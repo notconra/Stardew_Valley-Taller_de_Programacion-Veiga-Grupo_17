@@ -1,12 +1,13 @@
-// Comprueba que SDL2, SDL2_image (para cargar imagenes), SDL2_mixer (para el sonido) y SDL2_ttf (para las fuentes) estan instalados y enlazan.
-// Abre una ventana verde.
-// No hice nada con las librerías, nada más se verifica que se puedan inicializar (y que por ende está todo instalado y ok).
-// Después de hacer make build o make test se corre con ./build/check_sdl
+// Comprueba que SDL2, SDL2_image (para cargar imagenes), SDL2_mixer (para el sonido) y SDL2_ttf
+// (para las fuentes) estan instalados y enlazan. Abre una ventana verde. No hice nada con las
+// librerías, nada más se verifica que se puedan inicializar (y que por ende está todo instalado y
+// ok). Después de hacer make build o make test se corre con ./build/check_sdl
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_ttf.h>
+
 #include <iostream>
 
 int main() {
@@ -38,16 +39,21 @@ int main() {
 
     SDL_Window* window = SDL_CreateWindow(
         "SDL funciona :p",
-        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        320, 240, 0
-    );
+        SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED,
+        320,
+        240,
+        0);
 
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
 
     if (!window || !renderer) {
         std::cerr << SDL_GetError() << '\n';
-        if (renderer) SDL_DestroyRenderer(renderer);
-        if (window) SDL_DestroyWindow(window);
+        if (renderer)
+            SDL_DestroyRenderer(renderer);
+        if (window)
+            SDL_DestroyWindow(window);
+
         TTF_Quit();
         Mix_CloseAudio();
         IMG_Quit();

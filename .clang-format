@@ -22,3 +22,8 @@ AllowShortFunctionsOnASingleLine: None
 
 # Ordenar los includes
 SortIncludes: true
+
+# Ajuste de argumentos en llamadas a funciones
+BinPackArguments: false
+AlignAfterOpenBracket: AlwaysBreak
+AllowAllArgumentsOnNextLine: false
