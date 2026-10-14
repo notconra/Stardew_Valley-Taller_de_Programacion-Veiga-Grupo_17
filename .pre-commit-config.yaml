@@ -1,0 +1,35 @@
+# Hooks para el pre-commit.
+# Instalaciob: make hooks
+default_install_hook_types: [pre-commit, commit-msg]
+
+repos:
+  # Limpieza basica
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
+      - id: check-added-large-files   # avisa si hay algún archivo de mas de 1 MB
+        args: [--maxkb=1024]
+
+  # Formato: reescribe los archivos con el .clang-format
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v18.1.3
+    hooks:
+      - id: clang-format
+        types_or: [c++, c]
+
+  # Estilo: usa el CPPLINT.cfg
+  - repo: https://github.com/cpplint/cpplint
+    rev: 2.0.2
+    hooks:
+      - id: cpplint
+
+  # Mensaje de commit: exige el formato commitizen (feat(scope): ...)
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.9.1
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+  

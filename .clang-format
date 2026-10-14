@@ -2,8 +2,9 @@ BasedOnStyle: Google
 
 # Indentación
 IndentWidth: 4
+AccessModifierOffset: -4
 
-# Longitu de línea
+# Longitud de línea
 ColumnLimit: 100
 
 # Llaves en la misma línea
