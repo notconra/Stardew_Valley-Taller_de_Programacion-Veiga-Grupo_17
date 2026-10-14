@@ -11,9 +11,9 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 find_package(Threads REQUIRED)
 
 # Todos los .cpp de cada carpeta se compilan solos.
-file(GLOB COMMON CONFIGURE_DEPENDS common/*.cpp)
-file(GLOB SERVER CONFIGURE_DEPENDS server/*.cpp)
-file(GLOB CLIENT CONFIGURE_DEPENDS client/*.cpp)
+file(GLOB_RECURSE COMMON CONFIGURE_DEPENDS common/*.cpp)
+file(GLOB_RECURSE SERVER CONFIGURE_DEPENDS server/*.cpp)
+file(GLOB_RECURSE CLIENT CONFIGURE_DEPENDS client/*.cpp)
 
 add_executable(server ${SERVER} ${COMMON})
 target_include_directories(server PRIVATE common server)
@@ -32,7 +32,7 @@ if(GTest_FOUND)
   set(CLIENT_CLASSES ${CLIENT})
   list(FILTER SERVER_CLASSES EXCLUDE REGEX "main\\.cpp$")
   list(FILTER CLIENT_CLASSES EXCLUDE REGEX "main\\.cpp$")
-  file(GLOB TEST CONFIGURE_DEPENDS tests/*.cpp)
+  file(GLOB_RECURSE TEST CONFIGURE_DEPENDS tests/*.cpp)
 
   add_executable(tests ${TEST} ${COMMON} ${SERVER_CLASSES} ${CLIENT_CLASSES})
   target_include_directories(tests PRIVATE common server client)
