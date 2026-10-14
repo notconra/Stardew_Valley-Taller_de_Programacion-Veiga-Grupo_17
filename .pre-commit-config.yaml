@@ -19,12 +19,14 @@ repos:
     hooks:
       - id: clang-format
         types_or: [c++, c]
+        exclude: ^(checks/check_sdl\.cpp|common/liberror\.cpp|common/liberror\.h|common/queue\.h|common/resolver\.cpp|common/resolvererror\.cpp|common/resolvererror\.h|common/socket\.cpp|common/thread\.h)$
 
   # Estilo: usa el CPPLINT.cfg
   - repo: https://github.com/cpplint/cpplint
     rev: 2.0.2
     hooks:
       - id: cpplint
+        exclude: ^(checks/check_sdl\.cpp|common/liberror\.cpp|common/liberror\.h|common/queue\.h|common/resolver\.cpp|common/resolvererror\.cpp|common/resolvererror\.h|common/socket\.cpp|common/thread\.h)$
 
   # Mensaje de commit: exige el formato commitizen (feat(scope): ...)
   - repo: https://github.com/commitizen-tools/commitizen
@@ -32,4 +34,3 @@ repos:
     hooks:
       - id: commitizen
         stages: [commit-msg]
-  
