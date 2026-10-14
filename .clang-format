@@ -1,0 +1,23 @@
+BasedOnStyle: Google
+
+# Indentación
+IndentWidth: 4
+
+# Longitu de línea
+ColumnLimit: 100
+
+# Llaves en la misma línea
+BreakBeforeBraces: Attach
+
+# Espacios y formato
+SpaceBeforeParens: ControlStatements
+PointerAlignment: Left
+DerivePointerAlignment: false
+
+# Evitar compactar bloques de código
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+
+# Ordenar los includes
+SortIncludes: true
