@@ -72,14 +72,10 @@ bool ProtocoloCliente::recibir_evento(EventoServidor& evento) {
 }
 
 ErrorServidor ProtocoloCliente::recibir_error_servidor() {
-    uint8_t byte_codigo = recibir_u8();
-    if (byte_codigo < static_cast<uint8_t>(CodigoError::NOMBRE_JUGADOR_REPETIDO) ||
-        byte_codigo > static_cast<uint8_t>(CodigoError::NO_PERMITIDO)) {
-        throw ErrorProtocolo("código de error inválido: " + std::to_string(byte_codigo));
-    }
-    std::string detalle = recibir_texto();
+    uint8_t codigo = recibir_u8();
+    std::string detalles = recibir_texto();
 
-    return ErrorServidor{static_cast<CodigoError>(byte_codigo), detalle};
+    return ErrorServidor{static_cast<CodigoError>(codigo), detalles};
 }
 
 InfoPartida ProtocoloCliente::recibir_info_partida() {
