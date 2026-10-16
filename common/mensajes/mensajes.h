@@ -13,14 +13,14 @@
 // corresponda acá, agregar su valor en tipo_mensaje, escribir su recibir_algo() y su leer_algo() en
 // ProtocoloServidor y ProtocoloCliente.
 
-using MensajeCliente = std::variant<
+using ComandoCliente = std::variant<
     // Lobby
     Identificarse, ListarPartidas, CrearPartida, UnirsePartida,
 
     // Partida
     SalirDePartida>;
 
-using MensajeServidor = std::variant<
+using EventoServidor = std::variant<
     // Error
     ErrorServidor,
 
