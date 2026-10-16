@@ -1,5 +1,7 @@
 #include "protocolo_cliente.h"
 
+#include <sys/socket.h>  // solo para SHUT_RDWR
+
 #include <string>
 #include <vector>
 
@@ -107,4 +109,8 @@ EntradaExitosaAPartida ProtocoloCliente::recibir_entrada_exitosa_a_partida() {
 
 PartidaAbandonada ProtocoloCliente::recibir_partida_abandonada() {
     return PartidaAbandonada{};
+}
+
+void ProtocoloCliente::cerrar() {
+    socket.shutdown(SHUT_RDWR);
 }

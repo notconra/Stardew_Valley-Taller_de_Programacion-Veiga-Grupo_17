@@ -36,6 +36,10 @@ public:
     // Devuelve false si el servidor cerró la conexión justo entre dos mensajes.
     // Lanza ErrorProtocolo si la conexión se cortó a mitad de un mensaje o si llegó algo inválido.
     bool recibir_evento(EventoServidor& evento);
+
+    // Corta la conexión para desbloquear a un hilo bloqueado leyendo o escribiendo.
+    // Lanza excepción si el socket ya estaba cerrado.
+    void cerrar();
 };
 
 #endif
