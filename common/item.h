@@ -32,14 +32,23 @@ enum TipoItem : uint8_t {
 };
 
 struct Item {
+private:
     TipoItem tipo;
     std::optional<Calidad> calidad;
 
+public:
+    explicit Item(TipoItem tipo);
+
+    Item(TipoItem tipo, Calidad calidad);
+
+    TipoItem obtener_tipo() const;
+    std::optional<Calidad> obtener_calidad() const;
+
+
+    uint8_t tope_de_pila() const;
+    bool es_herramienta() const;
+ 
     bool operator==(const Item& otro) const = default;
 };
-
-uint8_t tope_de_pila(TipoItem tipo);
-bool es_herramienta(TipoItem tipo);
-bool tiene_calidad(TipoItem tipo);
 
 #endif
