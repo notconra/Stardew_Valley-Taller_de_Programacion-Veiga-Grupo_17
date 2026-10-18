@@ -19,6 +19,7 @@ private:
     void enviar_comando_listar_partidas(const ListarPartidas& listar_partidas);
     void enviar_comando_crear_partida(const CrearPartida& crear);
     void enviar_comando_unirse_partida(const UnirsePartida& unirse);
+    void enviar_comando_activar_multijugador(const ActivarMultijugador&);
     void enviar_comando_salir_de_partida(const SalirDePartida& salir_de_partida);
 
     // Recepción de eventos
@@ -26,6 +27,7 @@ private:
     ListaPartidas recibir_lista_partidas();
     EntradaExitosaAPartida recibir_entrada_exitosa_a_partida();
     InfoPartida recibir_info_partida();
+    MultijugadorActivado recibir_multijugador_activado();
     PartidaAbandonada recibir_partida_abandonada();
 
 public:

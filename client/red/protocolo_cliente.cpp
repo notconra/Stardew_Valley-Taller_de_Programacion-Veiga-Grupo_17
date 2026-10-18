@@ -13,6 +13,7 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::ERROR_SERVIDOR, [this] { return recibir_error_servidor(); }},
           {TipoMensaje::LISTA_PARTIDAS, [this] { return recibir_lista_partidas(); }},
           {TipoMensaje::PARTIDA_ENTRADA, [this] { return recibir_entrada_exitosa_a_partida(); }},
+          {TipoMensaje::MULTIJUGADOR_ACTIVADO, [this] { return recibir_multijugador_activado(); }},
           {TipoMensaje::PARTIDA_ABANDONADA, [this] { return recibir_partida_abandonada(); }},
       } {
 }
@@ -26,6 +27,7 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const ListarPartidas& m) { enviar_comando_listar_partidas(m); },
             [this](const CrearPartida& m) { enviar_comando_crear_partida(m); },
             [this](const UnirsePartida& m) { enviar_comando_unirse_partida(m); },
+            [this](const ActivarMultijugador& m) { enviar_comando_activar_multijugador(m); },
             [this](const SalirDePartida& m) { enviar_comando_salir_de_partida(m); },
         },
         comando);
@@ -49,6 +51,10 @@ void ProtocoloCliente::enviar_comando_crear_partida(const CrearPartida& crear) {
 void ProtocoloCliente::enviar_comando_unirse_partida(const UnirsePartida& unirse) {
     enviar_tipo(TipoMensaje::UNIRSE_PARTIDA);
     enviar_texto(unirse.codigo_partida);
+}
+
+void ProtocoloCliente::enviar_comando_activar_multijugador(const ActivarMultijugador&) {
+    enviar_tipo(TipoMensaje::ACTIVAR_MULTIJUGADOR);
 }
 
 void ProtocoloCliente::enviar_comando_salir_de_partida(const SalirDePartida&) {
@@ -105,6 +111,12 @@ EntradaExitosaAPartida ProtocoloCliente::recibir_entrada_exitosa_a_partida() {
     uint32_t id_jugador = recibir_u32();
 
     return EntradaExitosaAPartida{codigo_partida, id_jugador};
+}
+
+MultijugadorActivado ProtocoloCliente::recibir_multijugador_activado() {
+    std::string codigo_partida = recibir_texto();
+
+    return MultijugadorActivado{codigo_partida};
 }
 
 PartidaAbandonada ProtocoloCliente::recibir_partida_abandonada() {

@@ -18,6 +18,7 @@ public:
     EstadoEnPartida(ContextoDeCliente& contexto_de_cliente, const EntradaExitosaAPartida& entrada);
 
     std::string nombre() const override;
+    ProximoEstado activar_multijugador(const ActivarMultijugador&) override;
     ProximoEstado salir_de_partida(const SalirDePartida& comando) override;
     ProximoEstado comando_de_juego(const ComandoCliente& comando) override;
     void al_desconectar() override;

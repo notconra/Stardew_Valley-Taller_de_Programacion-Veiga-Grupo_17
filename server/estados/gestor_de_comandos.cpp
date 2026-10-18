@@ -38,6 +38,10 @@ void GestorDeComandos::manejar_comando(const ComandoCliente& comando) {
                 registrar(nombre + " -> SalirDePartida");
                 return estado->salir_de_partida(c);
             },
+            [this, &nombre](const ActivarMultijugador& c) {
+                registrar(nombre + " -> ActivarMultijugador");
+                return estado->activar_multijugador(c);
+            },
             [this, &nombre, &comando](const auto&) {
                 registrar(nombre + " -> Comando de juego");
                 return estado->comando_de_juego(comando);

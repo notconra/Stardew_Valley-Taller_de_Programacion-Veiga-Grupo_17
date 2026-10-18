@@ -21,17 +21,9 @@ EstadoDeConexion::ProximoEstado EstadoSinIdentificar::identificarse(const Identi
         return nullptr;
     }
 
-    try {
-        contexto.administrador.identificar_cliente(comando.id_cliente);
-    } catch (const ErrorDePartida& error) {
-        responder_error(error.codigo(), error.what());
-        return nullptr;
-    }
-
     contexto.identidad.id_cliente = comando.id_cliente;
     contexto.identidad.nombre_jugador = comando.nombre_jugador;
 
-    // No hay un evento de respuesta para este comando, sólo queda en el log del servidor.
     registrar(
         contexto.obtener_nombre_jugador() +
         " identificado: id=" + std::to_string(comando.id_cliente));

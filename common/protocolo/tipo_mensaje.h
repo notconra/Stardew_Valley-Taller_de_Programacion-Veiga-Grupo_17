@@ -12,12 +12,14 @@ enum class TipoMensaje : uint8_t {
     CREAR_PARTIDA = 0x03,
     UNIRSE_PARTIDA = 0x04,
     SALIR_DE_PARTIDA = 0x05,
+    ACTIVAR_MULTIJUGADOR = 0x06,
 
     // Servidor a cliente
     ERROR_SERVIDOR = 0x81,
     LISTA_PARTIDAS = 0x82,
     PARTIDA_ENTRADA = 0x83,
     PARTIDA_ABANDONADA = 0x84,
+    MULTIJUGADOR_ACTIVADO = 0x85,
 };
 
 #endif

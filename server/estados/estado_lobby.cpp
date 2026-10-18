@@ -16,7 +16,8 @@ std::string EstadoLobby::nombre() const {
 }
 
 EstadoDeConexion::ProximoEstado EstadoLobby::listar_partidas(const ListarPartidas&) {
-    const std::vector<InfoPartida> infos = contexto.administrador.listar();
+    const std::vector<InfoPartida> infos =
+        contexto.administrador.listar(contexto.identidad.id_cliente);
     encolar(
         ListaPartidas{infos},
         "ListaPartidas con " + std::to_string(infos.size()) + " partida(s)");

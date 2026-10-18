@@ -18,7 +18,7 @@ using ComandoCliente = std::variant<
     Identificarse, ListarPartidas, CrearPartida, UnirsePartida,
 
     // Partida
-    SalirDePartida>;
+    ActivarMultijugador, SalirDePartida>;
 
 using EventoServidor = std::variant<
     // Error
@@ -28,6 +28,6 @@ using EventoServidor = std::variant<
     ListaPartidas, EntradaExitosaAPartida,
 
     // Partida
-    PartidaAbandonada>;
+    MultijugadorActivado, PartidaAbandonada>;
 
 #endif

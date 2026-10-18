@@ -11,6 +11,8 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::LISTAR_PARTIDAS, [this] { return recibir_comando_listar_partidas(); }},
           {TipoMensaje::CREAR_PARTIDA, [this] { return recibir_comando_crear_partida(); }},
           {TipoMensaje::UNIRSE_PARTIDA, [this] { return recibir_comando_unirse_partida(); }},
+          {TipoMensaje::ACTIVAR_MULTIJUGADOR,
+           [this] { return recibir_comando_activar_multijugador(); }},
           {TipoMensaje::SALIR_DE_PARTIDA, [this] { return recibir_comando_salir_de_partida(); }},
       } {
 }
@@ -56,6 +58,10 @@ UnirsePartida ProtocoloServidor::recibir_comando_unirse_partida() {
     return UnirsePartida{codigo_partida};
 }
 
+ActivarMultijugador ProtocoloServidor::recibir_comando_activar_multijugador() {
+    return ActivarMultijugador{};
+}
+
 SalirDePartida ProtocoloServidor::recibir_comando_salir_de_partida() {
     return SalirDePartida{};
 }
@@ -68,6 +74,7 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const ErrorServidor& e) { enviar_evento_error_servidor(e); },
             [this](const ListaPartidas& e) { enviar_evento_lista_partidas(e); },
             [this](const EntradaExitosaAPartida& e) { enviar_evento_entrada_exitosa_a_partida(e); },
+            [this](const MultijugadorActivado& e) { enviar_evento_multijugador_activado(e); },
             [this](const PartidaAbandonada& e) { enviar_evento_partida_abandonada(e); },
         },
         evento);
@@ -99,6 +106,11 @@ void ProtocoloServidor::enviar_evento_entrada_exitosa_a_partida(
     enviar_tipo(TipoMensaje::PARTIDA_ENTRADA);
     enviar_texto(entrada.codigo_partida);
     enviar_u32(entrada.id_jugador);
+}
+
+void ProtocoloServidor::enviar_evento_multijugador_activado(const MultijugadorActivado& activado) {
+    enviar_tipo(TipoMensaje::MULTIJUGADOR_ACTIVADO);
+    enviar_texto(activado.codigo_partida);
 }
 
 void ProtocoloServidor::enviar_evento_partida_abandonada(const PartidaAbandonada&) {
