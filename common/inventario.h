@@ -8,14 +8,14 @@
 
 #include "item.h" 
 
-struct ItemStack {
+struct PilaItem {
     Item item;
     uint8_t cantidad;
 };
 
 class Inventario {
 private:
-    std::vector<std::optional<ItemStack>> espacios;
+    std::vector<std::optional<PilaItem>> casilleros;
 
 public:
 
@@ -27,13 +27,15 @@ bool se_puede_agregar(const Item& item, uint32_t cantidad) const;
 
 uint32_t cantidad_de(const Item& item) const;
 
-const std::optional<ItemStack>& obtener_espacio(size_t indice) const;
+const std::optional<PilaItem>& obtener_espacio(size_t indice) const;
 
 bool agregar(const Item& item, uint32_t cantidad);
 
-bool sacar(size_t index, uint8_t quantity);
+bool sacar(size_t indice, uint8_t cantidad);
 
-bool eliminar(const Item& item, uint32_t quantity);
+bool eliminar(const Item& item, uint32_t cantidad);
+
+bool transferir_a(Inventario& destino, size_t indice, uint8_t);
 };
 
 #endif 
