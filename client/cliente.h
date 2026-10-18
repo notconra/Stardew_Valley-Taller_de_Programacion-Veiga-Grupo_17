@@ -4,9 +4,9 @@
 #include <string>
 
 #include "../common/mensajes/mensajes.h"
-#include "red/conexion_con_servidor.h"
-// #include "vista_consola/consola.h"
 #include "estado_del_juego.h"
+#include "red/conexion_con_servidor.h"
+#include "vista_consola/consola.h"
 
 // notas (no documentación final)
 // Orquestador principal del cliente. Tiene la conexión con el servidor y las vistas (ahora es una,
@@ -53,7 +53,7 @@
 class Cliente {
 private:
     ConexionConServidor conexion;
-    // Consola consola;
+    Consola consola;
 
     // Partida en la que está el jugador. Solo es válida durante el EstadoDelJuego PARTIDA.
     EntradaExitosaAPartida partida_actual{};

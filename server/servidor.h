@@ -7,8 +7,11 @@
 #include "partidas/administrador_de_partidas.h"
 #include "red/aceptador.h"
 
-// Arma y es dueño de todo el servidor. El administrador va primero porque tiene que sobrevivir a
-// las conexiones que guarda el aceptador.
+// Arma y es dueño de todo el servidor. El administrador va primero porque tiene
+// que sobrevivir a las conexiones que guarda el aceptador (el aceptador se
+// destruye antes que él y su destructor espera a los hilos de todas las
+// conexiones, así que si ejecutar() no llega a apagar nada, el apagado igual
+// ocurre acá, en el orden correcto).
 class Servidor {
 private:
     AdministradorDePartidas administrador;
