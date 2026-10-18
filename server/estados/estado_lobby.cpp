@@ -1,5 +1,6 @@
 #include "estado_lobby.h"
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -16,36 +17,44 @@ std::string EstadoLobby::nombre() const {
 }
 
 EstadoDeConexion::ProximoEstado EstadoLobby::listar_partidas(const ListarPartidas&) {
-    const std::vector<InfoPartida> infos =
+    const std::vector<InfoPartida> info_partidas =
         contexto.administrador.listar(contexto.identidad.id_cliente);
     encolar(
-        ListaPartidas{infos},
-        "ListaPartidas con " + std::to_string(infos.size()) + " partida(s)");
+        ListaPartidas{info_partidas},
+        "ListaPartidas con " + std::to_string(info_partidas.size()) + " partida(s)");
     return nullptr;
 }
 
 EstadoDeConexion::ProximoEstado EstadoLobby::crear_partida(const CrearPartida& comando) {
-    try {
-        const EntradaExitosaAPartida entrada = contexto.administrador.crear(
+    return ingresar_a_partida([&] {
+        return contexto.administrador.crear(
             contexto.identidad.id_cliente,
             contexto.identidad.nombre_jugador,
             comando.nombre_partida);
-        encolar(entrada, "EntradaExitosaAPartida codigo=" + entrada.codigo_partida);
-        return std::make_unique<EstadoEnPartida>(contexto, entrada);
-    } catch (const ErrorDePartida& error) {
-        responder_error(error.codigo(), error.what());
-        return nullptr;
-    }
+    });
 }
 
 EstadoDeConexion::ProximoEstado EstadoLobby::unirse_a_partida(const UnirsePartida& comando) {
-    try {
-        const EntradaExitosaAPartida entrada = contexto.administrador.unirse(
+    return ingresar_a_partida([&] {
+        return contexto.administrador.unirse(
             contexto.identidad.id_cliente,
             contexto.identidad.nombre_jugador,
             comando.codigo_partida);
-        encolar(entrada, "EntradaExitosaAPartida codigo=" + entrada.codigo_partida);
-        return std::make_unique<EstadoEnPartida>(contexto, entrada);
+    });
+}
+
+EstadoDeConexion::ProximoEstado EstadoLobby::ingresar_a_partida(
+    const std::function<IngresoAPartida()>& ingreso) {
+    try {
+        const IngresoAPartida resultado = ingreso();
+
+        // Primero se le responde la entrada y recién después la sesión empieza
+        // a mandarle estado de la partida, así lo primero que lee el cliente es
+        // su entrada.
+        encolar(resultado.entrada, "EntradaExitosaAPartida " + resultado.entrada.codigo_partida);
+        resultado.sesion.entrar(resultado.entrada.id_jugador, contexto.cola_eventos);
+
+        return std::make_unique<EstadoEnPartida>(contexto, resultado);
     } catch (const ErrorDePartida& error) {
         responder_error(error.codigo(), error.what());
         return nullptr;

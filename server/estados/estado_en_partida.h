@@ -4,18 +4,24 @@
 #include <cstdint>
 #include <string>
 
+#include "../partidas/ingreso_a_partida.h"
 #include "estado_de_conexion.h"
 
-// El cliente está dentro de una partida. Guarda en cuál (código) y qué jugador está en la partida,
-// son datos de este estado, porque en el lobby no existen. Permite salir (vuelve al lobby) y los
-// comandos de juego.
+// El cliente está dentro de una partida. Guarda en cuál (código), qué jugador
+// es y su sesión, son datos de este estado, porque en el lobby no existen.
+// Permite salir (vuelve al lobby) y los comandos de juego.
+//
+// La sesión existe mientras el cliente siga conectado a la partida, por eso
+// este estado la guarda como referencia: antes de abandonarla le avisa con
+// sesion.salir().
 class EstadoEnPartida : public EstadoDeConexion {
 private:
     std::string codigo_partida;
     uint32_t id_jugador;  // el id de este cliente DENTRO de esa partida
+    SesionDePartida& sesion;
 
 public:
-    EstadoEnPartida(ContextoDeCliente& contexto_de_cliente, const EntradaExitosaAPartida& entrada);
+    EstadoEnPartida(ContextoDeCliente& contexto_de_cliente, const IngresoAPartida& ingreso);
 
     std::string nombre() const override;
     ProximoEstado activar_multijugador(const ActivarMultijugador&) override;

@@ -6,8 +6,11 @@
 #include "../registro.h"
 #include "error_de_partida.h"
 
-AdministradorDePartidas::AdministradorDePartidas(uint8_t jugadores_maximos_por_partida)
-    : jugadores_maximos(jugadores_maximos_por_partida), proximo_numero_de_partida(1) {
+AdministradorDePartidas::AdministradorDePartidas(
+    uint8_t jugadores_maximos_por_partida, uint8_t ticks_por_segundo_de_partida)
+    : jugadores_maximos(jugadores_maximos_por_partida),
+      ticks_por_segundo(ticks_por_segundo_de_partida),
+      proximo_numero_de_partida(1) {
 }
 
 Partida& AdministradorDePartidas::buscar_partida(const std::string& codigo_partida) {
@@ -20,19 +23,23 @@ Partida& AdministradorDePartidas::buscar_partida(const std::string& codigo_parti
     return partida->second;
 }
 
+SesionDePartida& AdministradorDePartidas::sesion_de(const std::string& codigo_partida) {
+    return sesiones.try_emplace(codigo_partida, codigo_partida, ticks_por_segundo).first->second;
+}
+
 std::vector<InfoPartida> AdministradorDePartidas::listar(uint32_t id_cliente) const {
     std::lock_guard<std::mutex> lock(mutex);
 
-    std::vector<InfoPartida> infos;
+    std::vector<InfoPartida> info_partidas;
     for (const auto& entrada : partidas) {
         if (entrada.second.es_miembro(id_cliente)) {
-            infos.push_back(entrada.second.info());
+            info_partidas.push_back(entrada.second.info());
         }
     }
-    return infos;
+    return info_partidas;
 }
 
-EntradaExitosaAPartida AdministradorDePartidas::crear(
+IngresoAPartida AdministradorDePartidas::crear(
     uint32_t id_cliente, const std::string& nombre_jugador, const std::string& nombre_partida) {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -55,24 +62,33 @@ EntradaExitosaAPartida AdministradorDePartidas::crear(
 
     registrar("partida " + codigo + " \"" + nombre_partida + "\" creada por " + nombre_jugador);
 
-    // creo que acá se crearía la sesión de la partida (bucle de juego, mundo etc etc).
-    return entrada;
+    return IngresoAPartida{entrada, sesion_de(codigo)};
 }
 
-EntradaExitosaAPartida AdministradorDePartidas::unirse(
+IngresoAPartida AdministradorDePartidas::unirse(
     uint32_t id_cliente, const std::string& nombre_jugador, const std::string& codigo_partida) {
     std::lock_guard<std::mutex> lock(mutex);
 
     Partida& partida = buscar_partida(codigo_partida);
 
-    // si no había nadie conectado, acá se crea la sesión de la partida.
+    const auto sesion_existente = sesiones.find(codigo_partida);
+    if (sesion_existente != sesiones.end() && !sesion_existente->second.esta_viva()) {
+        // si el bucle de juego murió por un error los jugadores que quedaron
+        // adentro se van a desconectar solos, y recién ahí se destruye la
+        // sesión y se puede volver a jugar acá.
+        throw ErrorDePartida(
+            CodigoError::PARTIDA_CERRADA,
+            "la partida " + codigo_partida + " se cerró por un error interno");
+    }
+
     const EntradaExitosaAPartida entrada = partida.conectar(id_cliente, nombre_jugador);
 
     registrar(
         nombre_jugador + " entró a " + codigo_partida + " (" +
         std::to_string(partida.cantidad_de_jugadores()) + "/" + std::to_string(jugadores_maximos) +
         " lugares, " + std::to_string(partida.cantidad_de_conectados()) + " conectado/s)");
-    return entrada;
+
+    return IngresoAPartida{entrada, sesion_de(codigo_partida)};
 }
 
 void AdministradorDePartidas::hacer_multijugador(
@@ -98,5 +114,10 @@ void AdministradorDePartidas::salir(const std::string& codigo_partida, uint32_t 
         "cliente " + std::to_string(id_cliente) + " salió de " + codigo_partida + " (" +
         std::to_string(partida->second.cantidad_de_conectados()) + " conectado/s)");
 
-    // si ya no queda nadie conectado, acá se tiene q destruir la sesión de la partida.
+    if (partida->second.cantidad_de_conectados() == 0) {
+        // acá para destruir la sesio´n espera a que termine su hilo (como mucho
+        // un tick). La sesión nunca llama al administrador, así que no hay
+        // deadlock (CHEQUEAR).
+        sesiones.erase(codigo_partida);
+    }
 }
