@@ -7,8 +7,22 @@
 #include <string>
 #include <utility>
 
+#include "./../registro.h"
+
 Aceptador::Aceptador(const std::string& puerto, AdministradorDePartidas& administrador_de_partidas)
-    : socket_de_escucha(puerto.c_str()), administrador(administrador_de_partidas) {
+    : socket_de_escucha(puerto.c_str()),
+      administrador(administrador_de_partidas),
+      hilo_arrancado(false) {
+}
+
+void Aceptador::start() {
+    Thread::start();
+    hilo_arrancado = true;
+}
+
+void Aceptador::join() {
+    Thread::join();
+    hilo_arrancado = false;
 }
 
 void Aceptador::detener() {
@@ -30,14 +44,23 @@ void Aceptador::run() {
             Socket peer = socket_de_escucha.accept();
             liberar_conexiones_terminadas();
             conexiones.emplace_back(std::move(peer), administrador);
-            std::cout << "cliente conectado " << std::to_string(conexiones.size())
-                      << " conexión/es en la lista)";
+            registrar(
+                "cliente conectado (" + std::to_string(conexiones.size()) +
+                " conexión/es en la lista)");
         }
     } catch (const std::exception& error) {
         if (should_keep_running()) {
-            std::cout << "el aceptador terminó por un error: " << error.what();
+            registrar(std::string("el aceptador terminó por un error: ") + error.what());
         }
     }
 
     conexiones.clear();  // corta cada conexión y espera a sus hilos
+}
+
+Aceptador::~Aceptador() {
+    detener();
+
+    if (hilo_arrancado) {
+        join();
+    }
 }
