@@ -5,8 +5,11 @@
 #include <stdexcept>
 
 EmisorDeEventos::EmisorDeEventos(
-    ProtocoloServidor& protocolo_servidor, Queue<EventoServidor>& cola_de_eventos)
-    : protocolo(protocolo_servidor), cola_eventos(cola_de_eventos) {
+    ProtocoloServidor& protocolo_servidor, Queue<EventoServidor>& cola_de_eventos,
+    const std::function<void()>& aviso_de_fin_de_envio)
+    : protocolo(protocolo_servidor),
+      cola_eventos(cola_de_eventos),
+      aviso_de_fin_de_envio(aviso_de_fin_de_envio) {
 }
 
 void EmisorDeEventos::run() {
@@ -22,9 +25,14 @@ void EmisorDeEventos::run() {
         std::cerr << "[emisor] no se pudo enviar al cliente: " << error.what() << '\n';
     }
 
+    avisar_fin_de_envio();
+}
+
+void EmisorDeEventos::avisar_fin_de_envio() {
     try {
-        cola_eventos.close();
-    } catch (const std::runtime_error&) {
-        // La cola de eventos ya estaba cerrada.
+        aviso_de_fin_de_envio();
+    } catch (const std::exception& error) {
+        // Nada de lo que pase acá debería dejar a este hilo sin terminar.
+        std::cerr << "[emisor] el aviso de fin de envío falló: " << error.what() << '\n';
     }
 }
