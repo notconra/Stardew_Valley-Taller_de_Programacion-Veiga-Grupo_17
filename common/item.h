@@ -63,7 +63,7 @@ public:
 
     uint8_t tope_de_pila() const;
     bool es_herramienta() const;
- 
+
     bool operator==(const Item& otro) const = default;
 };
 

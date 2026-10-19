@@ -25,6 +25,8 @@ size_t capacidad() const;
 
 bool se_puede_agregar(const Item& item, uint32_t cantidad) const;
 
+bool puede_agregar(const Item& item, uint32_t cantidad) const;
+
 uint32_t cantidad_de(const Item& item) const;
 
 const std::optional<PilaItem>& obtener_espacio(size_t indice) const;
