@@ -43,6 +43,10 @@ std::string describir(const PartidaAbandonada&) {
     return "[partida] saliste de la partida";
 }
 
+std::string describir(const PartidaCerradaPorError&) {
+    return "[partida] la partida se cerró por un error del servidor, volvés al lobby";
+}
+
 }  // namespace
 
 ImpresoraDeEventos::ImpresoraDeEventos(ConexionConServidor& conexion_conectada)
@@ -69,7 +73,9 @@ void ImpresoraDeEventos::registrar_fase(const EventoServidor& evento) {
     if (const auto* entrada = std::get_if<EntradaExitosaAPartida>(&evento)) {
         partida = *entrada;
         dentro_de_partida = true;
-    } else if (std::holds_alternative<PartidaAbandonada>(evento)) {
+    } else if (
+        std::holds_alternative<PartidaAbandonada>(evento) ||
+        std::holds_alternative<PartidaCerradaPorError>(evento)) {
         dentro_de_partida = false;
     }
 }

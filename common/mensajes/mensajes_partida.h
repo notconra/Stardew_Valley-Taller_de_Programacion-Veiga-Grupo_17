@@ -19,4 +19,8 @@ struct MultijugadorActivado {
 
 struct PartidaAbandonada {};
 
+// La sesión se cerró sola por un error interno del juego, la partida sigue
+// existiendo y el jugador vuelve al lobby.
+struct PartidaCerradaPorError {};
+
 #endif

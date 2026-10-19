@@ -15,6 +15,8 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::PARTIDA_ENTRADA, [this] { return recibir_entrada_exitosa_a_partida(); }},
           {TipoMensaje::MULTIJUGADOR_ACTIVADO, [this] { return recibir_multijugador_activado(); }},
           {TipoMensaje::PARTIDA_ABANDONADA, [this] { return recibir_partida_abandonada(); }},
+          {TipoMensaje::PARTIDA_CERRADA_POR_ERROR,
+           [this] { return recibir_partida_cerrada_por_error(); }},
       } {
 }
 
@@ -121,6 +123,10 @@ MultijugadorActivado ProtocoloCliente::recibir_multijugador_activado() {
 
 PartidaAbandonada ProtocoloCliente::recibir_partida_abandonada() {
     return PartidaAbandonada{};
+}
+
+PartidaCerradaPorError ProtocoloCliente::recibir_partida_cerrada_por_error() {
+    return PartidaCerradaPorError{};
 }
 
 void ProtocoloCliente::cerrar() {

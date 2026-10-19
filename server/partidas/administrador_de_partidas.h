@@ -64,9 +64,15 @@ public:
     // la partida.
     void hacer_multijugador(const std::string& codigo_partida, uint32_t id_cliente);
 
-    // El cliente tiene que haber llamado antes a salir() de la sesión, si es el
-    // último, se destruye acá.
+    // El cliente tiene que haber llamado antes a salir() de la sesión. Si ya no
+    // queda nadie conectado, la sesión hay que destruirla con
+    // limpiar_sesion_si_vacia().
     void salir(const std::string& codigo_partida, uint32_t id_cliente);
+
+    // Destruye la sesión de la partida si ya no le queda ningún jugador
+    // conectado. Si el bucle de juego murió, el que borra es el último jugador
+    // que se va.
+    void limpiar_sesion_si_vacia(const std::string& codigo_partida);
 
     AdministradorDePartidas(const AdministradorDePartidas&) = delete;
     AdministradorDePartidas& operator=(const AdministradorDePartidas&) = delete;

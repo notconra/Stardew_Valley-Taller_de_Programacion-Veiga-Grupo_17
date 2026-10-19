@@ -28,6 +28,6 @@ using EventoServidor = std::variant<
     ListaPartidas, EntradaExitosaAPartida,
 
     // Partida
-    MultijugadorActivado, PartidaAbandonada>;
+    MultijugadorActivado, PartidaAbandonada, PartidaCerradaPorError>;
 
 #endif

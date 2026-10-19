@@ -1,6 +1,5 @@
 #include "estado_lobby.h"
 
-#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -26,41 +25,46 @@ EstadoDeConexion::ProximoEstado EstadoLobby::listar_partidas(const ListarPartida
 }
 
 EstadoDeConexion::ProximoEstado EstadoLobby::crear_partida(const CrearPartida& comando) {
-    return ingresar_a_partida([&] {
-        return contexto.administrador.crear(
+    try {
+        const IngresoAPartida ingreso = contexto.administrador.crear(
             contexto.identidad.id_cliente,
             contexto.identidad.nombre_jugador,
             comando.nombre_partida);
-    });
-}
-
-EstadoDeConexion::ProximoEstado EstadoLobby::unirse_a_partida(const UnirsePartida& comando) {
-    return ingresar_a_partida([&] {
-        return contexto.administrador.unirse(
-            contexto.identidad.id_cliente,
-            contexto.identidad.nombre_jugador,
-            comando.codigo_partida);
-    });
-}
-
-EstadoDeConexion::ProximoEstado EstadoLobby::ingresar_a_partida(
-    const std::function<IngresoAPartida()>& ingreso) {
-    try {
-        const IngresoAPartida resultado = ingreso();
-
-        // Primero se le responde la entrada y recién después la sesión empieza
-        // a mandarle estado de la partida, así lo primero que lee el cliente es
-        // su entrada.
-        encolar(resultado.entrada, "EntradaExitosaAPartida " + resultado.entrada.codigo_partida);
-        resultado.sesion.entrar(resultado.entrada.id_jugador, contexto.cola_eventos);
-
-        return std::make_unique<EstadoEnPartida>(contexto, resultado);
+        entrar_a_partida(ingreso);
+        return std::make_unique<EstadoEnPartida>(contexto, ingreso);
     } catch (const ErrorDePartida& error) {
+        // si falla antes de crearla no limpia y si falla después, la sesión ya tiene al
+        // creador adentro.
         responder_error(error.codigo(), error.what());
         return nullptr;
     }
 }
 
+EstadoDeConexion::ProximoEstado EstadoLobby::unirse_a_partida(const UnirsePartida& comando) {
+    try {
+        const IngresoAPartida ingreso = contexto.administrador.unirse(
+            contexto.identidad.id_cliente,
+            contexto.identidad.nombre_jugador,
+            comando.codigo_partida);
+        entrar_a_partida(ingreso);
+        return std::make_unique<EstadoEnPartida>(contexto, ingreso);
+    } catch (const ErrorDePartida& error) {
+        rechazar_ingreso(error, comando.codigo_partida);
+        return nullptr;
+    }
+}
+
+void EstadoLobby::entrar_a_partida(const IngresoAPartida& ingreso) {
+    encolar(ingreso.entrada, "EntradaExitosaAPartida " + ingreso.entrada.codigo_partida);
+    ingreso.sesion.entrar(ingreso.entrada.id_jugador, contexto.cola_eventos);
+}
+
+void EstadoLobby::rechazar_ingreso(const ErrorDePartida& error, const std::string& codigo_partida) {
+    responder_error(error.codigo(), error.what());
+    contexto.administrador.limpiar_sesion_si_vacia(codigo_partida);
+}
+
 void EstadoLobby::al_desconectar() {
-    //
+    // Estar en el lobby significa que no se llegó a entrar a ninguna partida
+    // asiq no hay nada que liberar
 }

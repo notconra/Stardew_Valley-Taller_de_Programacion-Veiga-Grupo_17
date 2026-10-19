@@ -29,6 +29,7 @@ private:
     InfoPartida recibir_info_partida();
     MultijugadorActivado recibir_multijugador_activado();
     PartidaAbandonada recibir_partida_abandonada();
+    PartidaCerradaPorError recibir_partida_cerrada_por_error();
 
 public:
     explicit ProtocoloCliente(ISocket& socket_conectado);

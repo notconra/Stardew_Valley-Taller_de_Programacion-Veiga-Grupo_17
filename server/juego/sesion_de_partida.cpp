@@ -13,8 +13,14 @@ SesionDePartida::SesionDePartida(
       periodo_de_tick(1000 / ticks_por_segundo_de_partida),
       tick_actual(0),
       comandos(CAPACIDAD_DE_COMANDOS) {
+    try {
+        start();
+    } catch (...) {
+        stop();
+        join();
+        throw;
+    }
     registrar("sesión de " + codigo_partida + " iniciada");
-    start();
 }
 
 bool SesionDePartida::esta_viva() const {
@@ -24,7 +30,7 @@ bool SesionDePartida::esta_viva() const {
 void SesionDePartida::entrar(uint32_t id_jugador, Queue<EventoServidor>& cola_eventos) {
     std::lock_guard<std::mutex> lock(mutex_clientes);
     clientes.erase(id_jugador);
-    clientes.emplace(id_jugador, ClienteEnSesion{cola_eventos});
+    clientes.emplace(id_jugador, ColaDeEventosDelJugador{cola_eventos});
 }
 
 void SesionDePartida::salir(uint32_t id_jugador) {
@@ -33,20 +39,29 @@ void SesionDePartida::salir(uint32_t id_jugador) {
 }
 
 void SesionDePartida::recibir(uint32_t id_jugador, const ComandoCliente& comando) {
-    // Hay q ver que no haya muerto el gameloop porque si murió nadie va a vaciar la cola de
-    // comandos, y encolar ahí dejaría al cliente bloqueado para siempre.
     if (!esta_viva()) {
         throw ErrorDePartida(
             CodigoError::PARTIDA_CERRADA,
             "la partida " + codigo_partida + " se cerró por un error interno");
     }
 
-    comandos.push(ComandoDeJugador{id_jugador, comando});
+    try {
+        comandos.push(ComandoDeJugador{id_jugador, comando});
+    } catch (const ClosedQueue&) {
+        // El jugador ya salió de la sesión o la sesión murió, el comando después
+        // asiq se descarta.
+    }
 }
 
 void SesionDePartida::procesar_comandos() {
-    ComandoDeJugador pedido;
-    while (comandos.try_pop(pedido)) {
+    while (should_keep_running()) {
+        ComandoDeJugador pedido;
+        try {
+            pedido = comandos.pop();
+        } catch (const ClosedQueue&) {
+            // La sesión se está terminando y no va a llegar ningún comando más.
+            return;
+        }
         procesar_pedido(pedido);
     }
 }
@@ -112,16 +127,36 @@ void SesionDePartida::run() {
             std::this_thread::sleep_until(proximo_tick);
         }
     } catch (const std::exception& error) {
+        // Un error en la lógica de juego no tiene que desconectar a nadie, la
+        // partida sigue existiendo y los jugadores vuelven al lobby (se les
+        // avisa con PartidaCerradaPorError).
         registrar(
             "la sesión de " + codigo_partida +
             " terminó por un error: " + std::string(error.what()));
-        registrar(
-            "la partida " + codigo_partida + " quedó cerrada, sus jugadores se desconectarán");
+        difundir_cierre();
+    }
+}
+
+void SesionDePartida::difundir_cierre() {
+    difundir(PartidaCerradaPorError{});
+    std::lock_guard<std::mutex> lock(mutex_clientes);
+    clientes.clear();
+}
+
+void SesionDePartida::detener() {
+    stop();
+    // Se cierra acá y no en salir() porque salir() es por jugador y la sesión puede
+    // seguir viva y si se cerrara ahí un jugador que vuelve no
+    // podría mandar comandos.
+    try {
+        comandos.close();
+    } catch (const std::runtime_error&) {
+        // La cola ya estaba cerrada.
     }
 }
 
 SesionDePartida::~SesionDePartida() {
-    stop();
+    detener();
     join();
     registrar("sesión de " + codigo_partida + " terminada");
 }

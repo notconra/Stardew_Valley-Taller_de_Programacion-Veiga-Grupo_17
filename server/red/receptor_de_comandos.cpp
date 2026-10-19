@@ -20,8 +20,9 @@ void ReceptorDeComandos::run() {
     } catch (const ClosedQueue&) {
         // La cola de eventos se cerró.
     } catch (const ErrorDePartida& error) {
-        // El comando no se pudo aplicar porque la partida se cerró y no se
-        // puede seguir jugando.
+        // Sólo llega acá un error de partida que ningún estado maneja (los
+        // estados de partida ya reaccionan a PARTIDA_CERRADA volviendo al
+        // lobby). Es el peor de los casos, se corta la conexión.
         registrar(
             std::string("se desconecta al cliente porque su partida se cerró: ") + error.what());
     } catch (const std::exception& error) {

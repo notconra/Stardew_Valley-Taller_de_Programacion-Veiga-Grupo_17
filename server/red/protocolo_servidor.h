@@ -28,6 +28,7 @@ private:
     void enviar_evento_entrada_exitosa_a_partida(const EntradaExitosaAPartida& entrada);
     void enviar_evento_multijugador_activado(const MultijugadorActivado& activado);
     void enviar_evento_partida_abandonada(const PartidaAbandonada& partida_abandonada);
+    void enviar_evento_partida_cerrada_por_error(const PartidaCerradaPorError& cerrada);
     void enviar_info_partida(const InfoPartida& info_partida);
 
 public:

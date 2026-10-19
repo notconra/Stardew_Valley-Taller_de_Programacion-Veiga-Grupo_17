@@ -16,30 +16,28 @@
 // propio hilo. Lo crea el AdministradorDePartidas cuando se conecta el primer jugador y lo
 // destruye cuando se va el último.
 //
-// Cada tick ejecuta los comandos que llegaron, actualiza el mundo y manda el estado a los clientes.
-//
 // Para agregar un comando de juego se agrega un caso en procesar_pedido().
 //
 // Si el bucle de juego muere por un error, la sesión queda sin hilo pero sigue existiendo hasta que
 // se vaya su último jugador: mientras tanto recibir() lanza ErrorDePartida (PARTIDA_CERRADA), el
-// receptor de cada jugador lo convierte en la desconexión de ese cliente y la partida se va
-// cerrando de a poco.
+// estado de cada jugador vuelve al lobby y avisa al cliente.
+
+struct ComandoDeJugador {
+    uint32_t id_jugador = 0;
+    ComandoCliente comando;
+};
+
+// Dónde dejarle los eventos a un jugador conectado.
+struct ColaDeEventosDelJugador {
+    Queue<EventoServidor>& cola_eventos;
+};
+
 class SesionDePartida : public Thread {
 private:
     // cosas hardcodeadas q se sacarán de config o iran en otro
     // (!!!!!!!!)
     static constexpr unsigned int CAPACIDAD_DE_COMANDOS = 1024;
     static constexpr unsigned int SEGUNDOS_ENTRE_PULSOS = 5;
-
-    struct ComandoDeJugador {
-        uint32_t id_jugador = 0;
-        ComandoCliente comando;
-    };
-
-    // Dónde dejarle los eventos a un jugador conectado.
-    struct ClienteEnSesion {
-        Queue<EventoServidor>& cola_eventos;
-    };
 
     const std::string codigo_partida;
     const uint8_t ticks_por_segundo;
@@ -50,7 +48,7 @@ private:
 
     // id_jugador -> cliente conectado.
     std::mutex mutex_clientes;
-    std::map<uint32_t, ClienteEnSesion> clientes;
+    std::map<uint32_t, ColaDeEventosDelJugador> clientes;
 
     // acá iría tambien el mundo o juego o lo q sea, cuando exista
     // tipo Juego juego o la clase principal q haya;
@@ -62,6 +60,10 @@ private:
     // cola. Se usa cuando el mundo tenga estado para mandar.
     void difundir(const EventoServidor& evento);
 
+    // Cuando el bucle muere por un error avisa a los clientes que
+    // la sesión se cerró (para que vuelvan al lobby) y los saca de la lista.
+    void difundir_cierre();
+
     // wip: log temporal para ver que la sesión hace lo de los cosos pero se borra cuando haya
     // estado que difundir.
     void registrar_pulso();
@@ -72,24 +74,25 @@ public:
 
     // Los tres se pueden llamar desde cualquier hilo.
 
-    // Devuelve true mientras el bucle de juego siga funcionando. Si murió por un error, la partida
-    // ya no juega más, recibir() empieza a lanzar excepción y los jugadores se desconectan solos.
-    // (es un wrapper de is_alive())
+    // Devuelve true mientras el bucle de juego siga funcionando (es un wrapper de is_alive()).
     bool esta_viva() const;
 
     // Agrega al jugador, desde el próximo tick recibe lo que se difunda. La cola tiene que seguir
     // viva hasta que se llame a salir().
     void entrar(uint32_t id_jugador, Queue<EventoServidor>& cola_eventos);
 
-    // Saca al jugador, cuando devuelve la sesión ya no usa su cola.
+    // Saca al jugador, cuando devuelve la sesión ya no usa su cola. La sesión puede seguir viva
+    // (los demás siguen jugando, o este jugador se reconecta).
     void salir(uint32_t id_jugador);
 
-    // Deja el comando para el próximo tick. Espera si la cola de comandos está llena, pero sólo
-    // mientras la sesión siga viva, o sea, si el bucle de juego murió, lanza ErrorDePartida en vez
-    // de quedarse esperando para siempre.
+    // Deja el comando para el próximo tick. Si la cola está llena espera, pero a lo sumo hasta que
+    // la sesión se detenga. Si el bucle de juego murió lanza ErrorDePartida.
     void recibir(uint32_t id_jugador, const ComandoCliente& comando);
 
     void run() override;
+
+    // Pide parar el hilo y cierra la cola de comandos para despertarlo si está esperando.
+    void detener();
 
     SesionDePartida(const SesionDePartida&) = delete;
     SesionDePartida& operator=(const SesionDePartida&) = delete;

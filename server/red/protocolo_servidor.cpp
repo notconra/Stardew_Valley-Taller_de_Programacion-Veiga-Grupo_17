@@ -76,6 +76,7 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const EntradaExitosaAPartida& e) { enviar_evento_entrada_exitosa_a_partida(e); },
             [this](const MultijugadorActivado& e) { enviar_evento_multijugador_activado(e); },
             [this](const PartidaAbandonada& e) { enviar_evento_partida_abandonada(e); },
+            [this](const PartidaCerradaPorError& e) { enviar_evento_partida_cerrada_por_error(e); },
         },
         evento);
 }
@@ -115,4 +116,8 @@ void ProtocoloServidor::enviar_evento_multijugador_activado(const MultijugadorAc
 
 void ProtocoloServidor::enviar_evento_partida_abandonada(const PartidaAbandonada&) {
     enviar_tipo(TipoMensaje::PARTIDA_ABANDONADA);
+}
+
+void ProtocoloServidor::enviar_evento_partida_cerrada_por_error(const PartidaCerradaPorError&) {
+    enviar_tipo(TipoMensaje::PARTIDA_CERRADA_POR_ERROR);
 }

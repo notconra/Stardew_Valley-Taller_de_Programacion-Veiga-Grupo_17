@@ -1,6 +1,8 @@
 #include "administrador_de_partidas.h"
 
+#include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "../registro.h"
@@ -11,6 +13,12 @@ AdministradorDePartidas::AdministradorDePartidas(
     : jugadores_maximos(jugadores_maximos_por_partida),
       ticks_por_segundo(ticks_por_segundo_de_partida),
       proximo_numero_de_partida(1) {
+    if (jugadores_maximos_por_partida == 0) {
+        throw std::invalid_argument("la cantidad máxima de jugadores tiene que ser mayor a 0");
+    }
+    if (ticks_por_segundo_de_partida == 0) {
+        throw std::invalid_argument("los ticks por segundo tienen que ser mayores a 0");
+    }
 }
 
 Partida& AdministradorDePartidas::buscar_partida(const std::string& codigo_partida) {
@@ -73,22 +81,31 @@ IngresoAPartida AdministradorDePartidas::unirse(
 
     const auto sesion_existente = sesiones.find(codigo_partida);
     if (sesion_existente != sesiones.end() && !sesion_existente->second.esta_viva()) {
-        // si el bucle de juego murió por un error los jugadores que quedaron
-        // adentro se van a desconectar solos, y recién ahí se destruye la
-        // sesión y se puede volver a jugar acá.
         throw ErrorDePartida(
             CodigoError::PARTIDA_CERRADA,
             "la partida " + codigo_partida + " se cerró por un error interno");
     }
 
-    const EntradaExitosaAPartida entrada = partida.conectar(id_cliente, nombre_jugador);
+    const bool habia_sesion = (sesion_existente != sesiones.end());
+    const std::string codigo = codigo_partida;
+    auto sesion_creada = sesiones.try_emplace(codigo, codigo, ticks_por_segundo).first;
 
-    registrar(
-        nombre_jugador + " entró a " + codigo_partida + " (" +
-        std::to_string(partida.cantidad_de_jugadores()) + "/" + std::to_string(jugadores_maximos) +
-        " lugares, " + std::to_string(partida.cantidad_de_conectados()) + " conectado/s)");
+    try {
+        const EntradaExitosaAPartida entrada = partida.conectar(id_cliente, nombre_jugador);
 
-    return IngresoAPartida{entrada, sesion_de(codigo_partida)};
+        registrar(
+            nombre_jugador + " entró a " + codigo_partida + " (" +
+            std::to_string(partida.cantidad_de_jugadores()) + "/" +
+            std::to_string(jugadores_maximos) + " lugares, " +
+            std::to_string(partida.cantidad_de_conectados()) + " conectado/s)");
+
+        return IngresoAPartida{entrada, sesion_creada->second};
+    } catch (...) {
+        if (!habia_sesion) {
+            sesiones.erase(sesion_creada);
+        }
+        throw;
+    }
 }
 
 void AdministradorDePartidas::hacer_multijugador(
@@ -113,11 +130,20 @@ void AdministradorDePartidas::salir(const std::string& codigo_partida, uint32_t 
     registrar(
         "cliente " + std::to_string(id_cliente) + " salió de " + codigo_partida + " (" +
         std::to_string(partida->second.cantidad_de_conectados()) + " conectado/s)");
+}
 
-    if (partida->second.cantidad_de_conectados() == 0) {
-        // acá para destruir la sesio´n espera a que termine su hilo (como mucho
-        // un tick). La sesión nunca llama al administrador, así que no hay
-        // deadlock (CHEQUEAR).
-        sesiones.erase(codigo_partida);
+void AdministradorDePartidas::limpiar_sesion_si_vacia(const std::string& codigo_partida) {
+    // Meto sección crítica acá prque hay que destruir la sesión, y para eso el destructor espera a
+    // que termine su hilo asiq no tomo el mutex para eso. Lo tomo un toque para averiguar si ya no
+    // queda nadie conectado y el borrado en sí ocurre afuera de la CS
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+
+        const auto partida = partidas.find(codigo_partida);
+        if (partida != partidas.end() && partida->second.cantidad_de_conectados() != 0) {
+            return;
+        }
     }
+
+    sesiones.erase(codigo_partida);
 }

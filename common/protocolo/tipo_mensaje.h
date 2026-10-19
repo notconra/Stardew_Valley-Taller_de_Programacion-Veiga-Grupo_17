@@ -20,6 +20,7 @@ enum class TipoMensaje : uint8_t {
     PARTIDA_ENTRADA = 0x83,
     PARTIDA_ABANDONADA = 0x84,
     MULTIJUGADOR_ACTIVADO = 0x85,
+    PARTIDA_CERRADA_POR_ERROR = 0x86,
 };
 
 #endif
