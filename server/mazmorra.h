@@ -15,6 +15,7 @@ private:
     std::array<std::optional<Nivel>, CANTIDAD_NIVELES> niveles;
     std::optional<size_t> nivel_actual;
     std::mt19937 generador;
+    size_t indice_actual() const;
 
 public:
 
