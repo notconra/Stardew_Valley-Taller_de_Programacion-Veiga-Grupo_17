@@ -5,7 +5,6 @@
 #include <utility>
 #include <vector>
 
-#include "../registro.h"
 #include "error_de_partida.h"
 
 AdministradorDePartidas::AdministradorDePartidas(
@@ -68,8 +67,6 @@ IngresoAPartida AdministradorDePartidas::crear(
     Partida& partida = insertada.first->second;
     const EntradaExitosaAPartida entrada = partida.conectar(id_cliente, nombre_jugador);
 
-    registrar("partida " + codigo + " \"" + nombre_partida + "\" creada por " + nombre_jugador);
-
     return IngresoAPartida{entrada, sesion_de(codigo)};
 }
 
@@ -92,13 +89,6 @@ IngresoAPartida AdministradorDePartidas::unirse(
 
     try {
         const EntradaExitosaAPartida entrada = partida.conectar(id_cliente, nombre_jugador);
-
-        registrar(
-            nombre_jugador + " entró a " + codigo_partida + " (" +
-            std::to_string(partida.cantidad_de_jugadores()) + "/" +
-            std::to_string(jugadores_maximos) + " lugares, " +
-            std::to_string(partida.cantidad_de_conectados()) + " conectado/s)");
-
         return IngresoAPartida{entrada, sesion_creada->second};
     } catch (...) {
         if (!habia_sesion) {
@@ -113,8 +103,6 @@ void AdministradorDePartidas::hacer_multijugador(
     std::lock_guard<std::mutex> lock(mutex);
 
     buscar_partida(codigo_partida).hacer_multijugador(id_cliente);
-
-    registrar("partida " + codigo_partida + " ahora es multijugador");
 }
 
 void AdministradorDePartidas::salir(const std::string& codigo_partida, uint32_t id_cliente) {
@@ -126,10 +114,6 @@ void AdministradorDePartidas::salir(const std::string& codigo_partida, uint32_t 
     }
 
     partida->second.desconectar(id_cliente);
-
-    registrar(
-        "cliente " + std::to_string(id_cliente) + " salió de " + codigo_partida + " (" +
-        std::to_string(partida->second.cantidad_de_conectados()) + " conectado/s)");
 }
 
 void AdministradorDePartidas::limpiar_sesion_si_vacia(const std::string& codigo_partida) {
