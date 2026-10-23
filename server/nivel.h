@@ -33,9 +33,16 @@ private:
     std::vector<Posicion> enemigos;
     std::vector<Posicion> piedras;
 
+    size_t indice_de(Posicion pos) const;
+    void validar_punto(Posicion pos, const char* nombre) const;
+    bool es_punto_fijo(Posicion pos) const;
+
 public:
     explicit Nivel(GeografiaNivel geo);
 
+    /*
+    * Sortea enemigos y piedras en celdas libres distintas.
+    */
     void sortear(std::mt19937& generador);
 
     const GeografiaNivel& obtener_geo() const;
