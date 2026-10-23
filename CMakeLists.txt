@@ -9,11 +9,28 @@ add_compile_definitions(_POSIX_C_SOURCE=200809L)
 add_compile_options(-Wall -Wextra -Wpedantic)
 
 find_package(Threads REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(SDL2 REQUIRED sdl2)
+pkg_check_modules(SDL2_IMAGE REQUIRED SDL2_image)
 
 # Todos los .cpp de cada carpeta se compilan solos.
 file(GLOB_RECURSE COMMON CONFIGURE_DEPENDS common/*.cpp)
 file(GLOB_RECURSE SERVER CONFIGURE_DEPENDS server/*.cpp)
 file(GLOB_RECURSE CLIENT CONFIGURE_DEPENDS client/*.cpp)
+
+# La demo del personaje (client/vista_grafica) necesita SDL2, que el
+# cliente de consola no usa. Se la saca del resto de CLIENT para que
+# "client" no termine con dos main().
+set(CLIENT_GRAFICO)
+foreach(archivo ${CLIENT})
+  if(archivo MATCHES "/vista_grafica/")
+    list(APPEND CLIENT_GRAFICO ${archivo})
+  endif()
+endforeach()
+list(REMOVE_ITEM CLIENT ${CLIENT_GRAFICO})
+
+set(CLIENT_GRAFICO_COMUN ${CLIENT_GRAFICO})
+list(FILTER CLIENT_GRAFICO_COMUN EXCLUDE REGEX "/vista_grafica/main[^/]*\\.cpp$")
 
 add_executable(server ${SERVER} ${COMMON})
 target_include_directories(server PRIVATE common server)
@@ -22,6 +39,13 @@ target_link_libraries(server PRIVATE Threads::Threads)
 add_executable(client ${CLIENT} ${COMMON})
 target_include_directories(client PRIVATE common client)
 target_link_libraries(client PRIVATE Threads::Threads)
+
+add_executable(client_personaje ${CLIENT_GRAFICO_COMUN} client/vista_grafica/main_personaje.cpp ${COMMON})
+target_include_directories(client_personaje PRIVATE common client/vista_grafica
+                                                      client/vista_grafica/externo/tinyxml2 ${SDL2_INCLUDE_DIRS}
+                                                      ${SDL2_IMAGE_INCLUDE_DIRS})
+target_link_libraries(client_personaje PRIVATE Threads::Threads ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARIES})
+target_link_directories(client_personaje PRIVATE ${SDL2_LIBRARY_DIRS} ${SDL2_IMAGE_LIBRARY_DIRS})
 
 # Tests (opcional: si GoogleTest no esta instalado, el resto compila igual)
 find_package(GTest)
