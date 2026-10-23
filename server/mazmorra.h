@@ -7,37 +7,53 @@
 #include <optional>
 #include <random>
 #include <vector>
+#include "nivel.h"
 
-struct Posicion {
-    int x;
-    int y;
-
-    bool operator==(const Posicion& otra) const = default;
-};
-
-struct GeografiaNivel {
-    uint16_t ancho;
-    uint16_t alto;
-    std::vector<bool> transitable;
-    Posicion entrada;
-    std::optional<Posicion> escalera;
-    Posicion salida;
-    uint16_t cantidad_enemigos;
-    uint16_t cantidad_piedras;
-};
-
-
-class Nivel {
+#define CANTIDAD_NIVELES 10
+class Mazmorra {
 private:
-    GeografiaNivel geo;
-    std::vector<Posicion> enemigos;
-    std::vector<Posicion> piedras;
+    std::array<std::optional<Nivel>, CANTIDAD_NIVELES> niveles;
+    std::optional<size_t> nivel_actual;
+    std::mt19937 generador;
 
 public:
-    explicit Nivel(GeografiaNivel geo);
 
-    void sortear(std::mt19937& generador);
+    Mazmorra(std::vector<GeografiaNivel> geos, std::mt19937 generador);
 
-    const
+    Mazmorra(const Mazmorra&) = delete;
+    Mazmorra& operator=(const Mazmorra&) = delete;
+
+    /*
+    * Entra a la mazmorra siempre desde el nivel 1.
+    */
+    void entrar();
+
+    /*
+    * El jugador usa la escalera y pasa al siguiente nivel.
+    * No verifica la posición: el gameloop la llama cuando detecta por colisión que el jugador esta en la escalera.
+    */
+    bool bajar();
+
+
+    /*
+    * El jugador usa la puerta de salida y vuelve al pueblo.
+    * No verifica la posición: el gameloop la llama cuando detecta por colisión que el jugador esta en la puerta de salida.
+    */
+    void salir();
+
+    bool esta_adentro() const;
+
+
+    /*
+    * Devuelve el número del nivel actual del jugador.
+    */
+    size_t numero_de_nivel() const;
+
+    /*
+    * Nivel donde esta el jugador actualmente para que el gameloop pueda chequear colisiones con la escalera,
+    * la salida.
+    */
+    const Nivel& nivel_actual_del_jugador() const;
 };
+
 #endif

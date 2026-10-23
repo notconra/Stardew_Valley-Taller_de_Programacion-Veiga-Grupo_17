@@ -1,3 +1,6 @@
+#ifndef NIVEL_H
+#define NIVEL_H
+
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -39,3 +42,5 @@ public:
     const std::vector<Posicion>& obtener_enemigos() const;
     const std::vector<Posicion>& obtener_piedras() const;
 };
+
+#endif
