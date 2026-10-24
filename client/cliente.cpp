@@ -1,32 +1,49 @@
 #include "cliente.h"
 
+#include <QApplication>
+#include <iostream>
 #include <string>
 
-#include "estado_del_juego.h"
+#include "ui/pantallaprincipal.h"
 
-Cliente::Cliente(const std::string& host, const std::string& puerto)
-    : conexion(host, puerto), consola(conexion) {
+Cliente::Cliente(const std::string& host, const std::string& puerto, int argc, char** argv)
+    : conexion(host, puerto), argc_(argc), argv_(argv) {
 }
 
 void Cliente::ejecutar() {
-    EstadoDelJuego EstadoDelJuego = EstadoDelJuego::LOBBY;
-    while (EstadoDelJuego != EstadoDelJuego::SALIR) {
-        if (EstadoDelJuego == EstadoDelJuego::LOBBY) {
-            EstadoDelJuego = ejecutar_lobby();
-        } else {
-            EstadoDelJuego = ejecutar_partida();
+    EstadoDelJuego estado = EstadoDelJuego::LOBBY;
+
+    while (estado != EstadoDelJuego::SALIR) {
+        if (estado == EstadoDelJuego::LOBBY) {
+            estado = ejecutar_lobby();
+        } else if (estado == EstadoDelJuego::PARTIDA) {
+            estado = ejecutar_partida();
         }
     }
 }
 
 EstadoDelJuego Cliente::ejecutar_lobby() {
-    // con las vistas gráficas esto sería vista_lobby.ejecutar(partida_actual) en lugar de consola.
-    bool entro_a_partida = consola.ejecutar_lobby(partida_actual);
-    return entro_a_partida ? EstadoDelJuego::PARTIDA : EstadoDelJuego::SALIR;
+    QApplication app(argc_, argv_);
+
+    PantallaPrincipal w;
+    w.show();
+    // PantallaPrincipal ventana_lobby(conexion, partida_actual);
+    // ventana_lobby.show();
+
+    app.exec();
+
+    return EstadoDelJuego::SALIR;
 }
 
 EstadoDelJuego Cliente::ejecutar_partida() {
-    // Con las vistas gráficas: vista_partida.ejecutar(partida_actual).
-    bool volver_al_lobby = consola.ejecutar_partida(partida_actual);
-    return volver_al_lobby ? EstadoDelJuego::LOBBY : EstadoDelJuego::SALIR;
+    // Bren acá va lo de SDL
+    std::cout << "SDL imaginario\n";
+
+    bool volver_al_lobby = false;
+
+    if (volver_al_lobby) {
+        return EstadoDelJuego::LOBBY;
+    } else {
+        return EstadoDelJuego::SALIR;
+    }
 }
