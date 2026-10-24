@@ -47,6 +47,11 @@ std::string describir(const PartidaCerradaPorError&) {
     return "[partida] la partida se cerró por un error del servidor, volvés al lobby";
 }
 
+std::string describir(const PosicionJugador& posicion) {
+    return "[posicion] jugador " + std::to_string(posicion.id_jugador) + " en (" +
+           std::to_string(posicion.x) + ", " + std::to_string(posicion.y) + ")";
+}
+
 }  // namespace
 
 ImpresoraDeEventos::ImpresoraDeEventos(ConexionConServidor& conexion_conectada)

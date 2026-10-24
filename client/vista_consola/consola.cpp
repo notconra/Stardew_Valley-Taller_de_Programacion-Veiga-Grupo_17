@@ -19,6 +19,7 @@ const char AYUDA[] =
     "  unirse <código>               entra a una partida existente\n"
     "  multijugador                  permite que jugadores se puedan unir, devuelve el código\n"
     "  abandonar                     sale de la partida actual\n"
+    "  mover <dir>                   mueve al personaje (arrba/abjo/ izq/der)\n"
     "  ayuda                         muestra esta ayuda\n"
     "  cerrar                        cierra el cliente\n";
 
