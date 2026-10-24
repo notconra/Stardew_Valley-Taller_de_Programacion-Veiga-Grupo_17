@@ -64,10 +64,6 @@ private:
     // la sesión se cerró (para que vuelvan al lobby) y los saca de la lista.
     void difundir_cierre();
 
-    // wip: log temporal para ver que la sesión hace lo de los cosos pero se borra cuando haya
-    // estado que difundir.
-    void registrar_pulso();
-
 public:
     // Arranca el hilo.
     SesionDePartida(const std::string& codigo_de_partida, uint8_t ticks_por_segundo_de_partida);
