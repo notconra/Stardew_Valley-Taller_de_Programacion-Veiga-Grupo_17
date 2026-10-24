@@ -3,7 +3,6 @@
 #include <string>
 
 #include "../../common/queue.h"
-#include "../registro.h"
 
 EstadoDeConexion::EstadoDeConexion(ContextoDeCliente& contexto_de_cliente)
     : contexto(contexto_de_cliente) {
@@ -12,11 +11,8 @@ EstadoDeConexion::EstadoDeConexion(ContextoDeCliente& contexto_de_cliente)
 void EstadoDeConexion::encolar(const EventoServidor& evento, const std::string& descripcion) {
     try {
         contexto.cola_eventos.push(evento);
-        registrar(contexto.obtener_nombre_jugador() + " <- " + descripcion);
     } catch (const ClosedQueue&) {
-        registrar(
-            contexto.obtener_nombre_jugador() + " <- (descartado, la conexión se cerró) " +
-            descripcion);
+        //
     }
 }
 

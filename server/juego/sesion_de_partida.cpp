@@ -5,9 +5,6 @@
 #include <thread>
 #include <utility>
 
-#include "../../common/mensajes/manejadores_por_tipo.h"
-#include "../registro.h"
-
 SesionDePartida::SesionDePartida(
     const std::string& codigo_de_partida, uint8_t ticks_por_segundo_de_partida)
     : codigo_partida(codigo_de_partida),
@@ -22,7 +19,6 @@ SesionDePartida::SesionDePartida(
         join();
         throw;
     }
-    registrar("sesión de " + codigo_partida + " iniciada");
 }
 
 bool SesionDePartida::esta_viva() const {
@@ -123,18 +119,6 @@ void SesionDePartida::difundir(const EventoServidor& evento) {
     }
 }
 
-void SesionDePartida::registrar_pulso() {
-    ++tick_actual;
-    if (tick_actual % (SEGUNDOS_ENTRE_PULSOS * ticks_por_segundo) != 0) {
-        return;
-    }
-
-    std::lock_guard<std::mutex> lock(mutex_clientes);
-    registrar(
-        "partida " + codigo_partida + ": tick " + std::to_string(tick_actual) + ", " +
-        std::to_string(clientes.size()) + " cliente/s");
-}
-
 void SesionDePartida::run() {
     using Reloj = std::chrono::steady_clock;
 
@@ -146,7 +130,6 @@ void SesionDePartida::run() {
 
             // aca algo tipo mundo.actualizar(periodo_de_tick);
             // y difundir(mundo.estado());
-            registrar_pulso();
 
             proximo_tick += periodo_de_tick;
             const auto ahora = Reloj::now();
@@ -160,9 +143,6 @@ void SesionDePartida::run() {
         // Un error en la lógica de juego no tiene que desconectar a nadie, la
         // partida sigue existiendo y los jugadores vuelven al lobby (se les
         // avisa con PartidaCerradaPorError).
-        registrar(
-            "la sesión de " + codigo_partida +
-            " terminó por un error: " + std::string(error.what()));
         difundir_cierre();
     }
 }
@@ -188,5 +168,4 @@ void SesionDePartida::detener() {
 SesionDePartida::~SesionDePartida() {
     detener();
     join();
-    registrar("sesión de " + codigo_partida + " terminada");
 }

@@ -4,7 +4,6 @@
 #include <string>
 
 #include "../partidas/error_de_partida.h"
-#include "../registro.h"
 #include "estado_lobby.h"
 
 EstadoSinIdentificar::EstadoSinIdentificar(ContextoDeCliente& contexto_de_cliente)
@@ -24,8 +23,5 @@ EstadoDeConexion::ProximoEstado EstadoSinIdentificar::identificarse(const Identi
     contexto.identidad.id_cliente = comando.id_cliente;
     contexto.identidad.nombre_jugador = comando.nombre_jugador;
 
-    registrar(
-        contexto.obtener_nombre_jugador() +
-        " identificado: id=" + std::to_string(comando.id_cliente));
     return std::make_unique<EstadoLobby>(contexto);
 }

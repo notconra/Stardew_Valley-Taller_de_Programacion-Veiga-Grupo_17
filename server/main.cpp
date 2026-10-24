@@ -1,7 +1,4 @@
-#include <cstdint>
 #include <cstdlib>
-#include <exception>
-#include <iostream>
 
 #include "servidor.h"
 
@@ -13,15 +10,13 @@
 
 int main(int argc, char* argv[]) {
     if (argc != CANTIDAD_ARGUMENTOS) {
-        std::cerr << "Comando de ejecución: " << argv[0] << " <puerto>\n";
         return -1;
     }
 
     try {
         Servidor servidor(argv[INDICE_PUERTO], JUGADORES_MAXIMOS_POR_PARTIDA, TICKS_POR_SEGUNDO);
         servidor.ejecutar();
-    } catch (const std::exception& error) {
-        std::cerr << "[servidor] Error: " << error.what() << '\n';
+    } catch (const std::exception&) {
         return -1;
     }
     return 0;
