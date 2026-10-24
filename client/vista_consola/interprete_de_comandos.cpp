@@ -23,7 +23,7 @@ InterpreteDeComandos::InterpreteDeComandos()
           {"unirse", &InterpreteDeComandos::leer_unirse_partida},
           {"multijugador", &InterpreteDeComandos::leer_activar_multijugador},
           {"abandonar", &InterpreteDeComandos::leer_abandonar_partida},
-          {"mover", &InterpreteDeComandos::leer_mover},
+          {"moverse", &InterpreteDeComandos::leer_moverse},
       } {
 }
 
@@ -69,14 +69,20 @@ ComandoCliente InterpreteDeComandos::leer_abandonar_partida(std::istringstream&)
     return SalirDePartida{};
 }
 
-ComandoCliente InterpreteDeComandos::leer_mover(std::istringstream& argumentos) {
+ComandoCliente InterpreteDeComandos::leer_moverse(std::istringstream& argumentos) {
     std::string direccion;
     argumentos >> direccion;
 
-    if (direccion == "arriba") return Mover{Direccion::ARRIBA};
-    if (direccion == "abajo") return Mover{Direccion::ABAJO};
-    if (direccion == "izquierda") return Mover{Direccion::IZQUIERDA};
-    if (direccion == "derecha") return Mover{Direccion::DERECHA};
+    if (direccion == "arriba")
+        return Moverse{0, -1};
+    if (direccion == "abajo")
+        return Moverse{0, 1};
+    if (direccion == "izquierda")
+        return Moverse{-1, 0};
+    if (direccion == "derecha")
+        return Moverse{1, 0};
+    if (direccion == "parar")
+        return Moverse{0, 0};
 
-    throw std::invalid_argument("Ejemplo: mover <arriba|abajo|izquierda|derecha>");
+    throw std::invalid_argument("Ejemplo: moverse <arriba|abajo|izquierda|derecha|parar>");
 }

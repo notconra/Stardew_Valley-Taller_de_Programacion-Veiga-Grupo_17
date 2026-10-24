@@ -22,7 +22,7 @@ private:
     static ComandoCliente leer_unirse_partida(std::istringstream& argumentos);
     static ComandoCliente leer_activar_multijugador(std::istringstream& argumentos);
     static ComandoCliente leer_abandonar_partida(std::istringstream& argumentos);
-    static ComandoCliente leer_mover(std::istringstream& argumentos);
+    static ComandoCliente leer_moverse(std::istringstream& argumentos);
 
 public:
     InterpreteDeComandos();
