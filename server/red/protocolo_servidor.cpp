@@ -14,6 +14,7 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::ACTIVAR_MULTIJUGADOR,
            [this] { return recibir_comando_activar_multijugador(); }},
           {TipoMensaje::SALIR_DE_PARTIDA, [this] { return recibir_comando_salir_de_partida(); }},
+          {TipoMensaje::MOVER, [this] { return recibir_comando_mover(); }},
       } {
 }
 
@@ -66,6 +67,11 @@ SalirDePartida ProtocoloServidor::recibir_comando_salir_de_partida() {
     return SalirDePartida{};
 }
 
+Mover ProtocoloServidor::recibir_comando_mover() {
+    uint8_t direccion = recibir_u8();
+    return Mover{static_cast<Direccion>(direccion)};
+}
+
 // Envío de eventos
 
 void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
@@ -77,6 +83,7 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const MultijugadorActivado& e) { enviar_evento_multijugador_activado(e); },
             [this](const PartidaAbandonada& e) { enviar_evento_partida_abandonada(e); },
             [this](const PartidaCerradaPorError& e) { enviar_evento_partida_cerrada_por_error(e); },
+            [this](const PosicionJugador& e) { enviar_evento_posicion_jugador(e); },
         },
         evento);
 }
@@ -120,4 +127,11 @@ void ProtocoloServidor::enviar_evento_partida_abandonada(const PartidaAbandonada
 
 void ProtocoloServidor::enviar_evento_partida_cerrada_por_error(const PartidaCerradaPorError&) {
     enviar_tipo(TipoMensaje::PARTIDA_CERRADA_POR_ERROR);
+}
+
+void ProtocoloServidor::enviar_evento_posicion_jugador(const PosicionJugador& posicion) {
+    enviar_tipo(TipoMensaje::POSICION_JUGADOR);
+    enviar_u32(posicion.id_jugador);
+    enviar_u32(static_cast<uint32_t>(posicion.x));
+    enviar_u32(static_cast<uint32_t>(posicion.y));
 }
