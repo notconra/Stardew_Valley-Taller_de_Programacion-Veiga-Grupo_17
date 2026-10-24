@@ -4,21 +4,20 @@
 #include <cstdint>
 #include <string>
 
+#include "juego/recursos_de_juego.h"
 #include "partidas/administrador_de_partidas.h"
 #include "red/aceptador.h"
 
-// Arma y es dueño de todo el servidor. El administrador va primero porque tiene
-// que sobrevivir a las conexiones que guarda el aceptador (el aceptador se
-// destruye antes que él y su destructor espera a los hilos de todas las
-// conexiones, así que si ejecutar() no llega a apagar nada, el apagado igual
-// ocurre acá, en el orden correcto).
+// Arma y orquesta todo el servidor.
 class Servidor {
 private:
+    RecursosDeJuego recursos;
     AdministradorDePartidas administrador;
     Aceptador aceptador;
 
 public:
-    // Lanza excepción si no puede escuchar en ese puerto.
+    // Lanza excepción si no puede cargar los recursos del juego (el mapa, por ejemplo) o si no
+    // puede escuchar en ese puerto.
     Servidor(
         const std::string& puerto, uint8_t jugadores_maximos_por_partida, int ticks_por_segundo);
 

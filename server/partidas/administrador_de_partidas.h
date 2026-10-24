@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "../../common/mensajes/mensajes.h"
+#include "../juego/recursos_de_juego.h"
 #include "../juego/sesion_de_partida.h"
 #include "ingreso_a_partida.h"
 #include "partida.h"
@@ -29,6 +30,7 @@ class AdministradorDePartidas {
 private:
     const uint8_t jugadores_maximos;
     const uint8_t ticks_por_segundo;
+    const RecursosDeJuego& recursos;  // solo se los pasa a las sesiones
     mutable std::mutex mutex;
     std::map<std::string, Partida> partidas;  // código de la partida -> partida
 
@@ -46,7 +48,8 @@ public:
     // wip: la cantidad máxima de jugadores y los ticks por segundo tendrían que
     // salir de la configuración (!!!!!).
     AdministradorDePartidas(
-        uint8_t jugadores_maximos_por_partida, uint8_t ticks_por_segundo_de_partida);
+        uint8_t jugadores_maximos_por_partida, uint8_t ticks_por_segundo_de_partida,
+        const RecursosDeJuego& recursos_de_juego);
 
     // Sólo muestra las partidas en las que el cliente es jugador, nunca se
     // muestran las de los demás.
