@@ -3,7 +3,9 @@
 #include <exception>
 #include <string>
 #include <thread>
+#include <utility>
 
+#include "../../common/mensajes/manejadores_por_tipo.h"
 #include "../registro.h"
 
 SesionDePartida::SesionDePartida(
@@ -31,6 +33,9 @@ void SesionDePartida::entrar(uint32_t id_jugador, Queue<EventoServidor>& cola_ev
     std::lock_guard<std::mutex> lock(mutex_clientes);
     clientes.erase(id_jugador);
     clientes.emplace(id_jugador, ColaDeEventosDelJugador{cola_eventos});
+    // wip: posiciom inicial fija para todos hasta que exista la cama
+    std::lock_guard<std::mutex> lock_posiciones(mutex_posiciones);
+    posiciones.try_emplace(id_jugador, std::make_pair<int32_t, int32_t>(400, 300));
 }
 
 void SesionDePartida::salir(uint32_t id_jugador) {
@@ -66,16 +71,41 @@ void SesionDePartida::procesar_comandos() {
     }
 }
 
-void SesionDePartida::procesar_pedido(const ComandoDeJugador& /*pedido*/) {
-    // wip pq no hay nada de logica del juego: un caso por comando de juego, sería igual que
-    // enviar_evento() en ProtocoloServidor:
-    //
-    //   std::visit(
-    //       ManejadoresPorTipo{
-    //           [&](const Mover& c) { mundo.mover(pedido.id_jugador, c); },
-    //           [&](const Regar& c) { mundo.regar(pedido.id_jugador, c); },
-    //       },
-    //       pedido.comando);
+void SesionDePartida::procesar_pedido(const ComandoDeJugador& pedido) {
+    std::visit(
+        ManejadoresPorTipo{
+            [this, &pedido](const Mover& c) { mover_jugador(pedido.id_jugador, c); },
+            [](const auto&) {
+                // wip l resto de los comandos de juego todavia no existen
+            },
+        },
+        pedido.comando);
+}
+
+void SesionDePartida::mover_jugador(uint32_t id_jugador, const Mover& comando) {
+    int32_t x = 0;
+    int32_t y = 0;
+    {
+        std::lock_guard<std::mutex> lock(mutex_posiciones);
+        auto& posicion = posiciones[id_jugador];
+        switch (comando.direccion) {
+            case Direccion::ARRIBA:
+                posicion.second -= PASO_DE_MOVIMIENTO;
+                break;
+            case Direccion::ABAJO:
+                posicion.second += PASO_DE_MOVIMIENTO;
+                break;
+            case Direccion::IZQUIERDA:
+                posicion.first -= PASO_DE_MOVIMIENTO;
+                break;
+            case Direccion::DERECHA:
+                posicion.first += PASO_DE_MOVIMIENTO;
+                break;
+        }
+        x = posicion.first;
+        y = posicion.second;
+    }
+    difundir(PosicionJugador{id_jugador, x, y});
 }
 
 void SesionDePartida::difundir(const EventoServidor& evento) {

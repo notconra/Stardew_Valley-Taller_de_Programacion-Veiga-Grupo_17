@@ -6,6 +6,7 @@
 #include <map>
 #include <mutex>
 #include <string>
+#include <utility>
 
 #include "../../common/mensajes/mensajes.h"
 #include "../../common/queue.h"
@@ -38,6 +39,7 @@ private:
     // (!!!!!!!!)
     static constexpr unsigned int CAPACIDAD_DE_COMANDOS = 1024;
     static constexpr unsigned int SEGUNDOS_ENTRE_PULSOS = 5;
+    static constexpr int32_t PASO_DE_MOVIMIENTO = 4;
 
     const std::string codigo_partida;
     const uint8_t ticks_por_segundo;
@@ -50,11 +52,14 @@ private:
     std::mutex mutex_clientes;
     std::map<uint32_t, ColaDeEventosDelJugador> clientes;
 
-    // acá iría tambien el mundo o juego o lo q sea, cuando exista
-    // tipo Juego juego o la clase principal q haya;
+    // id_jugador -> posicion actual(x,y). wip: posicion inicial fija y sin
+    // colisiones/lmites de mapa
+    std::mutex mutex_posiciones;
+    std::map<uint32_t, std::pair<int32_t, int32_t>> posiciones;
 
     void procesar_comandos();
     void procesar_pedido(const ComandoDeJugador& pedido);
+    void mover_jugador(uint32_t id_jugador, const Mover& comando);
 
     // Manda el evento a todos los clientes sin esperar por ninguno. Quita a los que ya cerraron su
     // cola. Se usa cuando el mundo tenga estado para mandar.
