@@ -21,6 +21,7 @@ private:
     void enviar_comando_unirse_partida(const UnirsePartida& unirse);
     void enviar_comando_activar_multijugador(const ActivarMultijugador&);
     void enviar_comando_salir_de_partida(const SalirDePartida& salir_de_partida);
+    void enviar_comando_mover(const Mover& mover);
 
     // Recepción de eventos
     ErrorServidor recibir_error_servidor();
@@ -30,6 +31,7 @@ private:
     MultijugadorActivado recibir_multijugador_activado();
     PartidaAbandonada recibir_partida_abandonada();
     PartidaCerradaPorError recibir_partida_cerrada_por_error();
+    PosicionJugador recibir_posicion_jugador();
 
 public:
     explicit ProtocoloCliente(ISocket& socket_conectado);

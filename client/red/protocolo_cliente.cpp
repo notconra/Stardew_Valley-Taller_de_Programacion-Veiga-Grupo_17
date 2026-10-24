@@ -17,6 +17,7 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::PARTIDA_ABANDONADA, [this] { return recibir_partida_abandonada(); }},
           {TipoMensaje::PARTIDA_CERRADA_POR_ERROR,
            [this] { return recibir_partida_cerrada_por_error(); }},
+          {TipoMensaje::POSICION_JUGADOR, [this] { return recibir_posicion_jugador(); }},
       } {
 }
 
@@ -31,6 +32,7 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const UnirsePartida& m) { enviar_comando_unirse_partida(m); },
             [this](const ActivarMultijugador& m) { enviar_comando_activar_multijugador(m); },
             [this](const SalirDePartida& m) { enviar_comando_salir_de_partida(m); },
+            [this](const Mover& m) { enviar_comando_mover(m); },
         },
         comando);
 }
@@ -61,6 +63,11 @@ void ProtocoloCliente::enviar_comando_activar_multijugador(const ActivarMultijug
 
 void ProtocoloCliente::enviar_comando_salir_de_partida(const SalirDePartida&) {
     enviar_tipo(TipoMensaje::SALIR_DE_PARTIDA);
+}
+
+void ProtocoloCliente::enviar_comando_mover(const Mover& mover) {
+    enviar_tipo(TipoMensaje::MOVER);
+    enviar_u8(static_cast<uint8_t>(mover.direccion));
 }
 
 // Recepción de eventos
@@ -127,6 +134,14 @@ PartidaAbandonada ProtocoloCliente::recibir_partida_abandonada() {
 
 PartidaCerradaPorError ProtocoloCliente::recibir_partida_cerrada_por_error() {
     return PartidaCerradaPorError{};
+}
+
+PosicionJugador ProtocoloCliente::recibir_posicion_jugador() {
+    uint32_t id_jugador = recibir_u32();
+    int32_t x = static_cast<int32_t>(recibir_u32());
+    int32_t y = static_cast<int32_t>(recibir_u32());
+
+    return PosicionJugador{id_jugador, x, y};
 }
 
 void ProtocoloCliente::cerrar() {
