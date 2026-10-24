@@ -26,7 +26,7 @@ repos:
     rev: 2.0.2
     hooks:
       - id: cpplint
-        exclude: ^(checks/check_sdl\.cpp|common/liberror\.cpp|common/liberror\.h|common/queue\.h|common/resolver\.cpp|common/resolvererror\.cpp|common/resolvererror\.h|common/socket\.cpp|common/thread\.h)$
+        exclude: ^(common/lector_de_mapas_tmx/externo/tinyxml2/.*|checks/check_sdl\.cpp|common/liberror\.cpp|common/liberror\.h|common/queue\.h|common/resolver\.cpp|common/resolvererror\.cpp|common/resolvererror\.h|common/socket\.cpp|common/thread\.h)$
 
   # Mensaje de commit: exige el formato commitizen (feat(scope): ...)
   - repo: https://github.com/commitizen-tools/commitizen

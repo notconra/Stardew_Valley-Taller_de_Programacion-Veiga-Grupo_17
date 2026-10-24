@@ -26,6 +26,8 @@ enum class Direccion : uint8_t {
 struct Moverse {
     int8_t horizontal = 0;
     int8_t vertical = 0;
+
+    bool operator==(const Moverse&) const = default;
 };
 
 // Lo que el cliente necesita para dibujar a un jugador. La posición es en píxeles del mapa.

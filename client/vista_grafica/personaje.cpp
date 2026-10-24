@@ -1,45 +1,47 @@
 #include "personaje.h"
 
+#include <map>
+#include <string>
+
 #include "config.h"
 
-Personaje::Personaje(const std::string& rutaSprite, SDL_Renderer* renderer, int posXInicial, int posYInicial)
-    : textura(rutaSprite, renderer), posX(posXInicial), posY(posYInicial) {}
+namespace {
+// Fila de la hoja de sprites según hacia dónde mira (la cuarta es la de quieto).
+const std::map<Direccion, int> FILA_DE_DIRECCION{
+    {Direccion::ABAJO, 0},
+    {Direccion::DERECHA, 1},
+    {Direccion::ARRIBA, 2},
+    {Direccion::IZQUIERDA, 3},
+};
 
-void Personaje::mover(const Uint8* state) {
-    bool se_mueve = false;
-    if (state[SDL_SCANCODE_UP] || state[SDL_SCANCODE_W]) {
-        posY -= velocidad;
-        fila_actual = 2;
-        se_mueve = true;
-    }
-    if (state[SDL_SCANCODE_DOWN] || state[SDL_SCANCODE_S]) {
-        posY += velocidad;
-        fila_actual = 0;
-        se_mueve = true;
-    }
-    if (state[SDL_SCANCODE_LEFT] || state[SDL_SCANCODE_A]) {
-        posX -= velocidad;
-        fila_actual = 3;
-        se_mueve = true;
-    }
-    if (state[SDL_SCANCODE_RIGHT] || state[SDL_SCANCODE_D]) {
-        posX += velocidad;
-        fila_actual = 1;
-        se_mueve = true;
-    }
+// cosas q capaz se pueden configurar pero todavía no sé
+constexpr int FILA_QUIETO = 4;
+constexpr int CUADROS_CAMINANDO = 4;
+constexpr int MS_POR_CUADRO_CAMINANDO = 150;
+constexpr int CUADROS_QUIETO = 2;
+constexpr int MS_POR_CUADRO_QUIETO = 450;
+}  // namespace
 
-    if (se_mueve) {
-        columna_actual = (SDL_GetTicks() / 150) % 4;
-    } else {
-        fila_actual = 4;
-        columna_actual = (SDL_GetTicks() / 450) % 2;
-    }
+Personaje::Personaje(const std::string& ruta_sprite, SDL_Renderer* renderer)
+    : textura(ruta_sprite, renderer) {
 }
 
-void Personaje::dibujar(SDL_Renderer* renderer, int camX, int camY) {
-    if (!textura.ptr()) return;
+void Personaje::dibujar(
+    SDL_Renderer* renderer, const EstadoJugador& jugador, int cam_x, int cam_y) const {
+    const auto fila = FILA_DE_DIRECCION.find(jugador.mirando);
+    const bool camina = jugador.camina && fila != FILA_DE_DIRECCION.end();
+    const int fila_del_sprite = camina ? fila->second : FILA_QUIETO;
 
-    SDL_Rect srcRect = {columna_actual * 16, fila_actual * 32, 16, 32};
-    SDL_Rect destRect = {posX - camX, posY - camY, 16 * TILE_SCALE, 32 * TILE_SCALE};
-    SDL_RenderCopy(renderer, textura.ptr(), &srcRect, &destRect);
+    // La animación depende solo del reloj, el servidor manda posición y dirección.
+    const int ahora = static_cast<int>(SDL_GetTicks());
+    const int columna = camina ? (ahora / MS_POR_CUADRO_CAMINANDO) % CUADROS_CAMINANDO
+                               : (ahora / MS_POR_CUADRO_QUIETO) % CUADROS_QUIETO;
+
+    const SDL_Rect origen = {columna * ANCHO, fila_del_sprite * ALTO, ANCHO, ALTO};
+    const SDL_Rect destino = {
+        jugador.x * TILE_SCALE - cam_x,
+        jugador.y * TILE_SCALE - cam_y,
+        ANCHO * TILE_SCALE,
+        ALTO * TILE_SCALE};
+    SDL_RenderCopy(renderer, textura.ptr(), &origen, &destino);
 }
