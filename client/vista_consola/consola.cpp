@@ -21,7 +21,8 @@ const char AYUDA[] =
     "  abandonar                     sale de la partida actual\n"
     "  mover <dir>                   mueve al personaje (arrba/abjo/ izq/der)\n"
     "  ayuda                         muestra esta ayuda\n"
-    "  cerrar                        cierra el cliente\n";
+    "  cerrar                        cierra el cliente\n"
+    "  cavar <x> <y>                cava la parcela en esa coordenada\n";
 
 bool hay_entrada() {
     pollfd entrada{STDIN_FILENO, POLLIN, 0};
