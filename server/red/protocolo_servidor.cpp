@@ -15,6 +15,7 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
            [this] { return recibir_comando_activar_multijugador(); }},
           {TipoMensaje::SALIR_DE_PARTIDA, [this] { return recibir_comando_salir_de_partida(); }},
           {TipoMensaje::MOVER, [this] { return recibir_comando_mover(); }},
+          {TipoMensaje::CAVAR, [this] { return recibir_comando_cavar(); }},
       } {
 }
 
@@ -72,6 +73,12 @@ Mover ProtocoloServidor::recibir_comando_mover() {
     return Mover{static_cast<Direccion>(direccion)};
 }
 
+Cavar ProtocoloServidor::recibir_comando_cavar(){
+    int32_t x = static_cast<int32_t>(recibir_u32());
+    int32_t y = static_cast<int32_t>(recibir_u32());
+    return Cavar{x,y};
+}
+
 // Envío de eventos
 
 void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
@@ -84,6 +91,7 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const PartidaAbandonada& e) { enviar_evento_partida_abandonada(e); },
             [this](const PartidaCerradaPorError& e) { enviar_evento_partida_cerrada_por_error(e); },
             [this](const PosicionJugador& e) { enviar_evento_posicion_jugador(e); },
+            [this](const ParcelaTratada& e) { enviar_evento_parcela_tratada(e); },
         },
         evento);
 }
@@ -134,4 +142,10 @@ void ProtocoloServidor::enviar_evento_posicion_jugador(const PosicionJugador& po
     enviar_u32(posicion.id_jugador);
     enviar_u32(static_cast<uint32_t>(posicion.x));
     enviar_u32(static_cast<uint32_t>(posicion.y));
+}
+
+void ProtocoloServidor::enviar_evento_parcela_tratada(const ParcelaTratada& parcela) {
+    enviar_tipo(TipoMensaje::PARCELA_TRATADA);
+    enviar_u32(static_cast<uint32_t>(parcela.x));
+    enviar_u32(static_cast<uint32_t>(parcela.y));
 }
