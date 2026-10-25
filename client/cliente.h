@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "../common/juego/direccion.h"
 #include "../common/mensajes/mensajes.h"
 #include "estado_del_juego.h"
 #include "red/conexion_con_servidor.h"

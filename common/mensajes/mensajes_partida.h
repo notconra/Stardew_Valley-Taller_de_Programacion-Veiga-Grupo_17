@@ -4,20 +4,13 @@
 #ifndef MENSAJES_PARTIDA_H
 #define MENSAJES_PARTIDA_H
 
+#include "./../juego/direccion.h"
+
 // Cliente a servidor
 
 struct ActivarMultijugador {};
 
 struct SalirDePartida {};
-
-// Hacia dónde pide moverse el jugador. El cliente sólo informa la intención,
-// es el servidor el que decide si se puede mover y en qué posición queda.
-enum class Direccion : uint8_t {
-    ARRIBA,
-    ABAJO,
-    IZQUIERDA,
-    DERECHA,
-};
 
 // Hacia dónde quiere moverse el jugador, por eje: horizontal -1 (izquierda), 0 o 1 (derecha);
 // vertical -1 (arriba), 0 o 1 (abajo). Es un estado, NO es un paso, osea, el servidor lo sigue
