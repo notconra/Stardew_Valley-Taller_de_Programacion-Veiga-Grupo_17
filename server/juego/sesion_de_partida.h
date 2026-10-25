@@ -56,11 +56,14 @@ private:
     // colisiones/lmites de mapa
     std::mutex mutex_posiciones;
     std::map<uint32_t, std::pair<int32_t, int32_t>> posiciones;
+    
+    std::mutex mutex_parcelas;
+    std::map<std::pair<int32_t,int32_t>,bool> parcelas_tratadas;
 
     void procesar_comandos();
     void procesar_pedido(const ComandoDeJugador& pedido);
     void mover_jugador(uint32_t id_jugador, const Mover& comando);
-
+    void cavar(const Cavar& comando);
     // Manda el evento a todos los clientes sin esperar por ninguno. Quita a los que ya cerraron su
     // cola. Se usa cuando el mundo tenga estado para mandar.
     void difundir(const EventoServidor& evento);
