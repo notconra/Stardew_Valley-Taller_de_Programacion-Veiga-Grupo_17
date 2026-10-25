@@ -75,6 +75,7 @@ void SesionDePartida::procesar_pedido(const ComandoDeJugador& pedido) {
     std::visit(
         ManejadoresPorTipo{
             [this, &pedido](const Mover& c) { mover_jugador(pedido.id_jugador, c); },
+            [this](const Cavar& comando) { cavar(comando); },
             [](const auto&) {
                 // wip l resto de los comandos de juego todavia no existen
             },
@@ -106,6 +107,20 @@ void SesionDePartida::mover_jugador(uint32_t id_jugador, const Mover& comando) {
         y = posicion.second;
     }
     difundir(PosicionJugador{id_jugador, x, y});
+}
+
+void SesionDePartida::cavar(const Cavar& comando) {
+    bool es_nueva = false;
+    {
+        std::lock_guard<std::mutex> lock(mutex_parcelas);
+        if (!parcelas_tratadas[{comando.x, comando.y}]) {
+            parcelas_tratadas[{comando.x, comando.y}]=true;
+            es_nueva=true;
+        }
+    }
+    if (es_nueva) {
+        difundir(ParcelaTratada{comando.x,comando.y});
+    }
 }
 
 void SesionDePartida::difundir(const EventoServidor& evento) {
