@@ -24,6 +24,7 @@ InterpreteDeComandos::InterpreteDeComandos()
           {"multijugador", &InterpreteDeComandos::leer_activar_multijugador},
           {"abandonar", &InterpreteDeComandos::leer_abandonar_partida},
           {"mover", &InterpreteDeComandos::leer_mover},
+          {"cavar", &InterpreteDeComandos::leer_cavar},
       } {
 }
 
@@ -79,4 +80,13 @@ ComandoCliente InterpreteDeComandos::leer_mover(std::istringstream& argumentos) 
     if (direccion == "derecha") return Mover{Direccion::DERECHA};
 
     throw std::invalid_argument("Ejemplo: mover <arriba|abajo|izquierda|derecha>");
+}
+
+ComandoCliente InterpreteDeComandos::leer_cavar(std::istringstream& argumentos) {
+    int32_t x = 0;
+    int32_t y = 0;
+    if (!(argumentos >> x >> y)) {
+        throw std::invalid_argument("Ejemplo: cavar <x> <y>");
+    }
+    return Cavar{x, y};
 }
