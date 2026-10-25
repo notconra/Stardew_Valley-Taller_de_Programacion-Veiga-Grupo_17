@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "../../common/juego/direccion.h"
 #include "../../common/mensajes/manejadores_por_tipo.h"
 
 ProtocoloCliente::ProtocoloCliente(ISocket& socket)

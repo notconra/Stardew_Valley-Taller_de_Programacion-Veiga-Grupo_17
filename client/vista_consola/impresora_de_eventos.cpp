@@ -4,6 +4,10 @@
 #include <string>
 #include <variant>
 
+#include "../../common/mensajes/mensajes_error.h"
+#include "../../common/mensajes/mensajes_lobby.h"
+#include "../../common/mensajes/mensajes_partida.h"
+
 namespace {
 
 std::string describir(const ErrorServidor& error) {

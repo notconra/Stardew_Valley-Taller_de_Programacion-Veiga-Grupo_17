@@ -5,6 +5,7 @@
 
 #include <string>
 
+#include "../../common/juego/direccion.h"
 #include "../../common/mensajes/mensajes.h"
 #include "textura.h"
 
