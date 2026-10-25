@@ -1,16 +1,22 @@
 #include "sesion_de_partida.h"
 
 #include <exception>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <utility>
+#include <variant>
+#include <vector>
+
+#include "./../../common/mensajes/manejadores_por_tipo.h"
 
 SesionDePartida::SesionDePartida(
-    const std::string& codigo_de_partida, uint8_t ticks_por_segundo_de_partida)
+    const std::string& codigo_de_partida, uint8_t ticks_por_segundo_de_partida,
+    const RecursosDeJuego& recursos)
     : codigo_partida(codigo_de_partida),
       ticks_por_segundo(ticks_por_segundo_de_partida),
       periodo_de_tick(1000 / ticks_por_segundo_de_partida),
-      tick_actual(0),
+      mundo(recursos, ticks_por_segundo_de_partida),
       comandos(CAPACIDAD_DE_COMANDOS) {
     try {
         start();
@@ -29,9 +35,17 @@ void SesionDePartida::entrar(uint32_t id_jugador, Queue<EventoServidor>& cola_ev
     std::lock_guard<std::mutex> lock(mutex_clientes);
     clientes.erase(id_jugador);
     clientes.emplace(id_jugador, ColaDeEventosDelJugador{cola_eventos});
-    // wip: posiciom inicial fija para todos hasta que exista la cama
-    std::lock_guard<std::mutex> lock_posiciones(mutex_posiciones);
-    posiciones.try_emplace(id_jugador, std::make_pair<int32_t, int32_t>(400, 300));
+}
+
+void SesionDePartida::sincronizar_jugadores() {
+    std::vector<uint32_t> ids_conectados;
+    {
+        std::lock_guard<std::mutex> lock(mutex_clientes);
+        for (const auto& cliente : clientes) {
+            ids_conectados.push_back(cliente.first);
+        }
+    }
+    mundo.sincronizar_jugadores(ids_conectados);
 }
 
 void SesionDePartida::salir(uint32_t id_jugador) {
@@ -49,59 +63,26 @@ void SesionDePartida::recibir(uint32_t id_jugador, const ComandoCliente& comando
     try {
         comandos.push(ComandoDeJugador{id_jugador, comando});
     } catch (const ClosedQueue&) {
-        // El jugador ya salió de la sesión o la sesión murió, el comando después
-        // asiq se descarta.
     }
 }
 
 void SesionDePartida::procesar_comandos() {
-    while (should_keep_running()) {
+    try {
         ComandoDeJugador pedido;
-        try {
-            pedido = comandos.pop();
-        } catch (const ClosedQueue&) {
-            // La sesión se está terminando y no va a llegar ningún comando más.
-            return;
+        while (comandos.try_pop(pedido)) {
+            procesar_pedido(pedido);
         }
-        procesar_pedido(pedido);
+    } catch (const ClosedQueue&) {
     }
 }
 
 void SesionDePartida::procesar_pedido(const ComandoDeJugador& pedido) {
     std::visit(
         ManejadoresPorTipo{
-            [this, &pedido](const Mover& c) { mover_jugador(pedido.id_jugador, c); },
-            [](const auto&) {
-                // wip l resto de los comandos de juego todavia no existen
-            },
+            [this, &pedido](const Moverse& c) { mundo.atender(pedido.id_jugador, c); },
+            [](const auto&) {},
         },
         pedido.comando);
-}
-
-void SesionDePartida::mover_jugador(uint32_t id_jugador, const Mover& comando) {
-    int32_t x = 0;
-    int32_t y = 0;
-    {
-        std::lock_guard<std::mutex> lock(mutex_posiciones);
-        auto& posicion = posiciones[id_jugador];
-        switch (comando.direccion) {
-            case Direccion::ARRIBA:
-                posicion.second -= PASO_DE_MOVIMIENTO;
-                break;
-            case Direccion::ABAJO:
-                posicion.second += PASO_DE_MOVIMIENTO;
-                break;
-            case Direccion::IZQUIERDA:
-                posicion.first -= PASO_DE_MOVIMIENTO;
-                break;
-            case Direccion::DERECHA:
-                posicion.first += PASO_DE_MOVIMIENTO;
-                break;
-        }
-        x = posicion.first;
-        y = posicion.second;
-    }
-    difundir(PosicionJugador{id_jugador, x, y});
 }
 
 void SesionDePartida::difundir(const EventoServidor& evento) {
@@ -109,8 +90,6 @@ void SesionDePartida::difundir(const EventoServidor& evento) {
 
     for (auto cliente = clientes.begin(); cliente != clientes.end();) {
         try {
-            // try_push así si la cola está llena, el cliente no está leyendo y pierde este
-            // estado (el próximo llega en un tick).
             cliente->second.cola_eventos.try_push(evento);
             ++cliente;
         } catch (const ClosedQueue&) {
@@ -126,23 +105,19 @@ void SesionDePartida::run() {
         auto proximo_tick = Reloj::now();
 
         while (should_keep_running()) {
+            sincronizar_jugadores();
             procesar_comandos();
-
-            // aca algo tipo mundo.actualizar(periodo_de_tick);
-            // y difundir(mundo.estado());
+            mundo.actualizar();
+            difundir(mundo.estado());
 
             proximo_tick += periodo_de_tick;
             const auto ahora = Reloj::now();
             if (proximo_tick < ahora) {
-                // se atrasó, pero no hay q intentar recuperar los ticks perdidos pq no llega más
                 proximo_tick = ahora;
             }
             std::this_thread::sleep_until(proximo_tick);
         }
-    } catch (const std::exception& error) {
-        // Un error en la lógica de juego no tiene que desconectar a nadie, la
-        // partida sigue existiendo y los jugadores vuelven al lobby (se les
-        // avisa con PartidaCerradaPorError).
+    } catch (const std::exception&) {
         difundir_cierre();
     }
 }
@@ -155,13 +130,9 @@ void SesionDePartida::difundir_cierre() {
 
 void SesionDePartida::detener() {
     stop();
-    // Se cierra acá y no en salir() porque salir() es por jugador y la sesión puede
-    // seguir viva y si se cerrara ahí un jugador que vuelve no
-    // podría mandar comandos.
     try {
         comandos.close();
     } catch (const std::runtime_error&) {
-        // La cola ya estaba cerrada.
     }
 }
 

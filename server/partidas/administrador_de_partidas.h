@@ -8,10 +8,10 @@
 #include <vector>
 
 #include "../../common/mensajes/mensajes.h"
-#include "../juego/recursos_de_juego.h"
-#include "../juego/sesion_de_partida.h"
+#include "../juego/recursos/recursos_de_juego.h"
 #include "ingreso_a_partida.h"
 #include "partida.h"
+#include "sesion_de_partida.h"
 
 // Monitor con las partidas del servidor. Es lo único que comparten los hilos de
 // todos los clientes, por eso todas sus operaciones toman el mutex.
