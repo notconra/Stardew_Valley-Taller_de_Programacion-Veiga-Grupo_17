@@ -18,6 +18,7 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::PARTIDA_CERRADA_POR_ERROR,
            [this] { return recibir_partida_cerrada_por_error(); }},
           {TipoMensaje::POSICION_JUGADOR, [this] { return recibir_posicion_jugador(); }},
+          {TipoMensaje::PARCELA_TRATADA, [this] { return recibir_parcela_tratada(); }},
       } {
 }
 
@@ -33,6 +34,7 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const ActivarMultijugador& m) { enviar_comando_activar_multijugador(m); },
             [this](const SalirDePartida& m) { enviar_comando_salir_de_partida(m); },
             [this](const Mover& m) { enviar_comando_mover(m); },
+            [this](const Cavar& m) { enviar_comando_cavar(m); },
         },
         comando);
 }
@@ -68,6 +70,12 @@ void ProtocoloCliente::enviar_comando_salir_de_partida(const SalirDePartida&) {
 void ProtocoloCliente::enviar_comando_mover(const Mover& mover) {
     enviar_tipo(TipoMensaje::MOVER);
     enviar_u8(static_cast<uint8_t>(mover.direccion));
+}
+
+void ProtocoloCliente::enviar_comando_cavar(const Cavar& cavar){
+    enviar_tipo(TipoMensaje::CAVAR);
+    enviar_u32(static_cast<uint32_t>(cavar.x));
+    enviar_u32(static_cast<uint32_t>(cavar.y));
 }
 
 // Recepción de eventos
@@ -144,6 +152,11 @@ PosicionJugador ProtocoloCliente::recibir_posicion_jugador() {
     return PosicionJugador{id_jugador, x, y};
 }
 
+ParcelaTratada ProtocoloCliente::recibir_parcela_tratada(){
+    int32_t x= static_cast<int32_t>(recibir_u32());
+    int32_t y= static_cast<int32_t>(recibir_u32());
+    return ParcelaTratada{x,y};
+}
 void ProtocoloCliente::cerrar() {
     socket.shutdown(SHUT_RDWR);
 }
