@@ -52,6 +52,11 @@ std::string describir(const PosicionJugador& posicion) {
            std::to_string(posicion.x) + ", " + std::to_string(posicion.y) + ")";
 }
 
+std::string describir(const ParcelaTratada& parcela) {
+    return "[parcela] tratada en (" + std::to_string(parcela.x) + ", " + std::to_string(parcela.y) +
+           ")";
+}
+
 }  // namespace
 
 ImpresoraDeEventos::ImpresoraDeEventos(ConexionConServidor& conexion_conectada)
