@@ -21,17 +21,22 @@ private:
     UnirsePartida recibir_comando_unirse_partida();
     ActivarMultijugador recibir_comando_activar_multijugador();
     SalirDePartida recibir_comando_salir_de_partida();
-    Mover recibir_comando_mover();
+    Moverse recibir_comando_moverse();
 
     // Envío de eventos
     void enviar_evento_error_servidor(const ErrorServidor& error_servidor);
+    void enviar_evento_partida_cerrada_por_error(const PartidaCerradaPorError& cerrada);
+
+    // lobby
+    void enviar_info_partida(const InfoPartida& info_partida);
     void enviar_evento_lista_partidas(const ListaPartidas& lista_partidas);
     void enviar_evento_entrada_exitosa_a_partida(const EntradaExitosaAPartida& entrada);
     void enviar_evento_multijugador_activado(const MultijugadorActivado& activado);
     void enviar_evento_partida_abandonada(const PartidaAbandonada& partida_abandonada);
-    void enviar_evento_partida_cerrada_por_error(const PartidaCerradaPorError& cerrada);
-    void enviar_evento_posicion_jugador(const PosicionJugador& posicion);
-    void enviar_info_partida(const InfoPartida& info_partida);
+
+    // partida
+    void enviar_estado_jugador(const EstadoJugador& estado);
+    void enviar_estado_juego(const EstadoJuego& estado_juego);
 
 public:
     explicit ProtocoloServidor(ISocket& socket_conectado);

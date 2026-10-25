@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <string>
 
-#include "juego/recursos_de_juego.h"
+#include "juego/recursos/recursos_de_juego.h"
 #include "partidas/administrador_de_partidas.h"
 #include "red/aceptador.h"
 
