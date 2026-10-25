@@ -26,6 +26,11 @@ struct Mover {
     Direccion direccion;
 };
 
+struct Cavar{
+    int32_t x;
+    int32_t y;
+};
+
 // Servidor a cliente
 
 struct MultijugadorActivado {
@@ -44,6 +49,11 @@ struct PartidaCerradaPorError {};
 // entera de donde están los demas).
 struct PosicionJugador {
     uint32_t id_jugador;
+    int32_t x;
+    int32_t y;
+};
+
+struct ParcelaTratada{
     int32_t x;
     int32_t y;
 };
