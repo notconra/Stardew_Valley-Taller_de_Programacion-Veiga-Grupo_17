@@ -18,36 +18,16 @@ file(GLOB_RECURSE COMMON CONFIGURE_DEPENDS common/*.cpp)
 file(GLOB_RECURSE SERVER CONFIGURE_DEPENDS server/*.cpp)
 file(GLOB_RECURSE CLIENT CONFIGURE_DEPENDS client/*.cpp)
 
-# La demo grafica (client/vista_grafica) necesita SDL2, que el cliente de
-# consola no usa. Se la saca del resto de CLIENT para que "client" no
-# termine con dos main().
-set(CLIENT_GRAFICO)
-foreach(archivo ${CLIENT})
-  if(archivo MATCHES "/vista_grafica/")
-    list(APPEND CLIENT_GRAFICO ${archivo})
-  endif()
-endforeach()
-list(REMOVE_ITEM CLIENT ${CLIENT_GRAFICO})
-
-# Puede haber mas de un main*.cpp sueltos en el disco (demos distintas). Las
-# clases comunes van sin ningun main, y cada ejecutable agrega SOLO el suyo.
-set(CLIENT_GRAFICO_COMUN ${CLIENT_GRAFICO})
-list(FILTER CLIENT_GRAFICO_COMUN EXCLUDE REGEX "/vista_grafica/main[^/]*\\.cpp$")
-
 add_executable(server ${SERVER} ${COMMON})
 target_include_directories(server PRIVATE common server)
 target_link_libraries(server PRIVATE Threads::Threads)
 
+# El cliente incluye la vista de SDL (client/vista_grafica), por eso enlaza SDL2 y SDL2_image.
 add_executable(client ${CLIENT} ${COMMON})
-target_include_directories(client PRIVATE common client)
-target_link_libraries(client PRIVATE Threads::Threads)
-
-add_executable(client_grafico ${CLIENT_GRAFICO_COMUN} client/vista_grafica/main.cpp ${COMMON})
-target_include_directories(client_grafico PRIVATE common client/vista_grafica
-                                                   client/vista_grafica/externo/tinyxml2 ${SDL2_INCLUDE_DIRS}
-                                                   ${SDL2_IMAGE_INCLUDE_DIRS})
-target_link_libraries(client_grafico PRIVATE Threads::Threads ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARIES})
-target_link_directories(client_grafico PRIVATE ${SDL2_LIBRARY_DIRS} ${SDL2_IMAGE_LIBRARY_DIRS})
+target_include_directories(client PRIVATE common client ${SDL2_INCLUDE_DIRS}
+                                          ${SDL2_IMAGE_INCLUDE_DIRS})
+target_link_libraries(client PRIVATE Threads::Threads ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARIES})
+target_link_directories(client PRIVATE ${SDL2_LIBRARY_DIRS} ${SDL2_IMAGE_LIBRARY_DIRS})
 
 # Tests (opcional: si GoogleTest no esta instalado, el resto compila igual)
 find_package(GTest)
@@ -61,8 +41,11 @@ if(GTest_FOUND)
   file(GLOB_RECURSE TEST CONFIGURE_DEPENDS tests/*.cpp)
 
   add_executable(tests ${TEST} ${COMMON} ${SERVER_CLASSES} ${CLIENT_CLASSES})
-  target_include_directories(tests PRIVATE common server client)
-  target_link_libraries(tests PRIVATE GTest::gtest_main Threads::Threads)
+  target_include_directories(tests PRIVATE common server client ${SDL2_INCLUDE_DIRS}
+                                           ${SDL2_IMAGE_INCLUDE_DIRS})
+  target_link_libraries(tests PRIVATE GTest::gtest_main Threads::Threads ${SDL2_LIBRARIES}
+                                      ${SDL2_IMAGE_LIBRARIES})
+  target_link_directories(tests PRIVATE ${SDL2_LIBRARY_DIRS} ${SDL2_IMAGE_LIBRARY_DIRS})
   add_test(NAME tests COMMAND tests)
 else()
   message(WARNING "GoogleTest no esta instalado: no se compilan los tests (sudo apt install libgtest-dev)")
