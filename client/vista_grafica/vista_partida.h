@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "../../common/mensajes/mensajes.h"
+#include "../configuracion/configuracion_cliente_datos.h"
 #include "../red/conexion_con_servidor.h"
 #include "camara.h"
 #include "mapa_grafico.h"
@@ -16,11 +17,11 @@
 class VistaPartida {
 private:
     ConexionConServidor& conexion;
+    const ConfiguracionVista& configuracion;
 
     uint32_t id_jugador = 0;
     Moverse intencion_enviada{};
     EstadoJuego ultimo_estado_juego{};
-    Camara camara;
 
     void enviar_intencion_si_cambio(const Moverse& intencion);
 
@@ -28,10 +29,16 @@ private:
     // partida terminó (hay que volver al lobby).
     bool recibir_eventos();
 
-    void dibujar(Renderizador& renderizador, const MapaGrafico& mapa, const Personaje& personaje);
+    // El tamaño del mapa se lee del TMX, acá solo se pasa a píxeles de pantalla.
+    int ancho_del_mapa_en_pantalla(const MapaGrafico& mapa) const;
+    int alto_del_mapa_en_pantalla(const MapaGrafico& mapa) const;
+
+    void dibujar(
+        Renderizador& renderizador, const MapaGrafico& mapa, const Personaje& personaje,
+        Camara& camara);
 
 public:
-    explicit VistaPartida(ConexionConServidor& conexion_conectada);
+    VistaPartida(ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion);
 
     // Abre la ventana, bloquea hasta que termina la partida y la cierra. Devuelve true si hay que
     // volver al lobby (el jugador salió con ESC o la partida terminó) y false si el usuario

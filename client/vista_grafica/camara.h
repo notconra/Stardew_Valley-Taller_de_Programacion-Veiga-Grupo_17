@@ -2,21 +2,26 @@
 #define CAMARA_H
 
 // Calcula la esquina de la cámara (en píxeles de pantalla) para dejar a un jugador en el centro
-// de la ventana, sin salirse del mapa. La posición del jugador viene en píxeles del mapa.
+// de la ventana, sin salirse del mapa. La posición del jugador viene en píxeles del mapa y se
+// escala igual que los sprites.
 class Camara {
 private:
     int ancho_de_ventana;
     int alto_de_ventana;
     int ancho_del_mapa;
     int alto_del_mapa;
+    int escala_de_tiles;
     int esquina_x = 0;
     int esquina_y = 0;
 
-    static int calcular_esquina(
-        int posicion_en_mapa, int tamanio_del_sprite, int tamanio_de_ventana, int tamanio_del_mapa);
+    int calcular_esquina(
+        int posicion_en_mapa, int tamanio_del_sprite, int tamanio_de_ventana,
+        int tamanio_del_mapa) const;
 
 public:
-    Camara(int ancho_de_ventana, int alto_de_ventana, int ancho_del_mapa, int alto_del_mapa);
+    Camara(
+        int ancho_de_ventana, int alto_de_ventana, int ancho_del_mapa, int alto_del_mapa,
+        int escala_de_tiles);
 
     void centrar_en(int x_en_mapa, int y_en_mapa, int ancho_del_sprite, int alto_del_sprite);
 

@@ -1,11 +1,7 @@
 #include "personaje.h"
 
 #include <map>
-#include <string>
 
-#include "config.h"
-
-namespace {
 // Fila de la hoja de sprites según hacia dónde mira (la cuarta es la de quieto).
 const std::map<Direccion, int> FILA_DE_DIRECCION{
     {Direccion::ABAJO, 0},
@@ -14,16 +10,27 @@ const std::map<Direccion, int> FILA_DE_DIRECCION{
     {Direccion::IZQUIERDA, 3},
 };
 
-// cosas q capaz se pueden configurar pero todavía no sé
 constexpr int FILA_QUIETO = 4;
-constexpr int CUADROS_CAMINANDO = 4;
-constexpr int MS_POR_CUADRO_CAMINANDO = 150;
-constexpr int CUADROS_QUIETO = 2;
-constexpr int MS_POR_CUADRO_QUIETO = 450;
-}  // namespace
 
-Personaje::Personaje(const std::string& ruta_sprite, SDL_Renderer* renderer)
-    : textura(ruta_sprite, renderer) {
+Personaje::Personaje(
+    const ConfiguracionJugador& configuracion_jugador,
+    const ConfiguracionGraficos& configuracion_graficos, SDL_Renderer* renderer)
+    : textura(configuracion_jugador.ruta_sprite, renderer),
+      ancho(configuracion_jugador.ancho_sprite),
+      alto(configuracion_jugador.alto_sprite),
+      escala_de_tiles(configuracion_graficos.escala_de_tiles),
+      cuadros_caminando(configuracion_jugador.cuadros_caminando),
+      ms_por_cuadro_caminando(configuracion_jugador.ms_por_cuadro_caminando),
+      cuadros_quieto(configuracion_jugador.cuadros_quieto),
+      ms_por_cuadro_quieto(configuracion_jugador.ms_por_cuadro_quieto) {
+}
+
+int Personaje::ancho_del_sprite() const {
+    return ancho;
+}
+
+int Personaje::alto_del_sprite() const {
+    return alto;
 }
 
 void Personaje::dibujar(
@@ -34,14 +41,14 @@ void Personaje::dibujar(
 
     // La animación depende solo del reloj, el servidor manda posición y dirección.
     const int ahora = static_cast<int>(SDL_GetTicks());
-    const int columna = camina ? (ahora / MS_POR_CUADRO_CAMINANDO) % CUADROS_CAMINANDO
-                               : (ahora / MS_POR_CUADRO_QUIETO) % CUADROS_QUIETO;
+    const int columna = camina ? (ahora / ms_por_cuadro_caminando) % cuadros_caminando
+                               : (ahora / ms_por_cuadro_quieto) % cuadros_quieto;
 
-    const SDL_Rect origen = {columna * ANCHO, fila_del_sprite * ALTO, ANCHO, ALTO};
+    const SDL_Rect origen = {columna * ancho, fila_del_sprite * alto, ancho, alto};
     const SDL_Rect destino = {
-        jugador.x * TILE_SCALE - cam_x,
-        jugador.y * TILE_SCALE - cam_y,
-        ANCHO * TILE_SCALE,
-        ALTO * TILE_SCALE};
+        jugador.x * escala_de_tiles - cam_x,
+        jugador.y * escala_de_tiles - cam_y,
+        ancho * escala_de_tiles,
+        alto * escala_de_tiles};
     SDL_RenderCopy(renderer, textura.ptr(), &origen, &destino);
 }

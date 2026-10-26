@@ -1,11 +1,12 @@
 #include "cliente.h"
 
-#include <string>
-
 #include "estado_del_juego.h"
 
-Cliente::Cliente(const std::string& host, const std::string& puerto)
-    : conexion(host, puerto), consola(conexion), vista_sdl(conexion) {
+Cliente::Cliente(const ConfiguracionCliente& configuracion_cliente)
+    : configuracion(configuracion_cliente),
+      conexion(configuracion.servidor().host, configuracion.servidor().puerto),
+      consola(conexion),
+      vista_sdl(conexion, configuracion.vista()) {
 }
 
 void Cliente::ejecutar() {

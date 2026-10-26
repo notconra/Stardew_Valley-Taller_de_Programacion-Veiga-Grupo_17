@@ -2,6 +2,7 @@
 #define TEXTURA_H
 
 #include <SDL2/SDL.h>
+
 #include <string>
 
 class Textura {
@@ -19,7 +20,7 @@ public:
     SDL_Texture* ptr() const;
 
 private:
-    static SDL_Texture* cargarTextura(const std::string& ruta, SDL_Renderer* renderer);
+    SDL_Texture* cargarTextura(const std::string& ruta, SDL_Renderer* renderer);
 
     SDL_Texture* textura;
 };
