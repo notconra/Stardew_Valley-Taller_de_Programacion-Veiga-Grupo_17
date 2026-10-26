@@ -91,6 +91,40 @@ QLineEdit {
 QLineEdit:focus {
     background-color: #ffffff;
     border: 3px solid #d11f00;
+}
+
+QComboBox {
+    background-color: #ffc47a;
+    border: 3px solid #8e4c19;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #5c2900;
+    min-height: 35px;
+    min-width: 250px;
+    font-family: &quot;Courier New&quot;;
+}
+
+QComboBox:focus {
+    background-color: #ffffff;
+    border: 3px solid #d11f00;
+}
+
+QComboBox::drop-down {
+    border: none;
+    width: 25px;
+}
+
+QComboBox QAbstractItemView {
+    background-color: #ffc47a;
+    border: 3px solid #8e4c19;
+    color: #5c2900;
+    selection-background-color: #8e4c19;
+    selection-color: #ffffff;
+    font-size: 16px;
+    font-weight: bold;
+    font-family: &quot;Courier New&quot;;
 }</string>
       </property>
       <property name="currentIndex">
@@ -249,6 +283,79 @@ QLineEdit:focus {
              </item>
              <item row="2" column="1">
               <widget class="QLineEdit" name="input_cosa_fav"/>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_mundo">
+               <property name="text">
+                <string>Mundo</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QComboBox" name="combo_mundo">
+               <item>
+                <property name="text">
+                 <string>Granja Normal</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="4" column="0">
+              <widget class="QLabel" name="label_peinado">
+               <property name="text">
+                <string>Peinado</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="1">
+              <widget class="QComboBox" name="combo_peinado">
+               <item>
+                <property name="text">
+                 <string>Estilo 1</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Estilo 2</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Estilo 3</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="5" column="0">
+              <widget class="QLabel" name="label_color_pelo">
+               <property name="text">
+                <string>Color de pelo</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="1">
+              <widget class="QComboBox" name="combo_color_pelo">
+               <item>
+                <property name="text">
+                 <string>Castaño</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Rubio</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Negro</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Pelirrojo</string>
+                </property>
+               </item>
+              </widget>
              </item>
             </layout>
            </item>

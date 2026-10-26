@@ -59,11 +59,18 @@ void PantallaPrincipal::confirmar_personaje() {
     QString nombre = ui->input_nombre->text();
     QString granja = ui->input_nombre_granja->text();
     QString cosa_favorita = ui->input_cosa_fav->text();
+    QString mundo = ui->combo_mundo->currentText();
+    QString peinado = ui->combo_peinado->currentText();
+    QString color_pelo = ui->combo_color_pelo->currentText();
 
     if (nombre.isEmpty() || granja.isEmpty() || cosa_favorita.isEmpty()) {
         std::cout << "[Advertencia] Tenés que completar todos los campos para continuar.\n";
         return;
     }
+
+    std::cout << "Creando personaje: " << nombre.toStdString()
+              << " | Granja: " << granja.toStdString() << " (" << mundo.toStdString() << ")"
+              << " | Pelo: " << peinado.toStdString() << " (" << color_pelo.toStdString() << ")\n";
 
     conexion.enviar_comando(Identificarse{0, nombre.toStdString()});
     conexion.enviar_comando(CrearPartida{granja.toStdString()});
