@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "../../common/mensajes/mensajes.h"
+#include "../configuracion/configuracion_servidor_datos.h"
 #include "../juego/recursos/recursos_de_juego.h"
 #include "ingreso_a_partida.h"
 #include "partida.h"
@@ -28,8 +29,7 @@
 // puede.
 class AdministradorDePartidas {
 private:
-    const uint8_t jugadores_maximos;
-    const uint8_t ticks_por_segundo;
+    const ConfiguracionPartidaServidor configuracion;
     const RecursosDeJuego& recursos;  // solo se los pasa a las sesiones
     mutable std::mutex mutex;
     std::map<std::string, Partida> partidas;  // código de la partida -> partida
@@ -45,10 +45,8 @@ private:
     SesionDePartida& sesion_de(const std::string& codigo_partida);
 
 public:
-    // wip: la cantidad máxima de jugadores y los ticks por segundo tendrían que
-    // salir de la configuración (!!!!!).
     AdministradorDePartidas(
-        uint8_t jugadores_maximos_por_partida, uint8_t ticks_por_segundo_de_partida,
+        const ConfiguracionPartidaServidor& configuracion_partida,
         const RecursosDeJuego& recursos_de_juego);
 
     // Sólo muestra las partidas en las que el cliente es jugador, nunca se

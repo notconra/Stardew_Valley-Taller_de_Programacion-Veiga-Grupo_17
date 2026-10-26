@@ -11,6 +11,7 @@
 #include "../../common/mensajes/mensajes.h"
 #include "../../common/queue.h"
 #include "../../common/thread.h"
+#include "../configuracion/configuracion_servidor_datos.h"
 #include "../juego/mundo/mundo.h"
 #include "../juego/recursos/recursos_de_juego.h"
 #include "error_de_partida.h"
@@ -29,11 +30,7 @@ struct ColaDeEventosDelJugador {
 
 class SesionDePartida : public Thread {
 private:
-    // configurable (?)
-    static constexpr unsigned int CAPACIDAD_DE_COMANDOS = 1024;
-
     const std::string codigo_partida;
-    const uint8_t ticks_por_segundo;
     const std::chrono::milliseconds periodo_de_tick;
     uint64_t tick_actual = 0;
 
@@ -52,8 +49,8 @@ private:
 
 public:
     SesionDePartida(
-        const std::string& codigo_de_partida, uint8_t ticks_por_segundo_de_partida,
-        const RecursosDeJuego& recursos);
+        const std::string& codigo_de_partida,
+        const ConfiguracionPartidaServidor& configuracion_partida, const RecursosDeJuego& recursos);
 
     bool esta_viva() const;
 

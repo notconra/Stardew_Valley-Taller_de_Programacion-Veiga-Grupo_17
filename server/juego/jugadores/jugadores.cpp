@@ -8,30 +8,23 @@
 #include "../geometria/rectangulo.h"
 #include "servicio_aparicion.h"
 
-// config
-namespace {
-constexpr double VELOCIDAD = 120.0;
-constexpr int HITBOX_X = 2;
-constexpr int HITBOX_Y = 24;
-constexpr int HITBOX_ANCHO = 12;
-constexpr int HITBOX_ALTO = 8;
-constexpr double FACTOR_DIAGONAL = 1.0 / std::numbers::sqrt2;
-}  // namespace
-
 Jugadores::Jugadores(
-    const Mapa& mapa_de_partida, const Colisiones& colisiones_de_partida, uint8_t ticks_por_segundo)
-    : mapa(mapa_de_partida),
-      colisiones(colisiones_de_partida),
-      paso_por_tick(VELOCIDAD / static_cast<double>(ticks_por_segundo)),
-      aparicion(ServicioAparicion::buscar(mapa_de_partida, colisiones_de_partida)) {
+    const Mapa& mapa_de_partida, const Colisiones& colisiones_de_partida, uint8_t ticks_por_segundo,
+    const ConfiguracionJuegoServidor& configuracion_juego)
+    : colisiones(colisiones_de_partida),
+      movimiento_configuracion(configuracion_juego.movimiento),
+      paso_por_tick(
+          configuracion_juego.movimiento.velocidad / static_cast<double>(ticks_por_segundo)),
+      aparicion(
+          ServicioAparicion().buscar(mapa_de_partida, colisiones_de_partida, configuracion_juego)) {
 }
 
 bool Jugadores::choca(double x, double y) const {
     return colisiones.bloquea(Rectangulo{
-        static_cast<int>(std::floor(x)) + HITBOX_X,
-        static_cast<int>(std::floor(y)) + HITBOX_Y,
-        HITBOX_ANCHO,
-        HITBOX_ALTO,
+        static_cast<int>(std::floor(x)) + movimiento_configuracion.hitbox_x,
+        static_cast<int>(std::floor(y)) + movimiento_configuracion.hitbox_y,
+        movimiento_configuracion.hitbox_ancho,
+        movimiento_configuracion.hitbox_alto,
     });
 }
 
@@ -82,6 +75,7 @@ void Jugadores::moverse(uint32_t id_jugador, const Moverse& pedido) {
 }
 
 void Jugadores::actualizar() {
+    const double factor_diagonal = 1.0 / std::numbers::sqrt2;
     for (auto& [id_jugador, info] : jugadores) {
         (void)id_jugador;
         EstadoJugadorEnMundo& jugador = info.estado;
@@ -91,7 +85,7 @@ void Jugadores::actualizar() {
         const double y_anterior = jugador.y;
 
         const bool en_diagonal = controlador.horizontal != 0 && controlador.vertical != 0;
-        const double paso = en_diagonal ? paso_por_tick * FACTOR_DIAGONAL : paso_por_tick;
+        const double paso = en_diagonal ? paso_por_tick * factor_diagonal : paso_por_tick;
 
         avanzar(jugador, controlador.horizontal * paso, true);
         avanzar(jugador, controlador.vertical * paso, false);

@@ -46,10 +46,10 @@ bool Colisiones::bloquea(const Rectangulo& zona) const {
         return true;
     }
 
-    const int primera_columna = zona.x / Mapa::TAMANIO_DE_CASILLA;
-    const int ultima_columna = (zona.x + zona.ancho - 1) / Mapa::TAMANIO_DE_CASILLA;
-    const int primera_fila = zona.y / Mapa::TAMANIO_DE_CASILLA;
-    const int ultima_fila = (zona.y + zona.alto - 1) / Mapa::TAMANIO_DE_CASILLA;
+    const int primera_columna = zona.x / mapa.ancho_de_casilla_en_pixeles();
+    const int ultima_columna = (zona.x + zona.ancho - 1) / mapa.ancho_de_casilla_en_pixeles();
+    const int primera_fila = zona.y / mapa.alto_de_casilla_en_pixeles();
+    const int ultima_fila = (zona.y + zona.alto - 1) / mapa.alto_de_casilla_en_pixeles();
 
     for (int fila = primera_fila; fila <= ultima_fila; ++fila) {
         for (int columna = primera_columna; columna <= ultima_columna; ++columna) {

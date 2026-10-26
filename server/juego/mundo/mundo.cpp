@@ -4,8 +4,8 @@
 
 Mundo::Mundo(const RecursosDeJuego& recursos, uint8_t ticks_por_segundo)
     : colisiones(recursos.mapa),
-      reglas_movimiento(),
-      jugadores(recursos.mapa, colisiones, ticks_por_segundo),
+      reglas_movimiento(recursos.juego.movimiento),
+      jugadores(recursos.mapa, colisiones, ticks_por_segundo, recursos.juego),
       motor_movimiento(colisiones, reglas_movimiento) {
     (void)motor_movimiento;
 }

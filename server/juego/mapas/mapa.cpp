@@ -1,59 +1,68 @@
 #include "mapa.h"
 
 #include <cstddef>
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "../../../common/lector_de_mapas_tmx/lector_de_mapas.h"
-#include "propiedad_de_casilla.h"
 
-namespace {
-// Capa que se pinta en Tiled solo para marcar dónde NO se puede pasar, cualquier casilla no vacía
-// bloquea. Si el mapa todavía no la tiene se usa la de respaldo.
-// esto no sé donde o cómo iria, configurable o x mapa
-const char CAPA_DE_COLISIONES[] = "Colisiones";
-const char CAPA_DE_RESPALDO[] = "Buildings";
+std::map<std::string, uint8_t> Mapa::propiedades_disponibles() const {
+    std::map<std::string, uint8_t> propiedades;
+    propiedades["BLOQUEA"] = PropiedadDeCasilla::BLOQUEA;
+    propiedades["CULTIVABLE"] = PropiedadDeCasilla::CULTIVABLE;
+    propiedades["DECORABLE"] = PropiedadDeCasilla::DECORABLE;
+    propiedades["ADMITE_HIERBA"] = PropiedadDeCasilla::ADMITE_HIERBA;
+    propiedades["NINGUNA"] = PropiedadDeCasilla::NINGUNA;
+    return propiedades;
+}
 
-// Capas opcionales, si el TMX no las tiene, ninguna casilla tiene esa propiedad.
-// ver como se puede arreglar esto
-const std::vector<std::pair<std::string, uint8_t>> CAPAS_OPCIONALES{
-    {"Cultivable", PropiedadDeCasilla::CULTIVABLE},
-    {"Decorable", PropiedadDeCasilla::DECORABLE},
-    {"Hierba", PropiedadDeCasilla::ADMITE_HIERBA},
-};
-}  // namespace
-
-Mapa::Mapa(const std::string& ruta_tmx) {
-    const LectorDeMapasTMX lector(ruta_tmx);
+Mapa::Mapa(const ConfiguracionMapaServidor& configuracion) {
+    const LectorDeMapasTMX lector(configuracion.ruta_tmx);
     const TamanioMapa tamanio = lector.leer_tamanio();
 
     const std::size_t cantidad_de_casillas =
         static_cast<std::size_t>(tamanio.ancho_en_casillas) * tamanio.alto_en_casillas;
     if (cantidad_de_casillas == 0) {
-        throw std::runtime_error("no se pudo leer el tamaño del mapa " + ruta_tmx);
+        throw std::runtime_error("no se pudo leer el tamaño del mapa " + configuracion.ruta_tmx);
+    }
+    if (tamanio.ancho_de_casilla <= 0 || tamanio.alto_de_casilla <= 0) {
+        throw std::runtime_error(
+            "no se pudo leer el tamaño de las casillas del mapa " + configuracion.ruta_tmx);
     }
 
     ancho_en_casillas = tamanio.ancho_en_casillas;
     alto_en_casillas = tamanio.alto_en_casillas;
+    ancho_de_casilla = tamanio.ancho_de_casilla;
+    alto_de_casilla = tamanio.alto_de_casilla;
     propiedades.assign(cantidad_de_casillas, PropiedadDeCasilla::NINGUNA);
 
-    std::vector<int> colisiones = lector.cargar_capa(CAPA_DE_COLISIONES);
+    std::vector<int> colisiones = lector.cargar_capa(configuracion.capa_colisiones);
     if (colisiones.empty()) {
-        colisiones = lector.cargar_capa(CAPA_DE_RESPALDO);
+        colisiones = lector.cargar_capa(configuracion.capa_respaldo);
     }
     if (colisiones.empty()) {
         throw std::runtime_error(
-            std::string("falta la capa ") + CAPA_DE_COLISIONES + " (o " + CAPA_DE_RESPALDO +
-            ") en " + ruta_tmx);
+            std::string("falta la capa ") + configuracion.capa_colisiones + " (o " +
+            configuracion.capa_respaldo + ") en " + configuracion.ruta_tmx);
     }
-    marcar(colisiones, PropiedadDeCasilla::BLOQUEA, CAPA_DE_COLISIONES);
+    marcar(colisiones, PropiedadDeCasilla::BLOQUEA, configuracion.capa_colisiones);
 
-    for (const auto& [nombre, propiedad] : CAPAS_OPCIONALES) {
-        const std::vector<int> capa = lector.cargar_capa(nombre);
+    const std::map<std::string, uint8_t> disponibles = propiedades_disponibles();
+    for (const CapaOpcionalMapaServidor& capa_opcional : configuracion.capas_opcionales) {
+        const std::map<std::string, uint8_t>::const_iterator encontrado =
+            disponibles.find(capa_opcional.propiedad);
+        if (encontrado == disponibles.end()) {
+            throw std::runtime_error(
+                "configuración: propiedad desconocida '" + capa_opcional.propiedad +
+                "' en mapa.capas_opcionales");
+        }
+
+        const std::vector<int> capa = lector.cargar_capa(capa_opcional.nombre);
         if (!capa.empty()) {
-            marcar(capa, propiedad, nombre);
+            marcar(capa, encontrado->second, capa_opcional.nombre);
         }
     }
 }
@@ -77,12 +86,20 @@ int Mapa::cantidad_de_filas() const {
     return alto_en_casillas;
 }
 
+int Mapa::ancho_de_casilla_en_pixeles() const {
+    return ancho_de_casilla;
+}
+
+int Mapa::alto_de_casilla_en_pixeles() const {
+    return alto_de_casilla;
+}
+
 int Mapa::ancho_en_pixeles() const {
-    return ancho_en_casillas * TAMANIO_DE_CASILLA;
+    return ancho_en_casillas * ancho_de_casilla;
 }
 
 int Mapa::alto_en_pixeles() const {
-    return alto_en_casillas * TAMANIO_DE_CASILLA;
+    return alto_en_casillas * alto_de_casilla;
 }
 
 bool Mapa::esta_dentro(int columna, int fila) const {

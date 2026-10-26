@@ -4,10 +4,12 @@
 #include <string>
 #include <vector>
 
-// Tamaño del mapa expresado en cantidad de casillas.
+// Tamaño del mapa en cantidad de casillas y tamaño de cada casilla en píxeles.
 struct TamanioMapa {
     int ancho_en_casillas = 0;
     int alto_en_casillas = 0;
+    int ancho_de_casilla = 0;
+    int alto_de_casilla = 0;
 };
 
 // Lee un archivo TMX de Tiled. Lo usan el servidor (para las colisiones) y el cliente (para
