@@ -23,14 +23,18 @@ void Cliente::ejecutar() {
 }
 
 EstadoDelJuego Cliente::ejecutar_lobby() {
+    partida_actual = {};
     QApplication app(argc_, argv_);
 
-    PantallaPrincipal w;
-    w.show();
-    // PantallaPrincipal ventana_lobby(conexion, partida_actual);
-    // ventana_lobby.show();
+    PantallaPrincipal ventana_lobby(conexion, partida_actual);
+    ventana_lobby.show();
 
     app.exec();
+
+    // Esto es por si se cerró el lobby para dar paso a SDL
+    if (!partida_actual.codigo_partida.empty()) {
+        return EstadoDelJuego::PARTIDA;
+    }
 
     return EstadoDelJuego::SALIR;
 }
