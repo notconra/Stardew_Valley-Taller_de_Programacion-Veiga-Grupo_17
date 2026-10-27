@@ -6,7 +6,7 @@
 #define CANTIDAD_ARGUMENTOS 2
 #define INDICE_PUERTO 1
 #define JUGADORES_MAXIMOS_POR_PARTIDA 4
-#define TICKS_POR_SEGUNDO 3
+#define TICKS_POR_SEGUNDO 40
 
 int main(int argc, char* argv[]) {
     if (argc != CANTIDAD_ARGUMENTOS) {
