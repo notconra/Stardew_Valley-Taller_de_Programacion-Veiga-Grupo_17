@@ -67,7 +67,7 @@ void PantallaPrincipal::confirmar_personaje() {
         std::cout << "[Advertencia] Tenés que completar todos los campos para continuar.\n";
         return;
     }
-
+    ui->btn_confirmar_personaje->setEnabled(false);
     std::cout << "Creando personaje: " << nombre.toStdString()
               << " | Granja: " << granja.toStdString() << " (" << mundo.toStdString() << ")"
               << " | Pelo: " << peinado.toStdString() << " (" << color_pelo.toStdString() << ")\n";
