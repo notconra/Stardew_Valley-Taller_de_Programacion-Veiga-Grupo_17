@@ -12,8 +12,8 @@
 #include "../../common/queue.h"
 #include "../../common/thread.h"
 #include "../configuracion/configuracion_servidor_datos.h"
-#include "../juego/mundo/mundo.h"
-#include "../juego/recursos/recursos_de_juego.h"
+#include "../juego/base/recursos/recursos_de_juego.h"
+#include "../juego/mundo.h"
 #include "error_de_partida.h"
 
 // Bucle de simulación de una partida. Corre en su propio hilo. Coordina

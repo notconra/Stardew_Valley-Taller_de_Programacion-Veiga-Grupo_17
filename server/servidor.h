@@ -2,7 +2,7 @@
 #define SERVIDOR_H
 
 #include "configuracion/configuracion_servidor.h"
-#include "juego/recursos/recursos_de_juego.h"
+#include "juego/base/recursos/recursos_de_juego.h"
 #include "partidas/administrador_de_partidas.h"
 #include "red/aceptador.h"
 

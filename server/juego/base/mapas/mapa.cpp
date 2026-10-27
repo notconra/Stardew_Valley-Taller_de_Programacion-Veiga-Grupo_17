@@ -7,7 +7,7 @@
 #include <utility>
 #include <vector>
 
-#include "../../../common/lector_de_mapas_tmx/lector_de_mapas.h"
+#include "../../../../common/lector_de_mapas_tmx/lector_de_mapas.h"
 
 std::map<std::string, uint8_t> Mapa::propiedades_disponibles() const {
     std::map<std::string, uint8_t> propiedades;

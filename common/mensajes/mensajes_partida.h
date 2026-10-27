@@ -1,8 +1,9 @@
+#ifndef MENSAJES_PARTIDA_H
+#define MENSAJES_PARTIDA_H
+
 #include <cstdint>
 #include <string>
 #include <vector>
-#ifndef MENSAJES_PARTIDA_H
-#define MENSAJES_PARTIDA_H
 
 #include "./../juego/direccion.h"
 
@@ -49,15 +50,5 @@ struct PartidaAbandonada {};
 // La sesión se cerró sola por un error interno del juego, la partida sigue
 // existiendo y el jugador vuelve al lobby.
 struct PartidaCerradaPorError {};
-
-// Posición de un jugador dentro de la partida, calculada por el
-// servidor a partir de los Mover que fue recibiendo. id_jugador identifica a
-// quien pertenece (puede no ser el jugador local: asi es como el cliente se
-// entera de donde están los demas).
-struct PosicionJugador {
-    uint32_t id_jugador;
-    int32_t x;
-    int32_t y;
-};
 
 #endif
