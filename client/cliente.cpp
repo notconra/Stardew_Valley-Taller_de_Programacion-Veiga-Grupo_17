@@ -7,16 +7,15 @@
 #include "ui/pantallaprincipal.h"
 
 Cliente::Cliente(const std::string& host, const std::string& puerto, int argc, char** argv)
-    : conexion(host, puerto), argc_(argc), argv_(argv) {
+    : conexion(host, puerto), vista_sdl(conexion), argc_(argc), argv_(argv) {
 }
 
 void Cliente::ejecutar() {
     EstadoDelJuego estado = EstadoDelJuego::LOBBY;
-
     while (estado != EstadoDelJuego::SALIR) {
         if (estado == EstadoDelJuego::LOBBY) {
             estado = ejecutar_lobby();
-        } else if (estado == EstadoDelJuego::PARTIDA) {
+        } else {
             estado = ejecutar_partida();
         }
     }
@@ -27,8 +26,6 @@ EstadoDelJuego Cliente::ejecutar_lobby() {
 
     PantallaPrincipal w;
     w.show();
-    // PantallaPrincipal ventana_lobby(conexion, partida_actual);
-    // ventana_lobby.show();
 
     app.exec();
 
@@ -36,14 +33,6 @@ EstadoDelJuego Cliente::ejecutar_lobby() {
 }
 
 EstadoDelJuego Cliente::ejecutar_partida() {
-    // Bren acá va lo de SDL
-    std::cout << "SDL imaginario\n";
-
-    bool volver_al_lobby = false;
-
-    if (volver_al_lobby) {
-        return EstadoDelJuego::LOBBY;
-    } else {
-        return EstadoDelJuego::SALIR;
-    }
+    bool volver_al_lobby = vista_sdl.ejecutar(partida_actual);
+    return volver_al_lobby ? EstadoDelJuego::LOBBY : EstadoDelJuego::SALIR;
 }

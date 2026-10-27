@@ -8,9 +8,11 @@
 #include "error_de_partida.h"
 
 AdministradorDePartidas::AdministradorDePartidas(
-    uint8_t jugadores_maximos_por_partida, uint8_t ticks_por_segundo_de_partida)
+    uint8_t jugadores_maximos_por_partida, uint8_t ticks_por_segundo_de_partida,
+    const RecursosDeJuego& recursos_de_juego)
     : jugadores_maximos(jugadores_maximos_por_partida),
       ticks_por_segundo(ticks_por_segundo_de_partida),
+      recursos(recursos_de_juego),
       proximo_numero_de_partida(1) {
     if (jugadores_maximos_por_partida == 0) {
         throw std::invalid_argument("la cantidad máxima de jugadores tiene que ser mayor a 0");
@@ -31,7 +33,8 @@ Partida& AdministradorDePartidas::buscar_partida(const std::string& codigo_parti
 }
 
 SesionDePartida& AdministradorDePartidas::sesion_de(const std::string& codigo_partida) {
-    return sesiones.try_emplace(codigo_partida, codigo_partida, ticks_por_segundo).first->second;
+    return sesiones.try_emplace(codigo_partida, codigo_partida, ticks_por_segundo, recursos)
+        .first->second;
 }
 
 std::vector<InfoPartida> AdministradorDePartidas::listar(uint32_t id_cliente) const {
@@ -85,7 +88,7 @@ IngresoAPartida AdministradorDePartidas::unirse(
 
     const bool habia_sesion = (sesion_existente != sesiones.end());
     const std::string codigo = codigo_partida;
-    auto sesion_creada = sesiones.try_emplace(codigo, codigo, ticks_por_segundo).first;
+    auto sesion_creada = sesiones.try_emplace(codigo, codigo, ticks_por_segundo, recursos).first;
 
     try {
         const EntradaExitosaAPartida entrada = partida.conectar(id_cliente, nombre_jugador);
@@ -117,17 +120,15 @@ void AdministradorDePartidas::salir(const std::string& codigo_partida, uint32_t 
 }
 
 void AdministradorDePartidas::limpiar_sesion_si_vacia(const std::string& codigo_partida) {
-    // Meto sección crítica acá prque hay que destruir la sesión, y para eso el destructor espera a
-    // que termine su hilo asiq no tomo el mutex para eso. Lo tomo un toque para averiguar si ya no
-    // queda nadie conectado y el borrado en sí ocurre afuera de la CS
-    {
-        std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
 
-        const auto partida = partidas.find(codigo_partida);
-        if (partida != partidas.end() && partida->second.cantidad_de_conectados() != 0) {
-            return;
-        }
+    const auto partida = partidas.find(codigo_partida);
+    if (partida != partidas.end() && partida->second.cantidad_de_conectados() != 0) {
+        return;
     }
 
-    sesiones.erase(codigo_partida);
+    const auto sesion = sesiones.find(codigo_partida);
+    if (sesion != sesiones.end()) {
+        sesiones.erase(sesion);
+    }
 }
