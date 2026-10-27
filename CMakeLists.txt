@@ -8,10 +8,16 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_compile_definitions(_POSIX_C_SOURCE=200809L)
 add_compile_options(-Wall -Wextra -Wpedantic)
 
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTORCC ON)
+
 find_package(Threads REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SDL2 REQUIRED sdl2)
 pkg_check_modules(SDL2_IMAGE REQUIRED SDL2_image)
+
+find_package(Qt6 COMPONENTS Widgets REQUIRED)
 
 # Todos los .cpp de cada carpeta se compilan solos.
 file(GLOB_RECURSE COMMON CONFIGURE_DEPENDS common/*.cpp)
@@ -26,8 +32,9 @@ target_link_libraries(server PRIVATE Threads::Threads)
 add_executable(client ${CLIENT} ${COMMON})
 target_include_directories(client PRIVATE common client ${SDL2_INCLUDE_DIRS}
                                           ${SDL2_IMAGE_INCLUDE_DIRS})
-target_link_libraries(client PRIVATE Threads::Threads ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARIES})
+target_link_libraries(client PRIVATE Threads::Threads Qt6::Widgets ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARIES})
 target_link_directories(client PRIVATE ${SDL2_LIBRARY_DIRS} ${SDL2_IMAGE_LIBRARY_DIRS})
+
 
 # Tests (opcional: si GoogleTest no esta instalado, el resto compila igual)
 find_package(GTest)
@@ -43,8 +50,8 @@ if(GTest_FOUND)
   add_executable(tests ${TEST} ${COMMON} ${SERVER_CLASSES} ${CLIENT_CLASSES})
   target_include_directories(tests PRIVATE common server client ${SDL2_INCLUDE_DIRS}
                                            ${SDL2_IMAGE_INCLUDE_DIRS})
-  target_link_libraries(tests PRIVATE GTest::gtest_main Threads::Threads ${SDL2_LIBRARIES}
-                                      ${SDL2_IMAGE_LIBRARIES})
+  target_link_libraries(tests PRIVATE GTest::gtest_main Threads::Threads Qt6::Widgets
+                                      ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARIES})
   target_link_directories(tests PRIVATE ${SDL2_LIBRARY_DIRS} ${SDL2_IMAGE_LIBRARY_DIRS})
   add_test(NAME tests COMMAND tests)
 else()

@@ -3,7 +3,7 @@ PRECOMMIT = python3 -m pre_commit
 deps:   ## instala todo lo que necesita el proyecto (pide sudo)
 	sudo apt-get update
 	sudo apt-get install -y build-essential cmake pkg-config git libgtest-dev \
-		libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev qtbase5-dev \
+		libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev qt6-base-dev qt6-base-dev-tools \
 		python3-pip
 
 hooks:   ## instala pre-commit y activa los hooks
