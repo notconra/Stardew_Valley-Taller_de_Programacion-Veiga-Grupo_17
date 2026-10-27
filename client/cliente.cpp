@@ -1,11 +1,14 @@
 #include "cliente.h"
 
-#include "estado_del_juego.h"
+#include <QApplication>
+#include <iostream>
+#include <string>
+
+#include "ui/pantallaprincipal.h"
 
 Cliente::Cliente(const ConfiguracionCliente& configuracion_cliente)
     : configuracion(configuracion_cliente),
       conexion(configuracion.servidor().host, configuracion.servidor().puerto),
-      consola(conexion),
       vista_sdl(conexion, configuracion.vista()) {
 }
 
@@ -21,13 +24,23 @@ void Cliente::ejecutar() {
 }
 
 EstadoDelJuego Cliente::ejecutar_lobby() {
-    // cambiar por qt
-    bool entro_a_partida = consola.ejecutar_lobby(partida_actual);
-    return entro_a_partida ? EstadoDelJuego::PARTIDA : EstadoDelJuego::SALIR;
+    partida_actual = {};
+    QApplication app(argc_, argv_);
+
+    PantallaPrincipal ventana_lobby(conexion, partida_actual);
+    ventana_lobby.show();
+
+    app.exec();
+
+    // Esto es por si se cerró el lobby para dar paso a SDL
+    if (!partida_actual.codigo_partida.empty()) {
+        return EstadoDelJuego::PARTIDA;
+    }
+
+    return EstadoDelJuego::SALIR;
 }
 
 EstadoDelJuego Cliente::ejecutar_partida() {
-    // La ventana de SDL se abre acá, recién cuando se entra a una partida, y se cierra al salir.
     bool volver_al_lobby = vista_sdl.ejecutar(partida_actual);
     return volver_al_lobby ? EstadoDelJuego::LOBBY : EstadoDelJuego::SALIR;
 }
