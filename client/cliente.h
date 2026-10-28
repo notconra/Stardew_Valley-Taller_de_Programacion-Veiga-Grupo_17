@@ -14,6 +14,8 @@ private:
     ConexionConServidor conexion;
     VistaPartida vista_sdl;
 
+    uint32_t id_cliente;
+
     int argc_;
     char** argv_;
     // Partida en la que está el jugador. Solo es válida durante el EstadoDelJuego PARTIDA.

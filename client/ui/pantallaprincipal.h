@@ -15,7 +15,7 @@ class PantallaPrincipal : public QMainWindow {
 
 public:
     PantallaPrincipal(
-        ConexionConServidor& conexion, EntradaExitosaAPartida& partida_actual,
+        ConexionConServidor& conexion, EntradaExitosaAPartida& partida_actual, uint32_t id_cliente,
         QWidget* parent = nullptr);
     ~PantallaPrincipal();
 

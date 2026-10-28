@@ -9,17 +9,14 @@
 #include "ui_pantallaprincipal.h"
 
 PantallaPrincipal::PantallaPrincipal(
-    ConexionConServidor& conexion, EntradaExitosaAPartida& partida_actual, QWidget* parent)
+    ConexionConServidor& conexion, EntradaExitosaAPartida& partida_actual, uint32_t id_cliente,
+    QWidget* parent)
     : QMainWindow(parent),
       ui(new Ui::PantallaPrincipal),
       conexion(conexion),
-      partida_actual(partida_actual) {
+      partida_actual(partida_actual),
+      id_cliente(id_cliente) {
     ui->setupUi(this);
-    std::random_device rd;
-    id_cliente = rd();
-    if (id_cliente == 0) {
-        id_cliente = 1;
-    }
     configurar_ventana();
     connect(ui->btn_salir, &QPushButton::clicked, this, &PantallaPrincipal::close);
     connect(

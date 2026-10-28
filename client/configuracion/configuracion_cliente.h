@@ -20,10 +20,12 @@ public:
 
     const ConfiguracionConexion& servidor() const;
     const ConfiguracionVista& vista() const;
+    uint32_t id_cliente() const;
 
 private:
     ConfiguracionConexion configuracion_servidor;
     ConfiguracionVista configuracion_vista;
+    uint32_t id_del_cliente = 0;
 
     // Recorre las secciones del archivo_toml y completa los miembros de arriba.
     void cargar_toml(const toml::table& archivo_toml);

@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "../persistencia/identidad_cliente.h"
+
 ConfiguracionCliente::ConfiguracionCliente(const std::string& ruta) {
     toml::table archivo_toml;
     try {
@@ -17,6 +19,7 @@ ConfiguracionCliente::ConfiguracionCliente(const std::string& ruta) {
     }
 
     cargar_toml(archivo_toml);
+    id_del_cliente = IdentidadCliente::obtener_o_crear();
 }
 
 void ConfiguracionCliente::cargar_toml(const toml::table& archivo_toml) {
@@ -230,4 +233,8 @@ const ConfiguracionConexion& ConfiguracionCliente::servidor() const {
 
 const ConfiguracionVista& ConfiguracionCliente::vista() const {
     return configuracion_vista;
+}
+
+uint32_t ConfiguracionCliente::id_cliente() const {
+    return id_del_cliente;
 }
