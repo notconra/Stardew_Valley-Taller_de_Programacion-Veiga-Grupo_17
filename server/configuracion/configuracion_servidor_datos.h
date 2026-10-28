@@ -42,9 +42,17 @@ struct ConfiguracionAparicionJugador {
     int paso_de_busqueda = 8;
 };
 
+// Inventario del jugador. Solo se configura el tamaño de la barra para poder probar con más o menos
+// espacio, el stack de cada ítem y la capacidad de los cofres son reglas fijas del juego.
+struct ConfiguracionInventarioServidor {
+    // Por ahora el jugador solo tiene la barra de herramientas (sin mochila ni inventario extra).
+    uint8_t cantidad_ranuras_barra = 10;
+};
+
 struct ConfiguracionJuegoServidor {
     ConfiguracionMovimientoJugador movimiento;
     ConfiguracionAparicionJugador aparicion;
+    ConfiguracionInventarioServidor inventario;
 };
 
 struct ConfiguracionServidorDatos {
