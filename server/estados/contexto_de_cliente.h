@@ -2,7 +2,6 @@
 #define CONTEXTO_DE_CLIENTE_H
 
 #include <cstdint>
-#include <string>
 
 #include "../../common/mensajes/mensajes.h"
 #include "../../common/queue.h"
@@ -11,7 +10,6 @@
 // Info sobre quién es el cliente. Lo completa EstadoSinIdentificar al recibir Identificarse.
 struct IdentidadDeCliente {
     uint32_t id_cliente = 0;
-    std::string nombre_jugador;
 };
 
 // Todo lo que necesitan los estados de UNA conexión. No tiene lógica, solo agrupa datos.
@@ -24,12 +22,6 @@ struct ContextoDeCliente {
     ContextoDeCliente(
         AdministradorDePartidas& administrador_de_partidas, Queue<EventoServidor>& cola_de_eventos)
         : administrador(administrador_de_partidas), cola_eventos(cola_de_eventos) {
-    }
-
-    // aux para nombrar al cliente en el log
-    std::string obtener_nombre_jugador() const {
-        return identidad.nombre_jugador.empty() ? std::string("(sin identificar)")
-                                                : identidad.nombre_jugador;
     }
 
     ContextoDeCliente(const ContextoDeCliente&) = delete;

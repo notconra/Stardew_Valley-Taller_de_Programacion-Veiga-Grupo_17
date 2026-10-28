@@ -11,17 +11,18 @@
 
 struct Identificarse {
     uint32_t id_cliente = 0;
-    std::string nombre_jugador;
 };
 
 struct ListarPartidas {};
 
 struct CrearPartida {
     std::string nombre_partida;
+    std::string nombre_jugador;
 };
 
 struct UnirsePartida {
     std::string codigo_partida;
+    std::string nombre_jugador;
 };
 
 // Servidor a cliente

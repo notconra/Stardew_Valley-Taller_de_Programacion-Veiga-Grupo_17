@@ -25,10 +25,19 @@ EstadoDeConexion::ProximoEstado EstadoLobby::listar_partidas(const ListarPartida
 }
 
 EstadoDeConexion::ProximoEstado EstadoLobby::crear_partida(const CrearPartida& comando) {
+    if (comando.nombre_partida.empty()) {
+        responder_error(CodigoError::NO_PERMITIDO, "el nombre de la granja no puede estar vacío");
+        return nullptr;
+    }
+    if (comando.nombre_jugador.empty()) {
+        responder_error(CodigoError::NO_PERMITIDO, "el nombre del jugador no puede estar vacío");
+        return nullptr;
+    }
+
     try {
         const IngresoAPartida ingreso = contexto.administrador.crear(
             contexto.identidad.id_cliente,
-            contexto.identidad.nombre_jugador,
+            comando.nombre_jugador,
             comando.nombre_partida);
         entrar_a_partida(ingreso);
         return std::make_unique<EstadoEnPartida>(contexto, ingreso);
@@ -44,7 +53,7 @@ EstadoDeConexion::ProximoEstado EstadoLobby::unirse_a_partida(const UnirsePartid
     try {
         const IngresoAPartida ingreso = contexto.administrador.unirse(
             contexto.identidad.id_cliente,
-            contexto.identidad.nombre_jugador,
+            comando.nombre_jugador,
             comando.codigo_partida);
         entrar_a_partida(ingreso);
         return std::make_unique<EstadoEnPartida>(contexto, ingreso);

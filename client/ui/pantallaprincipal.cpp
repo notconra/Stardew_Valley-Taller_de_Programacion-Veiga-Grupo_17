@@ -5,6 +5,7 @@
 #include <QMessageBox>
 #include <iostream>
 #include <random>
+#include <string>
 #include <unordered_map>
 
 #include "ui_pantallaprincipal.h"
@@ -114,14 +115,14 @@ void PantallaPrincipal::confirmar_personaje() {
     }
 
     if (!identificado) {
-        conexion.enviar_comando(Identificarse{id_cliente, nombre.toStdString()});
+        conexion.enviar_comando(Identificarse{id_cliente});
         identificado = true;
     }
 
     if (es_modo_unirse) {
-        conexion.enviar_comando(UnirsePartida{codigo_partida_a_unirse});
+        conexion.enviar_comando(UnirsePartida{codigo_partida_a_unirse, nombre.toStdString()});
     } else {
-        conexion.enviar_comando(CrearPartida{granja.toStdString()});
+        conexion.enviar_comando(CrearPartida{granja.toStdString(), nombre.toStdString()});
     }
 
     try {

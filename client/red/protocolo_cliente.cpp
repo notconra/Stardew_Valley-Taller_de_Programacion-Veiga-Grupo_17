@@ -41,7 +41,6 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
 void ProtocoloCliente::enviar_comando_identificarse(const Identificarse& identificarse) {
     enviar_tipo(TipoMensaje::IDENTIFICARSE);
     enviar_u32(identificarse.id_cliente);
-    enviar_texto(identificarse.nombre_jugador);
 }
 
 void ProtocoloCliente::enviar_comando_listar_partidas(const ListarPartidas&) {
@@ -51,11 +50,13 @@ void ProtocoloCliente::enviar_comando_listar_partidas(const ListarPartidas&) {
 void ProtocoloCliente::enviar_comando_crear_partida(const CrearPartida& crear) {
     enviar_tipo(TipoMensaje::CREAR_PARTIDA);
     enviar_texto(crear.nombre_partida);
+    enviar_texto(crear.nombre_jugador);
 }
 
 void ProtocoloCliente::enviar_comando_unirse_partida(const UnirsePartida& unirse) {
     enviar_tipo(TipoMensaje::UNIRSE_PARTIDA);
     enviar_texto(unirse.codigo_partida);
+    enviar_texto(unirse.nombre_jugador);
 }
 
 void ProtocoloCliente::enviar_comando_activar_multijugador(const ActivarMultijugador&) {
