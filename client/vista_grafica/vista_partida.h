@@ -7,6 +7,8 @@
 #include "../configuracion/configuracion_cliente_datos.h"
 #include "../red/conexion_con_servidor.h"
 #include "camara.h"
+#include "entrada_del_usuario.h"
+#include "hud_inventario.h"
 #include "mapa_grafico.h"
 #include "personaje.h"
 #include "renderizador.h"
@@ -22,8 +24,13 @@ private:
     uint32_t id_jugador = 0;
     Moverse intencion_enviada{};
     EstadoJuego ultimo_estado_juego{};
+    InventarioJugador ultimo_inventario{};
+    CofreJugador ultimo_cofre{};
 
     void enviar_intencion_si_cambio(const Moverse& intencion);
+
+    // Traduce las teclas y los clics de este frame a comandos de inventario.
+    void procesar_inventario(const EntradaDelUsuario& entrada, HudInventario& hud);
 
     // Vacía los eventos que llegaron y se queda con el último EstadoJuego. Devuelve false si la
     // partida terminó (hay que volver al lobby).
@@ -35,7 +42,7 @@ private:
 
     void dibujar(
         Renderizador& renderizador, const MapaGrafico& mapa, const Personaje& personaje,
-        Camara& camara);
+        Camara& camara, const HudInventario& hud, int raton_x, int raton_y);
 
 public:
     VistaPartida(ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion);
