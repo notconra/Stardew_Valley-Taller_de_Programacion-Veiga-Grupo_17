@@ -26,7 +26,10 @@ void Cliente::ejecutar() {
 
 EstadoDelJuego Cliente::ejecutar_lobby() {
     partida_actual = {};
-    QApplication app(argc_, argv_);
+    int argc = 1;
+    char nombre_app[] = "StardewValley";
+    char* argv[] = {nombre_app, nullptr};
+    QApplication app(argc, argv);
 
     PantallaPrincipal ventana_lobby(conexion, partida_actual, id_cliente);
     ventana_lobby.show();
