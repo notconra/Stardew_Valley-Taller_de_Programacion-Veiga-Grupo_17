@@ -34,6 +34,7 @@ private:
     void configurar_ventana();
     void configurar_tabla_partidas();
     void configurar_formulario_granja(bool visible);
+    void llenar_lista_partidas(const ListaPartidas& lista);
     bool procesar_evento_ingreso(const EventoServidor& evento);
     QString describir_error(const ErrorServidor& error) const;
 
