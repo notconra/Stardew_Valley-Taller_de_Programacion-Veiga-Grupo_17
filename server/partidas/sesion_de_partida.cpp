@@ -69,7 +69,7 @@ void SesionDePartida::procesar_comandos() {
     try {
         ComandoDeJugador pedido;
         while (comandos.try_pop(pedido)) {
-            procesar_pedido(pedido);
+            mundo.atender(pedido.id_jugador, pedido.comando);
         }
     } catch (const ClosedQueue&) {
     }

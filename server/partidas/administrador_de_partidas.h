@@ -9,7 +9,7 @@
 
 #include "../../common/mensajes/mensajes.h"
 #include "../configuracion/configuracion_servidor_datos.h"
-#include "../juego/recursos/recursos_de_juego.h"
+#include "../juego/base/recursos/recursos_de_juego.h"
 #include "ingreso_a_partida.h"
 #include "partida.h"
 #include "sesion_de_partida.h"

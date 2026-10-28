@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "../../../server/configuracion/configuracion_servidor_datos.h"
+#include "../../../configuracion/configuracion_servidor_datos.h"
 #include "propiedad_de_casilla.h"
 
 // El terreno tal como lo necesita el servidor, qué propiedades tiene cada casilla.
