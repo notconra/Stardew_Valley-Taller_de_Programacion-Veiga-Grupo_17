@@ -14,7 +14,7 @@
 #define CANTIDAD_NIVELES 10
 class Mazmorra {
 public:
-    using IdJugador = uint16_t;
+    using IdJugador = uint32_t;
 
 private:
     std::array<std::optional<Nivel>, CANTIDAD_NIVELES> niveles;
