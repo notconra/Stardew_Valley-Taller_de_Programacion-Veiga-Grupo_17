@@ -143,7 +143,8 @@ void Jugadores::agregar_a(EstadoJuego& estado_juego) const {
             static_cast<int32_t>(std::floor(jugador.x)),
             static_cast<int32_t>(std::floor(jugador.y)),
             jugador.mirando,
-            jugador.camina});
+            jugador.camina,
+            0});
     }
 }
 

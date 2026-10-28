@@ -6,7 +6,7 @@
 #include <map>
 #include <mutex>
 #include <string>
-#include <utility>
+#include <vector>
 
 #include "../../common/mensajes/mensajes.h"
 #include "../../common/queue.h"
@@ -32,7 +32,6 @@ class SesionDePartida : public Thread {
 private:
     const std::string codigo_partida;
     const std::chrono::milliseconds periodo_de_tick;
-    uint64_t tick_actual = 0;
 
     Mundo mundo;
 
@@ -41,10 +40,14 @@ private:
     std::mutex mutex_clientes;
     std::map<uint32_t, ColaDeEventosDelJugador> clientes;
 
+    // Jugadores que entraron y todavía no recibieron su inventario inicial.
+    std::vector<uint32_t> inventarios_pendientes;
+
     void sincronizar_jugadores();
+    void enviar_inventarios_pendientes();
     void procesar_comandos();
-    void procesar_pedido(const ComandoDeJugador& pedido);
     void difundir(const EventoServidor& evento);
+    void difundir_a_jugador(uint32_t id_jugador, const EventoServidor& evento);
     void difundir_cierre();
 
 public:
