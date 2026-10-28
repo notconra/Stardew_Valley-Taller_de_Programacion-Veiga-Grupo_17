@@ -1,5 +1,6 @@
 #include "pantallaprincipal.h"
 
+#include <QHeaderView>
 #include <QInputDialog>
 #include <QMessageBox>
 #include <iostream>
@@ -40,6 +41,21 @@ PantallaPrincipal::PantallaPrincipal(
         &QPushButton::clicked,
         this,
         &PantallaPrincipal::confirmar_personaje);
+    connect(
+        ui->btn_volver_retomar,
+        &QPushButton::clicked,
+        this,
+        &PantallaPrincipal::volver_al_menu);
+    connect(
+        ui->btn_jugar_retomar,
+        &QPushButton::clicked,
+        this,
+        &PantallaPrincipal::confirmar_retomar_partida);
+    connect(
+        ui->tabla_partidas,
+        &QTableWidget::itemSelectionChanged,
+        this,
+        &PantallaPrincipal::actualizar_seleccion_partida);
 }
 
 PantallaPrincipal::~PantallaPrincipal() {
@@ -53,7 +69,14 @@ void PantallaPrincipal::configurar_ventana() {
     ui->centralwidget->setMaximumSize(16777215, 16777215);
     ui->stackedWidget->setMaximumSize(16777215, 16777215);
 
+    configurar_tabla_partidas();
     ui->stackedWidget->setCurrentIndex(0);
+}
+
+void PantallaPrincipal::configurar_tabla_partidas() {
+    ui->tabla_partidas->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    ui->tabla_partidas->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    ui->tabla_partidas->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
 }
 
 void PantallaPrincipal::volver_al_menu() {
@@ -173,7 +196,17 @@ void PantallaPrincipal::preparar_nueva_partida() {
 }
 
 void PantallaPrincipal::preparar_retomar_partida() {
-    std::cout << "Lista de Partidas Guardadas pruebita\n";
+    ui->btn_jugar_retomar->setEnabled(false);
+    ui->stackedWidget->setCurrentIndex(2);
+}
+
+void PantallaPrincipal::actualizar_seleccion_partida() {
+    bool hay_seleccion = !ui->tabla_partidas->selectedItems().isEmpty();
+    ui->btn_jugar_retomar->setEnabled(hay_seleccion);
+}
+
+void PantallaPrincipal::confirmar_retomar_partida() {
+    // Falta agregar la funcionalidad
 }
 
 void PantallaPrincipal::preparar_unirse_partida() {

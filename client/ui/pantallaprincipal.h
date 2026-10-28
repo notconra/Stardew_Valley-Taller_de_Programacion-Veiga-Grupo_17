@@ -26,10 +26,13 @@ private slots:
 
     void volver_al_menu();
     void confirmar_personaje();
+    void confirmar_retomar_partida();
+    void actualizar_seleccion_partida();
 
 private:
     Ui::PantallaPrincipal* ui;
     void configurar_ventana();
+    void configurar_tabla_partidas();
     void configurar_formulario_granja(bool visible);
     bool procesar_evento_ingreso(const EventoServidor& evento);
     QString describir_error(const ErrorServidor& error) const;
