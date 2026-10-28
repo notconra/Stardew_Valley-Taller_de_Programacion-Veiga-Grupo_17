@@ -41,3 +41,6 @@ ruta_tmx = "Assets/Maps/Farm.tmx"
 # x = 200
 # y = 150
 # paso_de_busqueda = 8
+
+[juego.inventario]
+# cantidad_ranuras_barra = 10
