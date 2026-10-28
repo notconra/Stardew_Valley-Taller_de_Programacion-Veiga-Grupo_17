@@ -1,0 +1,58 @@
+# Configuración del cliente.
+#
+# Las rutas de los recursos son relativas al directorio desde el que se ejecuta el cliente
+# así que al momento de ejecutar el cliente sería algo como:
+#
+#   ./build/client config/cliente.toml
+
+[servidor]
+host = "127.0.0.1"
+puerto = "8080"
+
+[ventana]
+titulo = "Stardew Valley"
+ancho = 720
+alto = 520
+
+[sdl]
+acelerado = true
+vsync = true
+
+[graficos]
+tamano_de_tile = 16
+escala_de_tiles = 2
+color_de_fondo = [50, 150, 50, 255]
+
+[mapa]
+ruta = "Assets/Maps/Farm.tmx"
+capas_bajo_los_jugadores = ["Back", "Buildings"]
+capas_sobre_los_jugadores = ["Front", "AlwaysFront", "AlwaysFront2"]
+
+[[mapa.tilesets]]
+ruta = "Assets/Maps/spring_outdoorTileSheet_extra.png"
+firstgid = 1
+columnas = 8
+
+[[mapa.tilesets]]
+ruta = "Assets/Maps/spring_outdoorsTileSheet.png"
+firstgid = 129
+columnas = 25
+
+[[mapa.tilesets]]
+ruta = "Assets/Maps/spring_outdoorsTileSheet2.png"
+firstgid = 2104
+columnas = 16
+
+[[mapa.tilesets]]
+ruta = "Assets/Buildings/houses.png"
+firstgid = 3224
+columnas = 17
+
+[jugador]
+ruta_sprite = "Assets/Characters/Alex_Beach.png"
+ancho_sprite = 16
+alto_sprite = 32
+cuadros_caminando = 4
+ms_por_cuadro_caminando = 150
+cuadros_quieto = 2
+ms_por_cuadro_quieto = 450

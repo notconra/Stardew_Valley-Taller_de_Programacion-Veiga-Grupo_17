@@ -2,18 +2,20 @@
 
 #include <algorithm>
 
-#include "config.h"
-
-Camara::Camara(int ancho_de_ventana, int alto_de_ventana, int ancho_del_mapa, int alto_del_mapa)
+Camara::Camara(
+    int ancho_de_ventana, int alto_de_ventana, int ancho_del_mapa, int alto_del_mapa,
+    int escala_de_tiles)
     : ancho_de_ventana(ancho_de_ventana),
       alto_de_ventana(alto_de_ventana),
       ancho_del_mapa(ancho_del_mapa),
-      alto_del_mapa(alto_del_mapa) {
+      alto_del_mapa(alto_del_mapa),
+      escala_de_tiles(escala_de_tiles) {
 }
 
 int Camara::calcular_esquina(
-    int posicion_en_mapa, int tamanio_del_sprite, int tamanio_de_ventana, int tamanio_del_mapa) {
-    const int centro_del_sprite = (posicion_en_mapa + tamanio_del_sprite / 2) * TILE_SCALE;
+    int posicion_en_mapa, int tamanio_del_sprite, int tamanio_de_ventana,
+    int tamanio_del_mapa) const {
+    const int centro_del_sprite = (posicion_en_mapa + tamanio_del_sprite / 2) * escala_de_tiles;
     const int maximo = std::max(0, tamanio_del_mapa - tamanio_de_ventana);
     return std::clamp(centro_del_sprite - tamanio_de_ventana / 2, 0, maximo);
 }

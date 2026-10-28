@@ -8,17 +8,19 @@
 #include "error_de_partida.h"
 
 AdministradorDePartidas::AdministradorDePartidas(
-    uint8_t jugadores_maximos_por_partida, uint8_t ticks_por_segundo_de_partida,
+    const ConfiguracionPartidaServidor& configuracion_partida,
     const RecursosDeJuego& recursos_de_juego)
-    : jugadores_maximos(jugadores_maximos_por_partida),
-      ticks_por_segundo(ticks_por_segundo_de_partida),
+    : configuracion(configuracion_partida),
       recursos(recursos_de_juego),
       proximo_numero_de_partida(1) {
-    if (jugadores_maximos_por_partida == 0) {
+    if (configuracion.jugadores_maximos_por_partida <= 0) {
         throw std::invalid_argument("la cantidad máxima de jugadores tiene que ser mayor a 0");
     }
-    if (ticks_por_segundo_de_partida == 0) {
+    if (configuracion.ticks_por_segundo <= 0) {
         throw std::invalid_argument("los ticks por segundo tienen que ser mayores a 0");
+    }
+    if (configuracion.capacidad_de_comandos <= 0) {
+        throw std::invalid_argument("la capacidad de comandos tiene que ser mayor a 0");
     }
 }
 
@@ -33,7 +35,7 @@ Partida& AdministradorDePartidas::buscar_partida(const std::string& codigo_parti
 }
 
 SesionDePartida& AdministradorDePartidas::sesion_de(const std::string& codigo_partida) {
-    return sesiones.try_emplace(codigo_partida, codigo_partida, ticks_por_segundo, recursos)
+    return sesiones.try_emplace(codigo_partida, codigo_partida, configuracion, recursos)
         .first->second;
 }
 
@@ -64,7 +66,12 @@ IngresoAPartida AdministradorDePartidas::crear(
     const std::string codigo = "P" + std::to_string(proximo_numero_de_partida);
     auto insertada = partidas.emplace(
         codigo,
-        Partida(codigo, nombre_partida, jugadores_maximos, id_cliente, nombre_jugador));
+        Partida(
+            codigo,
+            nombre_partida,
+            static_cast<uint8_t>(configuracion.jugadores_maximos_por_partida),
+            id_cliente,
+            nombre_jugador));
     ++proximo_numero_de_partida;
 
     Partida& partida = insertada.first->second;
@@ -88,7 +95,7 @@ IngresoAPartida AdministradorDePartidas::unirse(
 
     const bool habia_sesion = (sesion_existente != sesiones.end());
     const std::string codigo = codigo_partida;
-    auto sesion_creada = sesiones.try_emplace(codigo, codigo, ticks_por_segundo, recursos).first;
+    auto sesion_creada = sesiones.try_emplace(codigo, codigo, configuracion, recursos).first;
 
     try {
         const EntradaExitosaAPartida entrada = partida.conectar(id_cliente, nombre_jugador);

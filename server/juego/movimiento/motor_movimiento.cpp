@@ -6,10 +6,6 @@
 
 #include "../geometria/rectangulo.h"
 
-namespace {  // config ?
-constexpr double FACTOR_DIAGONAL = 1.0 / std::numbers::sqrt2;
-}
-
 MotorMovimiento::MotorMovimiento(
     const Colisiones& colisiones_juego, const ReglasMovimiento& reglas_movimiento)
     : colisiones(colisiones_juego), reglas(reglas_movimiento) {
@@ -40,5 +36,5 @@ void MotorMovimiento::avanzar(EstadoJugadorEnMundo& jugador, double delta, bool 
 }
 
 void MotorMovimiento::actualizar(EstadoJugadorEnMundo& jugador) const {
-    (void)0;
+    (void)jugador;
 }

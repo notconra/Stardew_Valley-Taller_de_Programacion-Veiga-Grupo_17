@@ -28,6 +28,10 @@ TamanioMapa LectorDeMapasTMX::leer_tamanio() const {
     if (nodo_mapa->QueryIntAttribute("width", &tamanio.ancho_en_casillas) !=
             tinyxml2::XML_SUCCESS ||
         nodo_mapa->QueryIntAttribute("height", &tamanio.alto_en_casillas) !=
+            tinyxml2::XML_SUCCESS ||
+        nodo_mapa->QueryIntAttribute("tilewidth", &tamanio.ancho_de_casilla) !=
+            tinyxml2::XML_SUCCESS ||
+        nodo_mapa->QueryIntAttribute("tileheight", &tamanio.alto_de_casilla) !=
             tinyxml2::XML_SUCCESS) {
         return {};
     }

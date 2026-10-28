@@ -2,6 +2,9 @@
 # Instalaciob: make hooks
 default_install_hook_types: [pre-commit, commit-msg]
 
+# Librerías de terceros vendorizadas: no se formatean ni se lintean.
+exclude: ^common/externo/tomlplusplus/.*
+
 repos:
   # Limpieza basica
   - repo: https://github.com/pre-commit/pre-commit-hooks

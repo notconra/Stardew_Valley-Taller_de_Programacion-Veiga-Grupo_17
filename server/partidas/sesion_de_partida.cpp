@@ -11,13 +11,12 @@
 #include "./../../common/mensajes/manejadores_por_tipo.h"
 
 SesionDePartida::SesionDePartida(
-    const std::string& codigo_de_partida, uint8_t ticks_por_segundo_de_partida,
+    const std::string& codigo_de_partida, const ConfiguracionPartidaServidor& configuracion_partida,
     const RecursosDeJuego& recursos)
     : codigo_partida(codigo_de_partida),
-      ticks_por_segundo(ticks_por_segundo_de_partida),
-      periodo_de_tick(1000 / ticks_por_segundo_de_partida),
-      mundo(recursos, ticks_por_segundo_de_partida),
-      comandos(CAPACIDAD_DE_COMANDOS) {
+      periodo_de_tick(1000 / configuracion_partida.ticks_por_segundo),
+      mundo(recursos, static_cast<uint8_t>(configuracion_partida.ticks_por_segundo)),
+      comandos(static_cast<unsigned int>(configuracion_partida.capacidad_de_comandos)) {
     try {
         start();
     } catch (...) {

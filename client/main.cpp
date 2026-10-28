@@ -1,18 +1,21 @@
-#include <cstdlib>
 #include <exception>
 #include <iostream>
 
 #include "cliente.h"
+#include "configuracion/configuracion_cliente.h"
 
-#define CANTIDAD_ARGUMENTOS 3
-#define INDICE_HOST 1    // esto vuela cuando haya config
-#define INDICE_PUERTO 2  // idem
+#define CANTIDAD_ARGUMENTOS 2
+#define INDICE_CONFIGURACION 1
 
 int main(int argc, char* argv[]) {
+    if (argc != CANTIDAD_ARGUMENTOS) {
+        std::cerr << "Comando de ejecución: " << argv[0] << " <ruta_al_archivo.toml>\n";
+        return -1;
+    }
+
     try {
-        // cuando exista ConfiguracionCliente: Cliente cliente(config) y q eso
-        // haga todo y chau
-        Cliente cliente(argv[INDICE_HOST], argv[INDICE_PUERTO], argc, argv);
+        const ConfiguracionCliente configuracion(argv[INDICE_CONFIGURACION]);
+        Cliente cliente(configuracion);
         cliente.ejecutar();
     } catch (const std::exception& error) {
         std::cerr << "Error: " << error.what() << "\n";

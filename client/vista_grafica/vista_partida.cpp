@@ -7,17 +7,9 @@
 #include <string>
 #include <variant>
 
-#include "config.h"
 #include "entrada_del_usuario.h"
 #include "inicio_de_sdl.h"
 #include "ventana.h"
-
-// todo esto habrá q pasarlo a q sean atributos configurables
-namespace {
-const char TITULO_DE_VENTANA[] = "Stardew Valley";
-constexpr int ANCHO_DE_VENTANA = 720;
-constexpr int ALTO_DE_VENTANA = 520;
-const char RUTA_DEL_SPRITE[] = "Assets/Characters/Alex_Beach.png";
 
 // esto vuela
 const char AYUDA_DE_TECLAS[] =
@@ -25,31 +17,36 @@ const char AYUDA_DE_TECLAS[] =
     "  flechas / WASD   mover al personaje\n"
     "  M                permitir que otros jugadores se unan (el código sale acá)\n"
     "  ESC              salir de la partida y volver al lobby\n";
-}  // namespace
 
-VistaPartida::VistaPartida(ConexionConServidor& conexion_conectada)
-    : conexion(conexion_conectada),
-      camara(
-          ANCHO_DE_VENTANA, ALTO_DE_VENTANA, MAPA_ANCHO * TILE_PANTALLA,
-          MAPA_ALTO * TILE_PANTALLA) {
+VistaPartida::VistaPartida(
+    ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion_vista)
+    : conexion(conexion_conectada), configuracion(configuracion_vista) {
 }
 
 bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     id_jugador = partida.id_jugador;
     intencion_enviada = Moverse{};
     ultimo_estado_juego = EstadoJuego{};
-    camara.reiniciar();
 
     std::cout << "\n=== EN PARTIDA " << partida.codigo_partida << " (jugador " << partida.id_jugador
               << ") ===\n"
               << AYUDA_DE_TECLAS << std::flush;
 
     InicioDeSDL inicio_de_sdl;
-    Ventana ventana(TITULO_DE_VENTANA, ANCHO_DE_VENTANA, ALTO_DE_VENTANA);
-    Renderizador renderizador(ventana);
-    MapaGrafico mapa(renderizador.ptr());
-    Personaje personaje(RUTA_DEL_SPRITE, renderizador.ptr());
+    Ventana ventana(
+        configuracion.ventana.titulo.c_str(),
+        configuracion.ventana.ancho,
+        configuracion.ventana.alto);
+    Renderizador renderizador(ventana, configuracion.sdl);
+    MapaGrafico mapa(renderizador.ptr(), configuracion.mapa, configuracion.graficos);
+    Personaje personaje(configuracion.jugador, configuracion.graficos, renderizador.ptr());
     EntradaDelUsuario entrada;
+    Camara camara(
+        configuracion.ventana.ancho,
+        configuracion.ventana.alto,
+        ancho_del_mapa_en_pantalla(mapa),
+        alto_del_mapa_en_pantalla(mapa),
+        configuracion.graficos.escala_de_tiles);
 
     // cada vuelta es un frame
     while (true) {
@@ -73,8 +70,18 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             return true;
         }
 
-        dibujar(renderizador, mapa, personaje);
+        dibujar(renderizador, mapa, personaje, camara);
     }
+}
+
+int VistaPartida::ancho_del_mapa_en_pantalla(const MapaGrafico& mapa) const {
+    return mapa.ancho_en_casillas() * configuracion.graficos.tamano_de_tile *
+           configuracion.graficos.escala_de_tiles;
+}
+
+int VistaPartida::alto_del_mapa_en_pantalla(const MapaGrafico& mapa) const {
+    return mapa.alto_en_casillas() * configuracion.graficos.tamano_de_tile *
+           configuracion.graficos.escala_de_tiles;
 }
 
 // Se manda el ESTADO ("ahora voy hacia X" / "me quedo quieto"), no un mensaje por frame, asi el
@@ -110,7 +117,8 @@ bool VistaPartida::recibir_eventos() {
 }
 
 void VistaPartida::dibujar(
-    Renderizador& renderizador, const MapaGrafico& mapa, const Personaje& personaje) {
+    Renderizador& renderizador, const MapaGrafico& mapa, const Personaje& personaje,
+    Camara& camara) {
     SDL_Renderer* renderer = renderizador.ptr();
 
     const auto propio = std::find_if(
@@ -118,11 +126,15 @@ void VistaPartida::dibujar(
         ultimo_estado_juego.jugadores.end(),
         [this](const EstadoJugador& jugador) { return jugador.id_jugador == id_jugador; });
     if (propio != ultimo_estado_juego.jugadores.end()) {
-        camara.centrar_en(propio->x, propio->y, Personaje::ANCHO, Personaje::ALTO);
+        camara.centrar_en(
+            propio->x,
+            propio->y,
+            personaje.ancho_del_sprite(),
+            personaje.alto_del_sprite());
     }
 
-    // configurable (?)
-    SDL_SetRenderDrawColor(renderer, 50, 150, 50, 255);
+    const ColorDeFondo& color = configuracion.graficos.color_de_fondo;
+    SDL_SetRenderDrawColor(renderer, color.rojo, color.verde, color.azul, color.alfa);
     SDL_RenderClear(renderer);
 
     mapa.dibujar_bajo_los_jugadores(renderer, camara.x(), camara.y());

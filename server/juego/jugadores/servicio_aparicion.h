@@ -1,6 +1,7 @@
 #ifndef SERVICIO_APARICION_H
 #define SERVICIO_APARICION_H
 
+#include "../../../server/configuracion/configuracion_servidor_datos.h"
 #include "../colisiones/colisiones.h"
 #include "../mapas/mapa.h"
 #include "posicion_aparicion.h"
@@ -9,7 +10,9 @@
 // es una regla de spawn, no del movimiento.
 class ServicioAparicion {
 public:
-    static PosicionAparicion buscar(const Mapa& mapa, const Colisiones& colisiones);
+    PosicionAparicion buscar(
+        const Mapa& mapa, const Colisiones& colisiones,
+        const ConfiguracionJuegoServidor& configuracion) const;
 };
 
 #endif

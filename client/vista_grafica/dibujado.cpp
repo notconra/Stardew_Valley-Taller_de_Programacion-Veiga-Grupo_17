@@ -1,15 +1,22 @@
 #include "dibujado.h"
 
+#include <cstddef>
 #include <vector>
 
-#include "config.h"
-
-Dibujado::Dibujado(const std::vector<Tileset>& tilesets) : tilesets(tilesets) {
+void Dibujado::configurar(
+    const std::vector<Tileset>& tilesets_configurados, const ConfiguracionGraficos& graficos) {
+    tilesets = &tilesets_configurados;
+    tamano_de_tile = graficos.tamano_de_tile;
+    escala_de_tiles = graficos.escala_de_tiles;
 }
 
 const Tileset* Dibujado::buscar_tileset(int id_de_tile) const {
+    if (tilesets == nullptr) {
+        return nullptr;
+    }
+
     const Tileset* elegido = nullptr;
-    for (const Tileset& tileset : tilesets) {
+    for (const Tileset& tileset : *tilesets) {
         if (id_de_tile >= tileset.firstgid &&
             (elegido == nullptr || tileset.firstgid > elegido->firstgid)) {
             elegido = &tileset;
@@ -19,14 +26,18 @@ const Tileset* Dibujado::buscar_tileset(int id_de_tile) const {
 }
 
 void Dibujado::dibujar_capa(
-    SDL_Renderer* renderer, const std::vector<int>& capa, int cam_x, int cam_y) const {
-    if (capa.empty()) {
+    SDL_Renderer* renderer, const std::vector<int>& capa, int ancho_en_casillas, int cam_x,
+    int cam_y) const {
+    if (tilesets == nullptr || capa.empty() || ancho_en_casillas <= 0) {
         return;
     }
 
-    for (int y = 0; y < MAPA_ALTO; ++y) {
-        for (int x = 0; x < MAPA_ANCHO; ++x) {
-            const int id_de_tile = capa[y * MAPA_ANCHO + x];
+    const int alto_en_casillas = static_cast<int>(capa.size()) / ancho_en_casillas;
+    const int tamano_en_pantalla = tamano_de_tile * escala_de_tiles;
+
+    for (int y = 0; y < alto_en_casillas; ++y) {
+        for (int x = 0; x < ancho_en_casillas; ++x) {
+            const int id_de_tile = capa[static_cast<std::size_t>(y) * ancho_en_casillas + x];
             if (id_de_tile <= 0) {
                 continue;
             }
@@ -39,16 +50,16 @@ void Dibujado::dibujar_capa(
             const int indice = id_de_tile - tileset->firstgid;
 
             SDL_Rect origen;
-            origen.x = (indice % tileset->columnas) * TILE_SIZE;
-            origen.y = (indice / tileset->columnas) * TILE_SIZE;
-            origen.w = TILE_SIZE;
-            origen.h = TILE_SIZE;
+            origen.x = (indice % tileset->columnas) * tamano_de_tile;
+            origen.y = (indice / tileset->columnas) * tamano_de_tile;
+            origen.w = tamano_de_tile;
+            origen.h = tamano_de_tile;
 
             SDL_Rect destino;
-            destino.x = (x * TILE_PANTALLA) - cam_x;
-            destino.y = (y * TILE_PANTALLA) - cam_y;
-            destino.w = TILE_PANTALLA;
-            destino.h = TILE_PANTALLA;
+            destino.x = (x * tamano_en_pantalla) - cam_x;
+            destino.y = (y * tamano_en_pantalla) - cam_y;
+            destino.w = tamano_en_pantalla;
+            destino.h = tamano_en_pantalla;
 
             SDL_RenderCopy(renderer, tileset->textura, &origen, &destino);
         }

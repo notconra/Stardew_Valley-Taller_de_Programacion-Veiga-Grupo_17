@@ -1,0 +1,43 @@
+# Configuración del servidor.
+#
+# Las rutas de los recursos son relativas al directorio desde el que se ejecuta el servidor
+# así que al momento de ejecutar el servidor sería algo como:
+#
+#   ./build/server config/servidor.toml
+
+[red]
+puerto = "8080"
+
+[partida]
+jugadores_maximos_por_partida = 4
+ticks_por_segundo = 40
+#capacidad_de_comandos = 1024
+
+[mapa]
+ruta_tmx = "Assets/Maps/Farm.tmx"
+#capa_colisiones = "Colisiones"
+#capa_respaldo = "Buildings"
+
+#[[mapa.capas_opcionales]]
+#nombre = "Cultivable"
+#propiedad = "CULTIVABLE"
+#
+#[[mapa.capas_opcionales]]
+#nombre = "Decorable"
+#propiedad = "DECORABLE"
+#
+#[[mapa.capas_opcionales]]
+#nombre = "Hierba"
+#propiedad = "ADMITE_HIERBA"
+
+[juego.movimiento]
+# velocidad = 120.0
+# hitbox_x = 2
+# hitbox_y = 24
+# hitbox_ancho = 12
+# hitbox_alto = 8
+
+[juego.aparicion]
+# x = 200
+# y = 150
+# paso_de_busqueda = 8

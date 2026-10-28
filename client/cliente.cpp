@@ -6,8 +6,10 @@
 
 #include "ui/pantallaprincipal.h"
 
-Cliente::Cliente(const std::string& host, const std::string& puerto, int argc, char** argv)
-    : conexion(host, puerto), vista_sdl(conexion), argc_(argc), argv_(argv) {
+Cliente::Cliente(const ConfiguracionCliente& configuracion_cliente)
+    : configuracion(configuracion_cliente),
+      conexion(configuracion.servidor().host, configuracion.servidor().puerto),
+      vista_sdl(conexion, configuracion.vista()) {
 }
 
 void Cliente::ejecutar() {
