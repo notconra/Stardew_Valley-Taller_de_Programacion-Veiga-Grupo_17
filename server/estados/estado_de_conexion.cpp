@@ -41,6 +41,10 @@ EstadoDeConexion::ProximoEstado EstadoDeConexion::unirse_a_partida(const UnirseP
     return rechazar();
 }
 
+EstadoDeConexion::ProximoEstado EstadoDeConexion::retomar_partida(const RetomarPartida&) {
+    return rechazar();
+}
+
 EstadoDeConexion::ProximoEstado EstadoDeConexion::activar_multijugador(const ActivarMultijugador&) {
     return rechazar();
 }

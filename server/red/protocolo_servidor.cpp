@@ -12,6 +12,7 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::LISTAR_PARTIDAS, [this] { return recibir_comando_listar_partidas(); }},
           {TipoMensaje::CREAR_PARTIDA, [this] { return recibir_comando_crear_partida(); }},
           {TipoMensaje::UNIRSE_PARTIDA, [this] { return recibir_comando_unirse_partida(); }},
+          {TipoMensaje::RETOMAR_PARTIDA, [this] { return recibir_comando_retomar_partida(); }},
           {TipoMensaje::ACTIVAR_MULTIJUGADOR,
            [this] { return recibir_comando_activar_multijugador(); }},
           {TipoMensaje::SALIR_DE_PARTIDA, [this] { return recibir_comando_salir_de_partida(); }},
@@ -59,6 +60,12 @@ UnirsePartida ProtocoloServidor::recibir_comando_unirse_partida() {
     std::string nombre_jugador = recibir_texto();
 
     return UnirsePartida{codigo_partida, nombre_jugador};
+}
+
+RetomarPartida ProtocoloServidor::recibir_comando_retomar_partida() {
+    std::string codigo_partida = recibir_texto();
+
+    return RetomarPartida{codigo_partida};
 }
 
 ActivarMultijugador ProtocoloServidor::recibir_comando_activar_multijugador() {

@@ -57,6 +57,10 @@ public:
     // partida.
     void hacer_multijugador(uint32_t id_cliente);
 
+    // Vuelve a conectar a un jugador existente de la partida.
+    // Lanza ErrorDePartida si el cliente no es jugador o si ya está conectado.
+    EntradaExitosaAPartida reconectar(uint32_t id_cliente);
+
     // Si el cliente ya es jugador de la partida vuelve a su lugar, si no, intenta ocupar uno nuevo.
     // Lanza ErrorDePartida si ya está conectado, si la partida no es multijugador o si no quedan
     // lugares.

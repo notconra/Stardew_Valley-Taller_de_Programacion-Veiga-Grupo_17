@@ -25,6 +25,10 @@ struct UnirsePartida {
     std::string nombre_jugador;
 };
 
+struct RetomarPartida {
+    std::string codigo_partida;
+};
+
 // Servidor a cliente
 
 struct InfoPartida {

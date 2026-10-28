@@ -31,6 +31,7 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const ListarPartidas& m) { enviar_comando_listar_partidas(m); },
             [this](const CrearPartida& m) { enviar_comando_crear_partida(m); },
             [this](const UnirsePartida& m) { enviar_comando_unirse_partida(m); },
+            [this](const RetomarPartida& m) { enviar_comando_retomar_partida(m); },
             [this](const ActivarMultijugador& m) { enviar_comando_activar_multijugador(m); },
             [this](const SalirDePartida& m) { enviar_comando_salir_de_partida(m); },
             [this](const Moverse& m) { enviar_comando_moverse(m); },
@@ -57,6 +58,11 @@ void ProtocoloCliente::enviar_comando_unirse_partida(const UnirsePartida& unirse
     enviar_tipo(TipoMensaje::UNIRSE_PARTIDA);
     enviar_texto(unirse.codigo_partida);
     enviar_texto(unirse.nombre_jugador);
+}
+
+void ProtocoloCliente::enviar_comando_retomar_partida(const RetomarPartida& retomar) {
+    enviar_tipo(TipoMensaje::RETOMAR_PARTIDA);
+    enviar_texto(retomar.codigo_partida);
 }
 
 void ProtocoloCliente::enviar_comando_activar_multijugador(const ActivarMultijugador&) {

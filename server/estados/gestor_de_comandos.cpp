@@ -18,6 +18,7 @@ void GestorDeComandos::manejar_comando(const ComandoCliente& comando) {
             [this](const ListarPartidas& c) { return estado->listar_partidas(c); },
             [this](const CrearPartida& c) { return estado->crear_partida(c); },
             [this](const UnirsePartida& c) { return estado->unirse_a_partida(c); },
+            [this](const RetomarPartida& c) { return estado->retomar_partida(c); },
             [this](const SalirDePartida& c) { return estado->salir_de_partida(c); },
             [this](const ActivarMultijugador& c) { return estado->activar_multijugador(c); },
             [this, &comando](const auto&) { return estado->comando_de_juego(comando); },
