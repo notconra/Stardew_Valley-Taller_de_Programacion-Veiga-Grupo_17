@@ -14,6 +14,8 @@ Cliente::Cliente(const ConfiguracionCliente& configuracion_cliente)
 }
 
 void Cliente::ejecutar() {
+    conexion.enviar_comando(Identificarse{id_cliente});
+
     EstadoDelJuego estado = EstadoDelJuego::LOBBY;
     while (estado != EstadoDelJuego::SALIR) {
         if (estado == EstadoDelJuego::LOBBY) {

@@ -23,6 +23,7 @@ public:
     explicit EstadoLobby(ContextoDeCliente& contexto_de_cliente);
 
     std::string nombre() const override;
+    ProximoEstado identificarse(const Identificarse& comando) override;
     ProximoEstado listar_partidas(const ListarPartidas& comando) override;
     ProximoEstado crear_partida(const CrearPartida& comando) override;
     ProximoEstado unirse_a_partida(const UnirsePartida& comando) override;

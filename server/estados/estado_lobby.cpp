@@ -15,6 +15,14 @@ std::string EstadoLobby::nombre() const {
     return "en el lobby";
 }
 
+EstadoDeConexion::ProximoEstado EstadoLobby::identificarse(const Identificarse& comando) {
+    if (comando.id_cliente == contexto.identidad.id_cliente) {
+        return nullptr;
+    }
+    responder_error(CodigoError::NO_PERMITIDO, "el cliente ya está identificado con otro id");
+    return nullptr;
+}
+
 EstadoDeConexion::ProximoEstado EstadoLobby::listar_partidas(const ListarPartidas&) {
     const std::vector<InfoPartida> info_partidas =
         contexto.administrador.listar(contexto.identidad.id_cliente);

@@ -120,11 +120,6 @@ void PantallaPrincipal::confirmar_personaje() {
                   << ")\n";
     }
 
-    if (!identificado) {
-        conexion.enviar_comando(Identificarse{id_cliente});
-        identificado = true;
-    }
-
     if (es_modo_unirse) {
         conexion.enviar_comando(UnirsePartida{codigo_partida_a_unirse, nombre.toStdString()});
     } else {
@@ -204,11 +199,6 @@ void PantallaPrincipal::preparar_nueva_partida() {
 }
 
 void PantallaPrincipal::preparar_retomar_partida() {
-    if (!identificado) {
-        conexion.enviar_comando(Identificarse{id_cliente});
-        identificado = true;
-    }
-
     conexion.enviar_comando(ListarPartidas{});
     ui->tabla_partidas->setRowCount(0);
     ui->btn_jugar_retomar->setEnabled(false);

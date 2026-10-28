@@ -42,7 +42,6 @@ private:
     EntradaExitosaAPartida& partida_actual;
     bool es_modo_unirse = false;
     std::string codigo_partida_a_unirse;
-    bool identificado = false;
     uint32_t id_cliente = 0;
 };
 
