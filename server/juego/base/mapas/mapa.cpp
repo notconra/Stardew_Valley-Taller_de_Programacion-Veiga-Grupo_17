@@ -65,6 +65,14 @@ Mapa::Mapa(const ConfiguracionMapaServidor& configuracion) {
             marcar(capa, encontrado->second, capa_opcional.nombre);
         }
     }
+    for (const TransicionTMX& transicion_tmx : lector.cargar_transiciones(
+             configuracion.capa_transiciones)) {
+        const Rectangulo zona{transicion_tmx.x, transicion_tmx.y, transicion_tmx.ancho,
+                               transicion_tmx.alto};
+        const Transicion transicion{transicion_tmx.mapa_destino, transicion_tmx.columna_destino,
+                                     transicion_tmx.fila_destino};
+        transiciones.emplace_back(zona, transicion);
+    }
 }
 
 void Mapa::marcar(const std::vector<int>& capa, uint8_t propiedad, const std::string& nombre_capa) {
@@ -112,4 +120,20 @@ bool Mapa::tiene(int columna, int fila, uint8_t propiedad) const {
     }
     const std::size_t indice = static_cast<std::size_t>(fila) * ancho_en_casillas + columna;
     return (propiedades[indice] & propiedad) != 0;
+}
+
+namespace {
+bool se_superponen(const Rectangulo& a, const Rectangulo& b) {
+    return a.x < b.x + b.ancho && a.x + a.ancho > b.x && a.y < b.y + b.alto &&
+           a.y + a.alto > b.y;
+}
+}
+
+const Transicion* Mapa::transicion_en(const Rectangulo& zona) const {
+    for (const std::pair<Rectangulo, Transicion>& par : transiciones) {
+        if (se_superponen(zona, par.first)) {
+            return &par.second;
+        }
+    }
+    return nullptr;
 }
