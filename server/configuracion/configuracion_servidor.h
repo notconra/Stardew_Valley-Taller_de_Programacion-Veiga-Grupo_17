@@ -16,7 +16,8 @@ public:
 
     const ConfiguracionRedServidor& red() const;
     const ConfiguracionPartidaServidor& partida() const;
-    const ConfiguracionMapaServidor& mapa() const;
+    const std::vector<ConfiguracionMapaServidor>& mapas() const;
+    const std::string& mapa_inicial() const;
     const ConfiguracionJuegoServidor& juego() const;
 
 private:
@@ -26,7 +27,7 @@ private:
     void cargar_toml(const toml::table& archivo_toml);
     void cargar_red(const toml::table& archivo_toml);
     void cargar_partida(const toml::table& archivo_toml);
-    void cargar_mapa(const toml::table& archivo_toml);
+    void cargar_mapas(const toml::table& archivo_toml);
     void cargar_juego(const toml::table& archivo_toml);
 
     // Auxiliares de lectura y validación.

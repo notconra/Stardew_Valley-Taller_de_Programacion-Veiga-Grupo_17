@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <algorithm>
 
 ConfiguracionServidor::ConfiguracionServidor(const std::string& ruta) {
     toml::table archivo_toml;
@@ -19,7 +20,7 @@ ConfiguracionServidor::ConfiguracionServidor(const std::string& ruta) {
 void ConfiguracionServidor::cargar_toml(const toml::table& archivo_toml) {
     cargar_red(archivo_toml);
     cargar_partida(archivo_toml);
-    cargar_mapa(archivo_toml);
+    cargar_mapas(archivo_toml);
     cargar_juego(archivo_toml);
 }
 
@@ -46,56 +47,95 @@ void ConfiguracionServidor::cargar_partida(const toml::table& archivo_toml) {
     }
 }
 
-void ConfiguracionServidor::cargar_mapa(const toml::table& archivo_toml) {
-    const toml::table& mapa = exigir_tabla(archivo_toml, "mapa");
+void ConfiguracionServidor::cargar_mapas(const toml::table& archivo_toml) {
+    const toml::array* mapas = archivo_toml["mapas"].as_array();
+    if (mapas == nullptr || mapas->empty()) {
+        throw std::runtime_error("configuración: falta la sección [[mapas]] (al menos uno)");
+    }
 
-    datos_configuracion.mapa.ruta_tmx = leer_texto(mapa, "ruta_tmx", "mapa");
-
-    // Opcionales: si no están, se usan los valores por defecto.
-    const auto valor_capa_colisiones = mapa["capa_colisiones"].value<std::string>();
-    if (valor_capa_colisiones) {
-        if (valor_capa_colisiones->empty()) {
+    for (std::size_t i = 0; i < mapas->size(); ++i) {
+        const toml::table* mapa = (*mapas)[i].as_table();
+        const std::string seccion = "mapas[" + std::to_string(i) + "]";
+        if (mapa == nullptr) {
             throw std::runtime_error(
-                "configuración: la clave 'capa_colisiones' de [mapa] no puede estar vacía");
+                "configuración: la entrada '" + seccion + "' debe ser una tabla");
         }
-        datos_configuracion.mapa.capa_colisiones = *valor_capa_colisiones;
+
+        ConfiguracionMapaServidor configuracion_mapa;
+        configuracion_mapa.id = leer_texto(*mapa, "id", seccion);
+        configuracion_mapa.ruta_tmx = leer_texto(*mapa, "ruta_tmx", seccion);
+
+        const auto valor_capa_colisiones = (*mapa)["capa_colisiones"].value<std::string>();
+        if (valor_capa_colisiones) {
+            if (valor_capa_colisiones->empty()) {
+                throw std::runtime_error(
+                    "configuración: la clave 'capa_colisiones' de " + seccion +
+                    " no puede estar vacía");
+            }
+            configuracion_mapa.capa_colisiones = *valor_capa_colisiones;
+        }
+
+        const auto valor_capa_respaldo = (*mapa)["capa_respaldo"].value<std::string>();
+        if (valor_capa_respaldo) {
+            if (valor_capa_respaldo->empty()) {
+                throw std::runtime_error(
+                    "configuración: la clave 'capa_respaldo' de " + seccion +
+                    " no puede estar vacía");
+            }
+            configuracion_mapa.capa_respaldo = *valor_capa_respaldo;
+        }
+
+        const auto valor_capa_transiciones = (*mapa)["capa_transiciones"].value<std::string>();
+        if (valor_capa_transiciones) {
+            if (valor_capa_transiciones->empty()) {
+                throw std::runtime_error(
+                    "configuración: la clave 'capa_transiciones' de " + seccion +
+                    " no puede estar vacía");
+            }
+            configuracion_mapa.capa_transiciones = *valor_capa_transiciones;
+        }
+
+        const toml::array* capas_opcionales = (*mapa)["capas_opcionales"].as_array();
+        if (capas_opcionales != nullptr) {
+            for (std::size_t j = 0; j < capas_opcionales->size(); ++j) {
+                const toml::table* capa = (*capas_opcionales)[j].as_table();
+                const std::string seccion_capa =
+                    seccion + ".capas_opcionales[" + std::to_string(j) + "]";
+                if (capa == nullptr) {
+                    throw std::runtime_error(
+                        "configuración: la entrada '" + seccion_capa + "' debe ser una tabla");
+                }
+                const auto nombre = (*capa)["nombre"].value<std::string>();
+                if (!nombre || nombre->empty()) {
+                    throw std::runtime_error(
+                        "configuración: falta o es inválida la clave 'nombre' de " + seccion_capa);
+                }
+                const auto propiedad = (*capa)["propiedad"].value<std::string>();
+                if (!propiedad || propiedad->empty()) {
+                    throw std::runtime_error(
+                        "configuración: falta o es inválida la clave 'propiedad' de " +
+                        seccion_capa);
+                }
+                configuracion_mapa.capas_opcionales.push_back(
+                    CapaOpcionalMapaServidor{*nombre, *propiedad});
+            }
+        }
+
+        datos_configuracion.mapas.push_back(configuracion_mapa);
     }
 
-    const auto valor_capa_respaldo = mapa["capa_respaldo"].value<std::string>();
-    if (valor_capa_respaldo) {
-        if (valor_capa_respaldo->empty()) {
-            throw std::runtime_error(
-                "configuración: la clave 'capa_respaldo' de [mapa] no puede estar vacía");
-        }
-        datos_configuracion.mapa.capa_respaldo = *valor_capa_respaldo;
+    const auto mapa_inicial = archivo_toml["mapa_inicial"].value<std::string>();
+    if (!mapa_inicial || mapa_inicial->empty()) {
+        throw std::runtime_error("configuración: falta la clave 'mapa_inicial'");
     }
-
-    const toml::array* capas_opcionales = mapa["capas_opcionales"].as_array();
-    if (capas_opcionales != nullptr) {
-        datos_configuracion.mapa.capas_opcionales.clear();
-        for (std::size_t i = 0; i < capas_opcionales->size(); ++i) {
-            const toml::table* capa = (*capas_opcionales)[i].as_table();
-            const std::string seccion = "mapa.capas_opcionales[" + std::to_string(i) + "]";
-            if (capa == nullptr) {
-                throw std::runtime_error(
-                    "configuración: la entrada '" + seccion + "' debe ser una tabla");
-            }
-
-            const auto nombre = (*capa)["nombre"].value<std::string>();
-            if (!nombre || nombre->empty()) {
-                throw std::runtime_error(
-                    "configuración: falta o es inválida la clave 'nombre' de " + seccion);
-            }
-            const auto propiedad = (*capa)["propiedad"].value<std::string>();
-            if (!propiedad || propiedad->empty()) {
-                throw std::runtime_error(
-                    "configuración: falta o es inválida la clave 'propiedad' de " + seccion);
-            }
-
-            datos_configuracion.mapa.capas_opcionales.push_back(
-                CapaOpcionalMapaServidor{*nombre, *propiedad});
-        }
+    const bool existe = std::any_of(
+        datos_configuracion.mapas.begin(), datos_configuracion.mapas.end(),
+        [&mapa_inicial](const ConfiguracionMapaServidor& m) { return m.id == *mapa_inicial; });
+    if (!existe) {
+        throw std::runtime_error(
+            "configuración: 'mapa_inicial' (" + *mapa_inicial + ") no está entre los [[mapas]]");
     }
+    datos_configuracion.mapa_inicial = *mapa_inicial;
 }
 
 void ConfiguracionServidor::cargar_juego(const toml::table& archivo_toml) {
@@ -217,8 +257,12 @@ const ConfiguracionPartidaServidor& ConfiguracionServidor::partida() const {
     return datos_configuracion.partida;
 }
 
-const ConfiguracionMapaServidor& ConfiguracionServidor::mapa() const {
-    return datos_configuracion.mapa;
+const std::vector<ConfiguracionMapaServidor>& ConfiguracionServidor::mapas() const {
+    return datos_configuracion.mapas;
+}
+
+const std::string& ConfiguracionServidor::mapa_inicial() const {
+    return datos_configuracion.mapa_inicial;
 }
 
 const ConfiguracionJuegoServidor& ConfiguracionServidor::juego() const {
