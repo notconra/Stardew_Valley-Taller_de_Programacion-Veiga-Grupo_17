@@ -5,6 +5,8 @@
 #
 #   ./build/client config/cliente.toml
 
+mapa_inicial = "granja"
+
 [servidor]
 host = "127.0.0.1"
 puerto = "8080"
@@ -21,32 +23,137 @@ vsync = true
 [graficos]
 tamano_de_tile = 16
 escala_de_tiles = 2
-color_de_fondo = [50, 150, 50, 255]
+color_de_fondo = [0, 0, 0, 255]
 
-[mapa]
+[[mapas]]
+id = "granja"
 ruta = "Assets/Maps/Farm.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front", "AlwaysFront", "AlwaysFront2"]
 
-[[mapa.tilesets]]
+[[mapas.tilesets]]
 ruta = "Assets/Maps/spring_outdoorTileSheet_extra.png"
 firstgid = 1
 columnas = 8
 
-[[mapa.tilesets]]
+[[mapas.tilesets]]
 ruta = "Assets/Maps/spring_outdoorsTileSheet.png"
 firstgid = 129
 columnas = 25
 
-[[mapa.tilesets]]
+[[mapas.tilesets]]
 ruta = "Assets/Maps/spring_outdoorsTileSheet2.png"
 firstgid = 2104
 columnas = 16
 
-[[mapa.tilesets]]
+[[mapas.tilesets]]
 ruta = "Assets/Buildings/houses.png"
 firstgid = 3224
 columnas = 17
+
+[[mapas]]
+id = "BusStop"
+ruta = "Assets/Maps/BusStop.tmx"
+capas_bajo_los_jugadores = ["Back", "Buildings", "Buildings2", "Paths"]
+capas_sobre_los_jugadores = ["Front", "AlwaysFront", "AlwaysFront2", "AlwaysFront3"]
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/spring_outdoorsTileSheet.png"
+firstgid = 1
+columnas = 25
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/paths.png"
+firstgid = 1976
+columnas = 4
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/spring_town.png"
+firstgid = 2040
+columnas = 32
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/spring_outdoorsTileSheet2.png"
+firstgid = 4344
+columnas = 16
+
+[[mapas.tilesets]]
+ruta = "Assets/Characters/mateogp.png"
+firstgid = 5464
+columnas = 8
+
+[[mapas.tilesets]]
+ruta = "Assets/Characters/minion.png"
+firstgid = 5592
+columnas = 8
+
+[[mapas]]
+id = "Town"
+ruta = "Assets/Maps/Town.tmx"
+capas_bajo_los_jugadores = ["Back", "Back2", "Back3", "Buildings", "Buildings2", "Paths"]
+capas_sobre_los_jugadores = ["Front", "AlwaysFront"]
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/spring_outdoorsTileSheet.png"
+firstgid = 1
+columnas = 25
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/paths.png"
+firstgid = 1976
+columnas = 4
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/spring_town.png"
+firstgid = 2040
+columnas = 32
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/spring_outdoorsTileSheet2.png"
+firstgid = 4344
+columnas = 16
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/spring_Shadows.png"
+firstgid = 5464
+columnas = 19
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/spring_Waterfalls.png"
+firstgid = 5939
+columnas = 36
+
+[[mapas]]
+id = "FarmHouse"
+ruta = "Assets/Maps/FarmHouse.tmx"
+capas_bajo_los_jugadores = ["Back", "Buildings"]
+capas_sobre_los_jugadores = ["Front"]
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/townInterior.png"
+firstgid = 1
+columnas = 32
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/farmhouse_tiles.png"
+firstgid = 2177
+columnas = 12
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/walls_and_floors.png"
+firstgid = 2441
+columnas = 16
+
+[[mapas]]
+id = "cueva1"
+ruta = "Assets/Maps/Mines/1.tmx"
+capas_bajo_los_jugadores = ["Back", "Buildings"]
+capas_sobre_los_jugadores = ["Front"]
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/Mines/mine.png"
+firstgid = 1
+columnas = 16
 
 [jugador]
 ruta_sprite = "Assets/Characters/Alex_Beach.png"
