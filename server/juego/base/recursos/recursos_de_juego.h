@@ -1,17 +1,20 @@
 #ifndef RECURSOS_DE_JUEGO_H
 #define RECURSOS_DE_JUEGO_H
 
+#include <map>
+#include <string>
+
 #include "../../../configuracion/configuracion_servidor_datos.h"
 #include "../mapas/mapa.h"
 
-// Lo que el juego necesita y se carga una sola vez al arrancar el servidor.
 struct RecursosDeJuego {
-    Mapa mapa;
+    std::map<std::string, Mapa> mapas;
+    std::string mapa_inicial;
     ConfiguracionJuegoServidor juego;
 
     RecursosDeJuego(
-        const ConfiguracionMapaServidor& configuracion_mapa,
-        const ConfiguracionJuegoServidor& configuracion_juego);
+        const std::vector<ConfiguracionMapaServidor>& configuracion_mapas,
+        const std::string& id_mapa_inicial, const ConfiguracionJuegoServidor& configuracion_juego);
 };
 
 #endif
