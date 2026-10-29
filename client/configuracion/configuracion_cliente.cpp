@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 ConfiguracionCliente::ConfiguracionCliente(const std::string& ruta) {
     toml::table archivo_toml;
@@ -24,7 +25,7 @@ void ConfiguracionCliente::cargar_toml(const toml::table& archivo_toml) {
     cargar_ventana(archivo_toml);
     cargar_sdl(archivo_toml);
     cargar_graficos(archivo_toml);
-    cargar_mapa(archivo_toml);
+    cargar_mapas(archivo_toml);
     cargar_jugador(archivo_toml);
 }
 
@@ -60,15 +61,42 @@ void ConfiguracionCliente::cargar_graficos(const toml::table& archivo_toml) {
     configuracion_vista.graficos.color_de_fondo = leer_color(graficos);
 }
 
-void ConfiguracionCliente::cargar_mapa(const toml::table& archivo_toml) {
-    const toml::table& mapa = exigir_tabla(archivo_toml, "mapa");
+void ConfiguracionCliente::cargar_mapas(const toml::table& archivo_toml) {
+    const toml::array& mapas = exigir_arreglo(archivo_toml, "mapas", "raíz");
+    if (mapas.empty()) {
+        throw std::runtime_error("configuración: [[mapas]] debe tener al menos un mapa");
+    }
 
-    configuracion_vista.mapa.ruta = leer_texto(mapa, "ruta", "mapa");
-    configuracion_vista.mapa.capas_bajo_los_jugadores =
-        leer_textos(mapa, "capas_bajo_los_jugadores", "mapa");
-    configuracion_vista.mapa.capas_sobre_los_jugadores =
-        leer_textos(mapa, "capas_sobre_los_jugadores", "mapa");
-    configuracion_vista.mapa.tilesets = leer_tilesets(mapa);
+    configuracion_vista.mapas.clear();
+    for (std::size_t i = 0; i < mapas.size(); ++i) {
+        const toml::table* mapa = mapas[i].as_table();
+        const std::string seccion = "mapas[" + std::to_string(i) + "]";
+        if (mapa == nullptr) {
+            throw std::runtime_error(
+                "configuración: la entrada '" + seccion + "' debe ser una tabla");
+        }
+
+        ConfiguracionMapa configuracion_mapa;
+        configuracion_mapa.id = leer_texto(*mapa, "id", seccion);
+        configuracion_mapa.ruta = leer_texto(*mapa, "ruta", seccion);
+        configuracion_mapa.capas_bajo_los_jugadores =
+            leer_textos(*mapa, "capas_bajo_los_jugadores", seccion);
+        configuracion_mapa.capas_sobre_los_jugadores =
+            leer_textos(*mapa, "capas_sobre_los_jugadores", seccion);
+        configuracion_mapa.tilesets = leer_tilesets(*mapa, seccion);
+
+        configuracion_vista.mapas.push_back(configuracion_mapa);
+    }
+
+    configuracion_vista.mapa_inicial = leer_texto(archivo_toml, "mapa_inicial", "raíz");
+    const bool existe = std::any_of(
+        configuracion_vista.mapas.begin(), configuracion_vista.mapas.end(),
+        [this](const ConfiguracionMapa& m) { return m.id == configuracion_vista.mapa_inicial; });
+    if (!existe) {
+        throw std::runtime_error(
+            "configuración: 'mapa_inicial' (" + configuracion_vista.mapa_inicial +
+            ") no está entre los [[mapas]]");
+    }
 }
 
 void ConfiguracionCliente::cargar_jugador(const toml::table& archivo_toml) {
@@ -198,28 +226,28 @@ ColorDeFondo ConfiguracionCliente::leer_color(const toml::table& graficos) const
 }
 
 std::vector<ConfiguracionTileset> ConfiguracionCliente::leer_tilesets(
-    const toml::table& mapa) const {
-    const toml::array& valores = exigir_arreglo(mapa, "tilesets", "mapa");
+    const toml::table& mapa, const std::string& seccion) const {
+    const toml::array& valores = exigir_arreglo(mapa, "tilesets", seccion);
 
     std::vector<ConfiguracionTileset> tilesets;
     tilesets.reserve(valores.size());
     for (std::size_t i = 0; i < valores.size(); ++i) {
         const toml::table* tileset = valores[i].as_table();
-        const std::string seccion = "mapa.tilesets[" + std::to_string(i) + "]";
+        const std::string seccion_tileset = seccion + ".tilesets[" + std::to_string(i) + "]";
         if (tileset == nullptr) {
             throw std::runtime_error(
-                "configuración: la entrada '" + seccion + "' debe ser una tabla");
+                "configuración: la entrada '" + seccion_tileset + "' debe ser una tabla");
         }
 
         tilesets.push_back(ConfiguracionTileset{
-            leer_texto(*tileset, "ruta", seccion),
-            leer_entero_positivo(*tileset, "firstgid", seccion),
-            leer_entero_positivo(*tileset, "columnas", seccion),
+            leer_texto(*tileset, "ruta", seccion_tileset),
+            leer_entero_positivo(*tileset, "firstgid", seccion_tileset),
+            leer_entero_positivo(*tileset, "columnas", seccion_tileset),
         });
     }
 
     if (tilesets.empty()) {
-        throw std::runtime_error("configuración: [mapa] debe tener al menos un tileset");
+        throw std::runtime_error("configuración: " + seccion + " debe tener al menos un tileset");
     }
     return tilesets;
 }
