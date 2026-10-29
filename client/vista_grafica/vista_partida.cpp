@@ -23,10 +23,21 @@ VistaPartida::VistaPartida(
     : conexion(conexion_conectada), configuracion(configuracion_vista) {
 }
 
+const ConfiguracionMapa& VistaPartida::configuracion_de(const std::string& id_mapa) const {
+    const auto encontrado = std::find_if(
+        configuracion.mapas.begin(), configuracion.mapas.end(),
+        [&id_mapa](const ConfiguracionMapa& mapa) { return mapa.id == id_mapa; });
+    if (encontrado == configuracion.mapas.end()) {
+        throw std::runtime_error("el servidor mandó un mapa desconocido: " + id_mapa);
+    }
+    return *encontrado;
+}
+
 bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     id_jugador = partida.id_jugador;
     intencion_enviada = Moverse{};
     ultimo_estado_juego = EstadoJuego{};
+    mapa_actual = configuracion.mapa_inicial;
 
     std::cout << "\n=== EN PARTIDA " << partida.codigo_partida << " (jugador " << partida.id_jugador
               << ") ===\n"
@@ -34,21 +45,22 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
 
     InicioDeSDL inicio_de_sdl;
     Ventana ventana(
-        configuracion.ventana.titulo.c_str(),
-        configuracion.ventana.ancho,
+        configuracion.ventana.titulo.c_str(), configuracion.ventana.ancho,
         configuracion.ventana.alto);
     Renderizador renderizador(ventana, configuracion.sdl);
-    MapaGrafico mapa(renderizador.ptr(), configuracion.mapa, configuracion.graficos);
+    std::map<std::string, MapaGrafico> mapas_cargados;
+    mapas_cargados.try_emplace(
+        mapa_actual, renderizador.ptr(), configuracion_de(mapa_actual), configuracion.graficos);
+
     Personaje personaje(configuracion.jugador, configuracion.graficos, renderizador.ptr());
     EntradaDelUsuario entrada;
     Camara camara(
         configuracion.ventana.ancho,
         configuracion.ventana.alto,
-        ancho_del_mapa_en_pantalla(mapa),
-        alto_del_mapa_en_pantalla(mapa),
+        ancho_del_mapa_en_pantalla(mapas_cargados.at(mapa_actual)),
+        alto_del_mapa_en_pantalla(mapas_cargados.at(mapa_actual)),
         configuracion.graficos.escala_de_tiles);
 
-    // cada vuelta es un frame
     while (true) {
         entrada.leer();
 
@@ -56,7 +68,6 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             return false;
         }
         if (entrada.pidio_salir_de_partida()) {
-            // La respuesta (PartidaAbandonada) la va a recibir y mostrar el lobby.
             conexion.enviar_comando(SalirDePartida{});
             return true;
         }
@@ -70,7 +81,25 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             return true;
         }
 
-        dibujar(renderizador, mapa, personaje, camara);
+        const auto propio = std::find_if(
+            ultimo_estado_juego.jugadores.begin(), ultimo_estado_juego.jugadores.end(),
+            [this](const EstadoJugador& jugador) { return jugador.id_jugador == id_jugador; });
+        if (propio != ultimo_estado_juego.jugadores.end() && propio->mapa != mapa_actual) {
+            mapa_actual = propio->mapa;
+            if (!mapas_cargados.contains(mapa_actual)) {
+                mapas_cargados.try_emplace(
+                    mapa_actual, renderizador.ptr(), configuracion_de(mapa_actual),
+                    configuracion.graficos);
+            }
+            camara = Camara(
+                configuracion.ventana.ancho,
+                configuracion.ventana.alto,
+                ancho_del_mapa_en_pantalla(mapas_cargados.at(mapa_actual)),
+                alto_del_mapa_en_pantalla(mapas_cargados.at(mapa_actual)),
+                configuracion.graficos.escala_de_tiles);
+        }
+
+        dibujar(renderizador, mapas_cargados.at(mapa_actual), personaje, camara);
     }
 }
 
@@ -122,15 +151,10 @@ void VistaPartida::dibujar(
     SDL_Renderer* renderer = renderizador.ptr();
 
     const auto propio = std::find_if(
-        ultimo_estado_juego.jugadores.begin(),
-        ultimo_estado_juego.jugadores.end(),
+        ultimo_estado_juego.jugadores.begin(), ultimo_estado_juego.jugadores.end(),
         [this](const EstadoJugador& jugador) { return jugador.id_jugador == id_jugador; });
     if (propio != ultimo_estado_juego.jugadores.end()) {
-        camara.centrar_en(
-            propio->x,
-            propio->y,
-            personaje.ancho_del_sprite(),
-            personaje.alto_del_sprite());
+        camara.centrar_en(propio->x, propio->y, personaje.ancho_del_sprite(), personaje.alto_del_sprite());
     }
 
     const ColorDeFondo& color = configuracion.graficos.color_de_fondo;
@@ -139,6 +163,9 @@ void VistaPartida::dibujar(
 
     mapa.dibujar_bajo_los_jugadores(renderer, camara.x(), camara.y());
     for (const EstadoJugador& jugador : ultimo_estado_juego.jugadores) {
+        if (jugador.mapa != mapa_actual) {
+            continue;  // está en otro mapa, no se dibuja acá
+        }
         personaje.dibujar(renderer, jugador, camara.x(), camara.y());
     }
     mapa.dibujar_sobre_los_jugadores(renderer, camara.x(), camara.y());
