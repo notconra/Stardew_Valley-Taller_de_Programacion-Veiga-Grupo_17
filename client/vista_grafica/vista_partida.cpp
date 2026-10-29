@@ -50,7 +50,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     MapaGrafico mapa(renderizador.ptr(), configuracion.mapa, configuracion.graficos);
     Personaje personaje(configuracion.jugador, configuracion.graficos, renderizador.ptr());
     EntradaDelUsuario entrada;
-    HudInventario hud;
+    HudInventario hud(renderizador.ptr());
     hud.configurar(configuracion.ventana.ancho, configuracion.ventana.alto);
     Camara camara(
         configuracion.ventana.ancho,
