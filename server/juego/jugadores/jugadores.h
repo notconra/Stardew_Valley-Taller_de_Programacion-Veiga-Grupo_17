@@ -51,7 +51,8 @@ private:
 
     // El lugar libre más cercano al punto deseado. ver esto cuando hagamos lo de los spawnpoints
     // (?)
-    Posicion buscar_aparicion(const ConfiguracionAparicionJugador& deseada) const;
+    Posicion buscar_aparicion(const ConfiguracionAparicionJugador& deseada) const;  
+    Rectangulo rectangulo_de_pies(double x, double y) const;
 
 public:
     Jugadores(
@@ -68,7 +69,7 @@ public:
     // Avanza un tick.
     void actualizar();
 
-    void agregar_a(EstadoJuego& estado_juego) const;
+    void agregar_a(EstadoJuego& estado_juego, const std::string& id_mapa) const;
 
     // Para los sistemas que necesitan saber de un jugador. Devuelve nullptr si no está.
     const JugadorEnPartida* buscar(uint32_t id_jugador) const;
@@ -76,6 +77,21 @@ public:
     // La casilla que el jugador tiene adelante: la que usan las acciones.
     // Puede estar fuera del mapa, quien la use tiene que chequearlo.
     std::optional<Casilla> casilla_de_enfrente(uint32_t id_jugador) const;
+
+    // Transición que toca cada jugador parado sobre una, con quién es. Se llama después de
+    // actualizar(), una vez por tick.
+    std::vector<std::pair<uint32_t, const Transicion*>> en_transicion() const;
+
+    // Saca al jugador de este mapa (se va a otro). No hace nada si no estaba.
+    void quitar(uint32_t id_jugador);
+
+    // Mete al jugador en la posición dada, en píxeles. Lo usa Mundo cuando alguien llega desde
+    // otro mapa por una transición.
+    void agregar_en(uint32_t id_jugador, double x, double y);
+    
+    // Mete al jugador en el punto de aparición configurado para este mapa. Lo usa Mundo cuando un
+    // jugador nuevo entra a la partida y arranca en el mapa inicial.
+    void agregar_en_aparicion(uint32_t id_jugador);
 };
 
 #endif

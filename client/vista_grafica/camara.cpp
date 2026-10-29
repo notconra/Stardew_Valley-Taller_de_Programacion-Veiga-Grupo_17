@@ -15,8 +15,11 @@ Camara::Camara(
 int Camara::calcular_esquina(
     int posicion_en_mapa, int tamanio_del_sprite, int tamanio_de_ventana,
     int tamanio_del_mapa) const {
+    if (tamanio_del_mapa <= tamanio_de_ventana) {
+        return (tamanio_del_mapa - tamanio_de_ventana) / 2;
+    }
     const int centro_del_sprite = (posicion_en_mapa + tamanio_del_sprite / 2) * escala_de_tiles;
-    const int maximo = std::max(0, tamanio_del_mapa - tamanio_de_ventana);
+    const int maximo = tamanio_del_mapa - tamanio_de_ventana;
     return std::clamp(centro_del_sprite - tamanio_de_ventana / 2, 0, maximo);
 }
 

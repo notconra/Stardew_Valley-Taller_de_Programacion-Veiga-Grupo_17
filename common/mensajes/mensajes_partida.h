@@ -28,6 +28,7 @@ struct Moverse {
 // "mirando" y "camina" bastan para elegir el sprite y la animación.
 struct EstadoJugador {
     uint32_t id_jugador = 0;
+    std::string mapa;
     int32_t x = 0;
     int32_t y = 0;
     Direccion mirando = Direccion::ABAJO;

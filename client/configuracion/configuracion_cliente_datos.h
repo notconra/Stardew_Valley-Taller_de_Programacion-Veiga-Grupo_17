@@ -46,12 +46,12 @@ struct ConfiguracionTileset {
 };
 
 struct ConfiguracionMapa {
+    std::string id;
     std::string ruta;
     std::vector<std::string> capas_bajo_los_jugadores;
     std::vector<std::string> capas_sobre_los_jugadores;
     std::vector<ConfiguracionTileset> tilesets;
 };
-
 struct ConfiguracionJugador {
     std::string ruta_sprite;
     int ancho_sprite = 0;
@@ -66,7 +66,8 @@ struct ConfiguracionVista {
     ConfiguracionVentana ventana;
     ConfiguracionSDL sdl;
     ConfiguracionGraficos graficos;
-    ConfiguracionMapa mapa;
+    std::vector<ConfiguracionMapa> mapas;
+    std::string mapa_inicial;
     ConfiguracionJugador jugador;
 };
 
