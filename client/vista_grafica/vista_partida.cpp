@@ -12,22 +12,31 @@
 #include "inicio_de_sdl.h"
 #include "ventana.h"
 
-// esto vuela
 const char AYUDA_DE_TECLAS[] =
     "Teclas (en la ventana):\n"
-    "  flechas / WASD   mover al personaje\n"
-    "  1-9 / 0          elegir ranura de la barra de herramientas\n"
-    "  rueda del ratón  recorrer la barra de herramientas\n"
-    "  clic izquierdo   agarrar/soltar el stack completo (o tirarlo al tacho)\n"
-    "  clic derecho     agarrar/soltar un solo ítem\n"
-    "  E                usar el ítem de la ranura activa (por ejemplo, colocar un cofre)\n"
-    "  F                abrir/cerrar el cofre que tenés enfrente\n"
-    "  M                permitir que otros jugadores se unan (el código sale acá)\n"
-    "  ESC              salir de la partida y volver al lobby\n";
+    "  flechas / WASD    mover al personaje\n"
+    "  1-9 / 0           elegir ranura de la barra de herramientas\n"
+    "  rueda del ratón   recorrer la barra de herramientas\n"
+    "  clic izquierdo    agarrar/soltar el stack completo (o tirarlo al tacho)\n"
+    "  clic derecho      agarrar/soltar un solo ítem\n"
+    "  E                 usar el ítem de la ranura activa (por ejemplo, colocar un cofre)\n"
+    "  F                 abrir/cerrar el cofre que tenés enfrente\n"
+    "  M                 permitir que otros jugadores se unan (el código sale acá)\n"
+    "  ESC               salir de la partida y volver al lobby\n";
 
 VistaPartida::VistaPartida(
     ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion_vista)
     : conexion(conexion_conectada), configuracion(configuracion_vista) {
+}
+
+const ConfiguracionMapa& VistaPartida::configuracion_de(const std::string& id_mapa) const {
+    const auto encontrado = std::find_if(
+        configuracion.mapas.begin(), configuracion.mapas.end(),
+        [&id_mapa](const ConfiguracionMapa& mapa) { return mapa.id == id_mapa; });
+    if (encontrado == configuracion.mapas.end()) {
+        throw std::runtime_error("el servidor mandó un mapa desconocido: " + id_mapa);
+    }
+    return *encontrado;
 }
 
 bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
@@ -36,6 +45,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     ultimo_estado_juego = EstadoJuego{};
     ultimo_inventario = InventarioJugador{};
     ultimo_cofre = CofreJugador{};
+    mapa_actual = configuracion.mapa_inicial;
 
     std::cout << "\n=== EN PARTIDA " << partida.codigo_partida << " (jugador " << partida.id_jugador
               << ") ===\n"
@@ -43,11 +53,13 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
 
     InicioDeSDL inicio_de_sdl;
     Ventana ventana(
-        configuracion.ventana.titulo.c_str(),
-        configuracion.ventana.ancho,
+        configuracion.ventana.titulo.c_str(), configuracion.ventana.ancho,
         configuracion.ventana.alto);
     Renderizador renderizador(ventana, configuracion.sdl);
-    MapaGrafico mapa(renderizador.ptr(), configuracion.mapa, configuracion.graficos);
+    std::map<std::string, MapaGrafico> mapas_cargados;
+    mapas_cargados.try_emplace(
+        mapa_actual, renderizador.ptr(), configuracion_de(mapa_actual), configuracion.graficos);
+
     Personaje personaje(configuracion.jugador, configuracion.graficos, renderizador.ptr());
     EntradaDelUsuario entrada;
     HudInventario hud(renderizador.ptr());
@@ -55,11 +67,10 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     Camara camara(
         configuracion.ventana.ancho,
         configuracion.ventana.alto,
-        ancho_del_mapa_en_pantalla(mapa),
-        alto_del_mapa_en_pantalla(mapa),
+        ancho_del_mapa_en_pantalla(mapas_cargados.at(mapa_actual)),
+        alto_del_mapa_en_pantalla(mapas_cargados.at(mapa_actual)),
         configuracion.graficos.escala_de_tiles);
 
-    // cada vuelta es un frame
     while (true) {
         entrada.leer();
 
@@ -67,7 +78,6 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             return false;
         }
         if (entrada.pidio_salir_de_partida()) {
-            // La respuesta (PartidaAbandonada) la va a recibir y mostrar el lobby.
             conexion.enviar_comando(SalirDePartida{});
             return true;
         }
@@ -84,9 +94,27 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             return true;
         }
 
+        const auto propio = std::find_if(
+            ultimo_estado_juego.jugadores.begin(), ultimo_estado_juego.jugadores.end(),
+            [this](const EstadoJugador& jugador) { return jugador.id_jugador == id_jugador; });
+        if (propio != ultimo_estado_juego.jugadores.end() && propio->mapa != mapa_actual) {
+            mapa_actual = propio->mapa;
+            if (!mapas_cargados.contains(mapa_actual)) {
+                mapas_cargados.try_emplace(
+                    mapa_actual, renderizador.ptr(), configuracion_de(mapa_actual),
+                    configuracion.graficos);
+            }
+            camara = Camara(
+                configuracion.ventana.ancho,
+                configuracion.ventana.alto,
+                ancho_del_mapa_en_pantalla(mapas_cargados.at(mapa_actual)),
+                alto_del_mapa_en_pantalla(mapas_cargados.at(mapa_actual)),
+                configuracion.graficos.escala_de_tiles);
+        }
+
         procesar_inventario(entrada, hud);
 
-        dibujar(renderizador, mapa, personaje, camara, hud, entrada.raton_x(), entrada.raton_y());
+        dibujar(renderizador, mapas_cargados.at(mapa_actual), personaje, camara, hud, entrada.raton_x(), entrada.raton_y());
     }
 }
 
@@ -100,8 +128,6 @@ int VistaPartida::alto_del_mapa_en_pantalla(const MapaGrafico& mapa) const {
            configuracion.graficos.escala_de_tiles;
 }
 
-// Se manda el ESTADO ("ahora voy hacia X" / "me quedo quieto"), no un mensaje por frame, asi el
-// servidor es quien hace avanzar al jugador en cada tick mientras no le llegue otra dirección.
 void VistaPartida::enviar_intencion_si_cambio(const Moverse& intencion) {
     if (intencion == intencion_enviada) {
         return;
@@ -161,7 +187,6 @@ bool VistaPartida::recibir_eventos() {
         } else if (const auto* cofre = std::get_if<ActualizacionCofre>(&evento)) {
             ultimo_cofre = cofre->cofre;
         } else if (const auto* activado = std::get_if<MultijugadorActivado>(&evento)) {
-            // habrá q sacar esto eventualmente para hacerlo bien
             std::cout << "[partida] multijugador activado, código para invitar: "
                       << activado->codigo_partida << std::endl;
         } else if (const auto* error = std::get_if<ErrorServidor>(&evento)) {
@@ -172,7 +197,6 @@ bool VistaPartida::recibir_eventos() {
             std::cout << "[partida] la partida terminó, volvés al lobby" << std::endl;
             return false;
         }
-        // cualquier otro evento por ahora se ignora
     }
     return true;
 }
@@ -183,15 +207,10 @@ void VistaPartida::dibujar(
     SDL_Renderer* renderer = renderizador.ptr();
 
     const auto propio = std::find_if(
-        ultimo_estado_juego.jugadores.begin(),
-        ultimo_estado_juego.jugadores.end(),
+        ultimo_estado_juego.jugadores.begin(), ultimo_estado_juego.jugadores.end(),
         [this](const EstadoJugador& jugador) { return jugador.id_jugador == id_jugador; });
     if (propio != ultimo_estado_juego.jugadores.end()) {
-        camara.centrar_en(
-            propio->x,
-            propio->y,
-            personaje.ancho_del_sprite(),
-            personaje.alto_del_sprite());
+        camara.centrar_en(propio->x, propio->y, personaje.ancho_del_sprite(), personaje.alto_del_sprite());
     }
 
     const ColorDeFondo& color = configuracion.graficos.color_de_fondo;
@@ -200,6 +219,9 @@ void VistaPartida::dibujar(
 
     mapa.dibujar_bajo_los_jugadores(renderer, camara.x(), camara.y());
     for (const EstadoJugador& jugador : ultimo_estado_juego.jugadores) {
+        if (jugador.mapa != mapa_actual) {
+            continue;
+        }
         personaje.dibujar(renderer, jugador, camara.x(), camara.y());
     }
     mapa.dibujar_sobre_los_jugadores(renderer, camara.x(), camara.y());

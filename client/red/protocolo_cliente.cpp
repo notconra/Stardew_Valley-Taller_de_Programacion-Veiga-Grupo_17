@@ -186,13 +186,14 @@ PartidaCerradaPorError ProtocoloCliente::recibir_partida_cerrada_por_error() {
 
 EstadoJugador ProtocoloCliente::recibir_estado_jugador() {
     uint32_t id_jugador = recibir_u32();
+    std::string mapa = recibir_texto();
     int32_t x = static_cast<int32_t>(recibir_u32());
     int32_t y = static_cast<int32_t>(recibir_u32());
     Direccion mirando = static_cast<Direccion>(recibir_u8());
     bool camina = recibir_u8() != 0;
     uint8_t ranura_activa = recibir_u8();
 
-    return EstadoJugador{id_jugador, x, y, mirando, camina, ranura_activa};
+    return EstadoJugador{id_jugador, mapa, x, y, mirando, camina, ranura_activa};
 }
 
 RanuraInventario ProtocoloCliente::recibir_ranura_inventario() {

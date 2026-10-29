@@ -7,7 +7,15 @@
 #include <vector>
 
 #include "../../../configuracion/configuracion_servidor_datos.h"
+#include "../geometria/rectangulo.h"
 #include "propiedad_de_casilla.h"
+
+// A dónde lleva una transición: el mapa destino y la casilla donde aparece el jugador ahí.
+struct Transicion {
+    std::string mapa_destino;
+    int columna_destino = 0;
+    int fila_destino = 0;
+};
 
 // El terreno tal como lo necesita el servidor, qué propiedades tiene cada casilla.
 // Se carga una sola vez y después es de solo lectura. El cliente carga el mismo TMX por su cuenta
@@ -19,6 +27,9 @@ private:
     int ancho_de_casilla = 0;
     int alto_de_casilla = 0;
     std::vector<uint8_t> propiedades;  // un byte de flags por casilla, fila por fila
+
+    // Zonas (en píxeles) que llevan a otro mapa. Pocas por mapa, alcanza con recorrerlas.
+    std::vector<std::pair<Rectangulo, Transicion>> transiciones;
 
     std::map<std::string, uint8_t> propiedades_disponibles() const;
 
@@ -41,6 +52,11 @@ public:
 
     // Si la casilla tiene alguna de las propiedades pedidas. Fuera del mapa devuelve false.
     bool tiene(int columna, int fila, uint8_t propiedad) const;
+
+    // La transición que toca la zona dada (el hitbox del jugador), si hay alguna. Devuelve
+    // nullptr si no toca ninguna. Si el jugador tocara dos a la vez (no debería pasar si los
+    // objetos de Tiled no se superponen), devuelve la primera que encuentra.
+    const Transicion* transicion_en(const Rectangulo& zona) const;
 };
 
 #endif

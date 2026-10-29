@@ -82,12 +82,14 @@ struct PartidaCerradaPorError {};
 // "mirando" y "camina" bastan para elegir el sprite y la animación.
 struct EstadoJugador {
     uint32_t id_jugador = 0;
+    std::string mapa; // <--- Mantenido de la rama de tu compañero para los mapas múltiples
     int32_t x = 0;
     int32_t y = 0;
     Direccion mirando = Direccion::ABAJO;
     bool camina = false;
     uint8_t ranura_activa = 0;
 };
+
 // Estado completo de los jugadores de una partida en un tick.
 struct EstadoJuego {
     std::vector<EstadoJugador> jugadores;

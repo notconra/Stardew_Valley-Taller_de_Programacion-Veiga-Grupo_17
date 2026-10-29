@@ -22,12 +22,13 @@ struct CapaOpcionalMapaServidor {
 };
 
 struct ConfiguracionMapaServidor {
+    std::string id;
     std::string ruta_tmx;
     std::string capa_colisiones = "Colisiones";
     std::string capa_respaldo = "Buildings";
+    std::string capa_transiciones = "Transiciones";
     std::vector<CapaOpcionalMapaServidor> capas_opcionales;
 };
-
 struct ConfiguracionMovimientoJugador {
     double velocidad = 120.0;
     int hitbox_x = 2;
@@ -58,7 +59,8 @@ struct ConfiguracionJuegoServidor {
 struct ConfiguracionServidorDatos {
     ConfiguracionRedServidor red;
     ConfiguracionPartidaServidor partida;
-    ConfiguracionMapaServidor mapa;
+    std::vector<ConfiguracionMapaServidor> mapas;
+    std::string mapa_inicial;
     ConfiguracionJuegoServidor juego;
 };
 

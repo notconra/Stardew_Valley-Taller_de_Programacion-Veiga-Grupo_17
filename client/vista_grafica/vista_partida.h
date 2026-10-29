@@ -2,6 +2,8 @@
 #define VISTA_PARTIDA_H
 
 #include <cstdint>
+#include <map>
+#include <string>
 
 #include "../../common/mensajes/mensajes.h"
 #include "../configuracion/configuracion_cliente_datos.h"
@@ -13,9 +15,6 @@
 #include "personaje.h"
 #include "renderizador.h"
 
-// Vista de la partida con SDL. Es un cliente "dummy", lee el teclado, avisa al servidor la
-// intención y dibuja lo que el servidor dice en el último EstadoJuego. No calcula posiciones ni
-// mueve nada por su cuenta.
 class VistaPartida {
 private:
     ConexionConServidor& conexion;
@@ -26,6 +25,7 @@ private:
     EstadoJuego ultimo_estado_juego{};
     InventarioJugador ultimo_inventario{};
     CofreJugador ultimo_cofre{};
+    std::string mapa_actual;
 
     void enviar_intencion_si_cambio(const Moverse& intencion);
 
@@ -36,7 +36,9 @@ private:
     // partida terminó (hay que volver al lobby).
     bool recibir_eventos();
 
-    // El tamaño del mapa se lee del TMX, acá solo se pasa a píxeles de pantalla.
+    // Busca la configuración del mapa con ese id. Lanza std::runtime_error si no existe.
+    const ConfiguracionMapa& configuracion_de(const std::string& id_mapa) const;
+
     int ancho_del_mapa_en_pantalla(const MapaGrafico& mapa) const;
     int alto_del_mapa_en_pantalla(const MapaGrafico& mapa) const;
 
@@ -47,11 +49,6 @@ private:
 public:
     VistaPartida(ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion);
 
-    // Abre la ventana, bloquea hasta que termina la partida y la cierra. Devuelve true si hay que
-    // volver al lobby (el jugador salió con ESC o la partida terminó) y false si el usuario
-    // cerró la ventana (hay que cerrar el cliente). SDL se inicializa y se libera acá adentro.
-    // Lanza ErrorConexionCerrada si el servidor se cae y std::runtime_error si falla SDL o un
-    // recurso gráfico.
     bool ejecutar(const EntradaExitosaAPartida& partida);
 
     VistaPartida(const VistaPartida&) = delete;

@@ -181,6 +181,7 @@ void ProtocoloServidor::enviar_evento_partida_cerrada_por_error(const PartidaCer
 
 void ProtocoloServidor::enviar_estado_jugador(const EstadoJugador& estado) {
     enviar_u32(estado.id_jugador);
+    enviar_texto(estado.mapa);
     enviar_u32(static_cast<uint32_t>(estado.x));
     enviar_u32(static_cast<uint32_t>(estado.y));
     enviar_u8(static_cast<uint8_t>(estado.mirando));

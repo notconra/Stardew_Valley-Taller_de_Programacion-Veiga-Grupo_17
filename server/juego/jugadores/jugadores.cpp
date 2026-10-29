@@ -35,12 +35,7 @@ Jugadores::Jugadores(
 }
 
 bool Jugadores::choca(double x, double y) const {
-    const Rectangulo pies{
-        static_cast<int>(std::floor(x)) + movimiento.hitbox_x,
-        static_cast<int>(std::floor(y)) + movimiento.hitbox_y,
-        movimiento.hitbox_ancho,
-        movimiento.hitbox_alto};
-    return colisiones.bloquea(pies);
+    return colisiones.bloquea(rectangulo_de_pies(x, y));
 }
 
 Posicion Jugadores::buscar_aparicion(const ConfiguracionAparicionJugador& deseada) const {
@@ -135,11 +130,12 @@ void Jugadores::actualizar() {
     }
 }
 
-void Jugadores::agregar_a(EstadoJuego& estado_juego) const {
+void Jugadores::agregar_a(EstadoJuego& estado_juego, const std::string& id_mapa) const {
     estado_juego.jugadores.reserve(estado_juego.jugadores.size() + jugadores.size());
     for (const auto& [id_jugador, jugador] : jugadores) {
         estado_juego.jugadores.push_back(EstadoJugador{
             id_jugador,
+            id_mapa,
             static_cast<int32_t>(std::floor(jugador.x)),
             static_cast<int32_t>(std::floor(jugador.y)),
             jugador.mirando,
@@ -167,4 +163,38 @@ std::optional<Casilla> Jugadores::casilla_de_enfrente(uint32_t id_jugador) const
 
     const auto& [desvio_columna, desvio_fila] = DESPLAZAMIENTO_AL_MIRAR.at(jugador->mirando);
     return Casilla{columna + desvio_columna, fila + desvio_fila};
+}
+
+Rectangulo Jugadores::rectangulo_de_pies(double x, double y) const {
+    return Rectangulo{
+        static_cast<int>(std::floor(x)) + movimiento.hitbox_x,
+        static_cast<int>(std::floor(y)) + movimiento.hitbox_y,
+        movimiento.hitbox_ancho,
+        movimiento.hitbox_alto};
+}
+
+
+std::vector<std::pair<uint32_t, const Transicion*>> Jugadores::en_transicion() const {
+    std::vector<std::pair<uint32_t, const Transicion*>> resultado;
+    for (const auto& [id_jugador, jugador] : jugadores) {
+        const Transicion* transicion = mapa.transicion_en(rectangulo_de_pies(jugador.x, jugador.y));
+        if (transicion != nullptr) {
+            resultado.emplace_back(id_jugador, transicion);
+        }
+    }
+    return resultado;
+}
+
+void Jugadores::quitar(uint32_t id_jugador) {
+    jugadores.erase(id_jugador);
+}
+
+void Jugadores::agregar_en(uint32_t id_jugador, double x, double y) {
+    JugadorEnPartida nuevo;
+    nuevo.x = x;
+    nuevo.y = y;
+    jugadores[id_jugador] = nuevo;
+}
+void Jugadores::agregar_en_aparicion(uint32_t id_jugador) {
+    agregar_en(id_jugador, aparicion.x, aparicion.y);
 }
