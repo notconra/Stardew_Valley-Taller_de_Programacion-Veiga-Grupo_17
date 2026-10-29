@@ -19,8 +19,6 @@
 // jugadores en mapas distintos ni se ven ni interactúan entre sí.
 class Mundo {
 private:
-    Colisiones colisiones;
-    Jugadores jugadores;
     GestorInventarioJugador gestor_inventario;
 
     const RecursosDeJuego& recursos;
