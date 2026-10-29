@@ -81,11 +81,6 @@ private:
     void dibujar_tacho(SDL_Renderer* renderer, const SDL_Rect& rectangulo) const;
     void dibujar_cantidad(
         SDL_Renderer* renderer, const SDL_Rect& rectangulo, uint16_t cantidad) const;
-    void dibujar_estrellita_calidad(
-        SDL_Renderer* renderer, const SDL_Rect& rectangulo, Calidad calidad) const;
-    void dibujar_tooltip(
-        SDL_Renderer* renderer, const RanuraInventario& ranura, int raton_x, int raton_y) const;
-
     void dibujar_item_levantado(
         SDL_Renderer* renderer, const InventarioJugador& inventario, const CofreJugador& cofre,
         int raton_x, int raton_y) const;
