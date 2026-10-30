@@ -14,6 +14,7 @@ enum class TipoMensaje : uint8_t {
     SALIR_DE_PARTIDA = 0x05,
     ACTIVAR_MULTIJUGADOR = 0x06,
     MOVERSE = 0x07,
+    RETOMAR_PARTIDA = 0x08,
 
     // Servidor a cliente
     ERROR_SERVIDOR = 0x81,

@@ -14,16 +14,23 @@
 // solo necesitan los datos (vistas, mapa, jugador) incluyen configuracion_cliente_datos.h.
 class ConfiguracionCliente {
 public:
-    // Lanza std::runtime_error si el archivo no existe, no es un TOML
-    // válido o le falta alguna clave obligatoria.
-    explicit ConfiguracionCliente(const std::string& ruta);
+    // Parsea los argumentos de línea de comandos (ruta al archivo TOML y flag opcional --id <N>),
+    // valida la configuración y deja los datos listos para usar.
+    // Lanza std::invalid_argument si los argumentos son inválidos, o std::runtime_error si el
+    // archivo no existe, no es un TOML válido o le falta alguna clave obligatoria.
+    ConfiguracionCliente(int argc, char* argv[]);
 
     const ConfiguracionConexion& servidor() const;
     const ConfiguracionVista& vista() const;
+    uint32_t id_cliente() const;
 
 private:
     ConfiguracionConexion configuracion_servidor;
     ConfiguracionVista configuracion_vista;
+    uint32_t id_del_cliente = 0;
+
+    void inicializar(const std::string& ruta, uint32_t id_override);
+    uint32_t validar_id(const std::string& id_en_texto) const;
 
     // Recorre las secciones del archivo_toml y completa los miembros de arriba.
     void cargar_toml(const toml::table& archivo_toml);

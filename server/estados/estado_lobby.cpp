@@ -15,6 +15,14 @@ std::string EstadoLobby::nombre() const {
     return "en el lobby";
 }
 
+EstadoDeConexion::ProximoEstado EstadoLobby::identificarse(const Identificarse& comando) {
+    if (comando.id_cliente == contexto.identidad.id_cliente) {
+        return nullptr;
+    }
+    responder_error(CodigoError::NO_PERMITIDO, "el cliente ya está identificado con otro id");
+    return nullptr;
+}
+
 EstadoDeConexion::ProximoEstado EstadoLobby::listar_partidas(const ListarPartidas&) {
     const std::vector<InfoPartida> info_partidas =
         contexto.administrador.listar(contexto.identidad.id_cliente);
@@ -25,10 +33,19 @@ EstadoDeConexion::ProximoEstado EstadoLobby::listar_partidas(const ListarPartida
 }
 
 EstadoDeConexion::ProximoEstado EstadoLobby::crear_partida(const CrearPartida& comando) {
+    if (comando.nombre_partida.empty()) {
+        responder_error(CodigoError::NO_PERMITIDO, "el nombre de la granja no puede estar vacío");
+        return nullptr;
+    }
+    if (comando.nombre_jugador.empty()) {
+        responder_error(CodigoError::NO_PERMITIDO, "el nombre del jugador no puede estar vacío");
+        return nullptr;
+    }
+
     try {
         const IngresoAPartida ingreso = contexto.administrador.crear(
             contexto.identidad.id_cliente,
-            contexto.identidad.nombre_jugador,
+            comando.nombre_jugador,
             comando.nombre_partida);
         entrar_a_partida(ingreso);
         return std::make_unique<EstadoEnPartida>(contexto, ingreso);
@@ -41,11 +58,37 @@ EstadoDeConexion::ProximoEstado EstadoLobby::crear_partida(const CrearPartida& c
 }
 
 EstadoDeConexion::ProximoEstado EstadoLobby::unirse_a_partida(const UnirsePartida& comando) {
+    if (comando.codigo_partida.empty()) {
+        responder_error(CodigoError::NO_PERMITIDO, "el código de la partida no puede estar vacío");
+        return nullptr;
+    }
+    if (comando.nombre_jugador.empty()) {
+        responder_error(CodigoError::NO_PERMITIDO, "el nombre del jugador no puede estar vacío");
+        return nullptr;
+    }
+
     try {
         const IngresoAPartida ingreso = contexto.administrador.unirse(
             contexto.identidad.id_cliente,
-            contexto.identidad.nombre_jugador,
+            comando.nombre_jugador,
             comando.codigo_partida);
+        entrar_a_partida(ingreso);
+        return std::make_unique<EstadoEnPartida>(contexto, ingreso);
+    } catch (const ErrorDePartida& error) {
+        rechazar_ingreso(error, comando.codigo_partida);
+        return nullptr;
+    }
+}
+
+EstadoDeConexion::ProximoEstado EstadoLobby::retomar_partida(const RetomarPartida& comando) {
+    if (comando.codigo_partida.empty()) {
+        responder_error(CodigoError::NO_PERMITIDO, "el código de la partida no puede estar vacío");
+        return nullptr;
+    }
+
+    try {
+        const IngresoAPartida ingreso =
+            contexto.administrador.retomar(contexto.identidad.id_cliente, comando.codigo_partida);
         entrar_a_partida(ingreso);
         return std::make_unique<EstadoEnPartida>(contexto, ingreso);
     } catch (const ErrorDePartida& error) {

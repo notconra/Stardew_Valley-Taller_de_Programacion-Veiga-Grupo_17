@@ -69,7 +69,18 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
         if (entrada.pidio_salir_de_partida()) {
             conexion.enviar_comando(SalirDePartida{});
-            return true;
+            try {
+                while (true) {
+                    EventoServidor evento = conexion.esperar_evento();
+                    if (std::holds_alternative<PartidaAbandonada>(evento) ||
+                        std::holds_alternative<PartidaCerradaPorError>(evento)) {
+                        std::cout << "[partida] la partida terminó, volvés al lobby" << std::endl;
+                        return true;
+                    }
+                }
+            } catch (const std::exception&) {
+                return false;
+            }
         }
         if (entrada.pidio_multijugador()) {
             conexion.enviar_comando(ActivarMultijugador{});

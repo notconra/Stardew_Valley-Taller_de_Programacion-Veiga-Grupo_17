@@ -9,10 +9,13 @@
 Cliente::Cliente(const ConfiguracionCliente& configuracion_cliente)
     : configuracion(configuracion_cliente),
       conexion(configuracion.servidor().host, configuracion.servidor().puerto),
-      vista_sdl(conexion, configuracion.vista()) {
+      vista_sdl(conexion, configuracion.vista()),
+      id_cliente(configuracion.id_cliente()) {
 }
 
 void Cliente::ejecutar() {
+    conexion.enviar_comando(Identificarse{id_cliente});
+
     EstadoDelJuego estado = EstadoDelJuego::LOBBY;
     while (estado != EstadoDelJuego::SALIR) {
         if (estado == EstadoDelJuego::LOBBY) {
@@ -25,9 +28,12 @@ void Cliente::ejecutar() {
 
 EstadoDelJuego Cliente::ejecutar_lobby() {
     partida_actual = {};
-    QApplication app(argc_, argv_);
+    int argc = 1;
+    char nombre_app[] = "StardewValley";
+    char* argv[] = {nombre_app, nullptr};
+    QApplication app(argc, argv);
 
-    PantallaPrincipal ventana_lobby(conexion, partida_actual);
+    PantallaPrincipal ventana_lobby(conexion, partida_actual, id_cliente);
     ventana_lobby.show();
 
     app.exec();
