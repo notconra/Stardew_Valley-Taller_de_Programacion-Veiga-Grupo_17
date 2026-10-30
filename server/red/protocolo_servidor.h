@@ -24,6 +24,9 @@ private:
     SalirDePartida recibir_comando_salir_de_partida();
     Moverse recibir_comando_moverse();
 
+    // Valida que el eje venga en el rango -1..1. Lanza ErrorProtocolo si no.
+    int8_t eje_de_movimiento(int8_t valor) const;
+
     // Envío de eventos
     void enviar_evento_error_servidor(const ErrorServidor& error_servidor);
     void enviar_evento_partida_cerrada_por_error(const PartidaCerradaPorError& cerrada);

@@ -5,8 +5,8 @@
 #include <string>
 #include <vector>
 
-#include "../../common/juego/direccion.h"
-#include "../../common/mensajes/manejadores_por_tipo.h"
+#include "../../common/direccion.h"
+#include "../../common/visitantes.h"
 
 ProtocoloCliente::ProtocoloCliente(ISocket& socket)
     : Protocolo(socket),
@@ -75,8 +75,8 @@ void ProtocoloCliente::enviar_comando_salir_de_partida(const SalirDePartida&) {
 
 void ProtocoloCliente::enviar_comando_moverse(const Moverse& moverse) {
     enviar_tipo(TipoMensaje::MOVERSE);
-    enviar_u8(static_cast<uint8_t>(moverse.horizontal));
-    enviar_u8(static_cast<uint8_t>(moverse.vertical));
+    enviar_i8(moverse.horizontal);
+    enviar_i8(moverse.vertical);
 }
 
 // Recepción de eventos
@@ -98,19 +98,19 @@ bool ProtocoloCliente::recibir_evento(EventoServidor& evento) {
 }
 
 ErrorServidor ProtocoloCliente::recibir_error_servidor() {
-    uint8_t codigo = recibir_u8();
+    CodigoError codigo = codigo_error_desde(recibir_u8());
     std::string detalles = recibir_texto();
 
-    return ErrorServidor{static_cast<CodigoError>(codigo), detalles};
+    return ErrorServidor{codigo, detalles};
 }
 
 InfoPartida ProtocoloCliente::recibir_info_partida() {
     std::string codigo_partida = recibir_texto();
     std::string nombre_partida = recibir_texto();
-    uint8_t jugadores_actuales = recibir_u8();
+    uint8_t jugadores_totales = recibir_u8();
     uint8_t jugadores_maximos = recibir_u8();
 
-    return InfoPartida{codigo_partida, nombre_partida, jugadores_actuales, jugadores_maximos};
+    return InfoPartida{codigo_partida, nombre_partida, jugadores_totales, jugadores_maximos};
 }
 
 ListaPartidas ProtocoloCliente::recibir_lista_partidas() {
@@ -148,10 +148,10 @@ PartidaCerradaPorError ProtocoloCliente::recibir_partida_cerrada_por_error() {
 EstadoJugador ProtocoloCliente::recibir_estado_jugador() {
     uint32_t id_jugador = recibir_u32();
     std::string mapa = recibir_texto();
-    int32_t x = static_cast<int32_t>(recibir_u32());
-    int32_t y = static_cast<int32_t>(recibir_u32());
-    Direccion mirando = static_cast<Direccion>(recibir_u8());
-    bool camina = recibir_u8() != 0;
+    uint32_t x = recibir_u32();
+    uint32_t y = recibir_u32();
+    Direccion mirando = direccion_desde(recibir_u8());
+    bool camina = recibir_booleano();
 
     return EstadoJugador{id_jugador, mapa, x, y, mirando, camina};
 }
@@ -169,4 +169,21 @@ EstadoJuego ProtocoloCliente::recibir_estado_juego() {
 
 void ProtocoloCliente::cerrar() {
     socket.shutdown(SHUT_RDWR);
+}
+
+// Auxiliares
+
+CodigoError ProtocoloCliente::codigo_error_desde(uint8_t valor) const {
+    if (valor < static_cast<uint8_t>(CodigoError::NOMBRE_JUGADOR_REPETIDO) ||
+        valor > static_cast<uint8_t>(CodigoError::PARTIDA_CERRADA)) {
+        throw ErrorProtocolo("código de error desconocido en el protocolo");
+    }
+    return static_cast<CodigoError>(valor);
+}
+
+Direccion ProtocoloCliente::direccion_desde(uint8_t valor) const {
+    if (valor > static_cast<uint8_t>(Direccion::DERECHA)) {
+        throw ErrorProtocolo("dirección desconocida en el protocolo");
+    }
+    return static_cast<Direccion>(valor);
 }

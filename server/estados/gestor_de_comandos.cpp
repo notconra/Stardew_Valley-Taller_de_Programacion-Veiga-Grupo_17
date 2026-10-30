@@ -3,7 +3,7 @@
 #include <utility>
 #include <variant>
 
-#include "../../common/mensajes/manejadores_por_tipo.h"
+#include "../../common/visitantes.h"
 #include "estado_sin_identificar.h"
 
 GestorDeComandos::GestorDeComandos(ContextoDeCliente& contexto_de_cliente)

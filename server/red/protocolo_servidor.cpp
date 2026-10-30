@@ -2,8 +2,8 @@
 
 #include <string>
 
-#include "../../common/juego/direccion.h"
-#include "../../common/mensajes/manejadores_por_tipo.h"
+#include "../../common/direccion.h"
+#include "../../common/visitantes.h"
 
 ProtocoloServidor::ProtocoloServidor(ISocket& socket)
     : Protocolo(socket),
@@ -77,9 +77,16 @@ SalirDePartida ProtocoloServidor::recibir_comando_salir_de_partida() {
 }
 
 Moverse ProtocoloServidor::recibir_comando_moverse() {
-    int8_t horizontal = static_cast<int8_t>(recibir_u8());
-    int8_t vertical = static_cast<int8_t>(recibir_u8());
+    int8_t horizontal = eje_de_movimiento(recibir_i8());
+    int8_t vertical = eje_de_movimiento(recibir_i8());
     return Moverse{horizontal, vertical};
+}
+
+int8_t ProtocoloServidor::eje_de_movimiento(int8_t valor) const {
+    if (valor < -1 || valor > 1) {
+        throw ErrorProtocolo("valor de movimiento inválido en el protocolo");
+    }
+    return valor;
 }
 
 // Envío de eventos
@@ -107,7 +114,7 @@ void ProtocoloServidor::enviar_evento_error_servidor(const ErrorServidor& error_
 void ProtocoloServidor::enviar_info_partida(const InfoPartida& info_partida) {
     enviar_texto(info_partida.codigo_partida);
     enviar_texto(info_partida.nombre_partida);
-    enviar_u8(info_partida.jugadores_actuales);
+    enviar_u8(info_partida.jugadores_totales);
     enviar_u8(info_partida.jugadores_maximos);
 }
 
@@ -142,10 +149,10 @@ void ProtocoloServidor::enviar_evento_partida_cerrada_por_error(const PartidaCer
 void ProtocoloServidor::enviar_estado_jugador(const EstadoJugador& estado) {
     enviar_u32(estado.id_jugador);
     enviar_texto(estado.mapa);
-    enviar_u32(static_cast<uint32_t>(estado.x));
-    enviar_u32(static_cast<uint32_t>(estado.y));
+    enviar_u32(estado.x);
+    enviar_u32(estado.y);
     enviar_u8(static_cast<uint8_t>(estado.mirando));
-    enviar_u8(estado.camina ? 1 : 0);
+    enviar_booleano(estado.camina);
 }
 
 void ProtocoloServidor::enviar_estado_juego(const EstadoJuego& estado_juego) {

@@ -33,7 +33,7 @@ EstadoDelJuego Cliente::ejecutar_lobby() {
     char* argv[] = {nombre_app, nullptr};
     QApplication app(argc, argv);
 
-    PantallaPrincipal ventana_lobby(conexion, partida_actual, id_cliente);
+    PantallaPrincipal ventana_lobby(conexion, partida_actual);
     ventana_lobby.show();
 
     app.exec();

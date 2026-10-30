@@ -35,6 +35,10 @@ private:
     EstadoJugador recibir_estado_jugador();
     EstadoJuego recibir_estado_juego();
 
+    // Auxiliares
+    CodigoError codigo_error_desde(uint8_t valor) const;
+    Direccion direccion_desde(uint8_t valor) const;
+
 public:
     explicit ProtocoloCliente(ISocket& socket_conectado);
 

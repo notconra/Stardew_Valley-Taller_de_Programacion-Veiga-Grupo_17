@@ -5,7 +5,11 @@
 #include <string>
 #include <vector>
 
-#include "./../juego/direccion.h"
+#include "../direccion.h"
+
+// Política de tipos del protocolo: las cantidades, ids y posiciones viajan sin signo (u8/u16/u32),
+// porque nunca son negativas. El único campo con signo es el eje de Moverse (i8), donde el signo
+// distingue izquierda/arriba de derecha/abajo.
 
 // Cliente a servidor
 
@@ -29,8 +33,8 @@ struct Moverse {
 struct EstadoJugador {
     uint32_t id_jugador = 0;
     std::string mapa;
-    int32_t x = 0;
-    int32_t y = 0;
+    uint32_t x = 0;
+    uint32_t y = 0;
     Direccion mirando = Direccion::ABAJO;
     bool camina = false;
 };
