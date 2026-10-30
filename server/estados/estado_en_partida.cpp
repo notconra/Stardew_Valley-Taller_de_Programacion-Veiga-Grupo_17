@@ -37,6 +37,7 @@ EstadoDeConexion::ProximoEstado EstadoEnPartida::comando_de_juego(const ComandoC
         return nullptr;
     } catch (const ErrorDePartida&) {
         abandonar();
+        encolar(PartidaAbandonada{});
         return std::make_unique<EstadoLobby>(contexto);
     }
 }

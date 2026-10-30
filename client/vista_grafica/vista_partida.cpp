@@ -3,8 +3,11 @@
 #include <SDL2/SDL.h>
 
 #include <algorithm>
+#include <chrono>
 #include <iostream>
+#include <map>
 #include <string>
+#include <thread>
 #include <variant>
 
 #include "entrada_del_usuario.h"
@@ -25,7 +28,8 @@ VistaPartida::VistaPartida(
 
 const ConfiguracionMapa& VistaPartida::configuracion_de(const std::string& id_mapa) const {
     const auto encontrado = std::find_if(
-        configuracion.mapas.begin(), configuracion.mapas.end(),
+        configuracion.mapas.begin(),
+        configuracion.mapas.end(),
         [&id_mapa](const ConfiguracionMapa& mapa) { return mapa.id == id_mapa; });
     if (encontrado == configuracion.mapas.end()) {
         throw std::runtime_error("el servidor mandó un mapa desconocido: " + id_mapa);
@@ -45,12 +49,16 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
 
     InicioDeSDL inicio_de_sdl;
     Ventana ventana(
-        configuracion.ventana.titulo.c_str(), configuracion.ventana.ancho,
+        configuracion.ventana.titulo.c_str(),
+        configuracion.ventana.ancho,
         configuracion.ventana.alto);
     Renderizador renderizador(ventana, configuracion.sdl);
     std::map<std::string, MapaGrafico> mapas_cargados;
     mapas_cargados.try_emplace(
-        mapa_actual, renderizador.ptr(), configuracion_de(mapa_actual), configuracion.graficos);
+        mapa_actual,
+        renderizador.ptr(),
+        configuracion_de(mapa_actual),
+        configuracion.graficos);
 
     Personaje personaje(configuracion.jugador, configuracion.graficos, renderizador.ptr());
     EntradaDelUsuario entrada;
@@ -68,19 +76,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             return false;
         }
         if (entrada.pidio_salir_de_partida()) {
-            conexion.enviar_comando(SalirDePartida{});
-            try {
-                while (true) {
-                    EventoServidor evento = conexion.esperar_evento();
-                    if (std::holds_alternative<PartidaAbandonada>(evento) ||
-                        std::holds_alternative<PartidaCerradaPorError>(evento)) {
-                        std::cout << "[partida] la partida terminó, volvés al lobby" << std::endl;
-                        return true;
-                    }
-                }
-            } catch (const std::exception&) {
-                return false;
-            }
+            return salir_de_partida_y_confirmar();
         }
         if (entrada.pidio_multijugador()) {
             conexion.enviar_comando(ActivarMultijugador{});
@@ -93,13 +89,16 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
 
         const auto propio = std::find_if(
-            ultimo_estado_juego.jugadores.begin(), ultimo_estado_juego.jugadores.end(),
+            ultimo_estado_juego.jugadores.begin(),
+            ultimo_estado_juego.jugadores.end(),
             [this](const EstadoJugador& jugador) { return jugador.id_jugador == id_jugador; });
         if (propio != ultimo_estado_juego.jugadores.end() && propio->mapa != mapa_actual) {
             mapa_actual = propio->mapa;
             if (!mapas_cargados.contains(mapa_actual)) {
                 mapas_cargados.try_emplace(
-                    mapa_actual, renderizador.ptr(), configuracion_de(mapa_actual),
+                    mapa_actual,
+                    renderizador.ptr(),
+                    configuracion_de(mapa_actual),
                     configuracion.graficos);
             }
             camara = Camara(
@@ -145,13 +144,46 @@ bool VistaPartida::recibir_eventos() {
                       << activado->codigo_partida << std::endl;
         } else if (const auto* error = std::get_if<ErrorServidor>(&evento)) {
             std::cerr << "[error] " << error->detalle << std::endl;
-        } else if (
-            std::holds_alternative<PartidaAbandonada>(evento) ||
-            std::holds_alternative<PartidaCerradaPorError>(evento)) {
+        } else if (std::holds_alternative<PartidaCerradaPorError>(evento)) {
+            // Acá la sesión murió por un error, pero el servidor todavía nos tiene en la partida.
+            // Hay que pedirle explícitamente que nos devuelva al lobby antes de salir, si no
+            // quedaría desincronizado, el cliente en el lobby y el servidor en la partida.
+            std::cout << "[partida] la partida terminó por un error, volvés al lobby" << std::endl;
+            salir_de_partida_y_confirmar();
+            return false;
+        } else if (std::holds_alternative<PartidaAbandonada>(evento)) {
             std::cout << "[partida] la partida terminó, volvés al lobby" << std::endl;
             return false;
         }
         // cualquier otro evento por ahora se ignora
+    }
+    return true;
+}
+
+bool VistaPartida::salir_de_partida_y_confirmar() {
+    try {
+        conexion.enviar_comando(SalirDePartida{});
+    } catch (const std::exception&) {
+        return false;
+    }
+
+    // Espera un toque, si el servidor no confirma (o ya nos había devuelto al lobby), volvemos
+    // igual para no dejar la ventana colgada.
+    const auto limite = std::chrono::steady_clock::now() + std::chrono::seconds(2);
+    EventoServidor evento;
+    while (std::chrono::steady_clock::now() < limite) {
+        try {
+            if (conexion.intentar_evento(evento)) {
+                if (std::holds_alternative<PartidaAbandonada>(evento) ||
+                    std::holds_alternative<ErrorServidor>(evento)) {
+                    return true;
+                }
+                continue;
+            }
+        } catch (const std::exception&) {
+            return false;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     return true;
 }
@@ -162,10 +194,15 @@ void VistaPartida::dibujar(
     SDL_Renderer* renderer = renderizador.ptr();
 
     const auto propio = std::find_if(
-        ultimo_estado_juego.jugadores.begin(), ultimo_estado_juego.jugadores.end(),
+        ultimo_estado_juego.jugadores.begin(),
+        ultimo_estado_juego.jugadores.end(),
         [this](const EstadoJugador& jugador) { return jugador.id_jugador == id_jugador; });
     if (propio != ultimo_estado_juego.jugadores.end()) {
-        camara.centrar_en(propio->x, propio->y, personaje.ancho_del_sprite(), personaje.alto_del_sprite());
+        camara.centrar_en(
+            propio->x,
+            propio->y,
+            personaje.ancho_del_sprite(),
+            personaje.alto_del_sprite());
     }
 
     const ColorDeFondo& color = configuracion.graficos.color_de_fondo;

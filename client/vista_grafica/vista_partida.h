@@ -26,6 +26,10 @@ private:
     void enviar_intencion_si_cambio(const Moverse& intencion);
     bool recibir_eventos();
 
+    // Pide salir al servidor y espera a que confirme que la conexión volvió al lobby.
+    // Devuelve false solo si la conexión se cortó.
+    bool salir_de_partida_y_confirmar();
+
     // Busca la configuración del mapa con ese id. Lanza std::runtime_error si no existe.
     const ConfiguracionMapa& configuracion_de(const std::string& id_mapa) const;
 
