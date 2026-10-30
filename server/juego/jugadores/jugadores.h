@@ -4,13 +4,14 @@
 #include <cstdint>
 #include <map>
 #include <optional>
+#include <string>
 #include <vector>
 
 #include "../../../common/mensajes/mensajes.h"
 #include "../../configuracion/configuracion_servidor_datos.h"
-#include "../base/colisiones/colisiones.h"
-#include "../base/geometria/casilla.h"
-#include "../base/mapas/mapa.h"
+#include "../colisiones/colisiones.h"
+#include "../geometria.h"
+#include "../mapa/mapa.h"
 
 // Lo que el resto del juego puede saber de un jugador. La posición es la esquina superior
 // izquierda del sprite en píxeles del mapa, y es double para avanzar en diagonal sin redondear en
@@ -18,8 +19,8 @@
 struct JugadorEnPartida {
     double x = 0.0;
     double y = 0.0;
-    int horizontal = 0;  // intención, de -1 a 1
-    int vertical = 0;
+    int8_t horizontal = 0;  // intención, de -1 a 1
+    int8_t vertical = 0;
     Direccion mirando = Direccion::ABAJO;
     bool camina = false;
 };
@@ -51,7 +52,7 @@ private:
 
     // El lugar libre más cercano al punto deseado. ver esto cuando hagamos lo de los spawnpoints
     // (?)
-    Posicion buscar_aparicion(const ConfiguracionAparicionJugador& deseada) const;  
+    Posicion buscar_aparicion(const ConfiguracionAparicionJugador& deseada) const;
     Rectangulo rectangulo_de_pies(double x, double y) const;
 
 public:
@@ -59,9 +60,6 @@ public:
         const Mapa& mapa_de_partida, const Colisiones& colisiones_de_partida,
         uint8_t ticks_por_segundo, const ConfiguracionMovimientoJugador& configuracion_movimiento,
         const ConfiguracionAparicionJugador& configuracion_aparicion);
-
-    // Deja a los jugadores conectados, agrega a los que faltan y saca a los que ya no están.
-    void sincronizar(const std::vector<uint32_t>& ids_conectados);
 
     // Cambia hacia dónde quiere ir el jugador. Ignora a los que no están.
     void moverse(uint32_t id_jugador, const Moverse& pedido);
@@ -88,7 +86,7 @@ public:
     // Mete al jugador en la posición dada, en píxeles. Lo usa Mundo cuando alguien llega desde
     // otro mapa por una transición.
     void agregar_en(uint32_t id_jugador, double x, double y);
-    
+
     // Mete al jugador en el punto de aparición configurado para este mapa. Lo usa Mundo cuando un
     // jugador nuevo entra a la partida y arranca en el mapa inicial.
     void agregar_en_aparicion(uint32_t id_jugador);

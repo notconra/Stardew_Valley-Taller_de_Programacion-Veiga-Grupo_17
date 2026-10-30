@@ -1,11 +1,12 @@
 #include "mundo.h"
 
 #include <algorithm>
+#include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
 
-#include "./../../common/mensajes/manejadores_por_tipo.h"
+#include "./../../common/visitantes.h"
 
 Mundo::Mundo(const RecursosDeJuego& recursos_de_juego, uint8_t ticks_por_segundo)
     : recursos(recursos_de_juego) {
@@ -16,8 +17,11 @@ Mundo::Mundo(const RecursosDeJuego& recursos_de_juego, uint8_t ticks_por_segundo
         jugadores_por_mapa.emplace(
             id_mapa,
             Jugadores(
-                mapa, colisiones_por_mapa.at(id_mapa), ticks_por_segundo,
-                recursos.juego.movimiento, recursos.juego.aparicion));
+                mapa,
+                colisiones_por_mapa.at(id_mapa),
+                ticks_por_segundo,
+                recursos.juego.movimiento,
+                recursos.juego.aparicion));
     }
 }
 

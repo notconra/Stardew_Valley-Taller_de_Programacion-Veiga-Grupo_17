@@ -4,8 +4,8 @@
 #include <cstddef>
 #include <vector>
 
-#include "../geometria/rectangulo.h"
-#include "../mapas/mapa.h"
+#include "../geometria.h"
+#include "../mapa/mapa.h"
 
 // Combina el terreno fijo del mapa con objetos dinámicos colocados en la
 // partida. Cada SesionDePartida crea su propia Colisiones para que los cambios no afecten otras

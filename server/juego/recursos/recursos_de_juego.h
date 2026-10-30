@@ -3,9 +3,10 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
-#include "../../../configuracion/configuracion_servidor_datos.h"
-#include "../mapas/mapa.h"
+#include "../../configuracion/configuracion_servidor_datos.h"
+#include "../mapa/mapa.h"
 
 struct RecursosDeJuego {
     std::map<std::string, Mapa> mapas;

@@ -1,5 +1,10 @@
 #include "recursos_de_juego.h"
 
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
+
 RecursosDeJuego::RecursosDeJuego(
     const std::vector<ConfiguracionMapaServidor>& configuracion_mapas,
     const std::string& id_mapa_inicial, const ConfiguracionJuegoServidor& configuracion_juego)

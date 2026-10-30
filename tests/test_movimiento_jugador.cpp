@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
 #include "../server/configuracion/configuracion_servidor_datos.h"
-#include "../server/juego/base/colisiones/colisiones.h"
-#include "../server/juego/base/mapas/mapa.h"
+#include "../server/juego/colisiones/colisiones.h"
 #include "../server/juego/jugadores/jugadores.h"
+#include "../server/juego/mapa/mapa.h"
 
 TEST(MovimientoJugadorTest, MovimientoBasicoYDireccion) {
     try {
@@ -32,7 +32,7 @@ TEST(MovimientoJugadorTest, MovimientoBasicoYDireccion) {
         Jugadores jugadores(mapa, colisiones, ticks_por_segundo, conf_mov, conf_aparicion);
 
         uint32_t id = 1;
-        jugadores.sincronizar({id});
+        jugadores.agregar_en_aparicion(id);
 
         // Mover hacia la izquierda (horizontal = -1)
         jugadores.moverse(id, Moverse{-1, 0});
@@ -73,7 +73,7 @@ TEST(MovimientoJugadorTest, CasillaDeEnfrenteSegunMirada) {
         Jugadores jugadores(mapa, colisiones, 10, conf_mov, conf_aparicion);
 
         uint32_t id = 99;
-        jugadores.sincronizar({id});
+        jugadores.agregar_en_aparicion(id);
 
         // Verificamos que devuelva una casilla válida al consultar el frente
         auto casilla_frente = jugadores.casilla_de_enfrente(id);

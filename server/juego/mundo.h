@@ -7,10 +7,10 @@
 #include <vector>
 
 #include "../../common/mensajes/mensajes.h"
-#include "base/colisiones/colisiones.h"
-#include "base/mapas/mapa.h"
-#include "base/recursos/recursos_de_juego.h"
+#include "colisiones/colisiones.h"
 #include "jugadores/jugadores.h"
+#include "mapa/mapa.h"
+#include "recursos/recursos_de_juego.h"
 
 // Clase madre de toda la lógica de juego en una partida. Ahora hay un mapa por zona (granja,
 // pueblo, cada nivel de la mazmorra, ...), y cada uno tiene su propia Colisiones y su propio

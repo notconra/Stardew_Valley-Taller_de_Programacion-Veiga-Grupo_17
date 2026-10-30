@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "../mapas/propiedad_de_casilla.h"
+#include "../mapa/propiedad_de_casilla.h"
 
 Colisiones::Colisiones(const Mapa& mapa_de_partida)
     : mapa(mapa_de_partida),

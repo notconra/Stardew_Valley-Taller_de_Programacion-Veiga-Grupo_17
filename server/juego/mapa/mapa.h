@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-#include "../../../configuracion/configuracion_servidor_datos.h"
-#include "../geometria/rectangulo.h"
+#include "../../configuracion/configuracion_servidor_datos.h"
+#include "../geometria.h"
 #include "propiedad_de_casilla.h"
 
 // A dónde lleva una transición: el mapa destino y la casilla donde aparece el jugador ahí.
@@ -37,6 +37,8 @@ private:
     // no coincide con el tamaño del mapa.
     void marcar(const std::vector<int>& capa, uint8_t propiedad, const std::string& nombre_capa);
 
+    bool se_superponen(const Rectangulo& a, const Rectangulo& b) const;
+
 public:
     // Lanza std::runtime_error si no puede leer el TMX o la capa de colisiones.
     explicit Mapa(const ConfiguracionMapaServidor& configuracion);
@@ -57,6 +59,9 @@ public:
     // nullptr si no toca ninguna. Si el jugador tocara dos a la vez (no debería pasar si los
     // objetos de Tiled no se superponen), devuelve la primera que encuentra.
     const Transicion* transicion_en(const Rectangulo& zona) const;
+
+    // Todas las zonas de transición del mapa, para validarlas al cargar los recursos.
+    const std::vector<std::pair<Rectangulo, Transicion>>& obtener_transiciones() const;
 };
 
 #endif

@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
 #include "../server/configuracion/configuracion_servidor_datos.h"
-#include "../server/juego/base/colisiones/colisiones.h"
-#include "../server/juego/base/geometria/rectangulo.h"
-#include "../server/juego/base/mapas/mapa.h"
+#include "../server/juego/colisiones/colisiones.h"
+#include "../server/juego/geometria.h"
+#include "../server/juego/mapa/mapa.h"
 
 // Test para verificar el comportamiento de las colisiones y la ocupación dinámica de casillas
 TEST(ColisionesTest, CasillaLibreYBloqueadaPorObstaculoDinamico) {
