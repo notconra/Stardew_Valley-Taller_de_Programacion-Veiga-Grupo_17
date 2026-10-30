@@ -1,8 +1,10 @@
 #include "protocolo_servidor.h"
 
 #include <string>
+#include <vector>
 
 #include "../../common/juego/direccion.h"
+#include "../../common/juego/tipo_item.h"
 #include "../../common/mensajes/manejadores_por_tipo.h"
 
 ProtocoloServidor::ProtocoloServidor(ISocket& socket)
@@ -17,6 +19,16 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
            [this] { return recibir_comando_activar_multijugador(); }},
           {TipoMensaje::SALIR_DE_PARTIDA, [this] { return recibir_comando_salir_de_partida(); }},
           {TipoMensaje::MOVERSE, [this] { return recibir_comando_moverse(); }},
+          {TipoMensaje::SELECCIONAR_RANURA_DE_LA_BARRA,
+           [this] { return recibir_comando_seleccionar_ranura_de_la_barra(); }},
+          {TipoMensaje::USAR_ITEM, [this] { return recibir_comando_usar_item(); }},
+          {TipoMensaje::MOVER_ITEM_ENTRE_RANURAS,
+           [this] { return recibir_comando_mover_item_entre_ranuras(); }},
+          {TipoMensaje::ABRIR_COFRE, [this] { return recibir_comando_abrir_cofre(); }},
+          {TipoMensaje::MOVER_ITEM_CON_COFRE,
+           [this] { return recibir_comando_mover_item_con_cofre(); }},
+          {TipoMensaje::SOLICITAR_INVENTARIO,
+           [this] { return recibir_comando_solicitar_inventario(); }},
       } {
 }
 
@@ -82,6 +94,40 @@ Moverse ProtocoloServidor::recibir_comando_moverse() {
     return Moverse{horizontal, vertical};
 }
 
+SeleccionarRanuraDeLaBarra ProtocoloServidor::recibir_comando_seleccionar_ranura_de_la_barra() {
+    uint8_t indice = recibir_u8();
+    return SeleccionarRanuraDeLaBarra{indice};
+}
+
+UsarItem ProtocoloServidor::recibir_comando_usar_item() {
+    uint8_t indice = recibir_u8();
+    return UsarItem{indice};
+}
+
+MoverItemEntreRanuras ProtocoloServidor::recibir_comando_mover_item_entre_ranuras() {
+    uint8_t origen = recibir_u8();
+    uint8_t destino = recibir_u8();
+    uint16_t cantidad = recibir_u16();
+    return MoverItemEntreRanuras{origen, destino, cantidad};
+}
+
+AbrirCofre ProtocoloServidor::recibir_comando_abrir_cofre() {
+    bool cerrar = recibir_u8() != 0;
+    return AbrirCofre{cerrar};
+}
+
+MoverItemConCofre ProtocoloServidor::recibir_comando_mover_item_con_cofre() {
+    uint8_t origen = recibir_u8();
+    uint8_t destino = recibir_u8();
+    uint16_t cantidad = recibir_u16();
+    bool desde_el_cofre = recibir_u8() != 0;
+    return MoverItemConCofre{origen, destino, cantidad, desde_el_cofre};
+}
+
+SolicitarInventario ProtocoloServidor::recibir_comando_solicitar_inventario() {
+    return SolicitarInventario{};
+}
+
 // Envío de eventos
 
 void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
@@ -93,6 +139,8 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const MultijugadorActivado& e) { enviar_evento_multijugador_activado(e); },
             [this](const PartidaAbandonada& e) { enviar_evento_partida_abandonada(e); },
             [this](const PartidaCerradaPorError& e) { enviar_evento_partida_cerrada_por_error(e); },
+            [this](const ActualizacionInventario& e) { enviar_evento_actualizacion_inventario(e); },
+            [this](const ActualizacionCofre& e) { enviar_evento_actualizacion_cofre(e); },
             [this](const EstadoJuego& e) { enviar_estado_juego(e); },
         },
         evento);
@@ -146,6 +194,43 @@ void ProtocoloServidor::enviar_estado_jugador(const EstadoJugador& estado) {
     enviar_u32(static_cast<uint32_t>(estado.y));
     enviar_u8(static_cast<uint8_t>(estado.mirando));
     enviar_u8(estado.camina ? 1 : 0);
+    enviar_u8(estado.ranura_activa);
+}
+
+void ProtocoloServidor::enviar_ranura_inventario(const RanuraInventario& ranura) {
+    enviar_u8(static_cast<uint8_t>(ranura.tipo));
+    enviar_u16(ranura.cantidad);
+    enviar_u8(static_cast<uint8_t>(ranura.calidad));
+}
+
+void ProtocoloServidor::enviar_ranuras(const std::vector<RanuraInventario>& ranuras) {
+    enviar_largo(ranuras.size());
+    for (const RanuraInventario& ranura : ranuras) {
+        enviar_ranura_inventario(ranura);
+    }
+}
+
+void ProtocoloServidor::enviar_inventario_jugador(const InventarioJugador& inventario) {
+    enviar_u32(inventario.id_jugador);
+    enviar_u8(inventario.ranura_activa);
+    enviar_ranuras(inventario.ranuras);
+}
+
+void ProtocoloServidor::enviar_cofre_jugador(const CofreJugador& cofre) {
+    enviar_u32(cofre.id_cofre);
+    enviar_u8(cofre.abierto ? 1 : 0);
+    enviar_ranuras(cofre.ranuras);
+}
+
+void ProtocoloServidor::enviar_evento_actualizacion_inventario(
+    const ActualizacionInventario& actualizacion) {
+    enviar_tipo(TipoMensaje::ACTUALIZACION_INVENTARIO);
+    enviar_inventario_jugador(actualizacion.inventario);
+}
+
+void ProtocoloServidor::enviar_evento_actualizacion_cofre(const ActualizacionCofre& actualizacion) {
+    enviar_tipo(TipoMensaje::ACTUALIZACION_COFRE);
+    enviar_cofre_jugador(actualizacion.cofre);
 }
 
 void ProtocoloServidor::enviar_estado_juego(const EstadoJuego& estado_juego) {

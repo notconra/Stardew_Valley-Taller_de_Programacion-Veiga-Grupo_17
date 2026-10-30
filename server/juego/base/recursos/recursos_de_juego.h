@@ -5,12 +5,14 @@
 #include <string>
 
 #include "../../../configuracion/configuracion_servidor_datos.h"
+#include "../../objetos/catalogo_de_items.h"
 #include "../mapas/mapa.h"
 
 struct RecursosDeJuego {
     std::map<std::string, Mapa> mapas;
     std::string mapa_inicial;
     ConfiguracionJuegoServidor juego;
+    CatalogoDeItems catalogo_de_items;
 
     RecursosDeJuego(
         const std::vector<ConfiguracionMapaServidor>& configuracion_mapas,

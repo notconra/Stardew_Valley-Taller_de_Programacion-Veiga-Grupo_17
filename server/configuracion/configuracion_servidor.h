@@ -29,6 +29,7 @@ private:
     void cargar_partida(const toml::table& archivo_toml);
     void cargar_mapas(const toml::table& archivo_toml);
     void cargar_juego(const toml::table& archivo_toml);
+    void cargar_inventario(const toml::table& inventario);
 
     // Auxiliares de lectura y validación.
     const toml::table& exigir_tabla(
@@ -38,6 +39,8 @@ private:
         const toml::table& tabla, const std::string& clave, const std::string& seccion) const;
     int leer_entero_positivo(
         const toml::table& tabla, const std::string& clave, const std::string& seccion) const;
+    int leer_entero_opcional(
+        const toml::table& tabla, const std::string& clave, int valor_por_defecto) const;
     std::string leer_texto(
         const toml::table& tabla, const std::string& clave, const std::string& seccion) const;
 };

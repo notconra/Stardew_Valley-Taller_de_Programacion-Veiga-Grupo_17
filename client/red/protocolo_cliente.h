@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <map>
+#include <vector>
 
 #include "../../common/mensajes/mensajes.h"
 #include "../../common/protocolo/protocolo.h"
@@ -23,6 +24,13 @@ private:
     void enviar_comando_activar_multijugador(const ActivarMultijugador&);
     void enviar_comando_salir_de_partida(const SalirDePartida& salir_de_partida);
     void enviar_comando_moverse(const Moverse& moverse);
+    void enviar_comando_seleccionar_ranura_de_la_barra(
+        const SeleccionarRanuraDeLaBarra& seleccionar);
+    void enviar_comando_usar_item(const UsarItem& usar);
+    void enviar_comando_mover_item_entre_ranuras(const MoverItemEntreRanuras& mover);
+    void enviar_comando_abrir_cofre(const AbrirCofre& abrir);
+    void enviar_comando_mover_item_con_cofre(const MoverItemConCofre& mover);
+    void enviar_comando_solicitar_inventario(const SolicitarInventario& solicitar);
 
     // Recepción de eventos
     ErrorServidor recibir_error_servidor();
@@ -34,6 +42,12 @@ private:
     PartidaCerradaPorError recibir_partida_cerrada_por_error();
     EstadoJugador recibir_estado_jugador();
     EstadoJuego recibir_estado_juego();
+    RanuraInventario recibir_ranura_inventario();
+    std::vector<RanuraInventario> recibir_ranuras();
+    InventarioJugador recibir_inventario_jugador();
+    CofreJugador recibir_cofre_jugador();
+    ActualizacionInventario recibir_actualizacion_inventario();
+    ActualizacionCofre recibir_actualizacion_cofre();
 
 public:
     explicit ProtocoloCliente(ISocket& socket_conectado);

@@ -1,23 +1,30 @@
 #include "mundo.h"
 
 #include <algorithm>
+#include <string>
 #include <tuple>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "./../../common/mensajes/manejadores_por_tipo.h"
 
 Mundo::Mundo(const RecursosDeJuego& recursos_de_juego, uint8_t ticks_por_segundo)
-    : recursos(recursos_de_juego) {
+    : gestor_inventario(recursos_de_juego.catalogo_de_items, recursos_de_juego.juego.inventario),
+      recursos(recursos_de_juego) {
     for (const auto& [id_mapa, mapa] : recursos.mapas) {
-        colisiones_por_mapa.emplace(id_mapa, mapa);
+        colisiones_por_mapa.try_emplace(id_mapa, mapa);
     }
+
     for (const auto& [id_mapa, mapa] : recursos.mapas) {
         jugadores_por_mapa.emplace(
             id_mapa,
             Jugadores(
-                mapa, colisiones_por_mapa.at(id_mapa), ticks_por_segundo,
-                recursos.juego.movimiento, recursos.juego.aparicion));
+                mapa,
+                colisiones_por_mapa.at(id_mapa),
+                ticks_por_segundo,
+                recursos.juego.movimiento,
+                recursos.juego.aparicion));
     }
 }
 
@@ -43,7 +50,11 @@ void Mundo::sincronizar_jugadores(const std::vector<uint32_t>& ids_conectados) {
         jugadores_por_mapa.at(recursos.mapa_inicial).agregar_en_aparicion(id_jugador);
         mapa_actual[id_jugador] = recursos.mapa_inicial;
     }
+
+    // Sincronizamos también el inventario de los conectados
+    gestor_inventario.sincronizar_conectados(ids_conectados);
 }
+
 void Mundo::cambiar_de_mapa(
     uint32_t id_jugador, const std::string& mapa_origen, const Transicion& transicion) {
     jugadores_por_mapa.at(mapa_origen).quitar(id_jugador);
@@ -56,18 +67,30 @@ void Mundo::cambiar_de_mapa(
     mapa_actual[id_jugador] = transicion.mapa_destino;
 }
 
-void Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
+bool Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
     const auto encontrado = mapa_actual.find(id_jugador);
     if (encontrado == mapa_actual.end()) {
-        return;
+        return false;
     }
     Jugadores& jugadores = jugadores_por_mapa.at(encontrado->second);
-    std::visit(
+
+    return std::visit(
         ManejadoresPorTipo{
             [&jugadores, id_jugador](const Moverse& pedido) {
                 jugadores.moverse(id_jugador, pedido);
+                return false;
             },
-            [](const auto&) {},
+            [this, id_jugador](const SeleccionarRanuraDeLaBarra& pedido) {
+                return gestor_inventario.seleccionar_ranura_de_la_barra(
+                    id_jugador,
+                    pedido.indice_ranura);
+            },
+            [this, id_jugador](const MoverItemEntreRanuras& pedido) {
+                return gestor_inventario
+                    .mover_item(id_jugador, pedido.origen, pedido.destino, pedido.cantidad);
+            },
+            [](const SolicitarInventario&) { return true; },
+            [](const auto&) { return false; },
         },
         comando);
 }
@@ -93,5 +116,16 @@ EstadoJuego Mundo::estado() const {
     for (const auto& [id_mapa, jugadores] : jugadores_por_mapa) {
         jugadores.agregar_a(estado_juego, id_mapa);
     }
+
+    for (EstadoJugador& jugador : estado_juego.jugadores) {
+        jugador.ranura_activa = gestor_inventario.obtener_ranura_activa(jugador.id_jugador);
+    }
+
     return estado_juego;
+}
+
+ActualizacionInventario Mundo::obtener_inventario(uint32_t id_jugador) const {
+    ActualizacionInventario actualizacion;
+    actualizacion.inventario = gestor_inventario.obtener_inventario_para_enviar(id_jugador);
+    return actualizacion;
 }

@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <map>
+#include <vector>
 
 #include "../../common/mensajes/mensajes.h"
 #include "../../common/protocolo/protocolo.h"
@@ -23,6 +24,12 @@ private:
     ActivarMultijugador recibir_comando_activar_multijugador();
     SalirDePartida recibir_comando_salir_de_partida();
     Moverse recibir_comando_moverse();
+    SeleccionarRanuraDeLaBarra recibir_comando_seleccionar_ranura_de_la_barra();
+    UsarItem recibir_comando_usar_item();
+    MoverItemEntreRanuras recibir_comando_mover_item_entre_ranuras();
+    AbrirCofre recibir_comando_abrir_cofre();
+    MoverItemConCofre recibir_comando_mover_item_con_cofre();
+    SolicitarInventario recibir_comando_solicitar_inventario();
 
     // Envío de eventos
     void enviar_evento_error_servidor(const ErrorServidor& error_servidor);
@@ -37,6 +44,12 @@ private:
 
     // partida
     void enviar_estado_jugador(const EstadoJugador& estado);
+    void enviar_ranura_inventario(const RanuraInventario& ranura);
+    void enviar_ranuras(const std::vector<RanuraInventario>& ranuras);
+    void enviar_inventario_jugador(const InventarioJugador& inventario);
+    void enviar_cofre_jugador(const CofreJugador& cofre);
+    void enviar_evento_actualizacion_inventario(const ActualizacionInventario& actualizacion);
+    void enviar_evento_actualizacion_cofre(const ActualizacionCofre& actualizacion);
     void enviar_estado_juego(const EstadoJuego& estado_juego);
 
 public:

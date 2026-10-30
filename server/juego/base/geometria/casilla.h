@@ -5,6 +5,8 @@
 struct Casilla {
     int columna;
     int fila;
+
+    bool operator==(const Casilla&) const = default;
 };
 
 #endif
