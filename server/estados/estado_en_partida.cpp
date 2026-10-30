@@ -21,13 +21,13 @@ std::string EstadoEnPartida::nombre() const {
 EstadoDeConexion::ProximoEstado EstadoEnPartida::activar_multijugador(const ActivarMultijugador&) {
     contexto.administrador.hacer_multijugador(codigo_partida, contexto.identidad.id_cliente);
 
-    encolar(MultijugadorActivado{codigo_partida}, "MultijugadorActivado " + codigo_partida);
+    encolar(MultijugadorActivado{codigo_partida});
     return nullptr;
 }
 
 EstadoDeConexion::ProximoEstado EstadoEnPartida::salir_de_partida(const SalirDePartida&) {
     abandonar();
-    encolar(PartidaAbandonada{}, "PartidaAbandonada");
+    encolar(PartidaAbandonada{});
     return std::make_unique<EstadoLobby>(contexto);
 }
 
