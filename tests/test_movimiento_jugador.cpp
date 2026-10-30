@@ -1,18 +1,3 @@
-/*
-El objetivo es testear las reglas de negocio esenciales sobre el movimiento de los jugadores por el
-mapa. Funcionalidades cubiertas por el test:
-
-- Movimiento libre en los ejes horizontal y vertical según la velocidad configurada.
-
-- Colisiones con las paredes, validando que el jugador se frene y "deslice" correctamente sin
-atravesar los obstáculos.
-
-- Restricción de velocidad en diagonal (evitando que se mueva más rápido en diagonal debido al
-vector unitario).
-
-- Sincronización y actualización de estados.
-*/
-
 #include <gtest/gtest.h>
 
 #include "../server/configuracion/configuracion_servidor_datos.h"
