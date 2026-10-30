@@ -12,13 +12,11 @@
 #include "ui_pantallaprincipal.h"
 
 PantallaPrincipal::PantallaPrincipal(
-    ConexionConServidor& conexion, EntradaExitosaAPartida& partida_actual, uint32_t id_cliente,
-    QWidget* parent)
+    ConexionConServidor& conexion, EntradaExitosaAPartida& partida_actual, QWidget* parent)
     : QMainWindow(parent),
       ui(new Ui::PantallaPrincipal),
       conexion(conexion),
-      partida_actual(partida_actual),
-      id_cliente(id_cliente) {
+      partida_actual(partida_actual) {
     ui->setupUi(this);
     configurar_ventana();
     connect(ui->btn_salir, &QPushButton::clicked, this, &PantallaPrincipal::close);
@@ -238,7 +236,7 @@ void PantallaPrincipal::llenar_lista_partidas(const ListaPartidas& lista) {
         item_codigo->setTextAlignment(Qt::AlignCenter);
 
         QString jugadores_str =
-            QString("%1/%2").arg(partida.jugadores_actuales).arg(partida.jugadores_maximos);
+            QString("%1/%2").arg(partida.jugadores_totales).arg(partida.jugadores_maximos);
         auto* item_jugadores = new QTableWidgetItem(jugadores_str);
         item_jugadores->setTextAlignment(Qt::AlignCenter);
 

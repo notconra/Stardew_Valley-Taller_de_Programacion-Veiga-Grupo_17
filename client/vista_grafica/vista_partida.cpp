@@ -199,8 +199,8 @@ void VistaPartida::dibujar(
         [this](const EstadoJugador& jugador) { return jugador.id_jugador == id_jugador; });
     if (propio != ultimo_estado_juego.jugadores.end()) {
         camara.centrar_en(
-            propio->x,
-            propio->y,
+            static_cast<int>(propio->x),
+            static_cast<int>(propio->y),
             personaje.ancho_del_sprite(),
             personaje.alto_del_sprite());
     }

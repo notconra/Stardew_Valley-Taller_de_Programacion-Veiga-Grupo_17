@@ -46,8 +46,8 @@ void Personaje::dibujar(
 
     const SDL_Rect origen = {columna * ancho, fila_del_sprite * alto, ancho, alto};
     const SDL_Rect destino = {
-        jugador.x * escala_de_tiles - cam_x,
-        jugador.y * escala_de_tiles - cam_y,
+        static_cast<int>(jugador.x) * escala_de_tiles - cam_x,
+        static_cast<int>(jugador.y) * escala_de_tiles - cam_y,
         ancho * escala_de_tiles,
         alto * escala_de_tiles};
     SDL_RenderCopy(renderer, textura.ptr(), &origen, &destino);
