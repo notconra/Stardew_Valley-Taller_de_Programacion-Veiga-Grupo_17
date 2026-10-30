@@ -5,10 +5,7 @@
 #include <string>
 #include <thread>
 #include <utility>
-#include <variant>
 #include <vector>
-
-#include "./../../common/mensajes/manejadores_por_tipo.h"
 
 SesionDePartida::SesionDePartida(
     const std::string& codigo_de_partida, const ConfiguracionPartidaServidor& configuracion_partida,
@@ -73,15 +70,6 @@ void SesionDePartida::procesar_comandos() {
         }
     } catch (const ClosedQueue&) {
     }
-}
-
-void SesionDePartida::procesar_pedido(const ComandoDeJugador& pedido) {
-    std::visit(
-        ManejadoresPorTipo{
-            [this, &pedido](const Moverse& c) { mundo.atender(pedido.id_jugador, c); },
-            [](const auto&) {},
-        },
-        pedido.comando);
 }
 
 void SesionDePartida::difundir(const EventoServidor& evento) {

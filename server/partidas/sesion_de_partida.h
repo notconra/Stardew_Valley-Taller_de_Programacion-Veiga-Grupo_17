@@ -43,7 +43,6 @@ private:
 
     void sincronizar_jugadores();
     void procesar_comandos();
-    void procesar_pedido(const ComandoDeJugador& pedido);
     void difundir(const EventoServidor& evento);
     void difundir_cierre();
 
