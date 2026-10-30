@@ -2,12 +2,58 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <algorithm>
 
-ConfiguracionCliente::ConfiguracionCliente(const std::string& ruta) {
+#include "../persistencia/identidad_cliente.h"
+
+ConfiguracionCliente::ConfiguracionCliente(int argc, char* argv[]) {
+    if (argc != 2 && argc != 4) {
+        throw std::invalid_argument("cantidad inválida de argumentos");
+    }
+
+    const std::string ruta = argv[1];
+    uint32_t id_override = 0;
+
+    if (argc == 4) {
+        if (std::string_view(argv[2]) != "--id") {
+            throw std::invalid_argument(
+                std::string("argumento inesperado: '") + argv[2] + "', se esperaba '--id <N>'");
+        }
+        id_override = validar_id(argv[3]);
+    }
+
+    inicializar(ruta, id_override);
+}
+
+uint32_t ConfiguracionCliente::validar_id(const std::string& id_en_texto) const {
+    if (id_en_texto.empty()) {
+        throw std::invalid_argument("el ID de cliente no puede estar vacío");
+    }
+    for (char caracter : id_en_texto) {
+        if (caracter < '0' || caracter > '9') {
+            throw std::invalid_argument(
+                "el ID de cliente debe ser un número entero positivo: " + id_en_texto);
+        }
+    }
+    try {
+        unsigned long id_numerico = std::stoul(id_en_texto);
+        if (id_numerico == 0 || id_numerico > std::numeric_limits<uint32_t>::max()) {
+            throw std::invalid_argument(
+                "el ID de cliente debe ser mayor a 0 y menor a " +
+                std::to_string(std::numeric_limits<uint32_t>::max()));
+        }
+        return static_cast<uint32_t>(id_numerico);
+    } catch (const std::out_of_range&) {
+        throw std::invalid_argument("valor de ID fuera de rango: " + id_en_texto);
+    }
+}
+
+void ConfiguracionCliente::inicializar(const std::string& ruta, uint32_t id_override) {
     toml::table archivo_toml;
     try {
         archivo_toml = toml::parse_file(ruta);
@@ -18,6 +64,7 @@ ConfiguracionCliente::ConfiguracionCliente(const std::string& ruta) {
     }
 
     cargar_toml(archivo_toml);
+    id_del_cliente = (id_override > 0) ? id_override : IdentidadCliente::obtener_o_crear();
 }
 
 void ConfiguracionCliente::cargar_toml(const toml::table& archivo_toml) {
@@ -258,4 +305,8 @@ const ConfiguracionConexion& ConfiguracionCliente::servidor() const {
 
 const ConfiguracionVista& ConfiguracionCliente::vista() const {
     return configuracion_vista;
+}
+
+uint32_t ConfiguracionCliente::id_cliente() const {
+    return id_del_cliente;
 }

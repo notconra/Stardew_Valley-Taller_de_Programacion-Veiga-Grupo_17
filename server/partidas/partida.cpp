@@ -64,16 +64,26 @@ void Partida::hacer_multijugador(uint32_t id_cliente) {
     multijugador = true;
 }
 
+EntradaExitosaAPartida Partida::reconectar(uint32_t id_cliente) {
+    Jugador* jugador = buscar_jugador(id_cliente);
+    if (jugador == nullptr) {
+        throw ErrorDePartida(
+            CodigoError::NO_PERMITIDO,
+            "no sos miembro de la partida \"" + nombre + "\"");
+    }
+    if (jugador->conectado) {
+        throw ErrorDePartida(
+            CodigoError::NO_PERMITIDO,
+            "ya estás conectado a la partida \"" + nombre + "\"");
+    }
+    jugador->conectado = true;
+    return EntradaExitosaAPartida{codigo, jugador->id_jugador};
+}
+
 EntradaExitosaAPartida Partida::conectar(uint32_t id_cliente, const std::string& nombre_jugador) {
     Jugador* jugador = buscar_jugador(id_cliente);
     if (jugador != nullptr) {
-        if (jugador->conectado) {
-            throw ErrorDePartida(
-                CodigoError::NO_PERMITIDO,
-                "ya estás conectado a la partida \"" + nombre + "\"");
-        }
-        jugador->conectado = true;
-        return EntradaExitosaAPartida{codigo, jugador->id_jugador};
+        return reconectar(id_cliente);
     }
 
     // un jugador nuevo solo entra a una partida multijugador y mientras queden lugares sin ocupar.

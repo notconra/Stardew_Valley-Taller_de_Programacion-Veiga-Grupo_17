@@ -1,25 +1,25 @@
 #include "pantallaprincipal.h"
 
+#include <QHeaderView>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QTableWidgetItem>
 #include <iostream>
 #include <random>
+#include <string>
 #include <unordered_map>
 
 #include "ui_pantallaprincipal.h"
 
 PantallaPrincipal::PantallaPrincipal(
-    ConexionConServidor& conexion, EntradaExitosaAPartida& partida_actual, QWidget* parent)
+    ConexionConServidor& conexion, EntradaExitosaAPartida& partida_actual, uint32_t id_cliente,
+    QWidget* parent)
     : QMainWindow(parent),
       ui(new Ui::PantallaPrincipal),
       conexion(conexion),
-      partida_actual(partida_actual) {
+      partida_actual(partida_actual),
+      id_cliente(id_cliente) {
     ui->setupUi(this);
-    std::random_device rd;
-    id_cliente = rd();
-    if (id_cliente == 0) {
-        id_cliente = 1;
-    }
     configurar_ventana();
     connect(ui->btn_salir, &QPushButton::clicked, this, &PantallaPrincipal::close);
     connect(
@@ -43,6 +43,26 @@ PantallaPrincipal::PantallaPrincipal(
         &QPushButton::clicked,
         this,
         &PantallaPrincipal::confirmar_personaje);
+    connect(
+        ui->btn_volver_retomar,
+        &QPushButton::clicked,
+        this,
+        &PantallaPrincipal::volver_al_menu);
+    connect(
+        ui->btn_jugar_retomar,
+        &QPushButton::clicked,
+        this,
+        &PantallaPrincipal::confirmar_retomar_partida);
+    connect(
+        ui->tabla_partidas,
+        &QTableWidget::itemSelectionChanged,
+        this,
+        &PantallaPrincipal::actualizar_seleccion_partida);
+    connect(
+        ui->tabla_partidas,
+        &QTableWidget::cellDoubleClicked,
+        this,
+        &PantallaPrincipal::confirmar_retomar_partida);
 }
 
 PantallaPrincipal::~PantallaPrincipal() {
@@ -56,7 +76,14 @@ void PantallaPrincipal::configurar_ventana() {
     ui->centralwidget->setMaximumSize(16777215, 16777215);
     ui->stackedWidget->setMaximumSize(16777215, 16777215);
 
+    configurar_tabla_partidas();
     ui->stackedWidget->setCurrentIndex(0);
+}
+
+void PantallaPrincipal::configurar_tabla_partidas() {
+    ui->tabla_partidas->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    ui->tabla_partidas->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    ui->tabla_partidas->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
 }
 
 void PantallaPrincipal::volver_al_menu() {
@@ -93,15 +120,10 @@ void PantallaPrincipal::confirmar_personaje() {
                   << ")\n";
     }
 
-    if (!identificado) {
-        conexion.enviar_comando(Identificarse{id_cliente, nombre.toStdString()});
-        identificado = true;
-    }
-
     if (es_modo_unirse) {
-        conexion.enviar_comando(UnirsePartida{codigo_partida_a_unirse});
+        conexion.enviar_comando(UnirsePartida{codigo_partida_a_unirse, nombre.toStdString()});
     } else {
-        conexion.enviar_comando(CrearPartida{granja.toStdString()});
+        conexion.enviar_comando(CrearPartida{granja.toStdString(), nombre.toStdString()});
     }
 
     try {
@@ -154,6 +176,7 @@ bool PantallaPrincipal::procesar_evento_ingreso(const EventoServidor& evento) {
         std::cerr << "Error del servidor: " << error.detalle << "\n";
         QMessageBox::warning(this, "Error", describir_error(error));
         ui->btn_confirmar_personaje->setEnabled(true);
+        ui->btn_jugar_retomar->setEnabled(true);
         return true;
     }
 
@@ -176,7 +199,92 @@ void PantallaPrincipal::preparar_nueva_partida() {
 }
 
 void PantallaPrincipal::preparar_retomar_partida() {
-    std::cout << "Lista de Partidas Guardadas pruebita\n";
+    conexion.enviar_comando(ListarPartidas{});
+    ui->tabla_partidas->setRowCount(0);
+    ui->btn_jugar_retomar->setEnabled(false);
+
+    try {
+        bool lista_recibida = false;
+        while (!lista_recibida) {
+            EventoServidor evento = conexion.esperar_evento();
+            if (std::holds_alternative<ListaPartidas>(evento)) {
+                llenar_lista_partidas(std::get<ListaPartidas>(evento));
+                lista_recibida = true;
+            } else if (std::holds_alternative<ErrorServidor>(evento)) {
+                const auto& error = std::get<ErrorServidor>(evento);
+                std::cerr << "Error del servidor al listar partidas: " << error.detalle << "\n";
+                QMessageBox::warning(this, "Error", describir_error(error));
+                return;
+            }
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error de conexión al listar partidas: " << e.what() << "\n";
+        QMessageBox::critical(this, "Error de conexión", "Se perdió la conexión con el servidor.");
+        return;
+    }
+
+    ui->stackedWidget->setCurrentIndex(2);
+}
+
+void PantallaPrincipal::llenar_lista_partidas(const ListaPartidas& lista) {
+    ui->tabla_partidas->setRowCount(0);
+    ui->tabla_partidas->setRowCount(static_cast<int>(lista.partidas.size()));
+
+    for (int i = 0; i < static_cast<int>(lista.partidas.size()); ++i) {
+        const auto& partida = lista.partidas[i];
+
+        auto* item_nombre = new QTableWidgetItem(QString::fromStdString(partida.nombre_partida));
+        auto* item_codigo = new QTableWidgetItem(QString::fromStdString(partida.codigo_partida));
+        item_codigo->setTextAlignment(Qt::AlignCenter);
+
+        QString jugadores_str =
+            QString("%1/%2").arg(partida.jugadores_actuales).arg(partida.jugadores_maximos);
+        auto* item_jugadores = new QTableWidgetItem(jugadores_str);
+        item_jugadores->setTextAlignment(Qt::AlignCenter);
+
+        ui->tabla_partidas->setItem(i, 0, item_nombre);
+        ui->tabla_partidas->setItem(i, 1, item_codigo);
+        ui->tabla_partidas->setItem(i, 2, item_jugadores);
+    }
+}
+
+void PantallaPrincipal::actualizar_seleccion_partida() {
+    bool hay_seleccion = !ui->tabla_partidas->selectedItems().isEmpty();
+    ui->btn_jugar_retomar->setEnabled(hay_seleccion);
+}
+
+void PantallaPrincipal::confirmar_retomar_partida() {
+    int fila = ui->tabla_partidas->currentRow();
+    if (fila < 0) {
+        return;
+    }
+
+    QTableWidgetItem* item_codigo = ui->tabla_partidas->item(fila, 1);
+    if (!item_codigo) {
+        return;
+    }
+
+    std::string codigo = item_codigo->text().trimmed().toStdString();
+    if (codigo.empty()) {
+        return;
+    }
+
+    es_modo_unirse = true;
+    ui->btn_jugar_retomar->setEnabled(false);
+
+    try {
+        conexion.enviar_comando(RetomarPartida{codigo});
+
+        bool procesado = false;
+        while (!procesado) {
+            EventoServidor evento = conexion.esperar_evento();
+            procesado = procesar_evento_ingreso(evento);
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error al retomar la partida: " << e.what() << "\n";
+        QMessageBox::critical(this, "Error de conexión", "Se perdió la conexión con el servidor.");
+        ui->btn_jugar_retomar->setEnabled(true);
+    }
 }
 
 void PantallaPrincipal::preparar_unirse_partida() {

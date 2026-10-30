@@ -15,13 +15,12 @@ std::string EstadoSinIdentificar::nombre() const {
 }
 
 EstadoDeConexion::ProximoEstado EstadoSinIdentificar::identificarse(const Identificarse& comando) {
-    if (comando.nombre_jugador.empty()) {
-        responder_error(CodigoError::NO_PERMITIDO, "el nombre no puede estar vacío");
+    if (comando.id_cliente == 0) {
+        responder_error(CodigoError::NO_PERMITIDO, "el id de cliente debe ser mayor a 0");
         return nullptr;
     }
 
     contexto.identidad.id_cliente = comando.id_cliente;
-    contexto.identidad.nombre_jugador = comando.nombre_jugador;
 
     return std::make_unique<EstadoLobby>(contexto);
 }

@@ -4,17 +4,14 @@
 #include "cliente.h"
 #include "configuracion/configuracion_cliente.h"
 
-#define CANTIDAD_ARGUMENTOS 2
-#define INDICE_CONFIGURACION 1
-
 int main(int argc, char* argv[]) {
-    if (argc != CANTIDAD_ARGUMENTOS) {
-        std::cerr << "Comando de ejecución: " << argv[0] << " <ruta_al_archivo.toml>\n";
+    if (argc != 2 && argc != 4) {
+        std::cerr << "Comando de ejecución: " << argv[0] << " <ruta_al_archivo.toml> [--id <N>]\n";
         return -1;
     }
 
     try {
-        const ConfiguracionCliente configuracion(argv[INDICE_CONFIGURACION]);
+        const ConfiguracionCliente configuracion(argc, argv);
         Cliente cliente(configuracion);
         cliente.ejecutar();
     } catch (const std::exception& error) {

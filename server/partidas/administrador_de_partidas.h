@@ -61,6 +61,8 @@ public:
     IngresoAPartida unirse(
         uint32_t id_cliente, const std::string& nombre_jugador, const std::string& codigo_partida);
 
+    IngresoAPartida retomar(uint32_t id_cliente, const std::string& codigo_partida);
+
     // Permite que se unan jugadores nuevos, sólo lo puede pedir un jugador de
     // la partida.
     void hacer_multijugador(const std::string& codigo_partida, uint32_t id_cliente);

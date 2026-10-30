@@ -108,6 +108,39 @@ IngresoAPartida AdministradorDePartidas::unirse(
     }
 }
 
+IngresoAPartida AdministradorDePartidas::retomar(
+    uint32_t id_cliente, const std::string& codigo_partida) {
+    std::lock_guard<std::mutex> lock(mutex);
+
+    Partida& partida = buscar_partida(codigo_partida);
+    if (!partida.es_miembro(id_cliente)) {
+        throw ErrorDePartida(
+            CodigoError::NO_PERMITIDO,
+            "no sos miembro de la partida \"" + codigo_partida + "\"");
+    }
+
+    const auto sesion_existente = sesiones.find(codigo_partida);
+    if (sesion_existente != sesiones.end() && !sesion_existente->second.esta_viva()) {
+        throw ErrorDePartida(
+            CodigoError::PARTIDA_CERRADA,
+            "la partida " + codigo_partida + " se cerró por un error interno");
+    }
+
+    const bool habia_sesion = (sesion_existente != sesiones.end());
+    const std::string codigo = codigo_partida;
+    auto sesion_creada = sesiones.try_emplace(codigo, codigo, configuracion, recursos).first;
+
+    try {
+        const EntradaExitosaAPartida entrada = partida.reconectar(id_cliente);
+        return IngresoAPartida{entrada, sesion_creada->second};
+    } catch (...) {
+        if (!habia_sesion) {
+            sesiones.erase(sesion_creada);
+        }
+        throw;
+    }
+}
+
 void AdministradorDePartidas::hacer_multijugador(
     const std::string& codigo_partida, uint32_t id_cliente) {
     std::lock_guard<std::mutex> lock(mutex);
