@@ -24,6 +24,9 @@ int leer_entero(const toml::table& tabla, const std::string& clave, const std::s
 int leer_entero_positivo(
     const toml::table& tabla, const std::string& clave, const std::string& seccion);
 
+// Si la clave no está, devuelve el valor por defecto; si está, exige que sea un entero.
+int leer_entero_opcional(const toml::table& tabla, const std::string& clave, int valor_por_defecto);
+
 bool leer_booleano(const toml::table& tabla, const std::string& clave, const std::string& seccion);
 
 // Exige que la clave exista y no esté vacía.

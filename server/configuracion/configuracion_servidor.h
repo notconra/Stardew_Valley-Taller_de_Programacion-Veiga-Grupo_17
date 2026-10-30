@@ -30,6 +30,7 @@ private:
     void cargar_partida(const toml::table& archivo_toml);
     void cargar_mapas(const toml::table& archivo_toml);
     void cargar_juego(const toml::table& archivo_toml);
+    void cargar_inventario(const toml::table& inventario);
 };
 
 #endif

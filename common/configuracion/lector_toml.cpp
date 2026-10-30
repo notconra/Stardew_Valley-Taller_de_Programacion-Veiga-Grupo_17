@@ -53,6 +53,20 @@ int leer_entero_positivo(
     return valor;
 }
 
+int leer_entero_opcional(
+    const toml::table& tabla, const std::string& clave, int valor_por_defecto) {
+    const toml::node* nodo = tabla.get(clave);
+    if (nodo == nullptr) {
+        return valor_por_defecto;
+    }
+    const auto valor = nodo->value<int>();
+    if (!valor) {
+        throw std::runtime_error(
+            "configuración: la clave '" + clave + "' debe ser un número entero");
+    }
+    return *valor;
+}
+
 bool leer_booleano(const toml::table& tabla, const std::string& clave, const std::string& seccion) {
     const auto valor = tabla[clave].value<bool>();
     if (!valor) {

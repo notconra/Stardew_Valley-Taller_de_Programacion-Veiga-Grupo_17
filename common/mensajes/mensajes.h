@@ -10,15 +10,19 @@
 
 // Único lugar donde se listan todos los mensajes que viajan por la red.
 // Para agregar un mensaje nuevo hay que definir su struct en mensajes/, agregarlo al variant que
-// corresponda acá, agregar su valor en tipo_mensaje, escribir su recibir_algo() y su leer_algo() en
-// ProtocoloServidor y ProtocoloCliente.
+// corresponda acá, agregar su valor en tipo_mensaje, escribir su recibir_algo() y su enviar_algo()
+// en ProtocoloServidor y ProtocoloCliente.
 
 using ComandoCliente = std::variant<
     // Lobby
     Identificarse, ListarPartidas, CrearPartida, UnirsePartida, RetomarPartida,
 
     // Partida
-    ActivarMultijugador, SalirDePartida, Moverse>;
+    ActivarMultijugador, SalirDePartida, Moverse,
+
+    // Inventario / acciones
+    SeleccionarRanuraDeLaBarra, UsarItem, MoverItemEntreRanuras, AbrirCofre, MoverItemConCofre,
+    SolicitarInventario>;
 
 using EventoServidor = std::variant<
     // Error
@@ -28,6 +32,9 @@ using EventoServidor = std::variant<
     ListaPartidas, EntradaExitosaAPartida,
 
     // Partida
-    MultijugadorActivado, PartidaAbandonada, PartidaCerradaPorError, EstadoJuego>;
+    MultijugadorActivado, PartidaAbandonada, PartidaCerradaPorError, EstadoJuego,
+
+    // Inventario y cofres
+    ActualizacionInventario, ActualizacionCofre>;
 
 #endif

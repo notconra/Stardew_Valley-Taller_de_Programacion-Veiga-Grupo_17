@@ -62,3 +62,6 @@ ruta_tmx = "Assets/Maps/Mines/1.tmx"
 # x = 200
 # y = 150
 # paso_de_busqueda = 8
+
+[juego.inventario]
+# cantidad_ranuras_barra = 10

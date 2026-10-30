@@ -6,6 +6,7 @@
 #include <chrono>
 #include <iostream>
 #include <map>
+#include <optional>
 #include <string>
 #include <thread>
 #include <variant>
@@ -14,12 +15,17 @@
 #include "inicio_de_sdl.h"
 #include "ventana.h"
 
-// esto vuela
 const char AYUDA_DE_TECLAS[] =
     "Teclas (en la ventana):\n"
-    "  flechas / WASD   mover al personaje\n"
-    "  M                permitir que otros jugadores se unan (el código sale acá)\n"
-    "  ESC              salir de la partida y volver al lobby\n";
+    "  flechas / WASD    mover al personaje\n"
+    "  1-9 / 0           elegir ranura de la barra de herramientas\n"
+    "  rueda del ratón   recorrer la barra de herramientas\n"
+    "  clic izquierdo    agarrar/soltar el stack completo (o tirarlo al tacho)\n"
+    "  clic derecho      agarrar/soltar un solo ítem\n"
+    "  E                 usar el ítem de la ranura activa (por ejemplo, colocar un cofre)\n"
+    "  F                 abrir/cerrar el cofre que tenés enfrente\n"
+    "  M                 permitir que otros jugadores se unan (el código sale acá)\n"
+    "  ESC               salir de la partida y volver al lobby\n";
 
 VistaPartida::VistaPartida(
     ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion_vista)
@@ -41,6 +47,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     id_jugador = partida.id_jugador;
     intencion_enviada = Moverse{};
     ultimo_estado_juego = EstadoJuego{};
+    ultimo_inventario = InventarioJugador{};
+    ultimo_cofre = CofreJugador{};
     mapa_actual = configuracion.mapa_inicial;
 
     std::cout << "\n=== EN PARTIDA " << partida.codigo_partida << " (jugador " << partida.id_jugador
@@ -62,6 +70,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
 
     Personaje personaje(configuracion.jugador, configuracion.graficos, renderizador.ptr());
     EntradaDelUsuario entrada;
+    HudInventario hud(renderizador.ptr());
+    hud.configurar(configuracion.ventana.ancho, configuracion.ventana.alto);
     Camara camara(
         configuracion.ventana.ancho,
         configuracion.ventana.alto,
@@ -80,6 +90,9 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
         if (entrada.pidio_multijugador()) {
             conexion.enviar_comando(ActivarMultijugador{});
+        }
+        if (entrada.pidio_usar_item()) {
+            conexion.enviar_comando(UsarItem{INDICE_RANURA_ACTIVA});
         }
 
         enviar_intencion_si_cambio(entrada.intencion());
@@ -109,7 +122,16 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
                 configuracion.graficos.escala_de_tiles);
         }
 
-        dibujar(renderizador, mapas_cargados.at(mapa_actual), personaje, camara);
+        procesar_inventario(entrada, hud);
+
+        dibujar(
+            renderizador,
+            mapas_cargados.at(mapa_actual),
+            personaje,
+            camara,
+            hud,
+            entrada.raton_x(),
+            entrada.raton_y());
     }
 }
 
@@ -123,8 +145,6 @@ int VistaPartida::alto_del_mapa_en_pantalla(const MapaGrafico& mapa) const {
            configuracion.graficos.escala_de_tiles;
 }
 
-// Se manda el ESTADO ("ahora voy hacia X" / "me quedo quieto"), no un mensaje por frame, asi el
-// servidor es quien hace avanzar al jugador en cada tick mientras no le llegue otra dirección.
 void VistaPartida::enviar_intencion_si_cambio(const Moverse& intencion) {
     if (intencion == intencion_enviada) {
         return;
@@ -133,13 +153,57 @@ void VistaPartida::enviar_intencion_si_cambio(const Moverse& intencion) {
     intencion_enviada = intencion;
 }
 
+void VistaPartida::procesar_inventario(const EntradaDelUsuario& entrada, HudInventario& hud) {
+    const int ranura_pedida = entrada.ranura_de_la_barra_pedida_por_tecla();
+    if (ranura_pedida >= 0 && ranura_pedida < static_cast<int>(ultimo_inventario.ranuras.size())) {
+        conexion.enviar_comando(SeleccionarRanuraDeLaBarra{static_cast<uint8_t>(ranura_pedida)});
+    } else if (
+        entrada.desplazamiento_de_la_barra_pedido() != 0 && !ultimo_inventario.ranuras.empty()) {
+        const int cantidad = static_cast<int>(ultimo_inventario.ranuras.size());
+        int nueva = (static_cast<int>(ultimo_inventario.ranura_activa) +
+                     entrada.desplazamiento_de_la_barra_pedido()) %
+                    cantidad;
+        if (nueva < 0) {
+            nueva += cantidad;
+        }
+        if (nueva != static_cast<int>(ultimo_inventario.ranura_activa)) {
+            conexion.enviar_comando(SeleccionarRanuraDeLaBarra{static_cast<uint8_t>(nueva)});
+        }
+    }
+
+    if (entrada.pidio_clic_izquierdo()) {
+        const std::optional<ComandoCliente> comando = hud.procesar_clic_izquierdo(
+            ultimo_inventario,
+            ultimo_cofre,
+            entrada.raton_x(),
+            entrada.raton_y());
+        if (comando.has_value()) {
+            conexion.enviar_comando(comando.value());
+        }
+    }
+
+    if (entrada.pidio_clic_derecho()) {
+        const std::optional<ComandoCliente> comando = hud.procesar_clic_derecho(
+            ultimo_inventario,
+            ultimo_cofre,
+            entrada.raton_x(),
+            entrada.raton_y());
+        if (comando.has_value()) {
+            conexion.enviar_comando(comando.value());
+        }
+    }
+}
+
 bool VistaPartida::recibir_eventos() {
     EventoServidor evento;
     while (conexion.intentar_evento(evento)) {
         if (const auto* estado_juego = std::get_if<EstadoJuego>(&evento)) {
             ultimo_estado_juego = *estado_juego;
+        } else if (const auto* inventario = std::get_if<ActualizacionInventario>(&evento)) {
+            ultimo_inventario = inventario->inventario;
+        } else if (const auto* cofre = std::get_if<ActualizacionCofre>(&evento)) {
+            ultimo_cofre = cofre->cofre;
         } else if (const auto* activado = std::get_if<MultijugadorActivado>(&evento)) {
-            // habrá q sacar esto eventualmente para hacerlo bien
             std::cout << "[partida] multijugador activado, código para invitar: "
                       << activado->codigo_partida << std::endl;
         } else if (const auto* error = std::get_if<ErrorServidor>(&evento)) {
@@ -155,7 +219,6 @@ bool VistaPartida::recibir_eventos() {
             std::cout << "[partida] la partida terminó, volvés al lobby" << std::endl;
             return false;
         }
-        // cualquier otro evento por ahora se ignora
     }
     return true;
 }
@@ -189,8 +252,8 @@ bool VistaPartida::salir_de_partida_y_confirmar() {
 }
 
 void VistaPartida::dibujar(
-    Renderizador& renderizador, const MapaGrafico& mapa, const Personaje& personaje,
-    Camara& camara) {
+    Renderizador& renderizador, const MapaGrafico& mapa, const Personaje& personaje, Camara& camara,
+    const HudInventario& hud, int raton_x, int raton_y) {
     SDL_Renderer* renderer = renderizador.ptr();
 
     const auto propio = std::find_if(
@@ -212,11 +275,13 @@ void VistaPartida::dibujar(
     mapa.dibujar_bajo_los_jugadores(renderer, camara.x(), camara.y());
     for (const EstadoJugador& jugador : ultimo_estado_juego.jugadores) {
         if (jugador.mapa != mapa_actual) {
-            continue;  // está en otro mapa, no se dibuja acá
+            continue;
         }
         personaje.dibujar(renderer, jugador, camara.x(), camara.y());
     }
     mapa.dibujar_sobre_los_jugadores(renderer, camara.x(), camara.y());
+
+    hud.dibujar(renderer, ultimo_inventario, ultimo_cofre, raton_x, raton_y);
 
     SDL_RenderPresent(renderer);
 }

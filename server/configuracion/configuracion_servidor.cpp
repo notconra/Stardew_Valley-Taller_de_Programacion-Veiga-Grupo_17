@@ -1,6 +1,7 @@
 #include "configuracion_servidor.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -219,6 +220,32 @@ void ConfiguracionServidor::cargar_juego(const toml::table& archivo_toml) {
             datos_configuracion.juego.aparicion.paso_de_busqueda = *paso;
         }
     }
+
+    const toml::table* inventario = (*juego)["inventario"].as_table();
+    if (inventario != nullptr) {
+        cargar_inventario(*inventario);
+    }
+}
+
+void ConfiguracionServidor::cargar_inventario(const toml::table& inventario) {
+    ConfiguracionInventarioServidor& destino = datos_configuracion.juego.inventario;
+
+    const int barra = lector_toml::leer_entero_opcional(
+        inventario,
+        "cantidad_ranuras_barra",
+        destino.cantidad_ranuras_barra);
+    if (barra <= 0) {
+        throw std::runtime_error(
+            "configuración: 'cantidad_ranuras_barra' de [juego.inventario] debe ser mayor que "
+            "cero");
+    }
+    if (barra > UINT8_MAX) {
+        throw std::runtime_error(
+            "configuración: 'cantidad_ranuras_barra' de [juego.inventario] no puede superar " +
+            std::to_string(UINT8_MAX));
+    }
+
+    destino.cantidad_ranuras_barra = static_cast<uint8_t>(barra);
 }
 
 const ConfiguracionRedServidor& ConfiguracionServidor::red() const {

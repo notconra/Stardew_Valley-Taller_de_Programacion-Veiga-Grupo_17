@@ -8,6 +8,7 @@
 
 #include "../../common/mensajes/mensajes.h"
 #include "colisiones/colisiones.h"
+#include "inventario/gestor_inventario_jugador.h"
 #include "jugadores/jugadores.h"
 #include "mapa/mapa.h"
 #include "recursos/recursos_de_juego.h"
@@ -18,6 +19,8 @@
 // jugadores en mapas distintos ni se ven ni interactúan entre sí.
 class Mundo {
 private:
+    GestorInventarioJugador gestor_inventario;
+
     const RecursosDeJuego& recursos;
     std::map<std::string, Colisiones> colisiones_por_mapa;
     std::map<std::string, Jugadores> jugadores_por_mapa;
@@ -35,12 +38,17 @@ public:
     // inicial (recursos.mapa_inicial).
     void sincronizar_jugadores(const std::vector<uint32_t>& ids_conectados);
 
-    void atender(uint32_t id_jugador, const ComandoCliente& comando);
+    // Atiende un comando de juego, cada uno va a la parte del mundo que corresponde. Devuelve true
+    // si cambió el inventario del jugador y hay que reenviárselo.
+    bool atender(uint32_t id_jugador, const ComandoCliente& comando);
 
     // Avanza un tick en todos los mapas, y resuelve las transiciones que se dispararon.
     void actualizar();
 
     EstadoJuego estado() const;
+
+    // Snapshot privado del inventario de un jugador.
+    ActualizacionInventario obtener_inventario(uint32_t id_jugador) const;
 
     Mundo(const Mundo&) = delete;
     Mundo& operator=(const Mundo&) = delete;
