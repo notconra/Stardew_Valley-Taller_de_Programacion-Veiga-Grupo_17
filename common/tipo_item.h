@@ -21,7 +21,11 @@ enum class TipoItem : uint8_t {
     ESPADA = 12,
     PIEDRA = 13,
     MADERA = 14,
-    COFRE = 15,
+    CARBON = 15,
+    LAPISLAZULI = 16,
+    PLATA = 17,
+    ORO = 18,
+    COFRE = 19,
 };
 
 #endif

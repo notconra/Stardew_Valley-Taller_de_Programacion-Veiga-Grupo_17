@@ -41,6 +41,7 @@ private:
     PartidaAbandonada recibir_partida_abandonada();
     PartidaCerradaPorError recibir_partida_cerrada_por_error();
     EstadoJugador recibir_estado_jugador();
+    EstadoObjetoDelMundo recibir_estado_objeto_del_mundo();
     EstadoJuego recibir_estado_juego();
     RanuraInventario recibir_ranura_inventario();
     std::vector<RanuraInventario> recibir_ranuras();

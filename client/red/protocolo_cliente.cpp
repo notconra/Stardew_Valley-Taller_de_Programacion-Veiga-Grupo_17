@@ -99,6 +99,9 @@ void ProtocoloCliente::enviar_comando_seleccionar_ranura_de_la_barra(
 void ProtocoloCliente::enviar_comando_usar_item(const UsarItem& usar) {
     enviar_tipo(TipoMensaje::USAR_ITEM);
     enviar_u8(usar.indice_ranura);
+    enviar_booleano(usar.tiene_casilla_objetivo);
+    enviar_u32(usar.columna_objetivo);
+    enviar_u32(usar.fila_objetivo);
 }
 
 void ProtocoloCliente::enviar_comando_mover_item_entre_ranuras(const MoverItemEntreRanuras& mover) {
@@ -203,6 +206,16 @@ EstadoJugador ProtocoloCliente::recibir_estado_jugador() {
     return EstadoJugador{id_jugador, mapa, x, y, mirando, camina, ranura_activa};
 }
 
+EstadoObjetoDelMundo ProtocoloCliente::recibir_estado_objeto_del_mundo() {
+    EstadoObjetoDelMundo objeto;
+    objeto.id = recibir_u32();
+    objeto.mapa = recibir_texto();
+    objeto.columna = recibir_u32();
+    objeto.fila = recibir_u32();
+    objeto.tipo = static_cast<TipoObjeto>(recibir_u8());
+    return objeto;
+}
+
 RanuraInventario ProtocoloCliente::recibir_ranura_inventario() {
     uint8_t tipo = recibir_u8();
     uint16_t cantidad = recibir_u16();
@@ -231,7 +244,7 @@ InventarioJugador ProtocoloCliente::recibir_inventario_jugador() {
 CofreJugador ProtocoloCliente::recibir_cofre_jugador() {
     CofreJugador cofre;
     cofre.id_cofre = recibir_u32();
-    cofre.abierto = recibir_u8() != 0;
+    cofre.abierto = recibir_booleano();
     cofre.ranuras = recibir_ranuras();
     return cofre;
 }
@@ -245,11 +258,17 @@ ActualizacionCofre ProtocoloCliente::recibir_actualizacion_cofre() {
 }
 
 EstadoJuego ProtocoloCliente::recibir_estado_juego() {
-    uint16_t cantidad = recibir_u16();
+    uint16_t cantidad_de_jugadores = recibir_u16();
     EstadoJuego estado_juego;
-    estado_juego.jugadores.reserve(cantidad);
-    for (uint16_t i = 0; i < cantidad; ++i) {
+    estado_juego.jugadores.reserve(cantidad_de_jugadores);
+    for (uint16_t i = 0; i < cantidad_de_jugadores; ++i) {
         estado_juego.jugadores.push_back(recibir_estado_jugador());
+    }
+
+    uint16_t cantidad_de_objetos = recibir_u16();
+    estado_juego.objetos.reserve(cantidad_de_objetos);
+    for (uint16_t i = 0; i < cantidad_de_objetos; ++i) {
+        estado_juego.objetos.push_back(recibir_estado_objeto_del_mundo());
     }
 
     return estado_juego;

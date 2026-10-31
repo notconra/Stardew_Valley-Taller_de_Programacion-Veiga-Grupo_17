@@ -47,6 +47,7 @@ private:
 
     // partida
     void enviar_estado_jugador(const EstadoJugador& estado);
+    void enviar_estado_objeto_del_mundo(const EstadoObjetoDelMundo& estado);
     void enviar_ranura_inventario(const RanuraInventario& ranura);
     void enviar_ranuras(const std::vector<RanuraInventario>& ranuras);
     void enviar_inventario_jugador(const InventarioJugador& inventario);

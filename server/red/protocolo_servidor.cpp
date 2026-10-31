@@ -107,7 +107,10 @@ SeleccionarRanuraDeLaBarra ProtocoloServidor::recibir_comando_seleccionar_ranura
 
 UsarItem ProtocoloServidor::recibir_comando_usar_item() {
     uint8_t indice = recibir_u8();
-    return UsarItem{indice};
+    bool tiene_casilla_objetivo = recibir_booleano();
+    uint32_t columna_objetivo = recibir_u32();
+    uint32_t fila_objetivo = recibir_u32();
+    return UsarItem{indice, tiene_casilla_objetivo, columna_objetivo, fila_objetivo};
 }
 
 MoverItemEntreRanuras ProtocoloServidor::recibir_comando_mover_item_entre_ranuras() {
@@ -203,6 +206,14 @@ void ProtocoloServidor::enviar_estado_jugador(const EstadoJugador& estado) {
     enviar_u8(estado.ranura_activa);
 }
 
+void ProtocoloServidor::enviar_estado_objeto_del_mundo(const EstadoObjetoDelMundo& estado) {
+    enviar_u32(estado.id);
+    enviar_texto(estado.mapa);
+    enviar_u32(estado.columna);
+    enviar_u32(estado.fila);
+    enviar_u8(static_cast<uint8_t>(estado.tipo));
+}
+
 void ProtocoloServidor::enviar_ranura_inventario(const RanuraInventario& ranura) {
     enviar_u8(static_cast<uint8_t>(ranura.tipo));
     enviar_u16(ranura.cantidad);
@@ -244,5 +255,9 @@ void ProtocoloServidor::enviar_estado_juego(const EstadoJuego& estado_juego) {
     enviar_largo(estado_juego.jugadores.size());
     for (const EstadoJugador& estado : estado_juego.jugadores) {
         enviar_estado_jugador(estado);
+    }
+    enviar_largo(estado_juego.objetos.size());
+    for (const EstadoObjetoDelMundo& estado : estado_juego.objetos) {
+        enviar_estado_objeto_del_mundo(estado);
     }
 }
