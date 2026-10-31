@@ -6,69 +6,108 @@
 #include <utility>
 #include <vector>
 
-Nivel::Nivel(GeografiaNivel geo) : geo(std::move(geo)) {
-    const GeografiaNivel& g = this->geo;
-
-    if (geo.transitable.size() != static_cast<size_t>(g.ancho) * g.alto) {
-        throw std::invalid_argument(
-            "la geografia del nivel tiene " + std::to_string(geo.transitable.size()) +
-            " celdas y deberia tener ancho * alto");
-    }
-
-    validar_punto(geo.entrada, "la entrada");
-    validar_punto(geo.salida, "la salida");
-
-    if (geo.escalera) {
-        validar_punto(*geo.escalera, "la escalera");
-    }
-
-    if (geo.entrada == geo.salida ||
-        (geo.escalera && (*geo.escalera == geo.entrada || *geo.escalera == geo.salida))) {
-        throw std::invalid_argument("entrada, escalera y salida deben estar en celdas distintas");
-    }
-
-    const size_t libres =
-        static_cast<size_t>(std::count(geo.transitable.begin(), geo.transitable.end(), true)) -
-        (geo.escalera ? 3 : 2);
-    const size_t pedidos = static_cast<size_t>(geo.cantidad_enemigos) + geo.cantidad_piedras;
-    if (pedidos > libres) {
-        throw std::invalid_argument(
-            "el nivel pide " + std::to_string(pedidos) + " enemigos y piedras pero solo tiene " +
-            std::to_string(libres) + " celdas libres");
-    }
+bool Zona::contiene(Posicion posicion) const {
+    return posicion.x >= origen.x && posicion.x < origen.x + ancho && posicion.y >= origen.y &&
+           posicion.y < origen.y + alto;
 }
 
-size_t Nivel::indice_de(Posicion posicion) const {
-    return static_cast<size_t>(posicion.y) * geo.ancho + posicion.x;
+size_t Nivel::indice_de(const GeografiaNivel& geografia, Posicion posicion) {
+    return static_cast<size_t>(posicion.y) * geografia.ancho + posicion.x;
 }
 
-void Nivel::validar_punto(Posicion pos, const char* nombre) const {
-    if (pos.x >= geo.ancho || pos.y >= geo.alto) {
-        throw std::invalid_argument(std::string(nombre) + " esta fuera del mapa");
+bool Nivel::esta_adentro(const GeografiaNivel& geografia, Posicion posicion) {
+    return posicion.x < geografia.ancho && posicion.y < geografia.alto;
+}
+
+bool Nivel::es_zona_especial(const GeografiaNivel& geografia, Posicion posicion) {
+    return geografia.escalera.contiene(posicion) || geografia.salida.contiene(posicion);
+}
+
+std::vector<Posicion> Nivel::alcanzables(const GeografiaNivel& geografia, Posicion desde) {
+    std::vector<Posicion> resultado;
+    if (!esta_adentro(geografia, desde) || !geografia.transitable[indice_de(geografia, desde)]) {
+        return resultado;
     }
-    if (!geo.transitable[indice_de(pos)]) {
-        throw std::invalid_argument(std::string(nombre) + " esta en una celda no transitable");
-    }
-}
 
-bool Nivel::es_punto_fijo(Posicion pos) const {
-    return pos == geo.entrada || pos == geo.salida || (geo.escalera && pos == *geo.escalera);
-}
+    std::vector<bool> visitada(geografia.transitable.size(), false);
+    std::vector<Posicion> pendientes{desde};
+    visitada[indice_de(geografia, desde)] = true;
 
-void Nivel::sortear(std::mt19937& generador) {
-    std::vector<Posicion> candidatas;
-    for (uint16_t y = 0; y < geo.alto; ++y) {
-        for (uint16_t x = 0; x < geo.ancho; ++x) {
-            const Posicion posicion{x, y};
-            if (geo.transitable[indice_de(posicion)] && !es_punto_fijo(posicion)) {
-                candidatas.push_back(posicion);
+    while (!pendientes.empty()) {
+        const Posicion actual = pendientes.back();
+        pendientes.pop_back();
+        resultado.push_back(actual);
+
+        const int x = actual.x;
+        const int y = actual.y;
+        const int vecinos[4][2] = {{x + 1, y}, {x - 1, y}, {x, y + 1}, {x, y - 1}};
+        for (const auto& vecino : vecinos) {
+            if (vecino[0] < 0 || vecino[1] < 0) {
+                continue;
+            }
+            const Posicion siguiente{
+                static_cast<uint16_t>(vecino[0]),
+                static_cast<uint16_t>(vecino[1])};
+            if (!esta_adentro(geografia, siguiente) || es_zona_especial(geografia, siguiente)) {
+                continue;
+            }
+            const size_t indice = indice_de(geografia, siguiente);
+            if (geografia.transitable[indice] && !visitada[indice]) {
+                visitada[indice] = true;
+                pendientes.push_back(siguiente);
             }
         }
     }
+    return resultado;
+}
+
+void Nivel::validar_zona(const Zona& zona, const char* nombre) const {
+    if (zona.ancho == 0 || zona.alto == 0) {
+        throw std::invalid_argument(std::string(nombre) + " no ocupa ninguna casilla");
+    }
+    if (zona.origen.x + zona.ancho > geo.ancho || zona.origen.y + zona.alto > geo.alto) {
+        throw std::invalid_argument(std::string(nombre) + " se sale del mapa");
+    }
+}
+
+Nivel::Nivel(GeografiaNivel geografia) : geo(std::move(geo)) {
+    const GeografiaNivel& geo = this->geo;
+
+    if (geo.transitable.size() != static_cast<size_t>(geo.ancho) * geo.alto) {
+        throw std::invalid_argument(
+            "la geografia del nivel tiene " + std::to_string(geo.transitable.size()) +
+            " casillas y deberia tener ancho * alto");
+    }
+    validar_zona(geo.escalera, "la escalera");
+    validar_zona(geo.salida, "la salida");
+
+    if (!esta_adentro(geo, geo.entrada)) {
+        throw std::invalid_argument("la entrada esta fuera del mapa");
+    }
+    if (!geo.transitable[indice_de(geo, geo.entrada)]) {
+        throw std::invalid_argument("la entrada esta en una casilla no transitable");
+    }
+    if (es_zona_especial(geo, geo.entrada)) {
+        throw std::invalid_argument("la entrada no puede estar sobre la escalera ni la salida");
+    }
+}
+
+void Nivel::sortear(
+    std::mt19937& generador, uint16_t cantidad_enemigos, uint16_t cantidad_piedras) {
+    std::vector<Posicion> candidatas = alcanzables(geo, geo.entrada);
+
+    candidatas.erase(
+        std::remove(candidatas.begin(), candidatas.end(), geo.entrada),
+        candidatas.end());
 
     std::shuffle(candidatas.begin(), candidatas.end(), generador);
-    const auto fin_enemigos = candidatas.begin() + geo.cantidad_enemigos;
-    const auto fin_piedras = fin_enemigos + geo.cantidad_piedras;
+
+    const size_t total_enemigos = std::min<size_t>(cantidad_enemigos, candidatas.size());
+    const size_t total_piedras =
+        std::min<size_t>(cantidad_piedras, candidatas.size() - total_enemigos);
+
+    const auto fin_enemigos = candidatas.begin() + static_cast<long>(total_enemigos);
+    const auto fin_piedras = fin_enemigos + static_cast<long>(total_piedras);
     enemigos.assign(candidatas.begin(), fin_enemigos);
     piedras.assign(fin_enemigos, fin_piedras);
 }

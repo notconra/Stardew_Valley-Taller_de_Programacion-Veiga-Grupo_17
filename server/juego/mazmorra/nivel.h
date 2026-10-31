@@ -38,17 +38,25 @@ private:
     std::vector<Posicion> enemigos;
     std::vector<Posicion> piedras;
 
-    size_t indice_de(Posicion pos) const;
-    void validar_punto(Posicion pos, const char* nombre) const;
-    bool es_punto_fijo(Posicion pos) const;
+    static size_t indice_de(const GeografiaNivel& geografia, Posicion posicion);
+    static bool esta_adentro(const GeografiaNivel& geografia, Posicion posicion);
+    static bool es_zona_especial(const GeografiaNivel& geografia, Posicion posicion);
+    void validar_zona(const Zona& zona, const char* nombre) const;
 
 public:
+    /*
+     * Casillas a las que se llega caminando desde `desde`, sin pasar por
+     * la escalera ni la salida (así no se cuelan casillas de afuera de
+     * la cueva que tocan la puerta). Incluye a `desde`.
+     */
+    static std::vector<Posicion> alcanzables(const GeografiaNivel& geografia, Posicion desde);
+
     explicit Nivel(GeografiaNivel geo);
 
     /*
      * Sortea enemigos y piedras en celdas libres distintas.
      */
-    void sortear(std::mt19937& generador);
+    void sortear(std::mt19937& generador, uint16_t cantidad_enemigos, uint16_t cantidad_piedras);
 
     const GeografiaNivel& obtener_geo() const;
     const std::vector<Posicion>& obtener_enemigos() const;

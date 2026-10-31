@@ -5,24 +5,16 @@
 #include <utility>
 #include <vector>
 
-Mazmorra::Mazmorra(std::vector<GeografiaNivel> geografias, std::mt19937 generador)
-    : generador(generador) {
+Mazmorra::Mazmorra(
+    std::vector<GeografiaNivel> geografias, CantidadesDeSorteo cantidades, std::mt19937 generador)
+    : cantidades(cantidades), generador(generador) {
     if (geografias.size() != CANTIDAD_NIVELES) {
         throw std::invalid_argument(
             "la mazmorra necesita " + std::to_string(CANTIDAD_NIVELES) +
             " niveles y se recibieron " + std::to_string(geografias.size()));
     }
 
-    for (size_t i = 0; i < CANTIDAD_NIVELES; i++) {
-        const bool es_el_ultimo = (i == CANTIDAD_NIVELES - 1);
-        const bool tiene_escalera = geografias[i].escalera.has_value();
-        if (es_el_ultimo && tiene_escalera) {
-            throw std::invalid_argument("el ultimo nivel no puede tener escalera");
-        }
-        if (!es_el_ultimo && !tiene_escalera) {
-            throw std::invalid_argument(
-                "el nivel " + std::to_string(i + 1) + " no tiene escalera al siguiente");
-        }
+    for (size_t i = 0; i < CANTIDAD_NIVELES; ++i) {
         niveles[i].emplace(std::move(geografias[i]));
     }
 }
@@ -43,7 +35,7 @@ void Mazmorra::entrar(IdJugador jugador) {
     }
     if (esta_vacia()) {
         for (std::optional<Nivel>& nivel : niveles) {
-            nivel->sortear(generador);
+            nivel->sortear(generador, cantidades.enemigos, cantidades.piedras);
         }
     }
     nivel_de_jugador[jugador] = 0;

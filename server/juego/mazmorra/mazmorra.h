@@ -12,6 +12,11 @@
 #include "nivel.h"
 
 #define CANTIDAD_NIVELES 10
+
+struct CantidadesDeSorteo {
+    uint16_t enemigos;
+    uint16_t piedras;
+};
 class Mazmorra {
 public:
     using IdJugador = uint32_t;
@@ -20,10 +25,12 @@ private:
     std::array<std::optional<Nivel>, CANTIDAD_NIVELES> niveles;
     std::map<IdJugador, size_t> nivel_de_jugador;
     std::mt19937 generador;
+    CantidadesDeSorteo cantidades;
     size_t indice_de(IdJugador jugador) const;
 
 public:
-    Mazmorra(std::vector<GeografiaNivel> geos, std::mt19937 generador);
+    Mazmorra(
+        std::vector<GeografiaNivel> geos, CantidadesDeSorteo cantidades, std::mt19937 generador);
 
     Mazmorra(const Mazmorra&) = delete;
     Mazmorra& operator=(const Mazmorra&) = delete;
