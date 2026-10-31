@@ -72,6 +72,10 @@ public:
     // Para los sistemas que necesitan saber de un jugador. Devuelve nullptr si no está.
     const JugadorEnPartida* buscar(uint32_t id_jugador) const;
 
+    // La casilla donde están los pies del jugador. Puede estar fuera del mapa, quien la use tiene
+    // que chequearlo.
+    std::optional<Casilla> casilla_del_jugador(uint32_t id_jugador) const;
+
     // La casilla que el jugador tiene adelante: la que usan las acciones.
     // Puede estar fuera del mapa, quien la use tiene que chequearlo.
     std::optional<Casilla> casilla_de_enfrente(uint32_t id_jugador) const;

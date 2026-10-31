@@ -25,6 +25,8 @@ struct DefinicionItem {
     uint16_t maximo_apilable = 1;
     bool se_puede_eliminar = true;
     uint16_t cantidad_inicial = 0;
+    // Lo que paga el mercado por unidad. Cero quiere decir que todavía no se puede vender.
+    uint32_t precio_de_venta = 0;
 };
 
 // Qué ítems existen y sus reglas. Se arma una vez y después solo se consulta.
@@ -34,7 +36,7 @@ private:
 
     void registrar(
         TipoItem tipo, const std::string& nombre, CategoriaItem categoria, uint16_t maximo_apilable,
-        bool se_puede_eliminar, uint16_t cantidad_inicial);
+        bool se_puede_eliminar, uint16_t cantidad_inicial, uint32_t precio_de_venta);
 
 public:
     CatalogoDeItems();

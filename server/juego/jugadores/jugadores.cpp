@@ -123,7 +123,7 @@ const JugadorEnPartida* Jugadores::buscar(uint32_t id_jugador) const {
     return encontrado == jugadores.end() ? nullptr : &encontrado->second;
 }
 
-std::optional<Casilla> Jugadores::casilla_de_enfrente(uint32_t id_jugador) const {
+std::optional<Casilla> Jugadores::casilla_del_jugador(uint32_t id_jugador) const {
     const JugadorEnPartida* jugador = buscar(id_jugador);
     if (jugador == nullptr) {
         return std::nullopt;
@@ -132,11 +132,20 @@ std::optional<Casilla> Jugadores::casilla_de_enfrente(uint32_t id_jugador) const
     // Se parte del centro de los pies, que es lo que realmente pisa el jugador.
     const double centro_x = jugador->x + movimiento.hitbox_x + movimiento.hitbox_ancho / 2.0;
     const double centro_y = jugador->y + movimiento.hitbox_y + movimiento.hitbox_alto / 2.0;
-    const int columna = static_cast<int>(std::floor(centro_x / mapa.ancho_de_casilla_en_pixeles()));
-    const int fila = static_cast<int>(std::floor(centro_y / mapa.alto_de_casilla_en_pixeles()));
+    return Casilla{
+        static_cast<int>(std::floor(centro_x / mapa.ancho_de_casilla_en_pixeles())),
+        static_cast<int>(std::floor(centro_y / mapa.alto_de_casilla_en_pixeles()))};
+}
+
+std::optional<Casilla> Jugadores::casilla_de_enfrente(uint32_t id_jugador) const {
+    const JugadorEnPartida* jugador = buscar(id_jugador);
+    const std::optional<Casilla> propia = casilla_del_jugador(id_jugador);
+    if (jugador == nullptr || !propia.has_value()) {
+        return std::nullopt;
+    }
 
     const auto& [desvio_columna, desvio_fila] = DESPLAZAMIENTO_AL_MIRAR.at(jugador->mirando);
-    return Casilla{columna + desvio_columna, fila + desvio_fila};
+    return Casilla{propia->columna + desvio_columna, propia->fila + desvio_fila};
 }
 
 Rectangulo Jugadores::rectangulo_de_pies(double x, double y) const {

@@ -32,8 +32,7 @@ private:
     uint16_t espacio_en(const RanuraInventario& destino, const RanuraInventario& item) const;
 
     // Pasa de una ranura a otra hasta "cantidad" unidades, solo las que entran. Devuelve cuántas
-    // pasó. Es la única que sabe apilar, y la usan agregar_item, mover_entre_ranuras y
-    // transferir_a.
+    // pasó. Es la única que sabe apilar, y la usan agregar_item y mover_entre_ranuras.
     uint16_t pasar(RanuraInventario& desde, RanuraInventario& hacia, uint16_t cantidad);
 
 public:
