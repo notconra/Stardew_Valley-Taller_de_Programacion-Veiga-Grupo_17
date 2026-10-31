@@ -15,15 +15,21 @@ struct Posicion {
     bool operator==(const Posicion& otra) const = default;
 };
 
+struct Zona {
+    Posicion origen;
+    uint16_t ancho;
+    uint16_t alto;
+
+    bool contiene(Posicion posicion) const;
+};
+
 struct GeografiaNivel {
     uint16_t ancho;
     uint16_t alto;
     std::vector<bool> transitable;
     Posicion entrada;
-    std::optional<Posicion> escalera;
-    Posicion salida;
-    uint16_t cantidad_enemigos;
-    uint16_t cantidad_piedras;
+    Zona escalera;
+    Zona salida;
 };
 
 class Nivel {
