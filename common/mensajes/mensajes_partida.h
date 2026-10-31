@@ -101,9 +101,8 @@ struct EstadoJugador {
 };
 
 // Un objeto del mundo que hay en el mapa (mineral, árbol, mueble, etc.), "id" es único dentro de su
-// mapa, "tipo" dice cómo se ve y cuántas casillas ocupa, el ítem que deja al romperse es otra cosa
-// y lo decide el servidor. El cliente usa "tipo" para elegir el aspecto y la huella, el servidor ya
-// validó esa huella al colocarlo.
+// mapa, "tipo" dice cómo se ve, el ítem que deja al romperse es otra cosa y lo decide el servidor.
+// Ocupa una sola casilla: la (columna, fila).
 struct EstadoObjetoDelMundo {
     uint32_t id = 0;
     std::string mapa;

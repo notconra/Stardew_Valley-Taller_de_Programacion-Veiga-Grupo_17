@@ -13,6 +13,14 @@ Colisiones::Colisiones(const Mapa& mapa_de_partida)
           false) {
 }
 
+int Colisiones::cantidad_de_columnas() const {
+    return mapa.cantidad_de_columnas();
+}
+
+int Colisiones::cantidad_de_filas() const {
+    return mapa.cantidad_de_filas();
+}
+
 std::size_t Colisiones::indice(int columna, int fila) const {
     if (!mapa.esta_dentro(columna, fila)) {
         throw std::out_of_range(

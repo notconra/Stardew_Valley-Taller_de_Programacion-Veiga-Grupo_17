@@ -20,12 +20,16 @@ private:
 public:
     explicit Colisiones(const Mapa& mapa_de_partida);
 
+    int cantidad_de_columnas() const;
+    int cantidad_de_filas() const;
+
     // Si el rectángulo toca algo que bloquea.
     bool bloquea(const Rectangulo& zona) const;
 
     // Si la casilla está dentro del mapa, el terreno no la bloquea y no hay
     // nada colocado.
     bool esta_libre(int columna, int fila) const;
+
     bool esta_libre_por_obstaculo(int columna, int fila) const;
 
     // Marca/libera casillas por objetos colocados dinámicamente.
