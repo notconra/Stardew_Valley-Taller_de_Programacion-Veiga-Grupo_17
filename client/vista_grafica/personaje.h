@@ -8,32 +8,47 @@
 #include "../configuracion/configuracion_cliente_datos.h"
 #include "textura.h"
 
-// Aspecto de un personaje (su hoja de sprites). No sabe dónde está ni hacia dónde va, dibuja a
-// cualquier jugador en la posición y dirección que le pasan, que vienen del estado_juego del
-// servidor. TO-DO: Más adelante cada jugador puede tener su propio Personaje (otra skin).
+// Aspecto de un personaje armado por capas: cuerpo (con brazos y la superposición de la acción
+// en la misma hoja), pantalón, pelo, sombrero y remera.
+//
+// haciendo_accion/ms_de_accion son estado LOCAL (del cliente que dibuja), no vienen del
+// servidor: solo se ve la animación de acción en la pantalla de quien la hace.
 class Personaje {
 private:
-    Textura textura;
+    Textura cuerpo;
+    Textura pantalon;
+    Textura pelo;
+    Textura sombrero;
+    Textura remera;
+
     int ancho;
     int alto;
     int escala_de_tiles;
-    int cuadros_caminando;
     int ms_por_cuadro_caminando;
-    int cuadros_quieto;
-    int ms_por_cuadro_quieto;
+
+    int indice_pelo;
+    int indice_sombrero;
+    int indice_remera;
+    int indice_pantalon;
+    int offset_y_remera;
+
+    int ancho_hoja_cuerpo;  // ancho total del PNG del cuerpo, lo usa el pantalón para alinearse
+    int columnas_pantalon;
+    int columnas_pelo;
+    int columnas_sombrero;
+    int columnas_remera;
 
 public:
-    // Lanza std::runtime_error si no puede cargar la imagen.
     Personaje(
         const ConfiguracionJugador& configuracion_jugador,
         const ConfiguracionGraficos& configuracion_graficos, SDL_Renderer* renderer);
 
-    // Tamaño del sprite en píxeles del mapa (sin escalar).
     int ancho_del_sprite() const;
     int alto_del_sprite() const;
 
-    // La posición del jugador está en píxeles del mapa; acá se escala a pantalla.
-    void dibujar(SDL_Renderer* renderer, const EstadoJugador& jugador, int cam_x, int cam_y) const;
+    void dibujar(
+        SDL_Renderer* renderer, const EstadoJugador& jugador, bool haciendo_accion,
+        Uint32 ms_de_accion, int cam_x, int cam_y) const;
 };
 
 #endif
