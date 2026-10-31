@@ -52,14 +52,35 @@ struct ConfiguracionMapa {
     std::vector<std::string> capas_sobre_los_jugadores;
     std::vector<ConfiguracionTileset> tilesets;
 };
+struct ColorRGB {
+    std::uint8_t rojo = 255;
+    std::uint8_t verde = 255;
+    std::uint8_t azul = 255;
+};
+
 struct ConfiguracionJugador {
-    std::string ruta_sprite;
-    int ancho_sprite = 0;
-    int alto_sprite = 0;
-    int cuadros_caminando = 0;
-    int ms_por_cuadro_caminando = 0;
-    int cuadros_quieto = 0;
-    int ms_por_cuadro_quieto = 0;
+    std::string ruta_cuerpo;
+    std::string ruta_pantalon;
+    std::string ruta_pelo;
+    std::string ruta_sombrero;
+    std::string ruta_remera;
+
+    int indice_pelo = 0;
+    int indice_sombrero = 0;
+    int indice_remera = 0;
+    int indice_pantalon = 0;
+
+    ColorRGB color_pelo;
+    ColorRGB color_pantalon;
+
+    int ms_por_cuadro_caminando = 150;
+    int offset_y_remera = 16;
+};
+
+struct ConfiguracionSonido {
+    std::string ruta_ambiente;
+    std::string ruta_caminar;
+    std::string ruta_accion;
 };
 
 struct ConfiguracionVista {
@@ -69,6 +90,7 @@ struct ConfiguracionVista {
     std::vector<ConfiguracionMapa> mapas;
     std::string mapa_inicial;
     ConfiguracionJugador jugador;
+    ConfiguracionSonido sonido;
 };
 
 #endif
