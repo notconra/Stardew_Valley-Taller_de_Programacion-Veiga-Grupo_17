@@ -18,8 +18,13 @@ class IconosDeItems {
 private:
     std::unordered_map<TipoItem, SDL_Texture*> texturas_cultivos;
     std::unordered_map<TipoItem, SDL_Texture*> texturas_individuales;
+    // Las menas comparten una sola textura con una fila por mineral.
+    SDL_Texture* textura_menas = nullptr;
 
     TipoItem obtener_cultivo_asociado(TipoItem tipo) const;
+
+    // Fila de la mena dentro de la textura compartida, o -1 si el tipo no es una mena.
+    static int fila_de_mena(TipoItem tipo);
 
 public:
     explicit IconosDeItems(SDL_Renderer* renderer);
