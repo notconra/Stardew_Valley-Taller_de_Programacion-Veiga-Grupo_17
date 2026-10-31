@@ -74,6 +74,7 @@ void ConfiguracionCliente::cargar_toml(const toml::table& archivo_toml) {
     cargar_graficos(archivo_toml);
     cargar_mapas(archivo_toml);
     cargar_jugador(archivo_toml);
+    cargar_sonido(archivo_toml);
 }
 
 void ConfiguracionCliente::cargar_servidor(const toml::table& archivo_toml) {
@@ -149,19 +150,36 @@ void ConfiguracionCliente::cargar_mapas(const toml::table& archivo_toml) {
 void ConfiguracionCliente::cargar_jugador(const toml::table& archivo_toml) {
     const toml::table& jugador = exigir_tabla(archivo_toml, "jugador");
 
-    configuracion_vista.jugador.ruta_sprite = leer_texto(jugador, "ruta_sprite", "jugador");
-    configuracion_vista.jugador.ancho_sprite =
-        leer_entero_positivo(jugador, "ancho_sprite", "jugador");
-    configuracion_vista.jugador.alto_sprite =
-        leer_entero_positivo(jugador, "alto_sprite", "jugador");
-    configuracion_vista.jugador.cuadros_caminando =
-        leer_entero_positivo(jugador, "cuadros_caminando", "jugador");
+    configuracion_vista.jugador.ruta_cuerpo = leer_texto(jugador, "ruta_cuerpo", "jugador");
+    configuracion_vista.jugador.ruta_pantalon = leer_texto(jugador, "ruta_pantalon", "jugador");
+    configuracion_vista.jugador.ruta_pelo = leer_texto(jugador, "ruta_pelo", "jugador");
+    configuracion_vista.jugador.ruta_sombrero = leer_texto(jugador, "ruta_sombrero", "jugador");
+    configuracion_vista.jugador.ruta_remera = leer_texto(jugador, "ruta_remera", "jugador");
+
+    configuracion_vista.jugador.indice_pelo = leer_entero(jugador, "indice_pelo", "jugador");
+    configuracion_vista.jugador.indice_sombrero =
+        leer_entero(jugador, "indice_sombrero", "jugador");
+    configuracion_vista.jugador.indice_remera = leer_entero(jugador, "indice_remera", "jugador");
+    configuracion_vista.jugador.indice_pantalon =
+        leer_entero(jugador, "indice_pantalon", "jugador");
+
+    configuracion_vista.jugador.color_pelo =
+        leer_color_rgb(exigir_tabla(jugador, "color_pelo"), "jugador.color_pelo");
+    configuracion_vista.jugador.color_pantalon =
+        leer_color_rgb(exigir_tabla(jugador, "color_pantalon"), "jugador.color_pantalon");
+
     configuracion_vista.jugador.ms_por_cuadro_caminando =
         leer_entero_positivo(jugador, "ms_por_cuadro_caminando", "jugador");
-    configuracion_vista.jugador.cuadros_quieto =
-        leer_entero_positivo(jugador, "cuadros_quieto", "jugador");
-    configuracion_vista.jugador.ms_por_cuadro_quieto =
-        leer_entero_positivo(jugador, "ms_por_cuadro_quieto", "jugador");
+    configuracion_vista.jugador.offset_y_remera =
+        leer_entero(jugador, "offset_y_remera", "jugador");
+}
+
+void ConfiguracionCliente::cargar_sonido(const toml::table& archivo_toml) {
+    const toml::table& sonido = exigir_tabla(archivo_toml, "sonido");
+
+    configuracion_vista.sonido.ruta_ambiente = leer_texto(sonido, "ruta_ambiente", "sonido");
+    configuracion_vista.sonido.ruta_caminar = leer_texto(sonido, "ruta_caminar", "sonido");
+    configuracion_vista.sonido.ruta_accion = leer_texto(sonido, "ruta_accion", "sonido");
 }
 
 const toml::table& ConfiguracionCliente::exigir_tabla(
@@ -270,6 +288,22 @@ ColorDeFondo ConfiguracionCliente::leer_color(const toml::table& graficos) const
     }
 
     return ColorDeFondo{componentes[0], componentes[1], componentes[2], componentes[3]};
+}
+
+ColorRGB ConfiguracionCliente::leer_color_rgb(
+    const toml::table& color, const std::string& seccion) const {
+    ColorRGB resultado;
+    const auto r = color["r"].value<int>();
+    const auto g = color["g"].value<int>();
+    const auto b = color["b"].value<int>();
+    if (!r || !g || !b || *r < 0 || *r > 255 || *g < 0 || *g > 255 || *b < 0 || *b > 255) {
+        throw std::runtime_error(
+            "configuración: '" + seccion + "' debe tener r, g, b entre 0 y 255");
+    }
+    resultado.rojo = static_cast<std::uint8_t>(*r);
+    resultado.verde = static_cast<std::uint8_t>(*g);
+    resultado.azul = static_cast<std::uint8_t>(*b);
+    return resultado;
 }
 
 std::vector<ConfiguracionTileset> ConfiguracionCliente::leer_tilesets(
