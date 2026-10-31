@@ -52,8 +52,8 @@ Zona CargadorMazmorra::a_casillas(const TransicionTMX& transicion, const Tamanio
         static_cast<uint16_t>(std::max(0, y_fin - y_inicio + 1))};
 }
 
-Posicion CargadorMazmorra::asignar_entrada(const GeografiaNivel& geografia) {
-    return Posicion{
+PosicionEnNivel CargadorMazmorra::asignar_entrada(const GeografiaNivel& geografia) {
+    return PosicionEnNivel{
         static_cast<uint16_t>(geografia.salida.origen.x + geografia.salida.ancho),
         geografia.salida.origen.y};
 }
