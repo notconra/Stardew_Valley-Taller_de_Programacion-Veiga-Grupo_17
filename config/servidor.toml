@@ -74,10 +74,6 @@ id = "mina_9"
 ruta_tmx = "Assets/Maps/Mines/9.tmx"
 
 [[mapas]]
-id = "mina_10"
-ruta_tmx = "Assets/Maps/Mines/10.tmx"
-
-[[mapas]]
 id = "mina_11"
 ruta_tmx = "Assets/Maps/Mines/11.tmx"
 
@@ -114,8 +110,12 @@ id = "mina_19"
 ruta_tmx = "Assets/Maps/Mines/19.tmx"
 
 [[mapas]]
-id = "mina_20"
-ruta_tmx = "Assets/Maps/Mines/20.tmx"
+id = "mina_21"
+ruta_tmx = "Assets/Maps/Mines/21.tmx"
+
+[[mapas]]
+id = "mina_24"
+ruta_tmx = "Assets/Maps/Mines/24.tmx"
 
 #[[mapas.capas_opcionales]]
 #nombre = "Cultivable"
@@ -147,6 +147,6 @@ ruta_tmx = "Assets/Maps/Mines/20.tmx"
 # La mazmorra. Una transición con mapa_destino = destino (en Farm.tmx) entra al nivel 1.
 [mazmorra]
 destino = "mazmorra"
-mapas = ["mina_1", "mina_2", "mina_3", "mina_4", "mina_5", "mina_6", "mina_7", "mina_8", "mina_9", "mina_10", "mina_11", "mina_12", "mina_13", "mina_14", "mina_15", "mina_16", "mina_17", "mina_18", "mina_19", "mina_20"]
+mapas = ["mina_1", "mina_2", "mina_3", "mina_4", "mina_5", "mina_6", "mina_7", "mina_8", "mina_9", "mina_11", "mina_12", "mina_13", "mina_14", "mina_15", "mina_16", "mina_17", "mina_18", "mina_19", "mina_21", "mina_24"]
 enemigos_por_nivel = 4
 piedras_por_nivel = 10

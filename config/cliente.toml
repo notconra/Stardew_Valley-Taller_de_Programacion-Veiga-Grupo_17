@@ -244,17 +244,6 @@ firstgid = 1
 columnas = 16
 
 [[mapas]]
-id = "mina_10"
-ruta = "Assets/Maps/Mines/10.tmx"
-capas_bajo_los_jugadores = ["Back", "Buildings"]
-capas_sobre_los_jugadores = ["Front"]
-
-[[mapas.tilesets]]
-ruta = "Assets/Maps/Mines/mine.png"
-firstgid = 1
-columnas = 16
-
-[[mapas]]
 id = "mina_11"
 ruta = "Assets/Maps/Mines/11.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
@@ -354,8 +343,19 @@ firstgid = 1
 columnas = 16
 
 [[mapas]]
-id = "mina_20"
-ruta = "Assets/Maps/Mines/20.tmx"
+id = "mina_21"
+ruta = "Assets/Maps/Mines/21.tmx"
+capas_bajo_los_jugadores = ["Back", "Buildings"]
+capas_sobre_los_jugadores = ["Front"]
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/Mines/mine.png"
+firstgid = 1
+columnas = 16
+
+[[mapas]]
+id = "mina_24"
+ruta = "Assets/Maps/Mines/24.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
 
