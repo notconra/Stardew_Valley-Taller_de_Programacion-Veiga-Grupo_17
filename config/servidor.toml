@@ -1,0 +1,67 @@
+# Configuración del servidor.
+#
+# Las rutas de los recursos son relativas al directorio desde el que se ejecuta el servidor
+# así que al momento de ejecutar el servidor sería algo como:
+#
+#   ./build/server config/servidor.toml
+mapa_inicial = "FarmHouse"
+[red]
+puerto = "8080"
+
+[partida]
+jugadores_maximos_por_partida = 4
+ticks_por_segundo = 40
+#capacidad_de_comandos = 1024
+
+[[mapas]]
+id = "granja"
+ruta_tmx = "Assets/Maps/Farm.tmx"
+#capa_colisiones = "Colisiones"
+#capa_respaldo = "Buildings"
+
+[[mapas]]
+id = "BusStop"
+ruta_tmx = "Assets/Maps/BusStop.tmx"
+#capa_colisiones = "Colisiones"
+#capa_respaldo = "Buildings"
+
+[[mapas]]
+id = "Town"
+ruta_tmx = "Assets/Maps/Town.tmx"
+#capa_colisiones = "Colisiones"
+#capa_respaldo = "Buildings"
+
+[[mapas]]
+id = "FarmHouse"
+ruta_tmx = "Assets/Maps/FarmHouse.tmx"
+
+[[mapas]]
+id = "cueva1"
+ruta_tmx = "Assets/Maps/Mines/1.tmx"
+
+#[[mapas.capas_opcionales]]
+#nombre = "Cultivable"
+#propiedad = "CULTIVABLE"
+#
+#[[mapas.capas_opcionales]]
+#nombre = "Decorable"
+#propiedad = "DECORABLE"
+#
+#[[mapas.capas_opcionales]]
+#nombre = "Hierba"
+#propiedad = "ADMITE_HIERBA"
+
+[juego.movimiento]
+# velocidad = 200.0
+# hitbox_x = 2
+# hitbox_y = 24
+# hitbox_ancho = 12
+# hitbox_alto = 8
+
+[juego.aparicion]
+# x = 200
+# y = 150
+# paso_de_busqueda = 8
+
+[juego.inventario]
+# cantidad_ranuras_barra = 10
