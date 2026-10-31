@@ -21,6 +21,21 @@ struct CapaOpcionalMapaServidor {
     std::string propiedad;  // nombre de la propiedad (se resuelve al cargar el mapa)
 };
 
+// Objeto que aparece siempre en la misma casilla del mapa. "tipo" es la clave del catálogo
+// (por ejemplo "ORO").
+struct ConfiguracionObjetoFijo {
+    std::string tipo;
+    int columna = 0;
+    int fila = 0;
+};
+
+// Objetos que el mapa trae ya colocados. Si la sección no está, el mapa no tiene objetos.
+// Sirve para probar (por ejemplo, minerales en la granja); la generación de las mazmorras
+// no pasa por acá.
+struct ConfiguracionObjetos {
+    std::vector<ConfiguracionObjetoFijo> fijos;
+};
+
 struct ConfiguracionMapaServidor {
     std::string id;
     std::string ruta_tmx;
@@ -28,7 +43,9 @@ struct ConfiguracionMapaServidor {
     std::string capa_respaldo = "Buildings";
     std::string capa_transiciones = "Transiciones";
     std::vector<CapaOpcionalMapaServidor> capas_opcionales;
+    ConfiguracionObjetos objetos;
 };
+
 struct ConfiguracionMovimientoJugador {
     double velocidad = 120.0;
     int hitbox_x = 2;
@@ -43,8 +60,8 @@ struct ConfiguracionAparicionJugador {
     int paso_de_busqueda = 8;
 };
 
-// Inventario del jugador. Solo se configura el tamaño de la barra para poder probar con más o menos
-// espacio, el stack de cada ítem y la capacidad de los cofres son reglas fijas del juego.
+// Inventario del jugador. Solo se configura el tamaño de la barra para poder probar con más o
+// menos espacio; el stack de cada ítem es una regla fija del juego.
 struct ConfiguracionInventarioServidor {
     // Por ahora el jugador solo tiene la barra de herramientas (sin mochila ni inventario extra).
     uint8_t cantidad_ranuras_barra = 10;
