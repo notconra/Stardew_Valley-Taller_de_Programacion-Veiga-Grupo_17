@@ -4,7 +4,9 @@
 #include <string>
 
 Servidor::Servidor(const ConfiguracionServidor& configuracion)
-    : recursos(configuracion.mapas(), configuracion.mapa_inicial(), configuracion.juego()),
+    : recursos(
+          configuracion.mapas(), configuracion.mapa_inicial(), configuracion.juego(),
+          configuracion.mazmorra()),
       administrador(configuracion.partida(), recursos),
       aceptador(configuracion.red().puerto, administrador) {
 }

@@ -2,6 +2,7 @@
 #define CONFIGURACION_SERVIDOR_H
 
 #include <string>
+#include <vector>
 
 #include "../../common/externo/tomlplusplus/toml.hpp"
 #include "configuracion_servidor_datos.h"
@@ -19,6 +20,7 @@ public:
     const std::vector<ConfiguracionMapaServidor>& mapas() const;
     const std::string& mapa_inicial() const;
     const ConfiguracionJuegoServidor& juego() const;
+    const ConfiguracionMazmorraServidor& mazmorra() const;
 
 private:
     ConfiguracionServidorDatos datos_configuracion;
@@ -30,6 +32,7 @@ private:
     void cargar_mapas(const toml::table& archivo_toml);
     void cargar_juego(const toml::table& archivo_toml);
     void cargar_inventario(const toml::table& inventario);
+    void cargar_mazmorra(const toml::table& archivo_toml);
 
     // Auxiliares de lectura y validación.
     const toml::table& exigir_tabla(

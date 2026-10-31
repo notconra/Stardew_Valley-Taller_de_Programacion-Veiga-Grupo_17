@@ -8,26 +8,26 @@
 #include <random>
 #include <vector>
 
-struct Posicion {
+struct PosicionEnNivel {
     int x;
     int y;
 
-    bool operator==(const Posicion& otra) const = default;
+    bool operator==(const PosicionEnNivel& otra) const = default;
 };
 
 struct Zona {
-    Posicion origen;
+    PosicionEnNivel origen;
     uint16_t ancho;
     uint16_t alto;
 
-    bool contiene(Posicion posicion) const;
+    bool contiene(PosicionEnNivel posicion) const;
 };
 
 struct GeografiaNivel {
     uint16_t ancho;
     uint16_t alto;
     std::vector<bool> transitable;
-    Posicion entrada;
+    PosicionEnNivel entrada;
     Zona escalera;
     Zona salida;
 };
@@ -35,12 +35,12 @@ struct GeografiaNivel {
 class Nivel {
 private:
     GeografiaNivel geo;
-    std::vector<Posicion> enemigos;
-    std::vector<Posicion> piedras;
+    std::vector<PosicionEnNivel> enemigos;
+    std::vector<PosicionEnNivel> piedras;
 
-    static size_t indice_de(const GeografiaNivel& geografia, Posicion posicion);
-    static bool esta_adentro(const GeografiaNivel& geografia, Posicion posicion);
-    static bool es_zona_especial(const GeografiaNivel& geografia, Posicion posicion);
+    static size_t indice_de(const GeografiaNivel& geografia, PosicionEnNivel posicion);
+    static bool esta_adentro(const GeografiaNivel& geografia, PosicionEnNivel posicion);
+    static bool es_zona_especial(const GeografiaNivel& geografia, PosicionEnNivel posicion);
     void validar_zona(const Zona& zona, const char* nombre) const;
 
 public:
@@ -49,7 +49,8 @@ public:
      * la escalera ni la salida (así no se cuelan casillas de afuera de
      * la cueva que tocan la puerta). Incluye a `desde`.
      */
-    static std::vector<Posicion> alcanzables(const GeografiaNivel& geografia, Posicion desde);
+    static std::vector<PosicionEnNivel> alcanzables(
+        const GeografiaNivel& geografia, PosicionEnNivel desde);
 
     explicit Nivel(GeografiaNivel geo);
 
@@ -59,8 +60,8 @@ public:
     void sortear(std::mt19937& generador, uint16_t cantidad_enemigos, uint16_t cantidad_piedras);
 
     const GeografiaNivel& obtener_geo() const;
-    const std::vector<Posicion>& obtener_enemigos() const;
-    const std::vector<Posicion>& obtener_piedras() const;
+    const std::vector<PosicionEnNivel>& obtener_enemigos() const;
+    const std::vector<PosicionEnNivel>& obtener_piedras() const;
 };
 
 #endif

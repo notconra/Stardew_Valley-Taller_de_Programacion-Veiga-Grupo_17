@@ -7,7 +7,7 @@
 
 Mazmorra::Mazmorra(
     std::vector<GeografiaNivel> geografias, CantidadesDeSorteo cantidades, std::mt19937 generador)
-    : cantidades(cantidades), generador(generador) {
+    : generador(generador), cantidades(cantidades) {
     if (geografias.size() != CANTIDAD_NIVELES) {
         throw std::invalid_argument(
             "la mazmorra necesita " + std::to_string(CANTIDAD_NIVELES) +

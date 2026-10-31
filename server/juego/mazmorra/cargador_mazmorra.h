@@ -39,7 +39,7 @@ private:
     /*
      * Elige una casilla libre pegada a la salida.
      */
-    static Posicion asignar_entrada(const GeografiaNivel& geografia);
+    static PosicionEnNivel asignar_entrada(const GeografiaNivel& geografia);
 };
 
 #endif

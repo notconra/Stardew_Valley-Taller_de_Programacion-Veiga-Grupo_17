@@ -6,35 +6,36 @@
 #include <utility>
 #include <vector>
 
-bool Zona::contiene(Posicion posicion) const {
+bool Zona::contiene(PosicionEnNivel posicion) const {
     return posicion.x >= origen.x && posicion.x < origen.x + ancho && posicion.y >= origen.y &&
            posicion.y < origen.y + alto;
 }
 
-size_t Nivel::indice_de(const GeografiaNivel& geografia, Posicion posicion) {
+size_t Nivel::indice_de(const GeografiaNivel& geografia, PosicionEnNivel posicion) {
     return static_cast<size_t>(posicion.y) * geografia.ancho + posicion.x;
 }
 
-bool Nivel::esta_adentro(const GeografiaNivel& geografia, Posicion posicion) {
+bool Nivel::esta_adentro(const GeografiaNivel& geografia, PosicionEnNivel posicion) {
     return posicion.x < geografia.ancho && posicion.y < geografia.alto;
 }
 
-bool Nivel::es_zona_especial(const GeografiaNivel& geografia, Posicion posicion) {
+bool Nivel::es_zona_especial(const GeografiaNivel& geografia, PosicionEnNivel posicion) {
     return geografia.escalera.contiene(posicion) || geografia.salida.contiene(posicion);
 }
 
-std::vector<Posicion> Nivel::alcanzables(const GeografiaNivel& geografia, Posicion desde) {
-    std::vector<Posicion> resultado;
+std::vector<PosicionEnNivel> Nivel::alcanzables(
+    const GeografiaNivel& geografia, PosicionEnNivel desde) {
+    std::vector<PosicionEnNivel> resultado;
     if (!esta_adentro(geografia, desde) || !geografia.transitable[indice_de(geografia, desde)]) {
         return resultado;
     }
 
     std::vector<bool> visitada(geografia.transitable.size(), false);
-    std::vector<Posicion> pendientes{desde};
+    std::vector<PosicionEnNivel> pendientes{desde};
     visitada[indice_de(geografia, desde)] = true;
 
     while (!pendientes.empty()) {
-        const Posicion actual = pendientes.back();
+        const PosicionEnNivel actual = pendientes.back();
         pendientes.pop_back();
         resultado.push_back(actual);
 
@@ -45,7 +46,7 @@ std::vector<Posicion> Nivel::alcanzables(const GeografiaNivel& geografia, Posici
             if (vecino[0] < 0 || vecino[1] < 0) {
                 continue;
             }
-            const Posicion siguiente{
+            const PosicionEnNivel siguiente{
                 static_cast<uint16_t>(vecino[0]),
                 static_cast<uint16_t>(vecino[1])};
             if (!esta_adentro(geografia, siguiente) || es_zona_especial(geografia, siguiente)) {
@@ -70,7 +71,7 @@ void Nivel::validar_zona(const Zona& zona, const char* nombre) const {
     }
 }
 
-Nivel::Nivel(GeografiaNivel geografia) : geo(std::move(geo)) {
+Nivel::Nivel(GeografiaNivel geografia) : geo(std::move(geografia)) {
     const GeografiaNivel& geo = this->geo;
 
     if (geo.transitable.size() != static_cast<size_t>(geo.ancho) * geo.alto) {
@@ -94,7 +95,7 @@ Nivel::Nivel(GeografiaNivel geografia) : geo(std::move(geo)) {
 
 void Nivel::sortear(
     std::mt19937& generador, uint16_t cantidad_enemigos, uint16_t cantidad_piedras) {
-    std::vector<Posicion> candidatas = alcanzables(geo, geo.entrada);
+    std::vector<PosicionEnNivel> candidatas = alcanzables(geo, geo.entrada);
 
     candidatas.erase(
         std::remove(candidatas.begin(), candidatas.end(), geo.entrada),
@@ -116,10 +117,10 @@ const GeografiaNivel& Nivel::obtener_geo() const {
     return geo;
 }
 
-const std::vector<Posicion>& Nivel::obtener_enemigos() const {
+const std::vector<PosicionEnNivel>& Nivel::obtener_enemigos() const {
     return enemigos;
 }
 
-const std::vector<Posicion>& Nivel::obtener_piedras() const {
+const std::vector<PosicionEnNivel>& Nivel::obtener_piedras() const {
     return piedras;
 }

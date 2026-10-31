@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -12,6 +13,7 @@
 #include "base/recursos/recursos_de_juego.h"
 #include "inventario/gestor_inventario_jugador.h"
 #include "jugadores/jugadores.h"
+#include "mazmorra/mazmorra.h"
 
 // Clase madre de toda la lógica de juego en una partida. Ahora hay un mapa por zona (granja,
 // pueblo, cada nivel de la mazmorra, ...), y cada uno tiene su propia Colisiones y su propio
@@ -25,11 +27,21 @@ private:
     std::map<std::string, Colisiones> colisiones_por_mapa;
     std::map<std::string, Jugadores> jugadores_por_mapa;
     std::map<uint32_t, std::string> mapa_actual;  // en qué mapa está cada jugador conectado
+    std::optional<Mazmorra> mazmorra;
+    std::vector<std::string> niveles_de_mazmorra;
 
     // Lo saca del Jugadores de mapa_origen y lo mete en el de transicion.mapa_destino, en la
     // casilla que indica la transición.
     void cambiar_de_mapa(
         uint32_t id_jugador, const std::string& mapa_origen, const Transicion& transicion);
+
+    // Decide qué hacer con una transición: entrar a la mazmorra, bajar un nivel, salir de ella o
+    // un cambio de mapa común.
+    void resolver_transicion(
+        uint32_t id_jugador, const std::string& mapa_origen, const Transicion& transicion);
+
+    // Lo pasa al nivel en el que la mazmorra dice que está, parado en la entrada del nivel.
+    void llevar_al_nivel_actual(uint32_t id_jugador, const std::string& mapa_origen);
 
 public:
     Mundo(const RecursosDeJuego& recursos, uint8_t ticks_por_segundo);

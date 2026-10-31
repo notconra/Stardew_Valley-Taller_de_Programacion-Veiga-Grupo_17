@@ -56,12 +56,22 @@ struct ConfiguracionJuegoServidor {
     ConfiguracionInventarioServidor inventario;
 };
 
+// La mazmorra: qué mapas pueden ser niveles y qué mapa_destino lleva a ella.
+// Si no hay mazmorra en el archivo, "mapas" queda vacío y la partida no tiene mazmorra.
+struct ConfiguracionMazmorraServidor {
+    std::string destino = "mazmorra";
+    std::vector<std::string> mapas;
+    int enemigos_por_nivel = 4;
+    int piedras_por_nivel = 10;
+};
+
 struct ConfiguracionServidorDatos {
     ConfiguracionRedServidor red;
     ConfiguracionPartidaServidor partida;
     std::vector<ConfiguracionMapaServidor> mapas;
     std::string mapa_inicial;
     ConfiguracionJuegoServidor juego;
+    ConfiguracionMazmorraServidor mazmorra;
 };
 
 #endif
