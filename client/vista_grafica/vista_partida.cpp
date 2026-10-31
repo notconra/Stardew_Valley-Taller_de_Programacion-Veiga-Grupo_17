@@ -61,6 +61,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         mapa_actual, renderizador.ptr(), configuracion_de(mapa_actual), configuracion.graficos);
 
     Personaje personaje(configuracion.jugador, configuracion.graficos, renderizador.ptr());
+    EfectosDeSonido efectos(configuracion.sonido);
+    efectos.reproducir_ambiente();
     EntradaDelUsuario entrada;
     HudInventario hud(renderizador.ptr());
     hud.configurar(configuracion.ventana.ancho, configuracion.ventana.alto);
@@ -97,9 +99,29 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
         if (entrada.pidio_usar_item()) {
             conexion.enviar_comando(UsarItem{INDICE_RANURA_ACTIVA});
+            if (!haciendo_accion) {
+                haciendo_accion = true;
+                inicio_accion_ms = SDL_GetTicks();
+                efectos.reproducir_accion();
+            }
+        }
+        if (haciendo_accion && SDL_GetTicks() - inicio_accion_ms >= 475) {
+            haciendo_accion = false;
         }
 
         enviar_intencion_si_cambio(entrada.intencion());
+
+        const auto propio_para_sonido = std::find_if(
+            ultimo_estado_juego.jugadores.begin(), ultimo_estado_juego.jugadores.end(),
+            [this](const EstadoJugador& jugador) { return jugador.id_jugador == id_jugador; });
+        if (propio_para_sonido != ultimo_estado_juego.jugadores.end() &&
+            propio_para_sonido->camina) {
+            const Uint32 ahora = SDL_GetTicks();
+            if (ahora - ultimo_paso_ms >= 350) {
+                efectos.reproducir_paso();
+                ultimo_paso_ms = ahora;
+            }
+        }
 
         if (!recibir_eventos()) {
             return true;
@@ -233,7 +255,10 @@ void VistaPartida::dibujar(
         if (jugador.mapa != mapa_actual) {
             continue;
         }
-        personaje.dibujar(renderer, jugador, camara.x(), camara.y());
+        const bool es_el_propio = jugador.id_jugador == id_jugador;
+        const bool mostrar_accion = es_el_propio && haciendo_accion;
+        const Uint32 ms_de_accion = mostrar_accion ? SDL_GetTicks() - inicio_accion_ms : 0;
+        personaje.dibujar(renderer, jugador, mostrar_accion, ms_de_accion, camara.x(), camara.y());
     }
     mapa.dibujar_sobre_los_jugadores(renderer, camara.x(), camara.y());
 

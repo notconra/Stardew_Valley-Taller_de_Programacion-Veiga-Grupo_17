@@ -9,6 +9,7 @@
 #include "../configuracion/configuracion_cliente_datos.h"
 #include "../red/conexion_con_servidor.h"
 #include "camara.h"
+#include "efectos_de_sonido.h"
 #include "entrada_del_usuario.h"
 #include "hud_inventario.h"
 #include "mapa_grafico.h"
@@ -26,6 +27,10 @@ private:
     InventarioJugador ultimo_inventario{};
     CofreJugador ultimo_cofre{};
     std::string mapa_actual;
+
+    bool haciendo_accion = false;
+    uint32_t inicio_accion_ms = 0;
+    uint32_t ultimo_paso_ms = 0;
 
     void enviar_intencion_si_cambio(const Moverse& intencion);
 
