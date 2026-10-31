@@ -19,6 +19,65 @@ ruta_tmx = "Assets/Maps/Farm.tmx"
 #capa_colisiones = "Colisiones"
 #capa_respaldo = "Buildings"
 
+# Objetos del mundo de prueba en la granja, pongo q aparezcan todos los minerales, incluso el oro, para
+# poder verlos sin bajar a la mazmorra. Los objetos fijos quedan a la vista cerca del punto de
+# aparición. Para mover un mineral, alcanza con cambiar su "columna" y "fila" acá, no hace falta
+# tocar el .tmx. El ancla es la esquina superior izquierda de la huella del objeto.
+[mapas.objetos]
+cantidad_de_objetos_aleatorios = 10
+semilla = 0
+nivel_de_mazmorra = 1
+respetar_nivel_minimo = false
+
+# Solo participan los tipos de esta lista, con el peso indicado. Si se omite la lista, se usan los
+# pesos por defecto de cada definición.
+[[mapas.objetos.pesos_por_tipo]]
+tipo = "PIEDRA"
+peso = 30
+
+[[mapas.objetos.pesos_por_tipo]]
+tipo = "CARBON"
+peso = 40
+
+[[mapas.objetos.pesos_por_tipo]]
+tipo = "LAPISLAZULI"
+peso = 20
+
+[[mapas.objetos.pesos_por_tipo]]
+tipo = "PLATA"
+peso = 8
+
+[[mapas.objetos.pesos_por_tipo]]
+tipo = "ORO"
+peso = 2
+
+# Cada entrada coloca un objeto siempre en la misma casilla. "tipo" es la clave del catálogo de
+# objetos del mundo, no el nombre visible.
+[[mapas.objetos.fijos]]
+tipo = "ORO"
+columna = 14
+fila = 10
+
+[[mapas.objetos.fijos]]
+tipo = "PLATA"
+columna = 16
+fila = 10
+
+[[mapas.objetos.fijos]]
+tipo = "LAPISLAZULI"
+columna = 18
+fila = 11
+
+[[mapas.objetos.fijos]]
+tipo = "CARBON"
+columna = 12
+fila = 13
+
+[[mapas.objetos.fijos]]
+tipo = "PIEDRA"
+columna = 10
+fila = 12
+
 [[mapas]]
 id = "BusStop"
 ruta_tmx = "Assets/Maps/BusStop.tmx"
