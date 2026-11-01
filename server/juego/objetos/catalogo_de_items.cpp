@@ -16,7 +16,7 @@ CatalogoDeItems::CatalogoDeItems() {
     registrar(TipoItem::PIEDRA, "Piedra", CategoriaItem::RECURSO, 50, true, 50, 0);
     registrar(TipoItem::MADERA, "Madera", CategoriaItem::RECURSO, 50, true, 10, 0);
     registrar(TipoItem::CARBON, "Carbón", CategoriaItem::RECURSO, 50, true, 8, 10);
-    registrar(TipoItem::LAPISLAZULI, "Lapislázuli", CategoriaItem::RECURSO, 50, true, 0, 25);
+    registrar(TipoItem::LAPISLAZULI, "Lapislázuli", CategoriaItem::RECURSO, 50, true, 1, 25);
     registrar(TipoItem::PLATA, "Plata", CategoriaItem::RECURSO, 50, true, 0, 40);
     registrar(TipoItem::ORO, "Oro", CategoriaItem::RECURSO, 50, true, 2, 80);
 

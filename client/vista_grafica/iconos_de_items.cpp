@@ -19,11 +19,12 @@ IconosDeItems::IconosDeItems(SDL_Renderer* renderer) {
         {TipoItem::REGADERA, "Assets/items/regadera.png"},
         {TipoItem::ESPADA, "Assets/items/espada.png"},
         {TipoItem::PIEDRA, "Assets/items/piedra.png"},
+        {TipoItem::MADERA, "Assets/items/madera.png"},
         {TipoItem::CARBON, "Assets/items/carbon.png"},
         {TipoItem::LAPISLAZULI, "Assets/items/lapislazuli.png"},
         {TipoItem::PLATA, "Assets/items/plata.png"},
         {TipoItem::ORO, "Assets/items/oro.png"},
-        {TipoItem::COFRE, "Assets/Misc/cofre.png"},
+        {TipoItem::COFRE, "Assets/items/cofre.png"},
     };
 
     for (const auto& [tipo, ruta] : rutas_cultivos) {
