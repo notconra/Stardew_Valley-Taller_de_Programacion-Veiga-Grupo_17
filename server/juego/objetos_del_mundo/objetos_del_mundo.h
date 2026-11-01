@@ -9,7 +9,6 @@
 #include "../../../common/mensajes/mensajes.h"
 #include "../../../common/tipo_item.h"
 #include "../../../common/tipo_objeto.h"
-#include "../../configuracion/configuracion_servidor_datos.h"
 #include "../colisiones/colisiones.h"
 
 // Un objeto ya colocado en un mapa. Ocupa una sola casilla. El id lo asigna GestorDeObjetos y es
@@ -72,11 +71,10 @@ private:
     int siguiente_id = 1;
 
 public:
-    // Coloca los objetos fijos que trae la configuración del mapa. Lanza std::runtime_error si
-    // alguno tiene un tipo desconocido o no se puede colocar.
+    // Arranca sin objetos: quien arma el mapa (por ahora la mazmorra) los coloca con colocar().
     GestorDeObjetos(
-        const std::string& id_mapa, const CatalogoDeObjetos& catalogo, Colisiones& colisiones,
-        const ConfiguracionObjetos& configuracion);
+        const std::string& id_del_mapa, const CatalogoDeObjetos& catalogo_de_objetos,
+        Colisiones& colisiones_del_mapa);
 
     // Coloca un objeto y devuelve su id, o 0 si no se pudo (tipo inexistente, casilla fuera del
     // mapa u ocupada). Si falla no cambia nada. Es lo que usa la mazmorra para poblar cada nivel.

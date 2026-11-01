@@ -41,9 +41,6 @@ private:
     std::map<uint32_t, std::string> mapa_actual;  // en qué mapa está cada jugador conectado
     std::map<uint32_t, int> cofres_abiertos;      // id del cofre que tiene abierto cada jugador
 
-    // La configuración de objetos del mapa. Lanza std::runtime_error si no existe.
-    const ConfiguracionObjetos& configuracion_de_objetos(const std::string& id_mapa) const;
-
     // Lo saca del Jugadores de mapa_origen y lo mete en el de transicion.mapa_destino, en la
     // casilla que indica la transición.
     void cambiar_de_mapa(

@@ -21,21 +21,6 @@ struct CapaOpcionalMapaServidor {
     std::string propiedad;  // nombre de la propiedad (se resuelve al cargar el mapa)
 };
 
-// Objeto que aparece siempre en la misma casilla del mapa. "tipo" es la clave del catálogo
-// (por ejemplo "ORO").
-struct ConfiguracionObjetoFijo {
-    std::string tipo;
-    int columna = 0;
-    int fila = 0;
-};
-
-// Objetos que el mapa trae ya colocados. Si la sección no está, el mapa no tiene objetos.
-// Sirve para probar (por ejemplo, minerales en la granja); la generación de las mazmorras
-// no pasa por acá.
-struct ConfiguracionObjetos {
-    std::vector<ConfiguracionObjetoFijo> fijos;
-};
-
 struct ConfiguracionMapaServidor {
     std::string id;
     std::string ruta_tmx;
@@ -43,7 +28,6 @@ struct ConfiguracionMapaServidor {
     std::string capa_respaldo = "Buildings";
     std::string capa_transiciones = "Transiciones";
     std::vector<CapaOpcionalMapaServidor> capas_opcionales;
-    ConfiguracionObjetos objetos;
 };
 
 struct ConfiguracionMovimientoJugador {

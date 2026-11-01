@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cstdlib>
 #include <limits>
-#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -19,15 +18,12 @@ Mundo::Mundo(const RecursosDeJuego& recursos_de_juego, uint8_t ticks_por_segundo
         colisiones_por_mapa.try_emplace(id_mapa, mapa);
     }
 
-    // Los objetos se colocan y marcan sus colisiones antes de crear a los jugadores, así la
-    // aparición busca un lugar libre que no tenga un objeto encima.
     for (const auto& [id_mapa, mapa] : recursos.mapas) {
         objetos_por_mapa.try_emplace(
             id_mapa,
             id_mapa,
             recursos.catalogo_de_objetos,
-            colisiones_por_mapa.at(id_mapa),
-            configuracion_de_objetos(id_mapa));
+            colisiones_por_mapa.at(id_mapa));
     }
 
     for (const auto& [id_mapa, mapa] : recursos.mapas) {
@@ -44,19 +40,6 @@ Mundo::Mundo(const RecursosDeJuego& recursos_de_juego, uint8_t ticks_por_segundo
                 recursos.juego.movimiento,
                 recursos.juego.aparicion));
     }
-}
-
-const ConfiguracionObjetos& Mundo::configuracion_de_objetos(const std::string& id_mapa) const {
-    const auto encontrado = std::find_if(
-        recursos.configuraciones_de_mapas.begin(),
-        recursos.configuraciones_de_mapas.end(),
-        [&id_mapa](const ConfiguracionMapaServidor& configuracion) {
-            return configuracion.id == id_mapa;
-        });
-    if (encontrado == recursos.configuraciones_de_mapas.end()) {
-        throw std::runtime_error("no hay configuración para el mapa '" + id_mapa + "'");
-    }
-    return encontrado->objetos;
 }
 
 void Mundo::sincronizar_jugadores(const std::vector<uint32_t>& ids_conectados) {

@@ -137,7 +137,6 @@ void ConfiguracionServidor::cargar_mapas(const toml::table& archivo_toml) {
             }
         }
 
-        cargar_objetos(*mapa, seccion, configuracion_mapa);
         datos_configuracion.mapas.push_back(configuracion_mapa);
     }
 
@@ -248,38 +247,6 @@ void ConfiguracionServidor::cargar_inventario(const toml::table& inventario) {
     }
 
     destino.cantidad_ranuras_barra = static_cast<uint8_t>(barra);
-}
-
-void ConfiguracionServidor::cargar_objetos(
-    const toml::table& mapa, const std::string& seccion, ConfiguracionMapaServidor& destino) {
-    const toml::table* objetos = mapa["objetos"].as_table();
-    if (objetos == nullptr) {
-        return;
-    }
-    const std::string seccion_objetos = seccion + ".objetos";
-
-    const toml::array* fijos = (*objetos)["fijos"].as_array();
-    if (fijos != nullptr) {
-        for (std::size_t i = 0; i < fijos->size(); ++i) {
-            const toml::table* fijo = (*fijos)[i].as_table();
-            const std::string seccion_fijo = seccion_objetos + ".fijos[" + std::to_string(i) + "]";
-            if (fijo == nullptr) {
-                throw std::runtime_error(
-                    "configuración: la entrada '" + seccion_fijo + "' debe ser una tabla");
-            }
-
-            const std::string tipo = lector_toml::leer_texto(*fijo, "tipo", seccion_fijo);
-            const int columna = lector_toml::leer_entero(*fijo, "columna", seccion_fijo);
-            const int fila = lector_toml::leer_entero(*fijo, "fila", seccion_fijo);
-            if (columna < 0 || fila < 0) {
-                throw std::runtime_error(
-                    "configuración: 'columna' y 'fila' de [" + seccion_fijo +
-                    "] no pueden ser negativas");
-            }
-
-            destino.objetos.fijos.push_back(ConfiguracionObjetoFijo{tipo, columna, fila});
-        }
-    }
 }
 
 const ConfiguracionRedServidor& ConfiguracionServidor::red() const {

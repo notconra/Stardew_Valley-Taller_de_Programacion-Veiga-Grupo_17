@@ -41,23 +41,9 @@ const DefinicionDeObjeto* CatalogoDeObjetos::buscar_por_clave(const std::string&
 }
 
 GestorDeObjetos::GestorDeObjetos(
-    const std::string& id_mapa, const CatalogoDeObjetos& catalogo, Colisiones& colisiones,
-    const ConfiguracionObjetos& configuracion)
-    : id_mapa(id_mapa), catalogo(catalogo), colisiones(colisiones) {
-    for (const ConfiguracionObjetoFijo& fijo : configuracion.fijos) {
-        const DefinicionDeObjeto* definicion = catalogo.buscar_por_clave(fijo.tipo);
-        if (definicion == nullptr) {
-            throw std::runtime_error(
-                "objetos del mundo: el mapa '" + id_mapa +
-                "' tiene un objeto de tipo desconocido ('" + fijo.tipo + "')");
-        }
-        if (colocar(definicion->tipo, fijo.columna, fijo.fila) == 0) {
-            throw std::runtime_error(
-                "objetos del mundo: no se pudo colocar '" + fijo.tipo + "' en el mapa '" + id_mapa +
-                "' (columna " + std::to_string(fijo.columna) + ", fila " +
-                std::to_string(fijo.fila) + "): cae fuera del mapa o sobre una casilla ocupada");
-        }
-    }
+    const std::string& id_del_mapa, const CatalogoDeObjetos& catalogo_de_objetos,
+    Colisiones& colisiones_del_mapa)
+    : id_mapa(id_del_mapa), catalogo(catalogo_de_objetos), colisiones(colisiones_del_mapa) {
 }
 
 int GestorDeObjetos::colocar(TipoObjeto tipo, int columna, int fila) {
