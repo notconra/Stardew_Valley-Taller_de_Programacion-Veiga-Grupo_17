@@ -127,7 +127,11 @@ ResultadoDeComando Mundo::atender(uint32_t id_jugador, const ComandoCliente& com
 ResultadoDeComando Mundo::usar_item(uint32_t id_jugador, const UsarItem& pedido) {
     const RanuraInventario seleccionada =
         gestor_inventario.ranura(id_jugador, pedido.indice_ranura);
-    if (seleccionada.tipo != TipoItem::COFRE) {
+    // Qué objeto coloca el ítem de la ranura. Si no coloca ninguno (herramientas, semillas...),
+    // no hay nada que hacer.
+    const DefinicionDeObjeto* definicion =
+        recursos.catalogo_de_objetos.buscar_por_item(seleccionada.tipo);
+    if (definicion == nullptr) {
         return ResultadoDeComando{};
     }
 
@@ -155,7 +159,7 @@ ResultadoDeComando Mundo::usar_item(uint32_t id_jugador, const UsarItem& pedido)
         return ResultadoDeComando{};
     }
 
-    // El cofre se coloca solo en una de las ocho casillas que rodean al jugador. No se permite
+    // El objeto se coloca solo en una de las ocho casillas que rodean al jugador. No se permite
     // colocarlo encima de uno mismo.
     const int distancia = std::max(
         std::abs(destino->columna - propia->columna),
@@ -166,14 +170,14 @@ ResultadoDeComando Mundo::usar_item(uint32_t id_jugador, const UsarItem& pedido)
 
     // colocar falla si la casilla ya tiene un objeto o está bloqueada.
     GestorDeObjetos& objetos = objetos_por_mapa.at(id_mapa);
-    const int id_objeto = objetos.colocar(TipoObjeto::COFRE, destino->columna, destino->fila);
+    const int id_objeto = objetos.colocar(definicion->tipo, destino->columna, destino->fila);
     if (id_objeto == 0) {
         return ResultadoDeComando{};
     }
 
     if (!gestor_inventario.quitar_de_ranura(id_jugador, pedido.indice_ranura, 1)) {
-        // No debería fallar porque la ranura tenía un cofre. Si pasara, se deshace la colocación
-        // para no dejar un cofre gratis en el mapa.
+        // No debería fallar porque la ranura tenía el ítem. Si pasara, se deshace la colocación
+        // para no dejar un objeto gratis en el mapa.
         objetos.romper(id_objeto);
         return ResultadoDeComando{};
     }

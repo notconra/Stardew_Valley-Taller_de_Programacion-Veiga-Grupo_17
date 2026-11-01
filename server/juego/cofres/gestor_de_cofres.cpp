@@ -9,6 +9,7 @@ std::vector<DefinicionDeObjeto> GestorDeCofres::definiciones() {
             .clave = "COFRE",
             .producto = TipoItem::COFRE,
             .cantidad = 1,
+            .item_colocable = TipoItem::COFRE,
         },
     };
 }

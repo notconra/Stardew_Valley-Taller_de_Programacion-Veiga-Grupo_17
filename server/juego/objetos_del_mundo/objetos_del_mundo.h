@@ -32,12 +32,16 @@ struct ResultadoDeRotura {
 // El objeto que se ve en el mapa (TipoObjeto) y el ítem que deja (TipoItem) son cosas distintas.
 struct DefinicionDeObjeto {
     TipoObjeto tipo = TipoObjeto::NINGUNO;
-    std::string clave;          // la que se escribe en el TOML
+    std::string clave;          // identificador de texto, único entre todas las definiciones
     int golpes_para_picar = 0;  // cuántos golpes de la herramienta hacen falta para romperlo
     TipoItem herramienta = TipoItem::NINGUNO;
     double probabilidad_de_no_dejar = 0.0;
     TipoItem producto = TipoItem::NINGUNO;
     int cantidad = 1;
+    // El ítem del inventario que el jugador gasta para colocar este objeto (el cofre, un mueble).
+    // NINGUNO si el jugador no puede colocarlo, como pasa con minerales y árboles, que solo
+    // genera el mundo. Dos objetos no pueden compartir el mismo ítem.
+    TipoItem item_colocable = TipoItem::NINGUNO;
 };
 
 // Todos los tipos de objeto que existen. Se arma una sola vez al arrancar (RecursosDeJuego) y
@@ -47,15 +51,22 @@ private:
     std::map<TipoObjeto, DefinicionDeObjeto> definiciones_por_tipo;
 
 public:
-    // Lanza std::runtime_error si una definición no tiene tipo o clave, o si hay tipos o claves
-    // repetidas.
+    // Lanza std::runtime_error si una definición no tiene tipo o clave, si hay tipos, claves o
+    // item_colocable repetidos, si la probabilidad de no dejar producto no está entre 0 y 1, o si
+    // deja un producto en cantidad menor a uno.
     explicit CatalogoDeObjetos(const std::vector<DefinicionDeObjeto>& definiciones);
 
     // Devuelve nullptr si el tipo no existe.
     const DefinicionDeObjeto* buscar(TipoObjeto tipo) const;
 
-    // Busca por la clave que se escribe en el TOML. Devuelve nullptr si no existe.
+    // Busca por clave de texto. Devuelve nullptr si no existe.
     const DefinicionDeObjeto* buscar_por_clave(const std::string& clave) const;
+
+    // El objeto que se coloca al gastar ese ítem. Devuelve nullptr si el ítem no coloca nada.
+    const DefinicionDeObjeto* buscar_por_item(TipoItem item) const;
+
+    // Todas las definiciones, ordenadas por tipo.
+    const std::map<TipoObjeto, DefinicionDeObjeto>& definiciones() const;
 };
 
 // Los objetos colocados en un mapa durante una partida. Marca su casilla en Colisiones, asigna

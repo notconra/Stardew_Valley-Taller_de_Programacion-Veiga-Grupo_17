@@ -25,7 +25,7 @@ struct RecursosDeJuego {
     CatalogoDeObjetos catalogo_de_objetos;
 
     // Construye los mapas y arma el catálogo de objetos del mundo. Lanza std::runtime_error si
-    // falla un mapa o el catálogo.
+    // falla un mapa, el catálogo, o un objeto menciona un ítem que no existe.
     RecursosDeJuego(
         const std::vector<ConfiguracionMapaServidor>& configuracion_mapas,
         const std::string& id_mapa_inicial, const ConfiguracionJuegoServidor& configuracion_juego);
@@ -34,6 +34,11 @@ private:
     // Junta las definiciones de todos los módulos que aportan objetos del mundo. Para sumar
     // árboles o muebles alcanza con concatenar sus definiciones acá.
     static CatalogoDeObjetos crear_catalogo_de_objetos();
+
+    // Verifica que el producto, la herramienta y el ítem colocable de cada objeto del mundo sean
+    // ítems registrados en catalogo_de_items (y el colocable, de categoría COLOCABLE), para que un
+    // ítem olvidado falle al arrancar y no en plena partida.
+    void validar_catalogo_de_objetos() const;
 };
 
 #endif

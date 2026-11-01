@@ -19,8 +19,8 @@ class GestorDeCofres {
 public:
     static constexpr uint8_t CAPACIDAD_DE_COFRE = 30;
 
-    // Cómo es un cofre como objeto del mundo (deja un cofre al romperse). RecursosDeJuego las
-    // suma al catálogo genérico de objetos del mundo.
+    // Cómo es un cofre como objeto del mundo: deja un cofre al romperse y se coloca gastando un
+    // ítem cofre (item_colocable). RecursosDeJuego las suma al catálogo genérico de objetos.
     static std::vector<DefinicionDeObjeto> definiciones();
 
     explicit GestorDeCofres(const CatalogoDeItems& catalogo_de_items);

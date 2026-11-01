@@ -46,7 +46,8 @@ private:
     void cambiar_de_mapa(
         uint32_t id_jugador, const std::string& mapa_origen, const Transicion& transicion);
 
-    // Coloca el ítem de la ranura (por ahora solo el cofre) en la casilla pedida o en la de
+    // Coloca como objeto del mundo el ítem de la ranura (cualquiera con item_colocable en el
+    // catálogo de objetos: hoy el cofre, a futuro muebles) en la casilla pedida o en la de
     // enfrente. El servidor valida que la casilla esté a distancia uno del jugador y libre.
     ResultadoDeComando usar_item(uint32_t id_jugador, const UsarItem& pedido);
 

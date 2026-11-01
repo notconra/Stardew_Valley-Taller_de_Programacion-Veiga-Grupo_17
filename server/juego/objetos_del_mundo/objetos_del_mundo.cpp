@@ -1,6 +1,7 @@
 #include "objetos_del_mundo.h"
 
 #include <cstdint>
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -22,6 +23,23 @@ CatalogoDeObjetos::CatalogoDeObjetos(const std::vector<DefinicionDeObjeto>& defi
                 "objetos del mundo: la clave '" + definicion.clave +
                 "' está definida más de una vez");
         }
+        if (definicion.item_colocable != TipoItem::NINGUNO &&
+            buscar_por_item(definicion.item_colocable) != nullptr) {
+            throw std::runtime_error(
+                "objetos del mundo: '" + definicion.clave +
+                "' usa un ítem que ya coloca otro objeto");
+        }
+        if (definicion.probabilidad_de_no_dejar < 0.0 ||
+            definicion.probabilidad_de_no_dejar > 1.0) {
+            throw std::runtime_error(
+                "objetos del mundo: '" + definicion.clave +
+                "' tiene una probabilidad de no dejar producto fuera de [0, 1]");
+        }
+        if (definicion.producto != TipoItem::NINGUNO && definicion.cantidad < 1) {
+            throw std::runtime_error(
+                "objetos del mundo: '" + definicion.clave +
+                "' deja un producto con cantidad menor a uno");
+        }
         definiciones_por_tipo.emplace(definicion.tipo, definicion);
     }
 }
@@ -38,6 +56,22 @@ const DefinicionDeObjeto* CatalogoDeObjetos::buscar_por_clave(const std::string&
         }
     }
     return nullptr;
+}
+
+const DefinicionDeObjeto* CatalogoDeObjetos::buscar_por_item(TipoItem item) const {
+    if (item == TipoItem::NINGUNO) {
+        return nullptr;
+    }
+    for (const auto& entrada : definiciones_por_tipo) {
+        if (entrada.second.item_colocable == item) {
+            return &entrada.second;
+        }
+    }
+    return nullptr;
+}
+
+const std::map<TipoObjeto, DefinicionDeObjeto>& CatalogoDeObjetos::definiciones() const {
+    return definiciones_por_tipo;
 }
 
 GestorDeObjetos::GestorDeObjetos(
