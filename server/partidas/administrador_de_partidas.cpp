@@ -1,10 +1,14 @@
 #include "administrador_de_partidas.h"
 
+#include <filesystem>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "../persistencia/datos_partida_guardada.h"
+#include "../persistencia/serializador_partida.h"
 #include "error_de_partida.h"
 
 AdministradorDePartidas::AdministradorDePartidas(
@@ -22,6 +26,8 @@ AdministradorDePartidas::AdministradorDePartidas(
     if (configuracion.capacidad_de_comandos <= 0) {
         throw std::invalid_argument("la capacidad de comandos tiene que ser mayor a 0");
     }
+
+    cargar_partidas_guardadas();
 }
 
 Partida& AdministradorDePartidas::buscar_partida(const std::string& codigo_partida) {
@@ -70,8 +76,8 @@ IngresoAPartida AdministradorDePartidas::crear(
             codigo,
             nombre_partida,
             static_cast<uint8_t>(configuracion.jugadores_maximos_por_partida),
-            id_cliente,
-            nombre_jugador));
+            false,
+            {Jugador{id_cliente, 1, nombre_jugador, false}}));
     ++proximo_numero_de_partida;
 
     Partida& partida = insertada.first->second;
@@ -170,5 +176,43 @@ void AdministradorDePartidas::limpiar_sesion_si_vacia(const std::string& codigo_
     const auto sesion = sesiones.find(codigo_partida);
     if (sesion != sesiones.end()) {
         sesiones.erase(sesion);
+    }
+}
+
+void AdministradorDePartidas::cargar_partidas_guardadas() {
+    indice.cargar();
+    for (const auto& partida_indexada : indice.listar_todas()) {
+        cargar_partida(partida_indexada.ruta_archivo);
+    }
+}
+
+void AdministradorDePartidas::cargar_partida(const std::string& ruta_archivo) {
+    if (!std::filesystem::exists(ruta_archivo)) {
+        return;
+    }
+
+    DatosPartidaGuardada datos = SerializadorPartida::cargar_desde_archivo(ruta_archivo);
+
+    std::vector<Jugador> miembros;
+    for (const auto& jugador_guardado : datos.jugadores) {
+        miembros.push_back(Jugador{
+            jugador_guardado.id_cliente,
+            jugador_guardado.id_jugador,
+            jugador_guardado.nombre_jugador,
+            false});
+    }
+
+    partidas.emplace(
+        datos.codigo,
+        Partida(datos.codigo, datos.nombre, datos.jugadores_maximos, datos.multijugador, miembros));
+
+    if (datos.codigo.size() > 1 && datos.codigo[0] == 'P') {
+        try {
+            unsigned long num = std::stoul(datos.codigo.substr(1));
+            if (static_cast<uint32_t>(num) >= proximo_numero_de_partida) {
+                proximo_numero_de_partida = static_cast<uint32_t>(num) + 1;
+            }
+        } catch (const std::exception&) {
+        }
     }
 }

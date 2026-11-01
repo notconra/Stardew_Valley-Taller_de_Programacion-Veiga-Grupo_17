@@ -10,6 +10,7 @@
 #include "../../common/mensajes/mensajes.h"
 #include "../configuracion/configuracion_servidor_datos.h"
 #include "../juego/base/recursos/recursos_de_juego.h"
+#include "../persistencia/indice_partidas.h"
 #include "ingreso_a_partida.h"
 #include "partida.h"
 #include "sesion_de_partida.h"
@@ -43,6 +44,11 @@ private:
 
     // Devuelve la sesión de la partida, la crea si no existía.
     SesionDePartida& sesion_de(const std::string& codigo_partida);
+
+    IndicePartidas indice;
+
+    void cargar_partidas_guardadas();
+    void cargar_partida(const std::string& ruta_archivo);
 
 public:
     AdministradorDePartidas(

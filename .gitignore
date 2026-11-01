@@ -3,4 +3,4 @@ build/
 *.autosave
 *.dat
 *.idx
-partidas/
+/partidas/
