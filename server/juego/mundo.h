@@ -15,6 +15,7 @@
 #include "mapa/mapa.h"
 #include "objetos_del_mundo/objetos_del_mundo.h"
 #include "recursos/recursos_de_juego.h"
+#include "mazmorra/mazmorra.h"
 
 // Qué cambió en el mundo al atender un comando. La sesión lo usa para mandar solo lo necesario al
 // jugador que lo pidió, sin reenviar todo el estado.
@@ -40,6 +41,8 @@ private:
     std::map<std::string, Jugadores> jugadores_por_mapa;
     std::map<uint32_t, std::string> mapa_actual;  // en qué mapa está cada jugador conectado
     std::map<uint32_t, int> cofres_abiertos;      // id del cofre que tiene abierto cada jugador
+    std::optional<Mazmorra> mazmorra;
+    std::vector<std::string> niveles_de_mazmorra;
 
     // Lo saca del Jugadores de mapa_origen y lo mete en el de transicion.mapa_destino, en la
     // casilla que indica la transición.
@@ -56,6 +59,13 @@ private:
 
     // Transfiere ítems entre la barra del jugador y el cofre que tiene abierto.
     ResultadoDeComando mover_item_con_cofre(uint32_t id_jugador, const MoverItemConCofre& pedido);
+    // Decide qué hacer con una transición: entrar a la mazmorra, bajar un nivel, salir de ella o
+    // un cambio de mapa común.
+    void resolver_transicion(
+        uint32_t id_jugador, const std::string& mapa_origen, const Transicion& transicion);
+
+    // Lo pasa al nivel en el que la mazmorra dice que está, parado en la entrada del nivel.
+    void llevar_al_nivel_actual(uint32_t id_jugador, const std::string& mapa_origen);
 
 public:
     Mundo(const RecursosDeJuego& recursos, uint8_t ticks_por_segundo);
