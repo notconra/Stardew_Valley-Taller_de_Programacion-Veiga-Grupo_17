@@ -18,6 +18,8 @@ const std::map<std::string, uint8_t>& propiedades_disponibles() {
         {"CULTIVABLE", PropiedadDeCasilla::CULTIVABLE},
         {"DECORABLE", PropiedadDeCasilla::DECORABLE},
         {"ADMITE_HIERBA", PropiedadDeCasilla::ADMITE_HIERBA},
+        {"ADMITE_MINERAL", PropiedadDeCasilla::ADMITE_MINERAL},
+        {"ADMITE_ARBOL", PropiedadDeCasilla::ADMITE_ARBOL},
         {"NINGUNA", PropiedadDeCasilla::NINGUNA},
     };
     return propiedades;
