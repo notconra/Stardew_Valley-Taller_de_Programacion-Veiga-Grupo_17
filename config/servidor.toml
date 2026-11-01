@@ -149,4 +149,6 @@ ruta_tmx = "Assets/Maps/Mines/24.tmx"
 destino = "mazmorra"
 mapas = ["mina_1", "mina_2", "mina_3", "mina_4", "mina_5", "mina_6", "mina_7", "mina_8", "mina_9", "mina_11", "mina_12", "mina_13", "mina_14", "mina_15", "mina_16", "mina_17", "mina_18", "mina_19", "mina_21", "mina_24"]
 enemigos_por_nivel = 4
-piedras_por_nivel = 10
+minerales_por_nivel = 30
+# Nivel a partir del cual puede aparecer el oro (el enunciado lo pide desde la quinta sala).
+oro_desde_nivel = 5

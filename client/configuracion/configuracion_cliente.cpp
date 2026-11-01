@@ -1,5 +1,6 @@
 #include "configuracion_cliente.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -7,8 +8,8 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <algorithm>
 
+#include "../../common/configuracion/lector_toml.h"
 #include "../persistencia/identidad_cliente.h"
 
 ConfiguracionCliente::ConfiguracionCliente(int argc, char* argv[]) {
@@ -54,14 +55,7 @@ uint32_t ConfiguracionCliente::validar_id(const std::string& id_en_texto) const 
 }
 
 void ConfiguracionCliente::inicializar(const std::string& ruta, uint32_t id_override) {
-    toml::table archivo_toml;
-    try {
-        archivo_toml = toml::parse_file(ruta);
-    } catch (const toml::parse_error& error) {
-        throw std::runtime_error(
-            "no se pudo leer la configuración '" + ruta + "': " + std::string(error.description()) +
-            " (línea " + std::to_string(error.source().begin.line) + ")");
-    }
+    const toml::table archivo_toml = lector_toml::cargar_archivo(ruta);
 
     cargar_toml(archivo_toml);
     id_del_cliente = (id_override > 0) ? id_override : IdentidadCliente::obtener_o_crear();
@@ -77,39 +71,41 @@ void ConfiguracionCliente::cargar_toml(const toml::table& archivo_toml) {
 }
 
 void ConfiguracionCliente::cargar_servidor(const toml::table& archivo_toml) {
-    const toml::table& servidor = exigir_tabla(archivo_toml, "servidor");
+    const toml::table& servidor = lector_toml::exigir_tabla(archivo_toml, "servidor");
 
-    configuracion_servidor.host = leer_texto(servidor, "host", "servidor");
-    configuracion_servidor.puerto = leer_texto(servidor, "puerto", "servidor");
+    configuracion_servidor.host = lector_toml::leer_texto(servidor, "host", "servidor");
+    configuracion_servidor.puerto = lector_toml::leer_texto(servidor, "puerto", "servidor");
 }
 
 void ConfiguracionCliente::cargar_ventana(const toml::table& archivo_toml) {
-    const toml::table& ventana = exigir_tabla(archivo_toml, "ventana");
+    const toml::table& ventana = lector_toml::exigir_tabla(archivo_toml, "ventana");
 
-    configuracion_vista.ventana.titulo = leer_texto(ventana, "titulo", "ventana");
-    configuracion_vista.ventana.ancho = leer_entero_positivo(ventana, "ancho", "ventana");
-    configuracion_vista.ventana.alto = leer_entero_positivo(ventana, "alto", "ventana");
+    configuracion_vista.ventana.titulo = lector_toml::leer_texto(ventana, "titulo", "ventana");
+    configuracion_vista.ventana.ancho =
+        lector_toml::leer_entero_positivo(ventana, "ancho", "ventana");
+    configuracion_vista.ventana.alto =
+        lector_toml::leer_entero_positivo(ventana, "alto", "ventana");
 }
 
 void ConfiguracionCliente::cargar_sdl(const toml::table& archivo_toml) {
-    const toml::table& sdl = exigir_tabla(archivo_toml, "sdl");
+    const toml::table& sdl = lector_toml::exigir_tabla(archivo_toml, "sdl");
 
-    configuracion_vista.sdl.acelerado = leer_booleano(sdl, "acelerado", "sdl");
-    configuracion_vista.sdl.vsync = leer_booleano(sdl, "vsync", "sdl");
+    configuracion_vista.sdl.acelerado = lector_toml::leer_booleano(sdl, "acelerado", "sdl");
+    configuracion_vista.sdl.vsync = lector_toml::leer_booleano(sdl, "vsync", "sdl");
 }
 
 void ConfiguracionCliente::cargar_graficos(const toml::table& archivo_toml) {
-    const toml::table& graficos = exigir_tabla(archivo_toml, "graficos");
+    const toml::table& graficos = lector_toml::exigir_tabla(archivo_toml, "graficos");
 
     configuracion_vista.graficos.tamano_de_tile =
-        leer_entero_positivo(graficos, "tamano_de_tile", "graficos");
+        lector_toml::leer_entero_positivo(graficos, "tamano_de_tile", "graficos");
     configuracion_vista.graficos.escala_de_tiles =
-        leer_entero_positivo(graficos, "escala_de_tiles", "graficos");
+        lector_toml::leer_entero_positivo(graficos, "escala_de_tiles", "graficos");
     configuracion_vista.graficos.color_de_fondo = leer_color(graficos);
 }
 
 void ConfiguracionCliente::cargar_mapas(const toml::table& archivo_toml) {
-    const toml::array& mapas = exigir_arreglo(archivo_toml, "mapas", "raíz");
+    const toml::array& mapas = lector_toml::exigir_arreglo(archivo_toml, "mapas", "raíz");
     if (mapas.empty()) {
         throw std::runtime_error("configuración: [[mapas]] debe tener al menos un mapa");
     }
@@ -124,20 +120,33 @@ void ConfiguracionCliente::cargar_mapas(const toml::table& archivo_toml) {
         }
 
         ConfiguracionMapa configuracion_mapa;
-        configuracion_mapa.id = leer_texto(*mapa, "id", seccion);
-        configuracion_mapa.ruta = leer_texto(*mapa, "ruta", seccion);
+        configuracion_mapa.id = lector_toml::leer_texto(*mapa, "id", seccion);
+        configuracion_mapa.ruta = lector_toml::leer_texto(*mapa, "ruta", seccion);
+
+        const bool id_repetido = std::any_of(
+            configuracion_vista.mapas.begin(),
+            configuracion_vista.mapas.end(),
+            [&configuracion_mapa](const ConfiguracionMapa& existente) {
+                return existente.id == configuracion_mapa.id;
+            });
+        if (id_repetido) {
+            throw std::runtime_error(
+                "configuración: el id de mapa '" + configuracion_mapa.id + "' está repetido");
+        }
         configuracion_mapa.capas_bajo_los_jugadores =
-            leer_textos(*mapa, "capas_bajo_los_jugadores", seccion);
+            lector_toml::leer_textos(*mapa, "capas_bajo_los_jugadores", seccion);
         configuracion_mapa.capas_sobre_los_jugadores =
-            leer_textos(*mapa, "capas_sobre_los_jugadores", seccion);
+            lector_toml::leer_textos(*mapa, "capas_sobre_los_jugadores", seccion);
         configuracion_mapa.tilesets = leer_tilesets(*mapa, seccion);
 
         configuracion_vista.mapas.push_back(configuracion_mapa);
     }
 
-    configuracion_vista.mapa_inicial = leer_texto(archivo_toml, "mapa_inicial", "raíz");
+    configuracion_vista.mapa_inicial =
+        lector_toml::leer_texto(archivo_toml, "mapa_inicial", "raíz");
     const bool existe = std::any_of(
-        configuracion_vista.mapas.begin(), configuracion_vista.mapas.end(),
+        configuracion_vista.mapas.begin(),
+        configuracion_vista.mapas.end(),
         [this](const ConfiguracionMapa& m) { return m.id == configuracion_vista.mapa_inicial; });
     if (!existe) {
         throw std::runtime_error(
@@ -147,111 +156,27 @@ void ConfiguracionCliente::cargar_mapas(const toml::table& archivo_toml) {
 }
 
 void ConfiguracionCliente::cargar_jugador(const toml::table& archivo_toml) {
-    const toml::table& jugador = exigir_tabla(archivo_toml, "jugador");
+    const toml::table& jugador = lector_toml::exigir_tabla(archivo_toml, "jugador");
 
-    configuracion_vista.jugador.ruta_sprite = leer_texto(jugador, "ruta_sprite", "jugador");
+    configuracion_vista.jugador.ruta_sprite =
+        lector_toml::leer_texto(jugador, "ruta_sprite", "jugador");
     configuracion_vista.jugador.ancho_sprite =
-        leer_entero_positivo(jugador, "ancho_sprite", "jugador");
+        lector_toml::leer_entero_positivo(jugador, "ancho_sprite", "jugador");
     configuracion_vista.jugador.alto_sprite =
-        leer_entero_positivo(jugador, "alto_sprite", "jugador");
+        lector_toml::leer_entero_positivo(jugador, "alto_sprite", "jugador");
     configuracion_vista.jugador.cuadros_caminando =
-        leer_entero_positivo(jugador, "cuadros_caminando", "jugador");
+        lector_toml::leer_entero_positivo(jugador, "cuadros_caminando", "jugador");
     configuracion_vista.jugador.ms_por_cuadro_caminando =
-        leer_entero_positivo(jugador, "ms_por_cuadro_caminando", "jugador");
+        lector_toml::leer_entero_positivo(jugador, "ms_por_cuadro_caminando", "jugador");
     configuracion_vista.jugador.cuadros_quieto =
-        leer_entero_positivo(jugador, "cuadros_quieto", "jugador");
+        lector_toml::leer_entero_positivo(jugador, "cuadros_quieto", "jugador");
     configuracion_vista.jugador.ms_por_cuadro_quieto =
-        leer_entero_positivo(jugador, "ms_por_cuadro_quieto", "jugador");
-}
-
-const toml::table& ConfiguracionCliente::exigir_tabla(
-    const toml::table& archivo_toml, const std::string& nombre) const {
-    const toml::table* tabla = archivo_toml[nombre].as_table();
-    if (tabla == nullptr) {
-        throw std::runtime_error("configuración: falta la sección [" + nombre + "]");
-    }
-    return *tabla;
-}
-
-const toml::array& ConfiguracionCliente::exigir_arreglo(
-    const toml::table& tabla, const std::string& clave, const std::string& seccion) const {
-    const toml::array* valores = tabla[clave].as_array();
-    if (valores == nullptr) {
-        throw std::runtime_error(
-            "configuración: falta o es inválida la clave '" + clave + "' de [" + seccion + "]");
-    }
-    return *valores;
-}
-
-int ConfiguracionCliente::leer_entero(
-    const toml::table& tabla, const std::string& clave, const std::string& seccion) const {
-    const auto valor = tabla[clave].value<int>();
-    if (!valor) {
-        throw std::runtime_error(
-            "configuración: falta o es inválida la clave '" + clave + "' de [" + seccion + "]");
-    }
-    return *valor;
-}
-
-int ConfiguracionCliente::leer_entero_positivo(
-    const toml::table& tabla, const std::string& clave, const std::string& seccion) const {
-    const int valor = leer_entero(tabla, clave, seccion);
-    if (valor <= 0) {
-        throw std::runtime_error(
-            "configuración: la clave '" + clave + "' de [" + seccion + "] debe ser mayor que cero");
-    }
-    return valor;
-}
-
-bool ConfiguracionCliente::leer_booleano(
-    const toml::table& tabla, const std::string& clave, const std::string& seccion) const {
-    const auto valor = tabla[clave].value<bool>();
-    if (!valor) {
-        throw std::runtime_error(
-            "configuración: falta o es inválida la clave '" + clave + "' de [" + seccion + "]");
-    }
-    return *valor;
-}
-
-std::string ConfiguracionCliente::leer_texto(
-    const toml::table& tabla, const std::string& clave, const std::string& seccion) const {
-    const auto valor = tabla[clave].value<std::string>();
-    if (!valor) {
-        throw std::runtime_error(
-            "configuración: falta o es inválida la clave '" + clave + "' de [" + seccion + "]");
-    }
-    if (valor->empty()) {
-        throw std::runtime_error(
-            "configuración: la clave '" + clave + "' de [" + seccion + "] no puede estar vacía");
-    }
-    return *valor;
-}
-
-std::vector<std::string> ConfiguracionCliente::leer_textos(
-    const toml::table& tabla, const std::string& clave, const std::string& seccion) const {
-    const toml::array& valores = exigir_arreglo(tabla, clave, seccion);
-
-    std::vector<std::string> textos;
-    textos.reserve(valores.size());
-    for (const auto& valor : valores) {
-        const auto texto = valor.value<std::string>();
-        if (!texto || texto->empty()) {
-            throw std::runtime_error(
-                "configuración: la clave '" + clave + "' de [" + seccion +
-                "] debe contener textos no vacíos");
-        }
-        textos.push_back(*texto);
-    }
-
-    if (textos.empty()) {
-        throw std::runtime_error(
-            "configuración: la clave '" + clave + "' de [" + seccion + "] no puede estar vacía");
-    }
-    return textos;
+        lector_toml::leer_entero_positivo(jugador, "ms_por_cuadro_quieto", "jugador");
 }
 
 ColorDeFondo ConfiguracionCliente::leer_color(const toml::table& graficos) const {
-    const toml::array& valores = exigir_arreglo(graficos, "color_de_fondo", "graficos");
+    const toml::array& valores =
+        lector_toml::exigir_arreglo(graficos, "color_de_fondo", "graficos");
     if (valores.size() != 4) {
         throw std::runtime_error(
             "configuración: 'color_de_fondo' de [graficos] debe tener 4 valores "
@@ -274,7 +199,7 @@ ColorDeFondo ConfiguracionCliente::leer_color(const toml::table& graficos) const
 
 std::vector<ConfiguracionTileset> ConfiguracionCliente::leer_tilesets(
     const toml::table& mapa, const std::string& seccion) const {
-    const toml::array& valores = exigir_arreglo(mapa, "tilesets", seccion);
+    const toml::array& valores = lector_toml::exigir_arreglo(mapa, "tilesets", seccion);
 
     std::vector<ConfiguracionTileset> tilesets;
     tilesets.reserve(valores.size());
@@ -287,9 +212,9 @@ std::vector<ConfiguracionTileset> ConfiguracionCliente::leer_tilesets(
         }
 
         tilesets.push_back(ConfiguracionTileset{
-            leer_texto(*tileset, "ruta", seccion_tileset),
-            leer_entero_positivo(*tileset, "firstgid", seccion_tileset),
-            leer_entero_positivo(*tileset, "columnas", seccion_tileset),
+            lector_toml::leer_texto(*tileset, "ruta", seccion_tileset),
+            lector_toml::leer_entero_positivo(*tileset, "firstgid", seccion_tileset),
+            lector_toml::leer_entero_positivo(*tileset, "columnas", seccion_tileset),
         });
     }
 

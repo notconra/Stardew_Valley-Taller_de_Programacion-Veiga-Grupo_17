@@ -5,7 +5,7 @@
 #
 #   ./build/client config/cliente.toml
 
-mapa_inicial = "granja"
+mapa_inicial = "FarmHouse"
 
 [servidor]
 host = "127.0.0.1"

@@ -5,11 +5,12 @@
 #include <string>
 #include <vector>
 
-#define DESTINO_ESCALERA "siguiente"
-#define DESTINO_ENTRADA "entrada"
-
-#include "../../../common/lector_de_mapas_tmx/lector_de_mapas.h"
+#include "../mapa/mapa.h"
 #include "nivel.h"
+
+// Nombres de mapa_destino que usan los TMX de la mazmorra para marcar la escalera y la entrada.
+inline constexpr const char* DESTINO_ESCALERA = "siguiente";
+inline constexpr const char* DESTINO_ENTRADA = "entrada";
 
 class CargadorMazmorra {
 public:
@@ -17,29 +18,24 @@ public:
      * Elige 10 mapas distintos de "disponibles" en orden aleatorio.
      */
     static std::vector<std::string> elegir_niveles(
-        const std::vector<std::string>& disponibles, std::mt19937&& generador);
+        const std::vector<std::string>& disponibles, std::mt19937& generador);
 
     /*
-     * Carga los niveles indicados (nombres de archivo dentro de "carpeta"), en el mismo orden.
+     * Arma la geografía de un nivel a partir del Mapa ya cargado: sus colisiones dicen qué
+     * casillas se caminan y sus transiciones, dónde están la entrada, la escalera y la salida.
      */
-    static std::vector<GeografiaNivel> cargar_niveles(
-        const std::string& carpeta, const std::vector<std::string>& nombres);
-
-    /*
-     * Carga un solo TMX.
-     */
-    static GeografiaNivel cargar_nivel(const std::string& ruta_tmx);
+    static GeografiaNivel crear_geografia(const std::string& id_mapa, const Mapa& mapa);
 
 private:
     /*
      * Pasa un rectángulo en píxeles a casillas, recortado al mapa.
      */
-    static Zona a_casillas(const TransicionTMX& transicion, const TamanioMapa& tamanio);
+    static Zona a_casillas(const Rectangulo& zona, const Mapa& mapa);
 
     /*
-     * Elige una casilla libre pegada a la salida.
+     * Elige una casilla libre pegada a la salida, para los mapas que no marcan la entrada.
      */
-    static PosicionEnNivel asignar_entrada(const GeografiaNivel& geografia);
+    static Casilla asignar_entrada(const GeografiaNivel& geografia);
 };
 
 #endif

@@ -11,12 +11,11 @@
 
 #include "nivel.h"
 
-#define CANTIDAD_NIVELES 10
+inline constexpr int CANTIDAD_NIVELES = 10;
 
-struct CantidadesDeSorteo {
-    uint16_t enemigos;
-    uint16_t piedras;
-};
+// Los niveles de la mazmorra de una partida y en cuál está cada jugador. La geografía de los
+// niveles no cambia durante la partida, pero el contenido (enemigos y objetos) se vuelve a
+// sortear cada vez que se entra con la mazmorra vacía.
 class Mazmorra {
 public:
     using IdJugador = uint32_t;
@@ -25,18 +24,23 @@ private:
     std::array<std::optional<Nivel>, CANTIDAD_NIVELES> niveles;
     std::map<IdJugador, size_t> nivel_de_jugador;
     std::mt19937 generador;
-    CantidadesDeSorteo cantidades;
+    int enemigos_por_nivel;
+    int objetos_por_nivel;
+
     size_t indice_de(IdJugador jugador) const;
+    size_t indice_de_nivel(size_t numero) const;
 
 public:
     Mazmorra(
-        std::vector<GeografiaNivel> geos, CantidadesDeSorteo cantidades, std::mt19937 generador);
+        std::vector<GeografiaNivel> geografias, int enemigos_por_nivel, int objetos_por_nivel,
+        std::mt19937 generador);
 
     Mazmorra(const Mazmorra&) = delete;
     Mazmorra& operator=(const Mazmorra&) = delete;
 
     /*
-     * Entra a la mazmorra siempre desde el nivel 1.
+     * Entra a la mazmorra siempre desde el nivel 1. Si no quedaba nadie adentro, vuelve a sortear
+     * los enemigos y las casillas de objetos de todos los niveles.
      */
     void entrar(IdJugador jugador);
 
@@ -64,10 +68,15 @@ public:
     size_t numero_de_nivel(IdJugador jugador) const;
 
     /*
-     * Nivel donde esta el jugador actualmente para que el gameloop pueda chequear colisiones con la
-     * escalera, la salida.
+     * Nivel donde esta el jugador actualmente, para que el gameloop pueda chequear la escalera, la
+     * salida y la entrada.
      */
     const Nivel& nivel_actual_del_jugador(IdJugador jugador) const;
+
+    /*
+     * El nivel indicado, contando desde 1. Lanza std::out_of_range si el número no existe.
+     */
+    const Nivel& nivel(size_t numero) const;
 
     /*
      * Devuelve los ids de los jugadores que estan en el nivel indicado.

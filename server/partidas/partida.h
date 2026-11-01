@@ -50,7 +50,7 @@ public:
     // Jugadores que tienen lugar y están conectados ahora.
     uint8_t cantidad_de_conectados() const;
 
-    // jugadores_actuales es cantidad_de_jugadores(), los lugares ocupados.
+    // jugadores_totales es cantidad_de_jugadores(), los lugares ocupados.
     InfoPartida info() const;
 
     // Permite que entren jugadores nuevos. Lanza ErrorDePartida si el cliente no es jugador de la

@@ -2,8 +2,10 @@
 
 #include <sys/socket.h>  // para la signal
 
+#include <chrono>
 #include <exception>
 #include <string>
+#include <thread>
 #include <utility>
 
 Aceptador::Aceptador(const std::string& puerto, AdministradorDePartidas& administrador_de_partidas)
@@ -36,14 +38,19 @@ void Aceptador::liberar_conexiones_terminadas() {
 }
 
 void Aceptador::run() {
-    try {
-        while (should_keep_running()) {
+    while (should_keep_running()) {
+        try {
             Socket peer = socket_de_escucha.accept();
             liberar_conexiones_terminadas();
             conexiones.emplace_back(std::move(peer), administrador);
+        } catch (const std::exception&) {
+            // Un accept() que falla no debería matar el hilo de aceptación: el servidor quedaría
+            // levantado pero sin aceptar más clientes.
+            if (!should_keep_running()) {
+                break;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
-    } catch (const std::exception& error) {
-        //
     }
 
     conexiones.clear();  // corta cada conexión y espera a sus hilos

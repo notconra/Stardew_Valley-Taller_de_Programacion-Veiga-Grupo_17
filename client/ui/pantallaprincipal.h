@@ -15,7 +15,7 @@ class PantallaPrincipal : public QMainWindow {
 
 public:
     PantallaPrincipal(
-        ConexionConServidor& conexion, EntradaExitosaAPartida& partida_actual, uint32_t id_cliente,
+        ConexionConServidor& conexion, EntradaExitosaAPartida& partida_actual,
         QWidget* parent = nullptr);
     ~PantallaPrincipal();
 
@@ -42,7 +42,6 @@ private:
     EntradaExitosaAPartida& partida_actual;
     bool es_modo_unirse = false;
     std::string codigo_partida_a_unirse;
-    uint32_t id_cliente = 0;
 };
 
 #endif  // PANTALLAPRINCIPAL_H

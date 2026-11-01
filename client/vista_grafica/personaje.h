@@ -3,7 +3,7 @@
 
 #include <SDL2/SDL.h>
 
-#include "../../common/juego/direccion.h"
+#include "../../common/direccion.h"
 #include "../../common/mensajes/mensajes.h"
 #include "../configuracion/configuracion_cliente_datos.h"
 #include "textura.h"

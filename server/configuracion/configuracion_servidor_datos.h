@@ -29,6 +29,7 @@ struct ConfiguracionMapaServidor {
     std::string capa_transiciones = "Transiciones";
     std::vector<CapaOpcionalMapaServidor> capas_opcionales;
 };
+
 struct ConfiguracionMovimientoJugador {
     double velocidad = 120.0;
     int hitbox_x = 2;
@@ -43,8 +44,8 @@ struct ConfiguracionAparicionJugador {
     int paso_de_busqueda = 8;
 };
 
-// Inventario del jugador. Solo se configura el tamaño de la barra para poder probar con más o menos
-// espacio, el stack de cada ítem y la capacidad de los cofres son reglas fijas del juego.
+// Inventario del jugador. Solo se configura el tamaño de la barra para poder probar con más o
+// menos espacio; el stack de cada ítem es una regla fija del juego.
 struct ConfiguracionInventarioServidor {
     // Por ahora el jugador solo tiene la barra de herramientas (sin mochila ni inventario extra).
     uint8_t cantidad_ranuras_barra = 10;
@@ -62,7 +63,8 @@ struct ConfiguracionMazmorraServidor {
     std::string destino = "mazmorra";
     std::vector<std::string> mapas;
     int enemigos_por_nivel = 4;
-    int piedras_por_nivel = 10;
+    int minerales_por_nivel = 30;
+    int oro_desde_nivel = 5;
 };
 
 struct ConfiguracionServidorDatos {

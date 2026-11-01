@@ -1,21 +1,16 @@
 #include "configuracion_servidor.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
-ConfiguracionServidor::ConfiguracionServidor(const std::string& ruta) {
-    toml::table archivo_toml;
-    try {
-        archivo_toml = toml::parse_file(ruta);
-    } catch (const toml::parse_error& error) {
-        throw std::runtime_error(
-            "no se pudo leer la configuración '" + ruta + "': " + std::string(error.description()) +
-            " (línea " + std::to_string(error.source().begin.line) + ")");
-    }
+#include "../../common/configuracion/lector_toml.h"
 
+ConfiguracionServidor::ConfiguracionServidor(const std::string& ruta) {
+    const toml::table archivo_toml = lector_toml::cargar_archivo(ruta);
     cargar_toml(archivo_toml);
 }
 
@@ -28,16 +23,24 @@ void ConfiguracionServidor::cargar_toml(const toml::table& archivo_toml) {
 }
 
 void ConfiguracionServidor::cargar_red(const toml::table& archivo_toml) {
-    const toml::table& red = exigir_tabla(archivo_toml, "red");
-    datos_configuracion.red.puerto = leer_texto(red, "puerto", "red");
+    const toml::table& red = lector_toml::exigir_tabla(archivo_toml, "red");
+    datos_configuracion.red.puerto = lector_toml::leer_texto(red, "puerto", "red");
 }
 
 void ConfiguracionServidor::cargar_partida(const toml::table& archivo_toml) {
-    const toml::table& partida = exigir_tabla(archivo_toml, "partida");
+    const toml::table& partida = lector_toml::exigir_tabla(archivo_toml, "partida");
     datos_configuracion.partida.jugadores_maximos_por_partida =
-        leer_entero_positivo(partida, "jugadores_maximos_por_partida", "partida");
+        lector_toml::leer_entero_positivo(partida, "jugadores_maximos_por_partida", "partida");
+    if (datos_configuracion.partida.jugadores_maximos_por_partida > 255) {
+        throw std::runtime_error(
+            "configuración: 'jugadores_maximos_por_partida' de [partida] no puede superar 255");
+    }
     datos_configuracion.partida.ticks_por_segundo =
-        leer_entero_positivo(partida, "ticks_por_segundo", "partida");
+        lector_toml::leer_entero_positivo(partida, "ticks_por_segundo", "partida");
+    if (datos_configuracion.partida.ticks_por_segundo > 1000) {
+        throw std::runtime_error(
+            "configuración: 'ticks_por_segundo' de [partida] no puede superar 1000");
+    }
 
     const auto capacidad = partida["capacidad_de_comandos"].value<int>();
     if (capacidad) {
@@ -65,8 +68,19 @@ void ConfiguracionServidor::cargar_mapas(const toml::table& archivo_toml) {
         }
 
         ConfiguracionMapaServidor configuracion_mapa;
-        configuracion_mapa.id = leer_texto(*mapa, "id", seccion);
-        configuracion_mapa.ruta_tmx = leer_texto(*mapa, "ruta_tmx", seccion);
+        configuracion_mapa.id = lector_toml::leer_texto(*mapa, "id", seccion);
+        configuracion_mapa.ruta_tmx = lector_toml::leer_texto(*mapa, "ruta_tmx", seccion);
+
+        const bool id_repetido = std::any_of(
+            datos_configuracion.mapas.begin(),
+            datos_configuracion.mapas.end(),
+            [&configuracion_mapa](const ConfiguracionMapaServidor& existente) {
+                return existente.id == configuracion_mapa.id;
+            });
+        if (id_repetido) {
+            throw std::runtime_error(
+                "configuración: el id de mapa '" + configuracion_mapa.id + "' está repetido");
+        }
 
         const auto valor_capa_colisiones = (*mapa)["capa_colisiones"].value<std::string>();
         if (valor_capa_colisiones) {
@@ -218,8 +232,10 @@ void ConfiguracionServidor::cargar_juego(const toml::table& archivo_toml) {
 void ConfiguracionServidor::cargar_inventario(const toml::table& inventario) {
     ConfiguracionInventarioServidor& destino = datos_configuracion.juego.inventario;
 
-    const int barra =
-        leer_entero_opcional(inventario, "cantidad_ranuras_barra", destino.cantidad_ranuras_barra);
+    const int barra = lector_toml::leer_entero_opcional(
+        inventario,
+        "cantidad_ranuras_barra",
+        destino.cantidad_ranuras_barra);
     if (barra <= 0) {
         throw std::runtime_error(
             "configuración: 'cantidad_ranuras_barra' de [juego.inventario] debe ser mayor que "
@@ -232,63 +248,6 @@ void ConfiguracionServidor::cargar_inventario(const toml::table& inventario) {
     }
 
     destino.cantidad_ranuras_barra = static_cast<uint8_t>(barra);
-}
-
-const toml::table& ConfiguracionServidor::exigir_tabla(
-    const toml::table& archivo_toml, const std::string& nombre) const {
-    const toml::table* tabla = archivo_toml[nombre].as_table();
-    if (tabla == nullptr) {
-        throw std::runtime_error("configuración: falta la sección [" + nombre + "]");
-    }
-    return *tabla;
-}
-
-int ConfiguracionServidor::leer_entero(
-    const toml::table& tabla, const std::string& clave, const std::string& seccion) const {
-    const auto valor = tabla[clave].value<int>();
-    if (!valor) {
-        throw std::runtime_error(
-            "configuración: falta o es inválida la clave '" + clave + "' de [" + seccion + "]");
-    }
-    return *valor;
-}
-
-int ConfiguracionServidor::leer_entero_positivo(
-    const toml::table& tabla, const std::string& clave, const std::string& seccion) const {
-    const int valor = leer_entero(tabla, clave, seccion);
-    if (valor <= 0) {
-        throw std::runtime_error(
-            "configuración: la clave '" + clave + "' de [" + seccion + "] debe ser mayor que cero");
-    }
-    return valor;
-}
-
-int ConfiguracionServidor::leer_entero_opcional(
-    const toml::table& tabla, const std::string& clave, int valor_por_defecto) const {
-    const toml::node* nodo = tabla.get(clave);
-    if (nodo == nullptr) {
-        return valor_por_defecto;
-    }
-    const auto valor = nodo->value<int>();
-    if (!valor) {
-        throw std::runtime_error(
-            "configuración: la clave '" + clave + "' debe ser un número entero");
-    }
-    return *valor;
-}
-
-std::string ConfiguracionServidor::leer_texto(
-    const toml::table& tabla, const std::string& clave, const std::string& seccion) const {
-    const auto valor = tabla[clave].value<std::string>();
-    if (!valor) {
-        throw std::runtime_error(
-            "configuración: falta o es inválida la clave '" + clave + "' de [" + seccion + "]");
-    }
-    if (valor->empty()) {
-        throw std::runtime_error(
-            "configuración: la clave '" + clave + "' de [" + seccion + "] no puede estar vacía");
-    }
-    return *valor;
 }
 
 const ConfiguracionRedServidor& ConfiguracionServidor::red() const {
@@ -322,14 +281,24 @@ void ConfiguracionServidor::cargar_mazmorra(const toml::table& archivo_toml) {
     if (destino) {
         mazmorra.destino = *destino;
     }
-    mazmorra.enemigos_por_nivel =
-        leer_entero_opcional(*tabla, "enemigos_por_nivel", mazmorra.enemigos_por_nivel);
-    mazmorra.piedras_por_nivel =
-        leer_entero_opcional(*tabla, "piedras_por_nivel", mazmorra.piedras_por_nivel);
-    if (mazmorra.enemigos_por_nivel < 0 || mazmorra.piedras_por_nivel < 0) {
+    mazmorra.enemigos_por_nivel = lector_toml::leer_entero_opcional(
+        *tabla,
+        "enemigos_por_nivel",
+        mazmorra.enemigos_por_nivel);
+    mazmorra.minerales_por_nivel = lector_toml::leer_entero_opcional(
+        *tabla,
+        "minerales_por_nivel",
+        mazmorra.minerales_por_nivel);
+    mazmorra.oro_desde_nivel =
+        lector_toml::leer_entero_opcional(*tabla, "oro_desde_nivel", mazmorra.oro_desde_nivel);
+    if (mazmorra.enemigos_por_nivel < 0 || mazmorra.minerales_por_nivel < 0) {
         throw std::runtime_error(
-            "configuración: 'enemigos_por_nivel' y 'piedras_por_nivel' de [mazmorra] no pueden "
-            "ser negativos");
+            "configuración: 'enemigos_por_nivel' y 'minerales_por_nivel' de [mazmorra] no "
+            "pueden ser negativos");
+    }
+    if (mazmorra.oro_desde_nivel < 1) {
+        throw std::runtime_error(
+            "configuración: 'oro_desde_nivel' de [mazmorra] debe ser al menos 1");
     }
 
     const toml::array* mapas = (*tabla)["mapas"].as_array();

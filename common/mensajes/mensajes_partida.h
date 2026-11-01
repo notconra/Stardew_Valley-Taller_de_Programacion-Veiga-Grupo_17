@@ -5,8 +5,14 @@
 #include <string>
 #include <vector>
 
-#include "./../juego/direccion.h"
-#include "./../juego/ranura_inventario.h"
+#include "../direccion.h"
+#include "../ranura_inventario.h"
+#include "../tipo_item.h"
+#include "../tipo_objeto.h"
+
+// Política de tipos del protocolo: las cantidades, ids y posiciones viajan sin signo (u8/u16/u32),
+// porque nunca son negativas. El único campo con signo es el eje de Moverse (i8), donde el signo
+// distingue izquierda/arriba de derecha/abajo.
 
 // Índice para la ranura activa de la barra de herramientas.
 constexpr uint8_t INDICE_RANURA_ACTIVA = 0xFF;
@@ -33,9 +39,14 @@ struct SeleccionarRanuraDeLaBarra {
     uint8_t indice_ranura = 0;
 };
 
-// Usa el ítem de la ranura activa (o de la indicada). El servidor interpreta según tipo.
+// Usa el ítem de la ranura activa (o de la indicada). El servidor interpreta según el tipo de
+// ítem. Si "tiene_casilla_objetivo" es true, la acción apunta a esa casilla del mapa (por ejemplo,
+// la que marcó el mouse); si no, el servidor usa la casilla de enfrente del jugador.
 struct UsarItem {
     uint8_t indice_ranura = INDICE_RANURA_ACTIVA;
+    bool tiene_casilla_objetivo = false;
+    uint32_t columna_objetivo = 0;
+    uint32_t fila_objetivo = 0;
 };
 
 // Mueve ítems entre ranuras de la barra. Si el destino es el tacho, el ítem se elimina
@@ -46,9 +57,8 @@ struct MoverItemEntreRanuras {
     uint16_t cantidad = 0;  // 0 significa mover todo lo posible
 };
 
-// (revisar si no llega a andar el cofre cuando se pueda colocar en el mapa)
 // Abre o cierra el cofre que el jugador tiene en la casilla de enfrente. El servidor responde
-// siempre con ActualizacionCofre, y si no hay cofre, responde un cofre cerrado.
+// siempre con ActualizacionCofre; si no hay cofre, responde un cofre cerrado.
 struct AbrirCofre {
     bool cerrar = false;
 };
@@ -82,17 +92,30 @@ struct PartidaCerradaPorError {};
 // "mirando" y "camina" bastan para elegir el sprite y la animación.
 struct EstadoJugador {
     uint32_t id_jugador = 0;
-    std::string mapa; // <--- Mantenido de la rama de tu compañero para los mapas múltiples
-    int32_t x = 0;
-    int32_t y = 0;
+    std::string mapa;
+    uint32_t x = 0;
+    uint32_t y = 0;
     Direccion mirando = Direccion::ABAJO;
     bool camina = false;
     uint8_t ranura_activa = 0;
 };
 
-// Estado completo de los jugadores de una partida en un tick.
+// Un objeto del mundo que hay en el mapa (mineral, árbol, mueble, etc.), "id" es único dentro de su
+// mapa, "tipo" dice cómo se ve, el ítem que deja al romperse es otra cosa y lo decide el servidor.
+// Ocupa una sola casilla: la (columna, fila).
+struct EstadoObjetoDelMundo {
+    uint32_t id = 0;
+    std::string mapa;
+    uint32_t columna = 0;
+    uint32_t fila = 0;
+    TipoObjeto tipo = TipoObjeto::NINGUNO;
+};
+
+// Estado completo de una partida en un tick: los jugadores y los objetos del mundo de todos los
+// mapas.
 struct EstadoJuego {
     std::vector<EstadoJugador> jugadores;
+    std::vector<EstadoObjetoDelMundo> objetos;
 };
 
 // La barra de un jugador. Las ranuras reales van de 0 a ranuras.size() - 1.

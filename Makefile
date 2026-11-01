@@ -16,7 +16,7 @@ build:   ## compila server y client
 	cmake --build build -j2
 
 test: build   ## corre los tests
-	ctest --test-dir build --output-on-failure
+	./build/tests
 
 format:   ## da formato al codigo (misma version de clang-format que los hooks)
 	-$(PRECOMMIT) run clang-format --all-files

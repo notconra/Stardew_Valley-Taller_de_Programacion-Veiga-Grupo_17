@@ -24,9 +24,9 @@ public:
 protected:
     ContextoDeCliente& contexto;
 
-    // Encola el evento para el cliente y lo registra. Si la cola ya se cerró lo descarta, la
-    // desconexión se limpia sola en al_desconectar().
-    void encolar(const EventoServidor& evento, const std::string& descripcion);
+    // Encola el evento para el cliente. Si la cola ya se cerró lo descarta; la desconexión se
+    // limpia sola en al_desconectar().
+    void encolar(const EventoServidor& evento);
     void responder_error(CodigoError codigo, const std::string& detalle);
 
     // Responde "operación no permitida" y devuelve nullptr (el estado no cambia).

@@ -6,15 +6,18 @@
 #include <vector>
 
 Mazmorra::Mazmorra(
-    std::vector<GeografiaNivel> geografias, CantidadesDeSorteo cantidades, std::mt19937 generador)
-    : generador(generador), cantidades(cantidades) {
-    if (geografias.size() != CANTIDAD_NIVELES) {
+    std::vector<GeografiaNivel> geografias, int enemigos_por_nivel, int objetos_por_nivel,
+    std::mt19937 generador)
+    : generador(std::move(generador)),
+      enemigos_por_nivel(enemigos_por_nivel),
+      objetos_por_nivel(objetos_por_nivel) {
+    if (geografias.size() != static_cast<size_t>(CANTIDAD_NIVELES)) {
         throw std::invalid_argument(
             "la mazmorra necesita " + std::to_string(CANTIDAD_NIVELES) +
             " niveles y se recibieron " + std::to_string(geografias.size()));
     }
 
-    for (size_t i = 0; i < CANTIDAD_NIVELES; ++i) {
+    for (size_t i = 0; i < static_cast<size_t>(CANTIDAD_NIVELES); ++i) {
         niveles[i].emplace(std::move(geografias[i]));
     }
 }
@@ -28,6 +31,13 @@ size_t Mazmorra::indice_de(IdJugador jugador) const {
     return it->second;
 }
 
+size_t Mazmorra::indice_de_nivel(size_t numero) const {
+    if (numero < 1 || numero > static_cast<size_t>(CANTIDAD_NIVELES)) {
+        throw std::out_of_range("no existe el nivel " + std::to_string(numero));
+    }
+    return numero - 1;
+}
+
 void Mazmorra::entrar(IdJugador jugador) {
     if (esta_adentro(jugador)) {
         throw std::logic_error(
@@ -35,7 +45,7 @@ void Mazmorra::entrar(IdJugador jugador) {
     }
     if (esta_vacia()) {
         for (std::optional<Nivel>& nivel : niveles) {
-            nivel->sortear(generador, cantidades.enemigos, cantidades.piedras);
+            nivel->sortear(generador, enemigos_por_nivel, objetos_por_nivel);
         }
     }
     nivel_de_jugador[jugador] = 0;
@@ -43,7 +53,7 @@ void Mazmorra::entrar(IdJugador jugador) {
 
 bool Mazmorra::bajar(IdJugador jugador) {
     const size_t indice = indice_de(jugador);
-    if (indice == CANTIDAD_NIVELES - 1) {
+    if (indice == static_cast<size_t>(CANTIDAD_NIVELES) - 1) {
         return false;
     }
     nivel_de_jugador[jugador] = indice + 1;
@@ -71,13 +81,15 @@ const Nivel& Mazmorra::nivel_actual_del_jugador(IdJugador jugador) const {
     return *niveles[indice_de(jugador)];
 }
 
+const Nivel& Mazmorra::nivel(size_t numero) const {
+    return *niveles[indice_de_nivel(numero)];
+}
+
 std::vector<Mazmorra::IdJugador> Mazmorra::jugadores_en_nivel(size_t numero) const {
-    if (numero < 1 || numero > CANTIDAD_NIVELES) {
-        throw std::out_of_range("no existe el nivel " + std::to_string(numero));
-    }
+    const size_t indice = indice_de_nivel(numero);
     std::vector<IdJugador> resultado;
-    for (const auto& [jugador, indice] : nivel_de_jugador) {
-        if (indice == numero - 1) {
+    for (const auto& [jugador, nivel] : nivel_de_jugador) {
+        if (nivel == indice) {
             resultado.push_back(jugador);
         }
     }

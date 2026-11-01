@@ -41,6 +41,7 @@ private:
     PartidaAbandonada recibir_partida_abandonada();
     PartidaCerradaPorError recibir_partida_cerrada_por_error();
     EstadoJugador recibir_estado_jugador();
+    EstadoObjetoDelMundo recibir_estado_objeto_del_mundo();
     EstadoJuego recibir_estado_juego();
     RanuraInventario recibir_ranura_inventario();
     std::vector<RanuraInventario> recibir_ranuras();
@@ -48,6 +49,10 @@ private:
     CofreJugador recibir_cofre_jugador();
     ActualizacionInventario recibir_actualizacion_inventario();
     ActualizacionCofre recibir_actualizacion_cofre();
+
+    // Auxiliares
+    CodigoError codigo_error_desde(uint8_t valor) const;
+    Direccion direccion_desde(uint8_t valor) const;
 
 public:
     explicit ProtocoloCliente(ISocket& socket_conectado);

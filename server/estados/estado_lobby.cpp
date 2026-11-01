@@ -26,9 +26,7 @@ EstadoDeConexion::ProximoEstado EstadoLobby::identificarse(const Identificarse& 
 EstadoDeConexion::ProximoEstado EstadoLobby::listar_partidas(const ListarPartidas&) {
     const std::vector<InfoPartida> info_partidas =
         contexto.administrador.listar(contexto.identidad.id_cliente);
-    encolar(
-        ListaPartidas{info_partidas},
-        "ListaPartidas con " + std::to_string(info_partidas.size()) + " partida(s)");
+    encolar(ListaPartidas{info_partidas});
     return nullptr;
 }
 
@@ -98,7 +96,7 @@ EstadoDeConexion::ProximoEstado EstadoLobby::retomar_partida(const RetomarPartid
 }
 
 void EstadoLobby::entrar_a_partida(const IngresoAPartida& ingreso) {
-    encolar(ingreso.entrada, "EntradaExitosaAPartida " + ingreso.entrada.codigo_partida);
+    encolar(ingreso.entrada);
     ingreso.sesion.entrar(ingreso.entrada.id_jugador, contexto.cola_eventos);
 }
 

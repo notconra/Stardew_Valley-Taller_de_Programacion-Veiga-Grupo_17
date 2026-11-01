@@ -416,7 +416,6 @@ void HudInventario::dibujar_panel_del_cofre(
     SDL_SetRenderDrawColor(renderer, 92, 53, 29, 255);
     SDL_RenderDrawRect(renderer, &fondo);
 
-    const RanuraInventario vacia{};
     for (int i = 0; i < static_cast<int>(cofre.ranuras.size()); ++i) {
         const RanuraInventario& ranura = cofre.ranuras[i];
         dibujar_ranura(
