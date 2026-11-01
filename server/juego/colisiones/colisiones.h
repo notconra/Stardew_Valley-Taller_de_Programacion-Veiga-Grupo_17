@@ -7,9 +7,8 @@
 #include "../geometria.h"
 #include "../mapa/mapa.h"
 
-// Combina el terreno fijo del mapa con objetos dinámicos colocados en la
-// partida. Cada SesionDePartida crea su propia Colisiones para que los cambios no afecten otras
-// partidas.
+// Combina el terreno fijo del mapa con los objetos colocados durante la partida. Cada Mundo
+// crea una Colisiones por mapa, así lo que se coloca en una partida no afecta a otras.
 class Colisiones {
 private:
     const Mapa& mapa;
@@ -30,9 +29,12 @@ public:
     // nada colocado.
     bool esta_libre(int columna, int fila) const;
 
-    bool esta_libre_por_obstaculo(int columna, int fila) const;
+    // Si la casilla está dentro del mapa y no tiene un objeto colocado. No mira el terreno.
+    bool esta_libre_de_objetos(int columna, int fila) const;
 
-    // Marca/libera casillas por objetos colocados dinámicamente.
+    // Marca/libera casillas por objetos colocados dinámicamente. Las usa GestorDeObjetos, que es
+    // quien valida que la casilla esté libre antes de colocar. Lanzan std::out_of_range si la
+    // casilla está fuera del mapa.
     void colocar(int columna, int fila);
     void eliminar(int columna, int fila);
 

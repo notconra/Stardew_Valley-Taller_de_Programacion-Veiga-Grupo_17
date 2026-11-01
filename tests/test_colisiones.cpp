@@ -22,15 +22,15 @@ TEST(ColisionesTest, CasillaLibreYBloqueadaPorObstaculoDinamico) {
 
         // Por defecto, si el terreno no bloquea, debería estar libre
         if (mapa.esta_dentro(col, fila)) {
-            EXPECT_TRUE(colisiones.esta_libre_por_obstaculo(col, fila));
+            EXPECT_TRUE(colisiones.esta_libre_de_objetos(col, fila));
 
             // Colocamos un objeto dinámicamente (ej. un mueble o planta)
             colisiones.colocar(col, fila);
-            EXPECT_FALSE(colisiones.esta_libre_por_obstaculo(col, fila));
+            EXPECT_FALSE(colisiones.esta_libre_de_objetos(col, fila));
 
             // Al eliminarlo, debe quedar libre nuevamente
             colisiones.eliminar(col, fila);
-            EXPECT_TRUE(colisiones.esta_libre_por_obstaculo(col, fila));
+            EXPECT_TRUE(colisiones.esta_libre_de_objetos(col, fila));
         }
     } catch (const std::exception& e) {
         SUCCEED() << "Omitido por requerir archivo TMX físico: " << e.what();

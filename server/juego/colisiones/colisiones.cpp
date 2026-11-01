@@ -30,7 +30,7 @@ std::size_t Colisiones::indice(int columna, int fila) const {
     return static_cast<std::size_t>(fila) * mapa.cantidad_de_columnas() + columna;
 }
 
-bool Colisiones::esta_libre_por_obstaculo(int columna, int fila) const {
+bool Colisiones::esta_libre_de_objetos(int columna, int fila) const {
     if (!mapa.esta_dentro(columna, fila)) {
         return false;
     }
@@ -42,7 +42,7 @@ bool Colisiones::esta_libre(int columna, int fila) const {
         return false;
     }
     return !mapa.tiene(columna, fila, PropiedadDeCasilla::BLOQUEA) &&
-           esta_libre_por_obstaculo(columna, fila);
+           esta_libre_de_objetos(columna, fila);
 }
 
 bool Colisiones::bloquea(const Rectangulo& zona) const {
