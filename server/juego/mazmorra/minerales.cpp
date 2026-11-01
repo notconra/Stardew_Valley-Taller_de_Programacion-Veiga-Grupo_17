@@ -62,3 +62,17 @@ std::vector<DefinicionDeObjeto> Minerales::definiciones() {
         },
     };
 }
+
+std::vector<PesoDeObjeto> Minerales::pesos(int numero_de_nivel, int oro_desde_nivel) {
+    // Las frecuencias salen del enunciado: el carbón es muy común, el lapislázuli medianamente
+    // común, la plata poco común y el oro extremadamente raro. La piedra es el relleno de la
+    // caverna.
+    const bool aparece_oro = numero_de_nivel >= oro_desde_nivel;
+    return {
+        PesoDeObjeto{TipoObjeto::PIEDRA, 50.0},
+        PesoDeObjeto{TipoObjeto::CARBON, 25.0},
+        PesoDeObjeto{TipoObjeto::LAPISLAZULI, 12.0},
+        PesoDeObjeto{TipoObjeto::PLATA, 7.0},
+        PesoDeObjeto{TipoObjeto::ORO, aparece_oro ? 2.0 : 0.0},
+    };
+}

@@ -97,6 +97,10 @@ private:
     // Posición de la casilla en id_por_casilla. La casilla tiene que estar dentro del mapa.
     std::size_t indice(int columna, int fila) const;
 
+    // Valida los pesos y coloca un objeto sorteado en cada casilla que se pueda usar.
+    int colocar_al_azar(
+        const std::vector<Casilla>& casillas, const std::vector<PesoDeObjeto>& pesos);
+
 public:
     // Arranca sin objetos: quien arma el mapa los coloca con colocar() o poblar_al_azar().
     GestorDeObjetos(
@@ -110,13 +114,20 @@ public:
     // Coloca hasta "cantidad" objetos en casillas libres elegidas al azar, sin repetir casilla.
     // El tipo de cada uno se sortea según "pesos". Si propiedad_requerida no es NINGUNA, solo
     // sirven las casillas del terreno que la tengan. Devuelve cuántos colocó, que es menos que
-    // "cantidad" si no alcanzan las casillas libres. Es la API pensada para que la mazmorra
-    // pueble cada nivel (y para árboles u otros objetos que se generan solos).
+    // "cantidad" si no alcanzan las casillas libres. Es la API para objetos que eligen sus propias
+    // casillas (árboles, hierbas); para casillas ya elegidas por otro (la mazmorra) está
+    // poblar_en().
     // Lanza std::invalid_argument si cantidad es negativa, si pesos está vacío, tiene un tipo
     // que no está en el catálogo, un peso negativo o todos en cero.
     int poblar_al_azar(
         const std::vector<PesoDeObjeto>& pesos, int cantidad,
         uint8_t propiedad_requerida = PropiedadDeCasilla::NINGUNA);
+
+    // Coloca un objeto en cada una de las casillas indicadas, salteando las que ya estén ocupadas
+    // o bloqueadas. El tipo de cada uno se sortea según "pesos", con la misma regla que
+    // poblar_al_azar(). Devuelve cuántos colocó. Es la API para poblar celdas que ya eligió quien
+    // conoce el nivel (la mazmorra).
+    int poblar_en(const std::vector<Casilla>& casillas, const std::vector<PesoDeObjeto>& pesos);
 
     // Agrega todos los objetos al estado que se manda al cliente.
     void agregar_a(EstadoJuego& estado) const;

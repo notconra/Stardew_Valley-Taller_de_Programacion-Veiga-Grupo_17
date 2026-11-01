@@ -281,14 +281,24 @@ void ConfiguracionServidor::cargar_mazmorra(const toml::table& archivo_toml) {
     if (destino) {
         mazmorra.destino = *destino;
     }
-    mazmorra.enemigos_por_nivel =
-        leer_entero_opcional(*tabla, "enemigos_por_nivel", mazmorra.enemigos_por_nivel);
-    mazmorra.piedras_por_nivel =
-        leer_entero_opcional(*tabla, "piedras_por_nivel", mazmorra.piedras_por_nivel);
-    if (mazmorra.enemigos_por_nivel < 0 || mazmorra.piedras_por_nivel < 0) {
+    mazmorra.enemigos_por_nivel = lector_toml::leer_entero_opcional(
+        *tabla,
+        "enemigos_por_nivel",
+        mazmorra.enemigos_por_nivel);
+    mazmorra.minerales_por_nivel = lector_toml::leer_entero_opcional(
+        *tabla,
+        "minerales_por_nivel",
+        mazmorra.minerales_por_nivel);
+    mazmorra.oro_desde_nivel =
+        lector_toml::leer_entero_opcional(*tabla, "oro_desde_nivel", mazmorra.oro_desde_nivel);
+    if (mazmorra.enemigos_por_nivel < 0 || mazmorra.minerales_por_nivel < 0) {
         throw std::runtime_error(
-            "configuración: 'enemigos_por_nivel' y 'piedras_por_nivel' de [mazmorra] no pueden "
-            "ser negativos");
+            "configuración: 'enemigos_por_nivel' y 'minerales_por_nivel' de [mazmorra] no "
+            "pueden ser negativos");
+    }
+    if (mazmorra.oro_desde_nivel < 1) {
+        throw std::runtime_error(
+            "configuración: 'oro_desde_nivel' de [mazmorra] debe ser al menos 1");
     }
 
     const toml::array* mapas = (*tabla)["mapas"].as_array();

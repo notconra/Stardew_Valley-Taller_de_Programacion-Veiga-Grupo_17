@@ -7,6 +7,8 @@
 struct Casilla {
     int columna;
     int fila;
+
+    bool operator==(const Casilla& otra) const = default;
 };
 
 // Una zona del mapa en píxeles del mapa. (x, y) es la esquina superior izquierda.

@@ -22,6 +22,7 @@ enum class CapaDeObjeto : uint8_t {
 // Cómo se dibuja un tipo de objeto del mundo.
 struct AspectoDeObjeto {
     std::string ruta_de_textura;
+    // Zona de la textura que se dibuja. Si el ancho es 0 se usa la textura completa.
     SDL_Rect origen{0, 0, 0, 0};
     int ancho_en_casillas = 1;
     int alto_en_casillas = 1;

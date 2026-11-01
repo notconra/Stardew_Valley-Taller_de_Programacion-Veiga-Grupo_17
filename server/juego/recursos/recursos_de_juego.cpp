@@ -6,18 +6,23 @@
 #include <vector>
 
 #include "../cofres/gestor_de_cofres.h"
+#include "../mazmorra/cargador_mazmorra.h"
+#include "../mazmorra/mazmorra.h"
 #include "../mazmorra/minerales.h"
 
 RecursosDeJuego::RecursosDeJuego(
     const std::vector<ConfiguracionMapaServidor>& configuracion_mapas,
-    const std::string& id_mapa_inicial, const ConfiguracionJuegoServidor& configuracion_juego)
+    const std::string& id_mapa_inicial, const ConfiguracionJuegoServidor& configuracion_juego,
+    const ConfiguracionMazmorraServidor& configuracion_mazmorra)
     : mapa_inicial(id_mapa_inicial),
       juego(configuracion_juego),
-      catalogo_de_objetos(crear_catalogo_de_objetos()) {
+      catalogo_de_objetos(crear_catalogo_de_objetos()),
+      mazmorra(configuracion_mazmorra) {
     for (const ConfiguracionMapaServidor& configuracion_mapa : configuracion_mapas) {
         mapas.emplace(configuracion_mapa.id, Mapa(configuracion_mapa));
     }
     validar_catalogo_de_objetos();
+    cargar_geografias_de_mazmorra();
 }
 
 CatalogoDeObjetos RecursosDeJuego::crear_catalogo_de_objetos() {
@@ -53,5 +58,27 @@ void RecursosDeJuego::validar_catalogo_de_objetos() const {
                     "' se coloca con un ítem que no existe o no es de categoría COLOCABLE");
             }
         }
+    }
+}
+
+void RecursosDeJuego::cargar_geografias_de_mazmorra() {
+    if (mazmorra.mapas.empty()) {
+        return;
+    }
+    if (mazmorra.mapas.size() < static_cast<size_t>(CANTIDAD_NIVELES)) {
+        throw std::runtime_error(
+            "la mazmorra necesita al menos " + std::to_string(CANTIDAD_NIVELES) +
+            " mapas y se configuraron " + std::to_string(mazmorra.mapas.size()));
+    }
+
+    for (const std::string& id_mapa : mazmorra.mapas) {
+        const auto mapa = mapas.find(id_mapa);
+        if (mapa == mapas.end()) {
+            throw std::runtime_error(
+                "la mazmorra pide el mapa '" + id_mapa + "', que no está en [[mapas]]");
+        }
+        geografias_de_mazmorra.emplace(
+            id_mapa,
+            CargadorMazmorra::crear_geografia(id_mapa, mapa->second));
     }
 }

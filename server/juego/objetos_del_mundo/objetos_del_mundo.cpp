@@ -114,6 +114,32 @@ int GestorDeObjetos::poblar_al_azar(
         throw std::invalid_argument(
             "objetos del mundo: la cantidad a colocar no puede ser negativa");
     }
+
+    std::vector<Casilla> candidatas;
+    for (int fila = 0; fila < mapa.cantidad_de_filas(); ++fila) {
+        for (int columna = 0; columna < mapa.cantidad_de_columnas(); ++columna) {
+            const bool sirve_el_terreno = propiedad_requerida == PropiedadDeCasilla::NINGUNA ||
+                                          mapa.tiene(columna, fila, propiedad_requerida);
+            if (sirve_el_terreno && colisiones.esta_libre(columna, fila)) {
+                candidatas.push_back(Casilla{columna, fila});
+            }
+        }
+    }
+
+    std::shuffle(candidatas.begin(), candidatas.end(), motor);
+    if (static_cast<int>(candidatas.size()) > cantidad) {
+        candidatas.resize(static_cast<size_t>(cantidad));
+    }
+    return colocar_al_azar(candidatas, pesos);
+}
+
+int GestorDeObjetos::poblar_en(
+    const std::vector<Casilla>& casillas, const std::vector<PesoDeObjeto>& pesos) {
+    return colocar_al_azar(casillas, pesos);
+}
+
+int GestorDeObjetos::colocar_al_azar(
+    const std::vector<Casilla>& casillas, const std::vector<PesoDeObjeto>& pesos) {
     if (pesos.empty()) {
         throw std::invalid_argument("objetos del mundo: hace falta al menos un tipo con peso");
     }
@@ -135,26 +161,9 @@ int GestorDeObjetos::poblar_al_azar(
         throw std::invalid_argument("objetos del mundo: todos los pesos están en cero");
     }
 
-    std::vector<Casilla> candidatas;
-    for (int fila = 0; fila < mapa.cantidad_de_filas(); ++fila) {
-        for (int columna = 0; columna < mapa.cantidad_de_columnas(); ++columna) {
-            const bool sirve_el_terreno = propiedad_requerida == PropiedadDeCasilla::NINGUNA ||
-                                          mapa.tiene(columna, fila, propiedad_requerida);
-            if (sirve_el_terreno && colisiones.esta_libre(columna, fila)) {
-                candidatas.push_back(Casilla{columna, fila});
-            }
-        }
-    }
-
     std::discrete_distribution<std::size_t> sorteo_de_tipo(valores.begin(), valores.end());
     int colocados = 0;
-    while (colocados < cantidad && !candidatas.empty()) {
-        std::uniform_int_distribution<std::size_t> sorteo_de_casilla(0, candidatas.size() - 1);
-        const std::size_t elegida = sorteo_de_casilla(motor);
-        const Casilla casilla = candidatas[elegida];
-        candidatas[elegida] = candidatas.back();
-        candidatas.pop_back();
-
+    for (const Casilla& casilla : casillas) {
         if (colocar(pesos[sorteo_de_tipo(motor)].tipo, casilla.columna, casilla.fila) != 0) {
             ++colocados;
         }

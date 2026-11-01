@@ -7,6 +7,7 @@
 
 #include "../../configuracion/configuracion_servidor_datos.h"
 #include "../mapa/mapa.h"
+#include "../mazmorra/nivel.h"
 #include "../objetos/catalogo_de_items.h"
 #include "../objetos_del_mundo/objetos_del_mundo.h"
 
@@ -24,11 +25,18 @@ struct RecursosDeJuego {
     // romperse; aquel describe cómo se apilan y se venden en el inventario.
     CatalogoDeObjetos catalogo_de_objetos;
 
-    // Construye los mapas y arma el catálogo de objetos del mundo. Lanza std::runtime_error si
-    // falla un mapa, el catálogo, o un objeto menciona un ítem que no existe.
+    // Configuración de la mazmorra y la geografía de cada mapa que puede ser un nivel. Los
+    // niveles concretos de cada partida se sortean en Mundo.
+    ConfiguracionMazmorraServidor mazmorra;
+    std::map<std::string, GeografiaNivel> geografias_de_mazmorra;
+
+    // Construye los mapas, arma el catálogo de objetos del mundo y prepara la mazmorra. Lanza
+    // std::runtime_error si falla un mapa, el catálogo, un objeto menciona un ítem que no existe
+    // o la mazmorra pide un mapa desconocido.
     RecursosDeJuego(
         const std::vector<ConfiguracionMapaServidor>& configuracion_mapas,
-        const std::string& id_mapa_inicial, const ConfiguracionJuegoServidor& configuracion_juego);
+        const std::string& id_mapa_inicial, const ConfiguracionJuegoServidor& configuracion_juego,
+        const ConfiguracionMazmorraServidor& configuracion_mazmorra);
 
 private:
     // Junta las definiciones de todos los módulos que aportan objetos del mundo. Para sumar
@@ -39,6 +47,9 @@ private:
     // ítems registrados en catalogo_de_items (y el colocable, de categoría COLOCABLE), para que un
     // ítem olvidado falle al arrancar y no en plena partida.
     void validar_catalogo_de_objetos() const;
+
+    // Arma la geografía de cada mapa que la mazmorra puede usar como nivel.
+    void cargar_geografias_de_mazmorra();
 };
 
 #endif

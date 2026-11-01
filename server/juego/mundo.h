@@ -13,9 +13,9 @@
 #include "inventario/gestor_inventario_jugador.h"
 #include "jugadores/jugadores.h"
 #include "mapa/mapa.h"
+#include "mazmorra/mazmorra.h"
 #include "objetos_del_mundo/objetos_del_mundo.h"
 #include "recursos/recursos_de_juego.h"
-#include "mazmorra/mazmorra.h"
 
 // Qué cambió en el mundo al atender un comando. La sesión lo usa para mandar solo lo necesario al
 // jugador que lo pidió, sin reenviar todo el estado.
@@ -67,16 +67,17 @@ private:
     // Lo pasa al nivel en el que la mazmorra dice que está, parado en la entrada del nivel.
     void llevar_al_nivel_actual(uint32_t id_jugador, const std::string& mapa_origen);
 
+    // Vuelve a generar los minerales de los diez niveles. Se llama cuando se entra a la mazmorra
+    // vacía, para que los spawns cambien entre visita y visita. Lo que colocó un jugador (un
+    // cofre) se conserva.
+    void poblar_niveles_de_mazmorra();
+
 public:
     Mundo(const RecursosDeJuego& recursos, uint8_t ticks_por_segundo);
 
     // Deja en el mundo exactamente a los jugadores conectados. Los nuevos aparecen en el mapa
     // inicial (recursos.mapa_inicial).
     void sincronizar_jugadores(const std::vector<uint32_t>& ids_conectados);
-
-    // Los objetos de un mapa, para quien los genera (la mazmorra al poblar un nivel). Lanza
-    // std::out_of_range si el mapa no existe.
-    GestorDeObjetos& objetos_del_mapa(const std::string& id_mapa);
 
     // Atiende un comando de juego, cada uno va a la parte del mundo que corresponde. Devuelve qué
     // cambió para que la sesión mande al jugador solo lo necesario.

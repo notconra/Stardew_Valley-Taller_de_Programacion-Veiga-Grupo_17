@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <cstdlib>
 #include <limits>
-#include <set>
 #include <random>
+#include <set>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -12,8 +12,8 @@
 #include <vector>
 
 #include "./../../common/visitantes.h"
-#include "./../../common/mensajes/manejadores_por_tipo.h"
 #include "mazmorra/cargador_mazmorra.h"
+#include "mazmorra/minerales.h"
 
 Mundo::Mundo(const RecursosDeJuego& recursos_de_juego, uint8_t ticks_por_segundo)
     : gestor_inventario(recursos_de_juego.catalogo_de_items, recursos_de_juego.juego.inventario),
@@ -47,17 +47,20 @@ Mundo::Mundo(const RecursosDeJuego& recursos_de_juego, uint8_t ticks_por_segundo
     }
 
     if (!recursos.mazmorra.mapas.empty()) {
-        std::random_device semilla;
-        niveles_de_mazmorra =
-            CargadorMazmorra::elegir_niveles(recursos.mazmorra.mapas, std::mt19937(semilla()));
+        std::random_device dispositivo;
+        std::mt19937 generador(dispositivo());
+        niveles_de_mazmorra = CargadorMazmorra::elegir_niveles(recursos.mazmorra.mapas, generador);
+
         std::vector<GeografiaNivel> geografias;
+        geografias.reserve(niveles_de_mazmorra.size());
         for (const std::string& id_mapa : niveles_de_mazmorra) {
             geografias.push_back(recursos.geografias_de_mazmorra.at(id_mapa));
         }
-        const CantidadesDeSorteo cantidades{
-            static_cast<uint16_t>(recursos.mazmorra.enemigos_por_nivel),
-            static_cast<uint16_t>(recursos.mazmorra.piedras_por_nivel)};
-        mazmorra.emplace(std::move(geografias), cantidades, std::mt19937(semilla()));
+        mazmorra.emplace(
+            std::move(geografias),
+            recursos.mazmorra.enemigos_por_nivel,
+            recursos.mazmorra.minerales_por_nivel,
+            std::move(generador));
     }
 }
 
@@ -106,58 +109,7 @@ void Mundo::cambiar_de_mapa(
     mapa_actual[id_jugador] = transicion.mapa_destino;
 }
 
-GestorDeObjetos& Mundo::objetos_del_mapa(const std::string& id_mapa) {
-    return objetos_por_mapa.at(id_mapa);
-}
-
 ResultadoDeComando Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
-void Mundo::llevar_al_nivel_actual(uint32_t id_jugador, const std::string& mapa_origen) {
-    const std::string& id_nivel = niveles_de_mazmorra.at(mazmorra->numero_de_nivel(id_jugador) - 1);
-    const PosicionEnNivel entrada =
-        mazmorra->nivel_actual_del_jugador(id_jugador).obtener_geo().entrada;
-    const Mapa& mapa_destino = recursos.mapas.at(id_nivel);
-
-    // La posición del jugador es la esquina del sprite: se la corre para que los pies (el hitbox)
-    // queden adentro de la casilla de entrada.
-    const ConfiguracionMovimientoJugador& movimiento = recursos.juego.movimiento;
-    const int ancho = mapa_destino.ancho_de_casilla_en_pixeles();
-    const int alto = mapa_destino.alto_de_casilla_en_pixeles();
-    const double x =
-        entrada.x * ancho + (ancho - movimiento.hitbox_ancho) / 2.0 - movimiento.hitbox_x;
-    const double y = (entrada.y + 1) * alto - movimiento.hitbox_y - movimiento.hitbox_alto;
-
-    jugadores_por_mapa.at(mapa_origen).quitar(id_jugador);
-    jugadores_por_mapa.at(id_nivel).agregar_en(id_jugador, x, y);
-    mapa_actual[id_jugador] = id_nivel;
-}
-
-void Mundo::resolver_transicion(
-    uint32_t id_jugador, const std::string& mapa_origen, const Transicion& transicion) {
-    if (!mazmorra) {
-        cambiar_de_mapa(id_jugador, mapa_origen, transicion);
-        return;
-    }
-    if (transicion.mapa_destino == DESTINO_ENTRADA) {
-        return;  // marca dónde aparece el jugador, no lleva a ningún lado
-    }
-    if (transicion.mapa_destino == DESTINO_ESCALERA) {
-        if (mazmorra->bajar(id_jugador)) {
-            llevar_al_nivel_actual(id_jugador, mapa_origen);
-        }
-        return;  // en el último nivel la escalera no lleva a ningún lado
-    }
-    if (transicion.mapa_destino == recursos.mazmorra.destino) {
-        mazmorra->entrar(id_jugador);
-        llevar_al_nivel_actual(id_jugador, mapa_origen);
-        return;
-    }
-    if (mazmorra->esta_adentro(id_jugador)) {
-        mazmorra->salir(id_jugador);
-    }
-    cambiar_de_mapa(id_jugador, mapa_origen, transicion);
-}
-
-bool Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
     const auto encontrado = mapa_actual.find(id_jugador);
     if (encontrado == mapa_actual.end()) {
         return ResultadoDeComando{};
@@ -323,6 +275,76 @@ ResultadoDeComando Mundo::mover_item_con_cofre(
     return ResultadoDeComando{
         true,
         CofreJugador{static_cast<uint32_t>(abierto->second), true, contenido.todas_las_ranuras()}};
+}
+
+void Mundo::llevar_al_nivel_actual(uint32_t id_jugador, const std::string& mapa_origen) {
+    const std::string& id_nivel = niveles_de_mazmorra.at(mazmorra->numero_de_nivel(id_jugador) - 1);
+    const Casilla entrada =
+        mazmorra->nivel_actual_del_jugador(id_jugador).obtener_geografia().entrada;
+    const Mapa& mapa_destino = recursos.mapas.at(id_nivel);
+
+    // La posición del jugador es la esquina del sprite: se la corre para que los pies (el hitbox)
+    // queden adentro de la casilla de entrada.
+    const ConfiguracionMovimientoJugador& movimiento = recursos.juego.movimiento;
+    const int ancho = mapa_destino.ancho_de_casilla_en_pixeles();
+    const int alto = mapa_destino.alto_de_casilla_en_pixeles();
+    const double x =
+        entrada.columna * ancho + (ancho - movimiento.hitbox_ancho) / 2.0 - movimiento.hitbox_x;
+    const double y = (entrada.fila + 1) * alto - movimiento.hitbox_y - movimiento.hitbox_alto;
+
+    jugadores_por_mapa.at(mapa_origen).quitar(id_jugador);
+    jugadores_por_mapa.at(id_nivel).agregar_en(id_jugador, x, y);
+
+    // El cofre abierto era del nivel anterior: al cambiar de nivel se cierra.
+    cofres_abiertos.erase(id_jugador);
+    mapa_actual[id_jugador] = id_nivel;
+}
+
+void Mundo::poblar_niveles_de_mazmorra() {
+    for (size_t i = 0; i < niveles_de_mazmorra.size(); ++i) {
+        const int numero_de_nivel = static_cast<int>(i) + 1;
+        GestorDeObjetos& objetos = objetos_por_mapa.at(niveles_de_mazmorra.at(i));
+
+        objetos.retirar_objetos_naturales();
+        objetos.poblar_en(
+            mazmorra->nivel(numero_de_nivel).obtener_celdas_de_objetos(),
+            Minerales::pesos(numero_de_nivel, recursos.mazmorra.oro_desde_nivel));
+    }
+}
+
+void Mundo::resolver_transicion(
+    uint32_t id_jugador, const std::string& mapa_origen, const Transicion& transicion) {
+    if (!mazmorra) {
+        if (transicion.mapa_destino == recursos.mazmorra.destino) {
+            return;  // el mapa tiene la puerta pero esta partida no configuró mazmorra
+        }
+        cambiar_de_mapa(id_jugador, mapa_origen, transicion);
+        return;
+    }
+    if (transicion.mapa_destino == DESTINO_ENTRADA) {
+        return;  // marca dónde aparece el jugador, no lleva a ningún lado
+    }
+    if (transicion.mapa_destino == DESTINO_ESCALERA) {
+        if (mazmorra->esta_adentro(id_jugador) && mazmorra->bajar(id_jugador)) {
+            llevar_al_nivel_actual(id_jugador, mapa_origen);
+        }
+        return;  // en el último nivel la escalera no lleva a ningún lado
+    }
+    if (transicion.mapa_destino == recursos.mazmorra.destino) {
+        if (!mazmorra->esta_adentro(id_jugador)) {
+            const bool estaba_vacia = mazmorra->esta_vacia();
+            mazmorra->entrar(id_jugador);
+            if (estaba_vacia) {
+                poblar_niveles_de_mazmorra();
+            }
+            llevar_al_nivel_actual(id_jugador, mapa_origen);
+        }
+        return;
+    }
+    if (mazmorra->esta_adentro(id_jugador)) {
+        mazmorra->salir(id_jugador);
+    }
+    cambiar_de_mapa(id_jugador, mapa_origen, transicion);
 }
 
 void Mundo::actualizar() {

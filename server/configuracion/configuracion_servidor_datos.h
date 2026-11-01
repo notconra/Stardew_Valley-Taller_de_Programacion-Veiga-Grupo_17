@@ -63,7 +63,8 @@ struct ConfiguracionMazmorraServidor {
     std::string destino = "mazmorra";
     std::vector<std::string> mapas;
     int enemigos_por_nivel = 4;
-    int piedras_por_nivel = 10;
+    int minerales_por_nivel = 30;
+    int oro_desde_nivel = 5;
 };
 
 struct ConfiguracionServidorDatos {

@@ -20,12 +20,12 @@ ObjetosGraficos::ObjetosGraficos(SDL_Renderer* renderer, const ConfiguracionGraf
 std::map<TipoObjeto, AspectoDeObjeto> ObjetosGraficos::crear_aspectos_conocidos() {
     std::map<TipoObjeto, AspectoDeObjeto> conocidos;
 
-    // Piedra
+    // Piedra: se dibuja el ícono completo, escalado a una casilla.
     conocidos.emplace(
         TipoObjeto::PIEDRA,
         AspectoDeObjeto{
             RUTA_ASSET_PIEDRA,
-            SDL_Rect{0, 0, 10, 10},
+            SDL_Rect{0, 0, 0, 0},
             1,
             1,
             0,
@@ -126,7 +126,7 @@ void ObjetosGraficos::dibujar_capa(
         SDL_RenderCopy(
             renderer,
             texturas.at(aspecto.ruta_de_textura).ptr(),
-            &aspecto.origen,
+            aspecto.origen.w > 0 ? &aspecto.origen : nullptr,
             &destino);
     }
 }
