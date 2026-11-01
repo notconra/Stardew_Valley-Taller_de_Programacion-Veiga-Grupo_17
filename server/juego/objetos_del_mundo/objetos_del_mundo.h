@@ -1,6 +1,8 @@
 #ifndef OBJETOS_DEL_MUNDO_H
 #define OBJETOS_DEL_MUNDO_H
 
+#include <cstddef>
+#include <cstdint>
 #include <map>
 #include <random>
 #include <string>
@@ -10,6 +12,8 @@
 #include "../../../common/tipo_item.h"
 #include "../../../common/tipo_objeto.h"
 #include "../colisiones/colisiones.h"
+#include "../mapa/mapa.h"
+#include "../mapa/propiedad_de_casilla.h"
 
 // Un objeto ya colocado en un mapa. Ocupa una sola casilla. El id lo asigna GestorDeObjetos y es
 // único dentro de ese mapa.
@@ -69,37 +73,74 @@ public:
     const std::map<TipoObjeto, DefinicionDeObjeto>& definiciones() const;
 };
 
-// Los objetos colocados en un mapa durante una partida. Marca su casilla en Colisiones, asigna
-// ids y sabe qué deja cada uno al romperse. La acción de picar la maneja el sistema de acciones,
-// acá solo se coloca y se rompe.
+// Peso relativo de un tipo de objeto al elegir cuál colocar al azar. No hace falta que los pesos
+// sumen 100, hacemos que la probabilidad de cada tipo sea su peso sobre la suma de todos.
+struct PesoDeObjeto {
+    TipoObjeto tipo = TipoObjeto::NINGUNO;
+    double peso = 0.0;
+};
+
+// Los objetos colocados en un mapa durante una partida. Marca su casilla en Colisiones, asigna ids
+// y sabe qué deja cada uno al romperse. Lo usan tanto los jugadores (colocar un cofre) como la
+// mazmorra (poblar un nivel con cosas).
 class GestorDeObjetos {
 private:
     std::string id_mapa;
+    const Mapa& mapa;
     const CatalogoDeObjetos& catalogo;
     Colisiones& colisiones;
     std::mt19937 motor{std::random_device{}()};
     std::map<int, ObjetoDelMundo> objetos_por_id;
-    int siguiente_id = 1;
+    std::vector<int> id_por_casilla;  // id del objeto en cada casilla (0 = ninguno), fila por fila
+    int siguiente_id = 1;             // no se reinicia, así un id viejo nunca apunta a otro objeto
+
+    // Posición de la casilla en id_por_casilla. La casilla tiene que estar dentro del mapa.
+    std::size_t indice(int columna, int fila) const;
 
 public:
-    // Arranca sin objetos: quien arma el mapa (por ahora la mazmorra) los coloca con colocar().
+    // Arranca sin objetos: quien arma el mapa los coloca con colocar() o poblar_al_azar().
     GestorDeObjetos(
-        const std::string& id_del_mapa, const CatalogoDeObjetos& catalogo_de_objetos,
-        Colisiones& colisiones_del_mapa);
+        const std::string& id_del_mapa, const Mapa& mapa_de_partida,
+        const CatalogoDeObjetos& catalogo_de_objetos, Colisiones& colisiones_del_mapa);
 
     // Coloca un objeto y devuelve su id, o 0 si no se pudo (tipo inexistente, casilla fuera del
-    // mapa u ocupada). Si falla no cambia nada. Es lo que usa la mazmorra para poblar cada nivel.
+    // mapa, bloqueada por el terreno u ocupada). Si falla no cambia nada.
     int colocar(TipoObjeto tipo, int columna, int fila);
+
+    // Coloca hasta "cantidad" objetos en casillas libres elegidas al azar, sin repetir casilla.
+    // El tipo de cada uno se sortea según "pesos". Si propiedad_requerida no es NINGUNA, solo
+    // sirven las casillas del terreno que la tengan. Devuelve cuántos colocó, que es menos que
+    // "cantidad" si no alcanzan las casillas libres. Es la API pensada para que la mazmorra
+    // pueble cada nivel (y para árboles u otros objetos que se generan solos).
+    // Lanza std::invalid_argument si cantidad es negativa, si pesos está vacío, tiene un tipo
+    // que no está en el catálogo, un peso negativo o todos en cero.
+    int poblar_al_azar(
+        const std::vector<PesoDeObjeto>& pesos, int cantidad,
+        uint8_t propiedad_requerida = PropiedadDeCasilla::NINGUNA);
 
     // Agrega todos los objetos al estado que se manda al cliente.
     void agregar_a(EstadoJuego& estado) const;
 
-    // Rompe el objeto, libera su casilla y devuelve lo que dejó. Si el id no existe, se_rompio
-    // queda en false.
+    // Rompe el objeto, lo retira y devuelve lo que dejó, con el sorteo de
+    // probabilidad_de_no_dejar. Si el id no existe, se_rompio queda en false.
     ResultadoDeRotura romper(int id);
 
+    // Saca el objeto del mapa y libera su casilla, sin dejar nada. Devuelve false si el id no
+    // existe. Es para deshacer una colocación o reemplazar objetos, no para picar.
+    bool retirar(int id);
+
+    // Retira los objetos que genera el mundo y deja los que colocó un
+    // jugador (los que tienen item_colocable). Es para regenerar un nivel
+    // de la mazmorra antes de volver a poblarlo, sin que el jugador pierda lo que construyó.
+    // Devuelve cuántos retiró.
+    int retirar_objetos_naturales();
+
+    // Fija la semilla de los sorteos de poblar_al_azar y romper, para generar siempre el mismo
+    // nivel o para probar. Si no se llama, la semilla es aleatoria.
+    void fijar_semilla(std::mt19937::result_type semilla);
+
     // El objeto que está en esa casilla, o nullptr si no hay ninguno. El puntero deja de ser
-    // válido si el objeto se rompe.
+    // válido si el objeto se retira o se rompe.
     const ObjetoDelMundo* objeto_en(int columna, int fila) const;
 
     int cantidad_de_objetos() const;

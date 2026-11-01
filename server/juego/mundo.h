@@ -64,6 +64,10 @@ public:
     // inicial (recursos.mapa_inicial).
     void sincronizar_jugadores(const std::vector<uint32_t>& ids_conectados);
 
+    // Los objetos de un mapa, para quien los genera (la mazmorra al poblar un nivel). Lanza
+    // std::out_of_range si el mapa no existe.
+    GestorDeObjetos& objetos_del_mapa(const std::string& id_mapa);
+
     // Atiende un comando de juego, cada uno va a la parte del mundo que corresponde. Devuelve qué
     // cambió para que la sesión mande al jugador solo lo necesario.
     ResultadoDeComando atender(uint32_t id_jugador, const ComandoCliente& comando);

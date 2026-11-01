@@ -1,7 +1,11 @@
 #include "objetos_del_mundo.h"
 
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <map>
+#include <random>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -75,9 +79,20 @@ const std::map<TipoObjeto, DefinicionDeObjeto>& CatalogoDeObjetos::definiciones(
 }
 
 GestorDeObjetos::GestorDeObjetos(
-    const std::string& id_del_mapa, const CatalogoDeObjetos& catalogo_de_objetos,
-    Colisiones& colisiones_del_mapa)
-    : id_mapa(id_del_mapa), catalogo(catalogo_de_objetos), colisiones(colisiones_del_mapa) {
+    const std::string& id_del_mapa, const Mapa& mapa_de_partida,
+    const CatalogoDeObjetos& catalogo_de_objetos, Colisiones& colisiones_del_mapa)
+    : id_mapa(id_del_mapa),
+      mapa(mapa_de_partida),
+      catalogo(catalogo_de_objetos),
+      colisiones(colisiones_del_mapa),
+      id_por_casilla(
+          static_cast<std::size_t>(mapa_de_partida.cantidad_de_columnas()) *
+              mapa_de_partida.cantidad_de_filas(),
+          0) {
+}
+
+std::size_t GestorDeObjetos::indice(int columna, int fila) const {
+    return static_cast<std::size_t>(fila) * mapa.cantidad_de_columnas() + columna;
 }
 
 int GestorDeObjetos::colocar(TipoObjeto tipo, int columna, int fila) {
@@ -88,8 +103,63 @@ int GestorDeObjetos::colocar(TipoObjeto tipo, int columna, int fila) {
 
     const int id = siguiente_id++;
     objetos_por_id.emplace(id, ObjetoDelMundo{id, columna, fila, tipo});
+    id_por_casilla[indice(columna, fila)] = id;
     colisiones.colocar(columna, fila);
     return id;
+}
+
+int GestorDeObjetos::poblar_al_azar(
+    const std::vector<PesoDeObjeto>& pesos, int cantidad, uint8_t propiedad_requerida) {
+    if (cantidad < 0) {
+        throw std::invalid_argument(
+            "objetos del mundo: la cantidad a colocar no puede ser negativa");
+    }
+    if (pesos.empty()) {
+        throw std::invalid_argument("objetos del mundo: hace falta al menos un tipo con peso");
+    }
+
+    std::vector<double> valores;
+    double total = 0.0;
+    for (const PesoDeObjeto& entrada : pesos) {
+        if (catalogo.buscar(entrada.tipo) == nullptr) {
+            throw std::invalid_argument(
+                "objetos del mundo: se pidió poblar con un tipo inexistente");
+        }
+        if (!std::isfinite(entrada.peso) || entrada.peso < 0.0) {
+            throw std::invalid_argument("objetos del mundo: los pesos tienen que ser >= 0");
+        }
+        valores.push_back(entrada.peso);
+        total += entrada.peso;
+    }
+    if (total <= 0.0) {
+        throw std::invalid_argument("objetos del mundo: todos los pesos están en cero");
+    }
+
+    std::vector<Casilla> candidatas;
+    for (int fila = 0; fila < mapa.cantidad_de_filas(); ++fila) {
+        for (int columna = 0; columna < mapa.cantidad_de_columnas(); ++columna) {
+            const bool sirve_el_terreno = propiedad_requerida == PropiedadDeCasilla::NINGUNA ||
+                                          mapa.tiene(columna, fila, propiedad_requerida);
+            if (sirve_el_terreno && colisiones.esta_libre(columna, fila)) {
+                candidatas.push_back(Casilla{columna, fila});
+            }
+        }
+    }
+
+    std::discrete_distribution<std::size_t> sorteo_de_tipo(valores.begin(), valores.end());
+    int colocados = 0;
+    while (colocados < cantidad && !candidatas.empty()) {
+        std::uniform_int_distribution<std::size_t> sorteo_de_casilla(0, candidatas.size() - 1);
+        const std::size_t elegida = sorteo_de_casilla(motor);
+        const Casilla casilla = candidatas[elegida];
+        candidatas[elegida] = candidatas.back();
+        candidatas.pop_back();
+
+        if (colocar(pesos[sorteo_de_tipo(motor)].tipo, casilla.columna, casilla.fila) != 0) {
+            ++colocados;
+        }
+    }
+    return colocados;
 }
 
 void GestorDeObjetos::agregar_a(EstadoJuego& estado) const {
@@ -111,13 +181,11 @@ ResultadoDeRotura GestorDeObjetos::romper(int id) {
         return resultado;
     }
 
-    const ObjetoDelMundo objeto = encontrado->second;
-    colisiones.eliminar(objeto.columna, objeto.fila);
-    objetos_por_id.erase(encontrado);
+    // colocar solo acepta tipos del catálogo, así que la definición siempre existe.
+    const DefinicionDeObjeto& definicion = *catalogo.buscar(encontrado->second.tipo);
+    retirar(id);
     resultado.se_rompio = true;
 
-    // colocar solo acepta tipos del catálogo, así que la definición siempre existe.
-    const DefinicionDeObjeto& definicion = *catalogo.buscar(objeto.tipo);
     if (definicion.producto == TipoItem::NINGUNO) {
         return resultado;
     }
@@ -132,14 +200,43 @@ ResultadoDeRotura GestorDeObjetos::romper(int id) {
     return resultado;
 }
 
-const ObjetoDelMundo* GestorDeObjetos::objeto_en(int columna, int fila) const {
+bool GestorDeObjetos::retirar(int id) {
+    const auto encontrado = objetos_por_id.find(id);
+    if (encontrado == objetos_por_id.end()) {
+        return false;
+    }
+
+    const ObjetoDelMundo& objeto = encontrado->second;
+    id_por_casilla[indice(objeto.columna, objeto.fila)] = 0;
+    colisiones.eliminar(objeto.columna, objeto.fila);
+    objetos_por_id.erase(encontrado);
+    return true;
+}
+
+int GestorDeObjetos::retirar_objetos_naturales() {
+    std::vector<int> ids;
     for (const auto& entrada : objetos_por_id) {
-        const ObjetoDelMundo& objeto = entrada.second;
-        if (objeto.columna == columna && objeto.fila == fila) {
-            return &objeto;
+        // colocar solo acepta tipos del catálogo, así que la definición siempre existe.
+        if (catalogo.buscar(entrada.second.tipo)->item_colocable == TipoItem::NINGUNO) {
+            ids.push_back(entrada.first);
         }
     }
-    return nullptr;
+    for (const int id : ids) {
+        retirar(id);
+    }
+    return static_cast<int>(ids.size());
+}
+
+void GestorDeObjetos::fijar_semilla(std::mt19937::result_type semilla) {
+    motor.seed(semilla);
+}
+
+const ObjetoDelMundo* GestorDeObjetos::objeto_en(int columna, int fila) const {
+    if (!mapa.esta_dentro(columna, fila)) {
+        return nullptr;
+    }
+    const int id = id_por_casilla[indice(columna, fila)];
+    return id == 0 ? nullptr : &objetos_por_id.at(id);
 }
 
 int GestorDeObjetos::cantidad_de_objetos() const {

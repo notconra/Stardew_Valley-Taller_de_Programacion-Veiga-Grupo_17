@@ -22,6 +22,7 @@ Mundo::Mundo(const RecursosDeJuego& recursos_de_juego, uint8_t ticks_por_segundo
         objetos_por_mapa.try_emplace(
             id_mapa,
             id_mapa,
+            mapa,
             recursos.catalogo_de_objetos,
             colisiones_por_mapa.at(id_mapa));
     }
@@ -82,6 +83,10 @@ void Mundo::cambiar_de_mapa(
     // El cofre abierto pertenece al mapa anterior, así que se cierra al cambiar de zona.
     cofres_abiertos.erase(id_jugador);
     mapa_actual[id_jugador] = transicion.mapa_destino;
+}
+
+GestorDeObjetos& Mundo::objetos_del_mapa(const std::string& id_mapa) {
+    return objetos_por_mapa.at(id_mapa);
 }
 
 ResultadoDeComando Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
@@ -178,7 +183,7 @@ ResultadoDeComando Mundo::usar_item(uint32_t id_jugador, const UsarItem& pedido)
     if (!gestor_inventario.quitar_de_ranura(id_jugador, pedido.indice_ranura, 1)) {
         // No debería fallar porque la ranura tenía el ítem. Si pasara, se deshace la colocación
         // para no dejar un objeto gratis en el mapa.
-        objetos.romper(id_objeto);
+        objetos.retirar(id_objeto);
         return ResultadoDeComando{};
     }
 
