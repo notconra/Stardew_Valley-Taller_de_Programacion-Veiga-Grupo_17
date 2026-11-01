@@ -4,7 +4,6 @@
 #include <utility>
 
 static constexpr int TAMANO_SPRITE = 16;
-static constexpr const char* RUTA_ASSET_MENAS = "Assets/Caverns/Mining/ore.png";
 
 IconosDeItems::IconosDeItems(SDL_Renderer* renderer) {
     const std::pair<TipoItem, const char*> rutas_cultivos[] = {
@@ -20,6 +19,10 @@ IconosDeItems::IconosDeItems(SDL_Renderer* renderer) {
         {TipoItem::REGADERA, "Assets/items/regadera.png"},
         {TipoItem::ESPADA, "Assets/items/espada.png"},
         {TipoItem::PIEDRA, "Assets/items/piedra.png"},
+        {TipoItem::CARBON, "Assets/items/carbon.png"},
+        {TipoItem::LAPISLAZULI, "Assets/items/lapislazuli.png"},
+        {TipoItem::PLATA, "Assets/items/plata.png"},
+        {TipoItem::ORO, "Assets/items/oro.png"},
         {TipoItem::COFRE, "Assets/Misc/cofre.png"},
     };
 
@@ -39,27 +42,6 @@ IconosDeItems::IconosDeItems(SDL_Renderer* renderer) {
             std::cerr << "[Aviso] No se pudo cargar ítem individual (" << ruta
                       << "): " << IMG_GetError() << std::endl;
         }
-    }
-
-    textura_menas = IMG_LoadTexture(renderer, RUTA_ASSET_MENAS);
-    if (!textura_menas) {
-        std::cerr << "[Aviso] No se pudo cargar la textura de menas (" << RUTA_ASSET_MENAS
-                  << "): " << IMG_GetError() << std::endl;
-    }
-}
-
-int IconosDeItems::fila_de_mena(TipoItem tipo) {
-    switch (tipo) {
-        case TipoItem::PLATA:
-            return 0;
-        case TipoItem::CARBON:
-            return 1;
-        case TipoItem::LAPISLAZULI:
-            return 2;
-        case TipoItem::ORO:
-            return 3;
-        default:
-            return -1;
     }
 }
 
@@ -104,12 +86,6 @@ Icono IconosDeItems::obtener_icono(TipoItem tipo, Calidad calidad) const {
             SDL_Rect{columna * TAMANO_SPRITE, 0, TAMANO_SPRITE, TAMANO_SPRITE}};
     }
 
-    // Las menas salen de una textura compartida, con una fila por mineral.
-    const int fila = fila_de_mena(tipo);
-    if (fila >= 0 && textura_menas) {
-        return Icono{textura_menas, SDL_Rect{4, 2 + (32 * fila), 26, 25}};
-    }
-
     // verificar si es un ítem individual con textura propia
     auto it_indiv = texturas_individuales.find(tipo);
     if (it_indiv != texturas_individuales.end()) {
@@ -132,6 +108,4 @@ IconosDeItems::~IconosDeItems() {
         if (t)
             SDL_DestroyTexture(t);
     }
-    if (textura_menas)
-        SDL_DestroyTexture(textura_menas);
 }

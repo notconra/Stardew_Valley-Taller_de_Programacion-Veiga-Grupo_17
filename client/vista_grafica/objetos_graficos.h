@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <map>
 #include <string>
+#include <vector>
 
 #include "../../common/mensajes/mensajes_partida.h"
 #include "../../common/tipo_objeto.h"
@@ -19,11 +20,19 @@ enum class CapaDeObjeto : uint8_t {
     SOBRE_LOS_JUGADORES,
 };
 
-// Cómo se dibuja un tipo de objeto del mundo.
-struct AspectoDeObjeto {
+// Una forma de dibujar un objeto: qué imagen usa y con qué frecuencia relativa sale.
+struct VarianteDeAspecto {
     std::string ruta_de_textura;
     // Zona de la textura que se dibuja. Si el ancho es 0 se usa la textura completa.
     SDL_Rect origen{0, 0, 0, 0};
+    // Frecuencia relativa de esta variante entre las del mismo aspecto. No tiene que sumar 100:
+    // la probabilidad es el peso sobre la suma de los pesos de todas las variantes.
+    uint32_t peso = 1;
+};
+
+// Cómo se dibuja un tipo de objeto del mundo.
+struct AspectoDeObjeto {
+    std::vector<VarianteDeAspecto> variantes;  // al menos una, con peso mayor a cero
     int ancho_en_casillas = 1;
     int alto_en_casillas = 1;
     int desplazamiento_x = 0;
@@ -37,12 +46,25 @@ struct AspectoDeObjeto {
 // de su ítem, el aspecto se define acá y el ícono en IconosDeItems.
 class ObjetosGraficos {
 public:
-    static constexpr const char* RUTA_ASSET_MENAS = "Assets/Caverns/Mining/ore.png";
-    static constexpr const char* RUTA_ASSET_PIEDRA = "Assets/items/piedra.png";
+    // Texturas de los objetos tal como se ven en el mapa. Las de los ítems (inventario, drops)
+    // son otras y las maneja IconosDeItems.
+    static constexpr const char* RUTA_ASSET_PIEDRA_1 = "Assets/Caverns/Mining/piedra1.png";
+    static constexpr const char* RUTA_ASSET_PIEDRA_2 = "Assets/Caverns/Mining/piedra2.png";
+    static constexpr const char* RUTA_ASSET_PIEDRA_3 = "Assets/Caverns/Mining/piedra3.png";
+    static constexpr const char* RUTA_ASSET_MENA_CARBON = "Assets/Caverns/Mining/mena_carbon.png";
+    static constexpr const char* RUTA_ASSET_MENA_LAPISLAZULI =
+        "Assets/Caverns/Mining/mena_lapislazuli.png";
+    static constexpr const char* RUTA_ASSET_MENA_PLATA = "Assets/Caverns/Mining/mena_plata.png";
+    static constexpr const char* RUTA_ASSET_MENA_ORO = "Assets/Caverns/Mining/mena_oro.png";
     static constexpr const char* RUTA_ASSET_COFRE = "Assets/Misc/chest.png";
 
+    // Frecuencia relativa de cada piedra para q la 1 salga más y la 2 y la 3 salgan menos.
+    static constexpr uint32_t PESO_PIEDRA_1 = 60;
+    static constexpr uint32_t PESO_PIEDRA_2 = 25;
+    static constexpr uint32_t PESO_PIEDRA_3 = 15;
+
     // Carga todas las texturas de los aspectos conocidos. Lanza std::runtime_error si falta
-    // alguna imagen.
+    // alguna imagen, o std::invalid_argument si un aspecto no tiene variantes con peso.
     ObjetosGraficos(SDL_Renderer* renderer, const ConfiguracionGraficos& graficos);
 
     // cam_x y cam_y son la esquina de la cámara, en píxeles de pantalla. Cada método dibuja solo
