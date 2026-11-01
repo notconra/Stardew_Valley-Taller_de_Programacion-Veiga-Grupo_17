@@ -9,15 +9,21 @@
 
 #include "../../../common/lector_de_mapas_tmx/lector_de_mapas.h"
 
-std::map<std::string, uint8_t> Mapa::propiedades_disponibles() const {
-    std::map<std::string, uint8_t> propiedades;
-    propiedades["BLOQUEA"] = PropiedadDeCasilla::BLOQUEA;
-    propiedades["CULTIVABLE"] = PropiedadDeCasilla::CULTIVABLE;
-    propiedades["DECORABLE"] = PropiedadDeCasilla::DECORABLE;
-    propiedades["ADMITE_HIERBA"] = PropiedadDeCasilla::ADMITE_HIERBA;
-    propiedades["NINGUNA"] = PropiedadDeCasilla::NINGUNA;
+namespace {
+
+// Los nombres con los que el TOML pide cada propiedad en capas_opcionales.
+const std::map<std::string, uint8_t>& propiedades_disponibles() {
+    static const std::map<std::string, uint8_t> propiedades{
+        {"BLOQUEA", PropiedadDeCasilla::BLOQUEA},
+        {"CULTIVABLE", PropiedadDeCasilla::CULTIVABLE},
+        {"DECORABLE", PropiedadDeCasilla::DECORABLE},
+        {"ADMITE_HIERBA", PropiedadDeCasilla::ADMITE_HIERBA},
+        {"NINGUNA", PropiedadDeCasilla::NINGUNA},
+    };
     return propiedades;
 }
+
+}  // namespace
 
 Mapa::Mapa(const ConfiguracionMapaServidor& configuracion) {
     const LectorDeMapasTMX lector(configuracion.ruta_tmx);
@@ -39,18 +45,22 @@ Mapa::Mapa(const ConfiguracionMapaServidor& configuracion) {
     alto_de_casilla = tamanio.alto_de_casilla;
     propiedades.assign(cantidad_de_casillas, PropiedadDeCasilla::NINGUNA);
 
-    std::vector<int> colisiones = lector.cargar_capa(configuracion.capa_colisiones);
+    // Si el mapa no tiene capa de colisiones se usa la de respaldo, y el nombre que se usó es el
+    // que tiene que aparecer en los errores.
+    std::string nombre_capa_colisiones = configuracion.capa_colisiones;
+    std::vector<int> colisiones = lector.cargar_capa(nombre_capa_colisiones);
     if (colisiones.empty()) {
-        colisiones = lector.cargar_capa(configuracion.capa_respaldo);
+        nombre_capa_colisiones = configuracion.capa_respaldo;
+        colisiones = lector.cargar_capa(nombre_capa_colisiones);
     }
     if (colisiones.empty()) {
         throw std::runtime_error(
             std::string("falta la capa ") + configuracion.capa_colisiones + " (o " +
             configuracion.capa_respaldo + ") en " + configuracion.ruta_tmx);
     }
-    marcar(colisiones, PropiedadDeCasilla::BLOQUEA, configuracion.capa_colisiones);
+    marcar(colisiones, PropiedadDeCasilla::BLOQUEA, nombre_capa_colisiones);
 
-    const std::map<std::string, uint8_t> disponibles = propiedades_disponibles();
+    const std::map<std::string, uint8_t>& disponibles = propiedades_disponibles();
     for (const CapaOpcionalMapaServidor& capa_opcional : configuracion.capas_opcionales) {
         const std::map<std::string, uint8_t>::const_iterator encontrado =
             disponibles.find(capa_opcional.propiedad);
@@ -125,10 +135,6 @@ bool Mapa::tiene(int columna, int fila, uint8_t propiedad) const {
     }
     const std::size_t indice = static_cast<std::size_t>(fila) * ancho_en_casillas + columna;
     return (propiedades[indice] & propiedad) != 0;
-}
-
-bool Mapa::se_superponen(const Rectangulo& a, const Rectangulo& b) const {
-    return a.x < b.x + b.ancho && a.x + a.ancho > b.x && a.y < b.y + b.alto && a.y + a.alto > b.y;
 }
 
 const Transicion* Mapa::transicion_en(const Rectangulo& zona) const {

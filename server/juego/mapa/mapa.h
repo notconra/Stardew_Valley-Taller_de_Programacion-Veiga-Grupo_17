@@ -2,8 +2,8 @@
 #define MAPA_H
 
 #include <cstdint>
-#include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "../../configuracion/configuracion_servidor_datos.h"
@@ -31,13 +31,9 @@ private:
     // Zonas (en píxeles) que llevan a otro mapa. Pocas por mapa, alcanza con recorrerlas.
     std::vector<std::pair<Rectangulo, Transicion>> transiciones;
 
-    std::map<std::string, uint8_t> propiedades_disponibles() const;
-
     // Suma "propiedad" a toda casilla no vacía de la capa. Lanza std::runtime_error si la capa
     // no coincide con el tamaño del mapa.
     void marcar(const std::vector<int>& capa, uint8_t propiedad, const std::string& nombre_capa);
-
-    bool se_superponen(const Rectangulo& a, const Rectangulo& b) const;
 
 public:
     // Lanza std::runtime_error si no puede leer el TMX o la capa de colisiones.

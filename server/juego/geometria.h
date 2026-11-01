@@ -17,4 +17,9 @@ struct Rectangulo {
     int alto;
 };
 
+// Si dos zonas comparten al menos un píxel. Tocarse solo en el borde no cuenta.
+inline bool se_superponen(const Rectangulo& a, const Rectangulo& b) {
+    return a.x < b.x + b.ancho && a.x + a.ancho > b.x && a.y < b.y + b.alto && a.y + a.alto > b.y;
+}
+
 #endif
