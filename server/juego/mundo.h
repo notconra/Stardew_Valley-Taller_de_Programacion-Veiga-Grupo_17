@@ -75,6 +75,8 @@ public:
     // Avanza un tick en todos los mapas, y resuelve las transiciones que se dispararon.
     void actualizar();
 
+    // El estado de la partida. Incluye los jugadores de todos los mapas, pero los objetos solo de
+    // los mapas donde hay alguien.
     EstadoJuego estado() const;
 
     // Snapshot privado del inventario de un jugador.

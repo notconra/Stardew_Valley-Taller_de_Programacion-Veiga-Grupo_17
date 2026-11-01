@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <limits>
+#include <set>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -283,8 +284,16 @@ EstadoJuego Mundo::estado() const {
         jugador.ranura_activa = gestor_inventario.obtener_ranura_activa(jugador.id_jugador);
     }
 
+    // Los objetos se mandan solo de los mapas donde hay algún jugador, los de una zona vacía (un
+    // nivel de la mazmorra que nadie visita) no los ve nadie y evitamos que agranden el snapshot.
+    std::set<std::string> mapas_con_jugadores;
+    for (const auto& entrada : mapa_actual) {
+        mapas_con_jugadores.insert(entrada.second);
+    }
     for (const auto& [id_mapa, objetos] : objetos_por_mapa) {
-        objetos.agregar_a(estado_juego);
+        if (mapas_con_jugadores.contains(id_mapa)) {
+            objetos.agregar_a(estado_juego);
+        }
     }
 
     return estado_juego;
