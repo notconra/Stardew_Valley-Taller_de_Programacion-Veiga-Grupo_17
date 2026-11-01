@@ -1,0 +1,51 @@
+#ifndef DATOS_PARTIDA_GUARDADA_H
+#define DATOS_PARTIDA_GUARDADA_H
+
+#include <cstdint>
+#include <string>
+#include <vector>
+
+#include "../../common/juego/direccion.h"
+#include "../../common/juego/ranura_inventario.h"
+
+struct DatosJugadorGuardado {
+    uint32_t id_cliente = 0;
+    uint32_t id_jugador = 0;
+    std::string nombre_jugador;
+    std::string mapa_actual;
+    double x = 0.0;
+    double y = 0.0;
+    Direccion mirando = Direccion::ABAJO;
+    uint8_t ranura_activa = 0;
+    std::vector<RanuraInventario> inventario;
+
+    bool operator==(const DatosJugadorGuardado&) const = default;
+};
+
+struct ModificacionCasilla {
+    uint32_t columna = 0;
+    uint32_t fila = 0;
+    uint8_t propiedad = 0;
+
+    bool operator==(const ModificacionCasilla&) const = default;
+};
+
+struct DatosMapaGuardado {
+    std::string id_mapa;
+    std::vector<ModificacionCasilla> casillas_modificadas;
+
+    bool operator==(const DatosMapaGuardado&) const = default;
+};
+
+struct DatosPartidaGuardada {
+    std::string codigo;
+    std::string nombre;
+    uint8_t jugadores_maximos = 0;
+    bool multijugador = false;
+    std::vector<DatosJugadorGuardado> jugadores;
+    std::vector<DatosMapaGuardado> mapas;
+
+    bool operator==(const DatosPartidaGuardada&) const = default;
+};
+
+#endif  // DATOS_PARTIDA_GUARDADA_H
