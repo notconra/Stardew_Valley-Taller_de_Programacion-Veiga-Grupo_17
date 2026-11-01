@@ -1,9 +1,10 @@
 #include "configuracion_servidor.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <stdexcept>
 #include <string>
-#include <algorithm>
+#include <vector>
 
 ConfiguracionServidor::ConfiguracionServidor(const std::string& ruta) {
     toml::table archivo_toml;
@@ -23,6 +24,7 @@ void ConfiguracionServidor::cargar_toml(const toml::table& archivo_toml) {
     cargar_partida(archivo_toml);
     cargar_mapas(archivo_toml);
     cargar_juego(archivo_toml);
+    cargar_mazmorra(archivo_toml);
 }
 
 void ConfiguracionServidor::cargar_red(const toml::table& archivo_toml) {
@@ -130,7 +132,8 @@ void ConfiguracionServidor::cargar_mapas(const toml::table& archivo_toml) {
         throw std::runtime_error("configuración: falta la clave 'mapa_inicial'");
     }
     const bool existe = std::any_of(
-        datos_configuracion.mapas.begin(), datos_configuracion.mapas.end(),
+        datos_configuracion.mapas.begin(),
+        datos_configuracion.mapas.end(),
         [&mapa_inicial](const ConfiguracionMapaServidor& m) { return m.id == *mapa_inicial; });
     if (!existe) {
         throw std::runtime_error(
@@ -306,4 +309,51 @@ const std::string& ConfiguracionServidor::mapa_inicial() const {
 
 const ConfiguracionJuegoServidor& ConfiguracionServidor::juego() const {
     return datos_configuracion.juego;
+}
+
+void ConfiguracionServidor::cargar_mazmorra(const toml::table& archivo_toml) {
+    const toml::table* tabla = archivo_toml["mazmorra"].as_table();
+    if (tabla == nullptr) {
+        return;
+    }
+    ConfiguracionMazmorraServidor& mazmorra = datos_configuracion.mazmorra;
+
+    const auto destino = (*tabla)["destino"].value<std::string>();
+    if (destino) {
+        mazmorra.destino = *destino;
+    }
+    mazmorra.enemigos_por_nivel =
+        leer_entero_opcional(*tabla, "enemigos_por_nivel", mazmorra.enemigos_por_nivel);
+    mazmorra.piedras_por_nivel =
+        leer_entero_opcional(*tabla, "piedras_por_nivel", mazmorra.piedras_por_nivel);
+    if (mazmorra.enemigos_por_nivel < 0 || mazmorra.piedras_por_nivel < 0) {
+        throw std::runtime_error(
+            "configuración: 'enemigos_por_nivel' y 'piedras_por_nivel' de [mazmorra] no pueden "
+            "ser negativos");
+    }
+
+    const toml::array* mapas = (*tabla)["mapas"].as_array();
+    if (mapas == nullptr) {
+        throw std::runtime_error("configuración: falta la clave 'mapas' de [mazmorra]");
+    }
+    for (const toml::node& nodo : *mapas) {
+        const auto id = nodo.value<std::string>();
+        if (!id) {
+            throw std::runtime_error(
+                "configuración: 'mapas' de [mazmorra] debe ser una lista de ids de [[mapas]]");
+        }
+        const bool existe = std::any_of(
+            datos_configuracion.mapas.begin(),
+            datos_configuracion.mapas.end(),
+            [&id](const ConfiguracionMapaServidor& mapa) { return mapa.id == *id; });
+        if (!existe) {
+            throw std::runtime_error(
+                "configuración: el mapa '" + *id + "' de [mazmorra] no está entre los [[mapas]]");
+        }
+        mazmorra.mapas.push_back(*id);
+    }
+}
+
+const ConfiguracionMazmorraServidor& ConfiguracionServidor::mazmorra() const {
+    return datos_configuracion.mazmorra;
 }

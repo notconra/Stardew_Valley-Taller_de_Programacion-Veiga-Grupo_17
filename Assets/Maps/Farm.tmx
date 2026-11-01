@@ -2065,7 +2065,7 @@
    <properties>
     <property name="columna_destino" type="int" value="14"/>
     <property name="fila_destino" type="int" value="17"/>
-    <property name="mapa_destino" value="cueva1"/>
+    <property name="mapa_destino" value="mazmorra"/>
    </properties>
   </object>
   <object id="93" x="640" y="-0.333333" width="32.6667" height="16.6667">
