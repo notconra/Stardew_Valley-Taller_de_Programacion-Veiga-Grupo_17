@@ -12,7 +12,7 @@ SesionDePartida::SesionDePartida(
     const RecursosDeJuego& recursos)
     : codigo_partida(codigo_de_partida),
       periodo_de_tick(1000 / configuracion_partida.ticks_por_segundo),
-      mundo(recursos, static_cast<uint8_t>(configuracion_partida.ticks_por_segundo)),
+      mundo(recursos, *this, static_cast<uint8_t>(configuracion_partida.ticks_por_segundo)),
       comandos(static_cast<unsigned int>(configuracion_partida.capacidad_de_comandos)) {
     try {
         start();
@@ -31,7 +31,6 @@ void SesionDePartida::entrar(uint32_t id_jugador, Queue<EventoServidor>& cola_ev
     std::lock_guard<std::mutex> lock(mutex_clientes);
     clientes.erase(id_jugador);
     clientes.emplace(id_jugador, ColaDeEventosDelJugador{cola_eventos});
-    inventarios_pendientes.push_back(id_jugador);
 }
 
 void SesionDePartida::sincronizar_jugadores() {
@@ -43,34 +42,6 @@ void SesionDePartida::sincronizar_jugadores() {
         }
     }
     mundo.sincronizar_jugadores(ids_conectados);
-}
-
-void SesionDePartida::enviar_inventarios_pendientes() {
-    std::lock_guard<std::mutex> lock(mutex_clientes);
-    std::vector<uint32_t> pendientes_restantes;
-
-    for (uint32_t id_jugador : inventarios_pendientes) {
-        auto cliente = clientes.find(id_jugador);
-        if (cliente == clientes.end()) {
-            continue;
-        }
-
-        const ActualizacionInventario actualizacion = mundo.obtener_inventario(id_jugador);
-        if (actualizacion.inventario.ranuras.empty()) {
-            // El jugador entró después de la última sincronización, en este caso el mundo todavía
-            // no le creó el inventario, así que se reintenta en el próximo tick.
-            pendientes_restantes.push_back(id_jugador);
-            continue;
-        }
-
-        try {
-            cliente->second.cola_eventos.try_push(actualizacion);
-        } catch (const ClosedQueue&) {
-            clientes.erase(cliente);
-        }
-    }
-
-    inventarios_pendientes.swap(pendientes_restantes);
 }
 
 void SesionDePartida::salir(uint32_t id_jugador) {
@@ -95,32 +66,13 @@ void SesionDePartida::procesar_comandos() {
     try {
         ComandoDeJugador pedido;
         while (comandos.try_pop(pedido)) {
-            const ResultadoDeComando resultado = mundo.atender(pedido.id_jugador, pedido.comando);
-            if (resultado.inventario_cambiado) {
-                difundir_a_jugador(pedido.id_jugador, mundo.obtener_inventario(pedido.id_jugador));
-            }
-            if (resultado.cofre.has_value()) {
-                difundir_a_jugador(pedido.id_jugador, ActualizacionCofre{resultado.cofre.value()});
-            }
+            mundo.atender(pedido.id_jugador, pedido.comando);
         }
     } catch (const ClosedQueue&) {
     }
 }
 
-void SesionDePartida::difundir(const EventoServidor& evento) {
-    std::lock_guard<std::mutex> lock(mutex_clientes);
-
-    for (auto cliente = clientes.begin(); cliente != clientes.end();) {
-        try {
-            cliente->second.cola_eventos.try_push(evento);
-            ++cliente;
-        } catch (const ClosedQueue&) {
-            cliente = clientes.erase(cliente);
-        }
-    }
-}
-
-void SesionDePartida::difundir_a_jugador(uint32_t id_jugador, const EventoServidor& evento) {
+void SesionDePartida::a_jugador(uint32_t id_jugador, const EventoServidor& evento) {
     std::lock_guard<std::mutex> lock(mutex_clientes);
     auto cliente = clientes.find(id_jugador);
     if (cliente == clientes.end()) {
@@ -129,6 +81,19 @@ void SesionDePartida::difundir_a_jugador(uint32_t id_jugador, const EventoServid
     try {
         cliente->second.cola_eventos.try_push(evento);
     } catch (const ClosedQueue&) {
+        clientes.erase(cliente);
+    }
+}
+
+void SesionDePartida::a_todos(const EventoServidor& evento) {
+    std::lock_guard<std::mutex> lock(mutex_clientes);
+    for (auto cliente = clientes.begin(); cliente != clientes.end();) {
+        try {
+            cliente->second.cola_eventos.try_push(evento);
+            ++cliente;
+        } catch (const ClosedQueue&) {
+            cliente = clientes.erase(cliente);
+        }
     }
 }
 
@@ -140,10 +105,8 @@ void SesionDePartida::run() {
 
         while (should_keep_running()) {
             sincronizar_jugadores();
-            enviar_inventarios_pendientes();
             procesar_comandos();
             mundo.actualizar();
-            difundir(mundo.estado());
 
             proximo_tick += periodo_de_tick;
             const auto ahora = Reloj::now();
@@ -158,10 +121,9 @@ void SesionDePartida::run() {
 }
 
 void SesionDePartida::difundir_cierre() {
-    difundir(PartidaCerradaPorError{});
+    a_todos(PartidaCerradaPorError{});
     std::lock_guard<std::mutex> lock(mutex_clientes);
     clientes.clear();
-    inventarios_pendientes.clear();
 }
 
 void SesionDePartida::detener() {
