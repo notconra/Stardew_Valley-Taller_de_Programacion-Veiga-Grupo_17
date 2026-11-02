@@ -6,16 +6,15 @@
 #include <vector>
 
 #include "../direccion.h"
+#include "../modo_uso.h"
 #include "../ranura_inventario.h"
+#include "../tipo_accion.h"
 #include "../tipo_item.h"
 #include "../tipo_objeto.h"
 
 // Política de tipos del protocolo: las cantidades, ids y posiciones viajan sin signo (u8/u16/u32),
 // porque nunca son negativas. El único campo con signo es el eje de Moverse (i8), donde el signo
 // distingue izquierda/arriba de derecha/abajo.
-
-// Índice para la ranura activa de la barra de herramientas.
-constexpr uint8_t INDICE_RANURA_ACTIVA = 0xFF;
 
 // Cliente a servidor
 
@@ -42,7 +41,10 @@ struct SeleccionarRanuraDeLaBarra {
 // Usa el ítem de la ranura activa (o de la indicada). El servidor interpreta según el tipo de
 // ítem. Si "tiene_casilla_objetivo" es true, la acción apunta a esa casilla del mapa (por ejemplo,
 // la que marcó el mouse); si no, el servidor usa la casilla de enfrente del jugador.
+// "modo" indica si es Clic Izquierdo (PRINCIPAL) para herramientas/colocar o Clic Derecho
+// (SECUNDARIO) para interactuar.
 struct UsarItem {
+    ModoUso modo = ModoUso::PRINCIPAL;
     uint8_t indice_ranura = INDICE_RANURA_ACTIVA;
     bool tiene_casilla_objetivo = false;
     uint32_t columna_objetivo = 0;
@@ -55,12 +57,6 @@ struct MoverItemEntreRanuras {
     uint8_t origen = 0;
     uint8_t destino = 0;
     uint16_t cantidad = 0;  // 0 significa mover todo lo posible
-};
-
-// Abre o cierra el cofre que el jugador tiene en la casilla de enfrente. El servidor responde
-// siempre con ActualizacionCofre; si no hay cofre, responde un cofre cerrado.
-struct AbrirCofre {
-    bool cerrar = false;
 };
 
 // Mueve un stack entre la barra del jugador y el cofre que tiene abierto.
@@ -76,6 +72,13 @@ struct MoverItemConCofre {
 // Solicita el inventario completo (respuesta será ActualizacionInventario).
 struct SolicitarInventario {};
 
+// Tira al piso parte de una ranura de la barra. El servidor decide dónde cae.
+// cantidad == 0 significa todo el stack.
+struct SoltarItem {
+    uint8_t ranura = 0;
+    uint16_t cantidad = 0;
+};
+
 // Servidor a cliente
 
 struct MultijugadorActivado {
@@ -89,7 +92,7 @@ struct PartidaAbandonada {};
 struct PartidaCerradaPorError {};
 
 // Lo que el cliente necesita para dibujar a un jugador. La posición es en píxeles del mapa.
-// "mirando" y "camina" bastan para elegir el sprite y la animación.
+// "mirando", "camina" y "accion_actual" bastan para elegir el sprite y la animación.
 struct EstadoJugador {
     uint32_t id_jugador = 0;
     std::string mapa;
@@ -98,11 +101,11 @@ struct EstadoJugador {
     Direccion mirando = Direccion::ABAJO;
     bool camina = false;
     uint8_t ranura_activa = 0;
+    TipoAccion accion_actual = TipoAccion::NINGUNA;
 };
 
-// Un objeto del mundo que hay en el mapa (mineral, árbol, mueble, etc.), "id" es único dentro de su
-// mapa, "tipo" dice cómo se ve, el ítem que deja al romperse es otra cosa y lo decide el servidor.
-// Ocupa una sola casilla: la (columna, fila).
+// Un objeto del mundo que hay en el mapa (mineral, cofre, puerta, mueble...). "id" es único dentro
+// de su mapa y "tipo" dice cómo se ve. Ocupa una sola casilla, la (columna, fila).
 struct EstadoObjetoDelMundo {
     uint32_t id = 0;
     std::string mapa;
@@ -111,11 +114,55 @@ struct EstadoObjetoDelMundo {
     TipoObjeto tipo = TipoObjeto::NINGUNO;
 };
 
-// Estado completo de una partida en un tick: los jugadores y los objetos del mundo de todos los
-// mapas.
+// Un ítem tirado en el piso de un mapa. "id" es único dentro de su mapa.
+struct EstadoDrop {
+    uint32_t id = 0;
+    uint32_t columna = 0;
+    uint32_t fila = 0;
+    TipoItem tipo = TipoItem::NINGUNO;
+    uint16_t cantidad = 0;
+    Calidad calidad = Calidad::BASE;
+};
+
+// Snapshot completa de UN sector. Se manda una sola vez cuando el jugador entra o cambia de
+// sector. Después, los cambios llegan como eventos.
 struct EstadoJuego {
+    std::string mapa;
     std::vector<EstadoJugador> jugadores;
     std::vector<EstadoObjetoDelMundo> objetos;
+    std::vector<EstadoDrop> drops;
+};
+
+// Posición y estado de todos los jugadores del sector del receptor. Se manda cada tick, pero solo
+// a los jugadores de ese sector, nunca viajan los jugadores de otros mapas.
+struct JugadoresEnSector {
+    std::string mapa;
+    std::vector<EstadoJugador> jugadores;
+};
+
+// Un objeto nuevo en el sector del receptor. Si el id ya existía, el cliente lo reemplaza.
+struct ObjetoColocado {
+    uint32_t id = 0;
+    uint32_t columna = 0;
+    uint32_t fila = 0;
+    TipoObjeto tipo = TipoObjeto::NINGUNO;
+};
+
+// Un objeto que dejó de existir en el sector del receptor (se picó, se rompió, se retiró).
+struct ObjetoRetirado {
+    uint32_t id = 0;
+};
+
+// Un ítem que apareció en el piso del sector del receptor.
+struct DropAparecido {
+    EstadoDrop drop;
+};
+
+// Un ítem que dejó de estar en el piso. id_jugador == 0 significa que lo perdió el mundo (por
+// ejemplo, se limpió un nivel de la mazmorra), no que lo recogió alguien.
+struct DropRetirado {
+    uint32_t id = 0;
+    uint32_t id_jugador = 0;
 };
 
 // La barra de un jugador. Las ranuras reales van de 0 a ranuras.size() - 1.

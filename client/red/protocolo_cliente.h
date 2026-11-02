@@ -28,9 +28,9 @@ private:
         const SeleccionarRanuraDeLaBarra& seleccionar);
     void enviar_comando_usar_item(const UsarItem& usar);
     void enviar_comando_mover_item_entre_ranuras(const MoverItemEntreRanuras& mover);
-    void enviar_comando_abrir_cofre(const AbrirCofre& abrir);
     void enviar_comando_mover_item_con_cofre(const MoverItemConCofre& mover);
     void enviar_comando_solicitar_inventario(const SolicitarInventario& solicitar);
+    void enviar_comando_soltar_item(const SoltarItem& soltar);
 
     // Recepción de eventos
     ErrorServidor recibir_error_servidor();
@@ -42,7 +42,13 @@ private:
     PartidaCerradaPorError recibir_partida_cerrada_por_error();
     EstadoJugador recibir_estado_jugador();
     EstadoObjetoDelMundo recibir_estado_objeto_del_mundo();
+    EstadoDrop recibir_estado_drop();
     EstadoJuego recibir_estado_juego();
+    JugadoresEnSector recibir_jugadores_en_sector();
+    ObjetoColocado recibir_objeto_colocado();
+    ObjetoRetirado recibir_objeto_retirado();
+    DropAparecido recibir_drop_aparecido();
+    DropRetirado recibir_drop_retirado();
     RanuraInventario recibir_ranura_inventario();
     std::vector<RanuraInventario> recibir_ranuras();
     InventarioJugador recibir_inventario_jugador();
