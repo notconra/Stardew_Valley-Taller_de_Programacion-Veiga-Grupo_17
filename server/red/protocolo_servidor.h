@@ -26,6 +26,7 @@ private:
     Moverse recibir_comando_moverse();
     SeleccionarRanuraDeLaBarra recibir_comando_seleccionar_ranura_de_la_barra();
     UsarItem recibir_comando_usar_item();
+    ConsultarCasilla recibir_comando_consultar_casilla();
     MoverItemEntreRanuras recibir_comando_mover_item_entre_ranuras();
     AbrirCofre recibir_comando_abrir_cofre();
     MoverItemConCofre recibir_comando_mover_item_con_cofre();
@@ -51,6 +52,8 @@ private:
     void enviar_evento_actualizacion_inventario(const ActualizacionInventario& actualizacion);
     void enviar_evento_actualizacion_cofre(const ActualizacionCofre& actualizacion);
     void enviar_estado_juego(const EstadoJuego& estado_juego);
+    void enviar_estado_tierra(const EstadoTierra& estado_tierra);
+    void enviar_casilla_consultada(const CasillaConsultada& consultada);
 
 public:
     explicit ProtocoloServidor(ISocket& socket_conectado);

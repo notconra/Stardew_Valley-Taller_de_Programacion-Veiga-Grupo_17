@@ -22,6 +22,7 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::SELECCIONAR_RANURA_DE_LA_BARRA,
            [this] { return recibir_comando_seleccionar_ranura_de_la_barra(); }},
           {TipoMensaje::USAR_ITEM, [this] { return recibir_comando_usar_item(); }},
+          {TipoMensaje::CONSULTAR_CASILLA, [this] { return recibir_comando_consultar_casilla(); }},
           {TipoMensaje::MOVER_ITEM_ENTRE_RANURAS,
            [this] { return recibir_comando_mover_item_entre_ranuras(); }},
           {TipoMensaje::ABRIR_COFRE, [this] { return recibir_comando_abrir_cofre(); }},
@@ -101,7 +102,9 @@ SeleccionarRanuraDeLaBarra ProtocoloServidor::recibir_comando_seleccionar_ranura
 
 UsarItem ProtocoloServidor::recibir_comando_usar_item() {
     uint8_t indice = recibir_u8();
-    return UsarItem{indice};
+    uint16_t columna = recibir_u16();
+    uint16_t fila = recibir_u16();
+    return UsarItem{indice, columna, fila};
 }
 
 MoverItemEntreRanuras ProtocoloServidor::recibir_comando_mover_item_entre_ranuras() {
@@ -142,6 +145,8 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const ActualizacionInventario& e) { enviar_evento_actualizacion_inventario(e); },
             [this](const ActualizacionCofre& e) { enviar_evento_actualizacion_cofre(e); },
             [this](const EstadoJuego& e) { enviar_estado_juego(e); },
+            [this](const EstadoTierra& e) { enviar_estado_tierra(e); },
+            [this](const CasillaConsultada& e) { enviar_casilla_consultada(e); },
         },
         evento);
 }
@@ -239,4 +244,30 @@ void ProtocoloServidor::enviar_estado_juego(const EstadoJuego& estado_juego) {
     for (const EstadoJugador& estado : estado_juego.jugadores) {
         enviar_estado_jugador(estado);
     }
+}
+
+void ProtocoloServidor::enviar_estado_tierra(const EstadoTierra& estado_tierra) {
+    enviar_tipo(TipoMensaje::ESTADO_TIERRA);
+    enviar_largo(estado_tierra.mapas.size());
+    for (const TierraDeUnMapa& tierra : estado_tierra.mapas) {
+        enviar_texto(tierra.mapa);
+        enviar_largo(tierra.casillas.size());
+        for (const CasillaTratada& casilla : tierra.casillas) {
+            enviar_u16(casilla.columna);
+            enviar_u16(casilla.fila);
+        }
+    }
+}
+
+ConsultarCasilla ProtocoloServidor::recibir_comando_consultar_casilla() {
+    const uint16_t columna = recibir_u16();
+    const uint16_t fila = recibir_u16();
+    return ConsultarCasilla{columna, fila};
+}
+
+void ProtocoloServidor::enviar_casilla_consultada(const CasillaConsultada& consultada) {
+    enviar_tipo(TipoMensaje::CASILLA_CONSULTADA);
+    enviar_u16(consultada.columna);
+    enviar_u16(consultada.fila);
+    enviar_u8(consultada.tendria_efecto ? 1 : 0);
 }

@@ -23,6 +23,7 @@ enum class TipoMensaje : uint8_t {
     ABRIR_COFRE = 0x0B,
     MOVER_ITEM_CON_COFRE = 0x0C,
     SOLICITAR_INVENTARIO = 0x0D,
+    CONSULTAR_CASILLA = 0x0F,
 
     // Servidor a cliente
     ERROR_SERVIDOR = 0x81,
@@ -36,6 +37,9 @@ enum class TipoMensaje : uint8_t {
 
     ACTUALIZACION_INVENTARIO = 0x88,
     ACTUALIZACION_COFRE = 0x89,
+
+    ESTADO_TIERRA = 0x8A,
+    CASILLA_CONSULTADA = 0x8B,
 };
 
 #endif

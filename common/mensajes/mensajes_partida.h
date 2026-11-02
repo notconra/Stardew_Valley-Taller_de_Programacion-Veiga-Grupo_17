@@ -36,6 +36,15 @@ struct SeleccionarRanuraDeLaBarra {
 // Usa el ítem de la ranura activa (o de la indicada). El servidor interpreta según tipo.
 struct UsarItem {
     uint8_t indice_ranura = INDICE_RANURA_ACTIVA;
+    uint16_t columna = 0;
+    uint16_t fila = 0;
+};
+
+// Pregunta si la herramienta de la ranura activa tendría efecto en esa casilla, para que el
+// cliente sepa si marcarla en verde. No cambia nada: la respuesta es CasillaConsultada.
+struct ConsultarCasilla {
+    uint16_t columna = 0;
+    uint16_t fila = 0;
 };
 
 // Mueve ítems entre ranuras de la barra. Si el destino es el tacho, el ítem se elimina
@@ -82,7 +91,7 @@ struct PartidaCerradaPorError {};
 // "mirando" y "camina" bastan para elegir el sprite y la animación.
 struct EstadoJugador {
     uint32_t id_jugador = 0;
-    std::string mapa; // <--- Mantenido de la rama de tu compañero para los mapas múltiples
+    std::string mapa;
     int32_t x = 0;
     int32_t y = 0;
     Direccion mirando = Direccion::ABAJO;
@@ -115,6 +124,34 @@ struct CofreJugador {
 // Actualización de inventario dirigida a un cliente específico (se envía por su cola).
 struct ActualizacionInventario {
     InventarioJugador inventario;
+};
+
+// Respuesta a ConsultarCasilla, solo para el jugador que preguntó: si usar la herramienta que
+// tiene en la mano sobre esa casilla haría algo.
+struct CasillaConsultada {
+    uint16_t columna = 0;
+    uint16_t fila = 0;
+    bool tendria_efecto = false;
+};
+
+// Una casilla de tierra tratada con la pala, por columna y fila del mapa.
+struct CasillaTratada {
+    uint16_t columna = 0;
+    uint16_t fila = 0;
+
+    bool operator==(const CasillaTratada&) const = default;
+};
+
+// Las casillas tratadas de un mapa.
+struct TierraDeUnMapa {
+    std::string mapa;
+    std::vector<CasillaTratada> casillas;
+};
+
+// Toda la tierra tratada de la partida. Se manda completa cuando alguien la cambia y cuando un
+// jugador entra, así el cliente nunca tiene que juntar cambios sueltos.
+struct EstadoTierra {
+    std::vector<TierraDeUnMapa> mapas;
 };
 
 // Actualización del cofre abierto por un jugador. Si el cofre se cerró, abierto == false.
