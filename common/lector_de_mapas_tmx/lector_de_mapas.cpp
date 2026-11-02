@@ -90,7 +90,8 @@ std::vector<TransicionTMX> LectorDeMapasTMX::cargar_transiciones(
 
     tinyxml2::XMLElement* nodo_capa = nullptr;
     for (tinyxml2::XMLElement* candidato = nodo_mapa->FirstChildElement("objectgroup");
-         candidato != nullptr; candidato = candidato->NextSiblingElement("objectgroup")) {
+         candidato != nullptr;
+         candidato = candidato->NextSiblingElement("objectgroup")) {
         const char* nombre = candidato->Attribute("name");
         if (nombre && nombre_capa == nombre) {
             nodo_capa = candidato;
@@ -102,7 +103,8 @@ std::vector<TransicionTMX> LectorDeMapasTMX::cargar_transiciones(
     }
 
     for (tinyxml2::XMLElement* nodo_objeto = nodo_capa->FirstChildElement("object");
-         nodo_objeto != nullptr; nodo_objeto = nodo_objeto->NextSiblingElement("object")) {
+         nodo_objeto != nullptr;
+         nodo_objeto = nodo_objeto->NextSiblingElement("object")) {
         TransicionTMX transicion;
         bool tiene_mapa_destino = false;
 
@@ -140,4 +142,44 @@ std::vector<TransicionTMX> LectorDeMapasTMX::cargar_transiciones(
     }
 
     return transiciones;
+}
+
+std::vector<int> LectorDeMapasTMX::ids_con_propiedad(
+    const std::string& propiedad, const std::string& valor) const {
+    std::vector<int> ids;
+    tinyxml2::XMLDocument documento;
+    tinyxml2::XMLElement* nodo_mapa = abrir_mapa(documento);
+    if (!nodo_mapa) {
+        return ids;
+    }
+
+    for (tinyxml2::XMLElement* nodo_tileset = nodo_mapa->FirstChildElement("tileset");
+         nodo_tileset != nullptr;
+         nodo_tileset = nodo_tileset->NextSiblingElement("tileset")) {
+        int primer_id = 0;
+        nodo_tileset->QueryIntAttribute("firstgid", &primer_id);
+
+        for (tinyxml2::XMLElement* nodo_tile = nodo_tileset->FirstChildElement("tile");
+             nodo_tile != nullptr;
+             nodo_tile = nodo_tile->NextSiblingElement("tile")) {
+            tinyxml2::XMLElement* nodo_propiedades = nodo_tile->FirstChildElement("properties");
+            if (!nodo_propiedades) {
+                continue;
+            }
+            for (tinyxml2::XMLElement* nodo_propiedad =
+                     nodo_propiedades->FirstChildElement("property");
+                 nodo_propiedad != nullptr;
+                 nodo_propiedad = nodo_propiedad->NextSiblingElement("property")) {
+                const char* nombre = nodo_propiedad->Attribute("name");
+                const char* valor_propiedad = nodo_propiedad->Attribute("value");
+                if (nombre && valor_propiedad && propiedad == nombre && valor == valor_propiedad) {
+                    int id_local = 0;
+                    nodo_tile->QueryIntAttribute("id", &id_local);
+                    ids.push_back(primer_id + id_local);
+                    break;
+                }
+            }
+        }
+    }
+    return ids;
 }

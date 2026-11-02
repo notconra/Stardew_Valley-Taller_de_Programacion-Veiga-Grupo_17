@@ -16,6 +16,7 @@ ticks_por_segundo = 40
 [[mapas]]
 id = "granja"
 ruta_tmx = "Assets/Maps/Farm.tmx"
+propiedad_cultivable = "Diggable"
 #capa_colisiones = "Colisiones"
 #capa_respaldo = "Buildings"
 

@@ -372,3 +372,6 @@ cuadros_caminando = 4
 ms_por_cuadro_caminando = 150
 cuadros_quieto = 2
 ms_por_cuadro_quieto = 450
+
+[tierra]
+ruta_sprite = "Assets/TerrainFeatures/hoeDirt.png"
