@@ -35,7 +35,7 @@ bool AccionColocar::ejecutar(ContextoDeAccion& c) {
     return true;
 }
 
-bool AccinoColocar::aplica(const ContextoDeAccion& c) const override {
+bool AccionColocar::aplica(const ContextoDeAccion& c) const {
     // Colocar objetos se hace ÚNICAMENTE con clic derecho (SECUNDARIO)
     return c.modo == ModoUso::SECUNDARIO && c.item.tipo != TipoItem::NINGUNO &&
            c.recursos.catalogo_de_objetos.buscar_por_item(c.item.tipo) != nullptr;

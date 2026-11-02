@@ -102,6 +102,10 @@ struct EstadoJugador {
     bool camina = false;
     uint8_t ranura_activa = 0;
     TipoAccion accion_actual = TipoAccion::NINGUNA;
+
+    // Esto sirve pq el servidor compara con lo último que mandó para no repetir un
+    // JugadoresEnSector igual.
+    bool operator==(const EstadoJugador&) const = default;
 };
 
 // Un objeto del mundo que hay en el mapa (mineral, cofre, puerta, mueble...). "id" es único dentro

@@ -31,22 +31,30 @@ void SesionDePartida::entrar(uint32_t id_jugador, Queue<EventoServidor>& cola_ev
     std::lock_guard<std::mutex> lock(mutex_clientes);
     clientes.erase(id_jugador);
     clientes.emplace(id_jugador, ColaDeEventosDelJugador{cola_eventos});
-}
-
-void SesionDePartida::sincronizar_jugadores() {
-    std::vector<uint32_t> ids_conectados;
-    {
-        std::lock_guard<std::mutex> lock(mutex_clientes);
-        for (const auto& cliente : clientes) {
-            ids_conectados.push_back(cliente.first);
-        }
-    }
-    mundo.sincronizar_jugadores(ids_conectados);
+    cambios_de_conexion.push_back(CambioDeConexion{id_jugador, true});
 }
 
 void SesionDePartida::salir(uint32_t id_jugador) {
     std::lock_guard<std::mutex> lock(mutex_clientes);
-    clientes.erase(id_jugador);
+    if (clientes.erase(id_jugador) > 0) {
+        cambios_de_conexion.push_back(CambioDeConexion{id_jugador, false});
+    }
+}
+
+void SesionDePartida::aplicar_cambios_de_conexion() {
+    std::vector<CambioDeConexion> cambios;
+    {
+        std::lock_guard<std::mutex> lock(mutex_clientes);
+        cambios.swap(cambios_de_conexion);
+    }
+
+    for (const CambioDeConexion& cambio : cambios) {
+        if (cambio.entra) {
+            mundo.conectar(cambio.id_jugador);
+        } else {
+            mundo.desconectar(cambio.id_jugador);
+        }
+    }
 }
 
 void SesionDePartida::recibir(uint32_t id_jugador, const ComandoCliente& comando) {
@@ -81,7 +89,9 @@ void SesionDePartida::a_jugador(uint32_t id_jugador, const EventoServidor& event
     try {
         cliente->second.cola_eventos.try_push(evento);
     } catch (const ClosedQueue&) {
+        // La conexión se cerró, se lo da de baja en el próximo tick.
         clientes.erase(cliente);
+        cambios_de_conexion.push_back(CambioDeConexion{id_jugador, false});
     }
 }
 
@@ -92,6 +102,7 @@ void SesionDePartida::a_todos(const EventoServidor& evento) {
             cliente->second.cola_eventos.try_push(evento);
             ++cliente;
         } catch (const ClosedQueue&) {
+            cambios_de_conexion.push_back(CambioDeConexion{cliente->first, false});
             cliente = clientes.erase(cliente);
         }
     }
@@ -104,7 +115,7 @@ void SesionDePartida::run() {
         auto proximo_tick = Reloj::now();
 
         while (should_keep_running()) {
-            sincronizar_jugadores();
+            aplicar_cambios_de_conexion();
             procesar_comandos();
             mundo.actualizar();
 
@@ -124,6 +135,7 @@ void SesionDePartida::difundir_cierre() {
     a_todos(PartidaCerradaPorError{});
     std::lock_guard<std::mutex> lock(mutex_clientes);
     clientes.clear();
+    cambios_de_conexion.clear();
 }
 
 void SesionDePartida::detener() {

@@ -9,7 +9,9 @@ GestorDeSectores::GestorDeSectores(
     const RecursosDeJuego& recursos, uint8_t ticks_por_segundo,
     const std::map<uint32_t, Personaje>& personajes_de_la_partida,
     Notificador& notificador_de_juego)
-    : notificador(notificador_de_juego), personajes(personajes_de_la_partida) {
+    : notificador(notificador_de_juego),
+      personajes(personajes_de_la_partida),
+      ticks_entre_refrescos(ticks_por_segundo) {
     for (const auto& entrada : recursos.mapas) {
         const std::string& id_mapa = entrada.first;
         sectores.try_emplace(id_mapa, id_mapa, recursos, ticks_por_segundo);
@@ -140,20 +142,36 @@ EstadoJuego GestorDeSectores::armar_instantanea(const std::string& id_mapa) cons
     return estado;
 }
 
-void GestorDeSectores::difundir_jugadores(const std::string& id_mapa) {
-    Sector& sector = sectores.at(id_mapa);
-    if (sector.jugadores.ids().empty()) {
+void GestorDeSectores::difundir(const std::string& id_mapa, bool forzar) {
+    std::vector<EstadoJugador> actuales = armar_jugadores(id_mapa);
+    std::vector<EstadoJugador>& ultimos = jugadores_enviados[id_mapa];
+    if (actuales.empty()) {
+        ultimos.clear();
+        return;
+    }
+    if (!forzar && actuales == ultimos) {
         return;
     }
 
     JugadoresEnSector evento;
     evento.mapa = id_mapa;
-    evento.jugadores = armar_jugadores(id_mapa);
-    sector.avisar(notificador, evento);
+    evento.jugadores = actuales;
+    ultimos = std::move(actuales);
+    sectores.at(id_mapa).avisar(notificador, evento);
+}
+
+void GestorDeSectores::difundir_jugadores(const std::string& id_mapa) {
+    difundir(id_mapa, false);
 }
 
 void GestorDeSectores::difundir_jugadores() {
-    for (auto& entrada : sectores) {
-        difundir_jugadores(entrada.first);
+    ++ticks_desde_el_refresco;
+    const bool refrescar = ticks_desde_el_refresco >= ticks_entre_refrescos;
+    if (refrescar) {
+        ticks_desde_el_refresco = 0;
+    }
+
+    for (const auto& entrada : sectores) {
+        difundir(entrada.first, refrescar);
     }
 }

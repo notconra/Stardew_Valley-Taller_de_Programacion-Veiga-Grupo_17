@@ -26,6 +26,12 @@ struct ColaDeEventosDelJugador {
     Queue<EventoServidor>& cola_eventos;
 };
 
+// Un jugador que entró o se fue.
+struct CambioDeConexion {
+    uint32_t id_jugador = 0;
+    bool entra = false;
+};
+
 // Implementa Notificador para proveer el servicio de envío sin acoplar el juego a la red.
 // El Mundo manda los eventos y esta clase solo los deposita en la cola del cliente.
 class SesionDePartida : public Thread, public Notificador {
@@ -36,11 +42,12 @@ private:
     Mundo mundo;
 
     Queue<ComandoDeJugador> comandos;
-
     std::mutex mutex_clientes;
     std::map<uint32_t, ColaDeEventosDelJugador> clientes;
+    std::vector<CambioDeConexion> cambios_de_conexion;
 
-    void sincronizar_jugadores();
+    // Le pasa a Mundo las altas y bajas anotadas desde el tick anterior.
+    void aplicar_cambios_de_conexion();
     void procesar_comandos();
     void difundir_cierre();
 

@@ -1,8 +1,5 @@
 #include "mundo.h"
 
-#include <unordered_set>
-#include <vector>
-
 Mundo::Mundo(
     const RecursosDeJuego& recursos_de_juego, Notificador& notificador_de_juego,
     uint8_t ticks_por_segundo)
@@ -16,41 +13,48 @@ Mundo::Mundo(
       controlador_de_mazmorra(recursos_de_juego, sectores) {
 }
 
-void Mundo::sincronizar_jugadores(const std::vector<uint32_t>& ids_conectados) {
-    const std::unordered_set<uint32_t> conectados(ids_conectados.begin(), ids_conectados.end());
+void Mundo::dar_de_baja(Personaje& personaje) {
+    controlador_de_mazmorra.al_desconectarse(personaje);
+    controlador_de_cofres.al_desconectarse(personaje);
+    controlador_de_acciones.al_desconectarse(personaje);
+    sectores.quitar(personaje);
+    personaje.conectado = false;
+}
 
-    auto personaje = personajes.begin();
-    while (personaje != personajes.end()) {
-        if (conectados.contains(personaje->second.id_jugador)) {
-            ++personaje;
-            continue;
-        }
+void Mundo::conectar(uint32_t id_jugador) {
+    auto encontrado = personajes.find(id_jugador);
+    if (encontrado == personajes.end()) {
+        encontrado = personajes
+                         .try_emplace(
+                             id_jugador,
+                             id_jugador,
+                             recursos.mapa_inicial,
+                             recursos.catalogo_de_items,
+                             recursos.juego.inventario.cantidad_ranuras_barra)
+                         .first;
+    }
+    Personaje& personaje = encontrado->second;
 
-        controlador_de_mazmorra.al_desconectarse(personaje->second);
-        sectores.quitar(personaje->second);
-        personaje = personajes.erase(personaje);
+    if (personaje.conectado) {
+        dar_de_baja(personaje);
     }
 
-    for (uint32_t id_jugador : ids_conectados) {
-        if (personajes.contains(id_jugador)) {
-            continue;
-        }
+    personaje.conectado = true;
+    notificador.a_jugador(id_jugador, personaje.actualizacion_de_inventario());
+    sectores.colocar_en_aparicion(personaje, recursos.mapa_inicial);
+}
 
-        const auto insertado = personajes.try_emplace(
-            id_jugador,
-            id_jugador,
-            recursos.mapa_inicial,
-            recursos.catalogo_de_items,
-            recursos.juego.inventario.cantidad_ranuras_barra);
-        Personaje& nuevo = insertado.first->second;
-        notificador.a_jugador(nuevo.id_jugador, nuevo.actualizacion_de_inventario());
-        sectores.colocar_en_aparicion(nuevo, recursos.mapa_inicial);
+void Mundo::desconectar(uint32_t id_jugador) {
+    auto encontrado = personajes.find(id_jugador);
+    if (encontrado == personajes.end() || !encontrado->second.conectado) {
+        return;
     }
+    dar_de_baja(encontrado->second);
 }
 
 void Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
     auto encontrado = personajes.find(id_jugador);
-    if (encontrado == personajes.end()) {
+    if (encontrado == personajes.end() || !encontrado->second.conectado) {
         return;
     }
     Personaje& personaje = encontrado->second;
@@ -63,6 +67,9 @@ void Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
         return;
     }
     if (controlador_de_cofres.atender(personaje, comando)) {
+        return;
+    }
+    if (controlador_de_drops.atender(personaje, comando)) {
         return;
     }
 }

@@ -16,11 +16,19 @@
 // Jugadores, dentro del Sector donde esté. Acá podría ir también lo que maneje las stats y la plata
 // (?)
 //
+// Un Personaje se crea la primera vez que el jugador entra a la partida y no se borra nunca, si el
+// jugador se desconecta queda con "conectado" en false (sin cuerpo en ningún sector) y conserva su
+// inventario. Al volver se lo coloca de nuevo en el mundo, sin repetir los ítems iniciales.
+//
 // Acá también están las pocas reglas del inventario que necesitan saber de la barra y del tacho.
 // Todo lo demás del inventario lo resuelve Inventario.
 struct Personaje {
     uint32_t id_jugador = 0;
+
+    // El mapa donde está su cuerpo. Solo lo escribe GestorDeSectores, el valor inicial del
+    // constructor no cuenta porque colocar_en_aparicion() lo pisa.
     std::string mapa_actual;
+    bool conectado = false;
     int id_cofre_abierto = 0;  // 0 si no tiene ningún cofre abierto
     std::string mapa_cofre_abierto;
     Inventario inventario;

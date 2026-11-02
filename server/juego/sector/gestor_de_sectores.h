@@ -27,8 +27,16 @@ private:
     Notificador& notificador;
     const std::map<uint32_t, Personaje>& personajes;
     std::map<std::string, Sector> sectores;
+    std::map<std::string, std::vector<EstadoJugador>> jugadores_enviados;
+
+    const int ticks_entre_refrescos;
+    int ticks_desde_el_refresco = 0;
 
     void enviar_instantanea(uint32_t id_jugador, const std::string& id_mapa);
+
+    // Manda JugadoresEnSector a los jugadores del sector, pero solo si cambió respecto del último
+    // envío o si "forzar" es true.
+    void difundir(const std::string& id_mapa, bool forzar);
 
 public:
     // Cada sector usa por referencia el mapa que ya está cargado en "recursos", que tiene que
@@ -46,8 +54,7 @@ public:
     Sector& en(const std::string& id_mapa);
     const Sector& en(const std::string& id_mapa) const;
 
-    // Un jugador nuevo: aparece en el punto de aparición del mapa indicado y recibe la instantánea
-    // completa del sector.
+    // Un jugador que entra al mundo, aparece en el punto de aparición del mapa indicado.
     void colocar_en_aparicion(Personaje& personaje, const std::string& id_mapa);
 
     // Lo saca de su sector actual y lo pone en (x, y) píxeles del destino.
@@ -57,7 +64,7 @@ public:
     void trasladar_a_casilla(
         Personaje& personaje, const std::string& destino, int columna, int fila);
 
-    // Lo saca de su sector (se desconectó).
+    // Lo saca de su sector (se desconectó). No hace nada si su cuerpo ya no estaba.
     void quitar(const Personaje& personaje);
 
     // Un tick de física en todos los sectores.
@@ -72,10 +79,11 @@ public:
     // Instantánea completa de un sector: jugadores, objetos y drops.
     EstadoJuego armar_instantanea(const std::string& id_mapa) const;
 
-    // Manda JugadoresEnSector a los jugadores de ese sector.
+    // Avisa los jugadores de ese sector si cambiaron desde el último aviso.
     void difundir_jugadores(const std::string& id_mapa);
 
-    // Manda JugadoresEnSector a los jugadores de todos los sectores. Se llama una vez por tick.
+    // Lo mismo para todos los sectores. Se llama una vez por tick, con los jugadores quietos no
+    // viaja nada, salvo el refresco de seguridad de una vez por segundo.
     void difundir_jugadores();
 };
 

@@ -3,7 +3,6 @@
 
 #include <cstdint>
 #include <map>
-#include <vector>
 
 #include "../../common/mensajes/mensajes.h"
 #include "controladores/controlador_de_acciones.h"
@@ -36,10 +35,21 @@ private:
 
     void resolver_transicion(Personaje& personaje, const Transicion& transicion);
 
+    // Saca al personaje del mundo sin borrarlo, cada controlador limpia lo suyo y se le quita el
+    // cuerpo del sector.
+    void dar_de_baja(Personaje& personaje);
+
 public:
     Mundo(const RecursosDeJuego& recursos, Notificador& notificador, uint8_t ticks_por_segundo);
 
-    void sincronizar_jugadores(const std::vector<uint32_t>& ids_conectados);
+    // El jugador entra a la partida. Si es la primera vez se crea su Personaje con los ítems
+    // iniciales, si ya existía (volvió después de desconectarse) conserva todo. En los dos casos
+    // aparece en el punto de aparición del mapa inicial y recibe su inventario y el snapshot.
+    void conectar(uint32_t id_jugador);
+
+    // El jugador se fue. Su Personaje queda guardado.
+    void desconectar(uint32_t id_jugador);
+
     void atender(uint32_t id_jugador, const ComandoCliente& comando);
     void actualizar();
 

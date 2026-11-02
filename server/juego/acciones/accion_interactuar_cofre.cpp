@@ -22,11 +22,11 @@ void AccionInteractuarCofre::cerrar(ContextoDeAccion& c) {
     notificar(c, id_cofre, false, {});
 }
 
-TipoAccion AccionInteractuarCofre::tipo() const override {
+TipoAccion AccionInteractuarCofre::tipo() const {
     return TipoAccion::INTERACTUAR;
 }
 
-bool AccionInteractuarCofre::aplica(const ContextoDeAccion& c) const override {
+bool AccionInteractuarCofre::aplica(const ContextoDeAccion& c) const {
     if (c.modo != ModoUso::SECUNDARIO) {
         return false;
     }

@@ -97,6 +97,9 @@ bool ControladorDeAcciones::atender(Personaje& personaje, const ComandoCliente& 
 void ControladorDeAcciones::actualizar() {
     for (auto& entrada : personajes) {
         Personaje& personaje = entrada.second;
+        if (!personaje.conectado) {
+            continue;
+        }
         if (personaje.ticks_restantes_accion > 0) {
             --personaje.ticks_restantes_accion;
         }
@@ -104,4 +107,9 @@ void ControladorDeAcciones::actualizar() {
             personaje.accion_actual = TipoAccion::NINGUNA;
         }
     }
+}
+
+void ControladorDeAcciones::al_desconectarse(Personaje& personaje) {
+    personaje.accion_actual = TipoAccion::NINGUNA;
+    personaje.ticks_restantes_accion = 0;
 }

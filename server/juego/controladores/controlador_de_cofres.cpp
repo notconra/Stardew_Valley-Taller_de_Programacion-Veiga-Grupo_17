@@ -1,6 +1,7 @@
 #include "controlador_de_cofres.h"
 
 #include <map>
+#include <optional>
 #include <variant>
 #include <vector>
 
@@ -110,11 +111,16 @@ bool ControladorDeCofres::atender(Personaje& personaje, const ComandoCliente& co
 void ControladorDeCofres::actualizar() {
     for (auto& entrada : personajes) {
         Personaje& personaje = entrada.second;
-        if (personaje.id_cofre_abierto == 0) {
+        if (!personaje.conectado || personaje.id_cofre_abierto == 0) {
             continue;
         }
         if (cofre_abierto_valido(personaje) == nullptr) {
             cerrar(personaje);
         }
     }
+}
+
+void ControladorDeCofres::al_desconectarse(Personaje& personaje) {
+    personaje.id_cofre_abierto = 0;
+    personaje.mapa_cofre_abierto.clear();
 }

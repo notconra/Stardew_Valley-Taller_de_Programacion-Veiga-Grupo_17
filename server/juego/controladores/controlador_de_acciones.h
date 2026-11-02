@@ -43,8 +43,11 @@ public:
     // Devuelve true si el comando era de este controlador (y lo consumió).
     bool atender(Personaje& personaje, const ComandoCliente& comando);
 
-    // Un tick: descuenta el tiempo de acción de cada personaje.
+    // Un tick: descuenta el tiempo de acción de cada personaje conectado.
     void actualizar();
+
+    // El jugador se desconecta.
+    void al_desconectarse(Personaje& personaje);
 };
 
 #endif
