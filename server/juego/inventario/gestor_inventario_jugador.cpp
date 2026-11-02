@@ -27,6 +27,13 @@ void GestorInventarioJugador::sincronizar_conectados(const std::vector<uint32_t>
     }
 }
 
+void GestorInventarioJugador::cargar_inventario(
+    uint32_t id_jugador, uint8_t ranura_activa, const std::vector<RanuraInventario>& ranuras) {
+    auto [iterador, es_nuevo] = estados.try_emplace(id_jugador, catalogo, cantidad_ranuras_barra);
+    iterador->second.ranura_activa = ranura_activa;
+    iterador->second.inventario.cargar_ranuras(ranuras);
+}
+
 void GestorInventarioJugador::crear_para_jugador(uint32_t id_jugador) {
     auto [encontrado, es_nuevo] = estados.try_emplace(id_jugador, catalogo, cantidad_ranuras_barra);
     if (es_nuevo) {

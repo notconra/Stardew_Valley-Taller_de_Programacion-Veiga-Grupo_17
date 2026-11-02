@@ -3,10 +3,12 @@
 
 #include <cstdint>
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 
 #include "../../common/mensajes/mensajes.h"
+#include "../persistencia/datos_partida_guardada.h"
 #include "base/colisiones/colisiones.h"
 #include "base/mapas/mapa.h"
 #include "base/recursos/recursos_de_juego.h"
@@ -25,6 +27,7 @@ private:
     std::map<std::string, Colisiones> colisiones_por_mapa;
     std::map<std::string, Jugadores> jugadores_por_mapa;
     std::map<uint32_t, std::string> mapa_actual;  // en qué mapa está cada jugador conectado
+    std::map<uint32_t, DatosJugadorGuardado> datos_jugadores;
 
     // Lo saca del Jugadores de mapa_origen y lo mete en el de transicion.mapa_destino, en la
     // casilla que indica la transición.
@@ -32,10 +35,12 @@ private:
         uint32_t id_jugador, const std::string& mapa_origen, const Transicion& transicion);
 
 public:
-    Mundo(const RecursosDeJuego& recursos, uint8_t ticks_por_segundo);
+    Mundo(
+        const RecursosDeJuego& recursos, uint8_t ticks_por_segundo,
+        const std::vector<DatosJugadorGuardado>& jugadores_guardados);
 
     // Deja en el mundo exactamente a los jugadores conectados. Los nuevos aparecen en el mapa
-    // inicial (recursos.mapa_inicial).
+    // inicial (recursos.mapa_inicial) o en su posición guardada si existe.
     void sincronizar_jugadores(const std::vector<uint32_t>& ids_conectados);
 
     // Atiende un comando de juego, cada uno va a la parte del mundo que corresponde. Devuelve true
@@ -49,6 +54,9 @@ public:
 
     // Snapshot privado del inventario de un jugador.
     ActualizacionInventario obtener_inventario(uint32_t id_jugador) const;
+
+    // Devuelve los datos guardados de un jugador que no está en el mundo en este tick.
+    std::optional<DatosJugadorGuardado> obtener_datos_desconectado(uint32_t id_jugador) const;
 
     Mundo(const Mundo&) = delete;
     Mundo& operator=(const Mundo&) = delete;

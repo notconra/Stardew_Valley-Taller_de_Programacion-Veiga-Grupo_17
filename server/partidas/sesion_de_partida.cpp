@@ -9,10 +9,12 @@
 
 SesionDePartida::SesionDePartida(
     const std::string& codigo_de_partida, const ConfiguracionPartidaServidor& configuracion_partida,
-    const RecursosDeJuego& recursos)
+    const RecursosDeJuego& recursos, const std::vector<DatosJugadorGuardado>& jugadores_guardados)
     : codigo_partida(codigo_de_partida),
       periodo_de_tick(1000 / configuracion_partida.ticks_por_segundo),
-      mundo(recursos, static_cast<uint8_t>(configuracion_partida.ticks_por_segundo)),
+      mundo(
+          recursos, static_cast<uint8_t>(configuracion_partida.ticks_por_segundo),
+          jugadores_guardados),
       comandos(static_cast<unsigned int>(configuracion_partida.capacidad_de_comandos)) {
     try {
         start();
@@ -207,15 +209,24 @@ std::vector<DatosJugadorGuardado> SesionDePartida::obtener_datos_jugadores(
             jugador_guardado.inventario = actualizacion_inventario.inventario.ranuras;
             resultado.push_back(jugador_guardado);
         } else {
-            auto jugador_previo = jugadores_guardados_previos.find(miembro.id_jugador);
-            if (jugador_previo != jugadores_guardados_previos.end()) {
-                resultado.push_back(jugador_previo->second);
-            } else {
-                DatosJugadorGuardado jugador_guardado;
+            auto datos_desconectado = mundo.obtener_datos_desconectado(miembro.id_jugador);
+            if (datos_desconectado.has_value()) {
+                DatosJugadorGuardado jugador_guardado = datos_desconectado.value();
                 jugador_guardado.id_cliente = miembro.id_cliente;
                 jugador_guardado.id_jugador = miembro.id_jugador;
                 jugador_guardado.nombre_jugador = miembro.nombre_jugador;
                 resultado.push_back(jugador_guardado);
+            } else {
+                auto jugador_previo = jugadores_guardados_previos.find(miembro.id_jugador);
+                if (jugador_previo != jugadores_guardados_previos.end()) {
+                    resultado.push_back(jugador_previo->second);
+                } else {
+                    DatosJugadorGuardado jugador_guardado;
+                    jugador_guardado.id_cliente = miembro.id_cliente;
+                    jugador_guardado.id_jugador = miembro.id_jugador;
+                    jugador_guardado.nombre_jugador = miembro.nombre_jugador;
+                    resultado.push_back(jugador_guardado);
+                }
             }
         }
     }

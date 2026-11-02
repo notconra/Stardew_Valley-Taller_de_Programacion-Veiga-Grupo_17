@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <map>
 #include <numbers>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -173,7 +174,6 @@ Rectangulo Jugadores::rectangulo_de_pies(double x, double y) const {
         movimiento.hitbox_alto};
 }
 
-
 std::vector<std::pair<uint32_t, const Transicion*>> Jugadores::en_transicion() const {
     std::vector<std::pair<uint32_t, const Transicion*>> resultado;
     for (const auto& [id_jugador, jugador] : jugadores) {
@@ -189,10 +189,11 @@ void Jugadores::quitar(uint32_t id_jugador) {
     jugadores.erase(id_jugador);
 }
 
-void Jugadores::agregar_en(uint32_t id_jugador, double x, double y) {
+void Jugadores::agregar_en(uint32_t id_jugador, double x, double y, Direccion mirando) {
     JugadorEnPartida nuevo;
     nuevo.x = x;
     nuevo.y = y;
+    nuevo.mirando = mirando;
     jugadores[id_jugador] = nuevo;
 }
 void Jugadores::agregar_en_aparicion(uint32_t id_jugador) {

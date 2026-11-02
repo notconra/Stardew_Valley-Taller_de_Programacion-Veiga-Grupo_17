@@ -46,6 +46,10 @@ public:
     // Crea inventarios para los conectados y descarta los de quienes se fueron.
     void sincronizar_conectados(const std::vector<uint32_t>& ids_conectados);
 
+    // Inicializa el inventario y ranura activa de un jugador con datos guardados.
+    void cargar_inventario(
+        uint32_t id_jugador, uint8_t ranura_activa, const std::vector<RanuraInventario>& ranuras);
+
     bool seleccionar_ranura_de_la_barra(uint32_t id_jugador, uint8_t indice_ranura);
 
     // Mueve ítems dentro de la barra. Si el destino es el tacho, los elimina.

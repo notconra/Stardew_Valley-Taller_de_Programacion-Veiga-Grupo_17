@@ -42,7 +42,14 @@ Partida& AdministradorDePartidas::buscar_partida(const std::string& codigo_parti
 }
 
 SesionDePartida& AdministradorDePartidas::sesion_de(const std::string& codigo_partida) {
-    return sesiones.try_emplace(codigo_partida, codigo_partida, configuracion, recursos)
+    auto sesion_existente = sesiones.find(codigo_partida);
+    if (sesion_existente != sesiones.end()) {
+        return sesion_existente->second;
+    }
+    std::vector<DatosJugadorGuardado> jugadores_guardados =
+        cargar_jugadores_guardados(codigo_partida);
+    return sesiones
+        .try_emplace(codigo_partida, codigo_partida, configuracion, recursos, jugadores_guardados)
         .first->second;
 }
 
@@ -102,7 +109,10 @@ IngresoAPartida AdministradorDePartidas::unirse(
 
     const bool habia_sesion = (sesion_existente != sesiones.end());
     const std::string codigo = codigo_partida;
-    auto sesion_creada = sesiones.try_emplace(codigo, codigo, configuracion, recursos).first;
+    std::vector<DatosJugadorGuardado> jugadores_guardados =
+        cargar_jugadores_guardados(codigo_partida);
+    auto sesion_creada =
+        sesiones.try_emplace(codigo, codigo, configuracion, recursos, jugadores_guardados).first;
 
     try {
         const EntradaExitosaAPartida entrada = partida.conectar(id_cliente, nombre_jugador);
@@ -135,7 +145,10 @@ IngresoAPartida AdministradorDePartidas::retomar(
 
     const bool habia_sesion = (sesion_existente != sesiones.end());
     const std::string codigo = codigo_partida;
-    auto sesion_creada = sesiones.try_emplace(codigo, codigo, configuracion, recursos).first;
+    std::vector<DatosJugadorGuardado> jugadores_guardados =
+        cargar_jugadores_guardados(codigo_partida);
+    auto sesion_creada =
+        sesiones.try_emplace(codigo, codigo, configuracion, recursos, jugadores_guardados).first;
 
     try {
         const EntradaExitosaAPartida entrada = partida.reconectar(id_cliente);
@@ -215,6 +228,22 @@ void AdministradorDePartidas::cargar_partida(const std::string& ruta_archivo) {
             }
         } catch (const std::exception&) {
         }
+    }
+}
+
+std::vector<DatosJugadorGuardado> AdministradorDePartidas::cargar_jugadores_guardados(
+    const std::string& codigo_partida) const {
+    const std::string ruta_archivo = "partidas/" + codigo_partida + ".dat";
+    if (!std::filesystem::exists(ruta_archivo)) {
+        return {};
+    }
+    try {
+        DatosPartidaGuardada datos = SerializadorPartida::cargar_desde_archivo(ruta_archivo);
+        return datos.jugadores;
+    } catch (const std::exception& error) {
+        throw ErrorDePartida(
+            CodigoError::NO_PERMITIDO,
+            "error al leer el archivo de guardado: " + std::string(error.what()));
     }
 }
 

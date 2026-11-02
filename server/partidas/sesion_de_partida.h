@@ -56,7 +56,8 @@ private:
 public:
     SesionDePartida(
         const std::string& codigo_de_partida,
-        const ConfiguracionPartidaServidor& configuracion_partida, const RecursosDeJuego& recursos);
+        const ConfiguracionPartidaServidor& configuracion_partida, const RecursosDeJuego& recursos,
+        const std::vector<DatosJugadorGuardado>& jugadores_guardados);
 
     bool esta_viva() const;
 
