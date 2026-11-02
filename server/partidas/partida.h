@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "../../common/mensajes/mensajes.h"
+#include "../persistencia/datos_partida_guardada.h"
 #include "jugador.h"
 
 // Registro de una partida, quiénes son sus jugadores y quiénes están conectados ahora.
@@ -39,6 +40,9 @@ public:
         const std::vector<Jugador>& lista_jugadores);
 
     const std::string& obtener_nombre() const;
+    const std::vector<Jugador>& obtener_jugadores() const;
+    DatosPartidaGuardada generar_datos_guardado(
+        const std::vector<DatosJugadorGuardado>& jugadores_guardados) const;
 
     // Devuelve true si el cliente tiene lugar en la partida, esté conectado o no.
     bool es_miembro(uint32_t id_cliente) const;

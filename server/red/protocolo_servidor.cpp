@@ -18,6 +18,7 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::ACTIVAR_MULTIJUGADOR,
            [this] { return recibir_comando_activar_multijugador(); }},
           {TipoMensaje::SALIR_DE_PARTIDA, [this] { return recibir_comando_salir_de_partida(); }},
+          {TipoMensaje::GUARDAR_PARTIDA, [this] { return recibir_comando_guardar_partida(); }},
           {TipoMensaje::MOVERSE, [this] { return recibir_comando_moverse(); }},
           {TipoMensaje::SELECCIONAR_RANURA_DE_LA_BARRA,
            [this] { return recibir_comando_seleccionar_ranura_de_la_barra(); }},
@@ -86,6 +87,10 @@ ActivarMultijugador ProtocoloServidor::recibir_comando_activar_multijugador() {
 
 SalirDePartida ProtocoloServidor::recibir_comando_salir_de_partida() {
     return SalirDePartida{};
+}
+
+GuardarPartida ProtocoloServidor::recibir_comando_guardar_partida() {
+    return GuardarPartida{};
 }
 
 Moverse ProtocoloServidor::recibir_comando_moverse() {

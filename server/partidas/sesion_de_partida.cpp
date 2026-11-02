@@ -1,6 +1,7 @@
 #include "sesion_de_partida.h"
 
 #include <exception>
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -134,11 +135,16 @@ void SesionDePartida::run() {
         auto proximo_tick = Reloj::now();
 
         while (should_keep_running()) {
-            sincronizar_jugadores();
-            enviar_inventarios_pendientes();
-            procesar_comandos();
-            mundo.actualizar();
-            difundir(mundo.estado());
+            EstadoJuego estado_actual;
+            {
+                std::lock_guard<std::mutex> lock(mutex_mundo);
+                sincronizar_jugadores();
+                enviar_inventarios_pendientes();
+                procesar_comandos();
+                mundo.actualizar();
+                estado_actual = mundo.estado();
+            }
+            difundir(estado_actual);
 
             proximo_tick += periodo_de_tick;
             const auto ahora = Reloj::now();
@@ -170,4 +176,48 @@ void SesionDePartida::detener() {
 SesionDePartida::~SesionDePartida() {
     detener();
     join();
+}
+
+std::vector<DatosJugadorGuardado> SesionDePartida::obtener_datos_jugadores(
+    const std::vector<Jugador>& miembros,
+    const std::map<uint32_t, DatosJugadorGuardado>& jugadores_guardados_previos) {
+    std::lock_guard<std::mutex> lock(mutex_mundo);
+    EstadoJuego estado_del_juego = mundo.estado();
+    std::map<uint32_t, EstadoJugador> estados_por_id;
+    for (const auto& estado_jugador : estado_del_juego.jugadores) {
+        estados_por_id[estado_jugador.id_jugador] = estado_jugador;
+    }
+
+    std::vector<DatosJugadorGuardado> resultado;
+    resultado.reserve(miembros.size());
+    for (const auto& miembro : miembros) {
+        auto jugador_en_mundo = estados_por_id.find(miembro.id_jugador);
+        if (jugador_en_mundo != estados_por_id.end()) {
+            ActualizacionInventario actualizacion_inventario =
+                mundo.obtener_inventario(miembro.id_jugador);
+            DatosJugadorGuardado jugador_guardado;
+            jugador_guardado.id_cliente = miembro.id_cliente;
+            jugador_guardado.id_jugador = miembro.id_jugador;
+            jugador_guardado.nombre_jugador = miembro.nombre_jugador;
+            jugador_guardado.mapa_actual = jugador_en_mundo->second.mapa;
+            jugador_guardado.x = static_cast<double>(jugador_en_mundo->second.x);
+            jugador_guardado.y = static_cast<double>(jugador_en_mundo->second.y);
+            jugador_guardado.mirando = jugador_en_mundo->second.mirando;
+            jugador_guardado.ranura_activa = jugador_en_mundo->second.ranura_activa;
+            jugador_guardado.inventario = actualizacion_inventario.inventario.ranuras;
+            resultado.push_back(jugador_guardado);
+        } else {
+            auto jugador_previo = jugadores_guardados_previos.find(miembro.id_jugador);
+            if (jugador_previo != jugadores_guardados_previos.end()) {
+                resultado.push_back(jugador_previo->second);
+            } else {
+                DatosJugadorGuardado jugador_guardado;
+                jugador_guardado.id_cliente = miembro.id_cliente;
+                jugador_guardado.id_jugador = miembro.id_jugador;
+                jugador_guardado.nombre_jugador = miembro.nombre_jugador;
+                resultado.push_back(jugador_guardado);
+            }
+        }
+    }
+    return resultado;
 }

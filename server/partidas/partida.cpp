@@ -28,6 +28,21 @@ const std::string& Partida::obtener_nombre() const {
     return nombre;
 }
 
+const std::vector<Jugador>& Partida::obtener_jugadores() const {
+    return jugadores;
+}
+
+DatosPartidaGuardada Partida::generar_datos_guardado(
+    const std::vector<DatosJugadorGuardado>& jugadores_guardados) const {
+    DatosPartidaGuardada datos;
+    datos.codigo = codigo;
+    datos.nombre = nombre;
+    datos.jugadores_maximos = jugadores_maximos;
+    datos.multijugador = multijugador;
+    datos.jugadores = jugadores_guardados;
+    return datos;
+}
+
 bool Partida::es_miembro(uint32_t id_cliente) const {
     for (const Jugador& jugador : jugadores) {
         if (jugador.id_cliente == id_cliente) {

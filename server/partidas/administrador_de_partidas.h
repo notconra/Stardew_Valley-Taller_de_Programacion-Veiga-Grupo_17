@@ -83,6 +83,9 @@ public:
     // que se va.
     void limpiar_sesion_si_vacia(const std::string& codigo_partida);
 
+    // Guarda el estado actual de la partida indicada en disco (.dat) y actualiza el índice (.idx).
+    void guardar_partida(const std::string& codigo_partida);
+
     AdministradorDePartidas(const AdministradorDePartidas&) = delete;
     AdministradorDePartidas& operator=(const AdministradorDePartidas&) = delete;
 };

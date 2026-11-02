@@ -18,6 +18,7 @@ EntradaDelUsuario::EntradaDelUsuario()
 
 void EntradaDelUsuario::leer() {
     salida_pedida = false;
+    guardar_pedido = false;
     multijugador_pedido = false;
     uso_de_item_pedido = false;
     cofre_pedido = false;
@@ -64,6 +65,8 @@ void EntradaDelUsuario::procesar(const SDL_Event& evento) {
 void EntradaDelUsuario::apretar(SDL_Scancode tecla) {
     if (tecla == SDL_SCANCODE_ESCAPE) {
         salida_pedida = true;
+    } else if (tecla == SDL_SCANCODE_G) {
+        guardar_pedido = true;
     } else if (tecla == SDL_SCANCODE_M) {
         multijugador_pedido = true;
     } else if (tecla == SDL_SCANCODE_E) {
@@ -107,6 +110,10 @@ bool EntradaDelUsuario::pidio_cerrar() const {
 
 bool EntradaDelUsuario::pidio_salir_de_partida() const {
     return salida_pedida;
+}
+
+bool EntradaDelUsuario::pidio_guardar() const {
+    return guardar_pedido;
 }
 
 bool EntradaDelUsuario::pidio_multijugador() const {

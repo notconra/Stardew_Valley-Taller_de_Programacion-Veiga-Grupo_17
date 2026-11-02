@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <limits>
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -215,4 +216,38 @@ void AdministradorDePartidas::cargar_partida(const std::string& ruta_archivo) {
         } catch (const std::exception&) {
         }
     }
+}
+
+void AdministradorDePartidas::guardar_partida(const std::string& codigo_partida) {
+    std::lock_guard<std::mutex> lock(mutex);
+    Partida& partida = buscar_partida(codigo_partida);
+    SesionDePartida& sesion = sesion_de(codigo_partida);
+
+    std::string ruta_archivo = "partidas/" + codigo_partida + ".dat";
+    std::map<uint32_t, DatosJugadorGuardado> jugadores_guardados_previos;
+    if (std::filesystem::exists(ruta_archivo)) {
+        try {
+            DatosPartidaGuardada datos_previos =
+                SerializadorPartida::cargar_desde_archivo(ruta_archivo);
+            for (const auto& jugador_previo : datos_previos.jugadores) {
+                jugadores_guardados_previos[jugador_previo.id_jugador] = jugador_previo;
+            }
+        } catch (const std::exception& error) {
+            throw ErrorDePartida(
+                CodigoError::NO_PERMITIDO,
+                "error al leer el archivo previo de guardado: " + std::string(error.what()));
+        }
+    }
+
+    std::vector<DatosJugadorGuardado> jugadores_guardados =
+        sesion.obtener_datos_jugadores(partida.obtener_jugadores(), jugadores_guardados_previos);
+
+    std::filesystem::create_directories("partidas");
+    SerializadorPartida::guardar_en_archivo(
+        ruta_archivo,
+        partida.generar_datos_guardado(jugadores_guardados));
+
+    indice.registrar_o_actualizar(
+        EntradaIndicePartida{codigo_partida, partida.obtener_nombre(), ruta_archivo});
+    indice.guardar();
 }

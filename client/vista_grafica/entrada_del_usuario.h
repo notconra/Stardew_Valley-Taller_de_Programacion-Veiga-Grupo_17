@@ -23,6 +23,7 @@ private:
     std::vector<SDL_Scancode> teclas_de_movimiento;
     bool cierre_pedido = false;
     bool salida_pedida = false;
+    bool guardar_pedido = false;
     bool multijugador_pedido = false;
     // El usuario quiere usar el ítem de la ranura activa (colocar un cofre, por ejemplo).
     bool uso_de_item_pedido = false;
@@ -57,6 +58,9 @@ public:
 
     // El usuario apretó ESC.
     bool pidio_salir_de_partida() const;
+
+    // El usuario apretó G para guardar la partida.
+    bool pidio_guardar() const;
 
     // Esto lo pongo para probar, despues va con un botón y en otro lado.
     bool pidio_multijugador() const;

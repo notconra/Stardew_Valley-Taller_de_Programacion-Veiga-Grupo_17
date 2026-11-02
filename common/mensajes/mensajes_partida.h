@@ -17,6 +17,8 @@ struct ActivarMultijugador {};
 
 struct SalirDePartida {};
 
+struct GuardarPartida {};
+
 // Hacia dónde quiere moverse el jugador, por eje: horizontal -1 (izquierda), 0 o 1 (derecha);
 // vertical -1 (arriba), 0 o 1 (abajo). Es un estado, NO es un paso, osea, el servidor lo sigue
 // aplicando en cada tick hasta que llegue otro Moverse que actualice el estado. {0, 0} es "quedarse
@@ -82,7 +84,7 @@ struct PartidaCerradaPorError {};
 // "mirando" y "camina" bastan para elegir el sprite y la animación.
 struct EstadoJugador {
     uint32_t id_jugador = 0;
-    std::string mapa; // <--- Mantenido de la rama de tu compañero para los mapas múltiples
+    std::string mapa;  // <--- Mantenido de la rama de tu compañero para los mapas múltiples
     int32_t x = 0;
     int32_t y = 0;
     Direccion mirando = Direccion::ABAJO;

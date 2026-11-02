@@ -14,7 +14,9 @@
 #include "../configuracion/configuracion_servidor_datos.h"
 #include "../juego/base/recursos/recursos_de_juego.h"
 #include "../juego/mundo.h"
+#include "../persistencia/datos_partida_guardada.h"
 #include "error_de_partida.h"
+#include "jugador.h"
 
 // Bucle de simulación de una partida. Corre en su propio hilo. Coordina
 // comandos de red con el Mundo. La sesión se crea al conectar el primer
@@ -33,6 +35,7 @@ private:
     const std::string codigo_partida;
     const std::chrono::milliseconds periodo_de_tick;
 
+    mutable std::mutex mutex_mundo;
     Mundo mundo;
 
     Queue<ComandoDeJugador> comandos;
@@ -63,6 +66,10 @@ public:
 
     void run() override;
     void detener();
+
+    std::vector<DatosJugadorGuardado> obtener_datos_jugadores(
+        const std::vector<Jugador>& miembros,
+        const std::map<uint32_t, DatosJugadorGuardado>& jugadores_guardados_previos);
 
     SesionDePartida(const SesionDePartida&) = delete;
     SesionDePartida& operator=(const SesionDePartida&) = delete;
