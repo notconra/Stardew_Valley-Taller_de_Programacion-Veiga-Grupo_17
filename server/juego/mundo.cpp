@@ -1,7 +1,8 @@
 #include "mundo.h"
 
 #include <algorithm>
-#include <random>
+#include <cstdlib>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -45,7 +46,6 @@ Mundo::Mundo(const RecursosDeJuego& recursos_de_juego, uint8_t ticks_por_segundo
 }
 
 void Mundo::sincronizar_jugadores(const std::vector<uint32_t>& ids_conectados) {
-    // Saca a los que se desconectaron, de donde sea que estuvieran parados.
     for (auto it = mapa_actual.begin(); it != mapa_actual.end();) {
         const bool sigue_conectado =
             std::find(ids_conectados.begin(), ids_conectados.end(), it->first) !=
@@ -61,7 +61,6 @@ void Mundo::sincronizar_jugadores(const std::vector<uint32_t>& ids_conectados) {
         }
     }
 
-    // A los nuevos los agrega el mapa inicial
     for (uint32_t id_jugador : ids_conectados) {
         if (mapa_actual.contains(id_jugador)) {
             continue;
@@ -70,7 +69,6 @@ void Mundo::sincronizar_jugadores(const std::vector<uint32_t>& ids_conectados) {
         mapa_actual[id_jugador] = recursos.mapa_inicial;
     }
 
-    // Sincronizamos también el inventario de los conectados
     gestor_inventario.sincronizar_conectados(ids_conectados);
 }
 
@@ -92,8 +90,6 @@ void Mundo::llevar_al_nivel_actual(uint32_t id_jugador, const std::string& mapa_
         mazmorra->nivel_actual_del_jugador(id_jugador).obtener_geo().entrada;
     const Mapa& mapa_destino = recursos.mapas.at(id_nivel);
 
-    // La posición del jugador es la esquina del sprite: se la corre para que los pies (el hitbox)
-    // queden adentro de la casilla de entrada.
     const ConfiguracionMovimientoJugador& movimiento = recursos.juego.movimiento;
     const int ancho = mapa_destino.ancho_de_casilla_en_pixeles();
     const int alto = mapa_destino.alto_de_casilla_en_pixeles();
@@ -113,13 +109,13 @@ void Mundo::resolver_transicion(
         return;
     }
     if (transicion.mapa_destino == DESTINO_ENTRADA) {
-        return;  // marca dónde aparece el jugador, no lleva a ningún lado
+        return;
     }
     if (transicion.mapa_destino == DESTINO_ESCALERA) {
         if (mazmorra->bajar(id_jugador)) {
             llevar_al_nivel_actual(id_jugador, mapa_origen);
         }
-        return;  // en el último nivel la escalera no lleva a ningún lado
+        return;
     }
     if (transicion.mapa_destino == recursos.mazmorra.destino) {
         mazmorra->entrar(id_jugador);
@@ -132,10 +128,49 @@ void Mundo::resolver_transicion(
     cambiar_de_mapa(id_jugador, mapa_origen, transicion);
 }
 
-bool Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
+bool Mundo::al_alcance(uint32_t id_jugador, const Casilla& casilla) const {
+    const std::optional<Casilla> pies =
+        jugadores_por_mapa.at(mapa_actual.at(id_jugador)).casilla_de_los_pies(id_jugador);
+    if (!pies) {
+        return false;
+    }
+    const int distancia =
+        std::max(std::abs(casilla.columna - pies->columna), std::abs(casilla.fila - pies->fila));
+    return distancia == 1;
+}
+
+bool Mundo::tendria_efecto(
+    uint32_t id_jugador, uint8_t indice_ranura, const Casilla& casilla) const {
+    if (!al_alcance(id_jugador, casilla)) {
+        return false;
+    }
+    const TierraTratada& tierra = tierra_por_mapa.at(mapa_actual.at(id_jugador));
+    switch (gestor_inventario.ranura(id_jugador, indice_ranura).tipo) {
+        case TipoItem::PALA:
+            return tierra.se_puede_tratar(casilla);
+        case TipoItem::PICO:
+            return tierra.esta_tratada(casilla);
+        default:
+            return false;
+    }
+}
+
+bool Mundo::usar_item(uint32_t id_jugador, const UsarItem& pedido) {
+    const Casilla casilla{pedido.columna, pedido.fila};
+    if (!tendria_efecto(id_jugador, pedido.indice_ranura, casilla)) {
+        return false;
+    }
+    TierraTratada& tierra = tierra_por_mapa.at(mapa_actual.at(id_jugador));
+    if (gestor_inventario.ranura(id_jugador, pedido.indice_ranura).tipo == TipoItem::PALA) {
+        return tierra.tratar(casilla);
+    }
+    return tierra.volver_a_comun(casilla);
+}
+
+CambiosPorComando Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
     const auto encontrado = mapa_actual.find(id_jugador);
     if (encontrado == mapa_actual.end()) {
-        return false;
+        return CambiosPorComando{};
     }
     Jugadores& jugadores = jugadores_por_mapa.at(encontrado->second);
 
@@ -143,19 +178,38 @@ bool Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
         ManejadoresPorTipo{
             [&jugadores, id_jugador](const Moverse& pedido) {
                 jugadores.moverse(id_jugador, pedido);
-                return false;
+                return CambiosPorComando{};
             },
             [this, id_jugador](const SeleccionarRanuraDeLaBarra& pedido) {
-                return gestor_inventario.seleccionar_ranura_de_la_barra(
-                    id_jugador,
-                    pedido.indice_ranura);
+                return CambiosPorComando{
+                    gestor_inventario.seleccionar_ranura_de_la_barra(
+                        id_jugador,
+                        pedido.indice_ranura),
+                    false,
+                    std::nullopt};
             },
             [this, id_jugador](const MoverItemEntreRanuras& pedido) {
-                return gestor_inventario
-                    .mover_item(id_jugador, pedido.origen, pedido.destino, pedido.cantidad);
+                return CambiosPorComando{
+                    gestor_inventario
+                        .mover_item(id_jugador, pedido.origen, pedido.destino, pedido.cantidad),
+                    false,
+                    std::nullopt};
             },
-            [](const SolicitarInventario&) { return true; },
-            [](const auto&) { return false; },
+            [this, id_jugador](const UsarItem& pedido) {
+                return CambiosPorComando{false, usar_item(id_jugador, pedido), std::nullopt};
+            },
+            [this, id_jugador](const ConsultarCasilla& pedido) {
+                const Casilla casilla{pedido.columna, pedido.fila};
+                return CambiosPorComando{
+                    false,
+                    false,
+                    CasillaConsultada{
+                        pedido.columna,
+                        pedido.fila,
+                        tendria_efecto(id_jugador, INDICE_RANURA_ACTIVA, casilla)}};
+            },
+            [](const SolicitarInventario&) { return CambiosPorComando{true, false, std::nullopt}; },
+            [](const auto&) { return CambiosPorComando{}; },
         },
         comando);
 }
@@ -187,6 +241,13 @@ EstadoJuego Mundo::estado() const {
     }
 
     return estado_juego;
+}
+EstadoTierra Mundo::estado_tierra() const {
+    EstadoTierra estado_tierra;
+    for (const auto& [id_mapa, tierra] : tierra_por_mapa) {
+        tierra.agregar_a(estado_tierra, id_mapa);
+    }
+    return estado_tierra;
 }
 
 ActualizacionInventario Mundo::obtener_inventario(uint32_t id_jugador) const {

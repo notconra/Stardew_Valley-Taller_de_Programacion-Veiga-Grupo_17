@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <map>
 #include <numbers>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -149,20 +150,28 @@ const JugadorEnPartida* Jugadores::buscar(uint32_t id_jugador) const {
     return encontrado == jugadores.end() ? nullptr : &encontrado->second;
 }
 
-std::optional<Casilla> Jugadores::casilla_de_enfrente(uint32_t id_jugador) const {
+std::optional<Casilla> Jugadores::casilla_de_los_pies(uint32_t id_jugador) const {
     const JugadorEnPartida* jugador = buscar(id_jugador);
     if (jugador == nullptr) {
         return std::nullopt;
     }
 
-    // Se parte del centro de los pies, que es lo que realmente pisa el jugador.
+    // El centro de los pies, que es lo que realmente pisa el jugador.
     const double centro_x = jugador->x + movimiento.hitbox_x + movimiento.hitbox_ancho / 2.0;
     const double centro_y = jugador->y + movimiento.hitbox_y + movimiento.hitbox_alto / 2.0;
-    const int columna = static_cast<int>(std::floor(centro_x / mapa.ancho_de_casilla_en_pixeles()));
-    const int fila = static_cast<int>(std::floor(centro_y / mapa.alto_de_casilla_en_pixeles()));
+    return Casilla{
+        static_cast<int>(std::floor(centro_x / mapa.ancho_de_casilla_en_pixeles())),
+        static_cast<int>(std::floor(centro_y / mapa.alto_de_casilla_en_pixeles()))};
+}
 
-    const auto& [desvio_columna, desvio_fila] = DESPLAZAMIENTO_AL_MIRAR.at(jugador->mirando);
-    return Casilla{columna + desvio_columna, fila + desvio_fila};
+std::optional<Casilla> Jugadores::casilla_de_enfrente(uint32_t id_jugador) const {
+    const std::optional<Casilla> pies = casilla_de_los_pies(id_jugador);
+    if (!pies) {
+        return std::nullopt;
+    }
+    const auto& [desvio_columna, desvio_fila] =
+        DESPLAZAMIENTO_AL_MIRAR.at(buscar(id_jugador)->mirando);
+    return Casilla{pies->columna + desvio_columna, pies->fila + desvio_fila};
 }
 
 Rectangulo Jugadores::rectangulo_de_pies(double x, double y) const {
@@ -172,7 +181,6 @@ Rectangulo Jugadores::rectangulo_de_pies(double x, double y) const {
         movimiento.hitbox_ancho,
         movimiento.hitbox_alto};
 }
-
 
 std::vector<std::pair<uint32_t, const Transicion*>> Jugadores::en_transicion() const {
     std::vector<std::pair<uint32_t, const Transicion*>> resultado;
