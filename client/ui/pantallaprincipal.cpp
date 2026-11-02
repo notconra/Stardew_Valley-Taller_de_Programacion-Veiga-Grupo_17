@@ -1,9 +1,12 @@
 #include "pantallaprincipal.h"
 
 #include <QHeaderView>
+#include <QIcon>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QPainter>
 #include <QTableWidgetItem>
+#include <cmath>
 #include <iostream>
 #include <random>
 #include <string>
@@ -71,13 +74,230 @@ PantallaPrincipal::~PantallaPrincipal() {
 
 void PantallaPrincipal::configurar_ventana() {
     this->setMinimumSize(800, 600);
+    this->resize(1024, 768);
     this->setMaximumSize(16777215, 16777215);
+    this->setWindowTitle("Stardew Valley");
 
     ui->centralwidget->setMaximumSize(16777215, 16777215);
     ui->stackedWidget->setMaximumSize(16777215, 16777215);
 
+    pixmap_logo.load("Assets/LooseSprites/logo.png");
+
+    if (!pixmap_logo.isNull()) {
+        this->setWindowIcon(QIcon(pixmap_logo));
+        pixmap_logo_escalado =
+            pixmap_logo.scaled(660, 363, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        ui->label->setPixmap(pixmap_logo_escalado);
+        ui->label->setAlignment(Qt::AlignCenter);
+    }
+
+    inicializar_estrellas();
+    inicializar_nubes();
+    inicializar_botones_menu();
+
     configurar_tabla_partidas();
     ui->stackedWidget->setCurrentIndex(0);
+
+    timer_animacion = new QTimer(this);
+    connect(timer_animacion, &QTimer::timeout, this, &PantallaPrincipal::actualizar_animacion);
+    timer_animacion->start(33);
+}
+
+void PantallaPrincipal::inicializar_estrellas() {
+    estrellas.clear();
+    std::mt19937 gen(42);
+    std::uniform_int_distribution<int> dist_x(10, 990);
+    std::uniform_int_distribution<int> dist_y(10, 990);
+    std::uniform_int_distribution<int> dist_tam(1, 2);
+    std::uniform_int_distribution<int> dist_brillo(180, 255);
+
+    for (int i = 0; i < 45; ++i) {
+        int b = dist_brillo(gen);
+        estrellas.push_back(Estrella{
+            dist_x(gen),
+            dist_y(gen),
+            dist_tam(gen),
+            QColor(b, b, b, b),
+        });
+    }
+}
+
+void PantallaPrincipal::inicializar_nubes() {
+    QPixmap hoja_nubes("Assets/Minigames/Clouds.png");
+    if (hoja_nubes.isNull()) {
+        return;
+    }
+
+    static const struct {
+        int x;
+        int y;
+        int w;
+        int h;
+    } RECTANGULOS_NUBES[] = {
+        {260, 336, 168, 116},
+        {115, 349, 123, 82},
+        {152, 447, 123, 53},
+        {20, 414, 82, 46},
+        {22, 471, 104, 29},
+        {410, 467, 64, 33},
+    };
+
+    sprites_nubes.clear();
+    for (const auto& r : RECTANGULOS_NUBES) {
+        sprites_nubes.push_back(hoja_nubes.copy(r.x, r.y, r.w, r.h));
+    }
+
+    nubes = {
+        Nube{-100.0f, 60.0f, 0.35f, 2.8f, 0},
+        Nube{450.0f, 130.0f, 0.22f, 3.2f, 1},
+        Nube{850.0f, 260.0f, 0.45f, 2.5f, 2},
+        Nube{100.0f, 300.0f, 0.18f, 2.5f, 3},
+        Nube{750.0f, 70.0f, 0.50f, 2.6f, 4},
+        Nube{-60.0f, 380.0f, 0.28f, 2.4f, 5},
+    };
+}
+
+void PantallaPrincipal::inicializar_botones_menu() {
+    QPixmap hoja_botones("Assets/Minigames/TitleButtons.es-ES.png");
+    if (hoja_botones.isNull()) {
+        hoja_botones.load("Assets/Minigames/TitleButtons.png");
+    }
+    if (hoja_botones.isNull()) {
+        return;
+    }
+
+    QPushButton* botones[4] = {
+        ui->btn_nueva_partida,
+        ui->btn_retomar_partida,
+        ui->btn_unirse_codigo,
+        ui->btn_salir,
+    };
+
+    const char* tooltips[4] = {
+        "Nueva Partida",
+        "Cargar Partida",
+        "Coop.",
+        "Salir",
+    };
+
+    constexpr int ANCHO_BOTON = 74;
+    constexpr int ALTO_BOTON = 58;
+    constexpr int ANCHO_ESCALADO = 118;
+    constexpr int ALTO_ESCALADO = 93;
+    constexpr int Y_NORMAL = 187;
+    constexpr int Y_HOVER = 245;
+    constexpr int Y_PRESSED = 303;
+
+    for (int i = 0; i < 4; ++i) {
+        QPushButton* btn = botones[i];
+        btn->setText("");
+        btn->setToolTip(tooltips[i]);
+        btn->setCursor(Qt::PointingHandCursor);
+
+        QPixmap normal = hoja_botones.copy(i * ANCHO_BOTON, Y_NORMAL, ANCHO_BOTON, ALTO_BOTON)
+                             .scaled(
+                                 ANCHO_ESCALADO,
+                                 ALTO_ESCALADO,
+                                 Qt::IgnoreAspectRatio,
+                                 Qt::FastTransformation);
+        QPixmap hover = hoja_botones.copy(i * ANCHO_BOTON, Y_HOVER, ANCHO_BOTON, ALTO_BOTON)
+                            .scaled(
+                                ANCHO_ESCALADO,
+                                ALTO_ESCALADO,
+                                Qt::IgnoreAspectRatio,
+                                Qt::FastTransformation);
+        QPixmap pressed = hoja_botones.copy(i * ANCHO_BOTON, Y_PRESSED, ANCHO_BOTON, ALTO_BOTON)
+                              .scaled(
+                                  ANCHO_ESCALADO,
+                                  ALTO_ESCALADO,
+                                  Qt::IgnoreAspectRatio,
+                                  Qt::FastTransformation);
+
+        btn->setIcon(QIcon(normal));
+        btn->setIconSize(QSize(ANCHO_ESCALADO, ALTO_ESCALADO));
+        btn->installEventFilter(this);
+
+        botones_menu[btn] = EstadoBoton{normal, hover, pressed};
+    }
+}
+
+bool PantallaPrincipal::eventFilter(QObject* watched, QEvent* event) {
+    auto it = botones_menu.find(watched);
+    if (it != botones_menu.end()) {
+        auto* btn = static_cast<QPushButton*>(watched);
+        switch (event->type()) {
+            case QEvent::Enter:
+                btn->setIcon(QIcon(it->second.hover));
+                break;
+            case QEvent::Leave:
+                btn->setIcon(QIcon(it->second.normal));
+                break;
+            case QEvent::MouseButtonPress:
+                btn->setIcon(QIcon(it->second.pressed));
+                break;
+            case QEvent::MouseButtonRelease:
+                btn->setIcon(QIcon(it->second.hover));
+                break;
+            default:
+                break;
+        }
+    }
+    return QMainWindow::eventFilter(watched, event);
+}
+
+void PantallaPrincipal::actualizar_animacion() {
+    tiempo_animacion += 0.05f;
+
+    for (auto& nube : nubes) {
+        nube.x += nube.velocidad;
+        float ancho_nube = 100.0f;
+        if (nube.tipo >= 0 && nube.tipo < static_cast<int>(sprites_nubes.size())) {
+            ancho_nube = sprites_nubes[nube.tipo].width() * nube.escala;
+        }
+        if (nube.x > this->width()) {
+            nube.x = -ancho_nube;
+        }
+    }
+
+    if (ui->stackedWidget->currentIndex() == 0) {
+        int offset_y = static_cast<int>(std::sin(tiempo_animacion) * 5.0f);
+        ui->label->setContentsMargins(0, 10 + offset_y, 0, 10 - offset_y);
+        update();
+    }
+}
+
+void PantallaPrincipal::paintEvent(QPaintEvent* event) {
+    QPainter painter(this);
+
+    // Gradiente de cielo idéntico al juego original (noche estrellada superior -> día celeste)
+    QLinearGradient gradiente_cielo(0, 0, 0, height());
+    gradiente_cielo.setColorAt(0.00, QColor(8, 30, 80));      // Noche estrellada superior (#081e50)
+    gradiente_cielo.setColorAt(0.12, QColor(22, 105, 195));   // Crepúsculo
+    gradiente_cielo.setColorAt(0.40, QColor(58, 175, 245));   // Celeste cielo brillante Stardew
+    gradiente_cielo.setColorAt(1.00, QColor(135, 215, 255));  // Celeste claro horizonte
+    painter.fillRect(rect(), gradiente_cielo);
+
+    // Estrellas en la franja nocturna superior
+    painter.setPen(Qt::NoPen);
+    for (const auto& estrella : estrellas) {
+        int sx = (estrella.x_pct * width()) / 1000;
+        int sy = static_cast<int>((estrella.y_pct * height() * 0.13f) / 1000.0f);
+        painter.fillRect(sx, sy, estrella.tamano, estrella.tamano, estrella.color);
+    }
+
+    if (ui->stackedWidget->currentIndex() == 0) {
+        for (const auto& nube : nubes) {
+            if (nube.tipo >= 0 && nube.tipo < static_cast<int>(sprites_nubes.size())) {
+                const QPixmap& sprite = sprites_nubes[nube.tipo];
+                int w = static_cast<int>(sprite.width() * nube.escala);
+                int h = static_cast<int>(sprite.height() * nube.escala);
+                painter
+                    .drawPixmap(static_cast<int>(nube.x), static_cast<int>(nube.y), w, h, sprite);
+            }
+        }
+    }
+
+    QMainWindow::paintEvent(event);
 }
 
 void PantallaPrincipal::configurar_tabla_partidas() {

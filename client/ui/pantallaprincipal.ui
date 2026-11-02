@@ -14,12 +14,43 @@
    <cursorShape>UpArrowCursor</cursorShape>
   </property>
   <property name="windowTitle">
-   <string>Stardrew Valley</string>
+   <string>Stardew Valley</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">/* Fondo color cielo*/
-QWidget#PantallaPrincipal {
-    background-color: #3bb2ed;
+   <string notr="true">/* Fondo transparente para ver el cielo animado */
+QWidget#centralwidget, QStackedWidget#stackedWidget, QWidget#page {
+    background: transparent;
+}
+
+/* Botones especiales del menú principal con sprites pixel-art */
+QPushButton#btn_nueva_partida,
+QPushButton#btn_retomar_partida,
+QPushButton#btn_unirse_codigo,
+QPushButton#btn_salir {
+    background-color: transparent;
+    border: none;
+    padding: 0px;
+    min-width: 118px;
+    min-height: 93px;
+    max-width: 118px;
+    max-height: 93px;
+}
+
+QPushButton#btn_nueva_partida:hover,
+QPushButton#btn_retomar_partida:hover,
+QPushButton#btn_unirse_codigo:hover,
+QPushButton#btn_salir:hover {
+    background-color: transparent;
+    border: none;
+}
+
+QPushButton#btn_nueva_partida:pressed,
+QPushButton#btn_retomar_partida:pressed,
+QPushButton#btn_unirse_codigo:pressed,
+QPushButton#btn_salir:pressed {
+    background-color: transparent;
+    border: none;
+    padding: 0px;
 }
 
 /* Botones tipo madera*/
@@ -168,15 +199,21 @@ QHeaderView::section {
           <property name="sizeHint" stdset="0">
            <size>
             <width>20</width>
-            <height>165</height>
+            <height>20</height>
            </size>
           </property>
          </spacer>
         </item>
         <item>
          <widget class="QLabel" name="label">
+          <property name="minimumSize">
+           <size>
+            <width>660</width>
+            <height>380</height>
+           </size>
+          </property>
           <property name="text">
-           <string>LOGO</string>
+           <string/>
           </property>
           <property name="alignment">
            <set>Qt::AlignmentFlag::AlignCenter</set>
@@ -190,14 +227,30 @@ QHeaderView::section {
           </property>
           <property name="sizeHint" stdset="0">
            <size>
-            <width>898</width>
-            <height>156</height>
+            <width>20</width>
+            <height>20</height>
            </size>
           </property>
          </spacer>
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout">
+          <property name="spacing">
+           <number>8</number>
+          </property>
+          <item>
+           <spacer name="horizontalSpacer_btn_left">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
           <item>
            <widget class="QPushButton" name="btn_nueva_partida">
             <property name="text">
@@ -226,6 +279,19 @@ QHeaderView::section {
             </property>
            </widget>
           </item>
+          <item>
+           <spacer name="horizontalSpacer_btn_right">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
          </layout>
         </item>
         <item>
@@ -236,7 +302,7 @@ QHeaderView::section {
           <property name="sizeHint" stdset="0">
            <size>
             <width>20</width>
-            <height>165</height>
+            <height>30</height>
            </size>
           </property>
          </spacer>
