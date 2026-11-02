@@ -38,8 +38,9 @@ private:
     void cargar_ventana(const toml::table& archivo_toml);
     void cargar_sdl(const toml::table& archivo_toml);
     void cargar_graficos(const toml::table& archivo_toml);
-    void cargar_mapas(const toml::table& archivo_toml); 
+    void cargar_mapas(const toml::table& archivo_toml);
     void cargar_jugador(const toml::table& archivo_toml);
+    void cargar_tierra(const toml::table& archivo_toml);
 
     // Auxiliares de lectura y validación.
     const toml::table& exigir_tabla(
@@ -59,7 +60,8 @@ private:
         const toml::table& tabla, const std::string& clave, const std::string& seccion) const;
 
     ColorDeFondo leer_color(const toml::table& graficos) const;
-    std::vector<ConfiguracionTileset> leer_tilesets(const toml::table& mapa, const std::string& seccion) const;
+    std::vector<ConfiguracionTileset> leer_tilesets(
+        const toml::table& mapa, const std::string& seccion) const;
 };
 
 #endif

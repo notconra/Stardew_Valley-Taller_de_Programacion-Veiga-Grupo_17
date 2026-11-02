@@ -3,6 +3,7 @@
 #include <sys/socket.h>  // solo para SHUT_RDWR
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "../../common/juego/direccion.h"
@@ -19,6 +20,8 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::PARTIDA_CERRADA_POR_ERROR,
            [this] { return recibir_partida_cerrada_por_error(); }},
           {TipoMensaje::ESTADO_JUEGO, [this] { return recibir_estado_juego(); }},
+          {TipoMensaje::ESTADO_TIERRA, [this] { return recibir_estado_tierra(); }},
+          {TipoMensaje::CASILLA_CONSULTADA, [this] { return recibir_casilla_consultada(); }},
           {TipoMensaje::ACTUALIZACION_INVENTARIO,
            [this] { return recibir_actualizacion_inventario(); }},
           {TipoMensaje::ACTUALIZACION_COFRE, [this] { return recibir_actualizacion_cofre(); }},
@@ -42,6 +45,7 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
                 enviar_comando_seleccionar_ranura_de_la_barra(m);
             },
             [this](const UsarItem& m) { enviar_comando_usar_item(m); },
+            [this](const ConsultarCasilla& m) { enviar_comando_consultar_casilla(m); },
             [this](const MoverItemEntreRanuras& m) { enviar_comando_mover_item_entre_ranuras(m); },
             [this](const AbrirCofre& m) { enviar_comando_abrir_cofre(m); },
             [this](const MoverItemConCofre& m) { enviar_comando_mover_item_con_cofre(m); },
@@ -99,6 +103,8 @@ void ProtocoloCliente::enviar_comando_seleccionar_ranura_de_la_barra(
 void ProtocoloCliente::enviar_comando_usar_item(const UsarItem& usar) {
     enviar_tipo(TipoMensaje::USAR_ITEM);
     enviar_u8(usar.indice_ranura);
+    enviar_u16(usar.columna);
+    enviar_u16(usar.fila);
 }
 
 void ProtocoloCliente::enviar_comando_mover_item_entre_ranuras(const MoverItemEntreRanuras& mover) {
@@ -253,6 +259,40 @@ EstadoJuego ProtocoloCliente::recibir_estado_juego() {
     }
 
     return estado_juego;
+}
+
+EstadoTierra ProtocoloCliente::recibir_estado_tierra() {
+    const uint16_t cantidad_de_mapas = recibir_u16();
+    EstadoTierra estado_tierra;
+    estado_tierra.mapas.reserve(cantidad_de_mapas);
+    for (uint16_t i = 0; i < cantidad_de_mapas; ++i) {
+        TierraDeUnMapa tierra;
+        tierra.mapa = recibir_texto();
+        const uint16_t cantidad_de_casillas = recibir_u16();
+        tierra.casillas.reserve(cantidad_de_casillas);
+        for (uint16_t j = 0; j < cantidad_de_casillas; ++j) {
+            CasillaTratada casilla;
+            casilla.columna = recibir_u16();
+            casilla.fila = recibir_u16();
+            tierra.casillas.push_back(casilla);
+        }
+        estado_tierra.mapas.push_back(std::move(tierra));
+    }
+    return estado_tierra;
+}
+
+void ProtocoloCliente::enviar_comando_consultar_casilla(const ConsultarCasilla& consultar) {
+    enviar_tipo(TipoMensaje::CONSULTAR_CASILLA);
+    enviar_u16(consultar.columna);
+    enviar_u16(consultar.fila);
+}
+
+CasillaConsultada ProtocoloCliente::recibir_casilla_consultada() {
+    CasillaConsultada consultada;
+    consultada.columna = recibir_u16();
+    consultada.fila = recibir_u16();
+    consultada.tendria_efecto = recibir_u8() != 0;
+    return consultada;
 }
 
 void ProtocoloCliente::cerrar() {

@@ -1,5 +1,6 @@
 #include "configuracion_cliente.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -7,7 +8,6 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <algorithm>
 
 #include "../persistencia/identidad_cliente.h"
 
@@ -74,6 +74,7 @@ void ConfiguracionCliente::cargar_toml(const toml::table& archivo_toml) {
     cargar_graficos(archivo_toml);
     cargar_mapas(archivo_toml);
     cargar_jugador(archivo_toml);
+    cargar_tierra(archivo_toml);
 }
 
 void ConfiguracionCliente::cargar_servidor(const toml::table& archivo_toml) {
@@ -137,7 +138,8 @@ void ConfiguracionCliente::cargar_mapas(const toml::table& archivo_toml) {
 
     configuracion_vista.mapa_inicial = leer_texto(archivo_toml, "mapa_inicial", "raíz");
     const bool existe = std::any_of(
-        configuracion_vista.mapas.begin(), configuracion_vista.mapas.end(),
+        configuracion_vista.mapas.begin(),
+        configuracion_vista.mapas.end(),
         [this](const ConfiguracionMapa& m) { return m.id == configuracion_vista.mapa_inicial; });
     if (!existe) {
         throw std::runtime_error(
@@ -309,4 +311,9 @@ const ConfiguracionVista& ConfiguracionCliente::vista() const {
 
 uint32_t ConfiguracionCliente::id_cliente() const {
     return id_del_cliente;
+}
+
+void ConfiguracionCliente::cargar_tierra(const toml::table& archivo_toml) {
+    const toml::table& tierra = exigir_tabla(archivo_toml, "tierra");
+    configuracion_vista.tierra.ruta_sprite = leer_texto(tierra, "ruta_sprite", "tierra");
 }

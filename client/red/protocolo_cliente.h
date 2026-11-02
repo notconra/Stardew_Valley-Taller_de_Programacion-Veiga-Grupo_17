@@ -27,6 +27,7 @@ private:
     void enviar_comando_seleccionar_ranura_de_la_barra(
         const SeleccionarRanuraDeLaBarra& seleccionar);
     void enviar_comando_usar_item(const UsarItem& usar);
+    void enviar_comando_consultar_casilla(const ConsultarCasilla& consultar);
     void enviar_comando_mover_item_entre_ranuras(const MoverItemEntreRanuras& mover);
     void enviar_comando_abrir_cofre(const AbrirCofre& abrir);
     void enviar_comando_mover_item_con_cofre(const MoverItemConCofre& mover);
@@ -42,6 +43,8 @@ private:
     PartidaCerradaPorError recibir_partida_cerrada_por_error();
     EstadoJugador recibir_estado_jugador();
     EstadoJuego recibir_estado_juego();
+    EstadoTierra recibir_estado_tierra();
+    CasillaConsultada recibir_casilla_consultada();
     RanuraInventario recibir_ranura_inventario();
     std::vector<RanuraInventario> recibir_ranuras();
     InventarioJugador recibir_inventario_jugador();

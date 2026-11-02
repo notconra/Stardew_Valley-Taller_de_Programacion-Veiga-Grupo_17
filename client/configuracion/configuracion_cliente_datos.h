@@ -62,6 +62,11 @@ struct ConfiguracionJugador {
     int ms_por_cuadro_quieto = 0;
 };
 
+// Hoja con los dibujos de la tierra tratada (hoeDirt.png de Stardew).
+struct ConfiguracionTierra {
+    std::string ruta_sprite;
+};
+
 struct ConfiguracionVista {
     ConfiguracionVentana ventana;
     ConfiguracionSDL sdl;
@@ -69,6 +74,7 @@ struct ConfiguracionVista {
     std::vector<ConfiguracionMapa> mapas;
     std::string mapa_inicial;
     ConfiguracionJugador jugador;
+    ConfiguracionTierra tierra;
 };
 
 #endif
