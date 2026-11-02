@@ -16,6 +16,7 @@
 // antes de aceptar clientes.
 struct RecursosDeJuego {
     std::map<std::string, Mapa> mapas;
+    std::map<std::string, ConfiguracionMapaServidor> configuraciones_mapas;
     std::string mapa_inicial;
     ConfiguracionJuegoServidor juego;
     CatalogoDeItems catalogo_de_items;

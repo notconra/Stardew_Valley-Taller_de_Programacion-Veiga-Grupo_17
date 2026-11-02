@@ -108,6 +108,26 @@ int GestorDeObjetos::colocar(TipoObjeto tipo, int columna, int fila) {
     return id;
 }
 
+ResultadoDeGolpe GestorDeObjetos::golpear(int id, TipoItem herramienta_usada) {
+    ResultadoDeGolpe res;
+    auto it = objetos_por_id.find(id);
+    if (it == objetos_por_id.end())
+        return res;
+
+    ObjetoDelMundo& objeto = it->second;
+    const DefinicionDeObjeto* def = catalogo.buscar(objeto.tipo);
+    if (!def || def->herramienta == TipoItem::NINGUNO || def->herramienta != herramienta_usada) {
+        return res;  // Herramienta incorrecta o el objeto no se puede golpear
+    }
+
+    res.golpeo = true;
+    objeto.golpes_recibidos++;
+    if (objeto.golpes_recibidos >= def->golpes_para_picar) {
+        res.rotura = romper(id);
+    }
+    return res;
+}
+
 int GestorDeObjetos::poblar_al_azar(
     const std::vector<PesoDeObjeto>& pesos, int cantidad, uint8_t propiedad_requerida) {
     if (cantidad < 0) {
