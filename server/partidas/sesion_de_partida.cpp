@@ -64,6 +64,7 @@ void SesionDePartida::enviar_inventarios_pendientes() {
 
         try {
             cliente->second.cola_eventos.try_push(actualizacion);
+            cliente->second.cola_eventos.try_push(mundo.estado_tierra());
         } catch (const ClosedQueue&) {
             clientes.erase(cliente);
         }
@@ -94,8 +95,15 @@ void SesionDePartida::procesar_comandos() {
     try {
         ComandoDeJugador pedido;
         while (comandos.try_pop(pedido)) {
-            if (mundo.atender(pedido.id_jugador, pedido.comando)) {
+            const CambiosPorComando cambios = mundo.atender(pedido.id_jugador, pedido.comando);
+            if (cambios.inventario) {
                 difundir_a_jugador(pedido.id_jugador, mundo.obtener_inventario(pedido.id_jugador));
+            }
+            if (cambios.tierra) {
+                difundir(mundo.estado_tierra());
+            }
+            if (cambios.consulta) {
+                difundir_a_jugador(pedido.id_jugador, *cambios.consulta);
             }
         }
     } catch (const ClosedQueue&) {
