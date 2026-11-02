@@ -97,6 +97,8 @@ public:
     RanuraApuntada ranura_en(
         const InventarioJugador& inventario, const CofreJugador& cofre, int x, int y) const;
 
+    bool ocupa(const InventarioJugador& inventario, const CofreJugador& cofre, int x, int y) const;
+
     std::optional<ComandoCliente> procesar_clic_izquierdo(
         const InventarioJugador& inventario, int x, int y);
     std::optional<ComandoCliente> procesar_clic_izquierdo(

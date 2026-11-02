@@ -157,6 +157,40 @@ RanuraApuntada HudInventario::ranura_en(
     return RanuraApuntada{};
 }
 
+bool HudInventario::ocupa(
+    const InventarioJugador& inventario, const CofreJugador& cofre, int x, int y) const {
+    if (hay_item_levantado()) {
+        return true;
+    }
+    if (inventario.ranuras.empty()) {
+        return false;
+    }
+    const SDL_Point punto{x, y};
+    const int tamano = tamano_de_ranura(inventario);
+
+    const SDL_Rect barra{
+        x_inicial(inventario) - SEPARACION_RANURAS,
+        y_de_la_barra(inventario) - SEPARACION_RANURAS,
+        ancho_de_la_barra(inventario) + tamano + (4 * SEPARACION_RANURAS),
+        tamano + (2 * SEPARACION_RANURAS)};
+    if (SDL_PointInRect(&punto, &barra)) {
+        return true;
+    }
+
+    if (cofre.abierto && !cofre.ranuras.empty()) {
+        const int filas = filas_del_cofre(cofre);
+        const SDL_Rect panel{
+            x_inicial_del_cofre(inventario, cofre) - SEPARACION_RANURAS,
+            y_del_cofre(inventario, cofre) - SEPARACION_RANURAS,
+            ancho_del_cofre(inventario, cofre) + (2 * SEPARACION_RANURAS),
+            (filas * tamano) + ((filas + 1) * SEPARACION_RANURAS)};
+        if (SDL_PointInRect(&punto, &panel)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 RanuraApuntada HudInventario::ranura_en(const InventarioJugador& inventario, int x, int y) const {
     return ranura_en(inventario, CofreJugador{}, x, y);
 }
