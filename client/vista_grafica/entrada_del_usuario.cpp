@@ -124,6 +124,10 @@ bool EntradaDelUsuario::pidio_usar_item() const {
     return uso_de_item_pedido;
 }
 
+bool EntradaDelUsuario::pidio_cofre() const {
+    return cofre_pedido;
+}
+
 int EntradaDelUsuario::raton_x() const {
     return posicion_raton_x;
 }

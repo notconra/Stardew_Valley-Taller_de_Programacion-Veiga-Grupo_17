@@ -6,8 +6,8 @@
 
 #include <unordered_map>
 
-#include "../../common/juego/calidad.h"
-#include "../../common/juego/tipo_item.h"
+#include "../../common/calidad.h"
+#include "../../common/tipo_item.h"
 
 struct Icono {
     SDL_Texture* textura = nullptr;

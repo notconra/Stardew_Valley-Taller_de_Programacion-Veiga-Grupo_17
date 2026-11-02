@@ -20,7 +20,7 @@ using ComandoCliente = std::variant<
     // Partida
     ActivarMultijugador, SalirDePartida, Moverse, GuardarPartida,
 
-    // Inventario / acciones
+    // Inventario y acciones
     SeleccionarRanuraDeLaBarra, UsarItem, MoverItemEntreRanuras, AbrirCofre, MoverItemConCofre,
     SolicitarInventario>;
 

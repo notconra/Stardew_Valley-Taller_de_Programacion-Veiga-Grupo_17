@@ -42,6 +42,26 @@ uint8_t Protocolo::recibir_u8() {
     return valor;
 }
 
+void Protocolo::enviar_i8(int8_t valor) {
+    enviar_u8(static_cast<uint8_t>(valor));
+}
+
+int8_t Protocolo::recibir_i8() {
+    return static_cast<int8_t>(recibir_u8());
+}
+
+void Protocolo::enviar_booleano(bool valor) {
+    enviar_u8(valor ? 1 : 0);
+}
+
+bool Protocolo::recibir_booleano() {
+    const uint8_t valor = recibir_u8();
+    if (valor > 1) {
+        throw ErrorProtocolo("valor booleano inválido en el protocolo");
+    }
+    return valor != 0;
+}
+
 void Protocolo::enviar_u16(uint16_t valor) {
     uint16_t bytes_en_formato_red = htons(valor);
     enviar_bytes(&bytes_en_formato_red, sizeof(bytes_en_formato_red));
@@ -72,6 +92,9 @@ void Protocolo::enviar_largo(size_t largo) {
 }
 
 void Protocolo::enviar_texto(const std::string& texto) {
+    if (texto.size() > LARGO_MAXIMO_DE_TEXTO) {
+        throw ErrorProtocolo("el texto supera el largo máximo permitido por el protocolo");
+    }
     enviar_largo(texto.size());
     if (!texto.empty()) {
         enviar_bytes(texto.data(), texto.size());
@@ -79,7 +102,10 @@ void Protocolo::enviar_texto(const std::string& texto) {
 }
 
 std::string Protocolo::recibir_texto() {
-    uint16_t largo = recibir_u16();
+    const uint16_t largo = recibir_u16();
+    if (largo > LARGO_MAXIMO_DE_TEXTO) {
+        throw ErrorProtocolo("el texto recibido supera el largo máximo permitido");
+    }
     std::string texto(largo, '\0');
     if (largo > 0) {
         recibir_bytes(texto.data(), largo);

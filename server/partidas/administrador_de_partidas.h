@@ -3,13 +3,14 @@
 
 #include <cstdint>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <vector>
 
 #include "../../common/mensajes/mensajes.h"
 #include "../configuracion/configuracion_servidor_datos.h"
-#include "../juego/base/recursos/recursos_de_juego.h"
+#include "../juego/recursos/recursos_de_juego.h"
 #include "../persistencia/indice_partidas.h"
 #include "ingreso_a_partida.h"
 #include "partida.h"
@@ -24,10 +25,11 @@
 //
 // Las sesiones (el bucle de juego de cada partida) existen solo mientras hay
 // jugadores conectados, se crean cuando se conecta el primero y se destruyen
-// cuando se va el último.
+// cuando se va el último. Como arrancar una sesión crea un hilo y destruirla lo
+// espera, eso se hace SIEMPRE fuera del mutex global, adentro solo se agrega o
+// se retira el unique_ptr.
 //
-// crear(), unirse() y hacer_multijugador() lanzan ErrorDePartida si no se
-// puede.
+// crear(), unirse() y retomar() lanzan ErrorDePartida si no se puede.
 class AdministradorDePartidas {
 private:
     const ConfiguracionPartidaServidor configuracion;
@@ -36,14 +38,14 @@ private:
     std::map<std::string, Partida> partidas;  // código de la partida -> partida
 
     // código de la partida -> su sesión.
-    std::map<std::string, SesionDePartida> sesiones;
+    std::map<std::string, std::unique_ptr<SesionDePartida>> sesiones;
     uint32_t proximo_numero_de_partida;
 
     // Lanza ErrorDePartida si no existe.
     Partida& buscar_partida(const std::string& codigo_partida);
 
-    // Devuelve la sesión de la partida, la crea si no existía.
-    SesionDePartida& sesion_de(const std::string& codigo_partida);
+    // Arranca una sesión nueva. Se llama sin el mutex tomado.
+    std::unique_ptr<SesionDePartida> crear_sesion(const std::string& codigo_partida) const;
 
     IndicePartidas indice;
 

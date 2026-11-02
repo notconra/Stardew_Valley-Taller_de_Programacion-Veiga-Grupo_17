@@ -5,8 +5,8 @@
 #include <string>
 #include <vector>
 
-#include "../../common/juego/direccion.h"
-#include "../../common/juego/ranura_inventario.h"
+#include "../../common/direccion.h"
+#include "../../common/ranura_inventario.h"
 
 struct DatosJugadorGuardado {
     uint32_t id_cliente = 0;

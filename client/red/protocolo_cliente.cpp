@@ -5,8 +5,8 @@
 #include <string>
 #include <vector>
 
-#include "../../common/juego/direccion.h"
-#include "../../common/mensajes/manejadores_por_tipo.h"
+#include "../../common/direccion.h"
+#include "../../common/visitantes.h"
 
 ProtocoloCliente::ProtocoloCliente(ISocket& socket)
     : Protocolo(socket),
@@ -91,8 +91,8 @@ void ProtocoloCliente::enviar_comando_guardar_partida(const GuardarPartida&) {
 
 void ProtocoloCliente::enviar_comando_moverse(const Moverse& moverse) {
     enviar_tipo(TipoMensaje::MOVERSE);
-    enviar_u8(static_cast<uint8_t>(moverse.horizontal));
-    enviar_u8(static_cast<uint8_t>(moverse.vertical));
+    enviar_i8(moverse.horizontal);
+    enviar_i8(moverse.vertical);
 }
 
 void ProtocoloCliente::enviar_comando_seleccionar_ranura_de_la_barra(
@@ -104,6 +104,9 @@ void ProtocoloCliente::enviar_comando_seleccionar_ranura_de_la_barra(
 void ProtocoloCliente::enviar_comando_usar_item(const UsarItem& usar) {
     enviar_tipo(TipoMensaje::USAR_ITEM);
     enviar_u8(usar.indice_ranura);
+    enviar_booleano(usar.tiene_casilla_objetivo);
+    enviar_u32(usar.columna_objetivo);
+    enviar_u32(usar.fila_objetivo);
 }
 
 void ProtocoloCliente::enviar_comando_mover_item_entre_ranuras(const MoverItemEntreRanuras& mover) {
@@ -115,7 +118,7 @@ void ProtocoloCliente::enviar_comando_mover_item_entre_ranuras(const MoverItemEn
 
 void ProtocoloCliente::enviar_comando_abrir_cofre(const AbrirCofre& abrir) {
     enviar_tipo(TipoMensaje::ABRIR_COFRE);
-    enviar_u8(abrir.cerrar ? 1 : 0);
+    enviar_booleano(abrir.cerrar);
 }
 
 void ProtocoloCliente::enviar_comando_mover_item_con_cofre(const MoverItemConCofre& mover) {
@@ -123,7 +126,7 @@ void ProtocoloCliente::enviar_comando_mover_item_con_cofre(const MoverItemConCof
     enviar_u8(mover.origen);
     enviar_u8(mover.destino);
     enviar_u16(mover.cantidad);
-    enviar_u8(mover.desde_el_cofre ? 1 : 0);
+    enviar_booleano(mover.desde_el_cofre);
 }
 
 void ProtocoloCliente::enviar_comando_solicitar_inventario(const SolicitarInventario&) {
@@ -149,19 +152,19 @@ bool ProtocoloCliente::recibir_evento(EventoServidor& evento) {
 }
 
 ErrorServidor ProtocoloCliente::recibir_error_servidor() {
-    uint8_t codigo = recibir_u8();
+    CodigoError codigo = codigo_error_desde(recibir_u8());
     std::string detalles = recibir_texto();
 
-    return ErrorServidor{static_cast<CodigoError>(codigo), detalles};
+    return ErrorServidor{codigo, detalles};
 }
 
 InfoPartida ProtocoloCliente::recibir_info_partida() {
     std::string codigo_partida = recibir_texto();
     std::string nombre_partida = recibir_texto();
-    uint8_t jugadores_actuales = recibir_u8();
+    uint8_t jugadores_totales = recibir_u8();
     uint8_t jugadores_maximos = recibir_u8();
 
-    return InfoPartida{codigo_partida, nombre_partida, jugadores_actuales, jugadores_maximos};
+    return InfoPartida{codigo_partida, nombre_partida, jugadores_totales, jugadores_maximos};
 }
 
 ListaPartidas ProtocoloCliente::recibir_lista_partidas() {
@@ -199,13 +202,23 @@ PartidaCerradaPorError ProtocoloCliente::recibir_partida_cerrada_por_error() {
 EstadoJugador ProtocoloCliente::recibir_estado_jugador() {
     uint32_t id_jugador = recibir_u32();
     std::string mapa = recibir_texto();
-    int32_t x = static_cast<int32_t>(recibir_u32());
-    int32_t y = static_cast<int32_t>(recibir_u32());
-    Direccion mirando = static_cast<Direccion>(recibir_u8());
-    bool camina = recibir_u8() != 0;
+    uint32_t x = recibir_u32();
+    uint32_t y = recibir_u32();
+    Direccion mirando = direccion_desde(recibir_u8());
+    bool camina = recibir_booleano();
     uint8_t ranura_activa = recibir_u8();
 
     return EstadoJugador{id_jugador, mapa, x, y, mirando, camina, ranura_activa};
+}
+
+EstadoObjetoDelMundo ProtocoloCliente::recibir_estado_objeto_del_mundo() {
+    EstadoObjetoDelMundo objeto;
+    objeto.id = recibir_u32();
+    objeto.mapa = recibir_texto();
+    objeto.columna = recibir_u32();
+    objeto.fila = recibir_u32();
+    objeto.tipo = static_cast<TipoObjeto>(recibir_u8());
+    return objeto;
 }
 
 RanuraInventario ProtocoloCliente::recibir_ranura_inventario() {
@@ -236,7 +249,7 @@ InventarioJugador ProtocoloCliente::recibir_inventario_jugador() {
 CofreJugador ProtocoloCliente::recibir_cofre_jugador() {
     CofreJugador cofre;
     cofre.id_cofre = recibir_u32();
-    cofre.abierto = recibir_u8() != 0;
+    cofre.abierto = recibir_booleano();
     cofre.ranuras = recibir_ranuras();
     return cofre;
 }
@@ -250,11 +263,17 @@ ActualizacionCofre ProtocoloCliente::recibir_actualizacion_cofre() {
 }
 
 EstadoJuego ProtocoloCliente::recibir_estado_juego() {
-    uint16_t cantidad = recibir_u16();
+    uint16_t cantidad_de_jugadores = recibir_u16();
     EstadoJuego estado_juego;
-    estado_juego.jugadores.reserve(cantidad);
-    for (uint16_t i = 0; i < cantidad; ++i) {
+    estado_juego.jugadores.reserve(cantidad_de_jugadores);
+    for (uint16_t i = 0; i < cantidad_de_jugadores; ++i) {
         estado_juego.jugadores.push_back(recibir_estado_jugador());
+    }
+
+    uint16_t cantidad_de_objetos = recibir_u16();
+    estado_juego.objetos.reserve(cantidad_de_objetos);
+    for (uint16_t i = 0; i < cantidad_de_objetos; ++i) {
+        estado_juego.objetos.push_back(recibir_estado_objeto_del_mundo());
     }
 
     return estado_juego;
@@ -262,4 +281,20 @@ EstadoJuego ProtocoloCliente::recibir_estado_juego() {
 
 void ProtocoloCliente::cerrar() {
     socket.shutdown(SHUT_RDWR);
+}
+// Auxiliares
+
+CodigoError ProtocoloCliente::codigo_error_desde(uint8_t valor) const {
+    if (valor < static_cast<uint8_t>(CodigoError::NOMBRE_JUGADOR_REPETIDO) ||
+        valor > static_cast<uint8_t>(CodigoError::PARTIDA_CERRADA)) {
+        throw ErrorProtocolo("código de error desconocido en el protocolo");
+    }
+    return static_cast<CodigoError>(valor);
+}
+
+Direccion ProtocoloCliente::direccion_desde(uint8_t valor) const {
+    if (valor > static_cast<uint8_t>(Direccion::DERECHA)) {
+        throw ErrorProtocolo("dirección desconocida en el protocolo");
+    }
+    return static_cast<Direccion>(valor);
 }

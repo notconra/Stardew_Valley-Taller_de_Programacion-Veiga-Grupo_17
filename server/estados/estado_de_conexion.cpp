@@ -8,7 +8,7 @@ EstadoDeConexion::EstadoDeConexion(ContextoDeCliente& contexto_de_cliente)
     : contexto(contexto_de_cliente) {
 }
 
-void EstadoDeConexion::encolar(const EventoServidor& evento, const std::string& descripcion) {
+void EstadoDeConexion::encolar(const EventoServidor& evento) {
     try {
         contexto.cola_eventos.push(evento);
     } catch (const ClosedQueue&) {
@@ -17,7 +17,7 @@ void EstadoDeConexion::encolar(const EventoServidor& evento, const std::string& 
 }
 
 void EstadoDeConexion::responder_error(CodigoError codigo, const std::string& detalle) {
-    encolar(ErrorServidor{codigo, detalle}, "ErrorServidor: " + detalle);
+    encolar(ErrorServidor{codigo, detalle});
 }
 
 EstadoDeConexion::ProximoEstado EstadoDeConexion::rechazar() {

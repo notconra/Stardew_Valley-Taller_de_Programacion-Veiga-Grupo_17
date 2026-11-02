@@ -3,9 +3,8 @@
 #include <string>
 #include <vector>
 
-#include "../../common/juego/direccion.h"
-#include "../../common/juego/tipo_item.h"
-#include "../../common/mensajes/manejadores_por_tipo.h"
+#include "../../common/direccion.h"
+#include "../../common/visitantes.h"
 
 ProtocoloServidor::ProtocoloServidor(ISocket& socket)
     : Protocolo(socket),
@@ -94,9 +93,16 @@ GuardarPartida ProtocoloServidor::recibir_comando_guardar_partida() {
 }
 
 Moverse ProtocoloServidor::recibir_comando_moverse() {
-    int8_t horizontal = static_cast<int8_t>(recibir_u8());
-    int8_t vertical = static_cast<int8_t>(recibir_u8());
+    int8_t horizontal = eje_de_movimiento(recibir_i8());
+    int8_t vertical = eje_de_movimiento(recibir_i8());
     return Moverse{horizontal, vertical};
+}
+
+int8_t ProtocoloServidor::eje_de_movimiento(int8_t valor) const {
+    if (valor < -1 || valor > 1) {
+        throw ErrorProtocolo("valor de movimiento inválido en el protocolo");
+    }
+    return valor;
 }
 
 SeleccionarRanuraDeLaBarra ProtocoloServidor::recibir_comando_seleccionar_ranura_de_la_barra() {
@@ -106,7 +112,10 @@ SeleccionarRanuraDeLaBarra ProtocoloServidor::recibir_comando_seleccionar_ranura
 
 UsarItem ProtocoloServidor::recibir_comando_usar_item() {
     uint8_t indice = recibir_u8();
-    return UsarItem{indice};
+    bool tiene_casilla_objetivo = recibir_booleano();
+    uint32_t columna_objetivo = recibir_u32();
+    uint32_t fila_objetivo = recibir_u32();
+    return UsarItem{indice, tiene_casilla_objetivo, columna_objetivo, fila_objetivo};
 }
 
 MoverItemEntreRanuras ProtocoloServidor::recibir_comando_mover_item_entre_ranuras() {
@@ -117,7 +126,7 @@ MoverItemEntreRanuras ProtocoloServidor::recibir_comando_mover_item_entre_ranura
 }
 
 AbrirCofre ProtocoloServidor::recibir_comando_abrir_cofre() {
-    bool cerrar = recibir_u8() != 0;
+    bool cerrar = recibir_booleano();
     return AbrirCofre{cerrar};
 }
 
@@ -125,7 +134,7 @@ MoverItemConCofre ProtocoloServidor::recibir_comando_mover_item_con_cofre() {
     uint8_t origen = recibir_u8();
     uint8_t destino = recibir_u8();
     uint16_t cantidad = recibir_u16();
-    bool desde_el_cofre = recibir_u8() != 0;
+    bool desde_el_cofre = recibir_booleano();
     return MoverItemConCofre{origen, destino, cantidad, desde_el_cofre};
 }
 
@@ -160,7 +169,7 @@ void ProtocoloServidor::enviar_evento_error_servidor(const ErrorServidor& error_
 void ProtocoloServidor::enviar_info_partida(const InfoPartida& info_partida) {
     enviar_texto(info_partida.codigo_partida);
     enviar_texto(info_partida.nombre_partida);
-    enviar_u8(info_partida.jugadores_actuales);
+    enviar_u8(info_partida.jugadores_totales);
     enviar_u8(info_partida.jugadores_maximos);
 }
 
@@ -195,11 +204,19 @@ void ProtocoloServidor::enviar_evento_partida_cerrada_por_error(const PartidaCer
 void ProtocoloServidor::enviar_estado_jugador(const EstadoJugador& estado) {
     enviar_u32(estado.id_jugador);
     enviar_texto(estado.mapa);
-    enviar_u32(static_cast<uint32_t>(estado.x));
-    enviar_u32(static_cast<uint32_t>(estado.y));
+    enviar_u32(estado.x);
+    enviar_u32(estado.y);
     enviar_u8(static_cast<uint8_t>(estado.mirando));
-    enviar_u8(estado.camina ? 1 : 0);
+    enviar_booleano(estado.camina);
     enviar_u8(estado.ranura_activa);
+}
+
+void ProtocoloServidor::enviar_estado_objeto_del_mundo(const EstadoObjetoDelMundo& estado) {
+    enviar_u32(estado.id);
+    enviar_texto(estado.mapa);
+    enviar_u32(estado.columna);
+    enviar_u32(estado.fila);
+    enviar_u8(static_cast<uint8_t>(estado.tipo));
 }
 
 void ProtocoloServidor::enviar_ranura_inventario(const RanuraInventario& ranura) {
@@ -243,5 +260,9 @@ void ProtocoloServidor::enviar_estado_juego(const EstadoJuego& estado_juego) {
     enviar_largo(estado_juego.jugadores.size());
     for (const EstadoJugador& estado : estado_juego.jugadores) {
         enviar_estado_jugador(estado);
+    }
+    enviar_largo(estado_juego.objetos.size());
+    for (const EstadoObjetoDelMundo& estado : estado_juego.objetos) {
+        enviar_estado_objeto_del_mundo(estado);
     }
 }

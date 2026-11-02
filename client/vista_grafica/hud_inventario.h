@@ -65,7 +65,6 @@ private:
         const InventarioJugador& inventario, const CofreJugador& cofre,
         const RanuraApuntada& apuntada) const;
 
-    bool hay_item_levantado() const;
     void levantar(
         const InventarioJugador& inventario, const CofreJugador& cofre,
         const RanuraApuntada& ranura, uint16_t cantidad);
@@ -96,6 +95,10 @@ public:
     RanuraApuntada ranura_en(const InventarioJugador& inventario, int x, int y) const;
     RanuraApuntada ranura_en(
         const InventarioJugador& inventario, const CofreJugador& cofre, int x, int y) const;
+
+    // Si el usuario tiene un stack levantado con el mouse. La vista lo consulta para no colocar
+    // un cofre cuando en realidad está moviendo un ítem.
+    bool hay_item_levantado() const;
 
     std::optional<ComandoCliente> procesar_clic_izquierdo(
         const InventarioJugador& inventario, int x, int y);

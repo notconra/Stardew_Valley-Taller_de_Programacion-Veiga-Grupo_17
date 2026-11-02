@@ -9,8 +9,6 @@
 #include <utility>
 #include <vector>
 
-namespace {
-
 // En diagonal cada eje avanza 1/raíz de 2 del paso, para no ir más rápido que en línea recta.
 constexpr double FACTOR_DIAGONAL = 1.0 / std::numbers::sqrt2;
 
@@ -21,8 +19,6 @@ const std::map<Direccion, std::pair<int, int>> DESPLAZAMIENTO_AL_MIRAR{
     {Direccion::IZQUIERDA, {-1, 0}},
     {Direccion::DERECHA, {1, 0}},
 };
-
-}  // namespace
 
 Jugadores::Jugadores(
     const Mapa& mapa_de_partida, const Colisiones& colisiones_de_partida, uint8_t ticks_por_segundo,
@@ -59,29 +55,6 @@ Posicion Jugadores::buscar_aparicion(const ConfiguracionAparicionJugador& desead
     return Posicion{static_cast<double>(deseada.x), static_cast<double>(deseada.y)};
 }
 
-void Jugadores::sincronizar(const std::vector<uint32_t>& ids_conectados) {
-    for (auto jugador = jugadores.begin(); jugador != jugadores.end();) {
-        const bool sigue_conectado =
-            std::find(ids_conectados.begin(), ids_conectados.end(), jugador->first) !=
-            ids_conectados.end();
-        if (sigue_conectado) {
-            ++jugador;
-        } else {
-            jugador = jugadores.erase(jugador);
-        }
-    }
-
-    for (uint32_t id_jugador : ids_conectados) {
-        if (jugadores.contains(id_jugador)) {
-            continue;
-        }
-        JugadorEnPartida nuevo;
-        nuevo.x = aparicion.x;
-        nuevo.y = aparicion.y;
-        jugadores.emplace(id_jugador, nuevo);
-    }
-}
-
 void Jugadores::moverse(uint32_t id_jugador, const Moverse& pedido) {
     auto encontrado = jugadores.find(id_jugador);
     if (encontrado == jugadores.end()) {
@@ -89,8 +62,8 @@ void Jugadores::moverse(uint32_t id_jugador, const Moverse& pedido) {
     }
     JugadorEnPartida& jugador = encontrado->second;
 
-    jugador.horizontal = std::clamp<int>(pedido.horizontal, -1, 1);
-    jugador.vertical = std::clamp<int>(pedido.vertical, -1, 1);
+    jugador.horizontal = std::clamp<int8_t>(pedido.horizontal, -1, 1);
+    jugador.vertical = std::clamp<int8_t>(pedido.vertical, -1, 1);
 
     if (jugador.horizontal != 0) {
         jugador.mirando = jugador.horizontal < 0 ? Direccion::IZQUIERDA : Direccion::DERECHA;
@@ -137,8 +110,8 @@ void Jugadores::agregar_a(EstadoJuego& estado_juego, const std::string& id_mapa)
         estado_juego.jugadores.push_back(EstadoJugador{
             id_jugador,
             id_mapa,
-            static_cast<int32_t>(std::floor(jugador.x)),
-            static_cast<int32_t>(std::floor(jugador.y)),
+            static_cast<uint32_t>(std::floor(jugador.x)),
+            static_cast<uint32_t>(std::floor(jugador.y)),
             jugador.mirando,
             jugador.camina,
             0});
@@ -150,7 +123,7 @@ const JugadorEnPartida* Jugadores::buscar(uint32_t id_jugador) const {
     return encontrado == jugadores.end() ? nullptr : &encontrado->second;
 }
 
-std::optional<Casilla> Jugadores::casilla_de_enfrente(uint32_t id_jugador) const {
+std::optional<Casilla> Jugadores::casilla_del_jugador(uint32_t id_jugador) const {
     const JugadorEnPartida* jugador = buscar(id_jugador);
     if (jugador == nullptr) {
         return std::nullopt;
@@ -159,11 +132,20 @@ std::optional<Casilla> Jugadores::casilla_de_enfrente(uint32_t id_jugador) const
     // Se parte del centro de los pies, que es lo que realmente pisa el jugador.
     const double centro_x = jugador->x + movimiento.hitbox_x + movimiento.hitbox_ancho / 2.0;
     const double centro_y = jugador->y + movimiento.hitbox_y + movimiento.hitbox_alto / 2.0;
-    const int columna = static_cast<int>(std::floor(centro_x / mapa.ancho_de_casilla_en_pixeles()));
-    const int fila = static_cast<int>(std::floor(centro_y / mapa.alto_de_casilla_en_pixeles()));
+    return Casilla{
+        static_cast<int>(std::floor(centro_x / mapa.ancho_de_casilla_en_pixeles())),
+        static_cast<int>(std::floor(centro_y / mapa.alto_de_casilla_en_pixeles()))};
+}
+
+std::optional<Casilla> Jugadores::casilla_de_enfrente(uint32_t id_jugador) const {
+    const JugadorEnPartida* jugador = buscar(id_jugador);
+    const std::optional<Casilla> propia = casilla_del_jugador(id_jugador);
+    if (jugador == nullptr || !propia.has_value()) {
+        return std::nullopt;
+    }
 
     const auto& [desvio_columna, desvio_fila] = DESPLAZAMIENTO_AL_MIRAR.at(jugador->mirando);
-    return Casilla{columna + desvio_columna, fila + desvio_fila};
+    return Casilla{propia->columna + desvio_columna, propia->fila + desvio_fila};
 }
 
 Rectangulo Jugadores::rectangulo_de_pies(double x, double y) const {

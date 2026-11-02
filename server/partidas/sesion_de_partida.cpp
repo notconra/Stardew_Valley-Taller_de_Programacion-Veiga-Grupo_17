@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 SesionDePartida::SesionDePartida(
@@ -97,8 +98,12 @@ void SesionDePartida::procesar_comandos() {
     try {
         ComandoDeJugador pedido;
         while (comandos.try_pop(pedido)) {
-            if (mundo.atender(pedido.id_jugador, pedido.comando)) {
+            const ResultadoDeComando resultado = mundo.atender(pedido.id_jugador, pedido.comando);
+            if (resultado.inventario_cambiado) {
                 difundir_a_jugador(pedido.id_jugador, mundo.obtener_inventario(pedido.id_jugador));
+            }
+            if (resultado.cofre.has_value()) {
+                difundir_a_jugador(pedido.id_jugador, ActualizacionCofre{resultado.cofre.value()});
             }
         }
     } catch (const ClosedQueue&) {

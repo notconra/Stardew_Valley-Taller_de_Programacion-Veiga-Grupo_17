@@ -9,9 +9,9 @@
 
 #include "../../../common/mensajes/mensajes.h"
 #include "../../configuracion/configuracion_servidor_datos.h"
-#include "../base/colisiones/colisiones.h"
-#include "../base/geometria/casilla.h"
-#include "../base/mapas/mapa.h"
+#include "../colisiones/colisiones.h"
+#include "../geometria.h"
+#include "../mapa/mapa.h"
 
 // Lo que el resto del juego puede saber de un jugador. La posición es la esquina superior
 // izquierda del sprite en píxeles del mapa, y es double para avanzar en diagonal sin redondear en
@@ -19,8 +19,8 @@
 struct JugadorEnPartida {
     double x = 0.0;
     double y = 0.0;
-    int horizontal = 0;  // intención, de -1 a 1
-    int vertical = 0;
+    int8_t horizontal = 0;  // intención, de -1 a 1
+    int8_t vertical = 0;
     Direccion mirando = Direccion::ABAJO;
     bool camina = false;
 };
@@ -61,9 +61,6 @@ public:
         uint8_t ticks_por_segundo, const ConfiguracionMovimientoJugador& configuracion_movimiento,
         const ConfiguracionAparicionJugador& configuracion_aparicion);
 
-    // Deja a los jugadores conectados, agrega a los que faltan y saca a los que ya no están.
-    void sincronizar(const std::vector<uint32_t>& ids_conectados);
-
     // Cambia hacia dónde quiere ir el jugador. Ignora a los que no están.
     void moverse(uint32_t id_jugador, const Moverse& pedido);
 
@@ -74,6 +71,10 @@ public:
 
     // Para los sistemas que necesitan saber de un jugador. Devuelve nullptr si no está.
     const JugadorEnPartida* buscar(uint32_t id_jugador) const;
+
+    // La casilla donde están los pies del jugador. Puede estar fuera del mapa, quien la use tiene
+    // que chequearlo.
+    std::optional<Casilla> casilla_del_jugador(uint32_t id_jugador) const;
 
     // La casilla que el jugador tiene adelante: la que usan las acciones.
     // Puede estar fuera del mapa, quien la use tiene que chequearlo.

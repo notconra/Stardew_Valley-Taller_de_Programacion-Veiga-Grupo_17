@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <limits>
 #include <map>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -41,16 +42,15 @@ Partida& AdministradorDePartidas::buscar_partida(const std::string& codigo_parti
     return partida->second;
 }
 
-SesionDePartida& AdministradorDePartidas::sesion_de(const std::string& codigo_partida) {
-    auto sesion_existente = sesiones.find(codigo_partida);
-    if (sesion_existente != sesiones.end()) {
-        return sesion_existente->second;
-    }
+std::unique_ptr<SesionDePartida> AdministradorDePartidas::crear_sesion(
+    const std::string& codigo_partida) const {
     std::vector<DatosJugadorGuardado> jugadores_guardados =
         cargar_jugadores_guardados(codigo_partida);
-    return sesiones
-        .try_emplace(codigo_partida, codigo_partida, configuracion, recursos, jugadores_guardados)
-        .first->second;
+    return std::make_unique<SesionDePartida>(
+        codigo_partida,
+        configuracion,
+        recursos,
+        jugadores_guardados);
 }
 
 std::vector<InfoPartida> AdministradorDePartidas::listar(uint32_t id_cliente) const {
@@ -67,98 +67,190 @@ std::vector<InfoPartida> AdministradorDePartidas::listar(uint32_t id_cliente) co
 
 IngresoAPartida AdministradorDePartidas::crear(
     uint32_t id_cliente, const std::string& nombre_jugador, const std::string& nombre_partida) {
-    std::lock_guard<std::mutex> lock(mutex);
+    EntradaExitosaAPartida entrada;
+    std::string codigo;
+    {
+        std::lock_guard<std::mutex> lock(mutex);
 
-    for (const auto& entrada : partidas) {
-        if (entrada.second.obtener_nombre() == nombre_partida) {
-            throw ErrorDePartida(
-                CodigoError::NOMBRE_PARTIDA_REPETIDO,
-                "ya existe una partida llamada \"" + nombre_partida + "\"");
+        for (const auto& entrada_partida : partidas) {
+            if (entrada_partida.second.obtener_nombre() == nombre_partida) {
+                throw ErrorDePartida(
+                    CodigoError::NOMBRE_PARTIDA_REPETIDO,
+                    "ya existe una partida llamada \"" + nombre_partida + "\"");
+            }
         }
-    }
 
-    const std::string codigo = "P" + std::to_string(proximo_numero_de_partida);
-    auto insertada = partidas.emplace(
-        codigo,
-        Partida(
+        codigo = "P" + std::to_string(proximo_numero_de_partida);
+        ++proximo_numero_de_partida;
+        auto insertada = partidas.try_emplace(
+            codigo,
             codigo,
             nombre_partida,
             static_cast<uint8_t>(configuracion.jugadores_maximos_por_partida),
-            false,
-            {Jugador{id_cliente, 1, nombre_jugador, false}}));
-    ++proximo_numero_de_partida;
+            id_cliente,
+            nombre_jugador);
+        try {
+            entrada = insertada.first->second.conectar(id_cliente, nombre_jugador);
+        } catch (...) {
+            partidas.erase(insertada.first);
+            throw;
+        }
+    }
 
-    Partida& partida = insertada.first->second;
-    const EntradaExitosaAPartida entrada = partida.conectar(id_cliente, nombre_jugador);
+    // La sesión arranca un hilo, por eso se crea sin el mutex tomado.
+    std::unique_ptr<SesionDePartida> sesion;
+    try {
+        sesion = crear_sesion(codigo);
+    } catch (...) {
+        std::lock_guard<std::mutex> lock(mutex);
+        partidas.erase(codigo);
+        throw;
+    }
 
-    return IngresoAPartida{entrada, sesion_de(codigo)};
+    SesionDePartida* sesion_creada = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        sesion_creada = sesiones.try_emplace(codigo, std::move(sesion)).first->second.get();
+    }
+    return IngresoAPartida{entrada, *sesion_creada};
 }
 
 IngresoAPartida AdministradorDePartidas::unirse(
     uint32_t id_cliente, const std::string& nombre_jugador, const std::string& codigo_partida) {
-    std::lock_guard<std::mutex> lock(mutex);
-
-    Partida& partida = buscar_partida(codigo_partida);
-
-    const auto sesion_existente = sesiones.find(codigo_partida);
-    if (sesion_existente != sesiones.end() && !sesion_existente->second.esta_viva()) {
-        throw ErrorDePartida(
-            CodigoError::PARTIDA_CERRADA,
-            "la partida " + codigo_partida + " se cerró por un error interno");
-    }
-
-    const bool habia_sesion = (sesion_existente != sesiones.end());
-    const std::string codigo = codigo_partida;
-    std::vector<DatosJugadorGuardado> jugadores_guardados =
-        cargar_jugadores_guardados(codigo_partida);
-    auto sesion_creada =
-        sesiones.try_emplace(codigo, codigo, configuracion, recursos, jugadores_guardados).first;
-
-    try {
-        const EntradaExitosaAPartida entrada = partida.conectar(id_cliente, nombre_jugador);
-        return IngresoAPartida{entrada, sesion_creada->second};
-    } catch (...) {
-        if (!habia_sesion) {
-            sesiones.erase(sesion_creada);
+    bool hay_sesion = false;
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        buscar_partida(codigo_partida);
+        const auto existente = sesiones.find(codigo_partida);
+        if (existente != sesiones.end()) {
+            if (!existente->second->esta_viva()) {
+                throw ErrorDePartida(
+                    CodigoError::PARTIDA_CERRADA,
+                    "la partida " + codigo_partida + " se cerró por un error interno");
+            }
+            hay_sesion = true;
         }
-        throw;
     }
+
+    // La sesión arranca un hilo, por eso se crea sin el mutex tomado.
+    std::unique_ptr<SesionDePartida> sesion_nueva;
+    if (!hay_sesion) {
+        sesion_nueva = crear_sesion(codigo_partida);
+    }
+
+    std::unique_ptr<SesionDePartida> sesion_sobrante;
+    SesionDePartida* sesion = nullptr;
+    EntradaExitosaAPartida entrada;
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+
+        Partida& partida = buscar_partida(codigo_partida);
+        auto existente = sesiones.find(codigo_partida);
+        bool sesion_insertada_aca = false;
+        if (existente != sesiones.end()) {
+            if (!existente->second->esta_viva()) {
+                sesion_sobrante = std::move(sesion_nueva);
+                throw ErrorDePartida(
+                    CodigoError::PARTIDA_CERRADA,
+                    "la partida " + codigo_partida + " se cerró por un error interno");
+            }
+            // Acá otro hilo creó la sesión asiq se usa esa y esta se descarta
+            // afuera del mutex
+            sesion_sobrante = std::move(sesion_nueva);
+            sesion = existente->second.get();
+        } else {
+            if (!sesion_nueva) {
+                throw ErrorDePartida(
+                    CodigoError::PARTIDA_CERRADA,
+                    "la partida " + codigo_partida + " se cerró por un error interno");
+            }
+            sesion =
+                sesiones.try_emplace(codigo_partida, std::move(sesion_nueva)).first->second.get();
+            sesion_insertada_aca = true;
+        }
+
+        try {
+            entrada = partida.conectar(id_cliente, nombre_jugador);
+        } catch (...) {
+            if (sesion_insertada_aca) {
+                auto insertada = sesiones.find(codigo_partida);
+                sesion_sobrante = std::move(insertada->second);
+                sesiones.erase(insertada);
+            }
+            throw;
+        }
+    }
+    return IngresoAPartida{entrada, *sesion};
 }
 
 IngresoAPartida AdministradorDePartidas::retomar(
     uint32_t id_cliente, const std::string& codigo_partida) {
-    std::lock_guard<std::mutex> lock(mutex);
-
-    Partida& partida = buscar_partida(codigo_partida);
-    if (!partida.es_miembro(id_cliente)) {
-        throw ErrorDePartida(
-            CodigoError::NO_PERMITIDO,
-            "no sos miembro de la partida \"" + codigo_partida + "\"");
-    }
-
-    const auto sesion_existente = sesiones.find(codigo_partida);
-    if (sesion_existente != sesiones.end() && !sesion_existente->second.esta_viva()) {
-        throw ErrorDePartida(
-            CodigoError::PARTIDA_CERRADA,
-            "la partida " + codigo_partida + " se cerró por un error interno");
-    }
-
-    const bool habia_sesion = (sesion_existente != sesiones.end());
-    const std::string codigo = codigo_partida;
-    std::vector<DatosJugadorGuardado> jugadores_guardados =
-        cargar_jugadores_guardados(codigo_partida);
-    auto sesion_creada =
-        sesiones.try_emplace(codigo, codigo, configuracion, recursos, jugadores_guardados).first;
-
-    try {
-        const EntradaExitosaAPartida entrada = partida.reconectar(id_cliente);
-        return IngresoAPartida{entrada, sesion_creada->second};
-    } catch (...) {
-        if (!habia_sesion) {
-            sesiones.erase(sesion_creada);
+    bool hay_sesion = false;
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        Partida& partida = buscar_partida(codigo_partida);
+        if (!partida.es_miembro(id_cliente)) {
+            throw ErrorDePartida(
+                CodigoError::NO_PERMITIDO,
+                "no sos miembro de la partida \"" + codigo_partida + "\"");
         }
-        throw;
+        const auto existente = sesiones.find(codigo_partida);
+        if (existente != sesiones.end()) {
+            if (!existente->second->esta_viva()) {
+                throw ErrorDePartida(
+                    CodigoError::PARTIDA_CERRADA,
+                    "la partida " + codigo_partida + " se cerró por un error interno");
+            }
+            hay_sesion = true;
+        }
     }
+
+    std::unique_ptr<SesionDePartida> sesion_nueva;
+    if (!hay_sesion) {
+        sesion_nueva = crear_sesion(codigo_partida);
+    }
+
+    std::unique_ptr<SesionDePartida> sesion_sobrante;
+    SesionDePartida* sesion = nullptr;
+    EntradaExitosaAPartida entrada;
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+
+        Partida& partida = buscar_partida(codigo_partida);
+        auto existente = sesiones.find(codigo_partida);
+        bool sesion_insertada_aca = false;
+        if (existente != sesiones.end()) {
+            if (!existente->second->esta_viva()) {
+                sesion_sobrante = std::move(sesion_nueva);
+                throw ErrorDePartida(
+                    CodigoError::PARTIDA_CERRADA,
+                    "la partida " + codigo_partida + " se cerró por un error interno");
+            }
+            sesion_sobrante = std::move(sesion_nueva);
+            sesion = existente->second.get();
+        } else {
+            if (!sesion_nueva) {
+                throw ErrorDePartida(
+                    CodigoError::PARTIDA_CERRADA,
+                    "la partida " + codigo_partida + " se cerró por un error interno");
+            }
+            sesion =
+                sesiones.try_emplace(codigo_partida, std::move(sesion_nueva)).first->second.get();
+            sesion_insertada_aca = true;
+        }
+
+        try {
+            entrada = partida.reconectar(id_cliente);
+        } catch (...) {
+            if (sesion_insertada_aca) {
+                auto insertada = sesiones.find(codigo_partida);
+                sesion_sobrante = std::move(insertada->second);
+                sesiones.erase(insertada);
+            }
+            throw;
+        }
+    }
+    return IngresoAPartida{entrada, *sesion};
 }
 
 void AdministradorDePartidas::hacer_multijugador(
@@ -180,17 +272,23 @@ void AdministradorDePartidas::salir(const std::string& codigo_partida, uint32_t 
 }
 
 void AdministradorDePartidas::limpiar_sesion_si_vacia(const std::string& codigo_partida) {
-    std::lock_guard<std::mutex> lock(mutex);
+    std::unique_ptr<SesionDePartida> sesion_a_destruir;
+    {
+        std::lock_guard<std::mutex> lock(mutex);
 
-    const auto partida = partidas.find(codigo_partida);
-    if (partida != partidas.end() && partida->second.cantidad_de_conectados() != 0) {
-        return;
+        const auto partida = partidas.find(codigo_partida);
+        if (partida != partidas.end() && partida->second.cantidad_de_conectados() != 0) {
+            return;
+        }
+
+        const auto sesion = sesiones.find(codigo_partida);
+        if (sesion != sesiones.end()) {
+            sesion_a_destruir = std::move(sesion->second);
+            sesiones.erase(sesion);
+        }
     }
 
-    const auto sesion = sesiones.find(codigo_partida);
-    if (sesion != sesiones.end()) {
-        sesiones.erase(sesion);
-    }
+    // El destructor de la sesión hace join() de su hilo, corre fuera del mutex global.
 }
 
 void AdministradorDePartidas::cargar_partidas_guardadas() {
@@ -250,7 +348,13 @@ std::vector<DatosJugadorGuardado> AdministradorDePartidas::cargar_jugadores_guar
 void AdministradorDePartidas::guardar_partida(const std::string& codigo_partida) {
     std::lock_guard<std::mutex> lock(mutex);
     Partida& partida = buscar_partida(codigo_partida);
-    SesionDePartida& sesion = sesion_de(codigo_partida);
+    auto sesion_it = sesiones.find(codigo_partida);
+    if (sesion_it == sesiones.end() || !sesion_it->second) {
+        throw ErrorDePartida(
+            CodigoError::PARTIDA_CERRADA,
+            "no hay sesión activa para la partida \"" + codigo_partida + "\"");
+    }
+    SesionDePartida& sesion = *sesion_it->second;
 
     std::string ruta_archivo = "partidas/" + codigo_partida + ".dat";
     std::map<uint32_t, DatosJugadorGuardado> jugadores_guardados_previos;

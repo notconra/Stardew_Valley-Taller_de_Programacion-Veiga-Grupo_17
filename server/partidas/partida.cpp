@@ -7,6 +7,17 @@
 
 Partida::Partida(
     const std::string& codigo_de_partida, const std::string& nombre_de_partida,
+    uint8_t maximo_de_jugadores, uint32_t id_cliente_creador,
+    const std::string& nombre_jugador_creador)
+    : codigo(codigo_de_partida),
+      nombre(nombre_de_partida),
+      jugadores_maximos(maximo_de_jugadores),
+      multijugador(false) {
+    jugadores.push_back(Jugador{id_cliente_creador, 1, nombre_jugador_creador, false});
+}
+
+Partida::Partida(
+    const std::string& codigo_de_partida, const std::string& nombre_de_partida,
     uint8_t maximo_de_jugadores, bool es_multijugador, const std::vector<Jugador>& lista_jugadores)
     : codigo(codigo_de_partida),
       nombre(nombre_de_partida),

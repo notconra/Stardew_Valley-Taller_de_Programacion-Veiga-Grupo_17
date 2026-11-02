@@ -32,6 +32,9 @@ private:
     MoverItemConCofre recibir_comando_mover_item_con_cofre();
     SolicitarInventario recibir_comando_solicitar_inventario();
 
+    // Valida que el eje venga en el rango -1..1. Lanza ErrorProtocolo si no.
+    int8_t eje_de_movimiento(int8_t valor) const;
+
     // Envío de eventos
     void enviar_evento_error_servidor(const ErrorServidor& error_servidor);
     void enviar_evento_partida_cerrada_por_error(const PartidaCerradaPorError& cerrada);
@@ -45,6 +48,7 @@ private:
 
     // partida
     void enviar_estado_jugador(const EstadoJugador& estado);
+    void enviar_estado_objeto_del_mundo(const EstadoObjetoDelMundo& estado);
     void enviar_ranura_inventario(const RanuraInventario& ranura);
     void enviar_ranuras(const std::vector<RanuraInventario>& ranuras);
     void enviar_inventario_jugador(const InventarioJugador& inventario);

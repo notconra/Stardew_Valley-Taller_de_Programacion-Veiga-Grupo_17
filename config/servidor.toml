@@ -35,9 +35,87 @@ ruta_tmx = "Assets/Maps/Town.tmx"
 id = "FarmHouse"
 ruta_tmx = "Assets/Maps/FarmHouse.tmx"
 
+# Niveles de la mazmorra: se registran como mapas comunes y [mazmorra] dice cuáles son.
+# Cada partida elige 10 al azar entre ellos.
 [[mapas]]
-id = "cueva1"
+id = "mina_1"
 ruta_tmx = "Assets/Maps/Mines/1.tmx"
+
+[[mapas]]
+id = "mina_2"
+ruta_tmx = "Assets/Maps/Mines/2.tmx"
+
+[[mapas]]
+id = "mina_3"
+ruta_tmx = "Assets/Maps/Mines/3.tmx"
+
+[[mapas]]
+id = "mina_4"
+ruta_tmx = "Assets/Maps/Mines/4.tmx"
+
+[[mapas]]
+id = "mina_5"
+ruta_tmx = "Assets/Maps/Mines/5.tmx"
+
+[[mapas]]
+id = "mina_6"
+ruta_tmx = "Assets/Maps/Mines/6.tmx"
+
+[[mapas]]
+id = "mina_7"
+ruta_tmx = "Assets/Maps/Mines/7.tmx"
+
+[[mapas]]
+id = "mina_8"
+ruta_tmx = "Assets/Maps/Mines/8.tmx"
+
+[[mapas]]
+id = "mina_9"
+ruta_tmx = "Assets/Maps/Mines/9.tmx"
+
+[[mapas]]
+id = "mina_11"
+ruta_tmx = "Assets/Maps/Mines/11.tmx"
+
+[[mapas]]
+id = "mina_12"
+ruta_tmx = "Assets/Maps/Mines/12.tmx"
+
+[[mapas]]
+id = "mina_13"
+ruta_tmx = "Assets/Maps/Mines/13.tmx"
+
+[[mapas]]
+id = "mina_14"
+ruta_tmx = "Assets/Maps/Mines/14.tmx"
+
+[[mapas]]
+id = "mina_15"
+ruta_tmx = "Assets/Maps/Mines/15.tmx"
+
+[[mapas]]
+id = "mina_16"
+ruta_tmx = "Assets/Maps/Mines/16.tmx"
+
+[[mapas]]
+id = "mina_17"
+ruta_tmx = "Assets/Maps/Mines/17.tmx"
+
+[[mapas]]
+id = "mina_18"
+ruta_tmx = "Assets/Maps/Mines/18.tmx"
+
+[[mapas]]
+id = "mina_19"
+ruta_tmx = "Assets/Maps/Mines/19.tmx"
+
+[[mapas]]
+id = "mina_21"
+ruta_tmx = "Assets/Maps/Mines/21.tmx"
+
+[[mapas]]
+id = "mina_24"
+ruta_tmx = "Assets/Maps/Mines/24.tmx"
 
 #[[mapas.capas_opcionales]]
 #nombre = "Cultivable"
@@ -65,3 +143,12 @@ ruta_tmx = "Assets/Maps/Mines/1.tmx"
 
 [juego.inventario]
 # cantidad_ranuras_barra = 10
+
+# La mazmorra. Una transición con mapa_destino = destino (en Farm.tmx) entra al nivel 1.
+[mazmorra]
+destino = "mazmorra"
+mapas = ["mina_1", "mina_2", "mina_3", "mina_4", "mina_5", "mina_6", "mina_7", "mina_8", "mina_9", "mina_11", "mina_12", "mina_13", "mina_14", "mina_15", "mina_16", "mina_17", "mina_18", "mina_19", "mina_21", "mina_24"]
+enemigos_por_nivel = 4
+minerales_por_nivel = 30
+# Nivel a partir del cual puede aparecer el oro (el enunciado lo pide desde la quinta sala).
+oro_desde_nivel = 5

@@ -68,6 +68,9 @@ public:
     // El usuario apretó la tecla para usar el ítem de la ranura activa.
     bool pidio_usar_item() const;
 
+    // El usuario apretó la tecla para abrir o cerrar el cofre que tiene enfrente.
+    bool pidio_cofre() const;
+
     // Posición del mouse dentro de la ventana, en píxeles.
     int raton_x() const;
     int raton_y() const;

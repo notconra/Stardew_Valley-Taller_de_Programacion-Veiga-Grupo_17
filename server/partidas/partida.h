@@ -36,6 +36,11 @@ private:
 public:
     Partida(
         const std::string& codigo_de_partida, const std::string& nombre_de_partida,
+        uint8_t maximo_de_jugadores, uint32_t id_cliente_creador,
+        const std::string& nombre_jugador_creador);
+
+    Partida(
+        const std::string& codigo_de_partida, const std::string& nombre_de_partida,
         uint8_t maximo_de_jugadores, bool es_multijugador,
         const std::vector<Jugador>& lista_jugadores);
 
@@ -53,7 +58,7 @@ public:
     // Jugadores que tienen lugar y están conectados ahora.
     uint8_t cantidad_de_conectados() const;
 
-    // jugadores_actuales es cantidad_de_jugadores(), los lugares ocupados.
+    // jugadores_totales es cantidad_de_jugadores(), los lugares ocupados.
     InfoPartida info() const;
 
     // Permite que entren jugadores nuevos. Lanza ErrorDePartida si el cliente no es jugador de la
