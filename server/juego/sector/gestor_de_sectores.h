@@ -1,0 +1,82 @@
+#ifndef GESTOR_DE_SECTORES_H
+#define GESTOR_DE_SECTORES_H
+
+#include <cstdint>
+#include <map>
+#include <string>
+#include <vector>
+
+#include "../../../common/mensajes/mensajes.h"
+#include "../jugadores/personaje.h"
+#include "../mapa/mapa.h"
+#include "../notificador.h"
+#include "../recursos/recursos_de_juego.h"
+#include "sector.h"
+
+struct JugadorEnTransicion {
+    uint32_t id_jugador;
+    Transicion transicion;
+};
+
+// Dueño de todos los sectores (mapas) de la partida. Es el único que sabe cómo mover a un
+// personaje de un sector a otro, así ningún otro sistema repite esa lógica. También es el que arma
+// las instantáneas y los avisos de cada sector, porque es el único que conoce a todos sus
+// jugadores.
+class GestorDeSectores {
+private:
+    Notificador& notificador;
+    const std::map<uint32_t, Personaje>& personajes;
+    std::map<std::string, Sector> sectores;
+
+    void enviar_instantanea(uint32_t id_jugador, const std::string& id_mapa);
+
+public:
+    // Cada sector usa por referencia el mapa que ya está cargado en "recursos", que tiene que
+    // vivir más que el gestor.
+    GestorDeSectores(
+        const RecursosDeJuego& recursos, uint8_t ticks_por_segundo,
+        const std::map<uint32_t, Personaje>& personajes, Notificador& notificador);
+
+    GestorDeSectores(const GestorDeSectores&) = delete;
+    GestorDeSectores& operator=(const GestorDeSectores&) = delete;
+
+    bool existe(const std::string& id_mapa) const;
+
+    // Lanzan std::out_of_range si el sector no existe.
+    Sector& en(const std::string& id_mapa);
+    const Sector& en(const std::string& id_mapa) const;
+
+    // Un jugador nuevo: aparece en el punto de aparición del mapa indicado y recibe la instantánea
+    // completa del sector.
+    void colocar_en_aparicion(Personaje& personaje, const std::string& id_mapa);
+
+    // Lo saca de su sector actual y lo pone en (x, y) píxeles del destino.
+    void trasladar(Personaje& personaje, const std::string& destino, double x, double y);
+
+    // Igual, pero indicando la casilla de llegada.
+    void trasladar_a_casilla(
+        Personaje& personaje, const std::string& destino, int columna, int fila);
+
+    // Lo saca de su sector (se desconectó).
+    void quitar(const Personaje& personaje);
+
+    // Un tick de física en todos los sectores.
+    void actualizar();
+
+    // Quién está pisando una transición, en cualquier sector. Se llama después de actualizar().
+    std::vector<JugadorEnTransicion> jugadores_en_transicion() const;
+
+    // Posición y estado de los jugadores de un sector, listos para mandar.
+    std::vector<EstadoJugador> armar_jugadores(const std::string& id_mapa) const;
+
+    // Instantánea completa de un sector: jugadores, objetos y drops.
+    EstadoJuego armar_instantanea(const std::string& id_mapa) const;
+
+    // Manda JugadoresEnSector a los jugadores de ese sector.
+    void difundir_jugadores(const std::string& id_mapa);
+
+    // Manda JugadoresEnSector a los jugadores de todos los sectores. Se llama una vez por tick.
+    void difundir_jugadores();
+};
+
+#endif
