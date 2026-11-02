@@ -55,15 +55,15 @@ Posicion Jugadores::buscar_aparicion(const ConfiguracionAparicionJugador& desead
     return Posicion{static_cast<double>(deseada.x), static_cast<double>(deseada.y)};
 }
 
-void Jugadores::moverse(uint32_t id_jugador, const Moverse& pedido) {
+void Jugadores::moverse(uint32_t id_jugador, int8_t horizontal, int8_t vertical) {
     auto encontrado = jugadores.find(id_jugador);
     if (encontrado == jugadores.end()) {
         return;
     }
     JugadorEnPartida& jugador = encontrado->second;
 
-    jugador.horizontal = std::clamp<int8_t>(pedido.horizontal, -1, 1);
-    jugador.vertical = std::clamp<int8_t>(pedido.vertical, -1, 1);
+    jugador.horizontal = std::clamp<int8_t>(horizontal, -1, 1);
+    jugador.vertical = std::clamp<int8_t>(vertical, -1, 1);
 
     if (jugador.horizontal != 0) {
         jugador.mirando = jugador.horizontal < 0 ? Direccion::IZQUIERDA : Direccion::DERECHA;
@@ -101,20 +101,6 @@ void Jugadores::actualizar() {
 
         // Camina si realmente se movió, contra una pared se queda quieto aunque mantenga la tecla.
         jugador.camina = jugador.x != x_anterior || jugador.y != y_anterior;
-    }
-}
-
-void Jugadores::agregar_a(EstadoJuego& estado_juego, const std::string& id_mapa) const {
-    estado_juego.jugadores.reserve(estado_juego.jugadores.size() + jugadores.size());
-    for (const auto& [id_jugador, jugador] : jugadores) {
-        estado_juego.jugadores.push_back(EstadoJugador{
-            id_jugador,
-            id_mapa,
-            static_cast<uint32_t>(std::floor(jugador.x)),
-            static_cast<uint32_t>(std::floor(jugador.y)),
-            jugador.mirando,
-            jugador.camina,
-            0});
     }
 }
 
@@ -177,6 +163,45 @@ void Jugadores::agregar_en(uint32_t id_jugador, double x, double y) {
     nuevo.y = y;
     jugadores[id_jugador] = nuevo;
 }
+
+std::vector<uint32_t> Jugadores::ids() const {
+    std::vector<uint32_t> resultado;
+    resultado.reserve(jugadores.size());
+    for (const auto& entrada : jugadores) {
+        resultado.push_back(entrada.first);
+    }
+    return resultado;
+}
+
+void Jugadores::mirar_hacia(uint32_t id_jugador, const Casilla& casilla_destino) {
+    auto encontrado = jugadores.find(id_jugador);
+    if (encontrado == jugadores.end()) {
+        return;
+    }
+    JugadorEnPartida& jugador = encontrado->second;
+    std::optional<Casilla> propia = casilla_del_jugador(id_jugador);
+    if (!propia.has_value()) {
+        return;
+    }
+
+    int diff_col = casilla_destino.columna - propia->columna;
+    int diff_fila = casilla_destino.fila - propia->fila;
+
+    if (std::abs(diff_col) > std::abs(diff_fila)) {
+        if (diff_col > 0) {
+            jugador.mirando = Direccion::DERECHA;
+        } else if (diff_col < 0) {
+            jugador.mirando = Direccion::IZQUIERDA;
+        }
+    } else if (diff_fila != 0) {
+        if (diff_fila > 0) {
+            jugador.mirando = Direccion::ABAJO;
+        } else if (diff_fila < 0) {
+            jugador.mirando = Direccion::ARRIBA;
+        }
+    }
+}
+
 void Jugadores::agregar_en_aparicion(uint32_t id_jugador) {
     agregar_en(id_jugador, aparicion.x, aparicion.y);
 }
