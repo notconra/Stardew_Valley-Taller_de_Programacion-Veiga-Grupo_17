@@ -10,6 +10,12 @@
 #include "../geometria/rectangulo.h"
 #include "propiedad_de_casilla.h"
 
+#define CAPA_DE_PISO "Back"
+
+#define VALOR_VERDADERO_TMX "T"
+
+#define MASCARA_ID_DE_TILE 0x1FFFFFFF
+
 // A dónde lleva una transición: el mapa destino y la casilla donde aparece el jugador ahí.
 struct Transicion {
     std::string mapa_destino;
@@ -36,6 +42,12 @@ private:
     // Suma "propiedad" a toda casilla no vacía de la capa. Lanza std::runtime_error si la capa
     // no coincide con el tamaño del mapa.
     void marcar(const std::vector<int>& capa, uint8_t propiedad, const std::string& nombre_capa);
+
+    // Suma "propiedad" a las casillas de la capa cuyo tile es uno de "ids". Lanza
+    // std::runtime_error si la capa no coincide con el tamaño del mapa.
+    void marcar_si_es_alguno(
+        const std::vector<int>& capa, const std::vector<int>& ids, uint8_t propiedad,
+        const std::string& nombre_capa);
 
 public:
     // Lanza std::runtime_error si no puede leer el TMX o la capa de colisiones.

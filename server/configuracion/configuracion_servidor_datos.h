@@ -28,6 +28,7 @@ struct ConfiguracionMapaServidor {
     std::string capa_respaldo = "Buildings";
     std::string capa_transiciones = "Transiciones";
     std::vector<CapaOpcionalMapaServidor> capas_opcionales;
+    std::string propiedad_cultivable;
 };
 struct ConfiguracionMovimientoJugador {
     double velocidad = 120.0;

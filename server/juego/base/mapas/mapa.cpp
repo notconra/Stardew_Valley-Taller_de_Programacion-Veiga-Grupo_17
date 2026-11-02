@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <map>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -65,12 +66,31 @@ Mapa::Mapa(const ConfiguracionMapaServidor& configuracion) {
             marcar(capa, encontrado->second, capa_opcional.nombre);
         }
     }
-    for (const TransicionTMX& transicion_tmx : lector.cargar_transiciones(
-             configuracion.capa_transiciones)) {
-        const Rectangulo zona{transicion_tmx.x, transicion_tmx.y, transicion_tmx.ancho,
-                               transicion_tmx.alto};
-        const Transicion transicion{transicion_tmx.mapa_destino, transicion_tmx.columna_destino,
-                                     transicion_tmx.fila_destino};
+    if (!configuracion.propiedad_cultivable.empty()) {
+        const std::vector<int> piso = lector.cargar_capa(CAPA_DE_PISO);
+        if (piso.empty()) {
+            throw std::runtime_error(
+                std::string("falta la capa ") + CAPA_DE_PISO + " para la tierra cultivable de " +
+                configuracion.ruta_tmx);
+        }
+        marcar_si_es_alguno(
+            piso,
+            lector.ids_con_propiedad(configuracion.propiedad_cultivable, VALOR_VERDADERO_TMX),
+            PropiedadDeCasilla::CULTIVABLE,
+            CAPA_DE_PISO);
+    }
+
+    for (const TransicionTMX& transicion_tmx :
+         lector.cargar_transiciones(configuracion.capa_transiciones)) {
+        const Rectangulo zona{
+            transicion_tmx.x,
+            transicion_tmx.y,
+            transicion_tmx.ancho,
+            transicion_tmx.alto};
+        const Transicion transicion{
+            transicion_tmx.mapa_destino,
+            transicion_tmx.columna_destino,
+            transicion_tmx.fila_destino};
         transiciones.emplace_back(zona, transicion);
     }
 }
@@ -81,6 +101,20 @@ void Mapa::marcar(const std::vector<int>& capa, uint8_t propiedad, const std::st
     }
     for (std::size_t i = 0; i < capa.size(); ++i) {
         if (capa[i] != 0) {
+            propiedades[i] = static_cast<uint8_t>(propiedades[i] | propiedad);
+        }
+    }
+}
+
+void Mapa::marcar_si_es_alguno(
+    const std::vector<int>& capa, const std::vector<int>& ids, uint8_t propiedad,
+    const std::string& nombre_capa) {
+    if (capa.size() != propiedades.size()) {
+        throw std::runtime_error("la capa " + nombre_capa + " no coincide con el tamaño del mapa");
+    }
+    const std::set<int> buscados(ids.begin(), ids.end());
+    for (std::size_t i = 0; i < capa.size(); ++i) {
+        if (buscados.contains(capa[i] & MASCARA_ID_DE_TILE)) {
             propiedades[i] = static_cast<uint8_t>(propiedades[i] | propiedad);
         }
     }
@@ -124,10 +158,9 @@ bool Mapa::tiene(int columna, int fila, uint8_t propiedad) const {
 
 namespace {
 bool se_superponen(const Rectangulo& a, const Rectangulo& b) {
-    return a.x < b.x + b.ancho && a.x + a.ancho > b.x && a.y < b.y + b.alto &&
-           a.y + a.alto > b.y;
+    return a.x < b.x + b.ancho && a.x + a.ancho > b.x && a.y < b.y + b.alto && a.y + a.alto > b.y;
 }
-}
+}  // namespace
 
 const Transicion* Mapa::transicion_en(const Rectangulo& zona) const {
     for (const std::pair<Rectangulo, Transicion>& par : transiciones) {

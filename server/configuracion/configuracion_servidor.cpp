@@ -98,6 +98,17 @@ void ConfiguracionServidor::cargar_mapas(const toml::table& archivo_toml) {
             configuracion_mapa.capa_transiciones = *valor_capa_transiciones;
         }
 
+        const auto valor_propiedad_cultivable =
+            (*mapa)["propiedad_cultivable"].value<std::string>();
+        if (valor_propiedad_cultivable) {
+            if (valor_propiedad_cultivable->empty()) {
+                throw std::runtime_error(
+                    "configuración: la clave 'propiedad_cultivable' de " + seccion +
+                    " no puede estar vacía");
+            }
+            configuracion_mapa.propiedad_cultivable = *valor_propiedad_cultivable;
+        }
+
         const toml::array* capas_opcionales = (*mapa)["capas_opcionales"].as_array();
         if (capas_opcionales != nullptr) {
             for (std::size_t j = 0; j < capas_opcionales->size(); ++j) {

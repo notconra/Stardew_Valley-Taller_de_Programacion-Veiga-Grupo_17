@@ -17,6 +17,7 @@ Mundo::Mundo(const RecursosDeJuego& recursos_de_juego, uint8_t ticks_por_segundo
       recursos(recursos_de_juego) {
     for (const auto& [id_mapa, mapa] : recursos.mapas) {
         colisiones_por_mapa.try_emplace(id_mapa, mapa);
+        tierra_por_mapa.try_emplace(id_mapa, mapa);
     }
 
     for (const auto& [id_mapa, mapa] : recursos.mapas) {
@@ -242,6 +243,7 @@ EstadoJuego Mundo::estado() const {
 
     return estado_juego;
 }
+
 EstadoTierra Mundo::estado_tierra() const {
     EstadoTierra estado_tierra;
     for (const auto& [id_mapa, tierra] : tierra_por_mapa) {
