@@ -43,6 +43,10 @@ public:
 
     bool existe(const std::string& id_mapa) const;
 
+    // Los ids de todos los mapas con sector, para quien necesite recorrerlos todos (por ejemplo,
+    // ControladorDeEnemigos). Sin orden garantizado.
+    std::vector<std::string> ids_de_sectores() const;
+
     // Lanzan std::out_of_range si el sector no existe.
     Sector& en(const std::string& id_mapa);
     const Sector& en(const std::string& id_mapa) const;

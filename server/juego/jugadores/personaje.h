@@ -36,6 +36,22 @@ struct Personaje {
     TipoAccion accion_actual = TipoAccion::NINGUNA;
     uint16_t ticks_restantes_accion = 0;
 
+    // Vida del jugador en combate (ver "Un día en el juego" del enunciado). Arranca a tope y se
+    // repone entera al dormir; por ahora el único lado implementado es "la mazmorra le pega al
+    // jugador": el reposo al dormir y el desmayo automático a las 2am los va a manejar el ciclo de
+    // día, que todavía no existe. VIDA_MAXIMA toma el valor de VIDA_MAXIMA_JUGADOR (común con el
+    // cliente) para que el servidor y la barra de vida del HUD nunca se desincronicen.
+    static constexpr int VIDA_MAXIMA = VIDA_MAXIMA_JUGADOR;
+    int vida = VIDA_MAXIMA;
+
+    // Energía del jugador. El enunciado la gasta con cualquier acción y la liga a la velocidad de
+    // movimiento al 10%; por ahora lo único implementado es que atacar con la espada la gasta
+    // (ver AccionAtacar); el resto de las acciones y el efecto en la velocidad quedan para cuando
+    // se sume el ciclo de día completo. ENERGIA_MAXIMA toma ENERGIA_MAXIMA_JUGADOR por la misma
+    // razón que VIDA_MAXIMA.
+    static constexpr int ENERGIA_MAXIMA = ENERGIA_MAXIMA_JUGADOR;
+    int energia = ENERGIA_MAXIMA;
+
     Personaje(
         uint32_t id, const std::string& mapa_inicial, const CatalogoDeItems& catalogo,
         uint8_t cantidad_ranuras_barra);
@@ -54,6 +70,20 @@ struct Personaje {
     bool quitar_de_ranura(uint8_t indice_ranura, uint16_t cantidad);
 
     bool esta_ocupado() const;
+
+    // Al 20% de vida o menos el jugador golpea a la mitad de efectivo (regla del enunciado), así
+    // que esto es lo que hay que multiplicar al daño que reparte con la espada.
+    double multiplicador_de_ataque() const;
+
+    // Si está a tope de vida (no puede subir más) o a cero (no baja de ahí).
+    bool esta_inconsciente() const;
+
+    // Le aplica daño recibido en combate. No hace nada si "danio" no es positivo o si ya está
+    // inconsciente.
+    void recibir_golpe(int danio);
+
+    // Descuenta energía gastada en una acción (por ahora, atacar). No baja de 0.
+    void gastar_energia(int cantidad);
 
     // El mensaje con la barra completa tal como lo espera el cliente. Se manda con
     // notificador.a_jugador(personaje.id_jugador, personaje.actualizacion_de_inventario()).

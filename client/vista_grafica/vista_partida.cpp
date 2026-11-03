@@ -108,6 +108,11 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     Personaje personaje(configuracion.jugador, configuracion.graficos, renderizador.ptr());
     TierraGrafica tierra(configuracion.tierra, configuracion.graficos, renderizador.ptr());
     ObjetosGraficos objetos(renderizador.ptr(), configuracion.graficos, iconos);
+    EnemigosGraficos enemigos(renderizador.ptr(), configuracion.graficos);
+    VisionMazmorra vision_mazmorra(
+        configuracion.graficos.radio_vision_mazmorra,
+        configuracion.graficos.tamano_pixel_vision_mazmorra,
+        configuracion.graficos.ancho_difuminado_vision_mazmorra);
     HudInventario hud(renderizador.ptr(), iconos);
     hud.configurar(configuracion.ventana.ancho, configuracion.ventana.alto);
     EntradaDelUsuario entrada;
@@ -149,10 +154,12 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             renderizador,
             mapa_de(mapa_actual),
             objetos,
+            enemigos,
             personaje,
             tierra,
             camara,
             hud,
+            vision_mazmorra,
             entrada);
     }
 }
@@ -253,13 +260,29 @@ void VistaPartida::procesar_clic(
         return;
     }
 
-    // Clic izquierdo = PRINCIPAL (Herramientas / Picar)
-    // Clic derecho = SECUNDARIO (Interactuar / Abrir cofre / Colocar ítem)
     const std::optional<Casilla> casilla = casilla_apuntada(entrada, camara);
     if (casilla.has_value()) {
         ModoUso modo = clic_derecho ? ModoUso::SECUNDARIO : ModoUso::PRINCIPAL;
         usar_item(INDICE_RANURA_ACTIVA, modo, casilla);
     }
+}
+
+bool VistaPartida::mapa_actual_es_mazmorra() const {
+    return configuracion_de(mapa_actual).es_mazmorra;
+}
+
+std::optional<std::pair<int, int>> VistaPartida::centro_de_pantalla_del_jugador(
+    const Personaje& personaje, const Camara& camara) const {
+    const auto propio = jugador_propio();
+    if (propio == nullptr) {
+        return std::nullopt;
+    }
+    const int escala = configuracion.graficos.escala_de_tiles;
+    const int x = static_cast<int>(propio->x) * escala - camara.x() +
+                  personaje.ancho_del_sprite() * escala / 2;
+    const int y = static_cast<int>(propio->y) * escala - camara.y() +
+                  personaje.alto_del_sprite() * escala / 2;
+    return std::make_pair(x, y);
 }
 
 bool VistaPartida::recibir_eventos() {
@@ -308,6 +331,19 @@ void VistaPartida::aplicar(const EventoServidor& evento) {
                 std::erase_if(estado.drops, [&e](const EstadoDrop& drop) {
                     return drop.id == e.id;
                 });
+            },
+            [&](const EnemigoActualizado& e) {
+                const auto existente = std::find_if(
+                    estado.enemigos.begin(),
+                    estado.enemigos.end(),
+                    [&e](const EstadoEnemigo& otro) { return otro.id == e.enemigo.id; });
+                if (existente == estado.enemigos.end()) {
+                    estado.enemigos.push_back(e.enemigo);
+                } else {
+                    *existente = e.enemigo;
+                }
+                // Si murió (vida en 0) no hace falta sacarlo de la lista: EnemigosGraficos ya no
+                // lo dibuja, y si revive llega otro EnemigoActualizado que lo actualiza in situ.
             },
             [&](const ActualizacionInventario& e) { ultimo_inventario = e.inventario; },
             [&](const ActualizacionCofre& e) { ultimo_cofre = e.cofre; },
@@ -364,8 +400,9 @@ bool VistaPartida::salir_de_partida_y_confirmar() {
 
 void VistaPartida::dibujar(
     Renderizador& renderizador, const MapaGrafico& mapa, const ObjetosGraficos& objetos,
-    const Personaje& personaje, const TierraGrafica& tierra, const Camara& camara,
-    const HudInventario& hud, const EntradaDelUsuario& entrada) const {
+    const EnemigosGraficos& enemigos, const Personaje& personaje, const TierraGrafica& tierra,
+    const Camara& camara, const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
+    const EntradaDelUsuario& entrada) const {
     SDL_Renderer* renderer = renderizador.ptr();
 
     const ColorDeFondo& color = configuracion.graficos.color_de_fondo;
@@ -381,6 +418,7 @@ void VistaPartida::dibujar(
         camara.x(),
         camara.y());
     objetos.dibujar_drops(renderer, ultimo_estado_juego, camara.x(), camara.y());
+    enemigos.dibujar(renderer, ultimo_estado_juego, camara.x(), camara.y());
     for (const EstadoJugador& jugador : ultimo_estado_juego.jugadores) {
         if (jugador.mapa == mapa_actual) {
             personaje.dibujar(renderer, jugador, camara.x(), camara.y());
@@ -394,7 +432,26 @@ void VistaPartida::dibujar(
         camara.x(),
         camara.y());
 
+    if (mapa_actual_es_mazmorra()) {
+        const std::optional<std::pair<int, int>> centro =
+            centro_de_pantalla_del_jugador(personaje, camara);
+        if (centro.has_value()) {
+            vision_mazmorra.dibujar(
+                renderer,
+                centro->first,
+                centro->second,
+                configuracion.ventana.ancho,
+                configuracion.ventana.alto);
+        }
+    }
+
     hud.dibujar(renderer, ultimo_inventario, ultimo_cofre, entrada.raton_x(), entrada.raton_y());
+    if (const EstadoJugador* propio = jugador_propio(); propio != nullptr) {
+        hud.dibujar_energia(renderer, propio->energia, ENERGIA_MAXIMA_JUGADOR);
+        if (mapa_actual_es_mazmorra()) {
+            hud.dibujar_vida(renderer, propio->vida, VIDA_MAXIMA_JUGADOR);
+        }
+    }
 
     SDL_RenderPresent(renderer);
 }

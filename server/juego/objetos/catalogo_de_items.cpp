@@ -7,7 +7,9 @@ CatalogoDeItems::CatalogoDeItems() {
     // Las herramientas no se apilan y no se pueden eliminar desde el tacho.
     registrar(TipoItem::PICO, "Pico", CategoriaItem::HERRAMIENTA, 1, false, 1, 0);
     registrar(TipoItem::PALA, "Pala", CategoriaItem::HERRAMIENTA, 1, false, 1, 0);
+    registrar(TipoItem::ESPADA, "Espada", CategoriaItem::HERRAMIENTA, 1, false, 1, 0);
     registrar(TipoItem::REGADERA, "Regadera", CategoriaItem::HERRAMIENTA, 1, false, 1, 0);
+    
 
     // Semillas y cultivos. Los cultivos llevan calidad, el resto no.
     registrar(TipoItem::SEMILLA_PAPA, "Semilla de papa", CategoriaItem::SEMILLA, 50, true, 10, 0);

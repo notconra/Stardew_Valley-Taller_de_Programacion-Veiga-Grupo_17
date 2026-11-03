@@ -19,7 +19,8 @@ Mundo::Mundo(
       controlador_de_cofres(sectores, personajes, notificador_de_juego),
       controlador_de_drops(
           sectores, personajes, notificador_de_juego, recursos_de_juego.juego.drops),
-      controlador_de_mazmorra(recursos_de_juego, sectores) {
+      controlador_de_mazmorra(recursos_de_juego, sectores),
+      controlador_de_enemigos(sectores, personajes, notificador_de_juego) {
 }
 
 void Mundo::dar_de_baja(Personaje& personaje) {
@@ -117,6 +118,7 @@ void Mundo::resolver_transiciones_automaticas() {
 void Mundo::actualizar() {
     sectores.actualizar();
     resolver_transiciones_automaticas();
+    controlador_de_enemigos.actualizar();
     sectores.difundir_jugadores();
     controlador_de_acciones.actualizar();
     controlador_de_cofres.actualizar();

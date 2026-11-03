@@ -44,7 +44,8 @@ enum class TipoMensaje : uint8_t {
     OBJETO_RETIRADO = 0x8C,
     DROP_APARECIDO = 0x8D,
     DROP_RETIRADO = 0x8E,
-    TIERRA_CAMBIADA = 0x8F,
+    ENEMIGO_ACTUALIZADO = 0x8F,
+    TIERRA_CAMBIADA = 0x90,
 };
 
 #endif

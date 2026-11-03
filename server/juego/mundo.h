@@ -8,6 +8,7 @@
 #include "controladores/controlador_de_acciones.h"
 #include "controladores/controlador_de_cofres.h"
 #include "controladores/controlador_de_drops.h"
+#include "controladores/controlador_de_enemigos.h"
 #include "controladores/controlador_de_jugador.h"
 #include "controladores/controlador_de_mazmorra.h"
 #include "jugadores/personaje.h"
@@ -32,6 +33,7 @@ private:
     ControladorDeCofres controlador_de_cofres;
     ControladorDeDrops controlador_de_drops;
     ControladorDeMazmorra controlador_de_mazmorra;
+    ControladorDeEnemigos controlador_de_enemigos;
 
     void resolver_transicion(Personaje& personaje, const Transicion& transicion);
 

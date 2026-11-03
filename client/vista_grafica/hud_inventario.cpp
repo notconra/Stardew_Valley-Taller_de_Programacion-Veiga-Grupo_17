@@ -6,6 +6,8 @@
 #include <stdexcept>
 #include <vector>
 
+#include "color_de_vida.h"
+
 namespace {
 
 constexpr std::array<std::array<uint8_t, 5>, 10> DIGITOS = {
@@ -51,6 +53,16 @@ HudInventario::HudInventario(SDL_Renderer* renderer, const IconosDeItems& iconos
     : iconos(iconos_de_items) {
     try {
         tacho.emplace(RUTA_ASSET_TACHO, renderer);
+    } catch (const std::runtime_error& error) {
+        std::cerr << "[Error] " << error.what() << std::endl;
+    }
+    try {
+        marco_de_vida.emplace(RUTA_ASSET_VIDA, renderer);
+    } catch (const std::runtime_error& error) {
+        std::cerr << "[Error] " << error.what() << std::endl;
+    }
+    try {
+        marco_de_energia.emplace(RUTA_ASSET_ENERGIA, renderer);
     } catch (const std::runtime_error& error) {
         std::cerr << "[Error] " << error.what() << std::endl;
     }
@@ -411,4 +423,100 @@ void HudInventario::dibujar(
     }
     dibujar_tacho(renderer, disposicion.tacho);
     dibujar_item_levantado(renderer, disposicion, inventario, cofre, raton_x, raton_y);
+}
+
+// Las dos imágenes (vida.png y energia.png) se recortaron al mismo tamaño nativo (36x165) a
+// propósito, así las dos barras salen exactamente del mismo grosor y alto en pantalla sin tener
+// que forzar nada en el escalado: el mismo ancho() que usa dibujar_gauge() les da el mismo
+// resultado a las dos.
+namespace {
+constexpr int ANCHO_NATIVO_GAUGE = 36;
+constexpr int ALTO_NATIVO_GAUGE = 165;
+constexpr int SEPARACION_ENTRE_GAUGES = 4;
+// vida.png y energia.png son pixel a pixel la misma plantilla (solo cambia la letra), así que
+// comparten exactamente la misma ventana interior.
+constexpr SDL_Rect VENTANA_NATIVA_GAUGE{8, 38, 20, 121};
+}  // namespace
+
+void HudInventario::dibujar_vida(SDL_Renderer* renderer, uint8_t vida, uint8_t vida_maxima) const {
+    if (vida_maxima == 0 || !marco_de_vida.has_value() || !marco_de_energia.has_value()) {
+        return;
+    }
+    // La vida va a la izquierda de la energía. Se calcula a partir del ancho de la energía (y no
+    // al revés) porque la energía es la que está siempre en un lugar fijo: la vida solo aparece
+    // en la mazmorra, así que no puede ser la referencia de posición de la otra.
+    const int alto = std::clamp(alto_ventana / 4, 90, 170);
+    const int ancho_energia = alto * ANCHO_NATIVO_GAUGE / ALTO_NATIVO_GAUGE;
+    const int borde_derecho = ancho_ventana - MARGEN - ancho_energia - SEPARACION_ENTRE_GAUGES;
+
+    const double fraccion = std::clamp(static_cast<double>(vida) / vida_maxima, 0.0, 1.0);
+    dibujar_gauge(
+        renderer,
+        *marco_de_vida,
+        ANCHO_NATIVO_GAUGE,
+        ALTO_NATIVO_GAUGE,
+        VENTANA_NATIVA_GAUGE,
+        fraccion,
+        borde_derecho);
+}
+
+void HudInventario::dibujar_energia(
+    SDL_Renderer* renderer, uint8_t energia, uint8_t energia_maxima) const {
+    if (energia_maxima == 0 || !marco_de_energia.has_value()) {
+        return;
+    }
+    const double fraccion = std::clamp(static_cast<double>(energia) / energia_maxima, 0.0, 1.0);
+    dibujar_gauge(
+        renderer,
+        *marco_de_energia,
+        ANCHO_NATIVO_GAUGE,
+        ALTO_NATIVO_GAUGE,
+        VENTANA_NATIVA_GAUGE,
+        fraccion,
+        ancho_ventana - MARGEN);
+}
+
+int HudInventario::dibujar_gauge(
+    SDL_Renderer* renderer, const Textura& marco, int ancho_nativo, int alto_nativo,
+    const SDL_Rect& ventana_nativa, double fraccion, int borde_derecho_en_pantalla) const {
+    fraccion = std::clamp(fraccion, 0.0, 1.0);
+    constexpr int SANGRADO = 2;
+    const int alto_relleno = static_cast<int>(ventana_nativa.h * fraccion);
+    const SDL_Rect relleno{
+        ventana_nativa.x - SANGRADO,
+        ventana_nativa.y + ventana_nativa.h - alto_relleno,
+        ventana_nativa.w + 2 * SANGRADO,
+        alto_relleno + SANGRADO};
+    const SDL_Color color = color_de_vida(fraccion);
+    SDL_Texture* lienzo = SDL_CreateTexture(
+        renderer,
+        SDL_PIXELFORMAT_RGBA8888,
+        SDL_TEXTUREACCESS_TARGET,
+        ancho_nativo,
+        alto_nativo);
+    if (lienzo == nullptr) {
+        return borde_derecho_en_pantalla;
+    }
+    SDL_SetTextureBlendMode(lienzo, SDL_BLENDMODE_BLEND);
+
+    SDL_Texture* destino_anterior = SDL_GetRenderTarget(renderer);
+    SDL_SetRenderTarget(renderer, lienzo);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+    SDL_RenderFillRect(renderer, &relleno);
+    SDL_RenderCopy(renderer, marco.ptr(), nullptr, nullptr);
+    SDL_SetRenderTarget(renderer, destino_anterior);
+
+    const int alto = std::clamp(alto_ventana / 4, 90, 170);
+    const int ancho = alto * ancho_nativo / alto_nativo;
+    const SDL_Rect destino{
+        borde_derecho_en_pantalla - ancho,
+        alto_ventana - MARGEN - alto,
+        ancho,
+        alto};
+    SDL_RenderCopy(renderer, lienzo, nullptr, &destino);
+
+    SDL_DestroyTexture(lienzo);
+    return destino.x;
 }

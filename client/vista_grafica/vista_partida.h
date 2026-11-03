@@ -2,6 +2,7 @@
 #define VISTA_PARTIDA_H
 
 #include <cstdint>
+#include <map>
 #include <optional>
 #include <set>
 #include <string>
@@ -12,12 +13,15 @@
 #include "../configuracion/configuracion_cliente_datos.h"
 #include "../red/conexion_con_servidor.h"
 #include "camara.h"
+#include "enemigos_graficos.h"
 #include "entrada_del_usuario.h"
 #include "hud_inventario.h"
+#include "iconos_de_items.h"
 #include "mapa_grafico.h"
 #include "objetos_graficos.h"
 #include "personaje.h"
 #include "renderizador.h"
+#include "vision_mazmorra.h"
 #include "tierra_grafica.h"
 
 class VistaPartida {
@@ -42,6 +46,10 @@ private:
     const ConfiguracionMapa& configuracion_de(const std::string& id_mapa) const;
     Camara camara_para(const MapaGrafico& mapa) const;
 
+    bool mapa_actual_es_mazmorra() const;
+    std::optional<std::pair<int, int>> centro_de_pantalla_del_jugador(
+        const Personaje& personaje, const Camara& camara) const;
+
     std::optional<Casilla> casilla_apuntada(
         const EntradaDelUsuario& entrada, const Camara& camara) const;
 
@@ -63,8 +71,9 @@ private:
 
     void dibujar(
         Renderizador& renderizador, const MapaGrafico& mapa, const ObjetosGraficos& objetos,
-        const Personaje& personaje, const TierraGrafica& tierra, const Camara& camara,
-        const HudInventario& hud, const EntradaDelUsuario& entrada) const;
+        const EnemigosGraficos& enemigos, const Personaje& personaje, const TierraGrafica& tierra,
+        const Camara& camara, const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
+        const EntradaDelUsuario& entrada) const;
 
 public:
     VistaPartida(ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion);

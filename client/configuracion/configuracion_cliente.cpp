@@ -103,6 +103,12 @@ void ConfiguracionCliente::cargar_graficos(const toml::table& archivo_toml) {
     configuracion_vista.graficos.escala_de_tiles =
         lector_toml::leer_entero_positivo(graficos, "escala_de_tiles", "graficos");
     configuracion_vista.graficos.color_de_fondo = leer_color(graficos);
+    configuracion_vista.graficos.radio_vision_mazmorra =
+        lector_toml::leer_entero_opcional(graficos, "radio_vision_mazmorra", 0);
+    configuracion_vista.graficos.tamano_pixel_vision_mazmorra =
+        lector_toml::leer_entero_opcional(graficos, "tamano_pixel_vision_mazmorra", 8);
+    configuracion_vista.graficos.ancho_difuminado_vision_mazmorra =
+        lector_toml::leer_entero_opcional(graficos, "ancho_difuminado_vision_mazmorra", 24);
 }
 
 void ConfiguracionCliente::cargar_mapas(const toml::table& archivo_toml) {
@@ -139,6 +145,8 @@ void ConfiguracionCliente::cargar_mapas(const toml::table& archivo_toml) {
         configuracion_mapa.capas_sobre_los_jugadores =
             lector_toml::leer_textos(*mapa, "capas_sobre_los_jugadores", seccion);
         configuracion_mapa.tilesets = leer_tilesets(*mapa, seccion);
+        configuracion_mapa.es_mazmorra =
+            lector_toml::leer_booleano_opcional(*mapa, "es_mazmorra", false);
 
         configuracion_vista.mapas.push_back(configuracion_mapa);
     }

@@ -11,6 +11,7 @@
 #include "../cofres/gestor_de_cofres.h"
 #include "../colisiones/colisiones.h"
 #include "../drops/drops.h"
+#include "../enemigos/gestor_de_enemigos.h"
 #include "../jugadores/jugadores.h"
 #include "../mapa/mapa.h"
 #include "../notificador.h"
@@ -35,6 +36,7 @@ public:
     GestorDeCofres cofres;
     Jugadores jugadores;
     Drops drops;
+    GestorDeEnemigos enemigos;
 
     // "recursos" tiene que vivir más que el Sector y tener el mapa "id_mapa" cargado.
     Sector(const std::string& id_mapa, const RecursosDeJuego& recursos, uint8_t ticks_por_segundo)
@@ -46,7 +48,8 @@ public:
           cofres(recursos.catalogo_de_items),
           jugadores(
               mapa, colisiones, ticks_por_segundo, recursos.juego.movimiento,
-              recursos.juego.aparicion) {
+              recursos.juego.aparicion),
+          enemigos(recursos.catalogo_de_enemigos) {
     }
 
     Sector(const Sector&) = delete;
@@ -80,6 +83,11 @@ public:
     // Golpea un objeto con la herramienta. Si el golpe lo rompe, avisa que se retiró. El contenido
     // y los productos que deja los suelta quien llama, con soltar().
     ResultadoDeGolpe golpear_objeto(Notificador& notificador, int id_objeto, TipoItem herramienta);
+
+    // Golpea a un enemigo con la espada y, si conectó, avisa a los jugadores del sector con
+    // EnemigoActualizado (con vida en 0 si lo mató). El oro que suelta lo maneja quien llama, con
+    // soltar().
+    ResultadoDeGolpeEnemigo golpear_enemigo(Notificador& notificador, int id_enemigo, int danio);
 
     // Deja un ítem en el piso y avisa a los jugadores del sector. Devuelve el id del drop, o 0 si
     // la casilla está fuera del mapa o no había nada que dejar.
