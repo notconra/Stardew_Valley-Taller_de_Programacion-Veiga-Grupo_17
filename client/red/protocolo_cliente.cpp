@@ -24,6 +24,7 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::OBJETO_RETIRADO, [this] { return recibir_objeto_retirado(); }},
           {TipoMensaje::DROP_APARECIDO, [this] { return recibir_drop_aparecido(); }},
           {TipoMensaje::DROP_RETIRADO, [this] { return recibir_drop_retirado(); }},
+          {TipoMensaje::ENEMIGO_ACTUALIZADO, [this] { return recibir_enemigo_actualizado(); }},
           {TipoMensaje::ACTUALIZACION_INVENTARIO,
            [this] { return recibir_actualizacion_inventario(); }},
           {TipoMensaje::ACTUALIZACION_COFRE, [this] { return recibir_actualizacion_cofre(); }},
@@ -211,6 +212,8 @@ EstadoJugador ProtocoloCliente::recibir_estado_jugador() {
     estado.camina = recibir_booleano();
     estado.ranura_activa = recibir_u8();
     estado.accion_actual = static_cast<TipoAccion>(recibir_u8());
+    estado.vida = recibir_u8();
+    estado.energia = recibir_u8();
     return estado;
 }
 
@@ -276,6 +279,19 @@ EstadoDrop ProtocoloCliente::recibir_estado_drop() {
     return estado;
 }
 
+EstadoEnemigo ProtocoloCliente::recibir_estado_enemigo() {
+    EstadoEnemigo estado;
+    estado.id = recibir_u32();
+    estado.tipo = static_cast<TipoEnemigo>(recibir_u8());
+    estado.columna = recibir_u32();
+    estado.fila = recibir_u32();
+    estado.vida = recibir_u16();
+    estado.vida_maxima = recibir_u16();
+    estado.atacando = recibir_booleano();
+    estado.muriendo = recibir_booleano();
+    return estado;
+}
+
 EstadoJuego ProtocoloCliente::recibir_estado_juego() {
     EstadoJuego estado_juego;
     estado_juego.mapa = recibir_texto();
@@ -296,6 +312,12 @@ EstadoJuego ProtocoloCliente::recibir_estado_juego() {
     estado_juego.drops.reserve(cantidad_de_drops);
     for (uint16_t i = 0; i < cantidad_de_drops; ++i) {
         estado_juego.drops.push_back(recibir_estado_drop());
+    }
+
+    uint16_t cantidad_de_enemigos = recibir_u16();
+    estado_juego.enemigos.reserve(cantidad_de_enemigos);
+    for (uint16_t i = 0; i < cantidad_de_enemigos; ++i) {
+        estado_juego.enemigos.push_back(recibir_estado_enemigo());
     }
 
     return estado_juego;
@@ -338,6 +360,12 @@ DropRetirado ProtocoloCliente::recibir_drop_retirado() {
     retirado.id = recibir_u32();
     retirado.id_jugador = recibir_u32();
     return retirado;
+}
+
+EnemigoActualizado ProtocoloCliente::recibir_enemigo_actualizado() {
+    EnemigoActualizado actualizado;
+    actualizado.enemigo = recibir_estado_enemigo();
+    return actualizado;
 }
 
 void ProtocoloCliente::cerrar() {
