@@ -22,6 +22,15 @@ bool GestorDeSectores::existe(const std::string& id_mapa) const {
     return sectores.contains(id_mapa);
 }
 
+std::vector<std::string> GestorDeSectores::ids_de_sectores() const {
+    std::vector<std::string> ids;
+    ids.reserve(sectores.size());
+    for (const auto& [id_mapa, sector] : sectores) {
+        ids.push_back(id_mapa);
+    }
+    return ids;
+}
+
 Sector& GestorDeSectores::en(const std::string& id_mapa) {
     return sectores.at(id_mapa);
 }
@@ -78,7 +87,17 @@ void GestorDeSectores::quitar(const Personaje& personaje) {
 
 void GestorDeSectores::actualizar() {
     for (auto& entrada : sectores) {
-        entrada.second.jugadores.actualizar();
+        Sector& sector = entrada.second;
+        sector.jugadores.actualizar();
+
+        for (int id_enemigo : sector.enemigos.actualizar()) {
+            const Enemigo* enemigo = sector.enemigos.buscar(id_enemigo);
+            if (enemigo != nullptr) {
+                EnemigoActualizado evento;
+                evento.enemigo = GestorDeEnemigos::estado_de(*enemigo);
+                sector.avisar(notificador, evento);
+            }
+        }
     }
 }
 
@@ -124,6 +143,8 @@ std::vector<EstadoJugador> GestorDeSectores::armar_jugadores(const std::string& 
         if (personaje != personajes.end()) {
             estado.ranura_activa = personaje->second.ranura_activa;
             estado.accion_actual = personaje->second.accion_actual;
+            estado.vida = static_cast<uint8_t>(personaje->second.vida);
+            estado.energia = static_cast<uint8_t>(personaje->second.energia);
         }
 
         resultado.push_back(estado);
@@ -139,6 +160,7 @@ EstadoJuego GestorDeSectores::armar_instantanea(const std::string& id_mapa) cons
     estado.jugadores = armar_jugadores(id_mapa);
     sector.objetos.agregar_a(estado);
     sector.drops.agregar_a(estado);
+    sector.enemigos.agregar_a(estado);
     return estado;
 }
 
