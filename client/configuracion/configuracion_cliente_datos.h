@@ -58,6 +58,11 @@ struct ColorRGB {
     std::uint8_t azul = 255;
 };
 
+constexpr int OFFSET_Y_REMERA_FEMENINO = 16;
+constexpr int OFFSET_Y_REMERA_MASCULINO = 15;
+constexpr int OFFSET_Y_PELO_FEMENINO = 1;
+constexpr int OFFSET_Y_PELO_MASCULINO = 0;
+
 struct ConfiguracionJugador {
     std::string ruta_cuerpo;
     std::string ruta_pantalon;
@@ -66,7 +71,7 @@ struct ConfiguracionJugador {
     std::string ruta_remera;
 
     int indice_pelo = 0;
-    int indice_sombrero = 0;
+    int indice_sombrero = -1;
     int indice_remera = 0;
     int indice_pantalon = 0;
 
@@ -75,6 +80,7 @@ struct ConfiguracionJugador {
 
     int ms_por_cuadro_caminando = 150;
     int offset_y_remera = 16;
+    int offset_y_pelo = 0;
 };
 
 struct ConfiguracionSonido {

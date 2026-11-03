@@ -7,8 +7,10 @@
 #include <QTimer>
 #include <string>
 
+#include "../configuracion/configuracion_cliente_datos.h"
 #include "../red/conexion_con_servidor.h"
 #include "botones_menu.h"
+#include "compositor_personaje.h"
 #include "fondo_animado.h"
 
 namespace Ui {
@@ -21,7 +23,7 @@ class PantallaPrincipal : public QMainWindow {
 public:
     PantallaPrincipal(
         ConexionConServidor& conexion, EntradaExitosaAPartida& partida_actual, uint32_t id_cliente,
-        QWidget* parent = nullptr);
+        ConfiguracionJugador& configuracion_jugador, QWidget* parent = nullptr);
     ~PantallaPrincipal();
 
 protected:
@@ -43,6 +45,9 @@ private:
     void configurar_ventana();
     void configurar_tabla_partidas();
     void configurar_formulario_granja(bool visible);
+    void inicializar_selectores_personaje();
+    void actualizar_previsualizacion_personaje();
+    ConfiguracionJugador obtener_configuracion_actual() const;
     void llenar_lista_partidas(const ListaPartidas& lista);
     bool procesar_evento_ingreso(const EventoServidor& evento);
     QString describir_error(const ErrorServidor& error) const;
@@ -52,6 +57,13 @@ private:
     bool es_modo_unirse = false;
     std::string codigo_partida_a_unirse;
     uint32_t id_cliente = 0;
+    ConfiguracionJugador& configuracion_jugador;
+    CompositorPersonaje compositor_personaje;
+    int indice_pelo_seleccionado = 0;
+    int indice_color_pelo_seleccionado = 0;
+    int indice_remera_seleccionado = 0;
+    int indice_pantalon_color_seleccionado = 0;
+    bool es_personaje_femenino = false;
 
     FondoAnimado fondo_animado;
     BotonesMenu botones_menu;

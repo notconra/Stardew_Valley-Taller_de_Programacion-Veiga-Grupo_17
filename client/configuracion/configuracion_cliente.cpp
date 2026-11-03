@@ -1,5 +1,6 @@
 #include "configuracion_cliente.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -7,7 +8,6 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <algorithm>
 
 #include "../persistencia/identidad_cliente.h"
 
@@ -138,7 +138,8 @@ void ConfiguracionCliente::cargar_mapas(const toml::table& archivo_toml) {
 
     configuracion_vista.mapa_inicial = leer_texto(archivo_toml, "mapa_inicial", "raíz");
     const bool existe = std::any_of(
-        configuracion_vista.mapas.begin(), configuracion_vista.mapas.end(),
+        configuracion_vista.mapas.begin(),
+        configuracion_vista.mapas.end(),
         [this](const ConfiguracionMapa& m) { return m.id == configuracion_vista.mapa_inicial; });
     if (!existe) {
         throw std::runtime_error(
@@ -343,4 +344,8 @@ const ConfiguracionVista& ConfiguracionCliente::vista() const {
 
 uint32_t ConfiguracionCliente::id_cliente() const {
     return id_del_cliente;
+}
+
+ConfiguracionJugador& ConfiguracionCliente::jugador() {
+    return configuracion_vista.jugador;
 }

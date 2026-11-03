@@ -31,6 +31,7 @@ private:
     int indice_remera;
     int indice_pantalon;
     int offset_y_remera;
+    int offset_y_pelo;
 
     int ancho_hoja_cuerpo;  // ancho total del PNG del cuerpo, lo usa el pantalón para alinearse
     int columnas_pantalon;

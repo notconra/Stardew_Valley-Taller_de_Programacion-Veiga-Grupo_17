@@ -6,23 +6,77 @@
 #include <QMessageBox>
 #include <QPainter>
 #include <QTableWidgetItem>
+#include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <limits>
 #include <string>
 #include <unordered_map>
 
 #include "ui_pantallaprincipal.h"
 
+constexpr const char* RUTA_CUERPO_MASCULINO = "Assets/Characters/Farmer/farmer_base.png";
+constexpr const char* RUTA_CUERPO_FEMENINO = "Assets/Characters/Farmer/farmer_girl_base.png";
+
+struct OpcionColor {
+    const char* nombre;
+    ColorRGB rgb;
+};
+
+constexpr OpcionColor COLORES_PELO[] = {
+    {"Castaño", {115, 65, 35}},
+    {"Rubio", {220, 185, 85}},
+    {"Negro", {40, 35, 35}},
+    {"Pelirrojo", {180, 65, 30}},
+    {"Azul", {55, 95, 195}},
+    {"Rosa", {215, 95, 155}},
+    {"Verde", {55, 160, 85}},
+    {"Blanco", {230, 230, 230}},
+};
+constexpr int CANTIDAD_COLORES_PELO = sizeof(COLORES_PELO) / sizeof(COLORES_PELO[0]);
+
+constexpr OpcionColor COLORES_PANTALON[] = {
+    {"Azul clásico", {45, 65, 120}},
+    {"Negro", {40, 40, 45}},
+    {"Marrón", {95, 65, 40}},
+    {"Gris", {115, 115, 125}},
+    {"Verde oliva", {65, 95, 55}},
+    {"Bordó", {125, 45, 45}},
+};
+constexpr int CANTIDAD_COLORES_PANTALON = sizeof(COLORES_PANTALON) / sizeof(COLORES_PANTALON[0]);
+
+constexpr int CANTIDAD_PEINADOS = 16;
+constexpr int CANTIDAD_REMERAS = 16;
+
+static int encontrar_indice_color_cercano(
+    const ColorRGB& color, const OpcionColor* opciones, int cantidad) {
+    int mejor_indice = 0;
+    int menor_diferencia = std::numeric_limits<int>::max();
+    for (int i = 0; i < cantidad; ++i) {
+        int dr = static_cast<int>(color.rojo) - static_cast<int>(opciones[i].rgb.rojo);
+        int dg = static_cast<int>(color.verde) - static_cast<int>(opciones[i].rgb.verde);
+        int db = static_cast<int>(color.azul) - static_cast<int>(opciones[i].rgb.azul);
+        int diferencia = dr * dr + dg * dg + db * db;
+        if (diferencia < menor_diferencia) {
+            menor_diferencia = diferencia;
+            mejor_indice = i;
+        }
+    }
+    return mejor_indice;
+}
+
 PantallaPrincipal::PantallaPrincipal(
     ConexionConServidor& conexion, EntradaExitosaAPartida& partida_actual, uint32_t id_cliente,
-    QWidget* parent)
+    ConfiguracionJugador& configuracion_jugador, QWidget* parent)
     : QMainWindow(parent),
       ui(new Ui::PantallaPrincipal),
       conexion(conexion),
       partida_actual(partida_actual),
-      id_cliente(id_cliente) {
+      id_cliente(id_cliente),
+      configuracion_jugador(configuracion_jugador) {
     ui->setupUi(this);
     configurar_ventana();
+    inicializar_selectores_personaje();
     connect(ui->btn_salir, &QPushButton::clicked, this, &PantallaPrincipal::close);
     connect(
         ui->btn_nueva_partida,
@@ -140,9 +194,6 @@ void PantallaPrincipal::confirmar_personaje() {
     QString nombre = ui->input_nombre->text().trimmed();
     QString cosa_favorita = ui->input_cosa_fav->text().trimmed();
     QString granja = ui->input_nombre_granja->text().trimmed();
-    QString mundo = ui->combo_mundo->currentText();
-    QString peinado = ui->combo_peinado->currentText();
-    QString color_pelo = ui->combo_color_pelo->currentText();
 
     if (nombre.isEmpty() || cosa_favorita.isEmpty() || (!es_modo_unirse && granja.isEmpty())) {
         QMessageBox::warning(
@@ -152,23 +203,17 @@ void PantallaPrincipal::confirmar_personaje() {
         return;
     }
 
+    configuracion_jugador = obtener_configuracion_actual();
+
     ui->btn_confirmar_personaje->setEnabled(false);
 
     if (es_modo_unirse) {
         std::cout << "Uniéndose a partida " << codigo_partida_a_unirse
-                  << " con personaje: " << nombre.toStdString()
-                  << " | Pelo: " << peinado.toStdString() << " (" << color_pelo.toStdString()
-                  << ")\n";
-    } else {
-        std::cout << "Creando personaje: " << nombre.toStdString()
-                  << " | Granja: " << granja.toStdString() << " (" << mundo.toStdString() << ")"
-                  << " | Pelo: " << peinado.toStdString() << " (" << color_pelo.toStdString()
-                  << ")\n";
-    }
-
-    if (es_modo_unirse) {
+                  << " con personaje: " << nombre.toStdString() << "\n";
         conexion.enviar_comando(UnirsePartida{codigo_partida_a_unirse, nombre.toStdString()});
     } else {
+        std::cout << "Creando personaje: " << nombre.toStdString()
+                  << " | Granja: " << granja.toStdString() << "\n";
         conexion.enviar_comando(CrearPartida{granja.toStdString(), nombre.toStdString()});
     }
 
@@ -234,6 +279,108 @@ void PantallaPrincipal::configurar_formulario_granja(bool visible) {
     ui->input_nombre_granja->setVisible(visible);
     ui->label_mundo->setVisible(visible);
     ui->combo_mundo->setVisible(visible);
+}
+
+void PantallaPrincipal::inicializar_selectores_personaje() {
+    es_personaje_femenino = (configuracion_jugador.ruta_cuerpo == RUTA_CUERPO_FEMENINO);
+    configuracion_jugador.offset_y_remera =
+        es_personaje_femenino ? OFFSET_Y_REMERA_FEMENINO : OFFSET_Y_REMERA_MASCULINO;
+    configuracion_jugador.offset_y_pelo =
+        es_personaje_femenino ? OFFSET_Y_PELO_FEMENINO : OFFSET_Y_PELO_MASCULINO;
+    indice_pelo_seleccionado = configuracion_jugador.indice_pelo;
+    indice_color_pelo_seleccionado = encontrar_indice_color_cercano(
+        configuracion_jugador.color_pelo,
+        COLORES_PELO,
+        CANTIDAD_COLORES_PELO);
+    indice_remera_seleccionado = configuracion_jugador.indice_remera;
+    indice_pantalon_color_seleccionado = encontrar_indice_color_cercano(
+        configuracion_jugador.color_pantalon,
+        COLORES_PANTALON,
+        CANTIDAD_COLORES_PANTALON);
+
+    connect(ui->btn_genero_masculino, &QPushButton::clicked, this, [this]() {
+        es_personaje_femenino = false;
+        actualizar_previsualizacion_personaje();
+    });
+    connect(ui->btn_genero_femenino, &QPushButton::clicked, this, [this]() {
+        es_personaje_femenino = true;
+        actualizar_previsualizacion_personaje();
+    });
+
+    connect(ui->btn_pelo_anterior, &QPushButton::clicked, this, [this]() {
+        indice_pelo_seleccionado =
+            (indice_pelo_seleccionado - 1 + CANTIDAD_PEINADOS) % CANTIDAD_PEINADOS;
+        actualizar_previsualizacion_personaje();
+    });
+    connect(ui->btn_pelo_siguiente, &QPushButton::clicked, this, [this]() {
+        indice_pelo_seleccionado = (indice_pelo_seleccionado + 1) % CANTIDAD_PEINADOS;
+        actualizar_previsualizacion_personaje();
+    });
+
+    connect(ui->btn_color_pelo_anterior, &QPushButton::clicked, this, [this]() {
+        indice_color_pelo_seleccionado =
+            (indice_color_pelo_seleccionado - 1 + CANTIDAD_COLORES_PELO) % CANTIDAD_COLORES_PELO;
+        actualizar_previsualizacion_personaje();
+    });
+    connect(ui->btn_color_pelo_siguiente, &QPushButton::clicked, this, [this]() {
+        indice_color_pelo_seleccionado =
+            (indice_color_pelo_seleccionado + 1) % CANTIDAD_COLORES_PELO;
+        actualizar_previsualizacion_personaje();
+    });
+
+    connect(ui->btn_remera_anterior, &QPushButton::clicked, this, [this]() {
+        indice_remera_seleccionado =
+            (indice_remera_seleccionado - 1 + CANTIDAD_REMERAS) % CANTIDAD_REMERAS;
+        actualizar_previsualizacion_personaje();
+    });
+    connect(ui->btn_remera_siguiente, &QPushButton::clicked, this, [this]() {
+        indice_remera_seleccionado = (indice_remera_seleccionado + 1) % CANTIDAD_REMERAS;
+        actualizar_previsualizacion_personaje();
+    });
+
+    connect(ui->btn_pantalon_anterior, &QPushButton::clicked, this, [this]() {
+        indice_pantalon_color_seleccionado =
+            (indice_pantalon_color_seleccionado - 1 + CANTIDAD_COLORES_PANTALON) %
+            CANTIDAD_COLORES_PANTALON;
+        actualizar_previsualizacion_personaje();
+    });
+    connect(ui->btn_pantalon_siguiente, &QPushButton::clicked, this, [this]() {
+        indice_pantalon_color_seleccionado =
+            (indice_pantalon_color_seleccionado + 1) % CANTIDAD_COLORES_PANTALON;
+        actualizar_previsualizacion_personaje();
+    });
+
+    actualizar_previsualizacion_personaje();
+}
+
+ConfiguracionJugador PantallaPrincipal::obtener_configuracion_actual() const {
+    ConfiguracionJugador jugador;
+    jugador.ruta_cuerpo = es_personaje_femenino ? RUTA_CUERPO_FEMENINO : RUTA_CUERPO_MASCULINO;
+    jugador.offset_y_remera =
+        es_personaje_femenino ? OFFSET_Y_REMERA_FEMENINO : OFFSET_Y_REMERA_MASCULINO;
+    jugador.offset_y_pelo =
+        es_personaje_femenino ? OFFSET_Y_PELO_FEMENINO : OFFSET_Y_PELO_MASCULINO;
+    jugador.indice_pelo = indice_pelo_seleccionado;
+    jugador.color_pelo = COLORES_PELO[indice_color_pelo_seleccionado].rgb;
+    jugador.indice_remera = indice_remera_seleccionado;
+    jugador.color_pantalon = COLORES_PANTALON[indice_pantalon_color_seleccionado].rgb;
+    jugador.indice_pantalon = 0;
+    jugador.indice_sombrero = -1;
+    return jugador;
+}
+
+void PantallaPrincipal::actualizar_previsualizacion_personaje() {
+    ui->label_pelo_valor->setText(QString::number(indice_pelo_seleccionado + 1));
+    ui->label_color_pelo_valor->setText(COLORES_PELO[indice_color_pelo_seleccionado].nombre);
+    ui->label_remera_valor->setText(QString::number(indice_remera_seleccionado + 1));
+    ui->label_pantalon_valor->setText(COLORES_PANTALON[indice_pantalon_color_seleccionado].nombre);
+
+    ui->btn_genero_masculino->setChecked(!es_personaje_femenino);
+    ui->btn_genero_femenino->setChecked(es_personaje_femenino);
+
+    ConfiguracionJugador temp = obtener_configuracion_actual();
+    QPixmap sprite = compositor_personaje.componer(temp, 4);
+    ui->label_previsualizacion_personaje->setPixmap(sprite);
 }
 
 void PantallaPrincipal::preparar_nueva_partida() {

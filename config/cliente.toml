@@ -158,12 +158,12 @@ columnas = 16
 [jugador]
 ruta_cuerpo = "Assets/Characters/Farmer/farmer_girl_base.png"  # aca puede ir para que sea de hombre "Assets/Characters/Farmer/farme_base.png"
 ruta_pantalon = "Assets/Characters/Farmer/pants.png"
-ruta_pelo = "Assets/Characters/Farmer/hairstyles.png"  # tamb existe hairstyles2.png 
+ruta_pelo = "Assets/Characters/Farmer/hairstyles.png"  # tamb existe hairstyles2.png
 ruta_sombrero = "Assets/Characters/Farmer/hats.png"
 ruta_remera = "Assets/Characters/Farmer/shirts.png"
 
 indice_pelo = 11
-indice_sombrero = 9
+indice_sombrero = -1
 indice_remera = 5
 indice_pantalon = 0
 

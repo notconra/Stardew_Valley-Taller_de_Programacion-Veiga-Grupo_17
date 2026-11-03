@@ -75,13 +75,18 @@ Personaje::Personaje(
       indice_sombrero(configuracion_jugador.indice_sombrero),
       indice_remera(configuracion_jugador.indice_remera),
       indice_pantalon(configuracion_jugador.indice_pantalon),
-      offset_y_remera(configuracion_jugador.offset_y_remera) {
+      offset_y_remera(configuracion_jugador.offset_y_remera),
+      offset_y_pelo(configuracion_jugador.offset_y_pelo) {
     SDL_SetTextureColorMod(
-        pelo.ptr(), configuracion_jugador.color_pelo.rojo, configuracion_jugador.color_pelo.verde,
+        pelo.ptr(),
+        configuracion_jugador.color_pelo.rojo,
+        configuracion_jugador.color_pelo.verde,
         configuracion_jugador.color_pelo.azul);
     SDL_SetTextureColorMod(
-        pantalon.ptr(), configuracion_jugador.color_pantalon.rojo,
-        configuracion_jugador.color_pantalon.verde, configuracion_jugador.color_pantalon.azul);
+        pantalon.ptr(),
+        configuracion_jugador.color_pantalon.rojo,
+        configuracion_jugador.color_pantalon.verde,
+        configuracion_jugador.color_pantalon.azul);
 
     ancho_hoja_cuerpo = 0;
     SDL_QueryTexture(cuerpo.ptr(), nullptr, nullptr, &ancho_hoja_cuerpo, nullptr);
@@ -112,10 +117,11 @@ int Personaje::alto_del_sprite() const {
 }
 
 void Personaje::dibujar(
-    SDL_Renderer* renderer, const EstadoJugador& jugador, bool haciendo_accion,
-    Uint32 ms_de_accion, int cam_x, int cam_y) const {
+    SDL_Renderer* renderer, const EstadoJugador& jugador, bool haciendo_accion, Uint32 ms_de_accion,
+    int cam_x, int cam_y) const {
     const auto encontrada = FILA_DE_DIRECCION.find(jugador.mirando);
-    const int fila_direccion = encontrada != FILA_DE_DIRECCION.end() ? encontrada->second : FILA_ABAJO;
+    const int fila_direccion =
+        encontrada != FILA_DE_DIRECCION.end() ? encontrada->second : FILA_ABAJO;
     const SDL_RendererFlip flip =
         jugador.mirando == Direccion::IZQUIERDA ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
 
@@ -144,8 +150,11 @@ void Personaje::dibujar(
 
     const int x_pantalla = jugador.x * escala_de_tiles - cam_x;
     const int y_pantalla = jugador.y * escala_de_tiles - cam_y;
-    const SDL_Rect destino_cuerpo{x_pantalla, y_pantalla, ancho * escala_de_tiles,
-                                   alto * escala_de_tiles};
+    const SDL_Rect destino_cuerpo{
+        x_pantalla,
+        y_pantalla,
+        ancho * escala_de_tiles,
+        alto * escala_de_tiles};
 
     const SDL_Rect origen_cuerpo{columna_cuerpo * ancho, fila_cuerpo * alto, ancho, alto};
     SDL_RenderCopyEx(renderer, cuerpo.ptr(), &origen_cuerpo, &destino_cuerpo, 0.0, nullptr, flip);
@@ -153,7 +162,14 @@ void Personaje::dibujar(
     const int columna_pantalon = indice_pantalon % columnas_pantalon;
     SDL_Rect origen_pantalon = origen_cuerpo;
     origen_pantalon.x += columna_pantalon * ancho_hoja_cuerpo;
-    SDL_RenderCopyEx(renderer, pantalon.ptr(), &origen_pantalon, &destino_cuerpo, 0.0, nullptr, flip);
+    SDL_RenderCopyEx(
+        renderer,
+        pantalon.ptr(),
+        &origen_pantalon,
+        &destino_cuerpo,
+        0.0,
+        nullptr,
+        flip);
 
     const SDL_Rect origen_brazos{columna_brazos * ancho, fila_brazos * alto, ancho, alto};
     SDL_RenderCopyEx(renderer, cuerpo.ptr(), &origen_brazos, &destino_cuerpo, 0.0, nullptr, flip);
@@ -162,43 +178,65 @@ void Personaje::dibujar(
     const int pagina_pelo = indice_pelo / columnas_pelo;
     const SDL_Rect origen_pelo{
         columna_pelo * ANCHO_CELDA_PELO,
-        FILA_PELO_POR_DIRECCION[fila_direccion] + pagina_pelo * ALTO_BLOQUE_PELO, ANCHO_CELDA_PELO,
+        FILA_PELO_POR_DIRECCION[fila_direccion] + pagina_pelo * ALTO_BLOQUE_PELO,
+        ANCHO_CELDA_PELO,
         alto};
-    const SDL_Rect destino_pelo{x_pantalla, y_pantalla + desvio_y_accesorios * escala_de_tiles,
-                                 ancho * escala_de_tiles, alto * escala_de_tiles};
+    const SDL_Rect destino_pelo{
+        x_pantalla,
+        y_pantalla + (offset_y_pelo + desvio_y_accesorios) * escala_de_tiles,
+        ancho * escala_de_tiles,
+        alto * escala_de_tiles};
     SDL_RenderCopyEx(renderer, pelo.ptr(), &origen_pelo, &destino_pelo, 0.0, nullptr, flip);
 
-    const int columna_sombrero = indice_sombrero % columnas_sombrero;
-    const int pagina_sombrero = indice_sombrero / columnas_sombrero;
-    const SDL_Rect origen_sombrero{
-        columna_sombrero * ANCHO_CELDA_SOMBRERO,
-        FILA_SOMBRERO_POR_DIRECCION[fila_direccion] + pagina_sombrero * ALTO_BLOQUE_SOMBRERO,
-        ANCHO_CELDA_SOMBRERO, ANCHO_CELDA_SOMBRERO};
-    const int margen_sombrero = (ANCHO_CELDA_SOMBRERO - ancho) / 2;
-    const SDL_Rect destino_sombrero{
-        x_pantalla - margen_sombrero * escala_de_tiles,
-        y_pantalla + (desvio_y_accesorios - margen_sombrero) * escala_de_tiles,
-        ANCHO_CELDA_SOMBRERO * escala_de_tiles, ANCHO_CELDA_SOMBRERO * escala_de_tiles};
-    const SDL_RendererFlip flip_sombrero =
-        flip == SDL_FLIP_NONE ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
-    SDL_RenderCopyEx(
-        renderer, sombrero.ptr(), &origen_sombrero, &destino_sombrero, 0.0, nullptr,
-        flip_sombrero);
+    if (indice_sombrero >= 0 && columnas_sombrero > 0) {
+        const int columna_sombrero = indice_sombrero % columnas_sombrero;
+        const int pagina_sombrero = indice_sombrero / columnas_sombrero;
+        const SDL_Rect origen_sombrero{
+            columna_sombrero * ANCHO_CELDA_SOMBRERO,
+            FILA_SOMBRERO_POR_DIRECCION[fila_direccion] + pagina_sombrero * ALTO_BLOQUE_SOMBRERO,
+            ANCHO_CELDA_SOMBRERO,
+            ANCHO_CELDA_SOMBRERO};
+        const int margen_sombrero = (ANCHO_CELDA_SOMBRERO - ancho) / 2;
+        const SDL_Rect destino_sombrero{
+            x_pantalla - margen_sombrero * escala_de_tiles,
+            y_pantalla + (desvio_y_accesorios - margen_sombrero) * escala_de_tiles,
+            ANCHO_CELDA_SOMBRERO * escala_de_tiles,
+            ANCHO_CELDA_SOMBRERO * escala_de_tiles};
+        const SDL_RendererFlip flip_sombrero =
+            flip == SDL_FLIP_NONE ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
+        SDL_RenderCopyEx(
+            renderer,
+            sombrero.ptr(),
+            &origen_sombrero,
+            &destino_sombrero,
+            0.0,
+            nullptr,
+            flip_sombrero);
+    }
 
     const int columna_remera = indice_remera % columnas_remera;
     const int pagina_remera = indice_remera / columnas_remera;
     const SDL_Rect origen_remera{
         columna_remera * ANCHO_CELDA_REMERA,
         FILA_REMERA_POR_DIRECCION[fila_direccion] + pagina_remera * ALTO_BLOQUE_REMERA,
-        ANCHO_CELDA_REMERA, ANCHO_CELDA_REMERA};
+        ANCHO_CELDA_REMERA,
+        ANCHO_CELDA_REMERA};
     const int margen_remera = (ancho - ANCHO_CELDA_REMERA) / 2;
     const SDL_Rect destino_remera{
         x_pantalla + margen_remera * escala_de_tiles,
         y_pantalla + (offset_y_remera + desvio_y_accesorios) * escala_de_tiles,
-        ANCHO_CELDA_REMERA * escala_de_tiles, ANCHO_CELDA_REMERA * escala_de_tiles};
+        ANCHO_CELDA_REMERA * escala_de_tiles,
+        ANCHO_CELDA_REMERA * escala_de_tiles};
     SDL_RenderCopyEx(renderer, remera.ptr(), &origen_remera, &destino_remera, 0.0, nullptr, flip);
 
     if (haciendo_accion) {
-        SDL_RenderCopyEx(renderer, cuerpo.ptr(), &origen_brazos, &destino_cuerpo, 0.0, nullptr, flip);
+        SDL_RenderCopyEx(
+            renderer,
+            cuerpo.ptr(),
+            &origen_brazos,
+            &destino_cuerpo,
+            0.0,
+            nullptr,
+            flip);
     }
 }
