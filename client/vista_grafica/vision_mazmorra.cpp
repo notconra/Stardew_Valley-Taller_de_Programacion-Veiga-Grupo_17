@@ -26,7 +26,7 @@ int VisionMazmorra::calcular_alfa(double distancia) const {
     if (ancho_difuminado <= 0 || distancia >= radio_visible + ancho_difuminado) {
         return 255;
     }
-    const double avance = (distancia - radio_visible) / ancho_difuminado;  // 0..1
+    const double avance = (distancia - radio_visible) / ancho_difuminado;
     const int escalon = static_cast<int>(avance * PASOS_DE_DIFUMINADO) + 1;
     return std::clamp(escalon * 255 / PASOS_DE_DIFUMINADO, 0, 255);
 }

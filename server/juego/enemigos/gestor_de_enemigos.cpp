@@ -3,12 +3,7 @@
 #include <cstdlib>
 
 namespace {
-// Cuánto dura el gesto de ataque del lado visual, en ticks. Es independiente del cooldown entre
-// golpes (ticks_entre_ataques, que es por tipo): esto solo controla cuánto se ve la animación.
 constexpr uint32_t DURACION_ANIMACION_ATAQUE_TICKS = 16;
-
-// Cuánto dura la animación de morir antes de que el cadáver deje de dibujarse (a 40 ticks/seg,
-// unos 600ms).
 constexpr uint32_t DURACION_ANIMACION_MUERTE_TICKS = 36;
 }  // namespace
 
@@ -45,7 +40,7 @@ ResultadoDeGolpeEnemigo GestorDeEnemigos::golpear(int id, int danio) {
     }
 
     Enemigo& enemigo = it->second;
-    resultado.golpeo = true;  // el golpe conectó; si es invulnerable, igual no le baja la vida
+    resultado.golpeo = true;
     if (enemigo.recibir_golpe(danio)) {
         resultado.murio = true;
         const DefinicionDeEnemigo* definicion = catalogo.buscar(enemigo.tipo);
@@ -71,9 +66,6 @@ std::vector<int> GestorDeEnemigos::actualizar() {
             continue;
         }
 
-        // Muerto: la animación de morir y el reloj de revivir corren en paralelo. Si terminó de
-        // morir sin que haya revivido todavía, el cliente tiene que dejar de dibujar el cadáver;
-        // si en este mismo tick además revive, el "vida llena" de abajo ya lo cubre.
         bool cambio_visible = false;
         if (enemigo.ticks_de_animacion_muerte > 0) {
             --enemigo.ticks_de_animacion_muerte;
