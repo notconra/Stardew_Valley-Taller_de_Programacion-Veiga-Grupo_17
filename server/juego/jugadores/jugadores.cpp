@@ -145,6 +145,9 @@ Rectangulo Jugadores::rectangulo_de_pies(double x, double y) const {
 std::vector<std::pair<uint32_t, const Transicion*>> Jugadores::en_transicion() const {
     std::vector<std::pair<uint32_t, const Transicion*>> resultado;
     for (const auto& [id_jugador, jugador] : jugadores) {
+        if (!jugador.camina) {
+            continue;
+        }
         const Transicion* transicion = mapa.transicion_en(rectangulo_de_pies(jugador.x, jugador.y));
         if (transicion != nullptr) {
             resultado.emplace_back(id_jugador, transicion);

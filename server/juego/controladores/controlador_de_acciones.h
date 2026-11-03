@@ -19,14 +19,11 @@
 // personaje con su acción.
 class ControladorDeAcciones {
 private:
-    // A cuántas casillas de la propia (en cualquier dirección, diagonales incluidas) se puede
-    // actuar. El cliente manda la casilla del click, el servidor no le cree.
-    static constexpr int ALCANCE_EN_CASILLAS = 1;
-
     GestorDeSectores& sectores;
     std::map<uint32_t, Personaje>& personajes;
     const RecursosDeJuego& recursos;
     Notificador& notificador;
+    ResolverDeTransicion resolver_transicion;
     std::vector<std::unique_ptr<Accion>> acciones;
 
     bool al_alcance(const Sector& sector, const Casilla& propia, const Casilla& objetivo) const;
@@ -38,7 +35,8 @@ private:
 public:
     ControladorDeAcciones(
         GestorDeSectores& sectores, std::map<uint32_t, Personaje>& personajes,
-        const RecursosDeJuego& recursos, Notificador& notificador);
+        const RecursosDeJuego& recursos, Notificador& notificador,
+        ResolverDeTransicion resolver_transicion);
 
     // Devuelve true si el comando era de este controlador (y lo consumió).
     bool atender(Personaje& personaje, const ComandoCliente& comando);

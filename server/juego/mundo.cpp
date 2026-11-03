@@ -1,5 +1,9 @@
 #include "mundo.h"
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 Mundo::Mundo(
     const RecursosDeJuego& recursos_de_juego, Notificador& notificador_de_juego,
     uint8_t ticks_por_segundo)
@@ -7,9 +11,14 @@ Mundo::Mundo(
       notificador(notificador_de_juego),
       sectores(recursos_de_juego, ticks_por_segundo, personajes, notificador_de_juego),
       controlador_de_jugador(sectores, notificador_de_juego),
-      controlador_de_acciones(sectores, personajes, recursos_de_juego, notificador_de_juego),
+      controlador_de_acciones(
+          sectores, personajes, recursos_de_juego, notificador_de_juego,
+          [this](Personaje& personaje, const Transicion& transicion) {
+              resolver_transicion(personaje, transicion);
+          }),
       controlador_de_cofres(sectores, personajes, notificador_de_juego),
-      controlador_de_drops(sectores, personajes, notificador_de_juego),
+      controlador_de_drops(
+          sectores, personajes, notificador_de_juego, recursos_de_juego.juego.drops),
       controlador_de_mazmorra(recursos_de_juego, sectores) {
 }
 
@@ -88,15 +97,26 @@ void Mundo::resolver_transicion(Personaje& personaje, const Transicion& transici
         transicion.fila_destino);
 }
 
-void Mundo::actualizar() {
-    sectores.actualizar();
+bool Mundo::requiere_clic(const Transicion& transicion) const {
+    const std::vector<std::string>& destinos = recursos.juego.transiciones.destinos_con_clic;
+    return std::find(destinos.begin(), destinos.end(), transicion.mapa_destino) != destinos.end();
+}
 
+void Mundo::resolver_transiciones_automaticas() {
     for (const JugadorEnTransicion& en_transicion : sectores.jugadores_en_transicion()) {
+        if (requiere_clic(en_transicion.transicion)) {
+            continue;
+        }
         auto encontrado = personajes.find(en_transicion.id_jugador);
         if (encontrado != personajes.end()) {
             resolver_transicion(encontrado->second, en_transicion.transicion);
         }
     }
+}
+
+void Mundo::actualizar() {
+    sectores.actualizar();
+    resolver_transiciones_automaticas();
     sectores.difundir_jugadores();
     controlador_de_acciones.actualizar();
     controlador_de_cofres.actualizar();
