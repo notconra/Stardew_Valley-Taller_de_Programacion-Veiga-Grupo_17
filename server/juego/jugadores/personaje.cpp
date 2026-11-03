@@ -49,6 +49,29 @@ bool Personaje::esta_ocupado() const {
     return ticks_restantes_accion > 0;
 }
 
+double Personaje::multiplicador_de_ataque() const {
+    constexpr int UMBRAL_VIDA_BAJA = VIDA_MAXIMA / 5;  // 20%
+    return vida <= UMBRAL_VIDA_BAJA ? 0.5 : 1.0;
+}
+
+bool Personaje::esta_inconsciente() const {
+    return vida <= 0;
+}
+
+void Personaje::recibir_golpe(int danio) {
+    if (danio <= 0 || esta_inconsciente()) {
+        return;
+    }
+    vida = (danio >= vida) ? 0 : vida - danio;
+}
+
+void Personaje::gastar_energia(int cantidad) {
+    if (cantidad <= 0) {
+        return;
+    }
+    energia = (cantidad >= energia) ? 0 : energia - cantidad;
+}
+
 ActualizacionInventario Personaje::actualizacion_de_inventario() const {
     ActualizacionInventario actualizacion;
     actualizacion.inventario.id_jugador = id_jugador;
