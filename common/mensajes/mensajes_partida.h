@@ -9,6 +9,7 @@
 #include "../modo_uso.h"
 #include "../ranura_inventario.h"
 #include "../tipo_accion.h"
+#include "../tipo_enemigo.h"
 #include "../tipo_item.h"
 #include "../tipo_objeto.h"
 
@@ -91,8 +92,15 @@ struct PartidaAbandonada {};
 // existiendo y el jugador vuelve al lobby.
 struct PartidaCerradaPorError {};
 
+// Vida y energía máximas de un jugador. Única fuente de verdad compartida entre servidor
+// (Personaje::VIDA_MAXIMA / ENERGIA_MAXIMA las toman de acá) y cliente (para saber a qué escala
+// dibujar sus gauges del HUD).
+constexpr uint8_t VIDA_MAXIMA_JUGADOR = 100;
+constexpr uint8_t ENERGIA_MAXIMA_JUGADOR = 100;
+
 // Lo que el cliente necesita para dibujar a un jugador. La posición es en píxeles del mapa.
-// "mirando", "camina" y "accion_actual" bastan para elegir el sprite y la animación.
+// "mirando", "camina" y "accion_actual" bastan para elegir el sprite y la animación. "vida" y
+// "energia" son para los gauges del HUD, de 0 a VIDA_MAXIMA_JUGADOR / ENERGIA_MAXIMA_JUGADOR.
 struct EstadoJugador {
     uint32_t id_jugador = 0;
     std::string mapa;
@@ -102,6 +110,8 @@ struct EstadoJugador {
     bool camina = false;
     uint8_t ranura_activa = 0;
     TipoAccion accion_actual = TipoAccion::NINGUNA;
+    uint8_t vida = VIDA_MAXIMA_JUGADOR;
+    uint8_t energia = ENERGIA_MAXIMA_JUGADOR;
 
     // Esto sirve pq el servidor compara con lo último que mandó para no repetir un
     // JugadoresEnSector igual.
@@ -128,6 +138,23 @@ struct EstadoDrop {
     Calidad calidad = Calidad::BASE;
 };
 
+// Un enemigo tal como lo necesita el cliente para dibujarlo: dónde está, de qué tipo es y cuánta
+// vida le queda (0 si está muerto esperando revivir; el cliente simplemente no lo dibuja en ese
+// caso). "id" es único dentro de su mapa, igual que con los objetos y los drops.
+struct EstadoEnemigo {
+    uint32_t id = 0;
+    TipoEnemigo tipo = TipoEnemigo::NINGUNO;
+    uint32_t columna = 0;
+    uint32_t fila = 0;
+    uint16_t vida = 0;
+    uint16_t vida_maxima = 0;
+    // Si está en medio del gesto de golpear a un jugador, para la animación de ataque del cliente.
+    bool atacando = false;
+    // Si está en medio de la animación de morir. Con vida en 0 y esto en false, ya terminó de
+    // morir: el cliente no tiene que dibujar nada hasta que vuelva a estar vivo.
+    bool muriendo = false;
+};
+
 // Snapshot completa de UN sector. Se manda una sola vez cuando el jugador entra o cambia de
 // sector. Después, los cambios llegan como eventos.
 struct EstadoJuego {
@@ -135,6 +162,7 @@ struct EstadoJuego {
     std::vector<EstadoJugador> jugadores;
     std::vector<EstadoObjetoDelMundo> objetos;
     std::vector<EstadoDrop> drops;
+    std::vector<EstadoEnemigo> enemigos;
 };
 
 // Posición y estado de todos los jugadores del sector del receptor. Se manda cada tick, pero solo
@@ -167,6 +195,13 @@ struct DropAparecido {
 struct DropRetirado {
     uint32_t id = 0;
     uint32_t id_jugador = 0;
+};
+
+// Un enemigo del sector del receptor que cambió: lo golpearon, murió (vida en 0) o revivió. Si el
+// id no existía todavía del lado del cliente (recién apareció, por ejemplo al poblarse un nivel),
+// lo agrega; si ya existía, lo reemplaza entero.
+struct EnemigoActualizado {
+    EstadoEnemigo enemigo;
 };
 
 // La barra de un jugador. Las ranuras reales van de 0 a ranuras.size() - 1.
