@@ -14,7 +14,7 @@
 class AccionPicar : public Accion {
 private:
     static constexpr uint16_t DURACION_EN_TICKS = 8;
-
+    static constexpr int COSTO_DE_ENERGIA = 3;
     static void soltar_contenido_de_cofre(ContextoDeAccion& c, int id_cofre, int columna, int fila);
 
 public:

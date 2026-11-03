@@ -47,5 +47,6 @@ bool AccionPicar::ejecutar(ContextoDeAccion& c) {
             columna,
             fila);
     }
+    c.personaje.gastar_energia(COSTO_DE_ENERGIA);
     return true;
 }
