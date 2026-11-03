@@ -27,9 +27,9 @@ private:
     SeleccionarRanuraDeLaBarra recibir_comando_seleccionar_ranura_de_la_barra();
     UsarItem recibir_comando_usar_item();
     MoverItemEntreRanuras recibir_comando_mover_item_entre_ranuras();
-    AbrirCofre recibir_comando_abrir_cofre();
     MoverItemConCofre recibir_comando_mover_item_con_cofre();
     SolicitarInventario recibir_comando_solicitar_inventario();
+    SoltarItem recibir_comando_soltar_item();
 
     // Valida que el eje venga en el rango -1..1. Lanza ErrorProtocolo si no.
     int8_t eje_de_movimiento(int8_t valor) const;
@@ -48,6 +48,7 @@ private:
     // partida
     void enviar_estado_jugador(const EstadoJugador& estado);
     void enviar_estado_objeto_del_mundo(const EstadoObjetoDelMundo& estado);
+    void enviar_estado_drop(const EstadoDrop& estado);
     void enviar_ranura_inventario(const RanuraInventario& ranura);
     void enviar_ranuras(const std::vector<RanuraInventario>& ranuras);
     void enviar_inventario_jugador(const InventarioJugador& inventario);
@@ -55,6 +56,11 @@ private:
     void enviar_evento_actualizacion_inventario(const ActualizacionInventario& actualizacion);
     void enviar_evento_actualizacion_cofre(const ActualizacionCofre& actualizacion);
     void enviar_estado_juego(const EstadoJuego& estado_juego);
+    void enviar_evento_jugadores_en_sector(const JugadoresEnSector& jugadores);
+    void enviar_evento_objeto_colocado(const ObjetoColocado& objeto);
+    void enviar_evento_objeto_retirado(const ObjetoRetirado& objeto);
+    void enviar_evento_drop_aparecido(const DropAparecido& drop);
+    void enviar_evento_drop_retirado(const DropRetirado& drop);
 
 public:
     explicit ProtocoloServidor(ISocket& socket_conectado);

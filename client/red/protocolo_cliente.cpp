@@ -19,6 +19,11 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::PARTIDA_CERRADA_POR_ERROR,
            [this] { return recibir_partida_cerrada_por_error(); }},
           {TipoMensaje::ESTADO_JUEGO, [this] { return recibir_estado_juego(); }},
+          {TipoMensaje::JUGADORES_EN_SECTOR, [this] { return recibir_jugadores_en_sector(); }},
+          {TipoMensaje::OBJETO_COLOCADO, [this] { return recibir_objeto_colocado(); }},
+          {TipoMensaje::OBJETO_RETIRADO, [this] { return recibir_objeto_retirado(); }},
+          {TipoMensaje::DROP_APARECIDO, [this] { return recibir_drop_aparecido(); }},
+          {TipoMensaje::DROP_RETIRADO, [this] { return recibir_drop_retirado(); }},
           {TipoMensaje::ACTUALIZACION_INVENTARIO,
            [this] { return recibir_actualizacion_inventario(); }},
           {TipoMensaje::ACTUALIZACION_COFRE, [this] { return recibir_actualizacion_cofre(); }},
@@ -43,9 +48,9 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             },
             [this](const UsarItem& m) { enviar_comando_usar_item(m); },
             [this](const MoverItemEntreRanuras& m) { enviar_comando_mover_item_entre_ranuras(m); },
-            [this](const AbrirCofre& m) { enviar_comando_abrir_cofre(m); },
             [this](const MoverItemConCofre& m) { enviar_comando_mover_item_con_cofre(m); },
             [this](const SolicitarInventario& m) { enviar_comando_solicitar_inventario(m); },
+            [this](const SoltarItem& m) { enviar_comando_soltar_item(m); },
         },
         comando);
 }
@@ -98,6 +103,7 @@ void ProtocoloCliente::enviar_comando_seleccionar_ranura_de_la_barra(
 
 void ProtocoloCliente::enviar_comando_usar_item(const UsarItem& usar) {
     enviar_tipo(TipoMensaje::USAR_ITEM);
+    enviar_u8(static_cast<uint8_t>(usar.modo));
     enviar_u8(usar.indice_ranura);
     enviar_booleano(usar.tiene_casilla_objetivo);
     enviar_u32(usar.columna_objetivo);
@@ -111,11 +117,6 @@ void ProtocoloCliente::enviar_comando_mover_item_entre_ranuras(const MoverItemEn
     enviar_u16(mover.cantidad);
 }
 
-void ProtocoloCliente::enviar_comando_abrir_cofre(const AbrirCofre& abrir) {
-    enviar_tipo(TipoMensaje::ABRIR_COFRE);
-    enviar_booleano(abrir.cerrar);
-}
-
 void ProtocoloCliente::enviar_comando_mover_item_con_cofre(const MoverItemConCofre& mover) {
     enviar_tipo(TipoMensaje::MOVER_ITEM_CON_COFRE);
     enviar_u8(mover.origen);
@@ -126,6 +127,12 @@ void ProtocoloCliente::enviar_comando_mover_item_con_cofre(const MoverItemConCof
 
 void ProtocoloCliente::enviar_comando_solicitar_inventario(const SolicitarInventario&) {
     enviar_tipo(TipoMensaje::SOLICITAR_INVENTARIO);
+}
+
+void ProtocoloCliente::enviar_comando_soltar_item(const SoltarItem& soltar) {
+    enviar_tipo(TipoMensaje::SOLTAR_ITEM);
+    enviar_u8(soltar.ranura);
+    enviar_u16(soltar.cantidad);
 }
 
 // Recepción de eventos
@@ -195,15 +202,16 @@ PartidaCerradaPorError ProtocoloCliente::recibir_partida_cerrada_por_error() {
 }
 
 EstadoJugador ProtocoloCliente::recibir_estado_jugador() {
-    uint32_t id_jugador = recibir_u32();
-    std::string mapa = recibir_texto();
-    uint32_t x = recibir_u32();
-    uint32_t y = recibir_u32();
-    Direccion mirando = direccion_desde(recibir_u8());
-    bool camina = recibir_booleano();
-    uint8_t ranura_activa = recibir_u8();
-
-    return EstadoJugador{id_jugador, mapa, x, y, mirando, camina, ranura_activa};
+    EstadoJugador estado;
+    estado.id_jugador = recibir_u32();
+    estado.mapa = recibir_texto();
+    estado.x = recibir_u32();
+    estado.y = recibir_u32();
+    estado.mirando = direccion_desde(recibir_u8());
+    estado.camina = recibir_booleano();
+    estado.ranura_activa = recibir_u8();
+    estado.accion_actual = static_cast<TipoAccion>(recibir_u8());
+    return estado;
 }
 
 EstadoObjetoDelMundo ProtocoloCliente::recibir_estado_objeto_del_mundo() {
@@ -257,9 +265,22 @@ ActualizacionCofre ProtocoloCliente::recibir_actualizacion_cofre() {
     return ActualizacionCofre{recibir_cofre_jugador()};
 }
 
+EstadoDrop ProtocoloCliente::recibir_estado_drop() {
+    EstadoDrop estado;
+    estado.id = recibir_u32();
+    estado.columna = recibir_u32();
+    estado.fila = recibir_u32();
+    estado.tipo = static_cast<TipoItem>(recibir_u8());
+    estado.cantidad = recibir_u16();
+    estado.calidad = static_cast<Calidad>(recibir_u8());
+    return estado;
+}
+
 EstadoJuego ProtocoloCliente::recibir_estado_juego() {
-    uint16_t cantidad_de_jugadores = recibir_u16();
     EstadoJuego estado_juego;
+    estado_juego.mapa = recibir_texto();
+
+    uint16_t cantidad_de_jugadores = recibir_u16();
     estado_juego.jugadores.reserve(cantidad_de_jugadores);
     for (uint16_t i = 0; i < cantidad_de_jugadores; ++i) {
         estado_juego.jugadores.push_back(recibir_estado_jugador());
@@ -271,7 +292,52 @@ EstadoJuego ProtocoloCliente::recibir_estado_juego() {
         estado_juego.objetos.push_back(recibir_estado_objeto_del_mundo());
     }
 
+    uint16_t cantidad_de_drops = recibir_u16();
+    estado_juego.drops.reserve(cantidad_de_drops);
+    for (uint16_t i = 0; i < cantidad_de_drops; ++i) {
+        estado_juego.drops.push_back(recibir_estado_drop());
+    }
+
     return estado_juego;
+}
+
+JugadoresEnSector ProtocoloCliente::recibir_jugadores_en_sector() {
+    JugadoresEnSector jugadores;
+    jugadores.mapa = recibir_texto();
+    uint16_t cantidad = recibir_u16();
+    jugadores.jugadores.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        jugadores.jugadores.push_back(recibir_estado_jugador());
+    }
+    return jugadores;
+}
+
+ObjetoColocado ProtocoloCliente::recibir_objeto_colocado() {
+    ObjetoColocado objeto;
+    objeto.id = recibir_u32();
+    objeto.columna = recibir_u32();
+    objeto.fila = recibir_u32();
+    objeto.tipo = static_cast<TipoObjeto>(recibir_u8());
+    return objeto;
+}
+
+ObjetoRetirado ProtocoloCliente::recibir_objeto_retirado() {
+    ObjetoRetirado objeto;
+    objeto.id = recibir_u32();
+    return objeto;
+}
+
+DropAparecido ProtocoloCliente::recibir_drop_aparecido() {
+    DropAparecido aparece;
+    aparece.drop = recibir_estado_drop();
+    return aparece;
+}
+
+DropRetirado ProtocoloCliente::recibir_drop_retirado() {
+    DropRetirado retirado;
+    retirado.id = recibir_u32();
+    retirado.id_jugador = recibir_u32();
+    return retirado;
 }
 
 void ProtocoloCliente::cerrar() {

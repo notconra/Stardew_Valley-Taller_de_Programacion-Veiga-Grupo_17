@@ -20,6 +20,7 @@ RecursosDeJuego::RecursosDeJuego(
       mazmorra(configuracion_mazmorra) {
     for (const ConfiguracionMapaServidor& configuracion_mapa : configuracion_mapas) {
         mapas.emplace(configuracion_mapa.id, Mapa(configuracion_mapa));
+        this->configuraciones_mapas.emplace(configuracion_mapa.id, configuracion_mapa);
     }
     validar_catalogo_de_objetos();
     cargar_geografias_de_mazmorra();

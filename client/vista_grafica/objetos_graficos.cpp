@@ -52,10 +52,13 @@ VarianteDeAspecto textura_completa(const char* ruta, uint32_t peso = 1) {
 
 }  // namespace
 
-ObjetosGraficos::ObjetosGraficos(SDL_Renderer* renderer, const ConfiguracionGraficos& graficos)
+ObjetosGraficos::ObjetosGraficos(
+    SDL_Renderer* renderer, const ConfiguracionGraficos& graficos,
+    const IconosDeItems& iconos_de_items)
     : aspectos(crear_aspectos_conocidos()),
       tamano_de_tile(graficos.tamano_de_tile),
-      escala_de_tiles(graficos.escala_de_tiles) {
+      escala_de_tiles(graficos.escala_de_tiles),
+      iconos(iconos_de_items) {
     for (const auto& entrada : aspectos) {
         const AspectoDeObjeto& aspecto = entrada.second;
         if (aspecto.variantes.empty() || peso_total(aspecto) == 0) {
@@ -113,6 +116,21 @@ void ObjetosGraficos::dibujar_sobre_los_jugadores(
     SDL_Renderer* renderer, const EstadoJuego& estado, const std::string& mapa, int cam_x,
     int cam_y) const {
     dibujar_capa(renderer, estado, mapa, cam_x, cam_y, CapaDeObjeto::SOBRE_LOS_JUGADORES);
+}
+
+void ObjetosGraficos::dibujar_drops(
+    SDL_Renderer* renderer, const EstadoJuego& estado, int cam_x, int cam_y) const {
+    const int casilla = tamano_de_tile * escala_de_tiles;
+    const int lado = casilla * 3 / 4;
+    const int margen = (casilla - lado) / 2;
+    for (const EstadoDrop& drop : estado.drops) {
+        const SDL_Rect destino{
+            static_cast<int>(drop.columna) * casilla - cam_x + margen,
+            static_cast<int>(drop.fila) * casilla - cam_y + margen,
+            lado,
+            lado};
+        iconos.dibujar(renderer, drop.tipo, drop.calidad, destino);
+    }
 }
 
 void ObjetosGraficos::dibujar_capa(

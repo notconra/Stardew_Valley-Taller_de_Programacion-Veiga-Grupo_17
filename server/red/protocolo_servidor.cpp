@@ -23,11 +23,11 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::USAR_ITEM, [this] { return recibir_comando_usar_item(); }},
           {TipoMensaje::MOVER_ITEM_ENTRE_RANURAS,
            [this] { return recibir_comando_mover_item_entre_ranuras(); }},
-          {TipoMensaje::ABRIR_COFRE, [this] { return recibir_comando_abrir_cofre(); }},
           {TipoMensaje::MOVER_ITEM_CON_COFRE,
            [this] { return recibir_comando_mover_item_con_cofre(); }},
           {TipoMensaje::SOLICITAR_INVENTARIO,
            [this] { return recibir_comando_solicitar_inventario(); }},
+          {TipoMensaje::SOLTAR_ITEM, [this] { return recibir_comando_soltar_item(); }},
       } {
 }
 
@@ -106,11 +106,13 @@ SeleccionarRanuraDeLaBarra ProtocoloServidor::recibir_comando_seleccionar_ranura
 }
 
 UsarItem ProtocoloServidor::recibir_comando_usar_item() {
+    uint8_t modo_val = recibir_u8();
+    ModoUso modo = (modo_val == 1) ? ModoUso::SECUNDARIO : ModoUso::PRINCIPAL;
     uint8_t indice = recibir_u8();
     bool tiene_casilla_objetivo = recibir_booleano();
     uint32_t columna_objetivo = recibir_u32();
     uint32_t fila_objetivo = recibir_u32();
-    return UsarItem{indice, tiene_casilla_objetivo, columna_objetivo, fila_objetivo};
+    return UsarItem{modo, indice, tiene_casilla_objetivo, columna_objetivo, fila_objetivo};
 }
 
 MoverItemEntreRanuras ProtocoloServidor::recibir_comando_mover_item_entre_ranuras() {
@@ -118,11 +120,6 @@ MoverItemEntreRanuras ProtocoloServidor::recibir_comando_mover_item_entre_ranura
     uint8_t destino = recibir_u8();
     uint16_t cantidad = recibir_u16();
     return MoverItemEntreRanuras{origen, destino, cantidad};
-}
-
-AbrirCofre ProtocoloServidor::recibir_comando_abrir_cofre() {
-    bool cerrar = recibir_booleano();
-    return AbrirCofre{cerrar};
 }
 
 MoverItemConCofre ProtocoloServidor::recibir_comando_mover_item_con_cofre() {
@@ -135,6 +132,12 @@ MoverItemConCofre ProtocoloServidor::recibir_comando_mover_item_con_cofre() {
 
 SolicitarInventario ProtocoloServidor::recibir_comando_solicitar_inventario() {
     return SolicitarInventario{};
+}
+
+SoltarItem ProtocoloServidor::recibir_comando_soltar_item() {
+    uint8_t ranura = recibir_u8();
+    uint16_t cantidad = recibir_u16();
+    return SoltarItem{ranura, cantidad};
 }
 
 // Envío de eventos
@@ -151,6 +154,11 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const ActualizacionInventario& e) { enviar_evento_actualizacion_inventario(e); },
             [this](const ActualizacionCofre& e) { enviar_evento_actualizacion_cofre(e); },
             [this](const EstadoJuego& e) { enviar_estado_juego(e); },
+            [this](const JugadoresEnSector& e) { enviar_evento_jugadores_en_sector(e); },
+            [this](const ObjetoColocado& e) { enviar_evento_objeto_colocado(e); },
+            [this](const ObjetoRetirado& e) { enviar_evento_objeto_retirado(e); },
+            [this](const DropAparecido& e) { enviar_evento_drop_aparecido(e); },
+            [this](const DropRetirado& e) { enviar_evento_drop_retirado(e); },
         },
         evento);
 }
@@ -204,6 +212,7 @@ void ProtocoloServidor::enviar_estado_jugador(const EstadoJugador& estado) {
     enviar_u8(static_cast<uint8_t>(estado.mirando));
     enviar_booleano(estado.camina);
     enviar_u8(estado.ranura_activa);
+    enviar_u8(static_cast<uint8_t>(estado.accion_actual));
 }
 
 void ProtocoloServidor::enviar_estado_objeto_del_mundo(const EstadoObjetoDelMundo& estado) {
@@ -212,6 +221,15 @@ void ProtocoloServidor::enviar_estado_objeto_del_mundo(const EstadoObjetoDelMund
     enviar_u32(estado.columna);
     enviar_u32(estado.fila);
     enviar_u8(static_cast<uint8_t>(estado.tipo));
+}
+
+void ProtocoloServidor::enviar_estado_drop(const EstadoDrop& estado) {
+    enviar_u32(estado.id);
+    enviar_u32(estado.columna);
+    enviar_u32(estado.fila);
+    enviar_u8(static_cast<uint8_t>(estado.tipo));
+    enviar_u16(estado.cantidad);
+    enviar_u8(static_cast<uint8_t>(estado.calidad));
 }
 
 void ProtocoloServidor::enviar_ranura_inventario(const RanuraInventario& ranura) {
@@ -252,6 +270,7 @@ void ProtocoloServidor::enviar_evento_actualizacion_cofre(const ActualizacionCof
 
 void ProtocoloServidor::enviar_estado_juego(const EstadoJuego& estado_juego) {
     enviar_tipo(TipoMensaje::ESTADO_JUEGO);
+    enviar_texto(estado_juego.mapa);
     enviar_largo(estado_juego.jugadores.size());
     for (const EstadoJugador& estado : estado_juego.jugadores) {
         enviar_estado_jugador(estado);
@@ -260,4 +279,41 @@ void ProtocoloServidor::enviar_estado_juego(const EstadoJuego& estado_juego) {
     for (const EstadoObjetoDelMundo& estado : estado_juego.objetos) {
         enviar_estado_objeto_del_mundo(estado);
     }
+    enviar_largo(estado_juego.drops.size());
+    for (const EstadoDrop& estado : estado_juego.drops) {
+        enviar_estado_drop(estado);
+    }
+}
+
+void ProtocoloServidor::enviar_evento_jugadores_en_sector(const JugadoresEnSector& jugadores) {
+    enviar_tipo(TipoMensaje::JUGADORES_EN_SECTOR);
+    enviar_texto(jugadores.mapa);
+    enviar_largo(jugadores.jugadores.size());
+    for (const EstadoJugador& estado : jugadores.jugadores) {
+        enviar_estado_jugador(estado);
+    }
+}
+
+void ProtocoloServidor::enviar_evento_objeto_colocado(const ObjetoColocado& objeto) {
+    enviar_tipo(TipoMensaje::OBJETO_COLOCADO);
+    enviar_u32(objeto.id);
+    enviar_u32(objeto.columna);
+    enviar_u32(objeto.fila);
+    enviar_u8(static_cast<uint8_t>(objeto.tipo));
+}
+
+void ProtocoloServidor::enviar_evento_objeto_retirado(const ObjetoRetirado& objeto) {
+    enviar_tipo(TipoMensaje::OBJETO_RETIRADO);
+    enviar_u32(objeto.id);
+}
+
+void ProtocoloServidor::enviar_evento_drop_aparecido(const DropAparecido& drop) {
+    enviar_tipo(TipoMensaje::DROP_APARECIDO);
+    enviar_estado_drop(drop.drop);
+}
+
+void ProtocoloServidor::enviar_evento_drop_retirado(const DropRetirado& drop) {
+    enviar_tipo(TipoMensaje::DROP_RETIRADO);
+    enviar_u32(drop.id);
+    enviar_u32(drop.id_jugador);
 }
