@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <map>
 #include <optional>
+#include <set>
 #include <string>
 #include <utility>
 
@@ -21,6 +22,7 @@
 #include "personaje.h"
 #include "renderizador.h"
 #include "vision_mazmorra.h"
+#include "tierra_grafica.h"
 
 class VistaPartida {
 private:
@@ -38,8 +40,8 @@ private:
     InventarioJugador ultimo_inventario{};
     CofreJugador ultimo_cofre{};
     std::string mapa_actual;
+    std::set<std::pair<int, int>> tierra_tratada;
     bool partida_terminada = false;
-
     const EstadoJugador* jugador_propio() const;
     const ConfiguracionMapa& configuracion_de(const std::string& id_mapa) const;
     Camara camara_para(const MapaGrafico& mapa) const;
@@ -50,6 +52,8 @@ private:
 
     std::optional<Casilla> casilla_apuntada(
         const EntradaDelUsuario& entrada, const Camara& camara) const;
+
+    void guardar_tierra(const EstadoJuego& estado);
 
     void enviar_intencion_si_cambio(const Moverse& intencion);
     void usar_item(uint8_t ranura, ModoUso modo, const std::optional<Casilla>& casilla);
@@ -67,8 +71,8 @@ private:
 
     void dibujar(
         Renderizador& renderizador, const MapaGrafico& mapa, const ObjetosGraficos& objetos,
-        const EnemigosGraficos& enemigos, const Personaje& personaje, const Camara& camara,
-        const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
+        const EnemigosGraficos& enemigos, const Personaje& personaje, const TierraGrafica& tierra,
+        const Camara& camara, const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
         const EntradaDelUsuario& entrada) const;
 
 public:

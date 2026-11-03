@@ -49,6 +49,12 @@ public:
     // Si no existe la capa, devuelve un vector vacío. Ignora objetos que no tengan
     // las propiedades necesarias (mapa_destino, columna_destino, fila_destino).
     std::vector<TransicionTMX> cargar_transiciones(const std::string& nombre_capa) const;
+
+    // Devuelve los identificadores globales (firstgid + id) de los tiles de todos los tilesets
+    // del mapa que tienen la propiedad con ese valor, por ejemplo Diggable = T. Sirve para marcar
+    // casillas según el dibujo que tienen. Si falla la lectura, devuelve un vector vacío.
+    std::vector<int> ids_con_propiedad(
+        const std::string& propiedad, const std::string& valor) const;
 };
 
 #endif

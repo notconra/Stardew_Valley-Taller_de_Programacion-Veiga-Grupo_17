@@ -160,6 +160,7 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const DropAparecido& e) { enviar_evento_drop_aparecido(e); },
             [this](const DropRetirado& e) { enviar_evento_drop_retirado(e); },
             [this](const EnemigoActualizado& e) { enviar_evento_enemigo_actualizado(e); },
+            [this](const TierraCambiada& e) { enviar_evento_tierra_cambiada(e); },
         },
         evento);
 }
@@ -246,6 +247,11 @@ void ProtocoloServidor::enviar_estado_enemigo(const EstadoEnemigo& estado) {
     enviar_booleano(estado.muriendo);
 }
 
+void ProtocoloServidor::enviar_casilla_tratada(const CasillaTratada& casilla) {
+    enviar_u32(casilla.columna);
+    enviar_u32(casilla.fila);
+}
+
 void ProtocoloServidor::enviar_ranura_inventario(const RanuraInventario& ranura) {
     enviar_u8(static_cast<uint8_t>(ranura.tipo));
     enviar_u16(ranura.cantidad);
@@ -297,9 +303,13 @@ void ProtocoloServidor::enviar_estado_juego(const EstadoJuego& estado_juego) {
     for (const EstadoDrop& estado : estado_juego.drops) {
         enviar_estado_drop(estado);
     }
-    enviar_largo(estado_juego.enemigos.size());
+enviar_largo(estado_juego.enemigos.size());
     for (const EstadoEnemigo& estado : estado_juego.enemigos) {
         enviar_estado_enemigo(estado);
+    }
+    enviar_largo(estado_juego.tierra.size());
+    for (const CasillaTratada& casilla : estado_juego.tierra) {
+        enviar_casilla_tratada(casilla);
     }
 }
 
@@ -339,4 +349,10 @@ void ProtocoloServidor::enviar_evento_drop_retirado(const DropRetirado& drop) {
 void ProtocoloServidor::enviar_evento_enemigo_actualizado(const EnemigoActualizado& enemigo) {
     enviar_tipo(TipoMensaje::ENEMIGO_ACTUALIZADO);
     enviar_estado_enemigo(enemigo.enemigo);
+}
+
+void ProtocoloServidor::enviar_evento_tierra_cambiada(const TierraCambiada& tierra) {
+    enviar_tipo(TipoMensaje::TIERRA_CAMBIADA);
+    enviar_casilla_tratada(tierra.casilla);
+    enviar_booleano(tierra.tratada);
 }

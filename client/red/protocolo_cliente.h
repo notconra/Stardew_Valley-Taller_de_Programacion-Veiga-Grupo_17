@@ -44,6 +44,7 @@ private:
     EstadoObjetoDelMundo recibir_estado_objeto_del_mundo();
     EstadoDrop recibir_estado_drop();
     EstadoEnemigo recibir_estado_enemigo();
+    CasillaTratada recibir_casilla_tratada();
     EstadoJuego recibir_estado_juego();
     JugadoresEnSector recibir_jugadores_en_sector();
     ObjetoColocado recibir_objeto_colocado();
@@ -51,6 +52,7 @@ private:
     DropAparecido recibir_drop_aparecido();
     DropRetirado recibir_drop_retirado();
     EnemigoActualizado recibir_enemigo_actualizado();
+    TierraCambiada recibir_tierra_cambiada();
     RanuraInventario recibir_ranura_inventario();
     std::vector<RanuraInventario> recibir_ranuras();
     InventarioJugador recibir_inventario_jugador();

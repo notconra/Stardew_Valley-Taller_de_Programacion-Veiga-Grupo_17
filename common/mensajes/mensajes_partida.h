@@ -138,7 +138,6 @@ struct EstadoDrop {
     Calidad calidad = Calidad::BASE;
 };
 
-// Un enemigo tal como lo necesita el cliente para dibujarlo: dónde está, de qué tipo es y cuánta
 // vida le queda (0 si está muerto esperando revivir; el cliente simplemente no lo dibuja en ese
 // caso). "id" es único dentro de su mapa, igual que con los objetos y los drops.
 struct EstadoEnemigo {
@@ -155,6 +154,14 @@ struct EstadoEnemigo {
     bool muriendo = false;
 };
 
+// Una casilla de tierra tratada con la pala, por columna y fila del mapa.
+struct CasillaTratada {
+    uint32_t columna = 0;
+    uint32_t fila = 0;
+
+    bool operator==(const CasillaTratada&) const = default;
+};
+
 // Snapshot completa de UN sector. Se manda una sola vez cuando el jugador entra o cambia de
 // sector. Después, los cambios llegan como eventos.
 struct EstadoJuego {
@@ -163,6 +170,7 @@ struct EstadoJuego {
     std::vector<EstadoObjetoDelMundo> objetos;
     std::vector<EstadoDrop> drops;
     std::vector<EstadoEnemigo> enemigos;
+    std::vector<CasillaTratada> tierra;
 };
 
 // Posición y estado de todos los jugadores del sector del receptor. Se manda cada tick, pero solo
@@ -202,6 +210,11 @@ struct DropRetirado {
 // lo agrega; si ya existía, lo reemplaza entero.
 struct EnemigoActualizado {
     EstadoEnemigo enemigo;
+// Cambió el estado de una casilla de tierra del sector del receptor. "tratada" indica si quedó
+// tratada con la pala (true) o si volvió a tierra común con el pico (false).
+struct TierraCambiada {
+    CasillaTratada casilla;
+    bool tratada = false;
 };
 
 // La barra de un jugador. Las ranuras reales van de 0 a ranuras.size() - 1.

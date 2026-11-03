@@ -47,7 +47,8 @@ struct RecursosDeJuego {
 private:
     // Junta las definiciones de todos los módulos que aportan objetos del mundo. Para sumar
     // árboles o muebles alcanza con concatenar sus definiciones acá.
-    static CatalogoDeObjetos crear_catalogo_de_objetos();
+    static CatalogoDeObjetos crear_catalogo_de_objetos(
+        const std::vector<ConfiguracionMineralServidor>& minerales);
 
     // Junta las definiciones de todos los módulos que aportan tipos de enemigo. Para sumar Orcos,
     // Vampiros o Skulls alcanza con sumar su definición acá, igual que con los objetos.

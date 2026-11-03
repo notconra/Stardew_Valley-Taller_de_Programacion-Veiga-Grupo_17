@@ -1,6 +1,5 @@
 #include "drops.h"
 
-#include <cstdlib>
 #include <vector>
 
 int Drops::dejar(TipoItem tipo, uint16_t cantidad, Calidad calidad, int columna, int fila) {
@@ -29,9 +28,7 @@ std::vector<int> Drops::ids_cerca_de(const Casilla& centro, int radio_en_casilla
     std::vector<int> resultado;
     for (const auto& entrada : drops) {
         const Drop& drop = entrada.second;
-        const int distancia_en_columnas = std::abs(drop.columna - centro.columna);
-        const int distancia_en_filas = std::abs(drop.fila - centro.fila);
-        if (distancia_en_columnas <= radio_en_casillas && distancia_en_filas <= radio_en_casillas) {
+        if (distancia_en_casillas(Casilla{drop.columna, drop.fila}, centro) <= radio_en_casillas) {
             resultado.push_back(drop.id);
         }
     }

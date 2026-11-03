@@ -3,22 +3,31 @@
 
 #include <vector>
 
+#include "../../configuracion/configuracion_servidor_datos.h"
 #include "../objetos_del_mundo/objetos_del_mundo.h"
 
 // Los minerales del juego, expresados como objetos del mundo. No hay una clase por mineral: cada
-// uno es una fila de datos en definiciones(). RecursosDeJuego las suma al catálogo genérico junto
-// con las definiciones de otros módulos (árboles, muebles, ...).
+// uno es una fila de datos. Lo que se puede ajustar desde la configuración (golpes, frecuencia,
+// nivel mínimo, cantidad, probabilidad de no dejar nada) viaja en ConfiguracionMineralServidor,
+// lo que no (con qué se pica, qué ítem deja, cómo se ve) es una regla fija de acá.
 //
-// Cuántos aparecen por nivel lo decide [mazmorra] en la configuración; con qué frecuencia relativa
-// aparece cada uno lo decide pesos(), que depende del número de nivel.
+// Si la configuración no trae minerales se usan los de por_defecto(). Si trae alguno, esos
+// reemplazan a los de defecto. Las funciones lanzan std::runtime_error si hay una clave
+// desconocida o repetida.
 class Minerales {
 public:
-    static std::vector<DefinicionDeObjeto> definiciones();
+    static std::vector<ConfiguracionMineralServidor> por_defecto();
+
+    // Siempre define los cinco minerales (los no configurados, con sus valores por defecto), así
+    // el catálogo de objetos está completo aunque un mineral no aparezca en los niveles.
+    static std::vector<DefinicionDeObjeto> definiciones(
+        const std::vector<ConfiguracionMineralServidor>& configurados);
 
     // Frecuencia relativa de cada mineral en un nivel. Los pesos no tienen que sumar 100: la
-    // probabilidad de cada tipo es su peso sobre el total. El oro recién aparece a partir de
-    // "oro_desde_nivel", así que en los niveles anteriores su peso es cero y nunca se sortea.
-    static std::vector<PesoDeObjeto> pesos(int numero_de_nivel, int oro_desde_nivel);
+    // probabilidad de cada tipo es su peso sobre el total. Un mineral antes de su "desde_nivel"
+    // tiene peso cero y nunca se sortea.
+    static std::vector<PesoDeObjeto> pesos(
+        int numero_de_nivel, const std::vector<ConfiguracionMineralServidor>& configurados);
 };
 
 #endif

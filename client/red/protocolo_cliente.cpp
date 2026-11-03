@@ -25,6 +25,7 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::DROP_APARECIDO, [this] { return recibir_drop_aparecido(); }},
           {TipoMensaje::DROP_RETIRADO, [this] { return recibir_drop_retirado(); }},
           {TipoMensaje::ENEMIGO_ACTUALIZADO, [this] { return recibir_enemigo_actualizado(); }},
+          {TipoMensaje::TIERRA_CAMBIADA, [this] { return recibir_tierra_cambiada(); }},
           {TipoMensaje::ACTUALIZACION_INVENTARIO,
            [this] { return recibir_actualizacion_inventario(); }},
           {TipoMensaje::ACTUALIZACION_COFRE, [this] { return recibir_actualizacion_cofre(); }},
@@ -290,6 +291,11 @@ EstadoEnemigo ProtocoloCliente::recibir_estado_enemigo() {
     estado.atacando = recibir_booleano();
     estado.muriendo = recibir_booleano();
     return estado;
+CasillaTratada ProtocoloCliente::recibir_casilla_tratada() {
+    CasillaTratada casilla;
+    casilla.columna = recibir_u32();
+    casilla.fila = recibir_u32();
+    return casilla;
 }
 
 EstadoJuego ProtocoloCliente::recibir_estado_juego() {
@@ -318,6 +324,10 @@ EstadoJuego ProtocoloCliente::recibir_estado_juego() {
     estado_juego.enemigos.reserve(cantidad_de_enemigos);
     for (uint16_t i = 0; i < cantidad_de_enemigos; ++i) {
         estado_juego.enemigos.push_back(recibir_estado_enemigo());
+    uint16_t cantidad_de_tierra = recibir_u16();
+    estado_juego.tierra.reserve(cantidad_de_tierra);
+    for (uint16_t i = 0; i < cantidad_de_tierra; ++i) {
+        estado_juego.tierra.push_back(recibir_casilla_tratada());
     }
 
     return estado_juego;
@@ -366,6 +376,11 @@ EnemigoActualizado ProtocoloCliente::recibir_enemigo_actualizado() {
     EnemigoActualizado actualizado;
     actualizado.enemigo = recibir_estado_enemigo();
     return actualizado;
+TierraCambiada ProtocoloCliente::recibir_tierra_cambiada() {
+    TierraCambiada tierra;
+    tierra.casilla = recibir_casilla_tratada();
+    tierra.tratada = recibir_booleano();
+    return tierra;
 }
 
 void ProtocoloCliente::cerrar() {

@@ -9,9 +9,7 @@ GestorDeSectores::GestorDeSectores(
     const RecursosDeJuego& recursos, uint8_t ticks_por_segundo,
     const std::map<uint32_t, Personaje>& personajes_de_la_partida,
     Notificador& notificador_de_juego)
-    : notificador(notificador_de_juego),
-      personajes(personajes_de_la_partida),
-      ticks_entre_refrescos(ticks_por_segundo) {
+    : notificador(notificador_de_juego), personajes(personajes_de_la_partida) {
     for (const auto& entrada : recursos.mapas) {
         const std::string& id_mapa = entrada.first;
         sectores.try_emplace(id_mapa, id_mapa, recursos, ticks_por_segundo);
@@ -104,12 +102,7 @@ void GestorDeSectores::actualizar() {
 std::vector<JugadorEnTransicion> GestorDeSectores::jugadores_en_transicion() const {
     std::vector<JugadorEnTransicion> resultado;
     for (const auto& entrada : sectores) {
-        const std::vector<std::pair<uint32_t, const Transicion*>> transiciones =
-            entrada.second.jugadores.en_transicion();
-        for (const std::pair<uint32_t, const Transicion*>& par : transiciones) {
-            if (par.second == nullptr) {
-                continue;
-            }
+        for (const auto& par : entrada.second.jugadores.en_transicion()) {
             JugadorEnTransicion en_transicion;
             en_transicion.id_jugador = par.first;
             en_transicion.transicion = *par.second;
@@ -161,17 +154,18 @@ EstadoJuego GestorDeSectores::armar_instantanea(const std::string& id_mapa) cons
     sector.objetos.agregar_a(estado);
     sector.drops.agregar_a(estado);
     sector.enemigos.agregar_a(estado);
+    sector.tierra.agregar_a(estado.tierra);
     return estado;
 }
 
-void GestorDeSectores::difundir(const std::string& id_mapa, bool forzar) {
+void GestorDeSectores::difundir_jugadores(const std::string& id_mapa) {
     std::vector<EstadoJugador> actuales = armar_jugadores(id_mapa);
     std::vector<EstadoJugador>& ultimos = jugadores_enviados[id_mapa];
     if (actuales.empty()) {
         ultimos.clear();
         return;
     }
-    if (!forzar && actuales == ultimos) {
+    if (actuales == ultimos) {
         return;
     }
 
@@ -182,18 +176,8 @@ void GestorDeSectores::difundir(const std::string& id_mapa, bool forzar) {
     sectores.at(id_mapa).avisar(notificador, evento);
 }
 
-void GestorDeSectores::difundir_jugadores(const std::string& id_mapa) {
-    difundir(id_mapa, false);
-}
-
 void GestorDeSectores::difundir_jugadores() {
-    ++ticks_desde_el_refresco;
-    const bool refrescar = ticks_desde_el_refresco >= ticks_entre_refrescos;
-    if (refrescar) {
-        ticks_desde_el_refresco = 0;
-    }
-
     for (const auto& entrada : sectores) {
-        difundir(entrada.first, refrescar);
+        difundir_jugadores(entrada.first);
     }
 }

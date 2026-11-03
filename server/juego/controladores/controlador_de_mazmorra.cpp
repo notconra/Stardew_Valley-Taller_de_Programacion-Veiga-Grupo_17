@@ -50,7 +50,7 @@ void ControladorDeMazmorra::poblar_niveles() {
         sector.objetos.retirar_objetos_naturales();
         sector.objetos.poblar_en(
             mazmorra->nivel(numero_de_nivel).obtener_celdas_de_objetos(),
-            Minerales::pesos(numero_de_nivel, recursos.mazmorra.oro_desde_nivel));
+            Minerales::pesos(numero_de_nivel, recursos.mazmorra.minerales));
 
         // TODO(enemigos): por ahora todas las casillas sorteadas por Nivel se pueblan con
         // esqueletos. Cuando estén Orcos, Vampiros y Skulls, esto tiene que repartir el tipo según

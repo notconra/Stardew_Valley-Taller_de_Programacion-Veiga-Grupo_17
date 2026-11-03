@@ -15,9 +15,17 @@ class AccionPicar : public Accion {
 private:
     static constexpr uint16_t DURACION_EN_TICKS = 8;
     static constexpr int COSTO_DE_ENERGIA = 3;
+    static constexpr uint16_t DURACION_POR_DEFECTO = 8;
+
+    const uint16_t duracion;
+
     static void soltar_contenido_de_cofre(ContextoDeAccion& c, int id_cofre, int columna, int fila);
 
 public:
+    explicit AccionPicar(uint16_t duracion_en_ticks = DURACION_POR_DEFECTO)
+        : duracion(duracion_en_ticks) {
+    }
+
     TipoAccion tipo() const override {
         return TipoAccion::PICAR;
     }
@@ -30,7 +38,7 @@ public:
     bool ejecutar(ContextoDeAccion& c) override;
 
     uint16_t duracion_en_ticks() const override {
-        return DURACION_EN_TICKS;
+        return duracion;
     }
 };
 

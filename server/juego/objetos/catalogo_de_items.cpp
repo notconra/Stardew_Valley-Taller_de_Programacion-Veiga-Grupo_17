@@ -12,18 +12,18 @@ CatalogoDeItems::CatalogoDeItems() {
     
 
     // Semillas y cultivos. Los cultivos llevan calidad, el resto no.
-    registrar(TipoItem::SEMILLA_PAPA, "Semilla de papa", CategoriaItem::SEMILLA, 50, true, 5, 0);
+    registrar(TipoItem::SEMILLA_PAPA, "Semilla de papa", CategoriaItem::SEMILLA, 50, true, 10, 0);
 
     // Recursos y minerales. Los minerales se pueden vender en el mercado.
-    registrar(TipoItem::PIEDRA, "Piedra", CategoriaItem::RECURSO, 50, true, 50, 0);
-    registrar(TipoItem::MADERA, "Madera", CategoriaItem::RECURSO, 50, true, 10, 0);
-    registrar(TipoItem::CARBON, "Carbón", CategoriaItem::RECURSO, 50, true, 8, 10);
-    registrar(TipoItem::LAPISLAZULI, "Lapislázuli", CategoriaItem::RECURSO, 50, true, 1, 25);
+    registrar(TipoItem::PIEDRA, "Piedra", CategoriaItem::RECURSO, 50, true, 0, 0);
+    registrar(TipoItem::MADERA, "Madera", CategoriaItem::RECURSO, 50, true, 0, 0);
+    registrar(TipoItem::CARBON, "Carbón", CategoriaItem::RECURSO, 50, true, 0, 10);
+    registrar(TipoItem::LAPISLAZULI, "Lapislázuli", CategoriaItem::RECURSO, 50, true, 0, 25);
     registrar(TipoItem::PLATA, "Plata", CategoriaItem::RECURSO, 50, true, 0, 40);
-    registrar(TipoItem::ORO, "Oro", CategoriaItem::RECURSO, 50, true, 2, 80);
+    registrar(TipoItem::ORO, "Oro", CategoriaItem::RECURSO, 50, true, 0, 80);
 
     // Colocables
-    registrar(TipoItem::COFRE, "Cofre", CategoriaItem::COLOCABLE, 50, true, 5, 0);
+    registrar(TipoItem::COFRE, "Cofre", CategoriaItem::COLOCABLE, 50, true, 0, 0);
 }
 
 void CatalogoDeItems::registrar(

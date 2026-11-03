@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <map>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -77,6 +78,22 @@ Mapa::Mapa(const ConfiguracionMapaServidor& configuracion) {
             marcar(capa, encontrado->second, capa_opcional.nombre);
         }
     }
+
+    // La tierra cultivable sale de una propiedad de los tiles del piso (en los mapas de Stardew,
+    // Diggable = T). Así no hace falta mantener a mano una capa aparte en el TMX.
+    if (!configuracion.propiedad_cultivable.empty()) {
+        const std::vector<int> piso = lector.cargar_capa(CAPA_DE_PISO);
+        if (piso.empty()) {
+            throw std::runtime_error(
+                std::string("falta la capa ") + CAPA_DE_PISO + " para la tierra cultivable de " +
+                configuracion.ruta_tmx);
+        }
+        marcar_si_es_alguno(
+            piso,
+            lector.ids_con_propiedad(configuracion.propiedad_cultivable, VALOR_VERDADERO_TMX),
+            PropiedadDeCasilla::CULTIVABLE,
+            CAPA_DE_PISO);
+    }
     for (const TransicionTMX& transicion_tmx :
          lector.cargar_transiciones(configuracion.capa_transiciones)) {
         const Rectangulo zona{
@@ -98,6 +115,20 @@ void Mapa::marcar(const std::vector<int>& capa, uint8_t propiedad, const std::st
     }
     for (std::size_t i = 0; i < capa.size(); ++i) {
         if (capa[i] != 0) {
+            propiedades[i] = static_cast<uint8_t>(propiedades[i] | propiedad);
+        }
+    }
+}
+
+void Mapa::marcar_si_es_alguno(
+    const std::vector<int>& capa, const std::vector<int>& ids, uint8_t propiedad,
+    const std::string& nombre_capa) {
+    if (capa.size() != propiedades.size()) {
+        throw std::runtime_error("la capa " + nombre_capa + " no coincide con el tamaño del mapa");
+    }
+    const std::set<int> buscados(ids.begin(), ids.end());
+    for (std::size_t i = 0; i < capa.size(); ++i) {
+        if (buscados.contains(capa[i] & MASCARA_ID_DE_TILE)) {
             propiedades[i] = static_cast<uint8_t>(propiedades[i] | propiedad);
         }
     }
@@ -146,6 +177,18 @@ const Transicion* Mapa::transicion_en(const Rectangulo& zona) const {
         }
     }
     return nullptr;
+}
+
+const Transicion* Mapa::transicion_en_casilla(int columna, int fila) const {
+    if (!esta_dentro(columna, fila)) {
+        return nullptr;
+    }
+    const Rectangulo casilla{
+        columna * ancho_de_casilla,
+        fila * alto_de_casilla,
+        ancho_de_casilla,
+        alto_de_casilla};
+    return transicion_en(casilla);
 }
 
 const std::vector<std::pair<Rectangulo, Transicion>>& Mapa::obtener_transiciones() const {

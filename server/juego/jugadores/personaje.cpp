@@ -9,11 +9,11 @@ Personaje::Personaje(
       mapa_actual(mapa_inicial),
       inventario(catalogo, cantidad_ranuras_barra),
       ranura_activa(0) {
-    // Los objetos iniciales son una regla del catálogo, no de la partida, cada personaje nuevo
-    // arranca con las herramientas y los stacks que el catálogo marque.
-    for (const auto& entrada : catalogo.definiciones()) {
-        if (entrada.second.cantidad_inicial > 0) {
-            inventario.agregar_item(entrada.first, entrada.second.cantidad_inicial);
+    // Al crearse (solo la primera vez que el jugador entra) recibe únicamente las herramientas que
+    // el catálogo marque con cantidad inicial. Nada más: lo demás se consigue jugando.
+    for (const auto& [tipo, definicion] : catalogo.definiciones()) {
+        if (catalogo.es_herramienta(tipo) && definicion.cantidad_inicial > 0) {
+            inventario.agregar_item(tipo, definicion.cantidad_inicial);
         }
     }
 }

@@ -1,22 +1,34 @@
 #include "controlador_de_acciones.h"
 
-#include <algorithm>
-#include <cstdlib>
 #include <map>
 #include <memory>
 #include <optional>
+#include <utility>
 #include <variant>
 
 #include "../acciones/accion_atacar.h"
 #include "../acciones/accion_colocar.h"
 #include "../acciones/accion_interactuar_cofre.h"
 #include "../acciones/accion_picar.h"
+#include "../acciones/accion_tratar_tierra.h"
+#include "../acciones/accion_usar_transicion.h"
 
 ControladorDeAcciones::ControladorDeAcciones(
     GestorDeSectores& sectores, std::map<uint32_t, Personaje>& personajes,
-    const RecursosDeJuego& recursos, Notificador& notificador)
-    : sectores(sectores), personajes(personajes), recursos(recursos), notificador(notificador) {
-    acciones.push_back(std::make_unique<AccionPicar>());
+    const RecursosDeJuego& recursos, Notificador& notificador,
+    ResolverDeTransicion resolver_transicion)
+    : sectores(sectores),
+      personajes(personajes),
+      recursos(recursos),
+      notificador(notificador),
+      resolver_transicion(std::move(resolver_transicion)) {
+    const ConfiguracionAccionesServidor& duraciones = recursos.juego.acciones;
+
+    acciones.push_back(std::make_unique<AccionUsarTransicion>());
+    acciones.push_back(
+        std::make_unique<AccionPicar>(static_cast<uint16_t>(duraciones.duracion_picar_en_ticks)));
+    acciones.push_back(std::make_unique<AccionTratarTierra>(
+        static_cast<uint16_t>(duraciones.duracion_tratar_tierra_en_ticks)));
     acciones.push_back(std::make_unique<AccionInteractuarCofre>());
     acciones.push_back(std::make_unique<AccionColocar>());
     acciones.push_back(std::make_unique<AccionAtacar>());
@@ -24,12 +36,8 @@ ControladorDeAcciones::ControladorDeAcciones(
 
 bool ControladorDeAcciones::al_alcance(
     const Sector& sector, const Casilla& propia, const Casilla& objetivo) const {
-    if (!sector.mapa.esta_dentro(objetivo.columna, objetivo.fila)) {
-        return false;
-    }
-    const int distancia_en_columnas = std::abs(objetivo.columna - propia.columna);
-    const int distancia_en_filas = std::abs(objetivo.fila - propia.fila);
-    return std::max(distancia_en_columnas, distancia_en_filas) <= ALCANCE_EN_CASILLAS;
+    return sector.mapa.esta_dentro(objetivo.columna, objetivo.fila) &&
+           distancia_en_casillas(propia, objetivo) <= recursos.juego.acciones.alcance_en_casillas;
 }
 
 const Accion* ControladorDeAcciones::ejecutar(ContextoDeAccion& contexto) {
@@ -87,7 +95,8 @@ bool ControladorDeAcciones::atender(Personaje& personaje, const ComandoCliente& 
         personaje,
         recursos,
         notificador,
-        pedido->modo};
+        pedido->modo,
+        resolver_transicion};
 
     const Accion* ejecutada = ejecutar(contexto);
     if (ejecutada != nullptr && ejecutada->modifica_inventario()) {

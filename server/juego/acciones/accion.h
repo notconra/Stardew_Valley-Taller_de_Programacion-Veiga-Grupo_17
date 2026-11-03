@@ -2,15 +2,21 @@
 #define ACCION_H
 
 #include <cstdint>
+#include <functional>
 
 #include "../../../common/modo_uso.h"
 #include "../../../common/ranura_inventario.h"
 #include "../../../common/tipo_accion.h"
 #include "../geometria.h"
 #include "../jugadores/personaje.h"
+#include "../mapa/mapa.h"
 #include "../notificador.h"
 #include "../recursos/recursos_de_juego.h"
 #include "../sector/sector.h"
+
+// Qué hacer cuando una acción manda a un personaje a través de una transición. Lo provee Mundo,
+// que es quien sabe resolver mazmorras y traslados entre sectores.
+using ResolverDeTransicion = std::function<void(Personaje&, const Transicion&)>;
 
 struct ContextoDeAccion {
     uint32_t id_jugador;
@@ -22,6 +28,7 @@ struct ContextoDeAccion {
     const RecursosDeJuego& recursos;
     Notificador& notificador;
     ModoUso modo;  // distingue principal (izq) o secundario (der)
+    const ResolverDeTransicion& resolver_transicion;
 };
 
 class Accion {

@@ -29,14 +29,7 @@ private:
     std::map<std::string, Sector> sectores;
     std::map<std::string, std::vector<EstadoJugador>> jugadores_enviados;
 
-    const int ticks_entre_refrescos;
-    int ticks_desde_el_refresco = 0;
-
     void enviar_instantanea(uint32_t id_jugador, const std::string& id_mapa);
-
-    // Manda JugadoresEnSector a los jugadores del sector, pero solo si cambió respecto del último
-    // envío o si "forzar" es true.
-    void difundir(const std::string& id_mapa, bool forzar);
 
 public:
     // Cada sector usa por referencia el mapa que ya está cargado en "recursos", que tiene que

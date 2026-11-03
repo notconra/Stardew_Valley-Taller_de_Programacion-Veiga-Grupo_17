@@ -387,6 +387,9 @@ ruta = "Assets/Maps/Mines/mine.png"
 firstgid = 1
 columnas = 16
 
+[tierra]
+ruta_sprite = "Assets/TerrainFeatures/hoeDirt.png"
+
 [jugador]
 ruta_sprite = "Assets/Characters/Alex_Beach.png"
 ancho_sprite = 16
