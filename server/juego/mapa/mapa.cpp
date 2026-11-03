@@ -1,5 +1,6 @@
 #include "mapa.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <map>
 #include <set>
@@ -12,7 +13,6 @@
 
 namespace {
 
-// Los nombres con los que el TOML pide cada propiedad en capas_opcionales.
 const std::map<std::string, uint8_t>& propiedades_disponibles() {
     static const std::map<std::string, uint8_t> propiedades{
         {"BLOQUEA", PropiedadDeCasilla::BLOQUEA},
@@ -48,8 +48,6 @@ Mapa::Mapa(const ConfiguracionMapaServidor& configuracion) {
     alto_de_casilla = tamanio.alto_de_casilla;
     propiedades.assign(cantidad_de_casillas, PropiedadDeCasilla::NINGUNA);
 
-    // Si el mapa no tiene capa de colisiones se usa la de respaldo, y el nombre que se usó es el
-    // que tiene que aparecer en los errores.
     std::string nombre_capa_colisiones = configuracion.capa_colisiones;
     std::vector<int> colisiones = lector.cargar_capa(nombre_capa_colisiones);
     if (colisiones.empty()) {
@@ -79,8 +77,6 @@ Mapa::Mapa(const ConfiguracionMapaServidor& configuracion) {
         }
     }
 
-    // La tierra cultivable sale de una propiedad de los tiles del piso (en los mapas de Stardew,
-    // Diggable = T). Así no hace falta mantener a mano una capa aparte en el TMX.
     if (!configuracion.propiedad_cultivable.empty()) {
         const std::vector<int> piso = lector.cargar_capa(CAPA_DE_PISO);
         if (piso.empty()) {
@@ -107,6 +103,7 @@ Mapa::Mapa(const ConfiguracionMapaServidor& configuracion) {
             transicion_tmx.fila_destino};
         transiciones.emplace_back(zona, transicion);
     }
+    liberar_transiciones();
 }
 
 void Mapa::marcar(const std::vector<int>& capa, uint8_t propiedad, const std::string& nombre_capa) {
@@ -130,6 +127,26 @@ void Mapa::marcar_si_es_alguno(
     for (std::size_t i = 0; i < capa.size(); ++i) {
         if (buscados.contains(capa[i] & MASCARA_ID_DE_TILE)) {
             propiedades[i] = static_cast<uint8_t>(propiedades[i] | propiedad);
+        }
+    }
+}
+
+void Mapa::liberar_transiciones() {
+    for (const std::pair<Rectangulo, Transicion>& par : transiciones) {
+        const Rectangulo& zona = par.first;
+        const int primera_columna = std::max(0, zona.x / ancho_de_casilla);
+        const int ultima_columna =
+            std::min(ancho_en_casillas - 1, (zona.x + zona.ancho - 1) / ancho_de_casilla);
+        const int primera_fila = std::max(0, zona.y / alto_de_casilla);
+        const int ultima_fila =
+            std::min(alto_en_casillas - 1, (zona.y + zona.alto - 1) / alto_de_casilla);
+        for (int fila = primera_fila; fila <= ultima_fila; ++fila) {
+            for (int columna = primera_columna; columna <= ultima_columna; ++columna) {
+                const std::size_t indice =
+                    static_cast<std::size_t>(fila) * ancho_en_casillas + columna;
+                propiedades[indice] =
+                    static_cast<uint8_t>(propiedades[indice] & ~PropiedadDeCasilla::BLOQUEA);
+            }
         }
     }
 }
