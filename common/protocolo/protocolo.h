@@ -21,6 +21,10 @@
 // mensaje por la mitad.
 class Protocolo {
 private:
+    // Ningún texto del protocolo (nombres, códigos, mapas) necesita más que esto. Acotarlo evita
+    // que un cliente malicioso fuerce una reserva de hasta 64 KiB por mensaje.
+    static constexpr uint16_t LARGO_MAXIMO_DE_TEXTO = 1024;
+
     // Envían/reciben bytes de un campo que está a mitad de un mensaje, por lo que un socket
     // cerrado (sendall/recvall devuelven 0) es un error. Requieren cantidad > 0.
     void enviar_bytes(const void* datos, size_t cantidad);
@@ -38,6 +42,12 @@ protected:
 
     void enviar_u8(uint8_t valor);
     uint8_t recibir_u8();
+
+    void enviar_i8(int8_t valor);
+    int8_t recibir_i8();
+
+    void enviar_booleano(bool valor);
+    bool recibir_booleano();
 
     void enviar_u16(uint16_t valor);
     uint16_t recibir_u16();

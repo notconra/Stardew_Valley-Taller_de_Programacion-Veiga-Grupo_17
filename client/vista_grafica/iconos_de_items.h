@@ -2,35 +2,37 @@
 #define ICONOS_DE_ITEMS_H
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
 
 #include <unordered_map>
 
-#include "../../common/juego/calidad.h"
-#include "../../common/juego/tipo_item.h"
+#include "../../common/calidad.h"
+#include "../../common/tipo_item.h"
+#include "textura.h"
 
 struct Icono {
     SDL_Texture* textura = nullptr;
     SDL_Rect origen{0, 0, 0, 0};  // w == 0 o h == 0 => usa la textura entera
 };
 
+// Imágenes de los ítems tal como se ven en el inventario y tirados en el piso. Las de los objetos
+// colocados en el mapa son otras y las maneja ObjetosGraficos.
 class IconosDeItems {
-private:
-    std::unordered_map<TipoItem, SDL_Texture*> texturas_cultivos;
-    std::unordered_map<TipoItem, SDL_Texture*> texturas_individuales;
-
-    TipoItem obtener_cultivo_asociado(TipoItem tipo) const;
-
 public:
     explicit IconosDeItems(SDL_Renderer* renderer);
 
-    IconosDeItems(const IconosDeItems&) = delete;
-    IconosDeItems& operator=(const IconosDeItems&) = delete;
+    Icono obtener_icono(TipoItem tipo, Calidad calidad = Calidad::BASE) const;
 
-    Icono obtener_icono(TipoItem tipo) const;
-    Icono obtener_icono(TipoItem tipo, Calidad calidad) const;
+    // Dibuja el ícono escalado dentro de "destino". No dibuja nada si el ítem no tiene imagen.
+    void dibujar(
+        SDL_Renderer* renderer, TipoItem tipo, Calidad calidad, const SDL_Rect& destino) const;
 
-    ~IconosDeItems();
+private:
+    // Tiras de sprites de 16x16: la columna 0 es la semilla y las siguientes son el cultivo con
+    // cada calidad.
+    std::unordered_map<TipoItem, Textura> cultivos;
+
+    // Una imagen entera por ítem (sin hoja de sprites)
+    std::unordered_map<TipoItem, Textura> individuales;
 };
 
 #endif

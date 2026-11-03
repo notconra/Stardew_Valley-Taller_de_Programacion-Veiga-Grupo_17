@@ -42,23 +42,7 @@ private:
     void cargar_mapas(const toml::table& archivo_toml);
     void cargar_jugador(const toml::table& archivo_toml);
     void cargar_sonido(const toml::table& archivo_toml);
-
-    // Auxiliares de lectura y validación.
-    const toml::table& exigir_tabla(
-        const toml::table& archivo_toml, const std::string& nombre) const;
-    const toml::array& exigir_arreglo(
-        const toml::table& tabla, const std::string& clave, const std::string& seccion) const;
-
-    int leer_entero(
-        const toml::table& tabla, const std::string& clave, const std::string& seccion) const;
-    int leer_entero_positivo(
-        const toml::table& tabla, const std::string& clave, const std::string& seccion) const;
-    bool leer_booleano(
-        const toml::table& tabla, const std::string& clave, const std::string& seccion) const;
-    std::string leer_texto(
-        const toml::table& tabla, const std::string& clave, const std::string& seccion) const;
-    std::vector<std::string> leer_textos(
-        const toml::table& tabla, const std::string& clave, const std::string& seccion) const;
+    void cargar_tierra(const toml::table& archivo_toml);
 
     ColorDeFondo leer_color(const toml::table& graficos) const;
     ColorRGB leer_color_rgb(const toml::table& color, const std::string& seccion) const;

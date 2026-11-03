@@ -35,7 +35,7 @@ EstadoDelJuego Cliente::ejecutar_lobby() {
     QApplication app(argc, argv);
     app.setWindowIcon(QIcon("Assets/LooseSprites/logo.png"));
 
-    PantallaPrincipal ventana_lobby(conexion, partida_actual, id_cliente, configuracion.jugador());
+    PantallaPrincipal ventana_lobby(conexion, partida_actual, configuracion.jugador());
     ventana_lobby.showMaximized();
 
     app.exec();

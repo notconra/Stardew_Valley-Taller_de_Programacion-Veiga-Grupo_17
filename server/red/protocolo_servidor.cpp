@@ -3,9 +3,8 @@
 #include <string>
 #include <vector>
 
-#include "../../common/juego/direccion.h"
-#include "../../common/juego/tipo_item.h"
-#include "../../common/mensajes/manejadores_por_tipo.h"
+#include "../../common/direccion.h"
+#include "../../common/visitantes.h"
 
 ProtocoloServidor::ProtocoloServidor(ISocket& socket)
     : Protocolo(socket),
@@ -24,11 +23,11 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::USAR_ITEM, [this] { return recibir_comando_usar_item(); }},
           {TipoMensaje::MOVER_ITEM_ENTRE_RANURAS,
            [this] { return recibir_comando_mover_item_entre_ranuras(); }},
-          {TipoMensaje::ABRIR_COFRE, [this] { return recibir_comando_abrir_cofre(); }},
           {TipoMensaje::MOVER_ITEM_CON_COFRE,
            [this] { return recibir_comando_mover_item_con_cofre(); }},
           {TipoMensaje::SOLICITAR_INVENTARIO,
            [this] { return recibir_comando_solicitar_inventario(); }},
+          {TipoMensaje::SOLTAR_ITEM, [this] { return recibir_comando_soltar_item(); }},
       } {
 }
 
@@ -89,9 +88,16 @@ SalirDePartida ProtocoloServidor::recibir_comando_salir_de_partida() {
 }
 
 Moverse ProtocoloServidor::recibir_comando_moverse() {
-    int8_t horizontal = static_cast<int8_t>(recibir_u8());
-    int8_t vertical = static_cast<int8_t>(recibir_u8());
+    int8_t horizontal = eje_de_movimiento(recibir_i8());
+    int8_t vertical = eje_de_movimiento(recibir_i8());
     return Moverse{horizontal, vertical};
+}
+
+int8_t ProtocoloServidor::eje_de_movimiento(int8_t valor) const {
+    if (valor < -1 || valor > 1) {
+        throw ErrorProtocolo("valor de movimiento inválido en el protocolo");
+    }
+    return valor;
 }
 
 SeleccionarRanuraDeLaBarra ProtocoloServidor::recibir_comando_seleccionar_ranura_de_la_barra() {
@@ -100,8 +106,13 @@ SeleccionarRanuraDeLaBarra ProtocoloServidor::recibir_comando_seleccionar_ranura
 }
 
 UsarItem ProtocoloServidor::recibir_comando_usar_item() {
+    uint8_t modo_val = recibir_u8();
+    ModoUso modo = (modo_val == 1) ? ModoUso::SECUNDARIO : ModoUso::PRINCIPAL;
     uint8_t indice = recibir_u8();
-    return UsarItem{indice};
+    bool tiene_casilla_objetivo = recibir_booleano();
+    uint32_t columna_objetivo = recibir_u32();
+    uint32_t fila_objetivo = recibir_u32();
+    return UsarItem{modo, indice, tiene_casilla_objetivo, columna_objetivo, fila_objetivo};
 }
 
 MoverItemEntreRanuras ProtocoloServidor::recibir_comando_mover_item_entre_ranuras() {
@@ -111,21 +122,22 @@ MoverItemEntreRanuras ProtocoloServidor::recibir_comando_mover_item_entre_ranura
     return MoverItemEntreRanuras{origen, destino, cantidad};
 }
 
-AbrirCofre ProtocoloServidor::recibir_comando_abrir_cofre() {
-    bool cerrar = recibir_u8() != 0;
-    return AbrirCofre{cerrar};
-}
-
 MoverItemConCofre ProtocoloServidor::recibir_comando_mover_item_con_cofre() {
     uint8_t origen = recibir_u8();
     uint8_t destino = recibir_u8();
     uint16_t cantidad = recibir_u16();
-    bool desde_el_cofre = recibir_u8() != 0;
+    bool desde_el_cofre = recibir_booleano();
     return MoverItemConCofre{origen, destino, cantidad, desde_el_cofre};
 }
 
 SolicitarInventario ProtocoloServidor::recibir_comando_solicitar_inventario() {
     return SolicitarInventario{};
+}
+
+SoltarItem ProtocoloServidor::recibir_comando_soltar_item() {
+    uint8_t ranura = recibir_u8();
+    uint16_t cantidad = recibir_u16();
+    return SoltarItem{ranura, cantidad};
 }
 
 // Envío de eventos
@@ -142,6 +154,13 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const ActualizacionInventario& e) { enviar_evento_actualizacion_inventario(e); },
             [this](const ActualizacionCofre& e) { enviar_evento_actualizacion_cofre(e); },
             [this](const EstadoJuego& e) { enviar_estado_juego(e); },
+            [this](const JugadoresEnSector& e) { enviar_evento_jugadores_en_sector(e); },
+            [this](const ObjetoColocado& e) { enviar_evento_objeto_colocado(e); },
+            [this](const ObjetoRetirado& e) { enviar_evento_objeto_retirado(e); },
+            [this](const DropAparecido& e) { enviar_evento_drop_aparecido(e); },
+            [this](const DropRetirado& e) { enviar_evento_drop_retirado(e); },
+            [this](const EnemigoActualizado& e) { enviar_evento_enemigo_actualizado(e); },
+            [this](const TierraCambiada& e) { enviar_evento_tierra_cambiada(e); },
         },
         evento);
 }
@@ -155,7 +174,7 @@ void ProtocoloServidor::enviar_evento_error_servidor(const ErrorServidor& error_
 void ProtocoloServidor::enviar_info_partida(const InfoPartida& info_partida) {
     enviar_texto(info_partida.codigo_partida);
     enviar_texto(info_partida.nombre_partida);
-    enviar_u8(info_partida.jugadores_actuales);
+    enviar_u8(info_partida.jugadores_totales);
     enviar_u8(info_partida.jugadores_maximos);
 }
 
@@ -190,11 +209,47 @@ void ProtocoloServidor::enviar_evento_partida_cerrada_por_error(const PartidaCer
 void ProtocoloServidor::enviar_estado_jugador(const EstadoJugador& estado) {
     enviar_u32(estado.id_jugador);
     enviar_texto(estado.mapa);
-    enviar_u32(static_cast<uint32_t>(estado.x));
-    enviar_u32(static_cast<uint32_t>(estado.y));
+    enviar_u32(estado.x);
+    enviar_u32(estado.y);
     enviar_u8(static_cast<uint8_t>(estado.mirando));
-    enviar_u8(estado.camina ? 1 : 0);
+    enviar_booleano(estado.camina);
     enviar_u8(estado.ranura_activa);
+    enviar_u8(static_cast<uint8_t>(estado.accion_actual));
+    enviar_u8(estado.vida);
+    enviar_u8(estado.energia);
+}
+
+void ProtocoloServidor::enviar_estado_objeto_del_mundo(const EstadoObjetoDelMundo& estado) {
+    enviar_u32(estado.id);
+    enviar_texto(estado.mapa);
+    enviar_u32(estado.columna);
+    enviar_u32(estado.fila);
+    enviar_u8(static_cast<uint8_t>(estado.tipo));
+}
+
+void ProtocoloServidor::enviar_estado_drop(const EstadoDrop& estado) {
+    enviar_u32(estado.id);
+    enviar_u32(estado.columna);
+    enviar_u32(estado.fila);
+    enviar_u8(static_cast<uint8_t>(estado.tipo));
+    enviar_u16(estado.cantidad);
+    enviar_u8(static_cast<uint8_t>(estado.calidad));
+}
+
+void ProtocoloServidor::enviar_estado_enemigo(const EstadoEnemigo& estado) {
+    enviar_u32(estado.id);
+    enviar_u8(static_cast<uint8_t>(estado.tipo));
+    enviar_u32(estado.columna);
+    enviar_u32(estado.fila);
+    enviar_u16(estado.vida);
+    enviar_u16(estado.vida_maxima);
+    enviar_booleano(estado.atacando);
+    enviar_booleano(estado.muriendo);
+}
+
+void ProtocoloServidor::enviar_casilla_tratada(const CasillaTratada& casilla) {
+    enviar_u32(casilla.columna);
+    enviar_u32(casilla.fila);
 }
 
 void ProtocoloServidor::enviar_ranura_inventario(const RanuraInventario& ranura) {
@@ -235,8 +290,69 @@ void ProtocoloServidor::enviar_evento_actualizacion_cofre(const ActualizacionCof
 
 void ProtocoloServidor::enviar_estado_juego(const EstadoJuego& estado_juego) {
     enviar_tipo(TipoMensaje::ESTADO_JUEGO);
+    enviar_texto(estado_juego.mapa);
     enviar_largo(estado_juego.jugadores.size());
     for (const EstadoJugador& estado : estado_juego.jugadores) {
         enviar_estado_jugador(estado);
     }
+    enviar_largo(estado_juego.objetos.size());
+    for (const EstadoObjetoDelMundo& estado : estado_juego.objetos) {
+        enviar_estado_objeto_del_mundo(estado);
+    }
+    enviar_largo(estado_juego.drops.size());
+    for (const EstadoDrop& estado : estado_juego.drops) {
+        enviar_estado_drop(estado);
+    }
+enviar_largo(estado_juego.enemigos.size());
+    for (const EstadoEnemigo& estado : estado_juego.enemigos) {
+        enviar_estado_enemigo(estado);
+    }
+    enviar_largo(estado_juego.tierra.size());
+    for (const CasillaTratada& casilla : estado_juego.tierra) {
+        enviar_casilla_tratada(casilla);
+    }
+}
+
+void ProtocoloServidor::enviar_evento_jugadores_en_sector(const JugadoresEnSector& jugadores) {
+    enviar_tipo(TipoMensaje::JUGADORES_EN_SECTOR);
+    enviar_texto(jugadores.mapa);
+    enviar_largo(jugadores.jugadores.size());
+    for (const EstadoJugador& estado : jugadores.jugadores) {
+        enviar_estado_jugador(estado);
+    }
+}
+
+void ProtocoloServidor::enviar_evento_objeto_colocado(const ObjetoColocado& objeto) {
+    enviar_tipo(TipoMensaje::OBJETO_COLOCADO);
+    enviar_u32(objeto.id);
+    enviar_u32(objeto.columna);
+    enviar_u32(objeto.fila);
+    enviar_u8(static_cast<uint8_t>(objeto.tipo));
+}
+
+void ProtocoloServidor::enviar_evento_objeto_retirado(const ObjetoRetirado& objeto) {
+    enviar_tipo(TipoMensaje::OBJETO_RETIRADO);
+    enviar_u32(objeto.id);
+}
+
+void ProtocoloServidor::enviar_evento_drop_aparecido(const DropAparecido& drop) {
+    enviar_tipo(TipoMensaje::DROP_APARECIDO);
+    enviar_estado_drop(drop.drop);
+}
+
+void ProtocoloServidor::enviar_evento_drop_retirado(const DropRetirado& drop) {
+    enviar_tipo(TipoMensaje::DROP_RETIRADO);
+    enviar_u32(drop.id);
+    enviar_u32(drop.id_jugador);
+}
+
+void ProtocoloServidor::enviar_evento_enemigo_actualizado(const EnemigoActualizado& enemigo) {
+    enviar_tipo(TipoMensaje::ENEMIGO_ACTUALIZADO);
+    enviar_estado_enemigo(enemigo.enemigo);
+}
+
+void ProtocoloServidor::enviar_evento_tierra_cambiada(const TierraCambiada& tierra) {
+    enviar_tipo(TipoMensaje::TIERRA_CAMBIADA);
+    enviar_casilla_tratada(tierra.casilla);
+    enviar_booleano(tierra.tratada);
 }

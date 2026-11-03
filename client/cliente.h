@@ -1,7 +1,7 @@
 #ifndef CLIENTE_H
 #define CLIENTE_H
 
-#include "../common/juego/direccion.h"
+#include "../common/direccion.h"
 #include "../common/mensajes/mensajes.h"
 #include "configuracion/configuracion_cliente.h"
 #include "estado_del_juego.h"

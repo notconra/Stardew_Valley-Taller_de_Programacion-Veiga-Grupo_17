@@ -28,7 +28,11 @@ struct ConfiguracionMapaServidor {
     std::string capa_respaldo = "Buildings";
     std::string capa_transiciones = "Transiciones";
     std::vector<CapaOpcionalMapaServidor> capas_opcionales;
+    // Propiedad de los tiles del piso que marca las casillas cultivables (por ejemplo "Diggable").
+    // Vacía significa que el mapa no tiene tierra cultivable.
+    std::string propiedad_cultivable;
 };
+
 struct ConfiguracionMovimientoJugador {
     double velocidad = 120.0;
     int hitbox_x = 2;
@@ -43,17 +47,62 @@ struct ConfiguracionAparicionJugador {
     int paso_de_busqueda = 8;
 };
 
-// Inventario del jugador. Solo se configura el tamaño de la barra para poder probar con más o menos
-// espacio, el stack de cada ítem y la capacidad de los cofres son reglas fijas del juego.
+// Inventario del jugador. Solo se configura el tamaño de la barra para poder probar con más o
+// menos espacio; el stack de cada ítem es una regla fija del juego.
 struct ConfiguracionInventarioServidor {
     // Por ahora el jugador solo tiene la barra de herramientas (sin mochila ni inventario extra).
     uint8_t cantidad_ranuras_barra = 10;
+};
+
+// Cuánto dura cada acción y hasta dónde llega. Las duraciones se miden en ticks del servidor.
+struct ConfiguracionAccionesServidor {
+    int alcance_en_casillas = 1;
+    int duracion_picar_en_ticks = 8;
+    int duracion_tratar_tierra_en_ticks = 8;
+};
+
+// Reglas de los ítems tirados en el piso.
+struct ConfiguracionDropsServidor {
+    int radio_de_recogida_en_casillas = 1;
+    // Tiene que ser mayor que el radio, si no el ítem se levanta solo apenas se suelta.
+    int distancia_de_soltado_en_casillas = 2;
+};
+
+// Qué transiciones se usan con clic derecho. El resto se activa al pisarlas.
+struct ConfiguracionTransicionesServidor {
+    // Ids de "mapa_destino" cuyas transiciones piden clic (puertas, escaleras).
+    std::vector<std::string> destinos_con_clic{"siguiente"};
 };
 
 struct ConfiguracionJuegoServidor {
     ConfiguracionMovimientoJugador movimiento;
     ConfiguracionAparicionJugador aparicion;
     ConfiguracionInventarioServidor inventario;
+    ConfiguracionAccionesServidor acciones;
+    ConfiguracionDropsServidor drops;
+    ConfiguracionTransicionesServidor transiciones;
+};
+
+// Un mineral de la mazmorra. La clave elige cuál es (PIEDRA, CARBON, LAPISLAZULI, PLATA u ORO),
+// con qué se pica y qué deja son reglas fijas del juego.
+struct ConfiguracionMineralServidor {
+    std::string clave;
+    int golpes_para_picar = 1;
+    double peso = 0.0;  // frecuencia relativa, no hace falta que sumen 100
+    double probabilidad_de_no_dejar = 0.0;
+    int cantidad = 1;
+    int desde_nivel = 1;  // primer nivel donde puede aparecer
+};
+
+// La mazmorra: qué mapas pueden ser niveles y qué mapa_destino lleva a ella.
+// Si no hay mazmorra en el archivo, "mapas" queda vacío y la partida no tiene mazmorra.
+struct ConfiguracionMazmorraServidor {
+    std::string destino = "mazmorra";
+    std::vector<std::string> mapas;
+    int enemigos_por_nivel = 4;
+    int minerales_por_nivel = 30;
+    // Vacía significa "usar los minerales por defecto". Si hay alguno, reemplaza a los de defecto.
+    std::vector<ConfiguracionMineralServidor> minerales;
 };
 
 struct ConfiguracionServidorDatos {
@@ -62,6 +111,7 @@ struct ConfiguracionServidorDatos {
     std::vector<ConfiguracionMapaServidor> mapas;
     std::string mapa_inicial;
     ConfiguracionJuegoServidor juego;
+    ConfiguracionMazmorraServidor mazmorra;
 };
 
 #endif

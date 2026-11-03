@@ -148,8 +148,8 @@ void Personaje::dibujar(
         }
     }
 
-    const int x_pantalla = jugador.x * escala_de_tiles - cam_x;
-    const int y_pantalla = jugador.y * escala_de_tiles - cam_y;
+    const int x_pantalla = static_cast<int>(jugador.x) * escala_de_tiles - cam_x;
+    const int y_pantalla = static_cast<int>(jugador.y) * escala_de_tiles - cam_y;
     const SDL_Rect destino_cuerpo{
         x_pantalla,
         y_pantalla,

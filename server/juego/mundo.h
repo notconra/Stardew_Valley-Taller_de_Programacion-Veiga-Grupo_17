@@ -3,52 +3,63 @@
 
 #include <cstdint>
 #include <map>
-#include <string>
-#include <vector>
 
 #include "../../common/mensajes/mensajes.h"
-#include "base/colisiones/colisiones.h"
-#include "base/mapas/mapa.h"
-#include "base/recursos/recursos_de_juego.h"
-#include "inventario/gestor_inventario_jugador.h"
-#include "jugadores/jugadores.h"
+#include "controladores/controlador_de_acciones.h"
+#include "controladores/controlador_de_cofres.h"
+#include "controladores/controlador_de_drops.h"
+#include "controladores/controlador_de_enemigos.h"
+#include "controladores/controlador_de_jugador.h"
+#include "controladores/controlador_de_mazmorra.h"
+#include "jugadores/personaje.h"
+#include "mapa/mapa.h"
+#include "notificador.h"
+#include "recursos/recursos_de_juego.h"
+#include "sector/gestor_de_sectores.h"
 
-// Clase madre de toda la lógica de juego en una partida. Ahora hay un mapa por zona (granja,
-// pueblo, cada nivel de la mazmorra, ...), y cada uno tiene su propia Colisiones y su propio
-// Jugadores: un jugador solo existe en el Jugadores del mapa donde está parado, así que dos
-// jugadores en mapas distintos ni se ven ni interactúan entre sí.
+// Router del juego. Es dueño de los datos compartidos (sectores y personajes) y de los
+// controladores, recibe los comandos de red y el tick, y los reparte llamando a cada controlador
+// explícitamente. Para sumar un feature nuevo se agregaría un controlador, un miembro acá y una
+// línea en atender() o actualizar().
 class Mundo {
 private:
-    GestorInventarioJugador gestor_inventario;
-
     const RecursosDeJuego& recursos;
-    std::map<std::string, Colisiones> colisiones_por_mapa;
-    std::map<std::string, Jugadores> jugadores_por_mapa;
-    std::map<uint32_t, std::string> mapa_actual;  // en qué mapa está cada jugador conectado
+    Notificador& notificador;
+    std::map<uint32_t, Personaje> personajes;
+    GestorDeSectores sectores;
 
-    // Lo saca del Jugadores de mapa_origen y lo mete en el de transicion.mapa_destino, en la
-    // casilla que indica la transición.
-    void cambiar_de_mapa(
-        uint32_t id_jugador, const std::string& mapa_origen, const Transicion& transicion);
+    ControladorDeJugador controlador_de_jugador;
+    ControladorDeAcciones controlador_de_acciones;
+    ControladorDeCofres controlador_de_cofres;
+    ControladorDeDrops controlador_de_drops;
+    ControladorDeMazmorra controlador_de_mazmorra;
+    ControladorDeEnemigos controlador_de_enemigos;
+
+    void resolver_transicion(Personaje& personaje, const Transicion& transicion);
+
+    // Si la transición se usa con clic derecho en vez de activarse al pisarla.
+    bool requiere_clic(const Transicion& transicion) const;
+
+    // Mueve a quienes pisan una transición que no pide clic.
+    void resolver_transiciones_automaticas();
+
+    // Saca al personaje del mundo sin borrarlo, cada controlador limpia lo suyo y se le quita el
+    // cuerpo del sector.
+    void dar_de_baja(Personaje& personaje);
 
 public:
-    Mundo(const RecursosDeJuego& recursos, uint8_t ticks_por_segundo);
+    Mundo(const RecursosDeJuego& recursos, Notificador& notificador, uint8_t ticks_por_segundo);
 
-    // Deja en el mundo exactamente a los jugadores conectados. Los nuevos aparecen en el mapa
-    // inicial (recursos.mapa_inicial).
-    void sincronizar_jugadores(const std::vector<uint32_t>& ids_conectados);
+    // El jugador entra a la partida. Si es la primera vez se crea su Personaje con los ítems
+    // iniciales, si ya existía (volvió después de desconectarse) conserva todo. En los dos casos
+    // aparece en el punto de aparición del mapa inicial y recibe su inventario y el snapshot.
+    void conectar(uint32_t id_jugador);
 
-    // Atiende un comando de juego, cada uno va a la parte del mundo que corresponde. Devuelve true
-    // si cambió el inventario del jugador y hay que reenviárselo.
-    bool atender(uint32_t id_jugador, const ComandoCliente& comando);
+    // El jugador se fue. Su Personaje queda guardado.
+    void desconectar(uint32_t id_jugador);
 
-    // Avanza un tick en todos los mapas, y resuelve las transiciones que se dispararon.
+    void atender(uint32_t id_jugador, const ComandoCliente& comando);
     void actualizar();
-
-    EstadoJuego estado() const;
-
-    // Snapshot privado del inventario de un jugador.
-    ActualizacionInventario obtener_inventario(uint32_t id_jugador) const;
 
     Mundo(const Mundo&) = delete;
     Mundo& operator=(const Mundo&) = delete;

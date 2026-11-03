@@ -2,12 +2,14 @@
 #define CONFIGURACION_SERVIDOR_H
 
 #include <string>
+#include <vector>
 
 #include "../../common/externo/tomlplusplus/toml.hpp"
 #include "configuracion_servidor_datos.h"
 
 // Lee el archivo .toml, valida lo que necesita y deja los datos listos para usar.
-// Es la única clase de la configuración del servidor: no delega en un lector aparte.
+// Es la única clase de la configuración del servidor. Las validaciones comunes (rangos, textos no
+// vacíos, listas) las resuelve lector_toml; acá solo se dice qué clave va en qué campo.
 class ConfiguracionServidor {
 public:
     // Lanza std::runtime_error si el archivo no existe, no es un TOML
@@ -19,30 +21,28 @@ public:
     const std::vector<ConfiguracionMapaServidor>& mapas() const;
     const std::string& mapa_inicial() const;
     const ConfiguracionJuegoServidor& juego() const;
+    const ConfiguracionMazmorraServidor& mazmorra() const;
 
 private:
     ConfiguracionServidorDatos datos_configuracion;
 
-    // Recorre las secciones del archivo .toml y completa los miembros de arriba.
-    void cargar_toml(const toml::table& archivo_toml);
+    bool existe_mapa(const std::string& id) const;
+
+    // Cada una lee una sección del archivo y completa su parte de datos_configuracion.
     void cargar_red(const toml::table& archivo_toml);
     void cargar_partida(const toml::table& archivo_toml);
     void cargar_mapas(const toml::table& archivo_toml);
     void cargar_juego(const toml::table& archivo_toml);
-    void cargar_inventario(const toml::table& inventario);
+    void cargar_mazmorra(const toml::table& archivo_toml);
 
-    // Auxiliares de lectura y validación.
-    const toml::table& exigir_tabla(
-        const toml::table& archivo_toml, const std::string& nombre) const;
-
-    int leer_entero(
-        const toml::table& tabla, const std::string& clave, const std::string& seccion) const;
-    int leer_entero_positivo(
-        const toml::table& tabla, const std::string& clave, const std::string& seccion) const;
-    int leer_entero_opcional(
-        const toml::table& tabla, const std::string& clave, int valor_por_defecto) const;
-    std::string leer_texto(
-        const toml::table& tabla, const std::string& clave, const std::string& seccion) const;
+    // Subsecciones de [juego] y de [mazmorra].
+    void cargar_movimiento(const toml::table& tabla);
+    void cargar_aparicion(const toml::table& tabla);
+    void cargar_inventario(const toml::table& tabla);
+    void cargar_acciones(const toml::table& tabla);
+    void cargar_drops(const toml::table& tabla);
+    void cargar_transiciones(const toml::table& tabla);
+    void cargar_minerales(const toml::array& lista);
 };
 
 #endif

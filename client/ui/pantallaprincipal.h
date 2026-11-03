@@ -22,7 +22,7 @@ class PantallaPrincipal : public QMainWindow {
 
 public:
     PantallaPrincipal(
-        ConexionConServidor& conexion, EntradaExitosaAPartida& partida_actual, uint32_t id_cliente,
+        ConexionConServidor& conexion, EntradaExitosaAPartida& partida_actual,
         ConfiguracionJugador& configuracion_jugador, QWidget* parent = nullptr);
     ~PantallaPrincipal();
 
@@ -56,7 +56,6 @@ private:
     EntradaExitosaAPartida& partida_actual;
     bool es_modo_unirse = false;
     std::string codigo_partida_a_unirse;
-    uint32_t id_cliente = 0;
     ConfiguracionJugador& configuracion_jugador;
     CompositorPersonaje compositor_personaje;
     int indice_pelo_seleccionado = 0;

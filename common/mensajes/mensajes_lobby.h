@@ -34,7 +34,7 @@ struct RetomarPartida {
 struct InfoPartida {
     std::string codigo_partida;
     std::string nombre_partida;
-    uint8_t jugadores_actuales = 0;
+    uint8_t jugadores_totales = 0;
     uint8_t jugadores_maximos = 0;
 };
 

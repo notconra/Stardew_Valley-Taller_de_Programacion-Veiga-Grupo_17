@@ -68,13 +68,12 @@ static int encontrar_indice_color_cercano(
 }
 
 PantallaPrincipal::PantallaPrincipal(
-    ConexionConServidor& conexion, EntradaExitosaAPartida& partida_actual, uint32_t id_cliente,
+    ConexionConServidor& conexion, EntradaExitosaAPartida& partida_actual,
     ConfiguracionJugador& configuracion_jugador, QWidget* parent)
     : QMainWindow(parent),
       ui(new Ui::PantallaPrincipal),
       conexion(conexion),
       partida_actual(partida_actual),
-      id_cliente(id_cliente),
       configuracion_jugador(configuracion_jugador) {
     ui->setupUi(this);
     configurar_ventana();
@@ -475,7 +474,7 @@ void PantallaPrincipal::llenar_lista_partidas(const ListaPartidas& lista) {
         item_codigo->setTextAlignment(Qt::AlignCenter);
 
         QString jugadores_str =
-            QString("%1/%2").arg(partida.jugadores_actuales).arg(partida.jugadores_maximos);
+            QString("%1/%2").arg(partida.jugadores_totales).arg(partida.jugadores_maximos);
         auto* item_jugadores = new QTableWidgetItem(jugadores_str);
         item_jugadores->setTextAlignment(Qt::AlignCenter);
 
