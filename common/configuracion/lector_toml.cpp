@@ -1,5 +1,6 @@
 #include "lector_toml.h"
 
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -34,6 +35,15 @@ const toml::array& exigir_arreglo(
     return *valores;
 }
 
+const toml::table& tabla_en(
+    const toml::array& lista, std::size_t indice, const std::string& seccion) {
+    const toml::table* tabla = lista[indice].as_table();
+    if (tabla == nullptr) {
+        throw std::runtime_error("configuración: la entrada '" + seccion + "' debe ser una tabla");
+    }
+    return *tabla;
+}
+
 int leer_entero(const toml::table& tabla, const std::string& clave, const std::string& seccion) {
     const auto valor = tabla[clave].value<int>();
     if (!valor) {
@@ -53,6 +63,18 @@ int leer_entero_positivo(
     return valor;
 }
 
+int leer_entero_en_rango(
+    const toml::table& tabla, const std::string& clave, const std::string& seccion, int minimo,
+    int maximo) {
+    const int valor = leer_entero(tabla, clave, seccion);
+    if (valor < minimo || valor > maximo) {
+        throw std::runtime_error(
+            "configuración: la clave '" + clave + "' de [" + seccion + "] debe estar entre " +
+            std::to_string(minimo) + " y " + std::to_string(maximo));
+    }
+    return valor;
+}
+
 int leer_entero_opcional(
     const toml::table& tabla, const std::string& clave, int valor_por_defecto) {
     const toml::node* nodo = tabla.get(clave);
@@ -63,6 +85,32 @@ int leer_entero_opcional(
     if (!valor) {
         throw std::runtime_error(
             "configuración: la clave '" + clave + "' debe ser un número entero");
+    }
+    return *valor;
+}
+
+int leer_entero_opcional(
+    const toml::table& tabla, const std::string& clave, const std::string& seccion,
+    int valor_por_defecto, int minimo, int maximo) {
+    if (tabla.get(clave) == nullptr) {
+        return valor_por_defecto;
+    }
+    return leer_entero_en_rango(tabla, clave, seccion, minimo, maximo);
+}
+
+double leer_decimal_opcional(
+    const toml::table& tabla, const std::string& clave, const std::string& seccion,
+    double valor_por_defecto, double minimo, double maximo) {
+    const toml::node* nodo = tabla.get(clave);
+    if (nodo == nullptr) {
+        return valor_por_defecto;
+    }
+    const auto valor = nodo->value<double>();
+    if (!valor || *valor < minimo || *valor > maximo) {
+        std::ostringstream mensaje;
+        mensaje << "configuración: la clave '" << clave << "' de [" << seccion
+                << "] debe ser un número entre " << minimo << " y " << maximo;
+        throw std::runtime_error(mensaje.str());
     }
     return *valor;
 }
@@ -90,6 +138,15 @@ std::string leer_texto(
     return *valor;
 }
 
+std::string leer_texto_opcional(
+    const toml::table& tabla, const std::string& clave, const std::string& seccion,
+    const std::string& valor_por_defecto) {
+    if (tabla.get(clave) == nullptr) {
+        return valor_por_defecto;
+    }
+    return leer_texto(tabla, clave, seccion);
+}
+
 std::vector<std::string> leer_textos(
     const toml::table& tabla, const std::string& clave, const std::string& seccion) {
     const toml::array& valores = exigir_arreglo(tabla, clave, seccion);
@@ -111,6 +168,15 @@ std::vector<std::string> leer_textos(
             "configuración: la clave '" + clave + "' de [" + seccion + "] no puede estar vacía");
     }
     return textos;
+}
+
+std::vector<std::string> leer_textos_opcional(
+    const toml::table& tabla, const std::string& clave, const std::string& seccion,
+    const std::vector<std::string>& valor_por_defecto) {
+    if (tabla.get(clave) == nullptr) {
+        return valor_por_defecto;
+    }
+    return leer_textos(tabla, clave, seccion);
 }
 
 }  // namespace lector_toml

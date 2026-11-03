@@ -28,6 +28,10 @@ public:
     // El contenido del cofre. Si todavía no existía, lo crea vacío.
     Inventario& contenido(int id_cofre);
 
+    // Saca el contenido del cofre y lo devuelve para que el que rompió el cofre lo tire al piso.
+    // Si el cofre no tenía contenido guardado, devuelve un vector vacío.
+    std::vector<RanuraInventario> retirar_contenido(int id_cofre);
+
 private:
     const CatalogoDeItems& catalogo;
     std::map<int, Inventario> contenidos;

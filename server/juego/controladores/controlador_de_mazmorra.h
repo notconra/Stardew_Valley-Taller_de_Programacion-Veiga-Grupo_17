@@ -1,0 +1,43 @@
+#ifndef CONTROLADOR_DE_MAZMORRA_H
+#define CONTROLADOR_DE_MAZMORRA_H
+
+#include <optional>
+#include <string>
+#include <vector>
+
+#include "../jugadores/personaje.h"
+#include "../mapa/mapa.h"
+#include "../recursos/recursos_de_juego.h"
+#include "../sector/gestor_de_sectores.h"
+#include "./../mazmorra/mazmorra.h"
+
+// Todo lo procedural de la mazmorra como elegir los niveles al arrancar, poblarlos cuando entra el
+// primer jugador, y resolver las transiciones especiales (entrada, escalera, salida). Mundo lo
+// tiene como miembro y le ofrece cada transición y cada desconexión.
+class ControladorDeMazmorra {
+private:
+    const RecursosDeJuego& recursos;
+    GestorDeSectores& sectores;
+    std::optional<Mazmorra> mazmorra;
+    std::vector<std::string> niveles_de_mazmorra;  // id del mapa de cada nivel, en orden
+
+    void poblar_niveles();
+    void limpiar_drops_de_niveles();
+    void salir_de_la_mazmorra(Personaje& personaje);
+    void llevar_al_nivel_actual(Personaje& personaje);
+    void entrar(Personaje& personaje);
+    void bajar(Personaje& personaje);
+
+public:
+    ControladorDeMazmorra(const RecursosDeJuego& recursos, GestorDeSectores& sectores);
+
+    // Se llama cuando un jugador toca una zona de transición. Devuelve true si el controlador se
+    // hizo cargo (incluso para ignorarla). Si devuelve false, Mundo hace el viaje común entre
+    // mapas. personaje.mapa_actual sigue siendo el mapa de origen.
+    bool resolver_transicion(Personaje& personaje, const Transicion& transicion);
+
+    // Se llama justo antes de sacar al jugador de la partida.
+    void al_desconectarse(Personaje& personaje);
+};
+
+#endif

@@ -20,9 +20,9 @@ enum class TipoMensaje : uint8_t {
     SELECCIONAR_RANURA_DE_LA_BARRA = 0x09,
     USAR_ITEM = 0x0A,
     MOVER_ITEM_ENTRE_RANURAS = 0x0B,
-    ABRIR_COFRE = 0x0C,
     MOVER_ITEM_CON_COFRE = 0x0D,
     SOLICITAR_INVENTARIO = 0x0E,
+    SOLTAR_ITEM = 0x0F,
 
     // Servidor a cliente
     ERROR_SERVIDOR = 0x81,
@@ -32,10 +32,19 @@ enum class TipoMensaje : uint8_t {
     MULTIJUGADOR_ACTIVADO = 0x85,
     PARTIDA_CERRADA_POR_ERROR = 0x86,
 
+    // snapshot completa del sector (al entrar o cambiar de mapa)
     ESTADO_JUEGO = 0x87,
 
     ACTUALIZACION_INVENTARIO = 0x88,
     ACTUALIZACION_COFRE = 0x89,
+
+    // Eventos incrementales del sector
+    JUGADORES_EN_SECTOR = 0x8A,
+    OBJETO_COLOCADO = 0x8B,
+    OBJETO_RETIRADO = 0x8C,
+    DROP_APARECIDO = 0x8D,
+    DROP_RETIRADO = 0x8E,
+    TIERRA_CAMBIADA = 0x8F,
 };
 
 #endif

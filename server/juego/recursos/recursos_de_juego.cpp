@@ -16,17 +16,19 @@ RecursosDeJuego::RecursosDeJuego(
     const ConfiguracionMazmorraServidor& configuracion_mazmorra)
     : mapa_inicial(id_mapa_inicial),
       juego(configuracion_juego),
-      catalogo_de_objetos(crear_catalogo_de_objetos()),
+      catalogo_de_objetos(crear_catalogo_de_objetos(configuracion_mazmorra.minerales)),
       mazmorra(configuracion_mazmorra) {
     for (const ConfiguracionMapaServidor& configuracion_mapa : configuracion_mapas) {
         mapas.emplace(configuracion_mapa.id, Mapa(configuracion_mapa));
+        this->configuraciones_mapas.emplace(configuracion_mapa.id, configuracion_mapa);
     }
     validar_catalogo_de_objetos();
     cargar_geografias_de_mazmorra();
 }
 
-CatalogoDeObjetos RecursosDeJuego::crear_catalogo_de_objetos() {
-    std::vector<DefinicionDeObjeto> definiciones = Minerales::definiciones();
+CatalogoDeObjetos RecursosDeJuego::crear_catalogo_de_objetos(
+    const std::vector<ConfiguracionMineralServidor>& minerales) {
+    std::vector<DefinicionDeObjeto> definiciones = Minerales::definiciones(minerales);
     const std::vector<DefinicionDeObjeto> cofres = GestorDeCofres::definiciones();
     definiciones.insert(definiciones.end(), cofres.begin(), cofres.end());
 

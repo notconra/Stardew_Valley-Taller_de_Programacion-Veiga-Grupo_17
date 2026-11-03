@@ -35,7 +35,7 @@ TEST(MovimientoJugadorTest, MovimientoBasicoYDireccion) {
         jugadores.agregar_en_aparicion(id);
 
         // Mover hacia la izquierda (horizontal = -1)
-        jugadores.moverse(id, Moverse{-1, 0});
+        jugadores.moverse(id, -1, 0);
         jugadores.actualizar();
 
         const JugadorEnPartida* j = jugadores.buscar(id);
