@@ -64,6 +64,20 @@ ResultadoDeGolpe Sector::golpear_objeto(
     return golpe;
 }
 
+ResultadoDeGolpeEnemigo Sector::golpear_enemigo(
+    Notificador& notificador, int id_enemigo, int danio) {
+    const ResultadoDeGolpeEnemigo golpe = enemigos.golpear(id_enemigo, danio);
+    if (golpe.golpeo) {
+        const Enemigo* enemigo = enemigos.buscar(id_enemigo);
+        if (enemigo != nullptr) {
+            EnemigoActualizado evento;
+            evento.enemigo = GestorDeEnemigos::estado_de(*enemigo);
+            avisar(notificador, evento);
+        }
+    }
+    return golpe;
+}
+
 int Sector::soltar(
     Notificador& notificador, TipoItem tipo, uint16_t cantidad, Calidad calidad, int columna,
     int fila) {
