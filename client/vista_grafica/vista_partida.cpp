@@ -135,7 +135,6 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         if (propio != nullptr && propio->mapa != mapa_actual) {
             mapa_actual = propio->mapa;
             ultimo_cofre = CofreJugador{};
-            tierra_tratada.clear();
             camara = camara_para(mapa_de(mapa_actual));
         }
         if (propio != nullptr) {
