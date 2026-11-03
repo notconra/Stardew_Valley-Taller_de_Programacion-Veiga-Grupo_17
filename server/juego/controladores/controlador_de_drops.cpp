@@ -7,8 +7,12 @@
 #include <vector>
 
 ControladorDeDrops::ControladorDeDrops(
-    GestorDeSectores& sectores, std::map<uint32_t, Personaje>& personajes, Notificador& notificador)
-    : sectores(sectores), personajes(personajes), notificador(notificador) {
+    GestorDeSectores& sectores, std::map<uint32_t, Personaje>& personajes, Notificador& notificador,
+    const ConfiguracionDropsServidor& configuracion)
+    : sectores(sectores),
+      personajes(personajes),
+      notificador(notificador),
+      configuracion(configuracion) {
 }
 
 bool ControladorDeDrops::recoger_cerca(Personaje& personaje) {
@@ -24,7 +28,8 @@ bool ControladorDeDrops::recoger_cerca(Personaje& personaje) {
     }
 
     bool recogio_algo = false;
-    const std::vector<int> ids = sector.drops.ids_cerca_de(*casilla, RADIO_DE_RECOGIDA_EN_CASILLAS);
+    const std::vector<int> ids =
+        sector.drops.ids_cerca_de(*casilla, configuracion.radio_de_recogida_en_casillas);
     for (int id_drop : ids) {
         if (!sector.drops.recoger(id_drop, personaje.inventario)) {
             continue;
@@ -53,11 +58,12 @@ void ControladorDeDrops::soltar(Personaje& personaje, const SoltarItem& pedido) 
         return;
     }
 
-    // Cae DISTANCIA_DE_SOLTADO casillas adelante, en la dirección en que mira. Si eso queda fuera
-    // del mapa no se suelta nada y el ítem se queda en la barra.
-    const int columna =
-        propia->columna + (frente->columna - propia->columna) * DISTANCIA_DE_SOLTADO;
-    const int fila = propia->fila + (frente->fila - propia->fila) * DISTANCIA_DE_SOLTADO;
+    // Cae configuracion.distancia_de_soltado_en_casillas casillas adelante, en la dirección en que
+    // mira. Si eso queda fuera del mapa no se suelta nada y el ítem se queda en la barra.
+    const int columna = propia->columna + (frente->columna - propia->columna) *
+                                              configuracion.distancia_de_soltado_en_casillas;
+    const int fila = propia->fila +
+                     (frente->fila - propia->fila) * configuracion.distancia_de_soltado_en_casillas;
     if (!sector.mapa.esta_dentro(columna, fila)) {
         return;
     }
