@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 
+#include "../../../common/tipo_enemigo.h"
 #include "./../mazmorra/cargador_mazmorra.h"
 #include "./../mazmorra/minerales.h"
 
@@ -38,18 +39,26 @@ void ControladorDeMazmorra::limpiar_drops_de_niveles() {
 }
 
 void ControladorDeMazmorra::poblar_niveles() {
-    // Un nivel se vuelve a poblar recién cuando la mazmorra quedó vacía, así que los drops viejos
-    // ya no le sirven a nadie y se descartan con el resto del contenido procedural.
+    // Un nivel se vuelve a poblar recién cuando la mazmorra quedó vacía, así que los drops y los
+    // enemigos viejos ya no le sirven a nadie y se descartan con el resto del contenido procedural.
     limpiar_drops_de_niveles();
 
     for (size_t i = 0; i < niveles_de_mazmorra.size(); ++i) {
         const int numero_de_nivel = static_cast<int>(i) + 1;
-        GestorDeObjetos& objetos = sectores.en(niveles_de_mazmorra.at(i)).objetos;
+        Sector& sector = sectores.en(niveles_de_mazmorra.at(i));
 
-        objetos.retirar_objetos_naturales();
-        objetos.poblar_en(
+        sector.objetos.retirar_objetos_naturales();
+        sector.objetos.poblar_en(
             mazmorra->nivel(numero_de_nivel).obtener_celdas_de_objetos(),
             Minerales::pesos(numero_de_nivel, recursos.mazmorra.oro_desde_nivel));
+
+        // TODO(enemigos): por ahora todas las casillas sorteadas por Nivel se pueblan con
+        // esqueletos. Cuando estén Orcos, Vampiros y Skulls, esto tiene que repartir el tipo según
+        // el número de nivel y agrupar a Orcos y Vampiros en vez de colocar uno por casilla.
+        sector.enemigos.limpiar();
+        sector.enemigos.poblar_en(
+            mazmorra->nivel(numero_de_nivel).obtener_enemigos(),
+            TipoEnemigo::ESQUELETO);
     }
 }
 
