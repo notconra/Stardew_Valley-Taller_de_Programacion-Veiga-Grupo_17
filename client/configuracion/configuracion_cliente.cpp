@@ -68,6 +68,7 @@ void ConfiguracionCliente::cargar_toml(const toml::table& archivo_toml) {
     cargar_graficos(archivo_toml);
     cargar_mapas(archivo_toml);
     cargar_jugador(archivo_toml);
+    cargar_tierra(archivo_toml);
 }
 
 void ConfiguracionCliente::cargar_servidor(const toml::table& archivo_toml) {
@@ -172,6 +173,13 @@ void ConfiguracionCliente::cargar_jugador(const toml::table& archivo_toml) {
         lector_toml::leer_entero_positivo(jugador, "cuadros_quieto", "jugador");
     configuracion_vista.jugador.ms_por_cuadro_quieto =
         lector_toml::leer_entero_positivo(jugador, "ms_por_cuadro_quieto", "jugador");
+}
+
+void ConfiguracionCliente::cargar_tierra(const toml::table& archivo_toml) {
+    const toml::table& tierra = lector_toml::exigir_tabla(archivo_toml, "tierra");
+
+    configuracion_vista.tierra.ruta_sprite =
+        lector_toml::leer_texto(tierra, "ruta_sprite", "tierra");
 }
 
 ColorDeFondo ConfiguracionCliente::leer_color(const toml::table& graficos) const {
