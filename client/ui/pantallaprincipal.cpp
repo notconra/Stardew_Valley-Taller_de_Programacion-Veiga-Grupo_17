@@ -47,6 +47,8 @@ constexpr int CANTIDAD_COLORES_PANTALON = sizeof(COLORES_PANTALON) / sizeof(COLO
 
 constexpr int CANTIDAD_PEINADOS = 16;
 constexpr int CANTIDAD_REMERAS = 16;
+constexpr int CANTIDAD_SOMBREROS = 132;
+constexpr int CANTIDAD_TIPOS_PANTALON = 6;
 
 static int encontrar_indice_color_cercano(
     const ColorRGB& color, const OpcionColor* opciones, int cantidad) {
@@ -297,6 +299,14 @@ void PantallaPrincipal::inicializar_selectores_personaje() {
         configuracion_jugador.color_pantalon,
         COLORES_PANTALON,
         CANTIDAD_COLORES_PANTALON);
+    indice_tipo_pantalon_seleccionado =
+        (configuracion_jugador.indice_pantalon >= 0)
+            ? (configuracion_jugador.indice_pantalon % CANTIDAD_TIPOS_PANTALON)
+            : 0;
+    indice_sombrero_seleccionado = configuracion_jugador.indice_sombrero;
+    if (indice_sombrero_seleccionado < -1 || indice_sombrero_seleccionado >= CANTIDAD_SOMBREROS) {
+        indice_sombrero_seleccionado = -1;
+    }
 
     connect(ui->btn_genero_masculino, &QPushButton::clicked, this, [this]() {
         es_personaje_femenino = false;
@@ -304,6 +314,23 @@ void PantallaPrincipal::inicializar_selectores_personaje() {
     });
     connect(ui->btn_genero_femenino, &QPushButton::clicked, this, [this]() {
         es_personaje_femenino = true;
+        actualizar_previsualizacion_personaje();
+    });
+
+    connect(ui->btn_sombrero_anterior, &QPushButton::clicked, this, [this]() {
+        if (indice_sombrero_seleccionado <= -1) {
+            indice_sombrero_seleccionado = CANTIDAD_SOMBREROS - 1;
+        } else {
+            indice_sombrero_seleccionado--;
+        }
+        actualizar_previsualizacion_personaje();
+    });
+    connect(ui->btn_sombrero_siguiente, &QPushButton::clicked, this, [this]() {
+        if (indice_sombrero_seleccionado >= CANTIDAD_SOMBREROS - 1) {
+            indice_sombrero_seleccionado = -1;
+        } else {
+            indice_sombrero_seleccionado++;
+        }
         actualizar_previsualizacion_personaje();
     });
 
@@ -339,12 +366,24 @@ void PantallaPrincipal::inicializar_selectores_personaje() {
     });
 
     connect(ui->btn_pantalon_anterior, &QPushButton::clicked, this, [this]() {
+        indice_tipo_pantalon_seleccionado =
+            (indice_tipo_pantalon_seleccionado - 1 + CANTIDAD_TIPOS_PANTALON) %
+            CANTIDAD_TIPOS_PANTALON;
+        actualizar_previsualizacion_personaje();
+    });
+    connect(ui->btn_pantalon_siguiente, &QPushButton::clicked, this, [this]() {
+        indice_tipo_pantalon_seleccionado =
+            (indice_tipo_pantalon_seleccionado + 1) % CANTIDAD_TIPOS_PANTALON;
+        actualizar_previsualizacion_personaje();
+    });
+
+    connect(ui->btn_color_pantalon_anterior, &QPushButton::clicked, this, [this]() {
         indice_pantalon_color_seleccionado =
             (indice_pantalon_color_seleccionado - 1 + CANTIDAD_COLORES_PANTALON) %
             CANTIDAD_COLORES_PANTALON;
         actualizar_previsualizacion_personaje();
     });
-    connect(ui->btn_pantalon_siguiente, &QPushButton::clicked, this, [this]() {
+    connect(ui->btn_color_pantalon_siguiente, &QPushButton::clicked, this, [this]() {
         indice_pantalon_color_seleccionado =
             (indice_pantalon_color_seleccionado + 1) % CANTIDAD_COLORES_PANTALON;
         actualizar_previsualizacion_personaje();
@@ -364,16 +403,21 @@ ConfiguracionJugador PantallaPrincipal::obtener_configuracion_actual() const {
     jugador.color_pelo = COLORES_PELO[indice_color_pelo_seleccionado].rgb;
     jugador.indice_remera = indice_remera_seleccionado;
     jugador.color_pantalon = COLORES_PANTALON[indice_pantalon_color_seleccionado].rgb;
-    jugador.indice_pantalon = 0;
-    jugador.indice_sombrero = -1;
+    jugador.indice_pantalon = indice_tipo_pantalon_seleccionado;
+    jugador.indice_sombrero = indice_sombrero_seleccionado;
     return jugador;
 }
 
 void PantallaPrincipal::actualizar_previsualizacion_personaje() {
+    ui->label_sombrero_valor->setText(
+        indice_sombrero_seleccionado < 0 ? "Ninguno"
+                                         : QString::number(indice_sombrero_seleccionado + 1));
     ui->label_pelo_valor->setText(QString::number(indice_pelo_seleccionado + 1));
     ui->label_color_pelo_valor->setText(COLORES_PELO[indice_color_pelo_seleccionado].nombre);
     ui->label_remera_valor->setText(QString::number(indice_remera_seleccionado + 1));
-    ui->label_pantalon_valor->setText(COLORES_PANTALON[indice_pantalon_color_seleccionado].nombre);
+    ui->label_pantalon_valor->setText(QString::number(indice_tipo_pantalon_seleccionado + 1));
+    ui->label_color_pantalon_valor->setText(
+        COLORES_PANTALON[indice_pantalon_color_seleccionado].nombre);
 
     ui->btn_genero_masculino->setChecked(!es_personaje_femenino);
     ui->btn_genero_femenino->setChecked(es_personaje_femenino);

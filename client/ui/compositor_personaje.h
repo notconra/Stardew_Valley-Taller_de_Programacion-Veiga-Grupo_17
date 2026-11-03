@@ -23,6 +23,7 @@ private:
     QImage hoja_pantalones;
     QImage hoja_peinados;
     QImage hoja_remeras;
+    QImage hoja_sombreros;
 
     static QImage aplicar_tinte(const QImage& original, const ColorRGB& color);
 };

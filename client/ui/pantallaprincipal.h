@@ -63,6 +63,8 @@ private:
     int indice_color_pelo_seleccionado = 0;
     int indice_remera_seleccionado = 0;
     int indice_pantalon_color_seleccionado = 0;
+    int indice_tipo_pantalon_seleccionado = 0;
+    int indice_sombrero_seleccionado = -1;
     bool es_personaje_femenino = false;
 
     FondoAnimado fondo_animado;

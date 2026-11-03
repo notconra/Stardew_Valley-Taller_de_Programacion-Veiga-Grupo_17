@@ -11,6 +11,15 @@ constexpr int ALTO_BLOQUE_PELO = 96;
 constexpr int ANCHO_CELDA_REMERA = 8;
 constexpr int ALTO_BLOQUE_REMERA = 24;
 
+constexpr int ANCHO_CELDA_SOMBRERO = 20;
+constexpr int ALTO_BLOQUE_SOMBRERO = 80;
+
+constexpr int MARGEN_X_SOMBRERO = 2;
+constexpr int MARGEN_Y_SOMBRERO = 2;
+
+constexpr int ANCHO_LIENZO = ANCHO_BASE_SPRITE + 2 * MARGEN_X_SOMBRERO;
+constexpr int ALTO_LIENZO = ALTO_BASE_SPRITE + MARGEN_Y_SOMBRERO;
+
 constexpr int POSICION_X_REMERA = 4;
 constexpr int COLUMNA_BRAZOS = 6;
 
@@ -19,13 +28,15 @@ constexpr const char* RUTA_CUERPO_FEMENINO = "Assets/Characters/Farmer/farmer_gi
 constexpr const char* RUTA_PANTALONES = "Assets/Characters/Farmer/pants.png";
 constexpr const char* RUTA_PEINADOS = "Assets/Characters/Farmer/hairstyles.png";
 constexpr const char* RUTA_REMERAS = "Assets/Characters/Farmer/shirts.png";
+constexpr const char* RUTA_SOMBREROS = "Assets/Characters/Farmer/hats.png";
 
 CompositorPersonaje::CompositorPersonaje()
     : hoja_cuerpo_masculino(RUTA_CUERPO_MASCULINO),
       hoja_cuerpo_femenino(RUTA_CUERPO_FEMENINO),
       hoja_pantalones(RUTA_PANTALONES),
       hoja_peinados(RUTA_PEINADOS),
-      hoja_remeras(RUTA_REMERAS) {
+      hoja_remeras(RUTA_REMERAS),
+      hoja_sombreros(RUTA_SOMBREROS) {
 }
 
 QImage CompositorPersonaje::aplicar_tinte(const QImage& original, const ColorRGB& color) {
@@ -60,13 +71,13 @@ QPixmap CompositorPersonaje::componer(
         return {};
     }
 
-    QImage lienzo(ANCHO_BASE_SPRITE, ALTO_BASE_SPRITE, QImage::Format_ARGB32_Premultiplied);
+    QImage lienzo(ANCHO_LIENZO, ALTO_LIENZO, QImage::Format_ARGB32_Premultiplied);
     lienzo.fill(Qt::transparent);
 
     QPainter pintor(&lienzo);
 
     QImage sprite_cuerpo = hoja_cuerpo.copy(0, 0, ANCHO_BASE_SPRITE, ALTO_BASE_SPRITE);
-    pintor.drawImage(0, 0, sprite_cuerpo);
+    pintor.drawImage(MARGEN_X_SOMBRERO, MARGEN_Y_SOMBRERO, sprite_cuerpo);
 
     if (!hoja_pantalones.isNull()) {
         int ancho_cuerpo = hoja_cuerpo.width() > 0 ? hoja_cuerpo.width() : 288;
@@ -80,7 +91,7 @@ QPixmap CompositorPersonaje::componer(
         QImage recorte_pantalon =
             hoja_pantalones.copy(origen_x, 0, ANCHO_BASE_SPRITE, ALTO_BASE_SPRITE);
         QImage pantalon_tintado = aplicar_tinte(recorte_pantalon, jugador.color_pantalon);
-        pintor.drawImage(0, 0, pantalon_tintado);
+        pintor.drawImage(MARGEN_X_SOMBRERO, MARGEN_Y_SOMBRERO, pantalon_tintado);
     }
 
     QImage sprite_brazos = hoja_cuerpo.copy(
@@ -88,7 +99,7 @@ QPixmap CompositorPersonaje::componer(
         0,
         ANCHO_BASE_SPRITE,
         ALTO_BASE_SPRITE);
-    pintor.drawImage(0, 0, sprite_brazos);
+    pintor.drawImage(MARGEN_X_SOMBRERO, MARGEN_Y_SOMBRERO, sprite_brazos);
 
     if (!hoja_remeras.isNull()) {
         int columnas_remera = hoja_remeras.width() / ANCHO_CELDA_REMERA;
@@ -104,7 +115,10 @@ QPixmap CompositorPersonaje::componer(
             ANCHO_CELDA_REMERA,
             ANCHO_CELDA_REMERA);
         int desvio_y_remera = es_femenino ? OFFSET_Y_REMERA_FEMENINO : OFFSET_Y_REMERA_MASCULINO;
-        pintor.drawImage(POSICION_X_REMERA, desvio_y_remera, recorte_remera);
+        pintor.drawImage(
+            MARGEN_X_SOMBRERO + POSICION_X_REMERA,
+            MARGEN_Y_SOMBRERO + desvio_y_remera,
+            recorte_remera);
     }
 
     if (!hoja_peinados.isNull()) {
@@ -122,14 +136,30 @@ QPixmap CompositorPersonaje::componer(
             ALTO_BASE_SPRITE);
         QImage pelo_tintado = aplicar_tinte(recorte_pelo, jugador.color_pelo);
         int desvio_y_pelo = es_femenino ? OFFSET_Y_PELO_FEMENINO : OFFSET_Y_PELO_MASCULINO;
-        pintor.drawImage(0, desvio_y_pelo, pelo_tintado);
+        pintor.drawImage(MARGEN_X_SOMBRERO, MARGEN_Y_SOMBRERO + desvio_y_pelo, pelo_tintado);
+    }
+
+    if (jugador.indice_sombrero >= 0 && !hoja_sombreros.isNull()) {
+        int columnas_sombrero = hoja_sombreros.width() / ANCHO_CELDA_SOMBRERO;
+        if (columnas_sombrero <= 0) {
+            columnas_sombrero = 1;
+        }
+        int columna_s = jugador.indice_sombrero % columnas_sombrero;
+        int pagina_s = jugador.indice_sombrero / columnas_sombrero;
+
+        QImage recorte_sombrero = hoja_sombreros.copy(
+            columna_s * ANCHO_CELDA_SOMBRERO,
+            pagina_s * ALTO_BLOQUE_SOMBRERO,
+            ANCHO_CELDA_SOMBRERO,
+            ANCHO_CELDA_SOMBRERO);
+        pintor.drawImage(0, 0, recorte_sombrero);
     }
 
     pintor.end();
 
     QImage escalada = lienzo.scaled(
-        ANCHO_BASE_SPRITE * factor_escala,
-        ALTO_BASE_SPRITE * factor_escala,
+        ANCHO_LIENZO * factor_escala,
+        ALTO_LIENZO * factor_escala,
         Qt::IgnoreAspectRatio,
         Qt::FastTransformation);
 

@@ -523,6 +523,56 @@ QPushButton#btn_confirmar_personaje:pressed {
                 </layout>
                </item>
                <item>
+                <layout class="QHBoxLayout" name="layout_sombrero">
+                 <item>
+                  <widget class="QLabel" name="label_sombrero_titulo">
+                   <property name="text">
+                    <string>Sombrero</string>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>115</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="btn_sombrero_anterior">
+                   <property name="text">
+                    <string>&lt;</string>
+                   </property>
+                   <property name="class" stdset="0">
+                    <string>btn_flecha</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLabel" name="label_sombrero_valor">
+                   <property name="text">
+                    <string>Ninguno</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignmentFlag::AlignCenter</set>
+                   </property>
+                   <property name="class" stdset="0">
+                    <string>label_valor_selector</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="btn_sombrero_siguiente">
+                   <property name="text">
+                    <string>&gt;</string>
+                   </property>
+                   <property name="class" stdset="0">
+                    <string>btn_flecha</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
                 <layout class="QHBoxLayout" name="layout_pelo">
                  <item>
                   <widget class="QLabel" name="label_pelo_titulo">
@@ -700,7 +750,7 @@ QPushButton#btn_confirmar_personaje:pressed {
                  <item>
                   <widget class="QLabel" name="label_pantalon_valor">
                    <property name="text">
-                    <string>Azul clásico</string>
+                    <string>1</string>
                    </property>
                    <property name="alignment">
                     <set>Qt::AlignmentFlag::AlignCenter</set>
@@ -722,6 +772,56 @@ QPushButton#btn_confirmar_personaje:pressed {
                  </item>
                 </layout>
                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="layout_color_pantalon">
+                  <item>
+                   <widget class="QLabel" name="label_color_pantalon_titulo">
+                    <property name="text">
+                     <string>Color pant.</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>115</width>
+                      <height>0</height>
+                     </size>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="btn_color_pantalon_anterior">
+                    <property name="text">
+                     <string>&lt;</string>
+                    </property>
+                    <property name="class" stdset="0">
+                     <string>btn_flecha</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_color_pantalon_valor">
+                    <property name="text">
+                     <string>Azul clásico</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignmentFlag::AlignCenter</set>
+                    </property>
+                    <property name="class" stdset="0">
+                     <string>label_valor_selector</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="btn_color_pantalon_siguiente">
+                    <property name="text">
+                     <string>&gt;</string>
+                    </property>
+                    <property name="class" stdset="0">
+                     <string>btn_flecha</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
               </layout>
              </item>
              <item>
