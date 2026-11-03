@@ -159,6 +159,7 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const ObjetoRetirado& e) { enviar_evento_objeto_retirado(e); },
             [this](const DropAparecido& e) { enviar_evento_drop_aparecido(e); },
             [this](const DropRetirado& e) { enviar_evento_drop_retirado(e); },
+            [this](const TierraCambiada& e) { enviar_evento_tierra_cambiada(e); },
         },
         evento);
 }
@@ -232,6 +233,11 @@ void ProtocoloServidor::enviar_estado_drop(const EstadoDrop& estado) {
     enviar_u8(static_cast<uint8_t>(estado.calidad));
 }
 
+void ProtocoloServidor::enviar_casilla_tratada(const CasillaTratada& casilla) {
+    enviar_u32(casilla.columna);
+    enviar_u32(casilla.fila);
+}
+
 void ProtocoloServidor::enviar_ranura_inventario(const RanuraInventario& ranura) {
     enviar_u8(static_cast<uint8_t>(ranura.tipo));
     enviar_u16(ranura.cantidad);
@@ -283,6 +289,10 @@ void ProtocoloServidor::enviar_estado_juego(const EstadoJuego& estado_juego) {
     for (const EstadoDrop& estado : estado_juego.drops) {
         enviar_estado_drop(estado);
     }
+    enviar_largo(estado_juego.tierra.size());
+    for (const CasillaTratada& casilla : estado_juego.tierra) {
+        enviar_casilla_tratada(casilla);
+    }
 }
 
 void ProtocoloServidor::enviar_evento_jugadores_en_sector(const JugadoresEnSector& jugadores) {
@@ -316,4 +326,10 @@ void ProtocoloServidor::enviar_evento_drop_retirado(const DropRetirado& drop) {
     enviar_tipo(TipoMensaje::DROP_RETIRADO);
     enviar_u32(drop.id);
     enviar_u32(drop.id_jugador);
+}
+
+void ProtocoloServidor::enviar_evento_tierra_cambiada(const TierraCambiada& tierra) {
+    enviar_tipo(TipoMensaje::TIERRA_CAMBIADA);
+    enviar_casilla_tratada(tierra.casilla);
+    enviar_booleano(tierra.tratada);
 }

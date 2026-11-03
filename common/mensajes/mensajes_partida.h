@@ -128,6 +128,14 @@ struct EstadoDrop {
     Calidad calidad = Calidad::BASE;
 };
 
+// Una casilla de tierra tratada con la pala, por columna y fila del mapa.
+struct CasillaTratada {
+    uint32_t columna = 0;
+    uint32_t fila = 0;
+
+    bool operator==(const CasillaTratada&) const = default;
+};
+
 // Snapshot completa de UN sector. Se manda una sola vez cuando el jugador entra o cambia de
 // sector. Después, los cambios llegan como eventos.
 struct EstadoJuego {
@@ -135,6 +143,7 @@ struct EstadoJuego {
     std::vector<EstadoJugador> jugadores;
     std::vector<EstadoObjetoDelMundo> objetos;
     std::vector<EstadoDrop> drops;
+    std::vector<CasillaTratada> tierra;
 };
 
 // Posición y estado de todos los jugadores del sector del receptor. Se manda cada tick, pero solo
@@ -167,6 +176,13 @@ struct DropAparecido {
 struct DropRetirado {
     uint32_t id = 0;
     uint32_t id_jugador = 0;
+};
+
+// Cambió el estado de una casilla de tierra del sector del receptor. "tratada" indica si quedó
+// tratada con la pala (true) o si volvió a tierra común con el pico (false).
+struct TierraCambiada {
+    CasillaTratada casilla;
+    bool tratada = false;
 };
 
 // La barra de un jugador. Las ranuras reales van de 0 a ranuras.size() - 1.

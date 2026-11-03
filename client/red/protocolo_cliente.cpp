@@ -24,6 +24,7 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::OBJETO_RETIRADO, [this] { return recibir_objeto_retirado(); }},
           {TipoMensaje::DROP_APARECIDO, [this] { return recibir_drop_aparecido(); }},
           {TipoMensaje::DROP_RETIRADO, [this] { return recibir_drop_retirado(); }},
+          {TipoMensaje::TIERRA_CAMBIADA, [this] { return recibir_tierra_cambiada(); }},
           {TipoMensaje::ACTUALIZACION_INVENTARIO,
            [this] { return recibir_actualizacion_inventario(); }},
           {TipoMensaje::ACTUALIZACION_COFRE, [this] { return recibir_actualizacion_cofre(); }},
@@ -276,6 +277,13 @@ EstadoDrop ProtocoloCliente::recibir_estado_drop() {
     return estado;
 }
 
+CasillaTratada ProtocoloCliente::recibir_casilla_tratada() {
+    CasillaTratada casilla;
+    casilla.columna = recibir_u32();
+    casilla.fila = recibir_u32();
+    return casilla;
+}
+
 EstadoJuego ProtocoloCliente::recibir_estado_juego() {
     EstadoJuego estado_juego;
     estado_juego.mapa = recibir_texto();
@@ -296,6 +304,12 @@ EstadoJuego ProtocoloCliente::recibir_estado_juego() {
     estado_juego.drops.reserve(cantidad_de_drops);
     for (uint16_t i = 0; i < cantidad_de_drops; ++i) {
         estado_juego.drops.push_back(recibir_estado_drop());
+    }
+
+    uint16_t cantidad_de_tierra = recibir_u16();
+    estado_juego.tierra.reserve(cantidad_de_tierra);
+    for (uint16_t i = 0; i < cantidad_de_tierra; ++i) {
+        estado_juego.tierra.push_back(recibir_casilla_tratada());
     }
 
     return estado_juego;
@@ -338,6 +352,13 @@ DropRetirado ProtocoloCliente::recibir_drop_retirado() {
     retirado.id = recibir_u32();
     retirado.id_jugador = recibir_u32();
     return retirado;
+}
+
+TierraCambiada ProtocoloCliente::recibir_tierra_cambiada() {
+    TierraCambiada tierra;
+    tierra.casilla = recibir_casilla_tratada();
+    tierra.tratada = recibir_booleano();
+    return tierra;
 }
 
 void ProtocoloCliente::cerrar() {
