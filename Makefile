@@ -1,8 +1,9 @@
 PRECOMMIT = python3 -m pre_commit
+JOBS ?= 3
 
 deps:   ## instala todo lo que necesita el proyecto (pide sudo)
 	sudo apt-get update
-	sudo apt-get install -y build-essential cmake pkg-config git libgtest-dev \
+	sudo apt-get install -y build-essential cmake pkg-config git libgtest-dev ccache lld \
 		libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev qt6-base-dev qt6-base-dev-tools \
 		python3-pip
 
@@ -11,11 +12,13 @@ hooks:   ## instala pre-commit y activa los hooks
 		python3 -m pip install --user --break-system-packages pre-commit
 	$(PRECOMMIT) install --hook-type pre-commit --hook-type commit-msg
 
-build:   ## compila server y client
+build:   ## compila server y client (make build JOBS=4 para compilar en paralelo con mas hilos)
 	cmake -S . -B build
-	cmake --build build -j2
+	cmake --build build -j$(JOBS) --target server client
 
-test: build   ## corre los tests
+test:   ## compila y corre los tests
+	cmake -S . -B build
+	cmake --build build -j$(JOBS) --target tests
 	./build/tests
 
 format:   ## da formato al codigo (misma version de clang-format que los hooks)

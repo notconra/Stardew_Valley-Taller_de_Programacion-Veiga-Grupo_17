@@ -13,14 +13,12 @@
 #include "../../common/thread.h"
 #include "../configuracion/configuracion_servidor_datos.h"
 #include "../juego/mundo.h"
+#include "../juego/notificador.h"
 #include "../juego/recursos/recursos_de_juego.h"
 #include "../persistencia/datos_partida_guardada.h"
 #include "error_de_partida.h"
 #include "jugador.h"
 
-// Bucle de simulación de una partida. Corre en su propio hilo. Coordina
-// comandos de red con el Mundo. La sesión se crea al conectar el primer
-// jugador y se destruye al irse el último.
 struct ComandoDeJugador {
     uint32_t id_jugador = 0;
     ComandoCliente comando;
@@ -30,7 +28,15 @@ struct ColaDeEventosDelJugador {
     Queue<EventoServidor>& cola_eventos;
 };
 
-class SesionDePartida : public Thread {
+// Un jugador que entró o se fue.
+struct CambioDeConexion {
+    uint32_t id_jugador = 0;
+    bool entra = false;
+};
+
+// Implementa Notificador para proveer el servicio de envío sin acoplar el juego a la red.
+// El Mundo manda los eventos y esta clase solo los deposita en la cola del cliente.
+class SesionDePartida : public Thread, public Notificador {
 private:
     const std::string codigo_partida;
     const std::chrono::milliseconds periodo_de_tick;
@@ -39,31 +45,30 @@ private:
     Mundo mundo;
 
     Queue<ComandoDeJugador> comandos;
-
     std::mutex mutex_clientes;
     std::map<uint32_t, ColaDeEventosDelJugador> clientes;
+    std::vector<CambioDeConexion> cambios_de_conexion;
 
-    // Jugadores que entraron y todavía no recibieron su inventario inicial.
-    std::vector<uint32_t> inventarios_pendientes;
-
-    void sincronizar_jugadores();
-    void enviar_inventarios_pendientes();
+    // Le pasa a Mundo las altas y bajas anotadas desde el tick anterior.
+    void aplicar_cambios_de_conexion();
     void procesar_comandos();
-    void difundir(const EventoServidor& evento);
-    void difundir_a_jugador(uint32_t id_jugador, const EventoServidor& evento);
     void difundir_cierre();
 
 public:
     SesionDePartida(
-        const std::string& codigo_de_partida,
+        const std::string& codigo_partida,
         const ConfiguracionPartidaServidor& configuracion_partida, const RecursosDeJuego& recursos,
-        const std::vector<DatosJugadorGuardado>& jugadores_guardados);
+        const std::vector<DatosJugadorGuardado>& jugadores_guardados = {});
 
     bool esta_viva() const;
 
     void entrar(uint32_t id_jugador, Queue<EventoServidor>& cola_eventos);
     void salir(uint32_t id_jugador);
     void recibir(uint32_t id_jugador, const ComandoCliente& comando);
+
+    // Implementación de la interfaz Notificador
+    void a_jugador(uint32_t id_jugador, const EventoServidor& evento) override;
+    void a_todos(const EventoServidor& evento) override;
 
     void run() override;
     void detener();

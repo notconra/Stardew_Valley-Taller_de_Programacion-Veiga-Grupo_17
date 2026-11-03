@@ -22,6 +22,7 @@ struct ObjetoDelMundo {
     int columna = 0;
     int fila = 0;
     TipoObjeto tipo = TipoObjeto::NINGUNO;
+    int golpes_recibidos = 0;  // para acumular el daño del pico
 };
 
 // Lo que pasó al romper un objeto. Si cantidad es 0, no dejó nada. El sistema de acciones decide
@@ -30,6 +31,13 @@ struct ResultadoDeRotura {
     bool se_rompio = false;
     TipoItem producto = TipoItem::NINGUNO;
     int cantidad = 0;
+};
+
+// Resultado de golpear un objeto con una herramienta. "golpeo" es false si el objeto no existe o la
+// herramienta no sirve para él; "rotura" solo tiene datos si ese golpe lo terminó de romper.
+struct ResultadoDeGolpe {
+    bool golpeo = false;
+    ResultadoDeRotura rotura;
 };
 
 // Cómo es un tipo de objeto, cuánto hay que picarlo, con qué herramienta y qué deja.
@@ -110,6 +118,10 @@ public:
     // Coloca un objeto y devuelve su id, o 0 si no se pudo (tipo inexistente, casilla fuera del
     // mapa, bloqueada por el terreno u ocupada). Si falla no cambia nada.
     int colocar(TipoObjeto tipo, int columna, int fila);
+
+    // Golpea el objeto con la herramienta indicada. Si no es la que pide su definición, no pasa
+    // nada. Al llegar a golpes_para_picar lo rompe.
+    ResultadoDeGolpe golpear(int id, TipoItem herramienta_usada);
 
     // Coloca hasta "cantidad" objetos en casillas libres elegidas al azar, sin repetir casilla.
     // El tipo de cada uno se sortea según "pesos". Si propiedad_requerida no es NINGUNA, solo

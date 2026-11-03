@@ -21,8 +21,8 @@ using ComandoCliente = std::variant<
     ActivarMultijugador, SalirDePartida, Moverse, GuardarPartida,
 
     // Inventario y acciones
-    SeleccionarRanuraDeLaBarra, UsarItem, MoverItemEntreRanuras, AbrirCofre, MoverItemConCofre,
-    SolicitarInventario>;
+    SeleccionarRanuraDeLaBarra, UsarItem, MoverItemEntreRanuras, MoverItemConCofre,
+    SolicitarInventario, SoltarItem>;
 
 using EventoServidor = std::variant<
     // Error
@@ -32,9 +32,13 @@ using EventoServidor = std::variant<
     ListaPartidas, EntradaExitosaAPartida,
 
     // Partida
-    MultijugadorActivado, PartidaAbandonada, PartidaCerradaPorError, EstadoJuego,
+    MultijugadorActivado, PartidaAbandonada, PartidaCerradaPorError,
 
-    // Inventario y cofres
+    // - Sector
+    EstadoJuego, JugadoresEnSector, ObjetoColocado, ObjetoRetirado, DropAparecido, DropRetirado,
+    EnemigoActualizado, TierraCambiada,
+
+    // - Inventario y cofres
     ActualizacionInventario, ActualizacionCofre>;
 
 #endif

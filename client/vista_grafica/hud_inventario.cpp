@@ -2,16 +2,15 @@
 
 #include <algorithm>
 #include <array>
-#include <cstdint>
 #include <iostream>
+#include <stdexcept>
+#include <vector>
 
-static constexpr int MARGEN = 8;
-static constexpr int SEPARACION_RANURAS = 4;
-static constexpr int TAMANO_MINIMO_DE_RANURA = 16;
-static constexpr int TAMANO_MAXIMO_DE_RANURA = 40;
-static constexpr int COLUMNAS_DEL_COFRE = 10;
+#include "color_de_vida.h"
 
-static constexpr std::array<std::array<uint8_t, 5>, 10> DIGITOS = {
+namespace {
+
+constexpr std::array<std::array<uint8_t, 5>, 10> DIGITOS = {
     {{{7, 5, 5, 5, 7}},
      {{2, 6, 2, 2, 7}},
      {{7, 1, 7, 4, 7}},
@@ -23,17 +22,49 @@ static constexpr std::array<std::array<uint8_t, 5>, 10> DIGITOS = {
      {{7, 5, 7, 5, 7}},
      {{7, 5, 7, 1, 7}}}};
 
-HudInventario::HudInventario(SDL_Renderer* renderer) : iconos(renderer) {
-    textura_hud = IMG_LoadTexture(renderer, RUTA_ASSET_HUD);
-    if (!textura_hud) {
-        std::cerr << "[Aviso] hud.png no se cargó, se usará diseño vectorial: " << IMG_GetError()
-                  << std::endl;
-    }
+uint8_t indice_u8(int indice) {
+    return static_cast<uint8_t>(indice);
+}
 
-    textura_tacho = IMG_LoadTexture(renderer, RUTA_ASSET_TACHO);
-    if (!textura_tacho) {
-        std::cerr << "[Error] No se pudo cargar tacho.png en: " << RUTA_ASSET_TACHO << " -> "
-                  << IMG_GetError() << std::endl;
+// El contenido de una ranura de la barra o del cofre. nullptr si no existe (o es el tacho).
+const RanuraInventario* ranura_de(
+    const InventarioJugador& inventario, const CofreJugador& cofre,
+    const RanuraApuntada& ubicacion) {
+    const std::vector<RanuraInventario>* ranuras = nullptr;
+    if (ubicacion.zona == ZonaDelHud::BARRA) {
+        ranuras = &inventario.ranuras;
+    } else if (ubicacion.zona == ZonaDelHud::COFRE && cofre.abierto) {
+        ranuras = &cofre.ranuras;
+    }
+    if (ranuras == nullptr || ubicacion.indice < 0 ||
+        ubicacion.indice >= static_cast<int>(ranuras->size())) {
+        return nullptr;
+    }
+    return &(*ranuras)[ubicacion.indice];
+}
+
+bool tiene_algo(const RanuraInventario* ranura) {
+    return ranura != nullptr && ranura->tipo != TipoItem::NINGUNO && ranura->cantidad > 0;
+}
+
+}  // namespace
+
+HudInventario::HudInventario(SDL_Renderer* renderer, const IconosDeItems& iconos_de_items)
+    : iconos(iconos_de_items) {
+    try {
+        tacho.emplace(RUTA_ASSET_TACHO, renderer);
+    } catch (const std::runtime_error& error) {
+        std::cerr << "[Error] " << error.what() << std::endl;
+    }
+    try {
+        marco_de_vida.emplace(RUTA_ASSET_VIDA, renderer);
+    } catch (const std::runtime_error& error) {
+        std::cerr << "[Error] " << error.what() << std::endl;
+    }
+    try {
+        marco_de_energia.emplace(RUTA_ASSET_ENERGIA, renderer);
+    } catch (const std::runtime_error& error) {
+        std::cerr << "[Error] " << error.what() << std::endl;
     }
 }
 
@@ -43,236 +74,192 @@ void HudInventario::configurar(int ancho, int alto) {
     cancelar_levantamiento();
 }
 
-int HudInventario::columnas(const InventarioJugador& inventario) const {
-    return std::max(1, static_cast<int>(inventario.ranuras.size()));
-}
+// Geometría
 
-int HudInventario::tamano_de_ranura(const InventarioJugador& inventario) const {
-    const int cols = columnas(inventario);
-    const int disponible = ancho_ventana - (2 * MARGEN) - ((cols + 1) * SEPARACION_RANURAS);
-    const int tamano = disponible / (cols + 1);
-    return std::clamp(tamano, TAMANO_MINIMO_DE_RANURA, TAMANO_MAXIMO_DE_RANURA);
-}
-
-int HudInventario::ancho_de_la_barra(const InventarioJugador& inventario) const {
-    const int cols = columnas(inventario);
-    const int tamano = tamano_de_ranura(inventario);
-    return (cols * tamano) + ((cols - 1) * SEPARACION_RANURAS);
-}
-
-int HudInventario::x_inicial(const InventarioJugador& inventario) const {
-    const int tamano = tamano_de_ranura(inventario);
-    const int ancho_total = ancho_de_la_barra(inventario) + (2 * SEPARACION_RANURAS) + tamano;
-    return std::max(MARGEN, (ancho_ventana - ancho_total) / 2);
-}
-
-int HudInventario::y_de_la_barra(const InventarioJugador& inventario) const {
-    return alto_ventana - MARGEN - tamano_de_ranura(inventario);
-}
-
-SDL_Rect HudInventario::rectangulo_de_ranura(
-    const InventarioJugador& inventario, int indice) const {
-    const int tamano = tamano_de_ranura(inventario);
-    return SDL_Rect{
-        x_inicial(inventario) + indice * (tamano + SEPARACION_RANURAS),
-        y_de_la_barra(inventario),
-        tamano,
-        tamano};
-}
-
-SDL_Rect HudInventario::rectangulo_del_tacho(const InventarioJugador& inventario) const {
-    const int tamano = tamano_de_ranura(inventario);
-    return SDL_Rect{
-        x_inicial(inventario) + ancho_de_la_barra(inventario) + (2 * SEPARACION_RANURAS),
-        y_de_la_barra(inventario),
-        tamano,
-        tamano};
-}
-
-int HudInventario::columnas_del_cofre(const CofreJugador& cofre) const {
-    return std::max(1, std::min(COLUMNAS_DEL_COFRE, static_cast<int>(cofre.ranuras.size())));
-}
-
-int HudInventario::filas_del_cofre(const CofreJugador& cofre) const {
-    const int cols = columnas_del_cofre(cofre);
-    return (static_cast<int>(cofre.ranuras.size()) + cols - 1) / cols;
-}
-
-int HudInventario::ancho_del_cofre(
+HudInventario::Disposicion HudInventario::disponer(
     const InventarioJugador& inventario, const CofreJugador& cofre) const {
-    const int cols = columnas_del_cofre(cofre);
-    const int tamano = tamano_de_ranura(inventario);
-    return (cols * tamano) + ((cols - 1) * SEPARACION_RANURAS);
+    Disposicion d;
+    d.cantidad_de_ranuras = static_cast<int>(inventario.ranuras.size());
+
+    const int columnas = std::max(1, d.cantidad_de_ranuras);
+    const int disponible = ancho_ventana - (2 * MARGEN) - ((columnas + 1) * SEPARACION_RANURAS);
+    d.tamano =
+        std::clamp(disponible / (columnas + 1), TAMANO_MINIMO_DE_RANURA, TAMANO_MAXIMO_DE_RANURA);
+
+    // La barra y el tacho van centrados juntos, abajo de todo.
+    const int ancho_de_la_barra = (columnas * d.tamano) + ((columnas - 1) * SEPARACION_RANURAS);
+    const int ancho_total = ancho_de_la_barra + (2 * SEPARACION_RANURAS) + d.tamano;
+    const int x = std::max(MARGEN, (ancho_ventana - ancho_total) / 2);
+    const int y = alto_ventana - MARGEN - d.tamano;
+    d.barra = SDL_Rect{x, y, ancho_de_la_barra, d.tamano};
+    d.tacho = SDL_Rect{x + ancho_de_la_barra + (2 * SEPARACION_RANURAS), y, d.tamano, d.tamano};
+    d.fondo_de_la_barra = SDL_Rect{
+        x - SEPARACION_RANURAS,
+        y - SEPARACION_RANURAS,
+        ancho_total + (2 * SEPARACION_RANURAS),
+        d.tamano + (2 * SEPARACION_RANURAS)};
+
+    // El cofre abierto va centrado, justo arriba de la barra.
+    if (cofre.abierto && !cofre.ranuras.empty()) {
+        d.cantidad_del_cofre = static_cast<int>(cofre.ranuras.size());
+        d.columnas_del_cofre = std::min(COLUMNAS_DEL_COFRE, d.cantidad_del_cofre);
+        const int filas = (d.cantidad_del_cofre + d.columnas_del_cofre - 1) / d.columnas_del_cofre;
+        const int ancho =
+            (d.columnas_del_cofre * d.tamano) + ((d.columnas_del_cofre - 1) * SEPARACION_RANURAS);
+        const int alto = (filas * d.tamano) + ((filas - 1) * SEPARACION_RANURAS);
+        const int cofre_x = std::max(MARGEN, (ancho_ventana - ancho) / 2);
+        const int cofre_y = std::max(MARGEN, y - (2 * SEPARACION_RANURAS) - alto);
+        d.cofre = SDL_Rect{cofre_x, cofre_y, ancho, alto};
+        d.fondo_del_cofre = SDL_Rect{
+            cofre_x - SEPARACION_RANURAS,
+            cofre_y - SEPARACION_RANURAS,
+            ancho + (2 * SEPARACION_RANURAS),
+            alto + (2 * SEPARACION_RANURAS)};
+    }
+    return d;
 }
 
-int HudInventario::x_inicial_del_cofre(
-    const InventarioJugador& inventario, const CofreJugador& cofre) const {
-    return std::max(MARGEN, (ancho_ventana - ancho_del_cofre(inventario, cofre)) / 2);
-}
-
-int HudInventario::y_del_cofre(
-    const InventarioJugador& inventario, const CofreJugador& cofre) const {
-    const int tamano = tamano_de_ranura(inventario);
-    const int alto =
-        filas_del_cofre(cofre) * tamano + (filas_del_cofre(cofre) - 1) * SEPARACION_RANURAS;
-    return std::max(MARGEN, y_de_la_barra(inventario) - (2 * SEPARACION_RANURAS) - alto);
-}
-
-SDL_Rect HudInventario::rectangulo_de_ranura_del_cofre(
-    const InventarioJugador& inventario, const CofreJugador& cofre, int indice) const {
-    const int cols = columnas_del_cofre(cofre);
-    const int tamano = tamano_de_ranura(inventario);
-    return SDL_Rect{
-        x_inicial_del_cofre(inventario, cofre) + (indice % cols) * (tamano + SEPARACION_RANURAS),
-        y_del_cofre(inventario, cofre) + (indice / cols) * (tamano + SEPARACION_RANURAS),
-        tamano,
-        tamano};
-}
-
-RanuraApuntada HudInventario::ranura_en(
-    const InventarioJugador& inventario, const CofreJugador& cofre, int x, int y) const {
-    if (inventario.ranuras.empty())
-        return RanuraApuntada{};
+RanuraApuntada HudInventario::ranura_en(const Disposicion& d, int x, int y) const {
     const SDL_Point punto{x, y};
 
-    if (cofre.abierto) {
-        for (int i = 0; i < static_cast<int>(cofre.ranuras.size()); ++i) {
-            SDL_Rect rect = rectangulo_de_ranura_del_cofre(inventario, cofre, i);
-            if (SDL_PointInRect(&punto, &rect))
-                return RanuraApuntada{ZonaDelHud::COFRE, i};
+    for (int i = 0; i < d.cantidad_del_cofre; ++i) {
+        const SDL_Rect rectangulo = d.ranura_del_cofre(i);
+        if (SDL_PointInRect(&punto, &rectangulo)) {
+            return RanuraApuntada{ZonaDelHud::COFRE, i};
         }
     }
-
-    for (int i = 0; i < static_cast<int>(inventario.ranuras.size()); ++i) {
-        SDL_Rect rect = rectangulo_de_ranura(inventario, i);
-        if (SDL_PointInRect(&punto, &rect))
+    for (int i = 0; i < d.cantidad_de_ranuras; ++i) {
+        const SDL_Rect rectangulo = d.ranura_de_la_barra(i);
+        if (SDL_PointInRect(&punto, &rectangulo)) {
             return RanuraApuntada{ZonaDelHud::BARRA, i};
+        }
     }
-
-    SDL_Rect tacho = rectangulo_del_tacho(inventario);
-    if (SDL_PointInRect(&punto, &tacho)) {
-        return RanuraApuntada{ZonaDelHud::TACHO, static_cast<int>(inventario.ranuras.size())};
+    if (SDL_PointInRect(&punto, &d.tacho)) {
+        // Para el servidor el tacho es la ranura que viene justo después de la última real.
+        return RanuraApuntada{ZonaDelHud::TACHO, d.cantidad_de_ranuras};
     }
-
     return RanuraApuntada{};
 }
 
-RanuraApuntada HudInventario::ranura_en(const InventarioJugador& inventario, int x, int y) const {
-    return ranura_en(inventario, CofreJugador{}, x, y);
+bool HudInventario::sobre_el_hud(const Disposicion& d, int x, int y) {
+    const SDL_Point punto{x, y};
+    return SDL_PointInRect(&punto, &d.fondo_de_la_barra) ||
+           (d.cantidad_del_cofre > 0 && SDL_PointInRect(&punto, &d.fondo_del_cofre));
 }
 
-const RanuraInventario* HudInventario::ranura_de(
-    const InventarioJugador& inventario, const CofreJugador& cofre,
-    const RanuraApuntada& apuntada) const {
-    if (apuntada.zona == ZonaDelHud::BARRA) {
-        if (apuntada.indice < 0 || apuntada.indice >= static_cast<int>(inventario.ranuras.size()))
-            return nullptr;
-        return &inventario.ranuras[apuntada.indice];
-    }
-    if (apuntada.zona == ZonaDelHud::COFRE) {
-        if (apuntada.indice < 0 || apuntada.indice >= static_cast<int>(cofre.ranuras.size()))
-            return nullptr;
-        return &cofre.ranuras[apuntada.indice];
-    }
-    return nullptr;
-}
+// Stack en la mano
 
 bool HudInventario::hay_item_levantado() const {
-    return zona_levantada != ZonaDelHud::NINGUNA && indice_levantado != SIN_RANURA &&
-           cantidad_levantada > 0;
+    return levantada.hay_ranura() && cantidad_levantada > 0;
 }
 
 void HudInventario::levantar(
     const InventarioJugador& inventario, const CofreJugador& cofre, const RanuraApuntada& ranura,
     uint16_t cantidad) {
     const RanuraInventario* contenido = ranura_de(inventario, cofre, ranura);
-    if (!contenido || contenido->tipo == TipoItem::NINGUNO || contenido->cantidad == 0)
+    if (!tiene_algo(contenido)) {
         return;
-    zona_levantada = ranura.zona;
-    indice_levantado = ranura.indice;
+    }
+    levantada = ranura;
     cantidad_levantada = std::min(cantidad, contenido->cantidad);
 }
 
 void HudInventario::cancelar_levantamiento() {
-    zona_levantada = ZonaDelHud::NINGUNA;
-    indice_levantado = SIN_RANURA;
+    levantada = RanuraApuntada{};
     cantidad_levantada = 0;
+}
+
+void HudInventario::actualizar(const InventarioJugador& inventario, const CofreJugador& cofre) {
+    if (!hay_item_levantado()) {
+        return;
+    }
+    const RanuraInventario* contenido = ranura_de(inventario, cofre, levantada);
+    if (!tiene_algo(contenido)) {
+        cancelar_levantamiento();
+        return;
+    }
+    cantidad_levantada = std::min(cantidad_levantada, contenido->cantidad);
+}
+
+RanuraInventario HudInventario::mostrada(
+    const RanuraApuntada& ubicacion, RanuraInventario ranura) const {
+    if (hay_item_levantado() && ubicacion == levantada) {
+        ranura.cantidad -= std::min(ranura.cantidad, cantidad_levantada);
+        if (ranura.cantidad == 0) {
+            ranura.tipo = TipoItem::NINGUNO;
+        }
+    }
+    return ranura;
+}
+
+// Clics
+
+bool HudInventario::captura_el_clic(
+    const InventarioJugador& inventario, const CofreJugador& cofre, int x, int y) const {
+    if (inventario.ranuras.empty()) {
+        return false;
+    }
+    return hay_item_levantado() || sobre_el_hud(disponer(inventario, cofre), x, y);
 }
 
 std::optional<ComandoCliente> HudInventario::procesar_clic(
     const InventarioJugador& inventario, const CofreJugador& cofre, int x, int y,
     bool clic_derecho) {
-    const RanuraApuntada destino = ranura_en(inventario, cofre, x, y);
+    const Disposicion disposicion = disponer(inventario, cofre);
+    const RanuraApuntada destino = ranura_en(disposicion, x, y);
+
+    // Mano vacía: agarrar.
+    if (!hay_item_levantado()) {
+        levantar(inventario, cofre, destino, clic_derecho ? 1 : TODO_EL_STACK);
+        return std::nullopt;
+    }
+
+    const RanuraApuntada origen = levantada;
+    const uint16_t cantidad = cantidad_levantada;
+
+    // Fuera de las ranuras: sobre un panel del HUD solo se suelta lo que había en la mano, y
+    // fuera del HUD se tira al piso (el servidor decide dónde cae).
     if (!destino.hay_ranura()) {
         cancelar_levantamiento();
+        if (origen.zona == ZonaDelHud::BARRA && !sobre_el_hud(disposicion, x, y)) {
+            return ComandoCliente{SoltarItem{indice_u8(origen.indice), cantidad}};
+        }
         return std::nullopt;
     }
 
-    if (!hay_item_levantado()) {
-        if (destino.zona == ZonaDelHud::TACHO)
-            return std::nullopt;
-        const RanuraInventario* contenido = ranura_de(inventario, cofre, destino);
-        if (!contenido || contenido->tipo == TipoItem::NINGUNO)
-            return std::nullopt;
-        levantar(inventario, cofre, destino, clic_derecho ? 1 : contenido->cantidad);
-        return std::nullopt;
-    }
-
-    if (destino.zona == zona_levantada && destino.indice == indice_levantado) {
-        if (!clic_derecho)
+    // Sobre la ranura de origen: el clic derecho suma un ítem a la mano, el izquierdo la suelta.
+    if (destino == origen) {
+        if (!clic_derecho) {
             cancelar_levantamiento();
+        } else if (const RanuraInventario* contenido = ranura_de(inventario, cofre, origen)) {
+            cantidad_levantada = static_cast<uint16_t>(
+                std::min<int>(static_cast<int>(cantidad) + 1, contenido->cantidad));
+        }
         return std::nullopt;
     }
 
-    uint16_t cantidad =
-        std::min(clic_derecho ? static_cast<uint16_t>(1) : cantidad_levantada, cantidad_levantada);
-
-    std::optional<ComandoCliente> comando = std::nullopt;
-    if (destino.zona == ZonaDelHud::TACHO) {
-        if (zona_levantada == ZonaDelHud::BARRA) {
-            comando = ComandoCliente{MoverItemEntreRanuras{
-                static_cast<uint8_t>(indice_levantado),
-                static_cast<uint8_t>(inventario.ranuras.size()),
-                cantidad}};
-        }
-    } else if (zona_levantada == ZonaDelHud::BARRA && destino.zona == ZonaDelHud::BARRA) {
-        comando = ComandoCliente{MoverItemEntreRanuras{
-            static_cast<uint8_t>(indice_levantado),
-            static_cast<uint8_t>(destino.indice),
-            cantidad}};
-    } else if (zona_levantada != ZonaDelHud::COFRE || destino.zona != ZonaDelHud::COFRE) {
-        if (zona_levantada != ZonaDelHud::NINGUNA) {
-            comando = ComandoCliente{MoverItemConCofre{
-                static_cast<uint8_t>(indice_levantado),
-                static_cast<uint8_t>(destino.indice),
-                cantidad,
-                zona_levantada == ZonaDelHud::COFRE}};
-        }
-    }
-
+    // Sobre otra ranura o el tacho: mover. Con el clic derecho se mueve de a uno.
+    const uint16_t a_mover = clic_derecho ? uint16_t{1} : cantidad;
     cancelar_levantamiento();
-    return comando;
+
+    const bool desde_el_cofre = origen.zona == ZonaDelHud::COFRE;
+    const bool entre_ranuras_de_la_barra =
+        !desde_el_cofre && (destino.zona == ZonaDelHud::BARRA || destino.zona == ZonaDelHud::TACHO);
+    if (entre_ranuras_de_la_barra) {
+        return ComandoCliente{
+            MoverItemEntreRanuras{indice_u8(origen.indice), indice_u8(destino.indice), a_mover}};
+    }
+    if (desde_el_cofre && destino.zona != ZonaDelHud::BARRA) {
+        return std::nullopt;  // cofre a cofre o cofre al tacho: no se puede
+    }
+    return ComandoCliente{MoverItemConCofre{
+        indice_u8(origen.indice),
+        indice_u8(destino.indice),
+        a_mover,
+        desde_el_cofre}};
 }
 
-std::optional<ComandoCliente> HudInventario::procesar_clic_izquierdo(
-    const InventarioJugador& inventario, const CofreJugador& cofre, int x, int y) {
-    return procesar_clic(inventario, cofre, x, y, false);
-}
-
-std::optional<ComandoCliente> HudInventario::procesar_clic_izquierdo(
-    const InventarioJugador& inventario, int x, int y) {
-    return procesar_clic(inventario, CofreJugador{}, x, y, false);
-}
-
-std::optional<ComandoCliente> HudInventario::procesar_clic_derecho(
-    const InventarioJugador& inventario, const CofreJugador& cofre, int x, int y) {
-    return procesar_clic(inventario, cofre, x, y, true);
-}
-
-std::optional<ComandoCliente> HudInventario::procesar_clic_derecho(
-    const InventarioJugador& inventario, int x, int y) {
-    return procesar_clic(inventario, CofreJugador{}, x, y, true);
-}
+// Dibujo
 
 void HudInventario::dibujar_ranura(
     SDL_Renderer* renderer, const SDL_Rect& rectangulo, const RanuraInventario& ranura,
@@ -280,7 +267,7 @@ void HudInventario::dibujar_ranura(
     SDL_SetRenderDrawColor(renderer, 180, 135, 95, 255);
     SDL_RenderFillRect(renderer, &rectangulo);
 
-    SDL_Rect interior{rectangulo.x + 2, rectangulo.y + 2, rectangulo.w - 4, rectangulo.h - 4};
+    const SDL_Rect interior{rectangulo.x + 2, rectangulo.y + 2, rectangulo.w - 4, rectangulo.h - 4};
     SDL_SetRenderDrawColor(renderer, 201, 168, 122, 255);
     SDL_RenderFillRect(renderer, &interior);
 
@@ -288,29 +275,32 @@ void HudInventario::dibujar_ranura(
     SDL_RenderDrawRect(renderer, &rectangulo);
 
     if (resaltada) {
-        SDL_Rect borde1{rectangulo.x - 2, rectangulo.y - 2, rectangulo.w + 4, rectangulo.h + 4};
-        SDL_Rect borde2{rectangulo.x - 3, rectangulo.y - 3, rectangulo.w + 6, rectangulo.h + 6};
+        const SDL_Rect borde1{
+            rectangulo.x - 2,
+            rectangulo.y - 2,
+            rectangulo.w + 4,
+            rectangulo.h + 4};
+        const SDL_Rect borde2{
+            rectangulo.x - 3,
+            rectangulo.y - 3,
+            rectangulo.w + 6,
+            rectangulo.h + 6};
         SDL_SetRenderDrawColor(renderer, 235, 50, 40, 255);
         SDL_RenderDrawRect(renderer, &borde1);
         SDL_RenderDrawRect(renderer, &borde2);
     }
 
-    if (ranura.tipo == TipoItem::NINGUNO)
+    if (ranura.tipo == TipoItem::NINGUNO) {
         return;
-
-    Icono icono = iconos.obtener_icono(ranura.tipo, ranura.calidad);
-    if (icono.textura) {
-        int margen = rectangulo.w / 8;
-        SDL_Rect dest_item{
-            rectangulo.x + margen,
-            rectangulo.y + margen,
-            rectangulo.w - (2 * margen),
-            rectangulo.h - (2 * margen)};
-        const SDL_Rect* origen_ptr =
-            (icono.origen.w > 0 && icono.origen.h > 0) ? &icono.origen : nullptr;
-        SDL_RenderCopy(renderer, icono.textura, origen_ptr, &dest_item);
     }
 
+    const int margen = rectangulo.w / 8;
+    const SDL_Rect icono{
+        rectangulo.x + margen,
+        rectangulo.y + margen,
+        rectangulo.w - (2 * margen),
+        rectangulo.h - (2 * margen)};
+    iconos.dibujar(renderer, ranura.tipo, ranura.calidad, icono);
     dibujar_cantidad(renderer, rectangulo, ranura.cantidad);
 }
 
@@ -320,21 +310,22 @@ void HudInventario::dibujar_tacho(SDL_Renderer* renderer, const SDL_Rect& rectan
     SDL_SetRenderDrawColor(renderer, 92, 53, 29, 255);
     SDL_RenderDrawRect(renderer, &rectangulo);
 
-    if (textura_tacho) {
-        int margen = rectangulo.w / 6;
-        SDL_Rect dest_tacho{
+    if (tacho.has_value()) {
+        const int margen = rectangulo.w / 6;
+        const SDL_Rect imagen{
             rectangulo.x + margen,
             rectangulo.y + margen,
             rectangulo.w - (2 * margen),
             rectangulo.h - (2 * margen)};
-        SDL_RenderCopy(renderer, textura_tacho, nullptr, &dest_tacho);
+        SDL_RenderCopy(renderer, tacho->ptr(), nullptr, &imagen);
     }
 }
 
 void HudInventario::dibujar_cantidad(
     SDL_Renderer* renderer, const SDL_Rect& rectangulo, uint16_t cantidad) const {
-    if (cantidad <= 1)
+    if (cantidad <= 1) {
         return;
+    }
     std::array<uint8_t, 5> digitos{};
     int cantidad_de_digitos = 0;
     uint16_t resto = cantidad;
@@ -353,7 +344,11 @@ void HudInventario::dibujar_cantidad(
     int x = rectangulo.x + rectangulo.w - ancho_total - pixel;
     const int y = rectangulo.y + rectangulo.h - alto_digito - pixel;
 
-    SDL_Rect fondo{x - pixel, y - pixel, ancho_total + (2 * pixel), alto_digito + (2 * pixel)};
+    const SDL_Rect fondo{
+        x - pixel,
+        y - pixel,
+        ancho_total + (2 * pixel),
+        alto_digito + (2 * pixel)};
     SDL_SetRenderDrawColor(renderer, 20, 20, 20, 255);
     SDL_RenderFillRect(renderer, &fondo);
 
@@ -361,11 +356,10 @@ void HudInventario::dibujar_cantidad(
     for (int i = cantidad_de_digitos - 1; i >= 0; --i) {
         const std::array<uint8_t, 5>& filas = DIGITOS[digitos[i]];
         for (int fila = 0; fila < 5; ++fila) {
-            uint8_t mascara = filas[fila];
-            for (int col = 0; col < 3; ++col) {
-                if ((mascara & (1 << (2 - col))) != 0) {
-                    SDL_Rect pixel_rect{x + (col * pixel), y + (fila * pixel), pixel, pixel};
-                    SDL_RenderFillRect(renderer, &pixel_rect);
+            for (int columna = 0; columna < 3; ++columna) {
+                if ((filas[fila] & (1 << (2 - columna))) != 0) {
+                    const SDL_Rect punto{x + (columna * pixel), y + (fila * pixel), pixel, pixel};
+                    SDL_RenderFillRect(renderer, &punto);
                 }
             }
         }
@@ -373,87 +367,156 @@ void HudInventario::dibujar_cantidad(
     }
 }
 
-void HudInventario::dibujar_item_levantado(
-    SDL_Renderer* renderer, const InventarioJugador& inventario, const CofreJugador& cofre,
-    int raton_x, int raton_y) const {
-    if (!hay_item_levantado())
-        return;
-    const RanuraInventario* contenido =
-        ranura_de(inventario, cofre, RanuraApuntada{zona_levantada, indice_levantado});
-    if (!contenido || contenido->tipo == TipoItem::NINGUNO)
-        return;
-
-    const int tamano = tamano_de_ranura(inventario);
-    const int lado = std::max(8, tamano * 3 / 5);
-    SDL_Rect rectangulo{raton_x - lado / 2, raton_y - lado / 2, lado, lado};
-
-    Icono icono = iconos.obtener_icono(contenido->tipo, contenido->calidad);
-    if (icono.textura) {
-        const SDL_Rect* origen_ptr =
-            (icono.origen.w > 0 && icono.origen.h > 0) ? &icono.origen : nullptr;
-        SDL_RenderCopy(renderer, icono.textura, origen_ptr, &rectangulo);
-    }
-    dibujar_cantidad(renderer, rectangulo, cantidad_levantada);
-}
-
 void HudInventario::dibujar_panel_del_cofre(
-    SDL_Renderer* renderer, const InventarioJugador& inventario, const CofreJugador& cofre) const {
-    if (!cofre.abierto || cofre.ranuras.empty())
+    SDL_Renderer* renderer, const Disposicion& disposicion, const CofreJugador& cofre) const {
+    if (disposicion.cantidad_del_cofre == 0) {
         return;
-    const int tamano = tamano_de_ranura(inventario);
-    const int filas = filas_del_cofre(cofre);
-    const int alto = (filas * tamano) + ((filas - 1) * SEPARACION_RANURAS);
-    const int x = x_inicial_del_cofre(inventario, cofre);
-    const int y = y_del_cofre(inventario, cofre);
+    }
 
-    SDL_Rect fondo{
-        x - SEPARACION_RANURAS,
-        y - SEPARACION_RANURAS,
-        ancho_del_cofre(inventario, cofre) + (2 * SEPARACION_RANURAS),
-        alto + (2 * SEPARACION_RANURAS)};
     SDL_SetRenderDrawColor(renderer, 222, 184, 135, 230);
-    SDL_RenderFillRect(renderer, &fondo);
+    SDL_RenderFillRect(renderer, &disposicion.fondo_del_cofre);
     SDL_SetRenderDrawColor(renderer, 92, 53, 29, 255);
-    SDL_RenderDrawRect(renderer, &fondo);
+    SDL_RenderDrawRect(renderer, &disposicion.fondo_del_cofre);
 
-    for (int i = 0; i < static_cast<int>(cofre.ranuras.size()); ++i) {
-        const RanuraInventario& ranura = cofre.ranuras[i];
+    for (int i = 0; i < disposicion.cantidad_del_cofre; ++i) {
         dibujar_ranura(
             renderer,
-            rectangulo_de_ranura_del_cofre(inventario, cofre, i),
-            ranura,
+            disposicion.ranura_del_cofre(i),
+            mostrada(RanuraApuntada{ZonaDelHud::COFRE, i}, cofre.ranuras[i]),
             false);
     }
 }
 
+void HudInventario::dibujar_item_levantado(
+    SDL_Renderer* renderer, const Disposicion& disposicion, const InventarioJugador& inventario,
+    const CofreJugador& cofre, int raton_x, int raton_y) const {
+    if (!hay_item_levantado()) {
+        return;
+    }
+    const RanuraInventario* contenido = ranura_de(inventario, cofre, levantada);
+    if (!tiene_algo(contenido)) {
+        return;
+    }
+
+    const int lado = std::max(8, disposicion.tamano * 3 / 5);
+    const SDL_Rect rectangulo{raton_x - lado / 2, raton_y - lado / 2, lado, lado};
+    iconos.dibujar(renderer, contenido->tipo, contenido->calidad, rectangulo);
+    dibujar_cantidad(renderer, rectangulo, cantidad_levantada);
+}
+
 void HudInventario::dibujar(
     SDL_Renderer* renderer, const InventarioJugador& inventario, const CofreJugador& cofre,
     int raton_x, int raton_y) const {
-    if (inventario.ranuras.empty())
+    if (inventario.ranuras.empty()) {
         return;
-    dibujar_panel_del_cofre(renderer, inventario, cofre);
+    }
+    const Disposicion disposicion = disponer(inventario, cofre);
 
-    for (int i = 0; i < static_cast<int>(inventario.ranuras.size()); ++i) {
-        const RanuraInventario& ranura = inventario.ranuras[i];
+    dibujar_panel_del_cofre(renderer, disposicion, cofre);
+
+    for (int i = 0; i < disposicion.cantidad_de_ranuras; ++i) {
         dibujar_ranura(
             renderer,
-            rectangulo_de_ranura(inventario, i),
-            ranura,
+            disposicion.ranura_de_la_barra(i),
+            mostrada(RanuraApuntada{ZonaDelHud::BARRA, i}, inventario.ranuras[i]),
             i == static_cast<int>(inventario.ranura_activa));
     }
-
-    dibujar_tacho(renderer, rectangulo_del_tacho(inventario));
-    dibujar_item_levantado(renderer, inventario, cofre, raton_x, raton_y);
+    dibujar_tacho(renderer, disposicion.tacho);
+    dibujar_item_levantado(renderer, disposicion, inventario, cofre, raton_x, raton_y);
 }
 
-void HudInventario::dibujar(
-    SDL_Renderer* renderer, const InventarioJugador& inventario, int raton_x, int raton_y) const {
-    dibujar(renderer, inventario, CofreJugador{}, raton_x, raton_y);
+// Las dos imágenes (vida.png y energia.png) se recortaron al mismo tamaño nativo (36x165) a
+// propósito, así las dos barras salen exactamente del mismo grosor y alto en pantalla sin tener
+// que forzar nada en el escalado: el mismo ancho() que usa dibujar_gauge() les da el mismo
+// resultado a las dos.
+namespace {
+constexpr int ANCHO_NATIVO_GAUGE = 36;
+constexpr int ALTO_NATIVO_GAUGE = 165;
+constexpr int SEPARACION_ENTRE_GAUGES = 4;
+// vida.png y energia.png son pixel a pixel la misma plantilla (solo cambia la letra), así que
+// comparten exactamente la misma ventana interior.
+constexpr SDL_Rect VENTANA_NATIVA_GAUGE{8, 38, 20, 121};
+}  // namespace
+
+void HudInventario::dibujar_vida(SDL_Renderer* renderer, uint8_t vida, uint8_t vida_maxima) const {
+    if (vida_maxima == 0 || !marco_de_vida.has_value() || !marco_de_energia.has_value()) {
+        return;
+    }
+    // La vida va a la izquierda de la energía. Se calcula a partir del ancho de la energía (y no
+    // al revés) porque la energía es la que está siempre en un lugar fijo: la vida solo aparece
+    // en la mazmorra, así que no puede ser la referencia de posición de la otra.
+    const int alto = std::clamp(alto_ventana / 4, 90, 170);
+    const int ancho_energia = alto * ANCHO_NATIVO_GAUGE / ALTO_NATIVO_GAUGE;
+    const int borde_derecho = ancho_ventana - MARGEN - ancho_energia - SEPARACION_ENTRE_GAUGES;
+
+    const double fraccion = std::clamp(static_cast<double>(vida) / vida_maxima, 0.0, 1.0);
+    dibujar_gauge(
+        renderer,
+        *marco_de_vida,
+        ANCHO_NATIVO_GAUGE,
+        ALTO_NATIVO_GAUGE,
+        VENTANA_NATIVA_GAUGE,
+        fraccion,
+        borde_derecho);
 }
 
-HudInventario::~HudInventario() {
-    if (textura_hud)
-        SDL_DestroyTexture(textura_hud);
-    if (textura_tacho)
-        SDL_DestroyTexture(textura_tacho);
+void HudInventario::dibujar_energia(
+    SDL_Renderer* renderer, uint8_t energia, uint8_t energia_maxima) const {
+    if (energia_maxima == 0 || !marco_de_energia.has_value()) {
+        return;
+    }
+    const double fraccion = std::clamp(static_cast<double>(energia) / energia_maxima, 0.0, 1.0);
+    dibujar_gauge(
+        renderer,
+        *marco_de_energia,
+        ANCHO_NATIVO_GAUGE,
+        ALTO_NATIVO_GAUGE,
+        VENTANA_NATIVA_GAUGE,
+        fraccion,
+        ancho_ventana - MARGEN);
+}
+
+int HudInventario::dibujar_gauge(
+    SDL_Renderer* renderer, const Textura& marco, int ancho_nativo, int alto_nativo,
+    const SDL_Rect& ventana_nativa, double fraccion, int borde_derecho_en_pantalla) const {
+    fraccion = std::clamp(fraccion, 0.0, 1.0);
+    constexpr int SANGRADO = 2;
+    const int alto_relleno = static_cast<int>(ventana_nativa.h * fraccion);
+    const SDL_Rect relleno{
+        ventana_nativa.x - SANGRADO,
+        ventana_nativa.y + ventana_nativa.h - alto_relleno,
+        ventana_nativa.w + 2 * SANGRADO,
+        alto_relleno + SANGRADO};
+    const SDL_Color color = color_de_vida(fraccion);
+    SDL_Texture* lienzo = SDL_CreateTexture(
+        renderer,
+        SDL_PIXELFORMAT_RGBA8888,
+        SDL_TEXTUREACCESS_TARGET,
+        ancho_nativo,
+        alto_nativo);
+    if (lienzo == nullptr) {
+        return borde_derecho_en_pantalla;
+    }
+    SDL_SetTextureBlendMode(lienzo, SDL_BLENDMODE_BLEND);
+
+    SDL_Texture* destino_anterior = SDL_GetRenderTarget(renderer);
+    SDL_SetRenderTarget(renderer, lienzo);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+    SDL_RenderFillRect(renderer, &relleno);
+    SDL_RenderCopy(renderer, marco.ptr(), nullptr, nullptr);
+    SDL_SetRenderTarget(renderer, destino_anterior);
+
+    const int alto = std::clamp(alto_ventana / 4, 90, 170);
+    const int ancho = alto * ancho_nativo / alto_nativo;
+    const SDL_Rect destino{
+        borde_derecho_en_pantalla - ancho,
+        alto_ventana - MARGEN - alto,
+        ancho,
+        alto};
+    SDL_RenderCopy(renderer, lienzo, nullptr, &destino);
+
+    SDL_DestroyTexture(lienzo);
+    return destino.x;
 }

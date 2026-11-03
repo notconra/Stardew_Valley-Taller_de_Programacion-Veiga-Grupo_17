@@ -40,6 +40,7 @@ private:
     void cargar_graficos(const toml::table& archivo_toml);
     void cargar_mapas(const toml::table& archivo_toml);
     void cargar_jugador(const toml::table& archivo_toml);
+    void cargar_tierra(const toml::table& archivo_toml);
 
     ColorDeFondo leer_color(const toml::table& graficos) const;
     std::vector<ConfiguracionTileset> leer_tilesets(

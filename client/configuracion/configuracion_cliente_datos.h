@@ -37,6 +37,9 @@ struct ConfiguracionGraficos {
     int tamano_de_tile = 0;
     int escala_de_tiles = 1;
     ColorDeFondo color_de_fondo;
+    int radio_vision_mazmorra = 0;
+    int tamano_pixel_vision_mazmorra = 8;
+    int ancho_difuminado_vision_mazmorra = 24;
 };
 
 struct ConfiguracionTileset {
@@ -51,6 +54,8 @@ struct ConfiguracionMapa {
     std::vector<std::string> capas_bajo_los_jugadores;
     std::vector<std::string> capas_sobre_los_jugadores;
     std::vector<ConfiguracionTileset> tilesets;
+
+    bool es_mazmorra = false;
 };
 struct ConfiguracionJugador {
     std::string ruta_sprite;
@@ -62,6 +67,12 @@ struct ConfiguracionJugador {
     int ms_por_cuadro_quieto = 0;
 };
 
+// Cómo se ve la tierra tratada. La textura es la de Stardew (hoeDirt.png); el resto del dibujado
+// sale de ConfiguracionGraficos, igual que los tiles del mapa.
+struct ConfiguracionTierra {
+    std::string ruta_sprite;
+};
+
 struct ConfiguracionVista {
     ConfiguracionVentana ventana;
     ConfiguracionSDL sdl;
@@ -69,6 +80,7 @@ struct ConfiguracionVista {
     std::vector<ConfiguracionMapa> mapas;
     std::string mapa_inicial;
     ConfiguracionJugador jugador;
+    ConfiguracionTierra tierra;
 };
 
 #endif
