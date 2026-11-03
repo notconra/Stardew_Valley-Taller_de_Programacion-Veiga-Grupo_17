@@ -6,9 +6,11 @@
 #include <chrono>
 #include <iostream>
 #include <map>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <utility>
 #include <variant>
 
 #include "../../common/modo_uso.h"
@@ -77,6 +79,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     ultimo_inventario = InventarioJugador{};
     ultimo_cofre = CofreJugador{};
     mapa_actual = configuracion.mapa_inicial;
+    tierra_tratada.clear();
     partida_terminada = false;
 
     std::cout << "\n=== EN PARTIDA " << partida.codigo_partida << " (jugador " << partida.id_jugador
@@ -103,6 +106,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
 
     IconosDeItems iconos(renderizador.ptr());
     Personaje personaje(configuracion.jugador, configuracion.graficos, renderizador.ptr());
+    TierraGrafica tierra(configuracion.tierra, configuracion.graficos, renderizador.ptr());
     ObjetosGraficos objetos(renderizador.ptr(), configuracion.graficos, iconos);
     HudInventario hud(renderizador.ptr(), iconos);
     hud.configurar(configuracion.ventana.ancho, configuracion.ventana.alto);
@@ -126,6 +130,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         if (propio != nullptr && propio->mapa != mapa_actual) {
             mapa_actual = propio->mapa;
             ultimo_cofre = CofreJugador{};
+            tierra_tratada.clear();
             camara = camara_para(mapa_de(mapa_actual));
         }
         if (propio != nullptr) {
@@ -140,7 +145,15 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         procesar_entrada(entrada, hud, camara);
         enviar_intencion_si_cambio(entrada.intencion());
 
-        dibujar(renderizador, mapa_de(mapa_actual), objetos, personaje, camara, hud, entrada);
+        dibujar(
+            renderizador,
+            mapa_de(mapa_actual),
+            objetos,
+            personaje,
+            tierra,
+            camara,
+            hud,
+            entrada);
     }
 }
 
@@ -175,6 +188,13 @@ std::optional<VistaPartida::Casilla> VistaPartida::casilla_apuntada(
     return Casilla{
         static_cast<uint32_t>(x_en_el_mapa / lado),
         static_cast<uint32_t>(y_en_el_mapa / lado)};
+}
+
+void VistaPartida::guardar_tierra(const EstadoJuego& estado) {
+    tierra_tratada.clear();
+    for (const CasillaTratada& casilla : estado.tierra) {
+        tierra_tratada.insert({static_cast<int>(casilla.columna), static_cast<int>(casilla.fila)});
+    }
 }
 
 void VistaPartida::procesar_entrada(
@@ -258,7 +278,10 @@ void VistaPartida::aplicar(const EventoServidor& evento) {
 
     std::visit(
         ManejadoresPorTipo{
-            [&](const EstadoJuego& e) { estado = e; },
+            [&](const EstadoJuego& e) {
+                estado = e;
+                guardar_tierra(e);
+            },
             [&](const JugadoresEnSector& e) {
                 estado.mapa = e.mapa;
                 estado.jugadores = e.jugadores;
@@ -288,6 +311,16 @@ void VistaPartida::aplicar(const EventoServidor& evento) {
             },
             [&](const ActualizacionInventario& e) { ultimo_inventario = e.inventario; },
             [&](const ActualizacionCofre& e) { ultimo_cofre = e.cofre; },
+            [&](const TierraCambiada& e) {
+                const std::pair<int, int> casilla{
+                    static_cast<int>(e.casilla.columna),
+                    static_cast<int>(e.casilla.fila)};
+                if (e.tratada) {
+                    tierra_tratada.insert(casilla);
+                } else {
+                    tierra_tratada.erase(casilla);
+                }
+            },
             [&](const MultijugadorActivado& e) {
                 std::cout << "[partida] multijugador activado, código para invitar: "
                           << e.codigo_partida << std::endl;
@@ -331,8 +364,8 @@ bool VistaPartida::salir_de_partida_y_confirmar() {
 
 void VistaPartida::dibujar(
     Renderizador& renderizador, const MapaGrafico& mapa, const ObjetosGraficos& objetos,
-    const Personaje& personaje, const Camara& camara, const HudInventario& hud,
-    const EntradaDelUsuario& entrada) const {
+    const Personaje& personaje, const TierraGrafica& tierra, const Camara& camara,
+    const HudInventario& hud, const EntradaDelUsuario& entrada) const {
     SDL_Renderer* renderer = renderizador.ptr();
 
     const ColorDeFondo& color = configuracion.graficos.color_de_fondo;
@@ -340,6 +373,7 @@ void VistaPartida::dibujar(
     SDL_RenderClear(renderer);
 
     mapa.dibujar_bajo_los_jugadores(renderer, camara.x(), camara.y());
+    tierra.dibujar(renderer, tierra_tratada, camara.x(), camara.y());
     objetos.dibujar_debajo_de_los_jugadores(
         renderer,
         ultimo_estado_juego,

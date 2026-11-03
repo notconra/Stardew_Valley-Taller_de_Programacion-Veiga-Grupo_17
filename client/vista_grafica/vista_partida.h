@@ -3,7 +3,9 @@
 
 #include <cstdint>
 #include <optional>
+#include <set>
 #include <string>
+#include <utility>
 
 #include "../../common/mensajes/mensajes.h"
 #include "../../common/modo_uso.h"
@@ -16,6 +18,7 @@
 #include "objetos_graficos.h"
 #include "personaje.h"
 #include "renderizador.h"
+#include "tierra_grafica.h"
 
 class VistaPartida {
 private:
@@ -33,14 +36,16 @@ private:
     InventarioJugador ultimo_inventario{};
     CofreJugador ultimo_cofre{};
     std::string mapa_actual;
+    std::set<std::pair<int, int>> tierra_tratada;
     bool partida_terminada = false;
-
     const EstadoJugador* jugador_propio() const;
     const ConfiguracionMapa& configuracion_de(const std::string& id_mapa) const;
     Camara camara_para(const MapaGrafico& mapa) const;
 
     std::optional<Casilla> casilla_apuntada(
         const EntradaDelUsuario& entrada, const Camara& camara) const;
+
+    void guardar_tierra(const EstadoJuego& estado);
 
     void enviar_intencion_si_cambio(const Moverse& intencion);
     void usar_item(uint8_t ranura, ModoUso modo, const std::optional<Casilla>& casilla);
@@ -58,8 +63,8 @@ private:
 
     void dibujar(
         Renderizador& renderizador, const MapaGrafico& mapa, const ObjetosGraficos& objetos,
-        const Personaje& personaje, const Camara& camara, const HudInventario& hud,
-        const EntradaDelUsuario& entrada) const;
+        const Personaje& personaje, const TierraGrafica& tierra, const Camara& camara,
+        const HudInventario& hud, const EntradaDelUsuario& entrada) const;
 
 public:
     VistaPartida(ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion);
