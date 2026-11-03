@@ -41,6 +41,8 @@ struct RanuraApuntada {
 class HudInventario {
 public:
     static constexpr const char* RUTA_ASSET_TACHO = "Assets/hud/tacho.png";
+    static constexpr const char* RUTA_ASSET_VIDA = "Assets/hud/vida.png";
+    static constexpr const char* RUTA_ASSET_ENERGIA = "Assets/hud/energia.png";
 
     HudInventario(SDL_Renderer* renderer, const IconosDeItems& iconos);
 
@@ -65,6 +67,13 @@ public:
     void dibujar(
         SDL_Renderer* renderer, const InventarioJugador& inventario, const CofreJugador& cofre,
         int raton_x, int raton_y) const;
+
+    // Gauges verticales de vida y energía, abajo a la derecha, del mismo tamaño en pantalla y uno
+    // al lado del otro: energía pegada al borde (siempre visible, se usa también fuera de la
+    // mazmorra) y vida inmediatamente a su izquierda (solo tiene sentido mostrarla adentro de la
+    // mazmorra, así que quien llama decide si corresponde).
+    void dibujar_vida(SDL_Renderer* renderer, uint8_t vida, uint8_t vida_maxima) const;
+    void dibujar_energia(SDL_Renderer* renderer, uint8_t energia, uint8_t energia_maxima) const;
 
 private:
     static constexpr int MARGEN = 8;
@@ -108,6 +117,8 @@ private:
 
     const IconosDeItems& iconos;
     std::optional<Textura> tacho;
+    std::optional<Textura> marco_de_vida;
+    std::optional<Textura> marco_de_energia;
 
     // Stack que el mouse tiene en la mano: de qué ranura salió y cuántos ítems agarró.
     RanuraApuntada levantada;
@@ -136,6 +147,11 @@ private:
     void dibujar_item_levantado(
         SDL_Renderer* renderer, const Disposicion& disposicion, const InventarioJugador& inventario,
         const CofreJugador& cofre, int raton_x, int raton_y) const;
+
+    // Dibuja un gauge vertical (vida o energía) ya compuesto a tamaño nativo
+    int dibujar_gauge(
+        SDL_Renderer* renderer, const Textura& marco, int ancho_nativo, int alto_nativo,
+        const SDL_Rect& ventana_nativa, double fraccion, int borde_derecho_en_pantalla) const;
 };
 
 #endif
