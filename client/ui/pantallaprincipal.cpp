@@ -392,8 +392,20 @@ void PantallaPrincipal::inicializar_selectores_personaje() {
 }
 
 ConfiguracionJugador PantallaPrincipal::obtener_configuracion_actual() const {
-    ConfiguracionJugador jugador;
+    ConfiguracionJugador jugador = configuracion_jugador;
     jugador.ruta_cuerpo = es_personaje_femenino ? RUTA_CUERPO_FEMENINO : RUTA_CUERPO_MASCULINO;
+    if (jugador.ruta_pantalon.empty()) {
+        jugador.ruta_pantalon = "Assets/Characters/Farmer/pants.png";
+    }
+    if (jugador.ruta_pelo.empty()) {
+        jugador.ruta_pelo = "Assets/Characters/Farmer/hairstyles.png";
+    }
+    if (jugador.ruta_sombrero.empty()) {
+        jugador.ruta_sombrero = "Assets/Characters/Farmer/hats.png";
+    }
+    if (jugador.ruta_remera.empty()) {
+        jugador.ruta_remera = "Assets/Characters/Farmer/shirts.png";
+    }
     jugador.offset_y_remera =
         es_personaje_femenino ? OFFSET_Y_REMERA_FEMENINO : OFFSET_Y_REMERA_MASCULINO;
     jugador.offset_y_pelo =
