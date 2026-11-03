@@ -107,7 +107,6 @@ TEST(MapaDeLaMazmorra, DesdeLaEntradaSeLlegaCaminandoALaSalida) {
         const int ancho = mapa.ancho_de_casilla_en_pixeles();
         const int alto = mapa.alto_de_casilla_en_pixeles();
 
-        // Igual que cuando el jugador baja a un nivel: los pies centrados en la entrada.
         const uint32_t id = 1;
         jugadores.agregar_en(
             id,
