@@ -49,7 +49,7 @@ void ControladorDeMazmorra::poblar_niveles() {
         objetos.retirar_objetos_naturales();
         objetos.poblar_en(
             mazmorra->nivel(numero_de_nivel).obtener_celdas_de_objetos(),
-            Minerales::pesos(numero_de_nivel, recursos.mazmorra.oro_desde_nivel));
+            Minerales::pesos(numero_de_nivel, recursos.mazmorra.minerales));
     }
 }
 

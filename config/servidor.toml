@@ -16,6 +16,7 @@ ticks_por_segundo = 40
 [[mapas]]
 id = "granja"
 ruta_tmx = "Assets/Maps/Farm.tmx"
+propiedad_cultivable = "Diggable"
 #capa_colisiones = "Colisiones"
 #capa_respaldo = "Buildings"
 
@@ -129,6 +130,11 @@ ruta_tmx = "Assets/Maps/Mines/24.tmx"
 #nombre = "Hierba"
 #propiedad = "ADMITE_HIERBA"
 
+[juego.transiciones]
+# Destinos que se usan con clic derecho. Todo lo demás (salir de la casa, entrar a la mina,
+# cambiar de mapa) se activa al pisarlo.
+destinos_con_clic = ["FarmHouse", "siguiente"]
+
 [juego.movimiento]
 # velocidad = 200.0
 # hitbox_x = 2
@@ -144,11 +150,51 @@ ruta_tmx = "Assets/Maps/Mines/24.tmx"
 [juego.inventario]
 # cantidad_ranuras_barra = 10
 
+[juego.acciones]
+# Las duraciones se miden en ticks (con ticks_por_segundo = 40, 8 ticks son 0,2 segundos).
+# alcance_en_casillas = 1
+duracion_picar_en_ticks = 16
+duracion_tratar_tierra_en_ticks = 16
+
+[juego.drops]
+# radio_de_recogida_en_casillas = 1
+# distancia_de_soltado_en_casillas = 2   # tiene que ser mayor que el radio
+
 # La mazmorra. Una transición con mapa_destino = destino (en Farm.tmx) entra al nivel 1.
 [mazmorra]
 destino = "mazmorra"
 mapas = ["mina_1", "mina_2", "mina_3", "mina_4", "mina_5", "mina_6", "mina_7", "mina_8", "mina_9", "mina_11", "mina_12", "mina_13", "mina_14", "mina_15", "mina_16", "mina_17", "mina_18", "mina_19", "mina_21", "mina_24"]
 enemigos_por_nivel = 4
 minerales_por_nivel = 30
-# Nivel a partir del cual puede aparecer el oro (el enunciado lo pide desde la quinta sala).
-oro_desde_nivel = 5
+
+# Minerales (opcional). Si hay al menos un [[mazmorra.minerales]], reemplazan a los por defecto:
+# los que no listemos acá no aparecen en los niveles. "peso" es la frecuencia relativa y
+# "desde_nivel" el primer nivel donde puede aparecer (el enunciado pide el oro desde el 5).
+# Claves válidas: PIEDRA, CARBON, LAPISLAZULI, PLATA, ORO.
+
+[[mazmorra.minerales]]
+clave = "PIEDRA"
+golpes_para_picar = 1
+peso = 50
+
+[[mazmorra.minerales]]
+clave = "CARBON"
+golpes_para_picar = 1
+peso = 50
+
+[[mazmorra.minerales]]
+clave = "PLATA"
+golpes_para_picar = 2
+peso = 50
+
+[[mazmorra.minerales]]
+clave = "LAPISLAZULI"
+golpes_para_picar = 3
+peso = 12
+probabilidad_de_no_dejar = 0.15
+
+[[mazmorra.minerales]]
+clave = "ORO"
+golpes_para_picar = 4
+peso = 2
+desde_nivel = 5

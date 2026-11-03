@@ -42,7 +42,8 @@ struct RecursosDeJuego {
 private:
     // Junta las definiciones de todos los módulos que aportan objetos del mundo. Para sumar
     // árboles o muebles alcanza con concatenar sus definiciones acá.
-    static CatalogoDeObjetos crear_catalogo_de_objetos();
+    static CatalogoDeObjetos crear_catalogo_de_objetos(
+        const std::vector<ConfiguracionMineralServidor>& minerales);
 
     // Verifica que el producto, la herramienta y el ítem colocable de cada objeto del mundo sean
     // ítems registrados en catalogo_de_items (y el colocable, de categoría COLOCABLE), para que un

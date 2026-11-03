@@ -1,78 +1,114 @@
 #include "minerales.h"
 
+#include <set>
+#include <stdexcept>
+#include <string>
 #include <vector>
 
-std::vector<DefinicionDeObjeto> Minerales::definiciones() {
+namespace {
+
+// Lo que no se configura de cada mineral, cómo se ve en el mapa y qué ítem deja. Siempre se pican
+// con el pico.
+struct MineralFijo {
+    TipoObjeto tipo;
+    const char* clave;
+    TipoItem producto;
+};
+
+const std::vector<MineralFijo>& minerales_fijos() {
+    static const std::vector<MineralFijo> lista{
+        {TipoObjeto::PIEDRA, "PIEDRA", TipoItem::PIEDRA},
+        {TipoObjeto::CARBON, "CARBON", TipoItem::CARBON},
+        {TipoObjeto::LAPISLAZULI, "LAPISLAZULI", TipoItem::LAPISLAZULI},
+        {TipoObjeto::PLATA, "PLATA", TipoItem::PLATA},
+        {TipoObjeto::ORO, "ORO", TipoItem::ORO},
+    };
+    return lista;
+}
+
+const MineralFijo& fijo_de(const std::string& clave) {
+    for (const MineralFijo& fijo : minerales_fijos()) {
+        if (clave == fijo.clave) {
+            return fijo;
+        }
+    }
+    throw std::runtime_error(
+        "configuración: mineral desconocido '" + clave + "' en [[mazmorra.minerales]]");
+}
+
+void validar(const std::vector<ConfiguracionMineralServidor>& configurados) {
+    std::set<std::string> vistas;
+    for (const ConfiguracionMineralServidor& mineral : configurados) {
+        fijo_de(mineral.clave);
+        if (!vistas.insert(mineral.clave).second) {
+            throw std::runtime_error(
+                "configuración: el mineral '" + mineral.clave +
+                "' está repetido en [[mazmorra.minerales]]");
+        }
+    }
+}
+
+}  // namespace
+
+std::vector<ConfiguracionMineralServidor> Minerales::por_defecto() {
+    // Las frecuencias salen del enunciado, el carbón es muy común, el lapislázuli medianamente
+    // común, la plata poco común y el oro extremadamente raro (desde la quinta sala). La piedra
+    // es el relleno de la caverna.
     return {
-        // Piedra: relleno común de la caverna, se rompe de un golpe y deja piedra.
-        DefinicionDeObjeto{
-            .tipo = TipoObjeto::PIEDRA,
-            .clave = "PIEDRA",
-            .golpes_para_picar = 1,
-            .herramienta = TipoItem::PICO,
-            .probabilidad_de_no_dejar = 0.0,
-            .producto = TipoItem::PIEDRA,
-            .cantidad = 1,
-        },
-
-        // Carbón: poco tiempo, 1 golpe.
-        DefinicionDeObjeto{
-            .tipo = TipoObjeto::CARBON,
-            .clave = "CARBON",
-            .golpes_para_picar = 1,
-            .herramienta = TipoItem::PICO,
-            .probabilidad_de_no_dejar = 0.0,
-            .producto = TipoItem::CARBON,
-            .cantidad = 1,
-        },
-
-        // Lapislázuli: tiempo medio, 2 golpes, y 15% de romperse sin dejar producto.
-        DefinicionDeObjeto{
-            .tipo = TipoObjeto::LAPISLAZULI,
-            .clave = "LAPISLAZULI",
-            .golpes_para_picar = 2,
-            .herramienta = TipoItem::PICO,
-            .probabilidad_de_no_dejar = 0.15,
-            .producto = TipoItem::LAPISLAZULI,
-            .cantidad = 1,
-        },
-
-        // Plata: tiempo alto, 3 golpes. La manada de orcos (10%) no se resuelve acá: es un
-        // efecto posterior a obtenerla y le toca al sistema de acciones.
-        DefinicionDeObjeto{
-            .tipo = TipoObjeto::PLATA,
-            .clave = "PLATA",
-            .golpes_para_picar = 3,
-            .herramienta = TipoItem::PICO,
-            .probabilidad_de_no_dejar = 0.0,
-            .producto = TipoItem::PLATA,
-            .cantidad = 1,
-        },
-
-        // Oro: tiempo muy alto, 4 golpes. "tipo" elige cómo se ve en el mapa y "producto" qué
-        // ítem deja.
-        DefinicionDeObjeto{
-            .tipo = TipoObjeto::ORO,
-            .clave = "ORO",
-            .golpes_para_picar = 4,
-            .herramienta = TipoItem::PICO,
-            .probabilidad_de_no_dejar = 0.0,
-            .producto = TipoItem::ORO,
-            .cantidad = 1,
-        },
+        {.clave = "PIEDRA", .golpes_para_picar = 1, .peso = 50.0},
+        {.clave = "CARBON", .golpes_para_picar = 1, .peso = 25.0},
+        {.clave = "LAPISLAZULI",
+         .golpes_para_picar = 2,
+         .peso = 12.0,
+         .probabilidad_de_no_dejar = 0.15},
+        {.clave = "PLATA", .golpes_para_picar = 3, .peso = 7.0},
+        {.clave = "ORO", .golpes_para_picar = 4, .peso = 2.0, .desde_nivel = 5},
     };
 }
 
-std::vector<PesoDeObjeto> Minerales::pesos(int numero_de_nivel, int oro_desde_nivel) {
-    // Las frecuencias salen del enunciado: el carbón es muy común, el lapislázuli medianamente
-    // común, la plata poco común y el oro extremadamente raro. La piedra es el relleno de la
-    // caverna.
-    const bool aparece_oro = numero_de_nivel >= oro_desde_nivel;
-    return {
-        PesoDeObjeto{TipoObjeto::PIEDRA, 50.0},
-        PesoDeObjeto{TipoObjeto::CARBON, 25.0},
-        PesoDeObjeto{TipoObjeto::LAPISLAZULI, 12.0},
-        PesoDeObjeto{TipoObjeto::PLATA, 7.0},
-        PesoDeObjeto{TipoObjeto::ORO, aparece_oro ? 2.0 : 0.0},
-    };
+std::vector<DefinicionDeObjeto> Minerales::definiciones(
+    const std::vector<ConfiguracionMineralServidor>& configurados) {
+    validar(configurados);
+
+    std::vector<ConfiguracionMineralServidor> todos = por_defecto();
+    for (const ConfiguracionMineralServidor& configurado : configurados) {
+        for (ConfiguracionMineralServidor& base : todos) {
+            if (base.clave == configurado.clave) {
+                base = configurado;
+            }
+        }
+    }
+
+    std::vector<DefinicionDeObjeto> resultado;
+    resultado.reserve(todos.size());
+    for (const ConfiguracionMineralServidor& mineral : todos) {
+        const MineralFijo& fijo = fijo_de(mineral.clave);
+        DefinicionDeObjeto definicion{};
+        definicion.tipo = fijo.tipo;
+        definicion.clave = fijo.clave;
+        definicion.golpes_para_picar = mineral.golpes_para_picar;
+        definicion.herramienta = TipoItem::PICO;
+        definicion.probabilidad_de_no_dejar = mineral.probabilidad_de_no_dejar;
+        definicion.producto = fijo.producto;
+        definicion.cantidad = mineral.cantidad;
+        resultado.push_back(definicion);
+    }
+    return resultado;
+}
+
+std::vector<PesoDeObjeto> Minerales::pesos(
+    int numero_de_nivel, const std::vector<ConfiguracionMineralServidor>& configurados) {
+    validar(configurados);
+
+    const std::vector<ConfiguracionMineralServidor> efectivos =
+        configurados.empty() ? por_defecto() : configurados;
+
+    std::vector<PesoDeObjeto> resultado;
+    resultado.reserve(efectivos.size());
+    for (const ConfiguracionMineralServidor& mineral : efectivos) {
+        const bool disponible = numero_de_nivel >= mineral.desde_nivel;
+        resultado.push_back(
+            PesoDeObjeto{fijo_de(mineral.clave).tipo, disponible ? mineral.peso : 0.0});
+    }
+    return resultado;
 }
