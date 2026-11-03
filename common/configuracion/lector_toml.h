@@ -29,6 +29,10 @@ int leer_entero_opcional(const toml::table& tabla, const std::string& clave, int
 
 bool leer_booleano(const toml::table& tabla, const std::string& clave, const std::string& seccion);
 
+// Si la clave no está, devuelve el valor por defecto; si está, exige que sea un booleano.
+bool leer_booleano_opcional(
+    const toml::table& tabla, const std::string& clave, bool valor_por_defecto);
+
 // Exige que la clave exista y no esté vacía.
 std::string leer_texto(
     const toml::table& tabla, const std::string& clave, const std::string& seccion);

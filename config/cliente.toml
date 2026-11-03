@@ -24,6 +24,9 @@ vsync = true
 tamano_de_tile = 16
 escala_de_tiles = 2
 color_de_fondo = [0, 0, 0, 255]
+radio_vision_mazmorra = 220
+tamano_pixel_vision_mazmorra = 15
+ancho_difuminado_vision_mazmorra = 50
 
 [[mapas]]
 id = "granja"
@@ -149,6 +152,7 @@ id = "mina_1"
 ruta = "Assets/Maps/Mines/1.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
+es_mazmorra = true
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -160,6 +164,7 @@ id = "mina_2"
 ruta = "Assets/Maps/Mines/2.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
+es_mazmorra = true
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -171,6 +176,7 @@ id = "mina_3"
 ruta = "Assets/Maps/Mines/3.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
+es_mazmorra = true
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -182,6 +188,7 @@ id = "mina_4"
 ruta = "Assets/Maps/Mines/4.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
+es_mazmorra = true
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -193,6 +200,7 @@ id = "mina_5"
 ruta = "Assets/Maps/Mines/5.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
+es_mazmorra = true
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -204,6 +212,7 @@ id = "mina_6"
 ruta = "Assets/Maps/Mines/6.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
+es_mazmorra = true
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -215,6 +224,7 @@ id = "mina_7"
 ruta = "Assets/Maps/Mines/7.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
+es_mazmorra = true
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -226,6 +236,7 @@ id = "mina_8"
 ruta = "Assets/Maps/Mines/8.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
+es_mazmorra = true
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -237,6 +248,7 @@ id = "mina_9"
 ruta = "Assets/Maps/Mines/9.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
+es_mazmorra = true
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -248,6 +260,7 @@ id = "mina_11"
 ruta = "Assets/Maps/Mines/11.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
+es_mazmorra = true
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -259,6 +272,7 @@ id = "mina_12"
 ruta = "Assets/Maps/Mines/12.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
+es_mazmorra = true
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -270,6 +284,7 @@ id = "mina_13"
 ruta = "Assets/Maps/Mines/13.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
+es_mazmorra = true
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -281,6 +296,7 @@ id = "mina_14"
 ruta = "Assets/Maps/Mines/14.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
+es_mazmorra = true
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -292,6 +308,7 @@ id = "mina_15"
 ruta = "Assets/Maps/Mines/15.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
+es_mazmorra = true
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -303,6 +320,7 @@ id = "mina_16"
 ruta = "Assets/Maps/Mines/16.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
+es_mazmorra = true
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -314,6 +332,7 @@ id = "mina_17"
 ruta = "Assets/Maps/Mines/17.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
+es_mazmorra = true
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -325,6 +344,7 @@ id = "mina_18"
 ruta = "Assets/Maps/Mines/18.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
+es_mazmorra = true
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -336,6 +356,7 @@ id = "mina_19"
 ruta = "Assets/Maps/Mines/19.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
+es_mazmorra = true
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -347,6 +368,7 @@ id = "mina_21"
 ruta = "Assets/Maps/Mines/21.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
+es_mazmorra = true
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -358,6 +380,7 @@ id = "mina_24"
 ruta = "Assets/Maps/Mines/24.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
+es_mazmorra = true
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
