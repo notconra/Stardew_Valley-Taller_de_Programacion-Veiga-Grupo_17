@@ -30,6 +30,32 @@ void Sector::avisar(Notificador& notificador, const EventoServidor& evento) cons
     }
 }
 
+bool Sector::tratar_tierra(Notificador& notificador, const Casilla& casilla) {
+    if (!tierra.tratar(casilla)) {
+        return false;
+    }
+
+    TierraCambiada evento;
+    evento.casilla =
+        CasillaTratada{static_cast<uint32_t>(casilla.columna), static_cast<uint32_t>(casilla.fila)};
+    evento.tratada = true;
+    avisar(notificador, evento);
+    return true;
+}
+
+bool Sector::volver_tierra_a_comun(Notificador& notificador, const Casilla& casilla) {
+    if (!tierra.volver_a_comun(casilla)) {
+        return false;
+    }
+
+    TierraCambiada evento;
+    evento.casilla =
+        CasillaTratada{static_cast<uint32_t>(casilla.columna), static_cast<uint32_t>(casilla.fila)};
+    evento.tratada = false;
+    avisar(notificador, evento);
+    return true;
+}
+
 int Sector::colocar_objeto(Notificador& notificador, TipoObjeto tipo, int columna, int fila) {
     const int id = objetos.colocar(tipo, columna, fila);
     if (id == 0) {

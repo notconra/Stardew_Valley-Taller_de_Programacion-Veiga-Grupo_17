@@ -16,6 +16,7 @@
 #include "../notificador.h"
 #include "../objetos_del_mundo/objetos_del_mundo.h"
 #include "../recursos/recursos_de_juego.h"
+#include "../tierra/tierra_tratada.h"
 
 // Un mapa de la partida con todo lo que vive en él. El terreno (Mapa) es de solo lectura y se
 // comparte entre todas las partidas: vive en RecursosDeJuego y acá solo se lo referencia. Los
@@ -28,6 +29,7 @@ class Sector {
 public:
     std::string id;
     const Mapa& mapa;
+    TierraTratada tierra;
     Colisiones colisiones;
     GestorDeObjetos objetos;
     GestorDeCofres cofres;
@@ -38,6 +40,7 @@ public:
     Sector(const std::string& id_mapa, const RecursosDeJuego& recursos, uint8_t ticks_por_segundo)
         : id(id_mapa),
           mapa(recursos.mapas.at(id_mapa)),
+          tierra(mapa),
           colisiones(mapa),
           objetos(id, mapa, recursos.catalogo_de_objetos, colisiones),
           cofres(recursos.catalogo_de_items),
@@ -59,6 +62,13 @@ public:
 
     // Manda el evento a todos los jugadores que están en este sector.
     void avisar(Notificador& notificador, const EventoServidor& evento) const;
+
+    // Trata la casilla con la pala y avisa a los jugadores del sector. Devuelve true si cambió.
+    bool tratar_tierra(Notificador& notificador, const Casilla& casilla);
+
+    // Vuelve la casilla a tierra común con el pico y avisa a los jugadores del sector. Devuelve
+    // true si estaba tratada.
+    bool volver_tierra_a_comun(Notificador& notificador, const Casilla& casilla);
 
     // Coloca un objeto y avisa a los jugadores del sector. Devuelve el id del objeto, o 0 si la
     // casilla ya tiene un objeto o está bloqueada.
