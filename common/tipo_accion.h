@@ -10,6 +10,7 @@ enum class TipoAccion : uint8_t {
     PICAR,
     COLOCAR,
     INTERACTUAR,  // interacción con la mano vacía, para los cofresm puertas, npcs, cultivos, etc.
+    ATACAR,       // golpear con la espada
 };
 
 #endif
