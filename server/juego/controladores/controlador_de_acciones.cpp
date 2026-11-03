@@ -7,6 +7,7 @@
 #include <optional>
 #include <variant>
 
+#include "../acciones/accion_atacar.h"
 #include "../acciones/accion_colocar.h"
 #include "../acciones/accion_interactuar_cofre.h"
 #include "../acciones/accion_picar.h"
@@ -18,6 +19,7 @@ ControladorDeAcciones::ControladorDeAcciones(
     acciones.push_back(std::make_unique<AccionPicar>());
     acciones.push_back(std::make_unique<AccionInteractuarCofre>());
     acciones.push_back(std::make_unique<AccionColocar>());
+    acciones.push_back(std::make_unique<AccionAtacar>());
 }
 
 bool ControladorDeAcciones::al_alcance(
