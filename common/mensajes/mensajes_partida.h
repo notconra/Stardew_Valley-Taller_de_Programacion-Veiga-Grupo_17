@@ -210,6 +210,7 @@ struct DropRetirado {
 // lo agrega; si ya existía, lo reemplaza entero.
 struct EnemigoActualizado {
     EstadoEnemigo enemigo;
+};
 // Cambió el estado de una casilla de tierra del sector del receptor. "tratada" indica si quedó
 // tratada con la pala (true) o si volvió a tierra común con el pico (false).
 struct TierraCambiada {

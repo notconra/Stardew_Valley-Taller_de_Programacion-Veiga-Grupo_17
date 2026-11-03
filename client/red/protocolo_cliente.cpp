@@ -291,6 +291,7 @@ EstadoEnemigo ProtocoloCliente::recibir_estado_enemigo() {
     estado.atacando = recibir_booleano();
     estado.muriendo = recibir_booleano();
     return estado;
+}
 CasillaTratada ProtocoloCliente::recibir_casilla_tratada() {
     CasillaTratada casilla;
     casilla.columna = recibir_u32();
@@ -324,6 +325,8 @@ EstadoJuego ProtocoloCliente::recibir_estado_juego() {
     estado_juego.enemigos.reserve(cantidad_de_enemigos);
     for (uint16_t i = 0; i < cantidad_de_enemigos; ++i) {
         estado_juego.enemigos.push_back(recibir_estado_enemigo());
+    }
+
     uint16_t cantidad_de_tierra = recibir_u16();
     estado_juego.tierra.reserve(cantidad_de_tierra);
     for (uint16_t i = 0; i < cantidad_de_tierra; ++i) {
@@ -376,6 +379,8 @@ EnemigoActualizado ProtocoloCliente::recibir_enemigo_actualizado() {
     EnemigoActualizado actualizado;
     actualizado.enemigo = recibir_estado_enemigo();
     return actualizado;
+}
+
 TierraCambiada ProtocoloCliente::recibir_tierra_cambiada() {
     TierraCambiada tierra;
     tierra.casilla = recibir_casilla_tratada();
