@@ -13,6 +13,7 @@
 #include "../configuracion/configuracion_cliente_datos.h"
 #include "../red/conexion_con_servidor.h"
 #include "camara.h"
+#include "efectos_de_sonido.h"
 #include "enemigos_graficos.h"
 #include "entrada_del_usuario.h"
 #include "hud_inventario.h"
@@ -21,8 +22,8 @@
 #include "objetos_graficos.h"
 #include "personaje.h"
 #include "renderizador.h"
-#include "vision_mazmorra.h"
 #include "tierra_grafica.h"
+#include "vision_mazmorra.h"
 
 class VistaPartida {
 private:
@@ -54,6 +55,11 @@ private:
         const EntradaDelUsuario& entrada, const Camara& camara) const;
 
     void guardar_tierra(const EstadoJuego& estado);
+
+    bool haciendo_accion = false;
+    uint32_t inicio_accion_ms = 0;
+    uint32_t ultimo_paso_ms = 0;
+    EfectosDeSonido* efectos_actuales = nullptr;
 
     void enviar_intencion_si_cambio(const Moverse& intencion);
     void usar_item(uint8_t ranura, ModoUso modo, const std::optional<Casilla>& casilla);

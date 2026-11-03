@@ -391,10 +391,31 @@ columnas = 16
 ruta_sprite = "Assets/TerrainFeatures/hoeDirt.png"
 
 [jugador]
-ruta_sprite = "Assets/Characters/Alex_Beach.png"
-ancho_sprite = 16
-alto_sprite = 32
-cuadros_caminando = 4
+ruta_cuerpo = "Assets/Characters/Farmer/farmer_girl_base.png"  # aca puede ir para que sea de hombre "Assets/Characters/Farmer/farme_base.png"
+ruta_pantalon = "Assets/Characters/Farmer/pants.png"
+ruta_pelo = "Assets/Characters/Farmer/hairstyles.png"  # tamb existe hairstyles2.png
+ruta_sombrero = "Assets/Characters/Farmer/hats.png"
+ruta_remera = "Assets/Characters/Farmer/shirts.png"
+
+indice_pelo = 11
+indice_sombrero = -1
+indice_remera = 5
+indice_pantalon = 0
+
 ms_por_cuadro_caminando = 150
-cuadros_quieto = 2
-ms_por_cuadro_quieto = 450
+offset_y_remera = 16
+
+[jugador.color_pelo]
+r = 0
+g = 167
+b = 158
+
+[jugador.color_pantalon]
+r = 221
+g = 113
+b = 113
+
+[sonido]
+ruta_ambiente = "Assets/sfx/ambiente.wav"
+ruta_caminar = "Assets/sfx/caminar.wav"
+ruta_accion = "Assets/sfx/pico_aire.wav"

@@ -23,6 +23,7 @@ public:
     const ConfiguracionConexion& servidor() const;
     const ConfiguracionVista& vista() const;
     uint32_t id_cliente() const;
+    ConfiguracionJugador& jugador();
 
 private:
     ConfiguracionConexion configuracion_servidor;
@@ -40,9 +41,11 @@ private:
     void cargar_graficos(const toml::table& archivo_toml);
     void cargar_mapas(const toml::table& archivo_toml);
     void cargar_jugador(const toml::table& archivo_toml);
+    void cargar_sonido(const toml::table& archivo_toml);
     void cargar_tierra(const toml::table& archivo_toml);
 
     ColorDeFondo leer_color(const toml::table& graficos) const;
+    ColorRGB leer_color_rgb(const toml::table& color, const std::string& seccion) const;
     std::vector<ConfiguracionTileset> leer_tilesets(
         const toml::table& mapa, const std::string& seccion) const;
 };

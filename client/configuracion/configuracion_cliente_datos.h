@@ -57,14 +57,41 @@ struct ConfiguracionMapa {
 
     bool es_mazmorra = false;
 };
+struct ColorRGB {
+    std::uint8_t rojo = 255;
+    std::uint8_t verde = 255;
+    std::uint8_t azul = 255;
+};
+
+constexpr int OFFSET_Y_REMERA_FEMENINO = 16;
+constexpr int OFFSET_Y_REMERA_MASCULINO = 15;
+constexpr int OFFSET_Y_PELO_FEMENINO = 1;
+constexpr int OFFSET_Y_PELO_MASCULINO = 0;
+
 struct ConfiguracionJugador {
-    std::string ruta_sprite;
-    int ancho_sprite = 0;
-    int alto_sprite = 0;
-    int cuadros_caminando = 0;
-    int ms_por_cuadro_caminando = 0;
-    int cuadros_quieto = 0;
-    int ms_por_cuadro_quieto = 0;
+    std::string ruta_cuerpo;
+    std::string ruta_pantalon;
+    std::string ruta_pelo;
+    std::string ruta_sombrero;
+    std::string ruta_remera;
+
+    int indice_pelo = 0;
+    int indice_sombrero = -1;
+    int indice_remera = 0;
+    int indice_pantalon = 0;
+
+    ColorRGB color_pelo;
+    ColorRGB color_pantalon;
+
+    int ms_por_cuadro_caminando = 150;
+    int offset_y_remera = 16;
+    int offset_y_pelo = 0;
+};
+
+struct ConfiguracionSonido {
+    std::string ruta_ambiente;
+    std::string ruta_caminar;
+    std::string ruta_accion;
 };
 
 // Cómo se ve la tierra tratada. La textura es la de Stardew (hoeDirt.png); el resto del dibujado
@@ -80,6 +107,7 @@ struct ConfiguracionVista {
     std::vector<ConfiguracionMapa> mapas;
     std::string mapa_inicial;
     ConfiguracionJugador jugador;
+    ConfiguracionSonido sonido;
     ConfiguracionTierra tierra;
 };
 

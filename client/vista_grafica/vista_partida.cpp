@@ -106,6 +106,9 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
 
     IconosDeItems iconos(renderizador.ptr());
     Personaje personaje(configuracion.jugador, configuracion.graficos, renderizador.ptr());
+    EfectosDeSonido efectos(configuracion.sonido);
+    efectos_actuales = &efectos;
+    efectos.reproducir_ambiente();
     TierraGrafica tierra(configuracion.tierra, configuracion.graficos, renderizador.ptr());
     ObjetosGraficos objetos(renderizador.ptr(), configuracion.graficos, iconos);
     EnemigosGraficos enemigos(renderizador.ptr(), configuracion.graficos);
@@ -122,12 +125,27 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         entrada.leer();
 
         if (entrada.pidio_cerrar()) {
+            efectos_actuales = nullptr;
             return false;
         }
         if (entrada.pedidos().salir) {
+            efectos_actuales = nullptr;
             return salir_de_partida_y_confirmar();
         }
+        if (haciendo_accion && SDL_GetTicks() - inicio_accion_ms >= 475) {
+            haciendo_accion = false;
+        }
+
+        const auto propio_para_sonido = jugador_propio();
+        if (propio_para_sonido != nullptr && propio_para_sonido->camina) {
+            const Uint32 ahora = SDL_GetTicks();
+            if (ahora - ultimo_paso_ms >= 350) {
+                efectos.reproducir_paso();
+                ultimo_paso_ms = ahora;
+            }
+        }
         if (!recibir_eventos()) {
+            efectos_actuales = nullptr;
             return true;
         }
 
@@ -172,6 +190,13 @@ void VistaPartida::enviar_intencion_si_cambio(const Moverse& intencion) {
 }
 
 void VistaPartida::usar_item(uint8_t ranura, ModoUso modo, const std::optional<Casilla>& casilla) {
+    if (!haciendo_accion) {
+        haciendo_accion = true;
+        inicio_accion_ms = SDL_GetTicks();
+        if (efectos_actuales != nullptr) {
+            efectos_actuales->reproducir_accion();
+        }
+    }
     UsarItem uso;
     uso.modo = modo;
     uso.indice_ranura = ranura;
@@ -420,7 +445,11 @@ void VistaPartida::dibujar(
     enemigos.dibujar(renderer, ultimo_estado_juego, camara.x(), camara.y());
     for (const EstadoJugador& jugador : ultimo_estado_juego.jugadores) {
         if (jugador.mapa == mapa_actual) {
-            personaje.dibujar(renderer, jugador, camara.x(), camara.y());
+            const bool es_el_propio = jugador.id_jugador == id_jugador;
+            const bool mostrar_accion = es_el_propio && haciendo_accion;
+            const Uint32 ms_de_accion = mostrar_accion ? SDL_GetTicks() - inicio_accion_ms : 0;
+            personaje
+                .dibujar(renderer, jugador, mostrar_accion, ms_de_accion, camara.x(), camara.y());
         }
     }
     mapa.dibujar_sobre_los_jugadores(renderer, camara.x(), camara.y());
