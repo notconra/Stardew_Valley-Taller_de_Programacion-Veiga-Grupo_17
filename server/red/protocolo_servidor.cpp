@@ -159,6 +159,7 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const ObjetoRetirado& e) { enviar_evento_objeto_retirado(e); },
             [this](const DropAparecido& e) { enviar_evento_drop_aparecido(e); },
             [this](const DropRetirado& e) { enviar_evento_drop_retirado(e); },
+            [this](const EnemigoActualizado& e) { enviar_evento_enemigo_actualizado(e); },
         },
         evento);
 }
@@ -213,6 +214,8 @@ void ProtocoloServidor::enviar_estado_jugador(const EstadoJugador& estado) {
     enviar_booleano(estado.camina);
     enviar_u8(estado.ranura_activa);
     enviar_u8(static_cast<uint8_t>(estado.accion_actual));
+    enviar_u8(estado.vida);
+    enviar_u8(estado.energia);
 }
 
 void ProtocoloServidor::enviar_estado_objeto_del_mundo(const EstadoObjetoDelMundo& estado) {
@@ -230,6 +233,17 @@ void ProtocoloServidor::enviar_estado_drop(const EstadoDrop& estado) {
     enviar_u8(static_cast<uint8_t>(estado.tipo));
     enviar_u16(estado.cantidad);
     enviar_u8(static_cast<uint8_t>(estado.calidad));
+}
+
+void ProtocoloServidor::enviar_estado_enemigo(const EstadoEnemigo& estado) {
+    enviar_u32(estado.id);
+    enviar_u8(static_cast<uint8_t>(estado.tipo));
+    enviar_u32(estado.columna);
+    enviar_u32(estado.fila);
+    enviar_u16(estado.vida);
+    enviar_u16(estado.vida_maxima);
+    enviar_booleano(estado.atacando);
+    enviar_booleano(estado.muriendo);
 }
 
 void ProtocoloServidor::enviar_ranura_inventario(const RanuraInventario& ranura) {
@@ -283,6 +297,10 @@ void ProtocoloServidor::enviar_estado_juego(const EstadoJuego& estado_juego) {
     for (const EstadoDrop& estado : estado_juego.drops) {
         enviar_estado_drop(estado);
     }
+    enviar_largo(estado_juego.enemigos.size());
+    for (const EstadoEnemigo& estado : estado_juego.enemigos) {
+        enviar_estado_enemigo(estado);
+    }
 }
 
 void ProtocoloServidor::enviar_evento_jugadores_en_sector(const JugadoresEnSector& jugadores) {
@@ -316,4 +334,9 @@ void ProtocoloServidor::enviar_evento_drop_retirado(const DropRetirado& drop) {
     enviar_tipo(TipoMensaje::DROP_RETIRADO);
     enviar_u32(drop.id);
     enviar_u32(drop.id_jugador);
+}
+
+void ProtocoloServidor::enviar_evento_enemigo_actualizado(const EnemigoActualizado& enemigo) {
+    enviar_tipo(TipoMensaje::ENEMIGO_ACTUALIZADO);
+    enviar_estado_enemigo(enemigo.enemigo);
 }

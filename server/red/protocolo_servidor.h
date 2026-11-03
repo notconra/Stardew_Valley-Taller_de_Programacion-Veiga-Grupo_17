@@ -49,6 +49,7 @@ private:
     void enviar_estado_jugador(const EstadoJugador& estado);
     void enviar_estado_objeto_del_mundo(const EstadoObjetoDelMundo& estado);
     void enviar_estado_drop(const EstadoDrop& estado);
+    void enviar_estado_enemigo(const EstadoEnemigo& estado);
     void enviar_ranura_inventario(const RanuraInventario& ranura);
     void enviar_ranuras(const std::vector<RanuraInventario>& ranuras);
     void enviar_inventario_jugador(const InventarioJugador& inventario);
@@ -61,6 +62,7 @@ private:
     void enviar_evento_objeto_retirado(const ObjetoRetirado& objeto);
     void enviar_evento_drop_aparecido(const DropAparecido& drop);
     void enviar_evento_drop_retirado(const DropRetirado& drop);
+    void enviar_evento_enemigo_actualizado(const EnemigoActualizado& enemigo);
 
 public:
     explicit ProtocoloServidor(ISocket& socket_conectado);
