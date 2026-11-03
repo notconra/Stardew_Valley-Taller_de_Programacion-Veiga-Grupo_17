@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "../cofres/gestor_de_cofres.h"
+#include "../enemigos/esqueletos.h"
 #include "../mazmorra/cargador_mazmorra.h"
 #include "../mazmorra/mazmorra.h"
 #include "../mazmorra/minerales.h"
@@ -17,6 +18,7 @@ RecursosDeJuego::RecursosDeJuego(
     : mapa_inicial(id_mapa_inicial),
       juego(configuracion_juego),
       catalogo_de_objetos(crear_catalogo_de_objetos()),
+      catalogo_de_enemigos(crear_catalogo_de_enemigos()),
       mazmorra(configuracion_mazmorra) {
     for (const ConfiguracionMapaServidor& configuracion_mapa : configuracion_mapas) {
         mapas.emplace(configuracion_mapa.id, Mapa(configuracion_mapa));
@@ -35,6 +37,15 @@ CatalogoDeObjetos RecursosDeJuego::crear_catalogo_de_objetos() {
     //   std::vector<DefinicionDeObjeto> arboles = Arboles::definiciones();
     //   definiciones.insert(definiciones.end(), arboles.begin(), arboles.end());
     return CatalogoDeObjetos(definiciones);
+}
+
+CatalogoDeEnemigos RecursosDeJuego::crear_catalogo_de_enemigos() {
+    std::vector<DefinicionDeEnemigo> definiciones = {Esqueletos::definicion()};
+
+    // Acá se suman las definiciones de Orcos, Vampiros y Skulls cuando estén listas,
+    //   definiciones.push_back(Orcos::definicion());
+    //   ...
+    return CatalogoDeEnemigos(definiciones);
 }
 
 void RecursosDeJuego::validar_catalogo_de_objetos() const {

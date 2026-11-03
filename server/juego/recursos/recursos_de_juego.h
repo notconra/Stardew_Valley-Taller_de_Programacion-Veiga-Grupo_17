@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "../../configuracion/configuracion_servidor_datos.h"
+#include "../enemigos/catalogo_de_enemigos.h"
 #include "../mapa/mapa.h"
 #include "../mazmorra/nivel.h"
 #include "../objetos/catalogo_de_items.h"
@@ -26,6 +27,10 @@ struct RecursosDeJuego {
     // romperse; aquel describe cómo se apilan y se venden en el inventario.
     CatalogoDeObjetos catalogo_de_objetos;
 
+    // Los tipos de enemigo que puede haber en la mazmorra (vida, daño, si revive). Lo arma la
+    // mazmorra para poblar los niveles; lo usa cada Sector para tener su GestorDeEnemigos.
+    CatalogoDeEnemigos catalogo_de_enemigos;
+
     // Configuración de la mazmorra y la geografía de cada mapa que puede ser un nivel. Los
     // niveles concretos de cada partida se sortean en Mundo.
     ConfiguracionMazmorraServidor mazmorra;
@@ -43,6 +48,10 @@ private:
     // Junta las definiciones de todos los módulos que aportan objetos del mundo. Para sumar
     // árboles o muebles alcanza con concatenar sus definiciones acá.
     static CatalogoDeObjetos crear_catalogo_de_objetos();
+
+    // Junta las definiciones de todos los módulos que aportan tipos de enemigo. Para sumar Orcos,
+    // Vampiros o Skulls alcanza con sumar su definición acá, igual que con los objetos.
+    static CatalogoDeEnemigos crear_catalogo_de_enemigos();
 
     // Verifica que el producto, la herramienta y el ítem colocable de cada objeto del mundo sean
     // ítems registrados en catalogo_de_items (y el colocable, de categoría COLOCABLE), para que un
