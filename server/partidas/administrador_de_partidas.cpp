@@ -66,7 +66,8 @@ std::vector<InfoPartida> AdministradorDePartidas::listar(uint32_t id_cliente) co
 }
 
 IngresoAPartida AdministradorDePartidas::crear(
-    uint32_t id_cliente, const std::string& nombre_jugador, const std::string& nombre_partida) {
+    uint32_t id_cliente, const std::string& nombre_jugador, const std::string& nombre_partida,
+    const AparienciaPersonaje& apariencia) {
     EntradaExitosaAPartida entrada;
     std::string codigo;
     {
@@ -88,9 +89,10 @@ IngresoAPartida AdministradorDePartidas::crear(
             nombre_partida,
             static_cast<uint8_t>(configuracion.jugadores_maximos_por_partida),
             id_cliente,
-            nombre_jugador);
+            nombre_jugador,
+            apariencia);
         try {
-            entrada = insertada.first->second.conectar(id_cliente, nombre_jugador);
+            entrada = insertada.first->second.conectar(id_cliente, nombre_jugador, apariencia);
         } catch (...) {
             partidas.erase(insertada.first);
             throw;
@@ -112,11 +114,12 @@ IngresoAPartida AdministradorDePartidas::crear(
         std::lock_guard<std::mutex> lock(mutex);
         sesion_creada = sesiones.try_emplace(codigo, std::move(sesion)).first->second.get();
     }
-    return IngresoAPartida{entrada, *sesion_creada};
+    return IngresoAPartida{entrada, *sesion_creada, apariencia};
 }
 
 IngresoAPartida AdministradorDePartidas::unirse(
-    uint32_t id_cliente, const std::string& nombre_jugador, const std::string& codigo_partida) {
+    uint32_t id_cliente, const std::string& nombre_jugador, const std::string& codigo_partida,
+    const AparienciaPersonaje& apariencia) {
     bool hay_sesion = false;
     {
         std::lock_guard<std::mutex> lock(mutex);
@@ -170,7 +173,7 @@ IngresoAPartida AdministradorDePartidas::unirse(
         }
 
         try {
-            entrada = partida.conectar(id_cliente, nombre_jugador);
+            entrada = partida.conectar(id_cliente, nombre_jugador, apariencia);
         } catch (...) {
             if (sesion_insertada_aca) {
                 auto insertada = sesiones.find(codigo_partida);
@@ -180,7 +183,7 @@ IngresoAPartida AdministradorDePartidas::unirse(
             throw;
         }
     }
-    return IngresoAPartida{entrada, *sesion};
+    return IngresoAPartida{entrada, *sesion, apariencia};
 }
 
 IngresoAPartida AdministradorDePartidas::retomar(
@@ -213,10 +216,12 @@ IngresoAPartida AdministradorDePartidas::retomar(
     std::unique_ptr<SesionDePartida> sesion_sobrante;
     SesionDePartida* sesion = nullptr;
     EntradaExitosaAPartida entrada;
+    AparienciaPersonaje apariencia;
     {
         std::lock_guard<std::mutex> lock(mutex);
 
         Partida& partida = buscar_partida(codigo_partida);
+        apariencia = partida.obtener_apariencia_jugador(id_cliente);
         auto existente = sesiones.find(codigo_partida);
         bool sesion_insertada_aca = false;
         if (existente != sesiones.end()) {
@@ -250,7 +255,7 @@ IngresoAPartida AdministradorDePartidas::retomar(
             throw;
         }
     }
-    return IngresoAPartida{entrada, *sesion};
+    return IngresoAPartida{entrada, *sesion, apariencia};
 }
 
 void AdministradorDePartidas::hacer_multijugador(
@@ -311,7 +316,8 @@ void AdministradorDePartidas::cargar_partida(const std::string& ruta_archivo) {
             jugador_guardado.id_cliente,
             jugador_guardado.id_jugador,
             jugador_guardado.nombre_jugador,
-            false});
+            false,
+            jugador_guardado.apariencia});
     }
 
     partidas.emplace(

@@ -71,12 +71,14 @@ void ProtocoloCliente::enviar_comando_crear_partida(const CrearPartida& crear) {
     enviar_tipo(TipoMensaje::CREAR_PARTIDA);
     enviar_texto(crear.nombre_partida);
     enviar_texto(crear.nombre_jugador);
+    enviar_apariencia(crear.apariencia);
 }
 
 void ProtocoloCliente::enviar_comando_unirse_partida(const UnirsePartida& unirse) {
     enviar_tipo(TipoMensaje::UNIRSE_PARTIDA);
     enviar_texto(unirse.codigo_partida);
     enviar_texto(unirse.nombre_jugador);
+    enviar_apariencia(unirse.apariencia);
 }
 
 void ProtocoloCliente::enviar_comando_retomar_partida(const RetomarPartida& retomar) {
@@ -220,6 +222,7 @@ EstadoJugador ProtocoloCliente::recibir_estado_jugador() {
     estado.accion_actual = static_cast<TipoAccion>(recibir_u8());
     estado.vida = recibir_u8();
     estado.energia = recibir_u8();
+    estado.apariencia = recibir_apariencia();
     return estado;
 }
 

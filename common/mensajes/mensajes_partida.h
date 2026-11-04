@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "../apariencia_personaje.h"
 #include "../direccion.h"
 #include "../modo_uso.h"
 #include "../ranura_inventario.h"
@@ -114,6 +115,7 @@ struct EstadoJugador {
     TipoAccion accion_actual = TipoAccion::NINGUNA;
     uint8_t vida = VIDA_MAXIMA_JUGADOR;
     uint8_t energia = ENERGIA_MAXIMA_JUGADOR;
+    AparienciaPersonaje apariencia;
 
     // Esto sirve pq el servidor compara con lo último que mandó para no repetir un
     // JugadoresEnSector igual.

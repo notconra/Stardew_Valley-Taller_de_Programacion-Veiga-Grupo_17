@@ -66,10 +66,12 @@ public:
     // La partida por defecto tiene un sólo jugador y el cliente que la crea
     // entra a ella.
     IngresoAPartida crear(
-        uint32_t id_cliente, const std::string& nombre_jugador, const std::string& nombre_partida);
+        uint32_t id_cliente, const std::string& nombre_jugador, const std::string& nombre_partida,
+        const AparienciaPersonaje& apariencia);
 
     IngresoAPartida unirse(
-        uint32_t id_cliente, const std::string& nombre_jugador, const std::string& codigo_partida);
+        uint32_t id_cliente, const std::string& nombre_jugador, const std::string& codigo_partida,
+        const AparienciaPersonaje& apariencia);
 
     IngresoAPartida retomar(uint32_t id_cliente, const std::string& codigo_partida);
 

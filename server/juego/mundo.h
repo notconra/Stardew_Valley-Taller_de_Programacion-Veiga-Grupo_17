@@ -58,7 +58,7 @@ public:
     // El jugador entra a la partida. Si es la primera vez se crea su Personaje con los ítems
     // iniciales, si ya existía (volvió después de desconectarse o restaurado de partida) conserva
     // todo.
-    void conectar(uint32_t id_jugador);
+    void conectar(uint32_t id_jugador, const AparienciaPersonaje& apariencia);
 
     // El jugador se fue. Su Personaje queda guardado.
     void desconectar(uint32_t id_jugador);

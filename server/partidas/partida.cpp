@@ -8,12 +8,13 @@
 Partida::Partida(
     const std::string& codigo_de_partida, const std::string& nombre_de_partida,
     uint8_t maximo_de_jugadores, uint32_t id_cliente_creador,
-    const std::string& nombre_jugador_creador)
+    const std::string& nombre_jugador_creador, const AparienciaPersonaje& apariencia_creador)
     : codigo(codigo_de_partida),
       nombre(nombre_de_partida),
       jugadores_maximos(maximo_de_jugadores),
       multijugador(false) {
-    jugadores.push_back(Jugador{id_cliente_creador, 1, nombre_jugador_creador, false});
+    jugadores.push_back(
+        Jugador{id_cliente_creador, 1, nombre_jugador_creador, false, apariencia_creador});
 }
 
 Partida::Partida(
@@ -41,6 +42,17 @@ const std::string& Partida::obtener_nombre() const {
 
 const std::vector<Jugador>& Partida::obtener_jugadores() const {
     return jugadores;
+}
+
+const AparienciaPersonaje& Partida::obtener_apariencia_jugador(uint32_t id_cliente) const {
+    for (const Jugador& jugador : jugadores) {
+        if (jugador.id_cliente == id_cliente) {
+            return jugador.apariencia;
+        }
+    }
+    throw ErrorDePartida(
+        CodigoError::NO_PERMITIDO,
+        "no sos miembro de la partida \"" + nombre + "\"");
 }
 
 DatosPartidaGuardada Partida::generar_datos_guardado(
@@ -106,7 +118,8 @@ EntradaExitosaAPartida Partida::reconectar(uint32_t id_cliente) {
     return EntradaExitosaAPartida{codigo, jugador->id_jugador};
 }
 
-EntradaExitosaAPartida Partida::conectar(uint32_t id_cliente, const std::string& nombre_jugador) {
+EntradaExitosaAPartida Partida::conectar(
+    uint32_t id_cliente, const std::string& nombre_jugador, const AparienciaPersonaje& apariencia) {
     Jugador* jugador = buscar_jugador(id_cliente);
     if (jugador != nullptr) {
         return reconectar(id_cliente);
@@ -125,7 +138,7 @@ EntradaExitosaAPartida Partida::conectar(uint32_t id_cliente, const std::string&
     }
 
     const uint32_t id_jugador = static_cast<uint32_t>(jugadores.size()) + 1;
-    jugadores.push_back(Jugador{id_cliente, id_jugador, nombre_jugador, true});
+    jugadores.push_back(Jugador{id_cliente, id_jugador, nombre_jugador, true, apariencia});
     return EntradaExitosaAPartida{codigo, id_jugador};
 }
 

@@ -30,17 +30,19 @@ bool SesionDePartida::esta_viva() const {
     return is_alive();
 }
 
-void SesionDePartida::entrar(uint32_t id_jugador, Queue<EventoServidor>& cola_eventos) {
+void SesionDePartida::entrar(
+    uint32_t id_jugador, Queue<EventoServidor>& cola_eventos,
+    const AparienciaPersonaje& apariencia) {
     std::lock_guard<std::mutex> lock(mutex_clientes);
     clientes.erase(id_jugador);
     clientes.emplace(id_jugador, ColaDeEventosDelJugador{cola_eventos});
-    cambios_de_conexion.push_back(CambioDeConexion{id_jugador, true});
+    cambios_de_conexion.push_back(CambioDeConexion{id_jugador, true, apariencia});
 }
 
 void SesionDePartida::salir(uint32_t id_jugador) {
     std::lock_guard<std::mutex> lock(mutex_clientes);
     if (clientes.erase(id_jugador) > 0) {
-        cambios_de_conexion.push_back(CambioDeConexion{id_jugador, false});
+        cambios_de_conexion.push_back(CambioDeConexion{id_jugador, false, {}});
     }
 }
 
@@ -53,7 +55,7 @@ void SesionDePartida::aplicar_cambios_de_conexion() {
 
     for (const CambioDeConexion& cambio : cambios) {
         if (cambio.entra) {
-            mundo.conectar(cambio.id_jugador);
+            mundo.conectar(cambio.id_jugador, cambio.apariencia);
         } else {
             mundo.desconectar(cambio.id_jugador);
         }
@@ -94,7 +96,7 @@ void SesionDePartida::a_jugador(uint32_t id_jugador, const EventoServidor& event
     } catch (const ClosedQueue&) {
         // La conexión se cerró, se lo da de baja en el próximo tick.
         clientes.erase(cliente);
-        cambios_de_conexion.push_back(CambioDeConexion{id_jugador, false});
+        cambios_de_conexion.push_back(CambioDeConexion{id_jugador, false, {}});
     }
 }
 
@@ -105,7 +107,7 @@ void SesionDePartida::a_todos(const EventoServidor& evento) {
             cliente->second.cola_eventos.try_push(evento);
             ++cliente;
         } catch (const ClosedQueue&) {
-            cambios_de_conexion.push_back(CambioDeConexion{cliente->first, false});
+            cambios_de_conexion.push_back(CambioDeConexion{cliente->first, false, {}});
             cliente = clientes.erase(cliente);
         }
     }
@@ -181,6 +183,7 @@ std::vector<DatosJugadorGuardado> SesionDePartida::obtener_datos_jugadores(
                 jugador_guardado.id_cliente = miembro.id_cliente;
                 jugador_guardado.id_jugador = miembro.id_jugador;
                 jugador_guardado.nombre_jugador = miembro.nombre_jugador;
+                jugador_guardado.apariencia = miembro.apariencia;
                 resultado.push_back(jugador_guardado);
             }
         }

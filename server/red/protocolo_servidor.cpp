@@ -63,15 +63,17 @@ ListarPartidas ProtocoloServidor::recibir_comando_listar_partidas() {
 CrearPartida ProtocoloServidor::recibir_comando_crear_partida() {
     std::string nombre_partida = recibir_texto();
     std::string nombre_jugador = recibir_texto();
+    AparienciaPersonaje apariencia = recibir_apariencia();
 
-    return CrearPartida{nombre_partida, nombre_jugador};
+    return CrearPartida{nombre_partida, nombre_jugador, apariencia};
 }
 
 UnirsePartida ProtocoloServidor::recibir_comando_unirse_partida() {
     std::string codigo_partida = recibir_texto();
     std::string nombre_jugador = recibir_texto();
+    AparienciaPersonaje apariencia = recibir_apariencia();
 
-    return UnirsePartida{codigo_partida, nombre_jugador};
+    return UnirsePartida{codigo_partida, nombre_jugador, apariencia};
 }
 
 RetomarPartida ProtocoloServidor::recibir_comando_retomar_partida() {
@@ -222,6 +224,7 @@ void ProtocoloServidor::enviar_estado_jugador(const EstadoJugador& estado) {
     enviar_u8(static_cast<uint8_t>(estado.accion_actual));
     enviar_u8(estado.vida);
     enviar_u8(estado.energia);
+    enviar_apariencia(estado.apariencia);
 }
 
 void ProtocoloServidor::enviar_estado_objeto_del_mundo(const EstadoObjetoDelMundo& estado) {

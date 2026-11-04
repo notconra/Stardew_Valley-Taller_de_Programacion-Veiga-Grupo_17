@@ -11,7 +11,7 @@
 #include "lector_binario.h"
 
 constexpr std::array<uint8_t, 4> FIRMA_ARCHIVO = {'S', 'V', 'P', 'T'};
-constexpr uint16_t VERSION_ACTUAL = 1;
+constexpr uint16_t VERSION_ACTUAL = 2;
 
 void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGuardada& datos) {
     EscritorBinario escritor(stream);
@@ -41,6 +41,18 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
             escritor.escribir_u16(ranura.cantidad);
             escritor.escribir_u8(static_cast<uint8_t>(ranura.calidad));
         }
+
+        escritor.escribir_bool(jugador.apariencia.es_femenino);
+        escritor.escribir_u8(jugador.apariencia.indice_pelo);
+        escritor.escribir_u8(jugador.apariencia.color_pelo.rojo);
+        escritor.escribir_u8(jugador.apariencia.color_pelo.verde);
+        escritor.escribir_u8(jugador.apariencia.color_pelo.azul);
+        escritor.escribir_u8(jugador.apariencia.indice_remera);
+        escritor.escribir_u8(jugador.apariencia.indice_pantalon);
+        escritor.escribir_u8(jugador.apariencia.color_pantalon.rojo);
+        escritor.escribir_u8(jugador.apariencia.color_pantalon.verde);
+        escritor.escribir_u8(jugador.apariencia.color_pantalon.azul);
+        escritor.escribir_u16(static_cast<uint16_t>(jugador.apariencia.indice_sombrero));
     }
 
     escritor.escribir_u16(static_cast<uint16_t>(datos.mapas.size()));
@@ -95,6 +107,18 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
             ranura.calidad = static_cast<Calidad>(lector.leer_u8());
             jugador.inventario.push_back(ranura);
         }
+
+        jugador.apariencia.es_femenino = lector.leer_bool();
+        jugador.apariencia.indice_pelo = lector.leer_u8();
+        jugador.apariencia.color_pelo.rojo = lector.leer_u8();
+        jugador.apariencia.color_pelo.verde = lector.leer_u8();
+        jugador.apariencia.color_pelo.azul = lector.leer_u8();
+        jugador.apariencia.indice_remera = lector.leer_u8();
+        jugador.apariencia.indice_pantalon = lector.leer_u8();
+        jugador.apariencia.color_pantalon.rojo = lector.leer_u8();
+        jugador.apariencia.color_pantalon.verde = lector.leer_u8();
+        jugador.apariencia.color_pantalon.azul = lector.leer_u8();
+        jugador.apariencia.indice_sombrero = static_cast<int16_t>(lector.leer_u16());
 
         datos.jugadores.push_back(jugador);
     }

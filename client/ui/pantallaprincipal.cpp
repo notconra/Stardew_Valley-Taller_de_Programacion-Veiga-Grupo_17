@@ -18,11 +18,6 @@
 constexpr const char* RUTA_CUERPO_MASCULINO = "Assets/Characters/Farmer/farmer_base.png";
 constexpr const char* RUTA_CUERPO_FEMENINO = "Assets/Characters/Farmer/farmer_girl_base.png";
 
-struct OpcionColor {
-    const char* nombre;
-    ColorRGB rgb;
-};
-
 constexpr OpcionColor COLORES_PELO[] = {
     {"Castaño", {115, 65, 35}},
     {"Rubio", {220, 185, 85}},
@@ -47,11 +42,11 @@ constexpr int CANTIDAD_COLORES_PANTALON = sizeof(COLORES_PANTALON) / sizeof(COLO
 
 constexpr int CANTIDAD_PEINADOS = 16;
 constexpr int CANTIDAD_REMERAS = 16;
-constexpr int CANTIDAD_SOMBREROS = 132;
+constexpr int CANTIDAD_SOMBREROS = 122;
 constexpr int CANTIDAD_TIPOS_PANTALON = 6;
 
-static int encontrar_indice_color_cercano(
-    const ColorRGB& color, const OpcionColor* opciones, int cantidad) {
+int PantallaPrincipal::encontrar_indice_color_cercano(
+    const ColorRGB& color, const OpcionColor* opciones, int cantidad) const {
     int mejor_indice = 0;
     int menor_diferencia = std::numeric_limits<int>::max();
     for (int i = 0; i < cantidad; ++i) {
@@ -208,14 +203,25 @@ void PantallaPrincipal::confirmar_personaje() {
 
     ui->btn_confirmar_personaje->setEnabled(false);
 
+    AparienciaPersonaje apariencia;
+    apariencia.es_femenino = es_personaje_femenino;
+    apariencia.indice_pelo = static_cast<uint8_t>(indice_pelo_seleccionado);
+    apariencia.color_pelo = COLORES_PELO[indice_color_pelo_seleccionado].rgb;
+    apariencia.indice_remera = static_cast<uint8_t>(indice_remera_seleccionado);
+    apariencia.indice_pantalon = static_cast<uint8_t>(indice_tipo_pantalon_seleccionado);
+    apariencia.color_pantalon = COLORES_PANTALON[indice_pantalon_color_seleccionado].rgb;
+    apariencia.indice_sombrero = static_cast<int16_t>(indice_sombrero_seleccionado);
+
     if (es_modo_unirse) {
         std::cout << "Uniéndose a partida " << codigo_partida_a_unirse
                   << " con personaje: " << nombre.toStdString() << "\n";
-        conexion.enviar_comando(UnirsePartida{codigo_partida_a_unirse, nombre.toStdString()});
+        conexion.enviar_comando(
+            UnirsePartida{codigo_partida_a_unirse, nombre.toStdString(), apariencia});
     } else {
         std::cout << "Creando personaje: " << nombre.toStdString()
                   << " | Granja: " << granja.toStdString() << "\n";
-        conexion.enviar_comando(CrearPartida{granja.toStdString(), nombre.toStdString()});
+        conexion.enviar_comando(
+            CrearPartida{granja.toStdString(), nombre.toStdString(), apariencia});
     }
 
     try {

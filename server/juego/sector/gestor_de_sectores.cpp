@@ -148,6 +148,7 @@ std::vector<EstadoJugador> GestorDeSectores::armar_jugadores(const std::string& 
             estado.accion_actual = personaje->second.accion_actual;
             estado.vida = static_cast<uint8_t>(personaje->second.vida);
             estado.energia = static_cast<uint8_t>(personaje->second.energia);
+            estado.apariencia = personaje->second.apariencia;
         }
 
         resultado.push_back(estado);

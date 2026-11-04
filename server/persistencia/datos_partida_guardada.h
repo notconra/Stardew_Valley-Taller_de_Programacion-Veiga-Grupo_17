@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "../../common/apariencia_personaje.h"
 #include "../../common/direccion.h"
 #include "../../common/ranura_inventario.h"
 
@@ -18,6 +19,7 @@ struct DatosJugadorGuardado {
     Direccion mirando = Direccion::ABAJO;
     uint8_t ranura_activa = 0;
     std::vector<RanuraInventario> inventario;
+    AparienciaPersonaje apariencia;
 
     bool operator==(const DatosJugadorGuardado&) const = default;
 };

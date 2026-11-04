@@ -32,6 +32,7 @@ Mundo::Mundo(
             recursos.catalogo_de_items,
             recursos.juego.inventario.cantidad_ranuras_barra);
         it->second.ranura_activa = guardado.ranura_activa;
+        it->second.apariencia = guardado.apariencia;
         if (!guardado.inventario.empty()) {
             it->second.inventario.cargar_ranuras(guardado.inventario);
         }
@@ -51,6 +52,7 @@ void Mundo::dar_de_baja(Personaje& personaje) {
             datos.mirando = jugador_en_partida->mirando;
             datos.ranura_activa = personaje.ranura_activa;
             datos.inventario = personaje.inventario.todas_las_ranuras();
+            datos.apariencia = personaje.apariencia;
         }
     }
     controlador_de_mazmorra.al_desconectarse(personaje);
@@ -60,7 +62,7 @@ void Mundo::dar_de_baja(Personaje& personaje) {
     personaje.conectado = false;
 }
 
-void Mundo::conectar(uint32_t id_jugador) {
+void Mundo::conectar(uint32_t id_jugador, const AparienciaPersonaje& apariencia) {
     auto encontrado = personajes.find(id_jugador);
     if (encontrado == personajes.end()) {
         encontrado = personajes
@@ -71,6 +73,7 @@ void Mundo::conectar(uint32_t id_jugador) {
                              recursos.catalogo_de_items,
                              recursos.juego.inventario.cantidad_ranuras_barra)
                          .first;
+        encontrado->second.apariencia = apariencia;
     }
     Personaje& personaje = encontrado->second;
 
@@ -175,6 +178,7 @@ std::optional<DatosJugadorGuardado> Mundo::obtener_datos_jugador(uint32_t id_jug
         datos.mapa_actual = personaje.mapa_actual;
         datos.ranura_activa = personaje.ranura_activa;
         datos.inventario = personaje.inventario.todas_las_ranuras();
+        datos.apariencia = personaje.apariencia;
 
         if (personaje.conectado && sectores.existe(personaje.mapa_actual)) {
             const JugadorEnPartida* cuerpo =

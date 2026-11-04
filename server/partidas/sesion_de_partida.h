@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "../../common/apariencia_personaje.h"
 #include "../../common/mensajes/mensajes.h"
 #include "../../common/queue.h"
 #include "../../common/thread.h"
@@ -32,6 +33,7 @@ struct ColaDeEventosDelJugador {
 struct CambioDeConexion {
     uint32_t id_jugador = 0;
     bool entra = false;
+    AparienciaPersonaje apariencia;
 };
 
 // Implementa Notificador para proveer el servicio de envío sin acoplar el juego a la red.
@@ -62,7 +64,9 @@ public:
 
     bool esta_viva() const;
 
-    void entrar(uint32_t id_jugador, Queue<EventoServidor>& cola_eventos);
+    void entrar(
+        uint32_t id_jugador, Queue<EventoServidor>& cola_eventos,
+        const AparienciaPersonaje& apariencia);
     void salir(uint32_t id_jugador);
     void recibir(uint32_t id_jugador, const ComandoCliente& comando);
 
