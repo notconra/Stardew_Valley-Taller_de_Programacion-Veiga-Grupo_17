@@ -1,6 +1,7 @@
 #include "cliente.h"
 
 #include <QApplication>
+#include <QIcon>
 #include <iostream>
 #include <string>
 
@@ -32,9 +33,10 @@ EstadoDelJuego Cliente::ejecutar_lobby() {
     char nombre_app[] = "StardewValley";
     char* argv[] = {nombre_app, nullptr};
     QApplication app(argc, argv);
+    app.setWindowIcon(QIcon("Assets/LooseSprites/logo.png"));
 
-    PantallaPrincipal ventana_lobby(conexion, partida_actual);
-    ventana_lobby.show();
+    PantallaPrincipal ventana_lobby(conexion, partida_actual, configuracion.jugador());
+    ventana_lobby.showMaximized();
 
     app.exec();
 

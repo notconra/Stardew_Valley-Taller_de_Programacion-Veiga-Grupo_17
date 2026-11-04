@@ -1,8 +1,7 @@
 #ifndef INICIO_DE_SDL_H
 #define INICIO_DE_SDL_H
 
-// Inicializa SDL y SDL_image al construirse y los libera al destruirse, así las librerías solo
-// están abiertas mientras dura la partida (y no quedan a la vez con Qt).
+// Inicializa SDL, SDL_image y SDL_mixer al construirse y los libera al destruirse.
 // Lanza std::runtime_error si no puede iniciarlas.
 class InicioDeSDL {
 public:
