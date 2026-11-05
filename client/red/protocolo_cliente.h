@@ -31,6 +31,7 @@ private:
     void enviar_comando_mover_item_con_cofre(const MoverItemConCofre& mover);
     void enviar_comando_solicitar_inventario(const SolicitarInventario& solicitar);
     void enviar_comando_soltar_item(const SoltarItem& soltar);
+    void enviar_comando_consultar_casilla(const ConsultarCasilla& consultar);
 
     // Recepción de eventos
     ErrorServidor recibir_error_servidor();
@@ -54,6 +55,7 @@ private:
     EnemigoActualizado recibir_enemigo_actualizado();
     TierraCambiada recibir_tierra_cambiada();
     HoraDelJuego recibir_hora_del_juego();
+    CasillaConsultada recibir_casilla_consultada();
     RanuraInventario recibir_ranura_inventario();
     std::vector<RanuraInventario> recibir_ranuras();
     InventarioJugador recibir_inventario_jugador();

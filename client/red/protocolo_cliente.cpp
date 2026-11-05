@@ -27,6 +27,7 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::ENEMIGO_ACTUALIZADO, [this] { return recibir_enemigo_actualizado(); }},
           {TipoMensaje::TIERRA_CAMBIADA, [this] { return recibir_tierra_cambiada(); }},
           {TipoMensaje::HORA_DEL_JUEGO, [this] { return recibir_hora_del_juego(); }},
+          {TipoMensaje::CASILLA_CONSULTADA, [this] { return recibir_casilla_consultada(); }},
           {TipoMensaje::ACTUALIZACION_INVENTARIO,
            [this] { return recibir_actualizacion_inventario(); }},
           {TipoMensaje::ACTUALIZACION_COFRE, [this] { return recibir_actualizacion_cofre(); }},
@@ -54,6 +55,7 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const MoverItemConCofre& m) { enviar_comando_mover_item_con_cofre(m); },
             [this](const SolicitarInventario& m) { enviar_comando_solicitar_inventario(m); },
             [this](const SoltarItem& m) { enviar_comando_soltar_item(m); },
+            [this](const ConsultarCasilla& m) { enviar_comando_consultar_casilla(m); },
         },
         comando);
 }
@@ -389,11 +391,38 @@ TierraCambiada ProtocoloCliente::recibir_tierra_cambiada() {
     return tierra;
 }
 
+void ProtocoloCliente::enviar_comando_consultar_casilla(const ConsultarCasilla& consultar) {
+    enviar_tipo(TipoMensaje::CONSULTAR_CASILLA);
+    enviar_u32(consultar.columna);
+    enviar_u32(consultar.fila);
+}
+
+CasillaConsultada ProtocoloCliente::recibir_casilla_consultada() {
+    CasillaConsultada consultada;
+    consultada.columna = recibir_u32();
+    consultada.fila = recibir_u32();
+    consultada.ancho = recibir_u8();
+    consultada.alto = recibir_u8();
+    const uint8_t marca = recibir_u8();
+    if (marca > static_cast<uint8_t>(MarcaDeCasilla::INVALIDA)) {
+        throw ErrorProtocolo("marca de casilla desconocida");
+    }
+    consultada.marca = static_cast<MarcaDeCasilla>(marca);
+    return consultada;
+}
+
 HoraDelJuego ProtocoloCliente::recibir_hora_del_juego() {
     HoraDelJuego hora;
     hora.dia = recibir_u32();
     hora.hora = recibir_u8();
     hora.minuto = recibir_u8();
+    hora.dia_de_la_estacion = recibir_u8();
+    const uint8_t estacion = recibir_u8();
+    if (estacion > static_cast<uint8_t>(Estacion::INVIERNO)) {
+        throw ErrorProtocolo("estación desconocida");
+    }
+    hora.estacion = static_cast<Estacion>(estacion);
+    hora.anio = recibir_u16();
     return hora;
 }
 
