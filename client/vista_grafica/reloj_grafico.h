@@ -9,9 +9,9 @@
 
 #include "../../common/mensajes/mensajes.h"
 
-// Muestra la hora que manda el servidor: un recuadro arriba a la derecha con "DIA N" y "HH:MM", y
-// un velo oscuro sobre el mapa que se va cerrando a la tarde y de noche. No calcula la hora: solo
-// dibuja la última HoraDelJuego que llegó.
+// Muestra la hora que manda el servidor: un recuadro arriba a la derecha con la estación y su día
+// ("PRIMAVERA 3"), el año ("AÑO 1") y la hora ("HH:MM"), y un velo oscuro sobre el mapa que se va
+// cerrando a la tarde y de noche. No calcula nada: solo dibuja la última HoraDelJuego que llegó.
 class RelojGrafico {
 private:
     // Cada letra es de 3x5 "píxeles" (como los números de las cantidades del inventario). Cada
@@ -27,6 +27,9 @@ private:
 
     // El número con un cero adelante si tiene una sola cifra ("06", "10").
     std::string dos_cifras(int numero) const;
+
+    // El nombre de la estación como se escribe en el reloj, en mayúsculas.
+    std::string nombre_de_la_estacion(Estacion estacion) const;
 
     // Lo que mide el texto en pantalla, de ancho.
     int ancho_del_texto(const std::string& texto, int pixel) const;
