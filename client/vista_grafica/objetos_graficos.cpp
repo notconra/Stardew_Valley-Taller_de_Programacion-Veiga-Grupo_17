@@ -103,6 +103,13 @@ std::map<TipoObjeto, AspectoDeObjeto> ObjetosGraficos::crear_aspectos_conocidos(
         TipoObjeto::COFRE,
         AspectoDeObjeto{{VarianteDeAspecto{RUTA_ASSET_COFRE, SDL_Rect{0, 0, 32, 32}, 1}}});
 
+    // Cama de una plaza: en furniture_2.png es el cuadro de 32x64 que arranca en (112, 144). Se
+    // dibuja de 2x4 casillas, las mismas que ocupa en el servidor.
+    AspectoDeObjeto cama{{VarianteDeAspecto{RUTA_ASSET_MUEBLES, SDL_Rect{112, 144, 32, 64}, 1}}};
+    cama.ancho_en_casillas = 2;
+    cama.alto_en_casillas = 4;
+    conocidos.emplace(TipoObjeto::CAMA, cama);
+
     return conocidos;
 }
 

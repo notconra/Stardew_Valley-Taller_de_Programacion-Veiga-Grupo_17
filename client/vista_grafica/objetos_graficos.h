@@ -58,6 +58,7 @@ public:
     static constexpr const char* RUTA_ASSET_MENA_PLATA = "Assets/Caverns/Mining/mena_plata.png";
     static constexpr const char* RUTA_ASSET_MENA_ORO = "Assets/Caverns/Mining/mena_oro.png";
     static constexpr const char* RUTA_ASSET_COFRE = "Assets/Misc/chest.png";
+    static constexpr const char* RUTA_ASSET_MUEBLES = "Assets/TileSheets/furniture_2.png";
 
     // Frecuencia relativa de cada piedra para q la 1 salga más y la 2 y la 3 salgan menos.
     static constexpr uint32_t PESO_PIEDRA_1 = 60;
