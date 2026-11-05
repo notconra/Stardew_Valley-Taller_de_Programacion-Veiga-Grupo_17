@@ -75,10 +75,11 @@ struct ConfiguracionTransicionesServidor {
 };
 
 // Cuánto dura un día de juego (de 6 am a 2 am) en tiempo real. "velocidad" es lento, medio o
-// rapido.
+// rapido; si el archivo trae duracion_en_minutos, esa duración pisa la del preset.
 struct ConfiguracionDiaServidor {
     std::string velocidad = "medio";
     double duracion_en_minutos = 14.0;
+    int dias_por_estacion = 28;
 };
 
 struct ConfiguracionJuegoServidor {

@@ -6,9 +6,11 @@
 #define SEGUNDOS_POR_MINUTO 60.0
 #define HORAS_DEL_RELOJ 24
 
-Reloj::Reloj(double duracion_del_dia_en_minutos, int ticks_por_segundo) {
-    if (duracion_del_dia_en_minutos <= 0 || ticks_por_segundo <= 0) {
-        throw std::invalid_argument("el día y los ticks por segundo tienen que ser positivos");
+Reloj::Reloj(double duracion_del_dia_en_minutos, int ticks_por_segundo, int dias_por_estacion)
+    : dias_por_estacion(static_cast<uint32_t>(dias_por_estacion > 0 ? dias_por_estacion : 0)) {
+    if (duracion_del_dia_en_minutos <= 0 || ticks_por_segundo <= 0 || dias_por_estacion <= 0) {
+        throw std::invalid_argument(
+            "el día, los ticks por segundo y los días por estación tienen que ser positivos");
     }
     ticks_por_dia = static_cast<uint64_t>(
         std::llround(duracion_del_dia_en_minutos * SEGUNDOS_POR_MINUTO * ticks_por_segundo));
@@ -46,5 +48,11 @@ HoraDelJuego Reloj::hora() const {
     hora_del_juego.hora =
         static_cast<uint8_t>((minutos_del_reloj / MINUTOS_POR_HORA) % HORAS_DEL_RELOJ);
     hora_del_juego.minuto = static_cast<uint8_t>(minutos_del_reloj % MINUTOS_POR_HORA);
+
+    const uint32_t dias_pasados = dia - 1;
+    const uint32_t estaciones_pasadas = dias_pasados / dias_por_estacion;
+    hora_del_juego.dia_de_la_estacion = static_cast<uint8_t>(dias_pasados % dias_por_estacion + 1);
+    hora_del_juego.estacion = static_cast<Estacion>(estaciones_pasadas % ESTACIONES_POR_ANIO);
+    hora_del_juego.anio = static_cast<uint16_t>(estaciones_pasadas / ESTACIONES_POR_ANIO + 1);
     return hora_del_juego;
 }

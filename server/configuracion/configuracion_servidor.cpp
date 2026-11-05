@@ -15,6 +15,7 @@
 #define MINUTOS_DE_UN_DIA_RAPIDO 7.0
 #define MINIMO_MINUTOS_DE_UN_DIA 0.5
 #define MAXIMO_MINUTOS_DE_UN_DIA 600.0
+#define MAXIMO_DIAS_POR_ESTACION 255
 
 ConfiguracionServidor::ConfiguracionServidor(const std::string& ruta) {
     const toml::table archivo_toml = lector_toml::cargar_archivo(ruta);
@@ -299,6 +300,14 @@ void ConfiguracionServidor::cargar_dia(const toml::table& tabla) {
         dia.duracion_en_minutos,
         MINIMO_MINUTOS_DE_UN_DIA,
         MAXIMO_MINUTOS_DE_UN_DIA);
+
+    dia.dias_por_estacion = lector_toml::leer_entero_opcional(
+        tabla,
+        "dias_por_estacion",
+        seccion,
+        dia.dias_por_estacion,
+        1,
+        MAXIMO_DIAS_POR_ESTACION);
 }
 
 void ConfiguracionServidor::cargar_mazmorra(const toml::table& archivo_toml) {

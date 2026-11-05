@@ -3,7 +3,7 @@
 ControladorDelDia::ControladorDelDia(
     const ConfiguracionDiaServidor& configuracion, uint8_t ticks_por_segundo,
     Notificador& notificador_de_juego)
-    : reloj(configuracion.duracion_en_minutos, ticks_por_segundo),
+    : reloj(configuracion.duracion_en_minutos, ticks_por_segundo, configuracion.dias_por_estacion),
       notificador(notificador_de_juego) {
 }
 

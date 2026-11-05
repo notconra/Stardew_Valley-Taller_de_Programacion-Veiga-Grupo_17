@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "../direccion.h"
+#include "../estacion.h"
 #include "../modo_uso.h"
 #include "../ranura_inventario.h"
 #include "../tipo_accion.h"
@@ -213,11 +214,16 @@ struct EnemigoActualizado {
 };
 // La hora del juego. El servidor la manda a todos cada 10 minutos de juego, cuando empieza un día
 // nuevo y a cada jugador que entra. "hora" va de 0 a 23: el día arranca a las 6 y termina a las 2
-// de la mañana del día siguiente.
+// de la mañana del día siguiente (hora = 0 y 1 son la madrugada del mismo día de juego).
+// "dia" cuenta todos los días desde que empezó la partida; dia_de_la_estacion, estacion y anio
+// salen de él (por defecto, 28 días por estación y 4 estaciones por año).
 struct HoraDelJuego {
     uint32_t dia = 1;
     uint8_t hora = 6;
     uint8_t minuto = 0;
+    uint8_t dia_de_la_estacion = 1;
+    Estacion estacion = Estacion::PRIMAVERA;
+    uint16_t anio = 1;
 
     bool operator==(const HoraDelJuego&) const = default;
 };
