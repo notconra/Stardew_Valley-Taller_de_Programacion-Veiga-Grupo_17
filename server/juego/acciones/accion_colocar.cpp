@@ -18,8 +18,6 @@ bool AccionColocar::se_puede_colocar(const ContextoDeAccion& c) const {
         return false;
     }
 
-    // Validar que ningún jugador esté parado en las casillas que va a ocupar, para evitar
-    // atascamientos. Un objeto grande (la cama) ocupa varias desde la casilla objetivo.
     const auto ids_jugadores = c.sector.jugadores.ids();
     for (uint32_t id_j : ids_jugadores) {
         auto casilla_j = c.sector.jugadores.casilla_del_jugador(id_j);
@@ -28,6 +26,17 @@ bool AccionColocar::se_puede_colocar(const ContextoDeAccion& c) const {
             casilla_j->fila >= c.objetivo.fila &&
             casilla_j->fila < c.objetivo.fila + definicion->alto_en_casillas) {
             return false;  // No se puede colocar un objeto encima de un jugador
+        }
+    }
+
+    for (int fila = c.objetivo.fila; fila < c.objetivo.fila + definicion->alto_en_casillas;
+         ++fila) {
+        for (int columna = c.objetivo.columna;
+             columna < c.objetivo.columna + definicion->ancho_en_casillas;
+             ++columna) {
+            if (c.sector.mapa.cerca_de_una_transicion(columna, fila)) {
+                return false;
+            }
         }
     }
 
