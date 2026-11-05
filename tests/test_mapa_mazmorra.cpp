@@ -16,6 +16,7 @@
 #define ESCALERA_DE_BAJADA 174
 #define TICKS_PARA_SALIR 200
 
+// test para el cargado de mapas de la mazmorra
 namespace {
 
 const ConfiguracionServidor& configuracion() {
