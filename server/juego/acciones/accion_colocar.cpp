@@ -1,5 +1,9 @@
 #include "accion_colocar.h"
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 bool AccionColocar::ejecutar(ContextoDeAccion& c) {
     const DefinicionDeObjeto* definicion =
         c.recursos.catalogo_de_objetos.buscar_por_item(c.item.tipo);
@@ -7,12 +11,22 @@ bool AccionColocar::ejecutar(ContextoDeAccion& c) {
         return false;
     }
 
-    // Validar que ningún jugador esté parado en la casilla objetivo para evitar atascamientos
+    // Algunos objetos solo van en ciertos mapas (la cama, en la casa).
+    const std::vector<std::string>& permitidos = definicion->mapas_permitidos;
+    if (!permitidos.empty() &&
+        std::find(permitidos.begin(), permitidos.end(), c.sector.id) == permitidos.end()) {
+        return false;
+    }
+
+    // Validar que ningún jugador esté parado en las casillas que va a ocupar, para evitar
+    // atascamientos. Un objeto grande (la cama) ocupa varias desde la casilla objetivo.
     const auto ids_jugadores = c.sector.jugadores.ids();
     for (uint32_t id_j : ids_jugadores) {
         auto casilla_j = c.sector.jugadores.casilla_del_jugador(id_j);
-        if (casilla_j.has_value() && casilla_j->columna == c.objetivo.columna &&
-            casilla_j->fila == c.objetivo.fila) {
+        if (casilla_j.has_value() && casilla_j->columna >= c.objetivo.columna &&
+            casilla_j->columna < c.objetivo.columna + definicion->ancho_en_casillas &&
+            casilla_j->fila >= c.objetivo.fila &&
+            casilla_j->fila < c.objetivo.fila + definicion->alto_en_casillas) {
             return false;  // No se puede colocar un objeto encima de un jugador
         }
     }

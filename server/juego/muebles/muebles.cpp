@@ -3,8 +3,6 @@
 #include <vector>
 
 std::vector<DefinicionDeObjeto> Muebles::definiciones() {
-    // La cama se coloca con el ítem cama y solo dentro de la casa. Igual que el cofre, se levanta
-    // con un golpe de pico y vuelve al inventario, así se puede cambiar de lugar.
     DefinicionDeObjeto cama;
     cama.tipo = TipoObjeto::CAMA;
     cama.clave = "CAMA";
