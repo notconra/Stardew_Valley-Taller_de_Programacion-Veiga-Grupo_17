@@ -157,7 +157,7 @@ TEST_F(ColocarCama, NoSePuedePonerEncimaDeOtraCama) {
 
     personaje.inventario.agregar_item(TipoItem::CAMA, 1);
     EXPECT_FALSE(colocar(casa, Casilla{3, 5}));
-    EXPECT_TRUE(colocar(casa, Casilla{4, 4}));  // justo al lado sí
+    EXPECT_TRUE(colocar(casa, Casilla{4, 4}));
     EXPECT_EQ(casa.objetos.cantidad_de_objetos(), 2);
 }
 
@@ -175,4 +175,11 @@ TEST_F(ColocarCama, AlLevantarlaVuelveElItemYSeLiberanLasCasillas) {
             EXPECT_TRUE(casa.colisiones.esta_libre(columna, fila)) << columna << ", " << fila;
         }
     }
+}
+
+TEST_F(ColocarCama, NoSePuedePonerPegadaALaPuerta) {
+    Sector casa(MAPA_DE_LA_CASA, recursos(), 40);
+    EXPECT_FALSE(colocar(casa, Casilla{3, 8}));
+    EXPECT_FALSE(colocar(casa, Casilla{5, 8}));
+    EXPECT_TRUE(colocar(casa, Casilla{7, 8}));
 }
