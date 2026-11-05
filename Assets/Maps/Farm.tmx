@@ -2049,8 +2049,8 @@
  <objectgroup id="14" name="Transiciones">
   <object id="90" x="1040" y="199.667" width="16" height="31">
    <properties>
-    <property name="columna_destino" type="int" value="10"/>
-    <property name="fila_destino" type="int" value="3"/>
+    <property name="columna_destino" type="int" value="3"/>
+    <property name="fila_destino" type="int" value="9"/>
     <property name="mapa_destino" value="FarmHouse"/>
    </properties>
   </object>

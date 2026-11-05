@@ -39,8 +39,9 @@ private:
 
     void resolver_transicion(Personaje& personaje, const Transicion& transicion);
 
-    // Si la transición se usa con clic derecho en vez de activarse al pisarla.
-    bool requiere_clic(const Transicion& transicion) const;
+    // Si la transición se usa con clic derecho en vez de activarse al pisarla: las que tienen un
+    // destino de destinos_con_clic y todas las de los niveles de la mazmorra.
+    bool requiere_clic(const Personaje& personaje, const Transicion& transicion) const;
 
     // Mueve a quienes pisan una transición que no pide clic.
     void resolver_transiciones_automaticas();
