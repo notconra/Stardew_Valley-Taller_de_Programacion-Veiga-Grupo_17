@@ -22,7 +22,7 @@ using ComandoCliente = std::variant<
 
     // Inventario y acciones
     SeleccionarRanuraDeLaBarra, UsarItem, MoverItemEntreRanuras, MoverItemConCofre,
-    SolicitarInventario, SoltarItem>;
+    SolicitarInventario, SoltarItem, ConsultarCasilla>;
 
 using EventoServidor = std::variant<
     // Error
@@ -40,6 +40,9 @@ using EventoServidor = std::variant<
 
     // - Tiempo
     HoraDelJuego,
+
+    // - Lo que se marca en el piso
+    CasillaConsultada,
 
     // - Inventario y cofres
     ActualizacionInventario, ActualizacionCofre>;

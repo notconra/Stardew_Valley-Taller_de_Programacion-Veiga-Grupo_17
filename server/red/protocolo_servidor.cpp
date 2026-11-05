@@ -28,6 +28,7 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::SOLICITAR_INVENTARIO,
            [this] { return recibir_comando_solicitar_inventario(); }},
           {TipoMensaje::SOLTAR_ITEM, [this] { return recibir_comando_soltar_item(); }},
+          {TipoMensaje::CONSULTAR_CASILLA, [this] { return recibir_comando_consultar_casilla(); }},
       } {
 }
 
@@ -162,6 +163,7 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const EnemigoActualizado& e) { enviar_evento_enemigo_actualizado(e); },
             [this](const TierraCambiada& e) { enviar_evento_tierra_cambiada(e); },
             [this](const HoraDelJuego& e) { enviar_evento_hora_del_juego(e); },
+            [this](const CasillaConsultada& e) { enviar_evento_casilla_consultada(e); },
         },
         evento);
 }
@@ -363,4 +365,22 @@ void ProtocoloServidor::enviar_evento_hora_del_juego(const HoraDelJuego& hora) {
     enviar_u32(hora.dia);
     enviar_u8(hora.hora);
     enviar_u8(hora.minuto);
+    enviar_u8(hora.dia_de_la_estacion);
+    enviar_u8(static_cast<uint8_t>(hora.estacion));
+    enviar_u16(hora.anio);
+}
+
+ConsultarCasilla ProtocoloServidor::recibir_comando_consultar_casilla() {
+    const uint32_t columna = recibir_u32();
+    const uint32_t fila = recibir_u32();
+    return ConsultarCasilla{columna, fila};
+}
+
+void ProtocoloServidor::enviar_evento_casilla_consultada(const CasillaConsultada& consultada) {
+    enviar_tipo(TipoMensaje::CASILLA_CONSULTADA);
+    enviar_u32(consultada.columna);
+    enviar_u32(consultada.fila);
+    enviar_u8(consultada.ancho);
+    enviar_u8(consultada.alto);
+    enviar_u8(static_cast<uint8_t>(consultada.marca));
 }

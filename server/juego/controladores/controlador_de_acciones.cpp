@@ -56,7 +56,70 @@ const Accion* ControladorDeAcciones::ejecutar(ContextoDeAccion& contexto) {
     return nullptr;
 }
 
+CasillaConsultada ControladorDeAcciones::consultar(
+    Personaje& personaje, const ConsultarCasilla& pedido) {
+    CasillaConsultada respuesta;
+    respuesta.columna = pedido.columna;
+    respuesta.fila = pedido.fila;
+
+    Sector& sector = sectores.en(personaje.mapa_actual);
+    const std::optional<Casilla> propia =
+        sector.jugadores.casilla_del_jugador(personaje.id_jugador);
+    if (!propia.has_value()) {
+        return respuesta;
+    }
+    const Casilla objetivo{static_cast<int>(pedido.columna), static_cast<int>(pedido.fila)};
+    const bool alcanza = al_alcance(sector, *propia, objetivo);
+    const RanuraInventario item = personaje.ranura(INDICE_RANURA_ACTIVA);
+
+    // Un mueble (o cualquier objeto que se coloca): se ve siempre lo que ocuparía, en verde si
+    // entra y en rojo si no.
+    if (const DefinicionDeObjeto* mueble = recursos.catalogo_de_objetos.buscar_por_item(item.tipo);
+        mueble != nullptr) {
+        ContextoDeAccion contexto{
+            personaje.id_jugador,
+            item,
+            personaje.resolver_ranura(INDICE_RANURA_ACTIVA),
+            objetivo,
+            sector,
+            personaje,
+            recursos,
+            notificador,
+            ModoUso::SECUNDARIO,
+            resolver_transicion};
+        respuesta.ancho = static_cast<uint8_t>(mueble->ancho_en_casillas);
+        respuesta.alto = static_cast<uint8_t>(mueble->alto_en_casillas);
+        respuesta.marca = alcanza && AccionColocar().se_puede_colocar(contexto)
+                              ? MarcaDeCasilla::VALIDA
+                              : MarcaDeCasilla::INVALIDA;
+        return respuesta;
+    }
+
+    // La pala y el pico: una casilla en verde solo si harían algo. Igual que al usarlos, el pico
+    // primero rompe lo que haya en la casilla y si no hay nada, vuelve la tierra a común.
+    if (!alcanza) {
+        return respuesta;
+    }
+    bool tendria_efecto = false;
+    if (item.tipo == TipoItem::PALA) {
+        tendria_efecto = sector.tierra.se_puede_tratar(objetivo);
+    } else if (item.tipo == TipoItem::PICO) {
+        const ObjetoDelMundo* objeto = sector.objetos.objeto_en(objetivo.columna, objetivo.fila);
+        const DefinicionDeObjeto* definicion =
+            objeto == nullptr ? nullptr : recursos.catalogo_de_objetos.buscar(objeto->tipo);
+        tendria_efecto = (definicion != nullptr && definicion->herramienta == TipoItem::PICO) ||
+                         sector.tierra.esta_tratada(objetivo);
+    }
+    respuesta.marca = tendria_efecto ? MarcaDeCasilla::VALIDA : MarcaDeCasilla::NINGUNA;
+    return respuesta;
+}
+
 bool ControladorDeAcciones::atender(Personaje& personaje, const ComandoCliente& comando) {
+    if (const ConsultarCasilla* consulta = std::get_if<ConsultarCasilla>(&comando)) {
+        notificador.a_jugador(personaje.id_jugador, consultar(personaje, *consulta));
+        return true;
+    }
+
     const UsarItem* pedido = std::get_if<UsarItem>(&comando);
     if (pedido == nullptr) {
         return false;

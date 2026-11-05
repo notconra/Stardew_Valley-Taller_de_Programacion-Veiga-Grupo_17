@@ -113,18 +113,24 @@ std::vector<Casilla> GestorDeObjetos::casillas_ocupadas(
     return casillas;
 }
 
-int GestorDeObjetos::colocar(TipoObjeto tipo, int columna, int fila) {
+bool GestorDeObjetos::se_puede_colocar(TipoObjeto tipo, int columna, int fila) const {
     const DefinicionDeObjeto* definicion = catalogo.buscar(tipo);
     if (definicion == nullptr) {
-        return 0;
+        return false;
     }
-    const std::vector<Casilla> casillas = casillas_ocupadas(*definicion, columna, fila);
-    for (const Casilla& casilla : casillas) {
-        // esta_libre también devuelve false si la casilla cae fuera del mapa.
+    for (const Casilla& casilla : casillas_ocupadas(*definicion, columna, fila)) {
         if (!colisiones.esta_libre(casilla.columna, casilla.fila)) {
-            return 0;
+            return false;
         }
     }
+    return true;
+}
+
+int GestorDeObjetos::colocar(TipoObjeto tipo, int columna, int fila) {
+    if (!se_puede_colocar(tipo, columna, fila)) {
+        return 0;
+    }
+    const std::vector<Casilla> casillas = casillas_ocupadas(*catalogo.buscar(tipo), columna, fila);
 
     const int id = siguiente_id++;
     objetos_por_id.emplace(id, ObjetoDelMundo{id, columna, fila, tipo});

@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-bool AccionColocar::ejecutar(ContextoDeAccion& c) {
+bool AccionColocar::se_puede_colocar(const ContextoDeAccion& c) const {
     const DefinicionDeObjeto* definicion =
         c.recursos.catalogo_de_objetos.buscar_por_item(c.item.tipo);
     if (definicion == nullptr) {
@@ -30,6 +30,17 @@ bool AccionColocar::ejecutar(ContextoDeAccion& c) {
             return false;  // No se puede colocar un objeto encima de un jugador
         }
     }
+
+    // Que todas sus casillas estén dentro del mapa y libres.
+    return c.sector.objetos.se_puede_colocar(definicion->tipo, c.objetivo.columna, c.objetivo.fila);
+}
+
+bool AccionColocar::ejecutar(ContextoDeAccion& c) {
+    if (!se_puede_colocar(c)) {
+        return false;
+    }
+    const DefinicionDeObjeto* definicion =
+        c.recursos.catalogo_de_objetos.buscar_por_item(c.item.tipo);
 
     // Falla si la casilla ya tiene un objeto o está bloqueada. Si sale bien, el sector ya avisó
     // a los jugadores.

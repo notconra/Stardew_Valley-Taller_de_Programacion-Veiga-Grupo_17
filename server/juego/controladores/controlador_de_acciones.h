@@ -16,7 +16,8 @@
 // Comando UsarItem (click con un ítem en mano o con la mano vacía). Resuelve la casilla objetivo,
 // valida que el cliente no pida algo imposible y prueba las acciones del juego en orden. Ejecuta la
 // primera que aplica y funciona. Además lleva la cuenta de cuánto tiempo sigue ocupado el
-// personaje con su acción.
+// personaje con su acción. También contesta ConsultarCasilla: qué se marcaría en el piso si se
+// usara el ítem de la mano en esa casilla, con las mismas reglas que al usarlo.
 class ControladorDeAcciones {
 private:
     GestorDeSectores& sectores;
@@ -31,6 +32,10 @@ private:
     // Ejecuta la primera acción que aplica y funciona. Devuelve esa acción, o nullptr si ninguna
     // ocurrió.
     const Accion* ejecutar(ContextoDeAccion& contexto);
+
+    // Qué marcar en el piso para el ítem de la ranura activa en esa casilla: el rectángulo del
+    // mueble en verde o rojo, o una casilla en verde si la pala o el pico harían algo ahí.
+    CasillaConsultada consultar(Personaje& personaje, const ConsultarCasilla& pedido);
 
 public:
     ControladorDeAcciones(

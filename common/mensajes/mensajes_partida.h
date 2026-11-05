@@ -53,6 +53,13 @@ struct UsarItem {
     uint32_t fila_objetivo = 0;
 };
 
+// Pregunta qué pasaría si se usara el ítem de la ranura activa sobre esa casilla, para que el
+// cliente sepa qué marcar en el piso. No cambia nada: la respuesta es CasillaConsultada.
+struct ConsultarCasilla {
+    uint32_t columna = 0;
+    uint32_t fila = 0;
+};
+
 // Mueve ítems entre ranuras de la barra. Si el destino es el tacho, el ítem se elimina
 // permanentemente, las herramientas no se pueden eliminar.
 struct MoverItemEntreRanuras {
@@ -212,6 +219,24 @@ struct DropRetirado {
 struct EnemigoActualizado {
     EstadoEnemigo enemigo;
 };
+// Cómo marcar en el piso lo que se va a hacer con el ítem de la mano.
+enum class MarcaDeCasilla : uint8_t {
+    NINGUNA = 0,
+    VALIDA = 1,
+    INVALIDA = 2,
+};
+
+// Respuesta a ConsultarCasilla, solo para el jugador que preguntó. (columna, fila) es la casilla
+// consultada y la esquina de arriba a la izquierda del rectángulo a marcar, de ancho x alto
+// casillas: 1x1 para la pala y el pico, el tamaño del mueble para un mueble.
+struct CasillaConsultada {
+    uint32_t columna = 0;
+    uint32_t fila = 0;
+    uint8_t ancho = 1;
+    uint8_t alto = 1;
+    MarcaDeCasilla marca = MarcaDeCasilla::NINGUNA;
+};
+
 // La hora del juego. El servidor la manda a todos cada 10 minutos de juego, cuando empieza un día
 // nuevo y a cada jugador que entra. "hora" va de 0 a 23: el día arranca a las 6 y termina a las 2
 // de la mañana del día siguiente (hora = 0 y 1 son la madrugada del mismo día de juego).

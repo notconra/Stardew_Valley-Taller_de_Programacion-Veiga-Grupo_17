@@ -23,6 +23,7 @@ enum class TipoMensaje : uint8_t {
     MOVER_ITEM_CON_COFRE = 0x0D,
     SOLICITAR_INVENTARIO = 0x0E,
     SOLTAR_ITEM = 0x0F,
+    CONSULTAR_CASILLA = 0x10,
 
     // Servidor a cliente
     ERROR_SERVIDOR = 0x81,
@@ -49,6 +50,9 @@ enum class TipoMensaje : uint8_t {
 
     // Reloj de la partida
     HORA_DEL_JUEGO = 0x91,
+
+    // Lo que se marca en el piso con el ítem de la mano
+    CASILLA_CONSULTADA = 0x92,
 };
 
 #endif

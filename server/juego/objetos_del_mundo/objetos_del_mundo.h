@@ -130,6 +130,9 @@ public:
     // casillas fuera del mapa, bloqueada por el terreno u ocupada). Si falla no cambia nada.
     int colocar(TipoObjeto tipo, int columna, int fila);
 
+    // Si colocar() funcionaría: el tipo existe y todas sus casillas están dentro del mapa y libres.
+    bool se_puede_colocar(TipoObjeto tipo, int columna, int fila) const;
+
     // Golpea el objeto con la herramienta indicada. Si no es la que pide su definición, no pasa
     // nada. Al llegar a golpes_para_picar lo rompe.
     ResultadoDeGolpe golpear(int id, TipoItem herramienta_usada);
