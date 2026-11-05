@@ -1,0 +1,42 @@
+#ifndef RELOJ_H
+#define RELOJ_H
+
+#include <cstdint>
+
+#include "../../../common/mensajes/mensajes.h"
+
+#define HORA_DE_INICIO_DEL_DIA 6
+#define HORAS_POR_DIA 20
+#define MINUTOS_POR_HORA 60
+#define MINUTOS_ENTRE_AVISOS 10
+
+enum class CambioDelReloj {
+    NINGUNO,
+    HORA,
+    DIA_NUEVO,
+};
+
+// Lleva la hora de la partida contando los ticks del servidor:
+// convierte ticks en día, hora y minuto. Con un día de 14 minutos reales y 40 ticks por
+// segundo, un día son 33600 ticks y cada 10 minutos de juego son 280 ticks (7 segundos).
+class Reloj {
+private:
+    uint64_t ticks_por_dia;
+    uint64_t ticks_del_dia = 0;
+    uint32_t dia = 1;
+
+    // Minutos de juego que pasaron desde las 6 am de hoy (de 0 a 1199).
+    uint32_t minutos_desde_el_inicio() const;
+
+public:
+    // Lanza std::invalid_argument si la duración o los ticks por segundo no son positivos.
+    Reloj(double duracion_del_dia_en_minutos, int ticks_por_segundo);
+
+    // Avanza un tick y dice qué cambió.
+    CambioDelReloj avanzar();
+
+    // La hora de ahora, redondeada para abajo a los 10 minutos (es la que ve el jugador).
+    HoraDelJuego hora() const;
+};
+
+#endif

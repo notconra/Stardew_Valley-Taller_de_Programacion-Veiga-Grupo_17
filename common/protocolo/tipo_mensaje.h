@@ -46,6 +46,9 @@ enum class TipoMensaje : uint8_t {
     DROP_RETIRADO = 0x8E,
     ENEMIGO_ACTUALIZADO = 0x8F,
     TIERRA_CAMBIADA = 0x90,
+
+    // Reloj de la partida
+    HORA_DEL_JUEGO = 0x91,
 };
 
 #endif

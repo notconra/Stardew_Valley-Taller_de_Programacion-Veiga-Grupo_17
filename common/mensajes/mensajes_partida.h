@@ -211,6 +211,17 @@ struct DropRetirado {
 struct EnemigoActualizado {
     EstadoEnemigo enemigo;
 };
+// La hora del juego. El servidor la manda a todos cada 10 minutos de juego, cuando empieza un día
+// nuevo y a cada jugador que entra. "hora" va de 0 a 23: el día arranca a las 6 y termina a las 2
+// de la mañana del día siguiente.
+struct HoraDelJuego {
+    uint32_t dia = 1;
+    uint8_t hora = 6;
+    uint8_t minuto = 0;
+
+    bool operator==(const HoraDelJuego&) const = default;
+};
+
 // Cambió el estado de una casilla de tierra del sector del receptor. "tratada" indica si quedó
 // tratada con la pala (true) o si volvió a tierra común con el pico (false).
 struct TierraCambiada {
