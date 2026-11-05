@@ -39,6 +39,10 @@ struct AspectoDeObjeto {
     int desplazamiento_x = 0;
     int desplazamiento_y = 0;
     CapaDeObjeto capa = CapaDeObjeto::DEBAJO_DE_LOS_JUGADORES;
+    // Filas del dibujo que van por encima de la casilla del objeto (la cabecera de la cama). Están
+    // contadas dentro de alto_en_casillas, no bloquean en el servidor y se dibujan sobre los
+    // jugadores, así se puede pasar por detrás.
+    int casillas_por_encima = 0;
 };
 
 // Dibuja los objetos del mundo que manda el servidor. Es genérico, sólo conoce un mapa de
@@ -92,6 +96,12 @@ private:
 
     // Aspectos de los objetos que ya existen.
     static std::map<TipoObjeto, AspectoDeObjeto> crear_aspectos_conocidos();
+
+    // Dibuja las filas [primera_fila, ultima_fila) del aspecto, contadas desde la de arriba de su
+    // dibujo. La fila 0 del dibujo cae casillas_por_encima filas arriba de la casilla del objeto.
+    void dibujar_filas(
+        SDL_Renderer* renderer, const EstadoObjetoDelMundo& objeto, const AspectoDeObjeto& aspecto,
+        int primera_fila, int ultima_fila, int cam_x, int cam_y) const;
 
     void dibujar_capa(
         SDL_Renderer* renderer, const EstadoJuego& estado, const std::string& mapa, int cam_x,
