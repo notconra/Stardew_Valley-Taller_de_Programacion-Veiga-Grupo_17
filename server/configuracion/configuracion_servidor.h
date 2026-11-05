@@ -42,6 +42,7 @@ private:
     void cargar_acciones(const toml::table& tabla);
     void cargar_drops(const toml::table& tabla);
     void cargar_transiciones(const toml::table& tabla);
+    void cargar_dia(const toml::table& tabla);
     void cargar_minerales(const toml::array& lista);
 };
 

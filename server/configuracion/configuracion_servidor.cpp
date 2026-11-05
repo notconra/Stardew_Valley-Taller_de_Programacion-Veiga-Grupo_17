@@ -10,6 +10,12 @@
 
 #include "../../common/configuracion/lector_toml.h"
 
+#define MINUTOS_DE_UN_DIA_LENTO 20.0
+#define MINUTOS_DE_UN_DIA_MEDIO 14.0
+#define MINUTOS_DE_UN_DIA_RAPIDO 7.0
+#define MINIMO_MINUTOS_DE_UN_DIA 0.5
+#define MAXIMO_MINUTOS_DE_UN_DIA 600.0
+
 ConfiguracionServidor::ConfiguracionServidor(const std::string& ruta) {
     const toml::table archivo_toml = lector_toml::cargar_archivo(ruta);
     cargar_red(archivo_toml);
@@ -131,6 +137,9 @@ void ConfiguracionServidor::cargar_juego(const toml::table& archivo_toml) {
     }
     if (const toml::table* tabla = (*juego)["transiciones"].as_table()) {
         cargar_transiciones(*tabla);
+    }
+    if (const toml::table* tabla = (*juego)["dia"].as_table()) {
+        cargar_dia(*tabla);
     }
 }
 
@@ -263,6 +272,33 @@ void ConfiguracionServidor::cargar_transiciones(const toml::table& tabla) {
         "destinos_con_clic",
         "juego.transiciones",
         transiciones.destinos_con_clic);
+}
+
+void ConfiguracionServidor::cargar_dia(const toml::table& tabla) {
+    const std::string seccion = "juego.dia";
+    ConfiguracionDiaServidor& dia = datos_configuracion.juego.dia;
+
+    dia.velocidad = lector_toml::leer_texto_opcional(tabla, "velocidad", seccion, dia.velocidad);
+    if (dia.velocidad == "lento") {
+        dia.duracion_en_minutos = MINUTOS_DE_UN_DIA_LENTO;
+    } else if (dia.velocidad == "medio") {
+        dia.duracion_en_minutos = MINUTOS_DE_UN_DIA_MEDIO;
+    } else if (dia.velocidad == "rapido") {
+        dia.duracion_en_minutos = MINUTOS_DE_UN_DIA_RAPIDO;
+    } else {
+        throw std::runtime_error(
+            "configuración: 'velocidad' de [juego.dia] tiene que ser \"lento\", \"medio\" o "
+            "\"rapido\" (es \"" +
+            dia.velocidad + "\")");
+    }
+
+    dia.duracion_en_minutos = lector_toml::leer_decimal_opcional(
+        tabla,
+        "duracion_en_minutos",
+        seccion,
+        dia.duracion_en_minutos,
+        MINIMO_MINUTOS_DE_UN_DIA,
+        MAXIMO_MINUTOS_DE_UN_DIA);
 }
 
 void ConfiguracionServidor::cargar_mazmorra(const toml::table& archivo_toml) {
