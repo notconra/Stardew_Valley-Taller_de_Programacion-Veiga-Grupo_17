@@ -161,6 +161,7 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const DropRetirado& e) { enviar_evento_drop_retirado(e); },
             [this](const EnemigoActualizado& e) { enviar_evento_enemigo_actualizado(e); },
             [this](const TierraCambiada& e) { enviar_evento_tierra_cambiada(e); },
+            [this](const HoraDelJuego& e) { enviar_evento_hora_del_juego(e); },
         },
         evento);
 }
@@ -303,7 +304,7 @@ void ProtocoloServidor::enviar_estado_juego(const EstadoJuego& estado_juego) {
     for (const EstadoDrop& estado : estado_juego.drops) {
         enviar_estado_drop(estado);
     }
-enviar_largo(estado_juego.enemigos.size());
+    enviar_largo(estado_juego.enemigos.size());
     for (const EstadoEnemigo& estado : estado_juego.enemigos) {
         enviar_estado_enemigo(estado);
     }
@@ -355,4 +356,11 @@ void ProtocoloServidor::enviar_evento_tierra_cambiada(const TierraCambiada& tier
     enviar_tipo(TipoMensaje::TIERRA_CAMBIADA);
     enviar_casilla_tratada(tierra.casilla);
     enviar_booleano(tierra.tratada);
+}
+
+void ProtocoloServidor::enviar_evento_hora_del_juego(const HoraDelJuego& hora) {
+    enviar_tipo(TipoMensaje::HORA_DEL_JUEGO);
+    enviar_u32(hora.dia);
+    enviar_u8(hora.hora);
+    enviar_u8(hora.minuto);
 }

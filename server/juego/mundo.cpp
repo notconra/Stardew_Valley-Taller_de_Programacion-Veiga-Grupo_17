@@ -20,7 +20,8 @@ Mundo::Mundo(
       controlador_de_drops(
           sectores, personajes, notificador_de_juego, recursos_de_juego.juego.drops),
       controlador_de_mazmorra(recursos_de_juego, sectores),
-      controlador_de_enemigos(sectores, personajes, notificador_de_juego) {
+      controlador_de_enemigos(sectores, personajes, notificador_de_juego),
+      controlador_del_dia(recursos_de_juego.juego.dia, ticks_por_segundo, notificador_de_juego) {
 }
 
 void Mundo::dar_de_baja(Personaje& personaje) {
@@ -51,6 +52,7 @@ void Mundo::conectar(uint32_t id_jugador) {
 
     personaje.conectado = true;
     notificador.a_jugador(id_jugador, personaje.actualizacion_de_inventario());
+    controlador_del_dia.al_conectarse(personaje);
     sectores.colocar_en_aparicion(personaje, recursos.mapa_inicial);
 }
 
@@ -116,6 +118,7 @@ void Mundo::resolver_transiciones_automaticas() {
 }
 
 void Mundo::actualizar() {
+    controlador_del_dia.actualizar();
     sectores.actualizar();
     resolver_transiciones_automaticas();
     controlador_de_enemigos.actualizar();

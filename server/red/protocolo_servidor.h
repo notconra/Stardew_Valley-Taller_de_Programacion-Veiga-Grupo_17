@@ -65,6 +65,7 @@ private:
     void enviar_evento_drop_retirado(const DropRetirado& drop);
     void enviar_evento_enemigo_actualizado(const EnemigoActualizado& enemigo);
     void enviar_evento_tierra_cambiada(const TierraCambiada& tierra);
+    void enviar_evento_hora_del_juego(const HoraDelJuego& hora);
 
 public:
     explicit ProtocoloServidor(ISocket& socket_conectado);

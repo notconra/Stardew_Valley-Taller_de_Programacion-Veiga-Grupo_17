@@ -7,6 +7,7 @@
 #include "../../common/mensajes/mensajes.h"
 #include "controladores/controlador_de_acciones.h"
 #include "controladores/controlador_de_cofres.h"
+#include "controladores/controlador_de_dia.h"
 #include "controladores/controlador_de_drops.h"
 #include "controladores/controlador_de_enemigos.h"
 #include "controladores/controlador_de_jugador.h"
@@ -34,6 +35,7 @@ private:
     ControladorDeDrops controlador_de_drops;
     ControladorDeMazmorra controlador_de_mazmorra;
     ControladorDeEnemigos controlador_de_enemigos;
+    ControladorDelDia controlador_del_dia;
 
     void resolver_transicion(Personaje& personaje, const Transicion& transicion);
 
