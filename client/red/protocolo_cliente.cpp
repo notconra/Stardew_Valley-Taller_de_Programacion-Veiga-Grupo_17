@@ -26,6 +26,7 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::DROP_RETIRADO, [this] { return recibir_drop_retirado(); }},
           {TipoMensaje::ENEMIGO_ACTUALIZADO, [this] { return recibir_enemigo_actualizado(); }},
           {TipoMensaje::TIERRA_CAMBIADA, [this] { return recibir_tierra_cambiada(); }},
+          {TipoMensaje::HORA_DEL_JUEGO, [this] { return recibir_hora_del_juego(); }},
           {TipoMensaje::ACTUALIZACION_INVENTARIO,
            [this] { return recibir_actualizacion_inventario(); }},
           {TipoMensaje::ACTUALIZACION_COFRE, [this] { return recibir_actualizacion_cofre(); }},
@@ -386,6 +387,14 @@ TierraCambiada ProtocoloCliente::recibir_tierra_cambiada() {
     tierra.casilla = recibir_casilla_tratada();
     tierra.tratada = recibir_booleano();
     return tierra;
+}
+
+HoraDelJuego ProtocoloCliente::recibir_hora_del_juego() {
+    HoraDelJuego hora;
+    hora.dia = recibir_u32();
+    hora.hora = recibir_u8();
+    hora.minuto = recibir_u8();
+    return hora;
 }
 
 void ProtocoloCliente::cerrar() {

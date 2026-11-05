@@ -53,6 +53,7 @@ private:
     DropRetirado recibir_drop_retirado();
     EnemigoActualizado recibir_enemigo_actualizado();
     TierraCambiada recibir_tierra_cambiada();
+    HoraDelJuego recibir_hora_del_juego();
     RanuraInventario recibir_ranura_inventario();
     std::vector<RanuraInventario> recibir_ranuras();
     InventarioJugador recibir_inventario_jugador();

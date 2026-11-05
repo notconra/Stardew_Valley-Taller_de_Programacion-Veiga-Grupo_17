@@ -80,6 +80,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     ultimo_cofre = CofreJugador{};
     mapa_actual = configuracion.mapa_inicial;
     tierra_tratada.clear();
+    hora_del_juego.reset();
     partida_terminada = false;
 
     std::cout << "\n=== EN PARTIDA " << partida.codigo_partida << " (jugador " << partida.id_jugador
@@ -381,6 +382,7 @@ void VistaPartida::aplicar(const EventoServidor& evento) {
                     tierra_tratada.erase(casilla);
                 }
             },
+            [&](const HoraDelJuego& e) { hora_del_juego = e; },
             [&](const MultijugadorActivado& e) {
                 std::cout << "[partida] multijugador activado, código para invitar: "
                           << e.codigo_partida << std::endl;
@@ -473,12 +475,28 @@ void VistaPartida::dibujar(
         }
     }
 
+    if (hora_del_juego.has_value() && !mapa_actual_es_mazmorra()) {
+        reloj_grafico.oscurecer(
+            renderer,
+            *hora_del_juego,
+            configuracion.ventana.ancho,
+            configuracion.ventana.alto);
+    }
+
     hud.dibujar(renderer, ultimo_inventario, ultimo_cofre, entrada.raton_x(), entrada.raton_y());
     if (const EstadoJugador* propio = jugador_propio(); propio != nullptr) {
         hud.dibujar_energia(renderer, propio->energia, ENERGIA_MAXIMA_JUGADOR);
         if (mapa_actual_es_mazmorra()) {
             hud.dibujar_vida(renderer, propio->vida, VIDA_MAXIMA_JUGADOR);
         }
+    }
+
+    if (hora_del_juego.has_value()) {
+        reloj_grafico.dibujar(
+            renderer,
+            *hora_del_juego,
+            configuracion.ventana.ancho,
+            configuracion.ventana.alto);
     }
 
     SDL_RenderPresent(renderer);

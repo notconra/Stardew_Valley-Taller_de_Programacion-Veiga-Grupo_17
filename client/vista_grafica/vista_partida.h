@@ -21,6 +21,7 @@
 #include "mapa_grafico.h"
 #include "objetos_graficos.h"
 #include "personaje.h"
+#include "reloj_grafico.h"
 #include "renderizador.h"
 #include "tierra_grafica.h"
 #include "vision_mazmorra.h"
@@ -42,6 +43,8 @@ private:
     CofreJugador ultimo_cofre{};
     std::string mapa_actual;
     std::set<std::pair<int, int>> tierra_tratada;
+    std::optional<HoraDelJuego> hora_del_juego;
+    RelojGrafico reloj_grafico;
     bool partida_terminada = false;
     const EstadoJugador* jugador_propio() const;
     const ConfiguracionMapa& configuracion_de(const std::string& id_mapa) const;
