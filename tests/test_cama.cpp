@@ -17,14 +17,6 @@
 // Estas pruebas leen config/servidor.toml y los mapas de Assets/, así que corren desde la raíz del
 // repositorio (el target test del Makefile ejecuta ./build/tests desde ahí).
 
-// Test para la cama que prueban :
-//  -Que el personaje empieza con una cama;
-//  -Que no se puede tirar al tacho;
-//  -Que en la casa se pone y ocupa 2×4;
-//  -Que en la granja no;
-//  -Que no se pone sobre la pared ni fuera del piso;
-//  -Que no se pone encima de otra cama, y que al levantarla vuelve el ítem y se liberan las
-//  casillas.
 namespace {
 const Casilla CONTRA_LA_PARED{2, 4};
 const uint32_t ID_JUGADOR = 1;
@@ -111,7 +103,7 @@ TEST(Cama, NoSePuedeTirarAlTacho) {
     EXPECT_FALSE(recursos().catalogo_de_items.se_puede_eliminar(TipoItem::CAMA));
 }
 
-TEST_F(ColocarCama, SePoneEnLaCasaYOcupaDosPorCuatro) {
+TEST_F(ColocarCama, SePoneContraLaParedYBloqueaDosPorTres) {
     Sector casa(MAPA_DE_LA_CASA, recursos(), 40);
 
     ASSERT_TRUE(colocar(casa, CONTRA_LA_PARED));
@@ -122,14 +114,23 @@ TEST_F(ColocarCama, SePoneEnLaCasaYOcupaDosPorCuatro) {
     ASSERT_NE(cama, nullptr);
     EXPECT_EQ(cama->tipo, TipoObjeto::CAMA);
     for (int columna = 2; columna <= 3; ++columna) {
-        for (int fila = 4; fila <= 7; ++fila) {
+        for (int fila = 4; fila <= 6; ++fila) {
             EXPECT_EQ(casa.objetos.objeto_en(columna, fila), cama) << columna << ", " << fila;
             EXPECT_FALSE(casa.colisiones.esta_libre(columna, fila)) << columna << ", " << fila;
         }
     }
-    // Las de al lado y la de abajo quedan libres.
     EXPECT_TRUE(casa.colisiones.esta_libre(4, 4));
-    EXPECT_TRUE(casa.colisiones.esta_libre(2, 8));
+    EXPECT_TRUE(casa.colisiones.esta_libre(2, 7));
+}
+
+TEST_F(ColocarCama, EnElMedioSePuedePasarPorDetrasDeLaCabecera) {
+    Sector casa(MAPA_DE_LA_CASA, recursos(), 40);
+
+    ASSERT_TRUE(colocar(casa, Casilla{5, 6}));
+    EXPECT_TRUE(casa.colisiones.esta_libre(5, 5));
+    EXPECT_TRUE(casa.colisiones.esta_libre(6, 5));
+    EXPECT_FALSE(casa.colisiones.esta_libre(5, 6));
+    EXPECT_FALSE(casa.colisiones.esta_libre(6, 8));
 }
 
 TEST_F(ColocarCama, NoSePuedePonerFueraDeLaCasa) {
@@ -145,7 +146,7 @@ TEST_F(ColocarCama, NoSePuedePonerSobreLaParedNiFueraDelPiso) {
 
     EXPECT_FALSE(colocar(casa, Casilla{2, 3}));
     EXPECT_FALSE(colocar(casa, Casilla{10, 4}));
-    EXPECT_FALSE(colocar(casa, Casilla{2, 8}));
+    EXPECT_FALSE(colocar(casa, Casilla{2, 9}));
     EXPECT_TRUE(ranura_de_la_cama(personaje).has_value());
     EXPECT_EQ(casa.objetos.cantidad_de_objetos(), 0);
 }
@@ -156,7 +157,7 @@ TEST_F(ColocarCama, NoSePuedePonerEncimaDeOtraCama) {
 
     personaje.inventario.agregar_item(TipoItem::CAMA, 1);
     EXPECT_FALSE(colocar(casa, Casilla{3, 5}));
-    EXPECT_TRUE(colocar(casa, Casilla{4, 4}));
+    EXPECT_TRUE(colocar(casa, Casilla{4, 4}));  // justo al lado sí
     EXPECT_EQ(casa.objetos.cantidad_de_objetos(), 2);
 }
 
@@ -170,7 +171,7 @@ TEST_F(ColocarCama, AlLevantarlaVuelveElItemYSeLiberanLasCasillas) {
     EXPECT_EQ(rotura.producto, TipoItem::CAMA);
     EXPECT_EQ(rotura.cantidad, 1);
     for (int columna = 2; columna <= 3; ++columna) {
-        for (int fila = 4; fila <= 7; ++fila) {
+        for (int fila = 4; fila <= 6; ++fila) {
             EXPECT_TRUE(casa.colisiones.esta_libre(columna, fila)) << columna << ", " << fila;
         }
     }
