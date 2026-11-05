@@ -14,21 +14,28 @@
 #include "../server/juego/tiempo/reloj.h"
 
 namespace {
+
 // Con un día de 1 minuto real y 20 ticks por segundo, el día son 1200 ticks: cada tick es justo
 // un minuto de juego, y cada aviso (10 minutos de juego) son 10 ticks.
 const double UN_MINUTO = 1.0;
 const int TICKS_POR_SEGUNDO = 20;
 const int TICKS_POR_DIA = 1200;
+const int DIAS_POR_ESTACION = 28;
 
 HoraDelJuego hora(uint32_t dia, uint8_t hora_del_dia, uint8_t minuto) {
     HoraDelJuego hora_del_juego;
     hora_del_juego.dia = dia;
     hora_del_juego.hora = hora_del_dia;
     hora_del_juego.minuto = minuto;
+    hora_del_juego.dia_de_la_estacion = static_cast<uint8_t>(dia);
     return hora_del_juego;
 }
 
-// Avanza el reloj "ticks" veces y devuelve cuántas veces avisó cada cambio.
+void ir_al_dia(Reloj& reloj, uint32_t dia) {
+    while (reloj.hora().dia < dia) {
+        reloj.avanzar();
+    }
+}
 struct Avisos {
     int horas = 0;
     int dias = 0;
@@ -67,16 +74,13 @@ public:
 
 }  // namespace
 
-// Test que prueban el funcionamiento del reloj, si cambia correctamente, si cambia cuando tiene que
-// cambiar o no, si acepta o no ticks invalidos entre otros.
-
 TEST(Reloj, ArrancaElDiaUnoALasSeis) {
-    const Reloj reloj(UN_MINUTO, TICKS_POR_SEGUNDO);
+    const Reloj reloj(UN_MINUTO, TICKS_POR_SEGUNDO, DIAS_POR_ESTACION);
     EXPECT_EQ(reloj.hora(), hora(1, 6, 0));
 }
 
 TEST(Reloj, LaHoraAvanzaDeADiezMinutos) {
-    Reloj reloj(UN_MINUTO, TICKS_POR_SEGUNDO);
+    Reloj reloj(UN_MINUTO, TICKS_POR_SEGUNDO, DIAS_POR_ESTACION);
 
     avanzar(reloj, 9);
     EXPECT_EQ(reloj.hora(), hora(1, 6, 0));
@@ -89,7 +93,7 @@ TEST(Reloj, LaHoraAvanzaDeADiezMinutos) {
 }
 
 TEST(Reloj, PasaLaMedianocheSinCambiarDeDia) {
-    Reloj reloj(UN_MINUTO, TICKS_POR_SEGUNDO);
+    Reloj reloj(UN_MINUTO, TICKS_POR_SEGUNDO, DIAS_POR_ESTACION);
     avanzar(reloj, 18 * 60);
     EXPECT_EQ(reloj.hora(), hora(1, 0, 0));
 
@@ -98,7 +102,7 @@ TEST(Reloj, PasaLaMedianocheSinCambiarDeDia) {
 }
 
 TEST(Reloj, ALasDosEmpiezaElDiaSiguienteALasSeis) {
-    Reloj reloj(UN_MINUTO, TICKS_POR_SEGUNDO);
+    Reloj reloj(UN_MINUTO, TICKS_POR_SEGUNDO, DIAS_POR_ESTACION);
     avanzar(reloj, TICKS_POR_DIA - 1);
     EXPECT_EQ(reloj.hora(), hora(1, 1, 50));
 
@@ -107,29 +111,72 @@ TEST(Reloj, ALasDosEmpiezaElDiaSiguienteALasSeis) {
 }
 
 TEST(Reloj, AvisaCientoVeinteVecesPorDia) {
-    Reloj reloj(UN_MINUTO, TICKS_POR_SEGUNDO);
+    Reloj reloj(UN_MINUTO, TICKS_POR_SEGUNDO, DIAS_POR_ESTACION);
     const Avisos avisos = avanzar(reloj, 3 * TICKS_POR_DIA);
+
     EXPECT_EQ(avisos.horas, 3 * 119);
     EXPECT_EQ(avisos.dias, 3);
     EXPECT_EQ(reloj.hora(), hora(4, 6, 0));
 }
 
 TEST(Reloj, UnDiaDeCatorceMinutosDuraLoQueDebe) {
-    Reloj reloj(14.0, 40);
+    Reloj reloj(14.0, 40, DIAS_POR_ESTACION);
     const Avisos antes = avanzar(reloj, 33599);
     EXPECT_EQ(antes.dias, 0);
     EXPECT_EQ(reloj.avanzar(), CambioDelReloj::DIA_NUEVO);
 }
 
 TEST(Reloj, NoAceptaDuracionesInvalidas) {
-    EXPECT_THROW(Reloj(0.0, TICKS_POR_SEGUNDO), std::invalid_argument);
-    EXPECT_THROW(Reloj(UN_MINUTO, 0), std::invalid_argument);
+    EXPECT_THROW(Reloj(0.0, TICKS_POR_SEGUNDO, DIAS_POR_ESTACION), std::invalid_argument);
+    EXPECT_THROW(Reloj(UN_MINUTO, 0, DIAS_POR_ESTACION), std::invalid_argument);
+    EXPECT_THROW(Reloj(UN_MINUTO, TICKS_POR_SEGUNDO, 0), std::invalid_argument);
+}
+
+TEST(Reloj, ArrancaEnElPrimerDiaDeLaPrimaveraDelAnioUno) {
+    const HoraDelJuego hora_del_juego =
+        Reloj(UN_MINUTO, TICKS_POR_SEGUNDO, DIAS_POR_ESTACION).hora();
+    EXPECT_EQ(hora_del_juego.dia_de_la_estacion, 1);
+    EXPECT_EQ(hora_del_juego.estacion, Estacion::PRIMAVERA);
+    EXPECT_EQ(hora_del_juego.anio, 1);
+}
+
+TEST(Reloj, DespuesDelDia28DeLaPrimaveraVieneElVerano) {
+    Reloj reloj(UN_MINUTO, TICKS_POR_SEGUNDO, DIAS_POR_ESTACION);
+
+    ir_al_dia(reloj, 28);
+    EXPECT_EQ(reloj.hora().dia_de_la_estacion, 28);
+    EXPECT_EQ(reloj.hora().estacion, Estacion::PRIMAVERA);
+
+    ir_al_dia(reloj, 29);
+    EXPECT_EQ(reloj.hora().dia_de_la_estacion, 1);
+    EXPECT_EQ(reloj.hora().estacion, Estacion::VERANO);
+    EXPECT_EQ(reloj.hora().anio, 1);
+}
+
+TEST(Reloj, LasEstacionesVanEnOrdenYDespuesDelInviernoEmpiezaOtroAnio) {
+    Reloj reloj(UN_MINUTO, TICKS_POR_SEGUNDO, 1);
+    const Estacion orden[] = {
+        Estacion::PRIMAVERA,
+        Estacion::VERANO,
+        Estacion::OTONO,
+        Estacion::INVIERNO};
+    for (uint32_t dia = 1; dia <= 4; ++dia) {
+        ir_al_dia(reloj, dia);
+        EXPECT_EQ(reloj.hora().estacion, orden[dia - 1]) << "día " << dia;
+        EXPECT_EQ(reloj.hora().anio, 1);
+    }
+
+    ir_al_dia(reloj, 5);
+    EXPECT_EQ(reloj.hora().estacion, Estacion::PRIMAVERA);
+    EXPECT_EQ(reloj.hora().anio, 2);
+    EXPECT_EQ(reloj.hora().dia, 5u);
 }
 
 TEST(ConfiguracionDelDia, ElTomlPideUnDiaDeCatorceMinutos) {
     const ConfiguracionServidor configuracion("config/servidor.toml");
     EXPECT_EQ(configuracion.juego().dia.velocidad, "medio");
     EXPECT_DOUBLE_EQ(configuracion.juego().dia.duracion_en_minutos, 14.0);
+    EXPECT_EQ(configuracion.juego().dia.dias_por_estacion, 28);
 }
 
 TEST(ControladorDelDia, AvisaATodosCadaDiezMinutosYAlQueEntra) {
