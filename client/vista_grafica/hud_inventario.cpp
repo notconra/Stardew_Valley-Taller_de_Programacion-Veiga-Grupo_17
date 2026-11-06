@@ -480,34 +480,6 @@ int HudInventario::dibujar_gauge(
     SDL_Renderer* renderer, const Textura& marco, int ancho_nativo, int alto_nativo,
     const SDL_Rect& ventana_nativa, double fraccion, int borde_derecho_en_pantalla) const {
     fraccion = std::clamp(fraccion, 0.0, 1.0);
-    constexpr int SANGRADO = 2;
-    const int alto_relleno = static_cast<int>(ventana_nativa.h * fraccion);
-    const SDL_Rect relleno{
-        ventana_nativa.x - SANGRADO,
-        ventana_nativa.y + ventana_nativa.h - alto_relleno,
-        ventana_nativa.w + 2 * SANGRADO,
-        alto_relleno + SANGRADO};
-    const SDL_Color color = color_de_vida(fraccion);
-    SDL_Texture* lienzo = SDL_CreateTexture(
-        renderer,
-        SDL_PIXELFORMAT_RGBA8888,
-        SDL_TEXTUREACCESS_TARGET,
-        ancho_nativo,
-        alto_nativo);
-    if (lienzo == nullptr) {
-        return borde_derecho_en_pantalla;
-    }
-    SDL_SetTextureBlendMode(lienzo, SDL_BLENDMODE_BLEND);
-
-    SDL_Texture* destino_anterior = SDL_GetRenderTarget(renderer);
-    SDL_SetRenderTarget(renderer, lienzo);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-    SDL_RenderClear(renderer);
-    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-    SDL_RenderFillRect(renderer, &relleno);
-    SDL_RenderCopy(renderer, marco.ptr(), nullptr, nullptr);
-    SDL_SetRenderTarget(renderer, destino_anterior);
-
     const int alto = std::clamp(alto_ventana / 4, 90, 170);
     const int ancho = alto * ancho_nativo / alto_nativo;
     const SDL_Rect destino{
@@ -515,8 +487,26 @@ int HudInventario::dibujar_gauge(
         alto_ventana - MARGEN - alto,
         ancho,
         alto};
-    SDL_RenderCopy(renderer, lienzo, nullptr, &destino);
 
-    SDL_DestroyTexture(lienzo);
+    constexpr int SANGRADO = 2;
+    const int alto_relleno = static_cast<int>(ventana_nativa.h * fraccion);
+    const SDL_Rect relleno_nativo{
+        ventana_nativa.x - SANGRADO,
+        ventana_nativa.y + ventana_nativa.h - alto_relleno,
+        ventana_nativa.w + 2 * SANGRADO,
+        alto_relleno + SANGRADO};
+    const float escala_x = static_cast<float>(ancho) / static_cast<float>(ancho_nativo);
+    const float escala_y = static_cast<float>(alto) / static_cast<float>(alto_nativo);
+    const SDL_Rect relleno{
+        destino.x + static_cast<int>(relleno_nativo.x * escala_x),
+        destino.y + static_cast<int>(relleno_nativo.y * escala_y),
+        static_cast<int>(relleno_nativo.w * escala_x),
+        static_cast<int>(relleno_nativo.h * escala_y)};
+
+    const SDL_Color color = color_de_vida(fraccion);
+    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+    SDL_RenderFillRect(renderer, &relleno);
+    SDL_RenderCopy(renderer, marco.ptr(), nullptr, &destino);
+
     return destino.x;
 }
