@@ -77,6 +77,26 @@ void Sector::agregar_modificaciones_a(std::vector<ModificacionCasilla>& modifica
     tierra.agregar_modificaciones_a(modificaciones);
 }
 
+void Sector::cargar_cofre(
+    uint32_t columna, uint32_t fila, const std::vector<RanuraInventario>& ranuras) {
+    const int id_objeto =
+        objetos.colocar(TipoObjeto::COFRE, static_cast<int>(columna), static_cast<int>(fila));
+    if (id_objeto > 0) {
+        cofres.cargar_contenido(id_objeto, ranuras);
+    }
+}
+
+void Sector::agregar_cofres_guardados_a(std::vector<DatosCofreGuardado>& lista) const {
+    for (const auto& objeto : objetos.obtener_objetos_de_tipo(TipoObjeto::COFRE)) {
+        DatosCofreGuardado cofre;
+        cofre.id_mapa = id;
+        cofre.columna = static_cast<uint32_t>(objeto.columna);
+        cofre.fila = static_cast<uint32_t>(objeto.fila);
+        cofre.inventario = cofres.obtener_contenido(objeto.id);
+        lista.push_back(cofre);
+    }
+}
+
 int Sector::colocar_objeto(Notificador& notificador, TipoObjeto tipo, int columna, int fila) {
     const int id = objetos.colocar(tipo, columna, fila);
     if (id == 0) {

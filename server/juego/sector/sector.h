@@ -81,6 +81,10 @@ public:
     void cargar_casillas_modificadas(const std::vector<ModificacionCasilla>& modificaciones);
     void agregar_modificaciones_a(std::vector<ModificacionCasilla>& modificaciones) const;
 
+    void cargar_cofre(
+        uint32_t columna, uint32_t fila, const std::vector<RanuraInventario>& ranuras);
+    void agregar_cofres_guardados_a(std::vector<DatosCofreGuardado>& lista) const;
+
     // Coloca un objeto y avisa a los jugadores del sector. Devuelve el id del objeto, o 0 si la
     // casilla ya tiene un objeto o está bloqueada.
     int colocar_objeto(Notificador& notificador, TipoObjeto tipo, int columna, int fila);

@@ -44,6 +44,9 @@ public:
     void cargar_mapas_guardados(const std::vector<DatosMapaGuardado>& mapas_guardados);
     std::vector<DatosMapaGuardado> obtener_mapas_guardados() const;
 
+    void cargar_cofres_guardados(const std::vector<DatosCofreGuardado>& cofres_guardados);
+    std::vector<DatosCofreGuardado> obtener_cofres_guardados() const;
+
     bool existe(const std::string& id_mapa) const;
 
     // Los ids de todos los mapas con sector, para quien necesite recorrerlos todos (por ejemplo,

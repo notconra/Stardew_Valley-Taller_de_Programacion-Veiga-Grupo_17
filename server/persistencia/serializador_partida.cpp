@@ -11,7 +11,7 @@
 #include "lector_binario.h"
 
 constexpr std::array<uint8_t, 4> FIRMA_ARCHIVO = {'S', 'V', 'P', 'T'};
-constexpr uint16_t VERSION_ACTUAL = 3;
+constexpr uint16_t VERSION_ACTUAL = 4;
 
 void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGuardada& datos) {
     EscritorBinario escritor(stream);
@@ -69,6 +69,19 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
     escritor.escribir_u8(static_cast<uint8_t>(datos.mundo.niveles_mazmorra.size()));
     for (const auto& nivel : datos.mundo.niveles_mazmorra) {
         escritor.escribir_texto(nivel);
+    }
+
+    escritor.escribir_u16(static_cast<uint16_t>(datos.mundo.cofres.size()));
+    for (const auto& cofre : datos.mundo.cofres) {
+        escritor.escribir_texto(cofre.id_mapa);
+        escritor.escribir_u32(cofre.columna);
+        escritor.escribir_u32(cofre.fila);
+        escritor.escribir_u8(static_cast<uint8_t>(cofre.inventario.size()));
+        for (const auto& ranura : cofre.inventario) {
+            escritor.escribir_u8(static_cast<uint8_t>(ranura.tipo));
+            escritor.escribir_u16(ranura.cantidad);
+            escritor.escribir_u8(static_cast<uint8_t>(ranura.calidad));
+        }
     }
 }
 
@@ -148,6 +161,23 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
     uint8_t cant_niveles_mazmorra = lector.leer_u8();
     for (uint8_t i = 0; i < cant_niveles_mazmorra; ++i) {
         datos.mundo.niveles_mazmorra.push_back(lector.leer_texto());
+    }
+
+    uint16_t cant_cofres = lector.leer_u16();
+    for (uint16_t i = 0; i < cant_cofres; ++i) {
+        DatosCofreGuardado cofre;
+        cofre.id_mapa = lector.leer_texto();
+        cofre.columna = lector.leer_u32();
+        cofre.fila = lector.leer_u32();
+        uint8_t cant_ranuras = lector.leer_u8();
+        for (uint8_t j = 0; j < cant_ranuras; ++j) {
+            RanuraInventario ranura;
+            ranura.tipo = static_cast<TipoItem>(lector.leer_u8());
+            ranura.cantidad = lector.leer_u16();
+            ranura.calidad = static_cast<Calidad>(lector.leer_u8());
+            cofre.inventario.push_back(ranura);
+        }
+        datos.mundo.cofres.push_back(cofre);
     }
 
     return datos;

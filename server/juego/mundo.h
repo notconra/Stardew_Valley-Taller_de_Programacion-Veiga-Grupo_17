@@ -71,6 +71,7 @@ public:
     std::optional<DatosJugadorGuardado> obtener_datos_jugador(uint32_t id_jugador) const;
     std::vector<std::string> obtener_niveles_mazmorra() const;
     std::vector<DatosMapaGuardado> obtener_mapas_guardados() const;
+    std::vector<DatosCofreGuardado> obtener_cofres_guardados() const;
     Mundo(const Mundo&) = delete;
     Mundo& operator=(const Mundo&) = delete;
 };

@@ -40,6 +40,28 @@ std::vector<DatosMapaGuardado> GestorDeSectores::obtener_mapas_guardados() const
     return mapas;
 }
 
+void GestorDeSectores::cargar_cofres_guardados(
+    const std::vector<DatosCofreGuardado>& cofres_guardados) {
+    for (const auto& cofre_guardado : cofres_guardados) {
+        auto sector_encontrado = sectores.find(cofre_guardado.id_mapa);
+        if (sector_encontrado != sectores.end()) {
+            Sector& sector = sector_encontrado->second;
+            sector.cargar_cofre(
+                cofre_guardado.columna,
+                cofre_guardado.fila,
+                cofre_guardado.inventario);
+        }
+    }
+}
+
+std::vector<DatosCofreGuardado> GestorDeSectores::obtener_cofres_guardados() const {
+    std::vector<DatosCofreGuardado> cofres;
+    for (const auto& [id_mapa, sector] : sectores) {
+        sector.agregar_cofres_guardados_a(cofres);
+    }
+    return cofres;
+}
+
 bool GestorDeSectores::existe(const std::string& id_mapa) const {
     return sectores.contains(id_mapa);
 }

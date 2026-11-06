@@ -43,10 +43,20 @@ struct DatosMapaGuardado {
     bool operator==(const DatosMapaGuardado&) const = default;
 };
 
+struct DatosCofreGuardado {
+    std::string id_mapa;
+    uint32_t columna = 0;
+    uint32_t fila = 0;
+    std::vector<RanuraInventario> inventario;
+
+    bool operator==(const DatosCofreGuardado&) const = default;
+};
+
 struct DatosMundoGuardado {
     std::vector<DatosJugadorGuardado> jugadores;
     std::vector<DatosMapaGuardado> mapas;
     std::vector<std::string> niveles_mazmorra;
+    std::vector<DatosCofreGuardado> cofres;
 
     bool operator==(const DatosMundoGuardado&) const = default;
 };
