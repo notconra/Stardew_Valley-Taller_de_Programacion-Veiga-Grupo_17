@@ -8,21 +8,31 @@
 mapa_inicial = "FarmHouse"
 
 [servidor]
+# para tailscale: host = "100.117.194.20"
 host = "127.0.0.1"
 puerto = "8080"
 
 [ventana]
 titulo = "Stardew Valley"
-ancho = 720
-alto = 520
+# "ancho" y "alto" solo se usan en modo ventana, porque en pantalla completa las dimensiones son las del monitor.
+ancho = 1000
+alto = 680
+pantalla_completa = false
+# En pantalla completa no tiene efecto: la ventana ocupa todo el monitor.
+redimensionable = false
 
 [sdl]
-acelerado = true
+acelerado = false
 vsync = true
+fps_maximos = 30
 
 [graficos]
-tamano_de_tile = 16
+zoom_automatico = false
+zoom_extra = 1.25
+
 escala_de_tiles = 2
+tamano_de_tile = 16
+escala_maxima_de_tiles = 8
 color_de_fondo = [0, 0, 0, 255]
 radio_vision_mazmorra = 220
 tamano_pixel_vision_mazmorra = 15

@@ -16,8 +16,8 @@ private:
     int escala_de_tiles = 1;
 
     // Vértices acumulados por tileset. Se reutilizan entre cuadros para no reservar memoria en
-    // cada uno: un mapa grande tiene miles de tiles y pedirle uno por uno al renderer es lo que
-    // más CPU consume, así que se manda un solo lote por tileset.
+    // cada uno, porque por ejemplo un mapa grande tiene miles de tiles y pedirle uno por uno al
+    // renderer es lo que consumiría más CPU. Así que se manda un solo lote por tileset.
     mutable std::vector<std::vector<SDL_Vertex>> vertices_por_tileset;
 
     // El tileset de un id es el de mayor firstgid que sea <= al id.

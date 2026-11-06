@@ -40,9 +40,6 @@ void Dibujado::dibujar_capa(
         return;
     }
 
-    // Solo se recorren las casillas que caen dentro de la ventana. Sin esto se dibuja el mapa
-    // entero en cada cuadro aunque casi todo quede fuera de pantalla, que es lo que más CPU
-    // consume cuando el mapa es grande.
     int ancho_de_pantalla = 0;
     int alto_de_pantalla = 0;
     if (SDL_GetRendererOutputSize(renderer, &ancho_de_pantalla, &alto_de_pantalla) != 0 ||
@@ -116,8 +113,8 @@ void Dibujado::dibujar_capa(
         }
     }
 
-    // Un solo pedido de dibujo por tileset en lugar de uno por tile. En un mapa grande eso baja
-    // de miles de llamadas por cuadro a un puñado, que es lo que realmente pesa en la CPU.
+    // acá se hace un pedido de dibujo x tileset en lugar de uno x tile. Asumo que en un mapa grande
+    // eso bajaría se tendría q notar bastente la diferencia de llamados (?)
     for (std::size_t i = 0; i < vertices_por_tileset.size(); ++i) {
         const std::vector<SDL_Vertex>& vertices = vertices_por_tileset[i];
         if (vertices.empty()) {

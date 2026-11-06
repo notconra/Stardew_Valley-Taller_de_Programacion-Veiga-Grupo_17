@@ -60,7 +60,6 @@ void TierraGrafica::dibujar(
     for (const auto& [columna, fila] : tratadas) {
         const int x = columna * tamano_en_pantalla - cam_x;
         const int y = fila * tamano_en_pantalla - cam_y;
-        // Las parcelas fuera de cámara no se dibujan, igual que los tiles del mapa.
         if (x >= ancho_de_pantalla || y >= alto_de_pantalla || x + tamano_en_pantalla <= 0 ||
             y + tamano_en_pantalla <= 0) {
             continue;

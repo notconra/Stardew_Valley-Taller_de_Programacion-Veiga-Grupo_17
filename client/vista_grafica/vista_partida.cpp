@@ -6,6 +6,7 @@
 #include <chrono>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -35,6 +36,23 @@ constexpr char AYUDA_DE_TECLAS[] =
     "  M                 permitir que otros jugadores se unan (el código sale acá)\n"
     "  ESC               salir de la partida y volver al lobby\n";
 
+using TexturaDelMundo = std::unique_ptr<SDL_Texture, void (*)(SDL_Texture*)>;
+
+// Textura donde se dibuja el mundo cuando hay zoom extra. Después se estira a toda la ventana.
+TexturaDelMundo crear_textura_del_mundo(SDL_Renderer* renderer, int ancho, int alto) {
+    SDL_Texture* textura = SDL_CreateTexture(
+        renderer,
+        SDL_PIXELFORMAT_ARGB8888,
+        SDL_TEXTUREACCESS_TARGET,
+        ancho,
+        alto);
+    if (textura == nullptr) {
+        throw std::runtime_error(
+            std::string("no se pudo crear la textura del mundo: ") + SDL_GetError());
+    }
+    return TexturaDelMundo(textura, SDL_DestroyTexture);
+}
+
 }  // namespace
 
 VistaPartida::VistaPartida(
@@ -62,14 +80,57 @@ const EstadoJugador* VistaPartida::jugador_propio() const {
 }
 
 Camara VistaPartida::camara_para(const MapaGrafico& mapa) const {
-    const int casilla =
-        configuracion.graficos.tamano_de_tile * configuracion.graficos.escala_de_tiles;
+    const int casilla = configuracion.graficos.tamano_de_tile * escala_de_tiles_actual;
     return Camara(
-        configuracion.ventana.ancho,
-        configuracion.ventana.alto,
+        ancho_del_mundo,
+        alto_del_mundo,
         mapa.ancho_en_casillas() * casilla,
         mapa.alto_en_casillas() * casilla,
-        configuracion.graficos.escala_de_tiles);
+        escala_de_tiles_actual);
+}
+
+int VistaPartida::calcular_escala_de_tiles(int alto_de_la_pantalla) const {
+    const ConfiguracionGraficos& graficos = configuracion.graficos;
+    if (!graficos.zoom_automatico) {
+        return graficos.escala_de_tiles;
+    }
+
+    constexpr int FILAS_VISIBLES_DESEADAS = 15;
+    const int ideal = alto_de_la_pantalla / (graficos.tamano_de_tile * FILAS_VISIBLES_DESEADAS);
+    return std::clamp(ideal, graficos.escala_de_tiles, graficos.escala_maxima_de_tiles);
+}
+
+void VistaPartida::actualizar_tamano_del_mundo() {
+    const double zoom_extra = configuracion.graficos.zoom_extra;
+    ancho_del_mundo = std::max(1, static_cast<int>(ancho_de_pantalla / zoom_extra + 0.5));
+    alto_del_mundo = std::max(1, static_cast<int>(alto_de_pantalla / zoom_extra + 0.5));
+}
+
+bool VistaPartida::actualizar_tamano_de_pantalla(Ventana& ventana, HudInventario& hud) {
+    const int ancho = std::max(1, ventana.ancho());
+    const int alto = std::max(1, ventana.alto());
+    if (ancho == ancho_de_pantalla && alto == alto_de_pantalla) {
+        return false;
+    }
+
+    ancho_de_pantalla = ancho;
+    alto_de_pantalla = alto;
+    actualizar_tamano_del_mundo();
+    hud.configurar(ancho_de_pantalla, alto_de_pantalla);
+    return true;
+}
+
+void VistaPartida::limitar_cuadro(uint32_t inicio_del_cuadro) const {
+    const int fps_maximos = configuracion.sdl.fps_maximos;
+    if (fps_maximos <= 0) {
+        return;
+    }
+
+    const uint32_t duracion_del_cuadro = 1000u / static_cast<uint32_t>(fps_maximos);
+    const uint32_t transcurrido = SDL_GetTicks() - inicio_del_cuadro;
+    if (transcurrido < duracion_del_cuadro) {
+        SDL_Delay(duracion_del_cuadro - transcurrido);
+    }
 }
 
 bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
@@ -87,41 +148,48 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
               << AYUDA_DE_TECLAS << std::flush;
 
     InicioDeSDL inicio_de_sdl;
-    Ventana ventana(
-        configuracion.ventana.titulo.c_str(),
-        configuracion.ventana.ancho,
-        configuracion.ventana.alto);
+    Ventana ventana(configuracion.ventana);
     Renderizador renderizador(ventana, configuracion.sdl);
+
+    ancho_de_pantalla = std::max(1, ventana.ancho());
+    alto_de_pantalla = std::max(1, ventana.alto());
+    actualizar_tamano_del_mundo();
+    escala_de_tiles_actual = calcular_escala_de_tiles(alto_de_pantalla);
+
+    TexturaDelMundo mundo(nullptr, SDL_DestroyTexture);
+    if (configuracion.graficos.zoom_extra > 1.0) {
+        mundo = crear_textura_del_mundo(renderizador.ptr(), ancho_del_mundo, alto_del_mundo);
+    }
+
+    ConfiguracionGraficos graficos = configuracion.graficos;
+    graficos.escala_de_tiles = escala_de_tiles_actual;
 
     std::map<std::string, MapaGrafico> mapas_cargados;
     const auto mapa_de = [&](const std::string& id_mapa) -> const MapaGrafico& {
         return mapas_cargados
-            .try_emplace(
-                id_mapa,
-                renderizador.ptr(),
-                configuracion_de(id_mapa),
-                configuracion.graficos)
+            .try_emplace(id_mapa, renderizador.ptr(), configuracion_de(id_mapa), graficos)
             .first->second;
     };
 
     IconosDeItems iconos(renderizador.ptr());
-    Personaje personaje(configuracion.jugador, configuracion.graficos, renderizador.ptr());
+    Personaje personaje(configuracion.jugador, graficos, renderizador.ptr());
     EfectosDeSonido efectos(configuracion.sonido);
     efectos_actuales = &efectos;
     efectos.reproducir_ambiente();
-    TierraGrafica tierra(configuracion.tierra, configuracion.graficos, renderizador.ptr());
-    ObjetosGraficos objetos(renderizador.ptr(), configuracion.graficos, iconos);
-    EnemigosGraficos enemigos(renderizador.ptr(), configuracion.graficos);
+    TierraGrafica tierra(configuracion.tierra, graficos, renderizador.ptr());
+    ObjetosGraficos objetos(renderizador.ptr(), graficos, iconos);
+    EnemigosGraficos enemigos(renderizador.ptr(), graficos);
     VisionMazmorra vision_mazmorra(
         configuracion.graficos.radio_vision_mazmorra,
         configuracion.graficos.tamano_pixel_vision_mazmorra,
         configuracion.graficos.ancho_difuminado_vision_mazmorra);
     HudInventario hud(renderizador.ptr(), iconos);
-    hud.configurar(configuracion.ventana.ancho, configuracion.ventana.alto);
+    hud.configurar(ancho_de_pantalla, alto_de_pantalla);
     EntradaDelUsuario entrada;
     Camara camara = camara_para(mapa_de(mapa_actual));
 
     while (true) {
+        const uint32_t inicio_del_cuadro = SDL_GetTicks();
         entrada.leer();
 
         if (entrada.pidio_cerrar()) {
@@ -150,6 +218,14 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
 
         const EstadoJugador* propio = jugador_propio();
+        const bool cambio_el_tamano = actualizar_tamano_de_pantalla(ventana, hud);
+        if (cambio_el_tamano) {
+            if (mundo != nullptr) {
+                mundo =
+                    crear_textura_del_mundo(renderizador.ptr(), ancho_del_mundo, alto_del_mundo);
+            }
+            camara = camara_para(mapa_de(mapa_actual));
+        }
         if (propio != nullptr && propio->mapa != mapa_actual) {
             mapa_actual = propio->mapa;
             ultimo_cofre = CofreJugador{};
@@ -169,6 +245,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
 
         dibujar(
             renderizador,
+            mundo.get(),
             mapa_de(mapa_actual),
             objetos,
             enemigos,
@@ -178,6 +255,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             hud,
             vision_mazmorra,
             entrada);
+        limitar_cuadro(inicio_del_cuadro);
     }
 }
 
@@ -210,9 +288,11 @@ void VistaPartida::usar_item(uint8_t ranura, ModoUso modo, const std::optional<C
 
 std::optional<VistaPartida::Casilla> VistaPartida::casilla_apuntada(
     const EntradaDelUsuario& entrada, const Camara& camara) const {
-    const int lado = configuracion.graficos.tamano_de_tile * configuracion.graficos.escala_de_tiles;
-    const int x_en_el_mapa = entrada.raton_x() + camara.x();
-    const int y_en_el_mapa = entrada.raton_y() + camara.y();
+    const int lado = configuracion.graficos.tamano_de_tile * escala_de_tiles_actual;
+    const int raton_en_el_mundo_x = entrada.raton_x() * ancho_del_mundo / ancho_de_pantalla;
+    const int raton_en_el_mundo_y = entrada.raton_y() * alto_del_mundo / alto_de_pantalla;
+    const int x_en_el_mapa = raton_en_el_mundo_x + camara.x();
+    const int y_en_el_mapa = raton_en_el_mundo_y + camara.y();
     if (lado <= 0 || x_en_el_mapa < 0 || y_en_el_mapa < 0) {
         return std::nullopt;
     }
@@ -301,7 +381,7 @@ std::optional<std::pair<int, int>> VistaPartida::centro_de_pantalla_del_jugador(
     if (propio == nullptr) {
         return std::nullopt;
     }
-    const int escala = configuracion.graficos.escala_de_tiles;
+    const int escala = escala_de_tiles_actual;
     const int x = static_cast<int>(propio->x) * escala - camara.x() +
                   personaje.ancho_del_sprite() * escala / 2;
     const int y = static_cast<int>(propio->y) * escala - camara.y() +
@@ -423,11 +503,15 @@ bool VistaPartida::salir_de_partida_y_confirmar() {
 }
 
 void VistaPartida::dibujar(
-    Renderizador& renderizador, const MapaGrafico& mapa, const ObjetosGraficos& objetos,
-    const EnemigosGraficos& enemigos, const Personaje& personaje, const TierraGrafica& tierra,
-    const Camara& camara, const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
-    const EntradaDelUsuario& entrada) const {
+    Renderizador& renderizador, SDL_Texture* mundo, const MapaGrafico& mapa,
+    const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos, const Personaje& personaje,
+    const TierraGrafica& tierra, const Camara& camara, const HudInventario& hud,
+    const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada) const {
     SDL_Renderer* renderer = renderizador.ptr();
+
+    if (mundo != nullptr) {
+        SDL_SetRenderTarget(renderer, mundo);
+    }
 
     const ColorDeFondo& color = configuracion.graficos.color_de_fondo;
     SDL_SetRenderDrawColor(renderer, color.rojo, color.verde, color.azul, color.alfa);
@@ -448,8 +532,15 @@ void VistaPartida::dibujar(
             const bool es_el_propio = jugador.id_jugador == id_jugador;
             const bool mostrar_accion = es_el_propio && haciendo_accion;
             const Uint32 ms_de_accion = mostrar_accion ? SDL_GetTicks() - inicio_accion_ms : 0;
-            personaje
-                .dibujar(renderer, jugador, mostrar_accion, ms_de_accion, camara.x(), camara.y());
+            personaje.dibujar(
+                renderer,
+                jugador,
+                mostrar_accion,
+                ms_de_accion,
+                static_cast<int>(jugador.x),
+                static_cast<int>(jugador.y),
+                camara.x(),
+                camara.y());
         }
     }
     mapa.dibujar_sobre_los_jugadores(renderer, camara.x(), camara.y());
@@ -464,13 +555,14 @@ void VistaPartida::dibujar(
         const std::optional<std::pair<int, int>> centro =
             centro_de_pantalla_del_jugador(personaje, camara);
         if (centro.has_value()) {
-            vision_mazmorra.dibujar(
-                renderer,
-                centro->first,
-                centro->second,
-                configuracion.ventana.ancho,
-                configuracion.ventana.alto);
+            vision_mazmorra
+                .dibujar(renderer, centro->first, centro->second, ancho_del_mundo, alto_del_mundo);
         }
+    }
+
+    if (mundo != nullptr) {
+        SDL_SetRenderTarget(renderer, nullptr);
+        SDL_RenderCopy(renderer, mundo, nullptr, nullptr);
     }
 
     hud.dibujar(renderer, ultimo_inventario, ultimo_cofre, entrada.raton_x(), entrada.raton_y());

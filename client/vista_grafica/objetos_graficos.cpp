@@ -28,8 +28,6 @@ uint64_t peso_total(const AspectoDeObjeto& aspecto) {
     return total;
 }
 
-// Un objeto fuera de cámara no hace falta dibujarlo: SDL lo recortaría igual, pero el costo de
-// preparar y pedir cada copia se paga lo mismo.
 bool esta_en_pantalla(const SDL_Rect& rectangulo, int ancho_de_pantalla, int alto_de_pantalla) {
     return rectangulo.x < ancho_de_pantalla && rectangulo.y < alto_de_pantalla &&
            rectangulo.x + rectangulo.w > 0 && rectangulo.y + rectangulo.h > 0;
