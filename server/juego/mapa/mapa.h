@@ -50,6 +50,10 @@ private:
         const std::vector<int>& capa, const std::vector<int>& ids, uint8_t propiedad,
         const std::string& nombre_capa);
 
+    // Las casillas de una transición siempre se pueden pisar, aunque tengan dibujo en la capa de
+    // colisiones.
+    void liberar_transiciones();
+
 public:
     // Lanza std::runtime_error si no puede leer el TMX o la capa de colisiones.
     explicit Mapa(const ConfiguracionMapaServidor& configuracion);
