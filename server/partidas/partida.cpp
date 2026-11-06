@@ -55,16 +55,13 @@ const AparienciaPersonaje& Partida::obtener_apariencia_jugador(uint32_t id_clien
         "no sos miembro de la partida \"" + nombre + "\"");
 }
 
-DatosPartidaGuardada Partida::generar_datos_guardado(
-    const std::vector<DatosJugadorGuardado>& jugadores_guardados,
-    const std::vector<std::string>& niveles_mazmorra) const {
+DatosPartidaGuardada Partida::generar_datos_guardado(const DatosMundoGuardado& datos_mundo) const {
     DatosPartidaGuardada datos;
     datos.codigo = codigo;
     datos.nombre = nombre;
     datos.jugadores_maximos = jugadores_maximos;
     datos.multijugador = multijugador;
-    datos.jugadores = jugadores_guardados;
-    datos.niveles_mazmorra = niveles_mazmorra;
+    datos.mundo = datos_mundo;
     return datos;
 }
 

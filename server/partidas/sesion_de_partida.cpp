@@ -10,13 +10,12 @@
 
 SesionDePartida::SesionDePartida(
     const std::string& codigo_de_partida, const ConfiguracionPartidaServidor& configuracion_partida,
-    const RecursosDeJuego& recursos, const std::vector<DatosJugadorGuardado>& jugadores_guardados,
-    const std::vector<std::string>& niveles_mazmorra_guardados)
+    const RecursosDeJuego& recursos, const DatosMundoGuardado& datos_guardados)
     : codigo_partida(codigo_de_partida),
       periodo_de_tick(1000 / configuracion_partida.ticks_por_segundo),
       mundo(
           recursos, *this, static_cast<uint8_t>(configuracion_partida.ticks_por_segundo),
-          jugadores_guardados, niveles_mazmorra_guardados),
+          datos_guardados),
       comandos(static_cast<unsigned int>(configuracion_partida.capacidad_de_comandos)) {
     try {
         start();
@@ -194,4 +193,13 @@ std::vector<DatosJugadorGuardado> SesionDePartida::obtener_datos_jugadores(
 
 std::vector<std::string> SesionDePartida::obtener_niveles_mazmorra() const {
     return mundo.obtener_niveles_mazmorra();
+}
+
+DatosMundoGuardado SesionDePartida::obtener_datos_guardado(
+    const std::vector<Jugador>& miembros,
+    const std::map<uint32_t, DatosJugadorGuardado>& jugadores_guardados_previos) {
+    DatosMundoGuardado datos_mundo;
+    datos_mundo.jugadores = obtener_datos_jugadores(miembros, jugadores_guardados_previos);
+    datos_mundo.niveles_mazmorra = mundo.obtener_niveles_mazmorra();
+    return datos_mundo;
 }

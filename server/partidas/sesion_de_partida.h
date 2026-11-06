@@ -60,8 +60,7 @@ public:
     SesionDePartida(
         const std::string& codigo_partida,
         const ConfiguracionPartidaServidor& configuracion_partida, const RecursosDeJuego& recursos,
-        const std::vector<DatosJugadorGuardado>& jugadores_guardados,
-        const std::vector<std::string>& niveles_mazmorra_guardados);
+        const DatosMundoGuardado& datos_guardados = {});
 
     bool esta_viva() const;
     std::vector<std::string> obtener_niveles_mazmorra() const;
@@ -78,6 +77,10 @@ public:
 
     void run() override;
     void detener();
+
+    DatosMundoGuardado obtener_datos_guardado(
+        const std::vector<Jugador>& miembros,
+        const std::map<uint32_t, DatosJugadorGuardado>& jugadores_guardados_previos);
 
     std::vector<DatosJugadorGuardado> obtener_datos_jugadores(
         const std::vector<Jugador>& miembros,

@@ -45,18 +45,11 @@ Partida& AdministradorDePartidas::buscar_partida(const std::string& codigo_parti
 std::unique_ptr<SesionDePartida> AdministradorDePartidas::crear_sesion(
     const std::string& codigo_partida) const {
     auto datos_guardados = cargar_datos_guardados(codigo_partida);
-    std::vector<DatosJugadorGuardado> jugadores_guardados;
-    std::vector<std::string> niveles_mazmorra_guardados;
+    DatosMundoGuardado datos_mundo;
     if (datos_guardados.has_value()) {
-        jugadores_guardados = datos_guardados->jugadores;
-        niveles_mazmorra_guardados = datos_guardados->niveles_mazmorra;
+        datos_mundo = datos_guardados->mundo;
     }
-    return std::make_unique<SesionDePartida>(
-        codigo_partida,
-        configuracion,
-        recursos,
-        jugadores_guardados,
-        niveles_mazmorra_guardados);
+    return std::make_unique<SesionDePartida>(codigo_partida, configuracion, recursos, datos_mundo);
 }
 
 std::vector<InfoPartida> AdministradorDePartidas::listar(uint32_t id_cliente) const {
@@ -317,7 +310,7 @@ void AdministradorDePartidas::cargar_partida(const std::string& ruta_archivo) {
     DatosPartidaGuardada datos = SerializadorPartida::cargar_desde_archivo(ruta_archivo);
 
     std::vector<Jugador> miembros;
-    for (const auto& jugador_guardado : datos.jugadores) {
+    for (const auto& jugador_guardado : datos.mundo.jugadores) {
         miembros.push_back(Jugador{
             jugador_guardado.id_cliente,
             jugador_guardado.id_jugador,
@@ -373,7 +366,7 @@ void AdministradorDePartidas::guardar_partida(const std::string& codigo_partida)
         try {
             DatosPartidaGuardada datos_previos =
                 SerializadorPartida::cargar_desde_archivo(ruta_archivo);
-            for (const auto& jugador_previo : datos_previos.jugadores) {
+            for (const auto& jugador_previo : datos_previos.mundo.jugadores) {
                 jugadores_guardados_previos[jugador_previo.id_jugador] = jugador_previo;
             }
         } catch (const std::exception& error) {
@@ -383,14 +376,13 @@ void AdministradorDePartidas::guardar_partida(const std::string& codigo_partida)
         }
     }
 
-    std::vector<DatosJugadorGuardado> jugadores_guardados =
-        sesion.obtener_datos_jugadores(partida.obtener_jugadores(), jugadores_guardados_previos);
-    std::vector<std::string> niveles_mazmorra = sesion.obtener_niveles_mazmorra();
+    DatosMundoGuardado datos_mundo =
+        sesion.obtener_datos_guardado(partida.obtener_jugadores(), jugadores_guardados_previos);
 
     std::filesystem::create_directories("partidas");
     SerializadorPartida::guardar_en_archivo(
         ruta_archivo,
-        partida.generar_datos_guardado(jugadores_guardados, niveles_mazmorra));
+        partida.generar_datos_guardado(datos_mundo));
 
     indice.registrar_o_actualizar(
         EntradaIndicePartida{codigo_partida, partida.obtener_nombre(), ruta_archivo});

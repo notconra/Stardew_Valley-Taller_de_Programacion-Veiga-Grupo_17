@@ -54,8 +54,7 @@ private:
 public:
     Mundo(
         const RecursosDeJuego& recursos, Notificador& notificador, uint8_t ticks_por_segundo,
-        const std::vector<DatosJugadorGuardado>& jugadores_guardados,
-        const std::vector<std::string>& niveles_mazmorra_guardados);
+        const DatosMundoGuardado& datos_guardados = {});
 
     // El jugador entra a la partida. Si es la primera vez se crea su Personaje con los ítems
     // iniciales, si ya existía (volvió después de desconectarse o restaurado de partida) conserva

@@ -6,8 +6,7 @@
 
 Mundo::Mundo(
     const RecursosDeJuego& recursos_de_juego, Notificador& notificador_de_juego,
-    uint8_t ticks_por_segundo, const std::vector<DatosJugadorGuardado>& jugadores_guardados,
-    const std::vector<std::string>& niveles_mazmorra_guardados)
+    uint8_t ticks_por_segundo, const DatosMundoGuardado& datos_guardados)
     : recursos(recursos_de_juego),
       notificador(notificador_de_juego),
       sectores(recursos_de_juego, ticks_por_segundo, personajes, notificador_de_juego),
@@ -20,9 +19,9 @@ Mundo::Mundo(
       controlador_de_cofres(sectores, personajes, notificador_de_juego),
       controlador_de_drops(
           sectores, personajes, notificador_de_juego, recursos_de_juego.juego.drops),
-      controlador_de_mazmorra(recursos_de_juego, sectores, niveles_mazmorra_guardados),
+      controlador_de_mazmorra(recursos_de_juego, sectores, datos_guardados.niveles_mazmorra),
       controlador_de_enemigos(sectores, personajes, notificador_de_juego) {
-    for (const auto& guardado : jugadores_guardados) {
+    for (const auto& guardado : datos_guardados.jugadores) {
         datos_jugadores[guardado.id_jugador] = guardado;
         std::string mapa_destino =
             guardado.mapa_actual.empty() ? recursos.mapa_inicial : guardado.mapa_actual;

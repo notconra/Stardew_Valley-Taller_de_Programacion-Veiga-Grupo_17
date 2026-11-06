@@ -24,8 +24,8 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
     escritor.escribir_u8(datos.jugadores_maximos);
     escritor.escribir_bool(datos.multijugador);
 
-    escritor.escribir_u8(static_cast<uint8_t>(datos.jugadores.size()));
-    for (const auto& jugador : datos.jugadores) {
+    escritor.escribir_u8(static_cast<uint8_t>(datos.mundo.jugadores.size()));
+    for (const auto& jugador : datos.mundo.jugadores) {
         escritor.escribir_u32(jugador.id_cliente);
         escritor.escribir_u32(jugador.id_jugador);
         escritor.escribir_texto(jugador.nombre_jugador);
@@ -55,8 +55,8 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
         escritor.escribir_u16(static_cast<uint16_t>(jugador.apariencia.indice_sombrero));
     }
 
-    escritor.escribir_u16(static_cast<uint16_t>(datos.mapas.size()));
-    for (const auto& mapa : datos.mapas) {
+    escritor.escribir_u16(static_cast<uint16_t>(datos.mundo.mapas.size()));
+    for (const auto& mapa : datos.mundo.mapas) {
         escritor.escribir_texto(mapa.id_mapa);
         escritor.escribir_u32(static_cast<uint32_t>(mapa.casillas_modificadas.size()));
         for (const auto& casilla : mapa.casillas_modificadas) {
@@ -66,8 +66,8 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
         }
     }
 
-    escritor.escribir_u8(static_cast<uint8_t>(datos.niveles_mazmorra.size()));
-    for (const auto& nivel : datos.niveles_mazmorra) {
+    escritor.escribir_u8(static_cast<uint8_t>(datos.mundo.niveles_mazmorra.size()));
+    for (const auto& nivel : datos.mundo.niveles_mazmorra) {
         escritor.escribir_texto(nivel);
     }
 }
@@ -125,7 +125,7 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
         jugador.apariencia.color_pantalon.azul = lector.leer_u8();
         jugador.apariencia.indice_sombrero = static_cast<int16_t>(lector.leer_u16());
 
-        datos.jugadores.push_back(jugador);
+        datos.mundo.jugadores.push_back(jugador);
     }
 
     uint16_t cant_mapas = lector.leer_u16();
@@ -142,12 +142,12 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
             mapa.casillas_modificadas.push_back(casilla);
         }
 
-        datos.mapas.push_back(mapa);
+        datos.mundo.mapas.push_back(mapa);
     }
 
     uint8_t cant_niveles_mazmorra = lector.leer_u8();
     for (uint8_t i = 0; i < cant_niveles_mazmorra; ++i) {
-        datos.niveles_mazmorra.push_back(lector.leer_texto());
+        datos.mundo.niveles_mazmorra.push_back(lector.leer_texto());
     }
 
     return datos;

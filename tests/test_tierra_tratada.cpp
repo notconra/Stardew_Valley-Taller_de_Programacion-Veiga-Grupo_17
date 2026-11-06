@@ -119,7 +119,7 @@ double peso_de(const std::vector<PesoDeObjeto>& pesos, TipoObjeto tipo) {
 class TratarTierraEnElMundo : public ::testing::Test {
 protected:
     NotificadorDePrueba notificador;
-    Mundo mundo{recursos(), notificador, 40, {}, {}};
+    Mundo mundo{recursos(), notificador, 40};
     uint8_t pala = 0;
     uint8_t pico = 0;
 

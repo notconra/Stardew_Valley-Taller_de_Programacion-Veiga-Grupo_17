@@ -47,9 +47,7 @@ public:
     const std::string& obtener_nombre() const;
     const std::vector<Jugador>& obtener_jugadores() const;
     const AparienciaPersonaje& obtener_apariencia_jugador(uint32_t id_cliente) const;
-    DatosPartidaGuardada generar_datos_guardado(
-        const std::vector<DatosJugadorGuardado>& jugadores_guardados,
-        const std::vector<std::string>& niveles_mazmorra) const;
+    DatosPartidaGuardada generar_datos_guardado(const DatosMundoGuardado& datos_mundo) const;
 
     // Devuelve true si el cliente tiene lugar en la partida, esté conectado o no.
     bool es_miembro(uint32_t id_cliente) const;

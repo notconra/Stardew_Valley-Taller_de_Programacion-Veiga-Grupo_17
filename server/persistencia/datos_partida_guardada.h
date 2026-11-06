@@ -39,14 +39,20 @@ struct DatosMapaGuardado {
     bool operator==(const DatosMapaGuardado&) const = default;
 };
 
+struct DatosMundoGuardado {
+    std::vector<DatosJugadorGuardado> jugadores;
+    std::vector<DatosMapaGuardado> mapas;
+    std::vector<std::string> niveles_mazmorra;
+
+    bool operator==(const DatosMundoGuardado&) const = default;
+};
+
 struct DatosPartidaGuardada {
     std::string codigo;
     std::string nombre;
     uint8_t jugadores_maximos = 0;
     bool multijugador = false;
-    std::vector<DatosJugadorGuardado> jugadores;
-    std::vector<DatosMapaGuardado> mapas;
-    std::vector<std::string> niveles_mazmorra;
+    DatosMundoGuardado mundo;
 
     bool operator==(const DatosPartidaGuardada&) const = default;
 };
