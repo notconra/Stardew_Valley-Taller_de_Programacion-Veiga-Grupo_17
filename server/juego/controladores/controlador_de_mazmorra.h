@@ -29,7 +29,11 @@ private:
     void bajar(Personaje& personaje);
 
 public:
-    ControladorDeMazmorra(const RecursosDeJuego& recursos, GestorDeSectores& sectores);
+    ControladorDeMazmorra(
+        const RecursosDeJuego& recursos, GestorDeSectores& sectores,
+        const std::vector<std::string>& niveles_guardados);
+
+    const std::vector<std::string>& obtener_niveles() const;
 
     // Se llama cuando un jugador toca una zona de transición. Devuelve true si el controlador se
     // hizo cargo (incluso para ignorarla). Si devuelve false, Mundo hace el viaje común entre

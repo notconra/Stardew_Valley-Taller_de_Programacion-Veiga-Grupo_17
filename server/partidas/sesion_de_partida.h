@@ -60,9 +60,11 @@ public:
     SesionDePartida(
         const std::string& codigo_partida,
         const ConfiguracionPartidaServidor& configuracion_partida, const RecursosDeJuego& recursos,
-        const std::vector<DatosJugadorGuardado>& jugadores_guardados = {});
+        const std::vector<DatosJugadorGuardado>& jugadores_guardados,
+        const std::vector<std::string>& niveles_mazmorra_guardados);
 
     bool esta_viva() const;
+    std::vector<std::string> obtener_niveles_mazmorra() const;
 
     void entrar(
         uint32_t id_jugador, Queue<EventoServidor>& cola_eventos,

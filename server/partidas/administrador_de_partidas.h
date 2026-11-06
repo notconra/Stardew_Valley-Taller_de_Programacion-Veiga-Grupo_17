@@ -51,7 +51,7 @@ private:
 
     void cargar_partidas_guardadas();
     void cargar_partida(const std::string& ruta_archivo);
-    std::vector<DatosJugadorGuardado> cargar_jugadores_guardados(
+    std::optional<DatosPartidaGuardada> cargar_datos_guardados(
         const std::string& codigo_partida) const;
 
 public:

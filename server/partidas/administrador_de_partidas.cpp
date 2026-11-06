@@ -44,13 +44,19 @@ Partida& AdministradorDePartidas::buscar_partida(const std::string& codigo_parti
 
 std::unique_ptr<SesionDePartida> AdministradorDePartidas::crear_sesion(
     const std::string& codigo_partida) const {
-    std::vector<DatosJugadorGuardado> jugadores_guardados =
-        cargar_jugadores_guardados(codigo_partida);
+    auto datos_guardados = cargar_datos_guardados(codigo_partida);
+    std::vector<DatosJugadorGuardado> jugadores_guardados;
+    std::vector<std::string> niveles_mazmorra_guardados;
+    if (datos_guardados.has_value()) {
+        jugadores_guardados = datos_guardados->jugadores;
+        niveles_mazmorra_guardados = datos_guardados->niveles_mazmorra;
+    }
     return std::make_unique<SesionDePartida>(
         codigo_partida,
         configuracion,
         recursos,
-        jugadores_guardados);
+        jugadores_guardados,
+        niveles_mazmorra_guardados);
 }
 
 std::vector<InfoPartida> AdministradorDePartidas::listar(uint32_t id_cliente) const {
@@ -335,15 +341,14 @@ void AdministradorDePartidas::cargar_partida(const std::string& ruta_archivo) {
     }
 }
 
-std::vector<DatosJugadorGuardado> AdministradorDePartidas::cargar_jugadores_guardados(
+std::optional<DatosPartidaGuardada> AdministradorDePartidas::cargar_datos_guardados(
     const std::string& codigo_partida) const {
     const std::string ruta_archivo = "partidas/" + codigo_partida + ".dat";
     if (!std::filesystem::exists(ruta_archivo)) {
-        return {};
+        return std::nullopt;
     }
     try {
-        DatosPartidaGuardada datos = SerializadorPartida::cargar_desde_archivo(ruta_archivo);
-        return datos.jugadores;
+        return SerializadorPartida::cargar_desde_archivo(ruta_archivo);
     } catch (const std::exception& error) {
         throw ErrorDePartida(
             CodigoError::NO_PERMITIDO,
@@ -380,11 +385,12 @@ void AdministradorDePartidas::guardar_partida(const std::string& codigo_partida)
 
     std::vector<DatosJugadorGuardado> jugadores_guardados =
         sesion.obtener_datos_jugadores(partida.obtener_jugadores(), jugadores_guardados_previos);
+    std::vector<std::string> niveles_mazmorra = sesion.obtener_niveles_mazmorra();
 
     std::filesystem::create_directories("partidas");
     SerializadorPartida::guardar_en_archivo(
         ruta_archivo,
-        partida.generar_datos_guardado(jugadores_guardados));
+        partida.generar_datos_guardado(jugadores_guardados, niveles_mazmorra));
 
     indice.registrar_o_actualizar(
         EntradaIndicePartida{codigo_partida, partida.obtener_nombre(), ruta_archivo});

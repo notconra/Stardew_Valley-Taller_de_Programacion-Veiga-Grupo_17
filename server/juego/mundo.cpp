@@ -6,7 +6,8 @@
 
 Mundo::Mundo(
     const RecursosDeJuego& recursos_de_juego, Notificador& notificador_de_juego,
-    uint8_t ticks_por_segundo, const std::vector<DatosJugadorGuardado>& jugadores_guardados)
+    uint8_t ticks_por_segundo, const std::vector<DatosJugadorGuardado>& jugadores_guardados,
+    const std::vector<std::string>& niveles_mazmorra_guardados)
     : recursos(recursos_de_juego),
       notificador(notificador_de_juego),
       sectores(recursos_de_juego, ticks_por_segundo, personajes, notificador_de_juego),
@@ -19,7 +20,7 @@ Mundo::Mundo(
       controlador_de_cofres(sectores, personajes, notificador_de_juego),
       controlador_de_drops(
           sectores, personajes, notificador_de_juego, recursos_de_juego.juego.drops),
-      controlador_de_mazmorra(recursos_de_juego, sectores),
+      controlador_de_mazmorra(recursos_de_juego, sectores, niveles_mazmorra_guardados),
       controlador_de_enemigos(sectores, personajes, notificador_de_juego) {
     for (const auto& guardado : jugadores_guardados) {
         datos_jugadores[guardado.id_jugador] = guardado;
@@ -197,4 +198,8 @@ std::optional<DatosJugadorGuardado> Mundo::obtener_datos_jugador(uint32_t id_jug
         return guardado->second;
     }
     return std::nullopt;
+}
+
+std::vector<std::string> Mundo::obtener_niveles_mazmorra() const {
+    return controlador_de_mazmorra.obtener_niveles();
 }

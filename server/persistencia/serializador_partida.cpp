@@ -11,7 +11,7 @@
 #include "lector_binario.h"
 
 constexpr std::array<uint8_t, 4> FIRMA_ARCHIVO = {'S', 'V', 'P', 'T'};
-constexpr uint16_t VERSION_ACTUAL = 2;
+constexpr uint16_t VERSION_ACTUAL = 3;
 
 void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGuardada& datos) {
     EscritorBinario escritor(stream);
@@ -64,6 +64,11 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
             escritor.escribir_u32(casilla.fila);
             escritor.escribir_u8(casilla.propiedad);
         }
+    }
+
+    escritor.escribir_u8(static_cast<uint8_t>(datos.niveles_mazmorra.size()));
+    for (const auto& nivel : datos.niveles_mazmorra) {
+        escritor.escribir_texto(nivel);
     }
 }
 
@@ -138,6 +143,11 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
         }
 
         datos.mapas.push_back(mapa);
+    }
+
+    uint8_t cant_niveles_mazmorra = lector.leer_u8();
+    for (uint8_t i = 0; i < cant_niveles_mazmorra; ++i) {
+        datos.niveles_mazmorra.push_back(lector.leer_texto());
     }
 
     return datos;

@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <map>
+#include <string>
 #include <vector>
 
 #include "../../common/mensajes/mensajes.h"
@@ -53,7 +54,8 @@ private:
 public:
     Mundo(
         const RecursosDeJuego& recursos, Notificador& notificador, uint8_t ticks_por_segundo,
-        const std::vector<DatosJugadorGuardado>& jugadores_guardados = {});
+        const std::vector<DatosJugadorGuardado>& jugadores_guardados,
+        const std::vector<std::string>& niveles_mazmorra_guardados);
 
     // El jugador entra a la partida. Si es la primera vez se crea su Personaje con los ítems
     // iniciales, si ya existía (volvió después de desconectarse o restaurado de partida) conserva
@@ -68,6 +70,7 @@ public:
 
     // Devuelve los datos guardados o en vivo de un jugador (posición, inventario, etc.).
     std::optional<DatosJugadorGuardado> obtener_datos_jugador(uint32_t id_jugador) const;
+    std::vector<std::string> obtener_niveles_mazmorra() const;
     Mundo(const Mundo&) = delete;
     Mundo& operator=(const Mundo&) = delete;
 };

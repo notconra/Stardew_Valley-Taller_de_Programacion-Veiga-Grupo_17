@@ -46,6 +46,7 @@ struct DatosPartidaGuardada {
     bool multijugador = false;
     std::vector<DatosJugadorGuardado> jugadores;
     std::vector<DatosMapaGuardado> mapas;
+    std::vector<std::string> niveles_mazmorra;
 
     bool operator==(const DatosPartidaGuardada&) const = default;
 };
