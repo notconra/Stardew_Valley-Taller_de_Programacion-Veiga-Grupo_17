@@ -1,5 +1,6 @@
 #include "dibujado.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <vector>
 
@@ -8,6 +9,7 @@ void Dibujado::configurar(
     tilesets = &tilesets_configurados;
     tamano_de_tile = graficos.tamano_de_tile;
     escala_de_tiles = graficos.escala_de_tiles;
+    vertices_por_tileset.assign(tilesets_configurados.size(), {});
 }
 
 const Tileset* Dibujado::buscar_tileset(int id_de_tile) const {
@@ -34,34 +36,99 @@ void Dibujado::dibujar_capa(
 
     const int alto_en_casillas = static_cast<int>(capa.size()) / ancho_en_casillas;
     const int tamano_en_pantalla = tamano_de_tile * escala_de_tiles;
+    if (tamano_en_pantalla <= 0) {
+        return;
+    }
 
-    for (int y = 0; y < alto_en_casillas; ++y) {
-        for (int x = 0; x < ancho_en_casillas; ++x) {
+    // Solo se recorren las casillas que caen dentro de la ventana. Sin esto se dibuja el mapa
+    // entero en cada cuadro aunque casi todo quede fuera de pantalla, que es lo que más CPU
+    // consume cuando el mapa es grande.
+    int ancho_de_pantalla = 0;
+    int alto_de_pantalla = 0;
+    if (SDL_GetRendererOutputSize(renderer, &ancho_de_pantalla, &alto_de_pantalla) != 0 ||
+        ancho_de_pantalla <= 0 || alto_de_pantalla <= 0) {
+        return;
+    }
+
+    // Se usan los bordes parciales: la casilla donde empieza la cámara también se dibuja.
+    const int primera_columna = std::clamp(cam_x / tamano_en_pantalla, 0, ancho_en_casillas - 1);
+    const int ultima_columna =
+        std::clamp((cam_x + ancho_de_pantalla - 1) / tamano_en_pantalla, 0, ancho_en_casillas - 1);
+    const int primera_fila = std::clamp(cam_y / tamano_en_pantalla, 0, alto_en_casillas - 1);
+    const int ultima_fila =
+        std::clamp((cam_y + alto_de_pantalla - 1) / tamano_en_pantalla, 0, alto_en_casillas - 1);
+
+    const std::size_t cantidad_de_casillas =
+        static_cast<std::size_t>(ultima_columna - primera_columna + 1) *
+        static_cast<std::size_t>(ultima_fila - primera_fila + 1);
+    if (vertices_por_tileset.size() != tilesets->size()) {
+        vertices_por_tileset.assign(tilesets->size(), {});
+    }
+    for (std::vector<SDL_Vertex>& vertices : vertices_por_tileset) {
+        vertices.clear();
+        // La reserva se hace una sola vez: en los cuadros siguientes solo se reutiliza.
+        if (vertices.capacity() < cantidad_de_casillas * 6) {
+            vertices.reserve(cantidad_de_casillas * 6);
+        }
+    }
+
+    const SDL_Color blanco{255, 255, 255, 255};
+
+    for (int y = primera_fila; y <= ultima_fila; ++y) {
+        for (int x = primera_columna; x <= ultima_columna; ++x) {
             const int id_de_tile = capa[static_cast<std::size_t>(y) * ancho_en_casillas + x];
             if (id_de_tile <= 0) {
                 continue;
             }
 
             const Tileset* tileset = buscar_tileset(id_de_tile);
-            if (tileset == nullptr || tileset->textura == nullptr) {
+            if (tileset == nullptr || tileset->textura == nullptr ||
+                tileset->ancho_de_textura <= 0 || tileset->alto_de_textura <= 0 ||
+                tileset->columnas <= 0) {
                 continue;
             }
 
             const int indice = id_de_tile - tileset->firstgid;
+            const float u0 = static_cast<float>((indice % tileset->columnas) * tamano_de_tile) /
+                             static_cast<float>(tileset->ancho_de_textura);
+            const float v0 = static_cast<float>((indice / tileset->columnas) * tamano_de_tile) /
+                             static_cast<float>(tileset->alto_de_textura);
+            const float ancho_en_textura =
+                static_cast<float>(tamano_de_tile) / static_cast<float>(tileset->ancho_de_textura);
+            const float alto_en_textura =
+                static_cast<float>(tamano_de_tile) / static_cast<float>(tileset->alto_de_textura);
 
-            SDL_Rect origen;
-            origen.x = (indice % tileset->columnas) * tamano_de_tile;
-            origen.y = (indice / tileset->columnas) * tamano_de_tile;
-            origen.w = tamano_de_tile;
-            origen.h = tamano_de_tile;
+            const float x0 = static_cast<float>((x * tamano_en_pantalla) - cam_x);
+            const float y0 = static_cast<float>((y * tamano_en_pantalla) - cam_y);
+            const float x1 = x0 + static_cast<float>(tamano_en_pantalla);
+            const float y1 = y0 + static_cast<float>(tamano_en_pantalla);
 
-            SDL_Rect destino;
-            destino.x = (x * tamano_en_pantalla) - cam_x;
-            destino.y = (y * tamano_en_pantalla) - cam_y;
-            destino.w = tamano_en_pantalla;
-            destino.h = tamano_en_pantalla;
-
-            SDL_RenderCopy(renderer, tileset->textura, &origen, &destino);
+            const std::size_t indice_tileset = static_cast<std::size_t>(tileset - tilesets->data());
+            std::vector<SDL_Vertex>& vertices = vertices_por_tileset[indice_tileset];
+            vertices.push_back(SDL_Vertex{{x0, y0}, blanco, {u0, v0}});
+            vertices.push_back(SDL_Vertex{{x1, y0}, blanco, {u0 + ancho_en_textura, v0}});
+            vertices.push_back(
+                SDL_Vertex{{x1, y1}, blanco, {u0 + ancho_en_textura, v0 + alto_en_textura}});
+            vertices.push_back(SDL_Vertex{{x0, y0}, blanco, {u0, v0}});
+            vertices.push_back(
+                SDL_Vertex{{x1, y1}, blanco, {u0 + ancho_en_textura, v0 + alto_en_textura}});
+            vertices.push_back(SDL_Vertex{{x0, y1}, blanco, {u0, v0 + alto_en_textura}});
         }
+    }
+
+    // Un solo pedido de dibujo por tileset en lugar de uno por tile. En un mapa grande eso baja
+    // de miles de llamadas por cuadro a un puñado, que es lo que realmente pesa en la CPU.
+    for (std::size_t i = 0; i < vertices_por_tileset.size(); ++i) {
+        const std::vector<SDL_Vertex>& vertices = vertices_por_tileset[i];
+        if (vertices.empty()) {
+            continue;
+        }
+        SDL_RenderGeometry(
+            renderer,
+            (*tilesets)[i].textura,
+            vertices.data(),
+            static_cast<int>(vertices.size()),
+            nullptr,
+            0);
     }
 }
