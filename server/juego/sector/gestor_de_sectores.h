@@ -41,6 +41,9 @@ public:
     GestorDeSectores(const GestorDeSectores&) = delete;
     GestorDeSectores& operator=(const GestorDeSectores&) = delete;
 
+    void cargar_mapas_guardados(const std::vector<DatosMapaGuardado>& mapas_guardados);
+    std::vector<DatosMapaGuardado> obtener_mapas_guardados() const;
+
     bool existe(const std::string& id_mapa) const;
 
     // Los ids de todos los mapas con sector, para quien necesite recorrerlos todos (por ejemplo,

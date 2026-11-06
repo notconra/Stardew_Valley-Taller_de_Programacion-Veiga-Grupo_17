@@ -21,6 +21,7 @@ Mundo::Mundo(
           sectores, personajes, notificador_de_juego, recursos_de_juego.juego.drops),
       controlador_de_mazmorra(recursos_de_juego, sectores, datos_guardados.niveles_mazmorra),
       controlador_de_enemigos(sectores, personajes, notificador_de_juego) {
+    sectores.cargar_mapas_guardados(datos_guardados.mapas);
     for (const auto& guardado : datos_guardados.jugadores) {
         datos_jugadores[guardado.id_jugador] = guardado;
         std::string mapa_destino =
@@ -201,4 +202,8 @@ std::optional<DatosJugadorGuardado> Mundo::obtener_datos_jugador(uint32_t id_jug
 
 std::vector<std::string> Mundo::obtener_niveles_mazmorra() const {
     return controlador_de_mazmorra.obtener_niveles();
+}
+
+std::vector<DatosMapaGuardado> Mundo::obtener_mapas_guardados() const {
+    return sectores.obtener_mapas_guardados();
 }

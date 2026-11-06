@@ -16,6 +16,30 @@ GestorDeSectores::GestorDeSectores(
     }
 }
 
+void GestorDeSectores::cargar_mapas_guardados(
+    const std::vector<DatosMapaGuardado>& mapas_guardados) {
+    for (const auto& mapa_guardado : mapas_guardados) {
+        auto sector_encontrado = sectores.find(mapa_guardado.id_mapa);
+        if (sector_encontrado != sectores.end()) {
+            Sector& sector = sector_encontrado->second;
+            sector.cargar_casillas_modificadas(mapa_guardado.casillas_modificadas);
+        }
+    }
+}
+
+std::vector<DatosMapaGuardado> GestorDeSectores::obtener_mapas_guardados() const {
+    std::vector<DatosMapaGuardado> mapas;
+    for (const auto& [id_mapa, sector] : sectores) {
+        DatosMapaGuardado& mapa = mapas.emplace_back();
+        mapa.id_mapa = id_mapa;
+        sector.agregar_modificaciones_a(mapa.casillas_modificadas);
+        if (mapa.casillas_modificadas.empty()) {
+            mapas.pop_back();
+        }
+    }
+    return mapas;
+}
+
 bool GestorDeSectores::existe(const std::string& id_mapa) const {
     return sectores.contains(id_mapa);
 }

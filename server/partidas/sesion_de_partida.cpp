@@ -201,5 +201,6 @@ DatosMundoGuardado SesionDePartida::obtener_datos_guardado(
     DatosMundoGuardado datos_mundo;
     datos_mundo.jugadores = obtener_datos_jugadores(miembros, jugadores_guardados_previos);
     datos_mundo.niveles_mazmorra = mundo.obtener_niveles_mazmorra();
+    datos_mundo.mapas = mundo.obtener_mapas_guardados();
     return datos_mundo;
 }

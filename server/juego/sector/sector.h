@@ -2,12 +2,16 @@
 #define SECTOR_H
 
 #include <cstdint>
+#include <functional>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "../../../common/mensajes/mensajes.h"
 #include "../../../common/ranura_inventario.h"
 #include "../../../common/tipo_item.h"
 #include "../../../common/tipo_objeto.h"
+#include "../../persistencia/datos_partida_guardada.h"
 #include "../cofres/gestor_de_cofres.h"
 #include "../colisiones/colisiones.h"
 #include "../drops/drops.h"
@@ -50,6 +54,7 @@ public:
               mapa, colisiones, ticks_por_segundo, recursos.juego.movimiento,
               recursos.juego.aparicion),
           enemigos(recursos.catalogo_de_enemigos) {
+        registrar_manejadores_de_modificaciones();
     }
 
     Sector(const Sector&) = delete;
@@ -73,6 +78,9 @@ public:
     // true si estaba tratada.
     bool volver_tierra_a_comun(Notificador& notificador, const Casilla& casilla);
 
+    void cargar_casillas_modificadas(const std::vector<ModificacionCasilla>& modificaciones);
+    void agregar_modificaciones_a(std::vector<ModificacionCasilla>& modificaciones) const;
+
     // Coloca un objeto y avisa a los jugadores del sector. Devuelve el id del objeto, o 0 si la
     // casilla ya tiene un objeto o está bloqueada.
     int colocar_objeto(Notificador& notificador, TipoObjeto tipo, int columna, int fila);
@@ -94,6 +102,11 @@ public:
     int soltar(
         Notificador& notificador, TipoItem tipo, uint16_t cantidad, Calidad calidad, int columna,
         int fila);
+
+private:
+    std::unordered_map<TipoModificacionCasilla, std::function<void(uint32_t, uint32_t)>>
+        manejadores_modificaciones;
+    void registrar_manejadores_de_modificaciones();
 };
 
 #endif

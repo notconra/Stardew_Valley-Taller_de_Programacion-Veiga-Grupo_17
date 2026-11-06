@@ -24,6 +24,10 @@ struct DatosJugadorGuardado {
     bool operator==(const DatosJugadorGuardado&) const = default;
 };
 
+enum class TipoModificacionCasilla : uint8_t {
+    TIERRA_TRATADA = 1,
+};
+
 struct ModificacionCasilla {
     uint32_t columna = 0;
     uint32_t fila = 0;

@@ -56,6 +56,27 @@ bool Sector::volver_tierra_a_comun(Notificador& notificador, const Casilla& casi
     return true;
 }
 
+void Sector::registrar_manejadores_de_modificaciones() {
+    manejadores_modificaciones[TipoModificacionCasilla::TIERRA_TRATADA] =
+        [this](uint32_t columna, uint32_t fila) {
+            tierra.cargar(static_cast<int>(columna), static_cast<int>(fila));
+        };
+}
+
+void Sector::cargar_casillas_modificadas(const std::vector<ModificacionCasilla>& modificaciones) {
+    for (const auto& mod : modificaciones) {
+        auto manejador =
+            manejadores_modificaciones.find(static_cast<TipoModificacionCasilla>(mod.propiedad));
+        if (manejador != manejadores_modificaciones.end()) {
+            manejador->second(mod.columna, mod.fila);
+        }
+    }
+}
+
+void Sector::agregar_modificaciones_a(std::vector<ModificacionCasilla>& modificaciones) const {
+    tierra.agregar_modificaciones_a(modificaciones);
+}
+
 int Sector::colocar_objeto(Notificador& notificador, TipoObjeto tipo, int columna, int fila) {
     const int id = objetos.colocar(tipo, columna, fila);
     if (id == 0) {
