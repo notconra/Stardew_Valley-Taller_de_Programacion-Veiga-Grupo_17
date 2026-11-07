@@ -460,6 +460,27 @@ TEST_F(Dormir, ElQueSeDesconectaNoCuenta) {
     EXPECT_EQ(dia.hora().dia, 2u);
 }
 
+TEST_F(Dormir, AlTerminarElDiaAvisaUnaSolaVezParaGuardar) {
+    Personaje& personaje = entrar(PRIMERO);
+    ASSERT_TRUE(acostar(personaje));
+    avanzar(1);
+    EXPECT_FALSE(dia.tomar_dia_terminado());
+
+    dar_el_ok(personaje);
+    avanzar(1);
+    EXPECT_TRUE(dia.tomar_dia_terminado());
+    EXPECT_FALSE(dia.tomar_dia_terminado());
+}
+
+TEST_F(Dormir, AlRetomarArrancaALasSeisDelDiaGuardado) {
+    dia.continuar_en_el_dia(30);
+    EXPECT_EQ(dia.hora().dia, 30u);
+    EXPECT_EQ(dia.hora().hora, 6);
+    EXPECT_EQ(dia.hora().minuto, 0);
+    EXPECT_EQ(dia.hora().dia_de_la_estacion, 2);
+    EXPECT_EQ(dia.hora().estacion, Estacion::VERANO);
+}
+
 TEST_F(Dormir, SinNadieConectadoElDiaNoSeSaltea) {
     avanzar(10);
     EXPECT_EQ(dia.hora().dia, 1u);
