@@ -10,9 +10,12 @@
 #include <cmath>
 #include <iostream>
 #include <limits>
+#include <random>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
+#include "recursos_ui.h"
 #include "ui_pantallaprincipal.h"
 
 constexpr const char* RUTA_CUERPO_MASCULINO = "Assets/Characters/Farmer/farmer_base.png";
@@ -45,10 +48,11 @@ constexpr OpcionColor COLORES_PANTALON[] = {
 };
 constexpr int CANTIDAD_COLORES_PANTALON = sizeof(COLORES_PANTALON) / sizeof(COLORES_PANTALON[0]);
 
-constexpr int CANTIDAD_PEINADOS = 16;
-constexpr int CANTIDAD_REMERAS = 16;
-constexpr int CANTIDAD_SOMBREROS = 132;
-constexpr int CANTIDAD_TIPOS_PANTALON = 6;
+constexpr int CANTIDAD_PIELES = 24;
+constexpr int CANTIDAD_PEINADOS = 56;
+constexpr int CANTIDAD_REMERAS = 112;
+constexpr int CANTIDAD_SOMBREROS = 122;
+constexpr int CANTIDAD_TIPOS_PANTALON = 16;
 
 static int encontrar_indice_color_cercano(
     const ColorRGB& color, const OpcionColor* opciones, int cantidad) {
@@ -283,11 +287,55 @@ void PantallaPrincipal::configurar_formulario_granja(bool visible) {
 }
 
 void PantallaPrincipal::inicializar_selectores_personaje() {
+    RecursosUI& recursos = RecursosUI::instancia();
+    recursos.configurar_boton_dado(ui->btn_randomizar);
+    recursos.configurar_boton_ok(ui->btn_confirmar_personaje);
+    recursos.configurar_boton_masculino(ui->btn_genero_masculino);
+    recursos.configurar_boton_femenino(ui->btn_genero_femenino);
+
+    const std::vector<QPushButton*> flechas_anteriores = {
+        ui->btn_piel_anterior,
+        ui->btn_sombrero_anterior,
+        ui->btn_pelo_anterior,
+        ui->btn_color_pelo_anterior,
+        ui->btn_remera_anterior,
+        ui->btn_pantalon_anterior,
+        ui->btn_color_pantalon_anterior,
+    };
+    for (QPushButton* boton : flechas_anteriores) {
+        recursos.configurar_boton_flecha_izquierda(boton);
+    }
+
+    const std::vector<QPushButton*> flechas_siguientes = {
+        ui->btn_piel_siguiente,
+        ui->btn_sombrero_siguiente,
+        ui->btn_pelo_siguiente,
+        ui->btn_color_pelo_siguiente,
+        ui->btn_remera_siguiente,
+        ui->btn_pantalon_siguiente,
+        ui->btn_color_pantalon_siguiente,
+    };
+    for (QPushButton* boton : flechas_siguientes) {
+        recursos.configurar_boton_flecha_derecha(boton);
+    }
+
+    connect(
+        ui->btn_randomizar,
+        &QPushButton::clicked,
+        this,
+        &PantallaPrincipal::randomizar_personaje);
+
     es_personaje_femenino = (configuracion_jugador.ruta_cuerpo == RUTA_CUERPO_FEMENINO);
     configuracion_jugador.offset_y_remera =
         es_personaje_femenino ? OFFSET_Y_REMERA_FEMENINO : OFFSET_Y_REMERA_MASCULINO;
     configuracion_jugador.offset_y_pelo =
         es_personaje_femenino ? OFFSET_Y_PELO_FEMENINO : OFFSET_Y_PELO_MASCULINO;
+    configuracion_jugador.offset_y_sombrero =
+        es_personaje_femenino ? OFFSET_Y_SOMBRERO_FEMENINO : OFFSET_Y_SOMBRERO_MASCULINO;
+    indice_piel_seleccionada = (configuracion_jugador.indice_piel >= 0 &&
+                                configuracion_jugador.indice_piel < CANTIDAD_PIELES)
+                                   ? configuracion_jugador.indice_piel
+                                   : 0;
     indice_pelo_seleccionado = configuracion_jugador.indice_pelo;
     indice_color_pelo_seleccionado = encontrar_indice_color_cercano(
         configuracion_jugador.color_pelo,
@@ -313,6 +361,16 @@ void PantallaPrincipal::inicializar_selectores_personaje() {
     });
     connect(ui->btn_genero_femenino, &QPushButton::clicked, this, [this]() {
         es_personaje_femenino = true;
+        actualizar_previsualizacion_personaje();
+    });
+
+    connect(ui->btn_piel_anterior, &QPushButton::clicked, this, [this]() {
+        indice_piel_seleccionada =
+            (indice_piel_seleccionada - 1 + CANTIDAD_PIELES) % CANTIDAD_PIELES;
+        actualizar_previsualizacion_personaje();
+    });
+    connect(ui->btn_piel_siguiente, &QPushButton::clicked, this, [this]() {
+        indice_piel_seleccionada = (indice_piel_seleccionada + 1) % CANTIDAD_PIELES;
         actualizar_previsualizacion_personaje();
     });
 
@@ -410,16 +468,20 @@ ConfiguracionJugador PantallaPrincipal::obtener_configuracion_actual() const {
         es_personaje_femenino ? OFFSET_Y_REMERA_FEMENINO : OFFSET_Y_REMERA_MASCULINO;
     jugador.offset_y_pelo =
         es_personaje_femenino ? OFFSET_Y_PELO_FEMENINO : OFFSET_Y_PELO_MASCULINO;
+    jugador.offset_y_sombrero =
+        es_personaje_femenino ? OFFSET_Y_SOMBRERO_FEMENINO : OFFSET_Y_SOMBRERO_MASCULINO;
     jugador.indice_pelo = indice_pelo_seleccionado;
     jugador.color_pelo = COLORES_PELO[indice_color_pelo_seleccionado].rgb;
     jugador.indice_remera = indice_remera_seleccionado;
     jugador.color_pantalon = COLORES_PANTALON[indice_pantalon_color_seleccionado].rgb;
     jugador.indice_pantalon = indice_tipo_pantalon_seleccionado;
     jugador.indice_sombrero = indice_sombrero_seleccionado;
+    jugador.indice_piel = indice_piel_seleccionada;
     return jugador;
 }
 
 void PantallaPrincipal::actualizar_previsualizacion_personaje() {
+    ui->label_piel_valor->setText(QString::number(indice_piel_seleccionada + 1));
     ui->label_sombrero_valor->setText(
         indice_sombrero_seleccionado < 0 ? "Ninguno"
                                          : QString::number(indice_sombrero_seleccionado + 1));
@@ -554,4 +616,29 @@ void PantallaPrincipal::preparar_unirse_partida() {
     configurar_formulario_granja(false);
     ui->btn_confirmar_personaje->setEnabled(true);
     ui->stackedWidget->setCurrentIndex(1);
+}
+
+void PantallaPrincipal::randomizar_personaje() {
+    std::uniform_int_distribution<int> dist_genero(0, 1);
+    std::uniform_int_distribution<int> dist_piel(0, CANTIDAD_PIELES - 1);
+    std::uniform_int_distribution<int> dist_pelo(0, CANTIDAD_PEINADOS - 1);
+    std::uniform_int_distribution<int> dist_color_pelo(0, CANTIDAD_COLORES_PELO - 1);
+    std::uniform_int_distribution<int> dist_remera(0, CANTIDAD_REMERAS - 1);
+    std::uniform_int_distribution<int> dist_pantalon(0, CANTIDAD_TIPOS_PANTALON - 1);
+    std::uniform_int_distribution<int> dist_color_pantalon(0, CANTIDAD_COLORES_PANTALON - 1);
+    std::uniform_int_distribution<int> dist_sombrero(-1, CANTIDAD_SOMBREROS - 1);
+
+    es_personaje_femenino = (dist_genero(generador_azar) == 1);
+    ui->btn_genero_masculino->setChecked(!es_personaje_femenino);
+    ui->btn_genero_femenino->setChecked(es_personaje_femenino);
+
+    indice_piel_seleccionada = dist_piel(generador_azar);
+    indice_pelo_seleccionado = dist_pelo(generador_azar);
+    indice_color_pelo_seleccionado = dist_color_pelo(generador_azar);
+    indice_remera_seleccionado = dist_remera(generador_azar);
+    indice_tipo_pantalon_seleccionado = dist_pantalon(generador_azar);
+    indice_pantalon_color_seleccionado = dist_color_pantalon(generador_azar);
+    indice_sombrero_seleccionado = dist_sombrero(generador_azar);
+
+    actualizar_previsualizacion_personaje();
 }

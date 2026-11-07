@@ -9,10 +9,15 @@ constexpr int ANCHO_CELDA_PELO = 16;
 constexpr int ALTO_BLOQUE_PELO = 96;
 
 constexpr int ANCHO_CELDA_REMERA = 8;
-constexpr int ALTO_BLOQUE_REMERA = 24;
+constexpr int COLUMNAS_REMERA = 16;
+constexpr int ALTO_BLOQUE_REMERA = 32;
 
 constexpr int ANCHO_CELDA_SOMBRERO = 20;
 constexpr int ALTO_BLOQUE_SOMBRERO = 80;
+
+constexpr int COLUMNAS_HOJA_PANTALON = 10;
+constexpr int ANCHO_ESTILO_PANTALON = 192;
+constexpr int ALTO_ESTILO_PANTALON = 688;
 
 constexpr int MARGEN_X_SOMBRERO = 2;
 constexpr int MARGEN_Y_SOMBRERO = 2;
@@ -29,6 +34,11 @@ constexpr const char* RUTA_PANTALONES = "Assets/Characters/Farmer/pants.png";
 constexpr const char* RUTA_PEINADOS = "Assets/Characters/Farmer/hairstyles.png";
 constexpr const char* RUTA_REMERAS = "Assets/Characters/Farmer/shirts.png";
 constexpr const char* RUTA_SOMBREROS = "Assets/Characters/Farmer/hats.png";
+constexpr const char* RUTA_PIELES = "Assets/Characters/Farmer/skinColors.png";
+constexpr const char* RUTA_FONDO_DIA = "Assets/LooseSprites/daybg.png";
+
+constexpr int ANCHO_RECUADRO_PREVIEW = 116;
+constexpr int ALTO_RECUADRO_PREVIEW = 156;
 
 CompositorPersonaje::CompositorPersonaje()
     : hoja_cuerpo_masculino(RUTA_CUERPO_MASCULINO),
@@ -36,10 +46,12 @@ CompositorPersonaje::CompositorPersonaje()
       hoja_pantalones(RUTA_PANTALONES),
       hoja_peinados(RUTA_PEINADOS),
       hoja_remeras(RUTA_REMERAS),
-      hoja_sombreros(RUTA_SOMBREROS) {
+      hoja_sombreros(RUTA_SOMBREROS),
+      hoja_pieles(RUTA_PIELES),
+      hoja_fondo_dia(RUTA_FONDO_DIA) {
 }
 
-QImage CompositorPersonaje::aplicar_tinte(const QImage& original, const ColorRGB& color) {
+QImage CompositorPersonaje::aplicar_tinte(const QImage& original, const ColorRGB& color) const {
     QImage resultado = original.convertToFormat(QImage::Format_ARGB32);
     int factor_r = color.rojo;
     int factor_g = color.verde;
@@ -62,6 +74,45 @@ QImage CompositorPersonaje::aplicar_tinte(const QImage& original, const ColorRGB
     return resultado;
 }
 
+QImage CompositorPersonaje::aplicar_piel(const QImage& original, int indice_piel) const {
+    if (hoja_pieles.isNull() || indice_piel <= 0 || indice_piel >= hoja_pieles.height()) {
+        return original;
+    }
+    QRgb original_sombra = hoja_pieles.pixel(0, 0) & 0x00FFFFFF;
+    QRgb original_medio = hoja_pieles.pixel(1, 0) & 0x00FFFFFF;
+    QRgb original_luz = hoja_pieles.pixel(2, 0) & 0x00FFFFFF;
+
+    QRgb destino_sombra = hoja_pieles.pixel(0, indice_piel);
+    QRgb destino_medio = hoja_pieles.pixel(1, indice_piel);
+    QRgb destino_luz = hoja_pieles.pixel(2, indice_piel);
+
+    QImage resultado = original.convertToFormat(QImage::Format_ARGB32);
+    for (int y = 0; y < resultado.height(); ++y) {
+        QRgb* fila = reinterpret_cast<QRgb*>(resultado.scanLine(y));
+        for (int x = 0; x < resultado.width(); ++x) {
+            QRgb pixel = fila[x];
+            int alfa = qAlpha(pixel);
+            if (alfa == 0) {
+                continue;
+            }
+            QRgb rgb = pixel & 0x00FFFFFF;
+            if (rgb == original_sombra) {
+                fila[x] = qRgba(
+                    qRed(destino_sombra),
+                    qGreen(destino_sombra),
+                    qBlue(destino_sombra),
+                    alfa);
+            } else if (rgb == original_medio) {
+                fila[x] =
+                    qRgba(qRed(destino_medio), qGreen(destino_medio), qBlue(destino_medio), alfa);
+            } else if (rgb == original_luz) {
+                fila[x] = qRgba(qRed(destino_luz), qGreen(destino_luz), qBlue(destino_luz), alfa);
+            }
+        }
+    }
+    return resultado;
+}
+
 QPixmap CompositorPersonaje::componer(
     const ConfiguracionJugador& jugador, int factor_escala) const {
     bool es_femenino = (jugador.ruta_cuerpo == RUTA_CUERPO_FEMENINO);
@@ -76,38 +127,32 @@ QPixmap CompositorPersonaje::componer(
 
     QPainter pintor(&lienzo);
 
-    QImage sprite_cuerpo = hoja_cuerpo.copy(0, 0, ANCHO_BASE_SPRITE, ALTO_BASE_SPRITE);
+    QImage sprite_cuerpo = aplicar_piel(
+        hoja_cuerpo.copy(0, 0, ANCHO_BASE_SPRITE, ALTO_BASE_SPRITE),
+        jugador.indice_piel);
     pintor.drawImage(MARGEN_X_SOMBRERO, MARGEN_Y_SOMBRERO, sprite_cuerpo);
 
     if (!hoja_pantalones.isNull()) {
-        int ancho_cuerpo = hoja_cuerpo.width() > 0 ? hoja_cuerpo.width() : 288;
-        int columnas_pantalon = hoja_pantalones.width() / ancho_cuerpo;
-        if (columnas_pantalon <= 0) {
-            columnas_pantalon = 1;
-        }
-        int columna = jugador.indice_pantalon % columnas_pantalon;
-        int origen_x = columna * ancho_cuerpo;
+        int columna_estilo = jugador.indice_pantalon % COLUMNAS_HOJA_PANTALON;
+        int fila_estilo = jugador.indice_pantalon / COLUMNAS_HOJA_PANTALON;
+        int origen_x = columna_estilo * ANCHO_ESTILO_PANTALON;
+        int origen_y = fila_estilo * ALTO_ESTILO_PANTALON;
 
         QImage recorte_pantalon =
-            hoja_pantalones.copy(origen_x, 0, ANCHO_BASE_SPRITE, ALTO_BASE_SPRITE);
+            hoja_pantalones.copy(origen_x, origen_y, ANCHO_BASE_SPRITE, ALTO_BASE_SPRITE);
         QImage pantalon_tintado = aplicar_tinte(recorte_pantalon, jugador.color_pantalon);
         pintor.drawImage(MARGEN_X_SOMBRERO, MARGEN_Y_SOMBRERO, pantalon_tintado);
     }
 
-    QImage sprite_brazos = hoja_cuerpo.copy(
-        COLUMNA_BRAZOS * ANCHO_BASE_SPRITE,
-        0,
-        ANCHO_BASE_SPRITE,
-        ALTO_BASE_SPRITE);
+    QImage sprite_brazos = aplicar_piel(
+        hoja_cuerpo
+            .copy(COLUMNA_BRAZOS * ANCHO_BASE_SPRITE, 0, ANCHO_BASE_SPRITE, ALTO_BASE_SPRITE),
+        jugador.indice_piel);
     pintor.drawImage(MARGEN_X_SOMBRERO, MARGEN_Y_SOMBRERO, sprite_brazos);
 
     if (!hoja_remeras.isNull()) {
-        int columnas_remera = hoja_remeras.width() / ANCHO_CELDA_REMERA;
-        if (columnas_remera <= 0) {
-            columnas_remera = 1;
-        }
-        int columna_r = jugador.indice_remera % columnas_remera;
-        int pagina_r = jugador.indice_remera / columnas_remera;
+        int columna_r = jugador.indice_remera % COLUMNAS_REMERA;
+        int pagina_r = jugador.indice_remera / COLUMNAS_REMERA;
 
         QImage recorte_remera = hoja_remeras.copy(
             columna_r * ANCHO_CELDA_REMERA,
@@ -152,7 +197,9 @@ QPixmap CompositorPersonaje::componer(
             pagina_s * ALTO_BLOQUE_SOMBRERO,
             ANCHO_CELDA_SOMBRERO,
             ANCHO_CELDA_SOMBRERO);
-        pintor.drawImage(0, 0, recorte_sombrero);
+        int desvio_y_sombrero =
+            es_femenino ? OFFSET_Y_SOMBRERO_FEMENINO : OFFSET_Y_SOMBRERO_MASCULINO;
+        pintor.drawImage(0, desvio_y_sombrero, recorte_sombrero);
     }
 
     pintor.end();
@@ -162,6 +209,20 @@ QPixmap CompositorPersonaje::componer(
         ALTO_LIENZO * factor_escala,
         Qt::IgnoreAspectRatio,
         Qt::FastTransformation);
+
+    if (!hoja_fondo_dia.isNull()) {
+        QImage retrato = hoja_fondo_dia.scaled(
+            ANCHO_RECUADRO_PREVIEW,
+            ALTO_RECUADRO_PREVIEW,
+            Qt::IgnoreAspectRatio,
+            Qt::SmoothTransformation);
+        QPainter pintor_retrato(&retrato);
+        int pos_x = (ANCHO_RECUADRO_PREVIEW - escalada.width()) / 2;
+        int pos_y = ALTO_RECUADRO_PREVIEW - escalada.height() - 6;
+        pintor_retrato.drawImage(pos_x, pos_y, escalada);
+        pintor_retrato.end();
+        return QPixmap::fromImage(retrato);
+    }
 
     return QPixmap::fromImage(escalada);
 }

@@ -5,6 +5,7 @@
 #include <QPaintEvent>
 #include <QPixmap>
 #include <QTimer>
+#include <random>
 #include <string>
 
 #include "../configuracion/configuracion_cliente_datos.h"
@@ -39,6 +40,7 @@ private slots:
     void confirmar_retomar_partida();
     void actualizar_seleccion_partida();
     void actualizar_animacion();
+    void randomizar_personaje();
 
 private:
     Ui::PantallaPrincipal* ui;
@@ -58,6 +60,7 @@ private:
     std::string codigo_partida_a_unirse;
     ConfiguracionJugador& configuracion_jugador;
     CompositorPersonaje compositor_personaje;
+    int indice_piel_seleccionada = 0;
     int indice_pelo_seleccionado = 0;
     int indice_color_pelo_seleccionado = 0;
     int indice_remera_seleccionado = 0;
@@ -65,6 +68,7 @@ private:
     int indice_tipo_pantalon_seleccionado = 0;
     int indice_sombrero_seleccionado = -1;
     bool es_personaje_femenino = false;
+    std::mt19937 generador_azar{std::random_device{}()};
 
     FondoAnimado fondo_animado;
     BotonesMenu botones_menu;

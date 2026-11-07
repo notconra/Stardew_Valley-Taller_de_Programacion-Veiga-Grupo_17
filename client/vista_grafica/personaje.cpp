@@ -1,8 +1,14 @@
 #include "personaje.h"
 
+#include <SDL2/SDL_image.h>
+
 #include <map>
+#include <stdexcept>
+#include <string>
 
 namespace {
+
+constexpr const char* RUTA_HOJA_PIELES = "Assets/Characters/Farmer/skinColors.png";
 
 constexpr int FILA_ABAJO = 0;
 constexpr int FILA_LATERAL = 1;
@@ -26,13 +32,15 @@ constexpr int FILA_SOMBRERO_POR_DIRECCION[3] = {0, 40, 60};
 constexpr int ANCHO_CELDA_PELO = 16;
 constexpr int ANCHO_CELDA_SOMBRERO = 20;
 constexpr int ANCHO_CELDA_REMERA = 8;
+constexpr int COLUMNAS_REMERA = 16;
 constexpr int ALTO_BLOQUE_PELO = 32 * 3;
-constexpr int ALTO_BLOQUE_REMERA = 8 * 3;
+constexpr int ALTO_BLOQUE_REMERA = 32;
 constexpr int ALTO_BLOQUE_SOMBRERO = 80;
 
-// Tu prototipo dibujaba todo a escala x4 "horneada" en los números (sprite de 16px -> 64px en
-// pantalla), así que estos desvíos estaban en píxeles de pantalla a esa escala. Acá se dividen
-// por 4 para expresarlos en unidades de mundo, y se multiplican por escala_de_tiles al dibujar.
+constexpr int COLUMNAS_HOJA_PANTALON = 10;
+constexpr int ANCHO_ESTILO_PANTALON = 192;
+constexpr int ALTO_ESTILO_PANTALON = 688;
+
 constexpr int DESVIO_ACCION_ABAJO[4] = {1, 0, -1, -2};
 constexpr int DESVIO_ACCION_LATERAL[4] = {0, -1, -2, -3};
 constexpr int DESVIO_ACCION_ARRIBA[4] = {1, 1, 0, 0};
@@ -57,12 +65,72 @@ int desvio_de_accion(int fila_direccion, int cuadro) {
     }
 }
 
+SDL_Texture* cargar_textura_cuerpo(
+    const std::string& ruta, int indice_piel, SDL_Renderer* renderer) {
+    SDL_Surface* surface = IMG_Load(ruta.c_str());
+    if (!surface) {
+        throw std::runtime_error("no se pudo cargar la imagen " + ruta + ": " + IMG_GetError());
+    }
+    if (indice_piel > 0) {
+        SDL_Surface* pieles = IMG_Load(RUTA_HOJA_PIELES);
+        if (pieles) {
+            SDL_Surface* pieles_rgba = SDL_ConvertSurfaceFormat(pieles, SDL_PIXELFORMAT_RGBA32, 0);
+            SDL_Surface* surface_rgba =
+                SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA32, 0);
+            SDL_FreeSurface(surface);
+            SDL_FreeSurface(pieles);
+            surface = surface_rgba;
+
+            if (indice_piel < pieles_rgba->h) {
+                Uint32* pixeles_piel = static_cast<Uint32*>(pieles_rgba->pixels);
+                int pitch_piel = pieles_rgba->pitch / sizeof(Uint32);
+                Uint32 color_base_sombra = pixeles_piel[0];
+                Uint32 color_base_medio = pixeles_piel[1];
+                Uint32 color_base_brillo = pixeles_piel[2];
+
+                Uint32 color_destino_sombra = pixeles_piel[indice_piel * pitch_piel + 0];
+                Uint32 color_destino_medio = pixeles_piel[indice_piel * pitch_piel + 1];
+                Uint32 color_destino_brillo = pixeles_piel[indice_piel * pitch_piel + 2];
+
+                Uint32* pixeles = static_cast<Uint32*>(surface->pixels);
+                int total_pixeles = (surface->pitch / sizeof(Uint32)) * surface->h;
+                for (int i = 0; i < total_pixeles; ++i) {
+                    Uint32 pixel_actual = pixeles[i];
+                    Uint8 canal_alfa = (pixel_actual >> 24) & 0xFF;
+                    if (canal_alfa == 0) {
+                        continue;
+                    }
+                    Uint32 color_rgb = pixel_actual & 0x00FFFFFF;
+                    if (color_rgb == (color_base_sombra & 0x00FFFFFF)) {
+                        pixeles[i] =
+                            (color_destino_sombra & 0x00FFFFFF) | (pixel_actual & 0xFF000000);
+                    } else if (color_rgb == (color_base_medio & 0x00FFFFFF)) {
+                        pixeles[i] =
+                            (color_destino_medio & 0x00FFFFFF) | (pixel_actual & 0xFF000000);
+                    } else if (color_rgb == (color_base_brillo & 0x00FFFFFF)) {
+                        pixeles[i] =
+                            (color_destino_brillo & 0x00FFFFFF) | (pixel_actual & 0xFF000000);
+                    }
+                }
+            }
+            SDL_FreeSurface(pieles_rgba);
+        }
+    }
+    SDL_Texture* textura_cuerpo = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_FreeSurface(surface);
+    if (!textura_cuerpo) {
+        throw std::runtime_error("no se pudo crear textura cuerpo: " + std::string(SDL_GetError()));
+    }
+    return textura_cuerpo;
+}
+
 }  // namespace
 
 Personaje::Personaje(
     const ConfiguracionJugador& configuracion_jugador,
     const ConfiguracionGraficos& configuracion_graficos, SDL_Renderer* renderer)
-    : cuerpo(configuracion_jugador.ruta_cuerpo, renderer),
+    : cuerpo(cargar_textura_cuerpo(
+          configuracion_jugador.ruta_cuerpo, configuracion_jugador.indice_piel, renderer)),
       pantalon(configuracion_jugador.ruta_pantalon, renderer),
       pelo(configuracion_jugador.ruta_pelo, renderer),
       sombrero(configuracion_jugador.ruta_sombrero, renderer),
@@ -76,7 +144,8 @@ Personaje::Personaje(
       indice_remera(configuracion_jugador.indice_remera),
       indice_pantalon(configuracion_jugador.indice_pantalon),
       offset_y_remera(configuracion_jugador.offset_y_remera),
-      offset_y_pelo(configuracion_jugador.offset_y_pelo) {
+      offset_y_pelo(configuracion_jugador.offset_y_pelo),
+      offset_y_sombrero(configuracion_jugador.offset_y_sombrero) {
     SDL_SetTextureColorMod(
         pelo.ptr(),
         configuracion_jugador.color_pelo.rojo,
@@ -88,13 +157,6 @@ Personaje::Personaje(
         configuracion_jugador.color_pantalon.verde,
         configuracion_jugador.color_pantalon.azul);
 
-    ancho_hoja_cuerpo = 0;
-    SDL_QueryTexture(cuerpo.ptr(), nullptr, nullptr, &ancho_hoja_cuerpo, nullptr);
-
-    int ancho_hoja_pantalon = 0;
-    SDL_QueryTexture(pantalon.ptr(), nullptr, nullptr, &ancho_hoja_pantalon, nullptr);
-    columnas_pantalon = ancho_hoja_pantalon / ancho_hoja_cuerpo;
-
     int ancho_hoja_pelo = 0;
     SDL_QueryTexture(pelo.ptr(), nullptr, nullptr, &ancho_hoja_pelo, nullptr);
     columnas_pelo = ancho_hoja_pelo / ANCHO_CELDA_PELO;
@@ -105,7 +167,7 @@ Personaje::Personaje(
 
     int ancho_hoja_remera = 0;
     SDL_QueryTexture(remera.ptr(), nullptr, nullptr, &ancho_hoja_remera, nullptr);
-    columnas_remera = ancho_hoja_remera / ANCHO_CELDA_REMERA;
+    columnas_remera = COLUMNAS_REMERA;
 }
 
 int Personaje::ancho_del_sprite() const {
@@ -159,9 +221,11 @@ void Personaje::dibujar(
     const SDL_Rect origen_cuerpo{columna_cuerpo * ancho, fila_cuerpo * alto, ancho, alto};
     SDL_RenderCopyEx(renderer, cuerpo.ptr(), &origen_cuerpo, &destino_cuerpo, 0.0, nullptr, flip);
 
-    const int columna_pantalon = indice_pantalon % columnas_pantalon;
+    const int columna_estilo_pantalon = indice_pantalon % COLUMNAS_HOJA_PANTALON;
+    const int fila_estilo_pantalon = indice_pantalon / COLUMNAS_HOJA_PANTALON;
     SDL_Rect origen_pantalon = origen_cuerpo;
-    origen_pantalon.x += columna_pantalon * ancho_hoja_cuerpo;
+    origen_pantalon.x += columna_estilo_pantalon * ANCHO_ESTILO_PANTALON;
+    origen_pantalon.y += fila_estilo_pantalon * ALTO_ESTILO_PANTALON;
     SDL_RenderCopyEx(
         renderer,
         pantalon.ptr(),
@@ -199,7 +263,8 @@ void Personaje::dibujar(
         const int margen_sombrero = (ANCHO_CELDA_SOMBRERO - ancho) / 2;
         const SDL_Rect destino_sombrero{
             x_pantalla - margen_sombrero * escala_de_tiles,
-            y_pantalla + (desvio_y_accesorios - margen_sombrero) * escala_de_tiles,
+            y_pantalla +
+                (offset_y_sombrero + desvio_y_accesorios - margen_sombrero) * escala_de_tiles,
             ANCHO_CELDA_SOMBRERO * escala_de_tiles,
             ANCHO_CELDA_SOMBRERO * escala_de_tiles};
         const SDL_RendererFlip flip_sombrero =

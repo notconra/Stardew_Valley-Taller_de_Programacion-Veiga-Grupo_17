@@ -187,56 +187,77 @@ QHeaderView::section {
 }
 
 QLabel#label_previsualizacion_personaje {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #4fa4f4, stop:0.65 #89c5f8, stop:0.66 #48a02a, stop:1 #35781e);
-    border: 4px solid #8e4c19;
-    border-radius: 6px;
+    background: transparent;
+    border: none;
 }
 
+QPushButton[class="btn_flecha"],
 QPushButton.btn_flecha {
-    background-color: #ffc47a;
-    border: 3px solid #8e4c19;
-    border-radius: 4px;
-    font-size: 16px;
-    font-weight: bold;
-    color: #8e4c19;
+    background-color: transparent;
+    border: none;
     min-width: 28px;
     max-width: 28px;
-    min-height: 28px;
-    max-height: 28px;
+    min-height: 26px;
+    max-height: 26px;
     padding: 0px;
 }
 
+QPushButton[class="btn_flecha"]:hover,
 QPushButton.btn_flecha:hover {
-    background-color: #ffd89e;
+    background-color: transparent;
 }
 
+QPushButton[class="btn_flecha"]:pressed,
 QPushButton.btn_flecha:pressed {
-    background-color: #d8964d;
     padding-top: 2px;
 }
 
-QPushButton.btn_genero {
-    background-color: #ffc47a;
-    border: 3px solid #8e4c19;
-    border-radius: 6px;
-    font-size: 22px;
-    font-weight: bold;
-    min-width: 44px;
-    max-width: 44px;
-    min-height: 44px;
-    max-height: 44px;
+QPushButton[class="btn_genero"],
+QPushButton#btn_genero_masculino,
+QPushButton#btn_genero_femenino {
+    background-color: transparent;
+    border: none;
+    min-width: 32px;
+    max-width: 32px;
+    min-height: 32px;
+    max-height: 32px;
     padding: 0px;
 }
 
-QPushButton.btn_genero:hover {
-    background-color: #ffd89e;
+QPushButton[class="btn_genero"]:hover,
+QPushButton#btn_genero_masculino:hover,
+QPushButton#btn_genero_femenino:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
 }
 
-QPushButton.btn_genero:checked {
-    background-color: #ffd89e;
-    border: 3px solid #d11f00;
+QPushButton[class="btn_genero"]:checked,
+QPushButton#btn_genero_masculino:checked,
+QPushButton#btn_genero_femenino:checked {
+    background-color: rgba(255, 220, 180, 0.4);
+    border: 2px solid #b33617;
+    border-radius: 4px;
 }
 
+QPushButton#btn_randomizar {
+    background-color: transparent;
+    border: none;
+    min-width: 32px;
+    max-width: 32px;
+    min-height: 32px;
+    max-height: 32px;
+    padding: 0px;
+}
+
+QPushButton#btn_randomizar:hover {
+    background-color: transparent;
+}
+
+QPushButton#btn_randomizar:pressed {
+    padding-top: 2px;
+}
+
+QLabel[class="label_valor_selector"],
 QLabel.label_valor_selector {
     color: #5c2900;
     font-size: 15px;
@@ -247,22 +268,22 @@ QLabel.label_valor_selector {
 }
 
 QPushButton#btn_confirmar_personaje {
-    min-width: 80px;
-    font-size: 20px;
-    font-weight: bold;
-    color: #2b6d17;
-    border: 4px solid #8e4c19;
-    padding: 8px 20px;
+    background-color: transparent;
+    border: none;
+    min-width: 64px;
+    max-width: 64px;
+    min-height: 64px;
+    max-height: 64px;
+    padding: 0px;
 }
 
 QPushButton#btn_confirmar_personaje:hover {
-    background-color: #ffd89e;
-    color: #3b9020;
+    background-color: transparent;
 }
 
 QPushButton#btn_confirmar_personaje:pressed {
-    background-color: #d8964d;
-    padding-top: 10px;
+    padding-top: 3px;
+}
 }</string>
       </property>
       <property name="currentIndex">
@@ -433,31 +454,61 @@ QPushButton#btn_confirmar_personaje:pressed {
              <item>
               <layout class="QVBoxLayout" name="layout_columna_izquierda">
                <property name="spacing">
-                <number>10</number>
+                <number>4</number>
                </property>
-               <item alignment="Qt::AlignCenter">
-                <widget class="QLabel" name="label_previsualizacion_personaje">
-                 <property name="minimumSize">
-                  <size>
-                   <width>116</width>
-                   <height>156</height>
-                  </size>
+               <item>
+                <layout class="QHBoxLayout" name="layout_preview_y_dado">
+                 <property name="spacing">
+                  <number>12</number>
                  </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>116</width>
-                   <height>156</height>
-                  </size>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignmentFlag::AlignCenter</set>
-                 </property>
-                </widget>
+                 <item alignment="Qt::AlignTop">
+                  <widget class="QPushButton" name="btn_randomizar">
+                   <property name="toolTip">
+                    <string>Aleatorio</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item alignment="Qt::AlignCenter">
+                  <widget class="QLabel" name="label_previsualizacion_personaje">
+                   <property name="minimumSize">
+                    <size>
+                     <width>116</width>
+                     <height>156</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>116</width>
+                     <height>156</height>
+                    </size>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignmentFlag::AlignCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="espaciador_dado_simetria">
+                   <property name="orientation">
+                    <enum>Qt::Orientation::Horizontal</enum>
+                   </property>
+                   <property name="sizeType">
+                    <enum>QSizePolicy::Policy::Fixed</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>32</width>
+                     <height>32</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
                </item>
                <item>
                 <layout class="QHBoxLayout" name="layout_botones_genero">
                  <property name="spacing">
-                  <number>16</number>
+                  <number>12</number>
                  </property>
                  <item>
                   <spacer name="espaciador_genero_izq">
@@ -519,6 +570,56 @@ QPushButton#btn_confirmar_personaje:pressed {
                     </size>
                    </property>
                   </spacer>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="layout_piel">
+                 <item>
+                  <widget class="QLabel" name="label_piel_titulo">
+                   <property name="text">
+                    <string>Piel</string>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>115</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="btn_piel_anterior">
+                   <property name="text">
+                    <string>&lt;</string>
+                   </property>
+                   <property name="class" stdset="0">
+                    <string>btn_flecha</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLabel" name="label_piel_valor">
+                   <property name="text">
+                    <string>1</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignmentFlag::AlignCenter</set>
+                   </property>
+                   <property name="class" stdset="0">
+                    <string>label_valor_selector</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="btn_piel_siguiente">
+                   <property name="text">
+                    <string>&gt;</string>
+                   </property>
+                   <property name="class" stdset="0">
+                    <string>btn_flecha</string>
+                   </property>
+                  </widget>
                  </item>
                 </layout>
                </item>
@@ -857,7 +958,7 @@ QPushButton#btn_confirmar_personaje:pressed {
                  <item row="2" column="0">
                   <widget class="QLabel" name="label_4">
                    <property name="text">
-                    <string>Tu cosa favorita</string>
+                    <string>Cosa favorita</string>
                    </property>
                   </widget>
                  </item>

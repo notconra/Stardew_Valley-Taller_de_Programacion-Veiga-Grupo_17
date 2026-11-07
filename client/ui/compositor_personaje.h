@@ -24,8 +24,11 @@ private:
     QImage hoja_peinados;
     QImage hoja_remeras;
     QImage hoja_sombreros;
+    QImage hoja_pieles;
+    QImage hoja_fondo_dia;
 
-    static QImage aplicar_tinte(const QImage& original, const ColorRGB& color);
+    QImage aplicar_tinte(const QImage& original, const ColorRGB& color) const;
+    QImage aplicar_piel(const QImage& original, int indice_piel) const;
 };
 
 #endif  // COMPOSITOR_PERSONAJE_H
