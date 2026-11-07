@@ -22,10 +22,11 @@
 // repositorio.
 
 namespace {
+// Con un día de 1 minuto real y 20 ticks por segundo, el día son 1200 ticks.
 const double UN_MINUTO = 1.0;
 const int TICKS_POR_SEGUNDO = 20;
 const int TICKS_POR_DIA = 1200;
-const Casilla CAMA{2, 4};
+const Casilla CAMA{2, 4};  // contra la pared de arriba, ocupa (2..3, 4..6)
 const Casilla AL_PIE_DE_LA_CAMA{2, 7};
 const Casilla OTRA_CAMA{6, 4};
 const Casilla AL_PIE_DE_LA_OTRA_CAMA{6, 7};
@@ -218,12 +219,12 @@ TEST_F(Dormir, ElAcostadoVeCuantosDieronElOk) {
 
     ASSERT_TRUE(acostar(primero));
     avanzar(1);
-    EstadoDelDescanso esperado{EstadoDeDescanso::ACOSTADO, false, 0, 2};
+    EstadoDelDescanso esperado{EstadoDeDescanso::ACOSTADO, false, 0, 2, true};
     EXPECT_EQ(notificador.ultimo_descanso[PRIMERO], esperado);
 
     dar_el_ok(primero);
     avanzar(1);
-    esperado = EstadoDelDescanso{EstadoDeDescanso::ACOSTADO, true, 1, 2};
+    esperado = EstadoDelDescanso{EstadoDeDescanso::ACOSTADO, true, 1, 2, false};
     EXPECT_EQ(notificador.ultimo_descanso[PRIMERO], esperado);
     EXPECT_EQ(notificador.ultimo_descanso[SEGUNDO].estado, EstadoDeDescanso::DESPIERTO);
 }
@@ -400,6 +401,8 @@ TEST_F(Dormir, ALasDosLosDespiertosSeDesmayanYTodosTienenQueDarElOk) {
     EXPECT_EQ(acostado.descanso, EstadoDeDescanso::ACOSTADO);
     EXPECT_EQ(notificador.ultimo_descanso[PRIMERO].estado, EstadoDeDescanso::DESMAYADO);
     EXPECT_EQ(dia.hora().hora, 2);
+
+    // El reloj queda en las 2 am hasta que todos den el OK.
     avanzar(500);
     EXPECT_EQ(dia.hora().dia, 1u);
     EXPECT_EQ(dia.hora().hora, 2);
@@ -422,7 +425,10 @@ TEST_F(Dormir, ALasDosLosDespiertosSeDesmayanYTodosTienenQueDarElOk) {
 TEST_F(Dormir, DespuesDeLasDosElAcostadoYaNoSePuedeLevantar) {
     Personaje& personaje = entrar(PRIMERO);
     ASSERT_TRUE(acostar(personaje));
+    avanzar(1);
+    EXPECT_TRUE(notificador.ultimo_descanso[PRIMERO].puede_levantarse);
     avanzar(TICKS_POR_DIA);
+    EXPECT_FALSE(notificador.ultimo_descanso[PRIMERO].puede_levantarse);
 
     EXPECT_TRUE(dia.atender(personaje, ComandoCliente{Moverse{1, 0}}));
     EXPECT_EQ(personaje.descanso, EstadoDeDescanso::ACOSTADO);
