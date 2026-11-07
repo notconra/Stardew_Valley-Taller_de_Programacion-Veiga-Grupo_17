@@ -2,10 +2,12 @@
 #define GESTOR_DE_ENEMIGOS_H
 
 #include <map>
+#include <random>
 #include <utility>
 #include <vector>
 
 #include "../../../common/mensajes/mensajes.h"
+#include "../colisiones/colisiones.h"
 #include "../geometria.h"
 #include "catalogo_de_enemigos.h"
 #include "enemigo.h"
@@ -36,6 +38,12 @@ private:
     const CatalogoDeEnemigos& catalogo;
     std::map<int, Enemigo> enemigos_por_id;
     int siguiente_id = 1;  // no se reinicia, así un id viejo nunca apunta a otro enemigo
+    std::mt19937 azar{std::random_device{}()};
+
+    // Un paso al azar (o un rato de descanso) de un enemigo que no ve a ningún jugador. Devuelve
+    // true si se movió.
+    bool deambular(
+        Enemigo& enemigo, const DefinicionDeEnemigo& definicion, const Colisiones& colisiones);
 
 public:
     explicit GestorDeEnemigos(const CatalogoDeEnemigos& catalogo_de_enemigos);
@@ -55,6 +63,16 @@ public:
     // animación de ataque), para que quien llama les avise a los jugadores del sector (acá no se
     // conoce al Notificador).
     std::vector<int> actualizar();
+
+    // Cada enemigo vivo que se mueva (ticks_por_casilla > 0) y esté listo para dar un paso busca
+    // al jugador más cercano dentro de su radio de visión; si no hay ninguno, deambula al azar
+    // cerca de donde apareció. Si lo ve, avanza una casilla hacia él (en las 4
+    // direcciones, sin diagonales), por el eje en el que más lejos está o, si ese está bloqueado,
+    // por el otro. No pisa paredes, objetos, otros enemigos vivos ni jugadores, y se frena al
+    // quedar al lado (ahí le toca pegar). "jugadores" son los (id, casilla) de este sector.
+    // Devuelve los ids de los que se movieron, para avisarle a los jugadores del sector.
+    std::vector<int> mover_hacia(
+        const std::vector<std::pair<uint32_t, Casilla>>& jugadores, const Colisiones& colisiones);
 
     // Todo enemigo vivo y listo para golpear (cooldown en cero) que tenga a un jugador en una
     // casilla adyacente (las 8 direcciones) le pega al primero que encuentre y recarga su
