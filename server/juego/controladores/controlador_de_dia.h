@@ -57,7 +57,9 @@ private:
     void despertar(Personaje& personaje);
 
     // La casilla libre al lado de la cama donde se despierta, si la cama sigue en su lugar.
-    std::optional<Casilla> casilla_al_lado_de_la_cama(const UbicacionDeCama& cama) const;
+    // Prefiere una donde no haya otro jugador.
+    std::optional<Casilla> casilla_al_lado_de_la_cama(
+        const UbicacionDeCama& cama, uint32_t id_que_despierta) const;
 
     // Donde aparece el que nunca durmió: la casilla a la que lleva la puerta de la casa.
     std::optional<Casilla> casilla_de_la_entrada_de_la_casa() const;

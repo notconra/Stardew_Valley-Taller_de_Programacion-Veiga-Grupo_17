@@ -86,7 +86,7 @@ bool ControladorDelDia::todos_listos() const {
 }
 
 std::optional<Casilla> ControladorDelDia::casilla_al_lado_de_la_cama(
-    const UbicacionDeCama& cama) const {
+    const UbicacionDeCama& cama, uint32_t id_que_despierta) const {
     if (!sectores.existe(cama.mapa)) {
         return std::nullopt;
     }
@@ -97,7 +97,6 @@ std::optional<Casilla> ControladorDelDia::casilla_al_lado_de_la_cama(
         return std::nullopt;
     }
 
-    // Primero abajo (el pie de la cama), después a los costados y por último arriba.
     std::vector<Casilla> candidatas;
     for (int columna = cama.columna; columna < cama.columna + ANCHO_DE_LA_CAMA; ++columna) {
         candidatas.push_back(Casilla{columna, cama.fila + ALTO_DE_LA_CAMA});
@@ -109,13 +108,35 @@ std::optional<Casilla> ControladorDelDia::casilla_al_lado_de_la_cama(
     for (int columna = cama.columna; columna < cama.columna + ANCHO_DE_LA_CAMA; ++columna) {
         candidatas.push_back(Casilla{columna, cama.fila - 1});
     }
-    for (const Casilla& candidata : candidatas) {
-        if (sector.colisiones.esta_libre(candidata.columna, candidata.fila) &&
-            sector.mapa.transicion_en_casilla(candidata.columna, candidata.fila) == nullptr) {
-            return candidata;
+    std::vector<Casilla> con_jugadores;
+    for (uint32_t id_jugador : sector.jugadores.ids()) {
+        if (id_jugador == id_que_despierta) {
+            continue;
+        }
+        const std::optional<Casilla> casilla = sector.jugadores.casilla_del_jugador(id_jugador);
+        if (casilla.has_value()) {
+            con_jugadores.push_back(*casilla);
         }
     }
-    return std::nullopt;
+    std::optional<Casilla> libre_pero_con_alguien;
+    for (const Casilla& candidata : candidatas) {
+        if (!sector.colisiones.esta_libre(candidata.columna, candidata.fila) ||
+            sector.mapa.transicion_en_casilla(candidata.columna, candidata.fila) != nullptr) {
+            continue;
+        }
+        bool hay_alguien = false;
+        for (const Casilla& ocupada : con_jugadores) {
+            hay_alguien = hay_alguien ||
+                          (ocupada.columna == candidata.columna && ocupada.fila == candidata.fila);
+        }
+        if (!hay_alguien) {
+            return candidata;
+        }
+        if (!libre_pero_con_alguien.has_value()) {
+            libre_pero_con_alguien = candidata;
+        }
+    }
+    return libre_pero_con_alguien;
 }
 
 std::optional<Casilla> ControladorDelDia::casilla_de_la_entrada_de_la_casa() const {
@@ -151,12 +172,13 @@ void ControladorDelDia::despertar(Personaje& personaje) {
     sacar_de_la_mazmorra(personaje);
 
     if (personaje.ultima_cama.has_value()) {
-        const std::optional<Casilla> al_lado = casilla_al_lado_de_la_cama(*personaje.ultima_cama);
+        const std::optional<Casilla> al_lado =
+            casilla_al_lado_de_la_cama(*personaje.ultima_cama, personaje.id_jugador);
         if (al_lado.has_value()) {
             parar_en(personaje, personaje.ultima_cama->mapa, *al_lado);
             return;
         }
-        personaje.ultima_cama.reset();  // la levantaron con el pico
+        personaje.ultima_cama.reset();
     }
     const std::optional<Casilla> entrada = casilla_de_la_entrada_de_la_casa();
     if (entrada.has_value() && sectores.existe(MAPA_DE_LA_CASA)) {

@@ -552,7 +552,6 @@ void VistaPartida::dibujar(
         }
     }
 
-    // La mazmorra ya tiene su propia oscuridad: la noche se nota en la granja, el pueblo y la casa.
     if (hora_del_juego.has_value() && !mapa_actual_es_mazmorra()) {
         reloj_grafico.oscurecer(
             renderer,
@@ -564,7 +563,7 @@ void VistaPartida::dibujar(
     hud.dibujar(renderer, ultimo_inventario, ultimo_cofre, entrada.raton_x(), entrada.raton_y());
     if (const EstadoJugador* propio = jugador_propio(); propio != nullptr) {
         hud.dibujar_energia(renderer, propio->energia, ENERGIA_MAXIMA_JUGADOR);
-        if (mapa_actual_es_mazmorra()) {
+        if (mapa_actual_es_mazmorra() || propio->vida < VIDA_MAXIMA_JUGADOR) {
             hud.dibujar_vida(renderer, propio->vida, VIDA_MAXIMA_JUGADOR);
         }
     }
