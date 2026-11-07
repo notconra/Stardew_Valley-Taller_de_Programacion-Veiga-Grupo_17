@@ -253,6 +253,7 @@ void ProtocoloServidor::enviar_estado_enemigo(const EstadoEnemigo& estado) {
     enviar_u16(estado.vida_maxima);
     enviar_booleano(estado.atacando);
     enviar_booleano(estado.muriendo);
+    enviar_u8(static_cast<uint8_t>(estado.mirando));
 }
 
 void ProtocoloServidor::enviar_casilla_tratada(const CasillaTratada& casilla) {

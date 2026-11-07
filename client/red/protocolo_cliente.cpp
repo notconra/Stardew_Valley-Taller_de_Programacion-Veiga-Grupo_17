@@ -298,6 +298,7 @@ EstadoEnemigo ProtocoloCliente::recibir_estado_enemigo() {
     estado.vida_maxima = recibir_u16();
     estado.atacando = recibir_booleano();
     estado.muriendo = recibir_booleano();
+    estado.mirando = direccion_desde(recibir_u8());
     return estado;
 }
 CasillaTratada ProtocoloCliente::recibir_casilla_tratada() {
