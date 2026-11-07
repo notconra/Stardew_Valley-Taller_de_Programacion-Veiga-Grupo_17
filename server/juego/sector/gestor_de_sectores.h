@@ -41,6 +41,12 @@ public:
     GestorDeSectores(const GestorDeSectores&) = delete;
     GestorDeSectores& operator=(const GestorDeSectores&) = delete;
 
+    void cargar_mapas_guardados(const std::vector<DatosMapaGuardado>& mapas_guardados);
+    std::vector<DatosMapaGuardado> obtener_mapas_guardados() const;
+
+    void cargar_cofres_guardados(const std::vector<DatosCofreGuardado>& cofres_guardados);
+    std::vector<DatosCofreGuardado> obtener_cofres_guardados() const;
+
     bool existe(const std::string& id_mapa) const;
 
     // Los ids de todos los mapas con sector, para quien necesite recorrerlos todos (por ejemplo,
@@ -53,6 +59,11 @@ public:
 
     // Un jugador que entra al mundo, aparece en el punto de aparición del mapa indicado.
     void colocar_en_aparicion(Personaje& personaje, const std::string& id_mapa);
+
+    // Coloca al jugador directamente en el mapa y coordenadas indicadas.
+    void colocar_en(
+        Personaje& personaje, const std::string& id_mapa, double x, double y,
+        Direccion mirando = Direccion::ABAJO);
 
     // Lo saca de su sector actual y lo pone en (x, y) píxeles del destino.
     void trasladar(Personaje& personaje, const std::string& destino, double x, double y);

@@ -18,7 +18,7 @@ using ComandoCliente = std::variant<
     Identificarse, ListarPartidas, CrearPartida, UnirsePartida, RetomarPartida,
 
     // Partida
-    ActivarMultijugador, SalirDePartida, Moverse,
+    ActivarMultijugador, SalirDePartida, Moverse, GuardarPartida,
 
     // Inventario y acciones
     SeleccionarRanuraDeLaBarra, UsarItem, MoverItemEntreRanuras, MoverItemConCofre,

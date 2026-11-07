@@ -45,6 +45,7 @@ struct Personaje {
     uint8_t ranura_activa = 0;
     TipoAccion accion_actual = TipoAccion::NINGUNA;
     uint16_t ticks_restantes_accion = 0;
+    AparienciaPersonaje apariencia;
 
     // Vida del jugador en combate (ver "Un día en el juego" del enunciado). Arranca a tope y se
     // repone entera al dormir; por ahora el único lado implementado es "la mazmorra le pega al

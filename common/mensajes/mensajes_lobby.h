@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "../apariencia_personaje.h"
+
 // Mensajes del estado "lobby" para cuando el jugador todavía no está dentro de una partida.
 
 // Cliente a servidor
@@ -18,11 +20,13 @@ struct ListarPartidas {};
 struct CrearPartida {
     std::string nombre_partida;
     std::string nombre_jugador;
+    AparienciaPersonaje apariencia;
 };
 
 struct UnirsePartida {
     std::string codigo_partida;
     std::string nombre_jugador;
+    AparienciaPersonaje apariencia;
 };
 
 struct RetomarPartida {

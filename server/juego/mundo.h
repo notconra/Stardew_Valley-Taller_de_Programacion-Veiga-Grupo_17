@@ -3,8 +3,11 @@
 
 #include <cstdint>
 #include <map>
+#include <string>
+#include <vector>
 
 #include "../../common/mensajes/mensajes.h"
+#include "../persistencia/datos_partida_guardada.h"
 #include "controladores/controlador_de_acciones.h"
 #include "controladores/controlador_de_cofres.h"
 #include "controladores/controlador_de_dia.h"
@@ -27,6 +30,7 @@ private:
     const RecursosDeJuego& recursos;
     Notificador& notificador;
     std::map<uint32_t, Personaje> personajes;
+    std::map<uint32_t, DatosJugadorGuardado> datos_jugadores;
     GestorDeSectores sectores;
 
     ControladorDeJugador controlador_de_jugador;
@@ -51,12 +55,14 @@ private:
     void dar_de_baja(Personaje& personaje);
 
 public:
-    Mundo(const RecursosDeJuego& recursos, Notificador& notificador, uint8_t ticks_por_segundo);
+    Mundo(
+        const RecursosDeJuego& recursos, Notificador& notificador, uint8_t ticks_por_segundo,
+        const DatosMundoGuardado& datos_guardados = {});
 
     // El jugador entra a la partida. Si es la primera vez se crea su Personaje con los ítems
-    // iniciales, si ya existía (volvió después de desconectarse) conserva todo. En los dos casos
-    // aparece en el punto de aparición del mapa inicial y recibe su inventario y el snapshot.
-    void conectar(uint32_t id_jugador);
+    // iniciales, si ya existía (volvió después de desconectarse o restaurado de partida) conserva
+    // todo.
+    void conectar(uint32_t id_jugador, const AparienciaPersonaje& apariencia);
 
     // El jugador se fue. Su Personaje queda guardado.
     void desconectar(uint32_t id_jugador);
@@ -64,6 +70,11 @@ public:
     void atender(uint32_t id_jugador, const ComandoCliente& comando);
     void actualizar();
 
+    // Devuelve los datos guardados o en vivo de un jugador (posición, inventario, etc.).
+    std::optional<DatosJugadorGuardado> obtener_datos_jugador(uint32_t id_jugador) const;
+    std::vector<std::string> obtener_niveles_mazmorra() const;
+    std::vector<DatosMapaGuardado> obtener_mapas_guardados() const;
+    std::vector<DatosCofreGuardado> obtener_cofres_guardados() const;
     Mundo(const Mundo&) = delete;
     Mundo& operator=(const Mundo&) = delete;
 };

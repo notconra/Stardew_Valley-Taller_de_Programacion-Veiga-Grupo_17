@@ -31,6 +31,15 @@ EstadoDeConexion::ProximoEstado EstadoEnPartida::salir_de_partida(const SalirDeP
     return std::make_unique<EstadoLobby>(contexto);
 }
 
+EstadoDeConexion::ProximoEstado EstadoEnPartida::guardar_partida(const GuardarPartida&) {
+    try {
+        contexto.administrador.guardar_partida(codigo_partida);
+    } catch (const ErrorDePartida& error) {
+        responder_error(error.codigo(), error.what());
+    }
+    return nullptr;
+}
+
 EstadoDeConexion::ProximoEstado EstadoEnPartida::comando_de_juego(const ComandoCliente& comando) {
     try {
         sesion.recibir(id_jugador, comando);

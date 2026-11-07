@@ -180,6 +180,9 @@ public:
     // válido si el objeto se retira o se rompe.
     const ObjetoDelMundo* objeto_en(int columna, int fila) const;
 
+    // Devuelve todos los objetos colocados en el mapa que coincidan con el tipo indicado.
+    std::vector<ObjetoDelMundo> obtener_objetos_de_tipo(TipoObjeto tipo) const;
+
     int cantidad_de_objetos() const;
 };
 

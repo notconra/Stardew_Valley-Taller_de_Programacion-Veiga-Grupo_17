@@ -17,6 +17,11 @@ namespace Ui {
 class PantallaPrincipal;
 }
 
+struct OpcionColor {
+    const char* nombre;
+    ColorRGB rgb;
+};
+
 class PantallaPrincipal : public QMainWindow {
     Q_OBJECT
 
@@ -47,6 +52,8 @@ private:
     void configurar_formulario_granja(bool visible);
     void inicializar_selectores_personaje();
     void actualizar_previsualizacion_personaje();
+    int encontrar_indice_color_cercano(
+        const ColorRGB& color, const OpcionColor* opciones, int cantidad) const;
     ConfiguracionJugador obtener_configuracion_actual() const;
     void llenar_lista_partidas(const ListaPartidas& lista);
     bool procesar_evento_ingreso(const EventoServidor& evento);

@@ -251,7 +251,7 @@ TEST(ControladorDelDia, ElQueEntraALaPartidaRecibeLaHora) {
     NotificadorDePrueba notificador;
     Mundo mundo(recursos, notificador, 40);
 
-    mundo.conectar(1);
+    mundo.conectar(1, AparienciaPersonaje{});
     ASSERT_EQ(notificador.a_un_jugador_recibidas.size(), 1u);
     EXPECT_EQ(notificador.a_un_jugador_recibidas[0], hora(1, 6, 0));
 }

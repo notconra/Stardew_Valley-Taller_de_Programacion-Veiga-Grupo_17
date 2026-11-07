@@ -305,6 +305,16 @@ const ObjetoDelMundo* GestorDeObjetos::objeto_en(int columna, int fila) const {
     return id == 0 ? nullptr : &objetos_por_id.at(id);
 }
 
+std::vector<ObjetoDelMundo> GestorDeObjetos::obtener_objetos_de_tipo(TipoObjeto tipo) const {
+    std::vector<ObjetoDelMundo> resultado;
+    for (const auto& [id, objeto] : objetos_por_id) {
+        if (objeto.tipo == tipo) {
+            resultado.push_back(objeto);
+        }
+    }
+    return resultado;
+}
+
 int GestorDeObjetos::cantidad_de_objetos() const {
     return static_cast<int>(objetos_por_id.size());
 }

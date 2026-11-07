@@ -34,6 +34,7 @@ constexpr char AYUDA_DE_TECLAS[] =
     "  clic afuera       con un stack agarrado de la barra, lo tira al piso\n"
     "  clic der. (cama)  acostarse a dormir\n"
     "  Enter             dar el OK para pasar al día siguiente (acostado o desmayado)\n"
+    "  G                 guardar la partida en el servidor\n"
     "  M                 permitir que otros jugadores se unan (el código sale acá)\n"
     "  ESC               salir de la partida y volver al lobby\n";
 
@@ -244,6 +245,11 @@ void VistaPartida::procesar_entrada(
     }
     if (pedidos.confirmar && pantalla_de_descanso.visible(descanso) && !descanso.dio_el_ok) {
         conexion.enviar_comando(DarElOk{});
+    }
+
+    if (pedidos.guardar) {
+        conexion.enviar_comando(GuardarPartida{});
+        std::cout << "[partida] guardando partida en el servidor..." << std::endl;
     }
 
     elegir_ranura_de_la_barra(pedidos);
