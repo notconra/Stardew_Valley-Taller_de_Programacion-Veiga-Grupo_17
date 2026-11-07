@@ -22,6 +22,8 @@ pantalla_completa = false
 redimensionable = false
 
 [sdl]
+# si estan en linux nativo (con GPU) pongan true, si están con WSL o VM (sin GPU) ponganlo en false para usar
+# el renderer por software de SDL, que evita que use OpenGL los hilos para de llvmpipe emular la GPU.
 acelerado = false
 vsync = true
 fps_maximos = 30

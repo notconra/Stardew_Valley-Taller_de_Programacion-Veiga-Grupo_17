@@ -15,11 +15,6 @@ private:
     int tamano_de_tile = 0;
     int escala_de_tiles = 1;
 
-    // Vértices acumulados por tileset. Se reutilizan entre cuadros para no reservar memoria en
-    // cada uno, porque por ejemplo un mapa grande tiene miles de tiles y pedirle uno por uno al
-    // renderer es lo que consumiría más CPU. Así que se manda un solo lote por tileset.
-    mutable std::vector<std::vector<SDL_Vertex>> vertices_por_tileset;
-
     // El tileset de un id es el de mayor firstgid que sea <= al id.
     const Tileset* buscar_tileset(int id_de_tile) const;
 
@@ -31,6 +26,8 @@ public:
 
     // cam_x y cam_y son la esquina de la cámara, en píxeles de pantalla. El ancho del mapa se usa
     // para recorrer la capa fila por fila, el alto sale de la cantidad de casillas de la capa.
+    // Solo se recorren las casillas visibles en el área de dibujo actual (ventana o textura del
+    // mundo si hay zoom extra).
     void dibujar_capa(
         SDL_Renderer* renderer, const std::vector<int>& capa, int ancho_en_casillas, int cam_x,
         int cam_y) const;
