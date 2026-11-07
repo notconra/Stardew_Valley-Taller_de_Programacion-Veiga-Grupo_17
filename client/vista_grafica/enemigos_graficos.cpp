@@ -1,6 +1,7 @@
 #include "enemigos_graficos.h"
 
 #include <algorithm>
+#include <cstdlib>
 
 #include "color_de_vida.h"
 
@@ -26,8 +27,50 @@ void EnemigosGraficos::dibujar(
             continue;
         }
 
-        int fila = FILA_QUIETO;
+        Recorrido& recorrido = recorridos[enemigo.id];
+        const int salto_de_columna = std::abs(
+            static_cast<int>(enemigo.columna) - static_cast<int>(recorrido.columna_destino));
+        const int salto_de_fila =
+            std::abs(static_cast<int>(enemigo.fila) - static_cast<int>(recorrido.fila_destino));
+        if (salto_de_columna + salto_de_fila > 1) {
+            recorrido.desde_ms = 0;
+        }
+        if (recorrido.desde_ms == 0) {  // primera vez que se lo ve: aparece quieto donde está
+            recorrido.columna_origen = static_cast<float>(enemigo.columna);
+            recorrido.fila_origen = static_cast<float>(enemigo.fila);
+            recorrido.columna_destino = enemigo.columna;
+            recorrido.fila_destino = enemigo.fila;
+            recorrido.desde_ms = ahora - MS_POR_CASILLA;
+        }
+        const auto avance_del_paso = [&]() {
+            return std::min(1.0f, static_cast<float>(ahora - recorrido.desde_ms) / MS_POR_CASILLA);
+        };
+        if (recorrido.columna_destino != enemigo.columna ||
+            recorrido.fila_destino != enemigo.fila) {
+            const float t = avance_del_paso();
+            recorrido.columna_origen +=
+                (static_cast<float>(recorrido.columna_destino) - recorrido.columna_origen) * t;
+            recorrido.fila_origen +=
+                (static_cast<float>(recorrido.fila_destino) - recorrido.fila_origen) * t;
+            recorrido.columna_destino = enemigo.columna;
+            recorrido.fila_destino = enemigo.fila;
+            recorrido.desde_ms = ahora;
+        }
+        const float t = avance_del_paso();
+        const float columna_en_pantalla =
+            recorrido.columna_origen +
+            (static_cast<float>(recorrido.columna_destino) - recorrido.columna_origen) * t;
+        const float fila_en_pantalla =
+            recorrido.fila_origen +
+            (static_cast<float>(recorrido.fila_destino) - recorrido.fila_origen) * t;
+        const bool caminando = t < 1.0f;
+
+        const int fila_caminar = FILA_CAMINAR_POR_DIRECCION[static_cast<int>(enemigo.mirando)];
+        int fila = fila_caminar;
         int columna = 0;
+        if (caminando) {
+            columna = static_cast<int>((ahora / MS_POR_CUADRO_CAMINAR) % CUADROS_CAMINAR);
+        }
         if (enemigo.muriendo) {
             fila = FILA_MUERTE;
             columna = static_cast<int>((ahora / MS_POR_CUADRO_MUERTE) % CUADROS_MUERTE);
@@ -37,8 +80,8 @@ void EnemigosGraficos::dibujar(
         }
         const SDL_Rect origen{columna * FRAME_ANCHO, fila * FRAME_ALTO, FRAME_ANCHO, FRAME_ALTO};
         const SDL_Rect destino{
-            static_cast<int>(enemigo.columna) * casilla - cam_x + (casilla - ancho_px) / 2,
-            static_cast<int>(enemigo.fila + 1) * casilla - cam_y - alto_px,
+            static_cast<int>(columna_en_pantalla * casilla) - cam_x + (casilla - ancho_px) / 2,
+            static_cast<int>((fila_en_pantalla + 1) * casilla) - cam_y - alto_px,
             ancho_px,
             alto_px};
         SDL_RenderCopy(renderer, textura->second.ptr(), &origen, &destino);
@@ -46,6 +89,12 @@ void EnemigosGraficos::dibujar(
             dibujar_barra_de_vida(renderer, destino, enemigo.vida, enemigo.vida_maxima);
         }
     }
+    std::erase_if(recorridos, [&estado](const auto& entrada) {
+        return std::none_of(
+            estado.enemigos.begin(),
+            estado.enemigos.end(),
+            [&entrada](const EstadoEnemigo& e) { return e.id == entrada.first; });
+    });
 }
 
 void EnemigosGraficos::dibujar_barra_de_vida(

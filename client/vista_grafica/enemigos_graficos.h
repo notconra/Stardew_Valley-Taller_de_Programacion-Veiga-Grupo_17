@@ -20,7 +20,14 @@ public:
     // personaje también es más alto que ancho).
     static constexpr int FRAME_ANCHO = 16;
     static constexpr int FRAME_ALTO = 32;
-    static constexpr int FILA_QUIETO = 0;
+    // Fila de la hoja al caminar (y al estar quieto, con el primer cuadro), según hacia dónde mira.
+    // Se indexa con la Direccion: ARRIBA, ABAJO, IZQUIERDA, DERECHA.
+    static constexpr int FILA_CAMINAR_POR_DIRECCION[4] = {2, 0, 3, 1};
+    static constexpr int CUADROS_CAMINAR = 4;
+    static constexpr uint32_t MS_POR_CUADRO_CAMINAR = 120;
+    // Lo que tarda en cruzar una casilla; igual al tiempo entre pasos del servidor (20 ticks de
+    // 25 ms), así camina de corrido y sin saltos.
+    static constexpr uint32_t MS_POR_CASILLA = 500;
     static constexpr int FILA_MUERTE = 4;
     static constexpr int FILA_ATAQUE = 5;
     static constexpr int CUADROS_ATAQUE = 4;
@@ -37,7 +44,18 @@ public:
     void dibujar(SDL_Renderer* renderer, const EstadoJuego& estado, int cam_x, int cam_y) const;
 
 private:
+    // El paso que está dando cada enemigo: el servidor manda casillas enteras, y desde acá se
+    // desliza el dibujo de una a la otra.
+    struct Recorrido {
+        float columna_origen = 0;
+        float fila_origen = 0;
+        uint32_t columna_destino = 0;
+        uint32_t fila_destino = 0;
+        uint32_t desde_ms = 0;
+    };
+
     std::map<TipoEnemigo, Textura> texturas;
+    mutable std::map<uint32_t, Recorrido> recorridos;
     int tamano_de_tile = 16;
     int escala_de_tiles = 1;
 
