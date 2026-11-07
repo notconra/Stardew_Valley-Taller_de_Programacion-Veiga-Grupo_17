@@ -34,7 +34,8 @@ constexpr char AYUDA_DE_TECLAS[] =
     "  clic afuera       con un stack agarrado de la barra, lo tira al piso\n"
     "  clic der. (cama)  acostarse a dormir\n"
     "  Enter             dar el OK para pasar al día siguiente (acostado o desmayado)\n"
-    "  G                 guardar la partida en el servidor\n"
+    "  F5                (cheat) guardar la partida ya; normalmente se guarda sola al dar todos el "
+    "OK\n"
     "  M                 permitir que otros jugadores se unan (el código sale acá)\n"
     "  ESC               salir de la partida y volver al lobby\n";
 
