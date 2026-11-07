@@ -24,7 +24,8 @@ public:
 
     // Dibuja el ícono escalado dentro de "destino". No dibuja nada si el ítem no tiene imagen.
     void dibujar(
-        SDL_Renderer* renderer, TipoItem tipo, Calidad calidad, const SDL_Rect& destino) const;
+        SDL_Renderer* renderer, TipoItem tipo, Calidad calidad, const SDL_Rect& destino,
+        SDL_RendererFlip espejo = SDL_FLIP_NONE, double angulo = 0.0) const;
 
 private:
     // Tiras de sprites de 16x16: la columna 0 es la semilla y las siguientes son el cultivo con

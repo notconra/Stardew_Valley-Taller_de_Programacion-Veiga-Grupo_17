@@ -5,7 +5,9 @@
 
 #include "../../common/direccion.h"
 #include "../../common/mensajes/mensajes.h"
+#include "../../common/ranura_inventario.h"
 #include "../configuracion/configuracion_cliente_datos.h"
+#include "iconos_de_items.h"
 #include "textura.h"
 
 // Aspecto de un personaje armado por capas: cuerpo (con brazos y la superposición de la acción
@@ -47,9 +49,12 @@ public:
     int ancho_del_sprite() const;
     int alto_del_sprite() const;
 
+    // en_mano es el ítem de la ranura activa (TipoItem::NINGUNO si no se conoce o está vacía).
+    // Pico, pala y espada se ven en la mano; cualquier otro ítem se sostiene sobre la cabeza.
     void dibujar(
         SDL_Renderer* renderer, const EstadoJugador& jugador, bool haciendo_accion,
-        Uint32 ms_de_accion, int cam_x, int cam_y) const;
+        Uint32 ms_de_accion, int cam_x, int cam_y, const RanuraInventario& en_mano,
+        const IconosDeItems& iconos) const;
 };
 
 #endif
