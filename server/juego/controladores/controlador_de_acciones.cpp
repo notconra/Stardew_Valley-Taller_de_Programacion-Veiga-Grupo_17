@@ -8,6 +8,7 @@
 
 #include "../acciones/accion_atacar.h"
 #include "../acciones/accion_colocar.h"
+#include "../acciones/accion_dormir.h"
 #include "../acciones/accion_interactuar_cofre.h"
 #include "../acciones/accion_picar.h"
 #include "../acciones/accion_tratar_tierra.h"
@@ -25,6 +26,7 @@ ControladorDeAcciones::ControladorDeAcciones(
     const ConfiguracionAccionesServidor& duraciones = recursos.juego.acciones;
 
     acciones.push_back(std::make_unique<AccionUsarTransicion>());
+    acciones.push_back(std::make_unique<AccionDormir>());
     acciones.push_back(
         std::make_unique<AccionPicar>(static_cast<uint16_t>(duraciones.duracion_picar_en_ticks)));
     acciones.push_back(std::make_unique<AccionTratarTierra>(

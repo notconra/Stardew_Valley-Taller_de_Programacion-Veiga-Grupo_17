@@ -21,13 +21,17 @@ Mundo::Mundo(
           sectores, personajes, notificador_de_juego, recursos_de_juego.juego.drops),
       controlador_de_mazmorra(recursos_de_juego, sectores),
       controlador_de_enemigos(sectores, personajes, notificador_de_juego),
-      controlador_del_dia(recursos_de_juego.juego.dia, ticks_por_segundo, notificador_de_juego) {
+      controlador_del_dia(
+          recursos_de_juego.juego.dia, ticks_por_segundo, sectores, personajes, recursos_de_juego,
+          notificador_de_juego,
+          [this](Personaje& personaje) { controlador_de_mazmorra.al_desconectarse(personaje); }) {
 }
 
 void Mundo::dar_de_baja(Personaje& personaje) {
     controlador_de_mazmorra.al_desconectarse(personaje);
     controlador_de_cofres.al_desconectarse(personaje);
     controlador_de_acciones.al_desconectarse(personaje);
+    controlador_del_dia.al_desconectarse(personaje);
     sectores.quitar(personaje);
     personaje.conectado = false;
 }
@@ -71,7 +75,9 @@ void Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
     }
     Personaje& personaje = encontrado->second;
 
-    // cada comando lo reconoce un solo controlador, el primero que lo toma lo consume.
+    if (controlador_del_dia.atender(personaje, comando)) {
+        return;
+    }
     if (controlador_de_jugador.atender(personaje, comando)) {
         return;
     }

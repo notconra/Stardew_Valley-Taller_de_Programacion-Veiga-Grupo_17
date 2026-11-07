@@ -2,14 +2,24 @@
 #define PERSONAJE_H
 
 #include <cstdint>
+#include <optional>
 #include <string>
 
+#include "../../../common/estado_de_descanso.h"
 #include "../../../common/mensajes/mensajes.h"
 #include "../../../common/ranura_inventario.h"
 #include "../../../common/tipo_accion.h"
 #include "../inventario/inventario.h"
 #include "../notificador.h"
 #include "../objetos/catalogo_de_items.h"
+
+// Dónde está la cama en la que durmió por última vez: el mapa y la casilla de arriba a la
+// izquierda.
+struct UbicacionDeCama {
+    std::string mapa;
+    int columna = 0;
+    int fila = 0;
+};
 
 // Datos lógicos de un jugador en la partida como su inventario, qué ranura tiene elegida, qué cofre
 // está mirando y qué acción está ejecutando. El cuerpo (posición, dirección, colisiones) vive en
@@ -51,6 +61,12 @@ struct Personaje {
     // razón que VIDA_MAXIMA.
     static constexpr int ENERGIA_MAXIMA = ENERGIA_MAXIMA_JUGADOR;
     int energia = ENERGIA_MAXIMA;
+
+    // El fin del día (ver ControladorDelDia). Acostado en una cama o desmayado, el jugador espera
+    // el día siguiente y tiene que dar el OK. "ultima_cama" es donde se despierta si se desmaya.
+    EstadoDeDescanso descanso = EstadoDeDescanso::DESPIERTO;
+    bool dio_el_ok = false;
+    std::optional<UbicacionDeCama> ultima_cama;
 
     Personaje(
         uint32_t id, const std::string& mapa_inicial, const CatalogoDeItems& catalogo,
