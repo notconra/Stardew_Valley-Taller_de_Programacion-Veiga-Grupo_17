@@ -3,6 +3,7 @@
 
 #include <cstdint>
 
+#include "../../../common/direccion.h"
 #include "../../../common/tipo_enemigo.h"
 #include "../geometria.h"
 
@@ -17,6 +18,7 @@ struct Enemigo {
     int id = 0;
     TipoEnemigo tipo = TipoEnemigo::NINGUNO;
     Casilla posicion{};
+    Casilla origen{};  // donde apareció: de ahí no se aleja más que su radio de deambulo
     int vida = 0;
     int vida_maxima = 0;
 
@@ -44,6 +46,12 @@ struct Enemigo {
     // ticks_para_revivir: mientras es > 0 el cliente dibuja el cadáver cayendo; en 0 ya no dibuja
     // nada hasta que vuelva a estar vivo.
     uint32_t ticks_de_animacion_muerte = 0;
+
+    // Hacia dónde mira: hacia donde camina, o hacia el jugador al que le pega.
+    Direccion mirando = Direccion::ABAJO;
+
+    // Ticks que faltan para que pueda dar el próximo paso (ver GestorDeEnemigos::mover_hacia()).
+    uint32_t ticks_para_moverse = 0;
 
     bool esta_vivo() const;
 
