@@ -26,6 +26,18 @@ struct DefinicionDeEnemigo {
     // que no revive (como los Orcos, que solo pueden dropear plata al morir).
     uint32_t ticks_para_revivir = 0;
 
+    // Ticks de juego que tarda en cruzar una casilla (cuanto más alto, más lento). 0 significa que
+    // no se mueve. A 40 ticks/seg, 20 ticks son 2 casillas por segundo.
+    uint32_t ticks_por_casilla = 0;
+
+    // A cuántas casillas (en línea recta, contando diagonales) detecta a un jugador y empieza a
+    // perseguirlo. Más lejos que eso se queda quieto.
+    int radio_de_vision = 0;
+
+    // Mientras no ve a nadie, deambula al azar sin alejarse de donde apareció más que esta cantidad
+    // de casillas. 0 significa que se queda quieto hasta ver a un jugador.
+    int radio_de_deambulo = 0;
+
     // Las Skulls no se pueden matar: el jugador tiene que huir. Con esto en true, los golpes no
     // les hacen nada.
     bool invulnerable = false;
