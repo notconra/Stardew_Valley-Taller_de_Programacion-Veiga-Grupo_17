@@ -24,6 +24,7 @@ enum class TipoMensaje : uint8_t {
     SOLICITAR_INVENTARIO = 0x0E,
     SOLTAR_ITEM = 0x0F,
     CONSULTAR_CASILLA = 0x10,
+    DAR_EL_OK = 0x11,
 
     // Servidor a cliente
     ERROR_SERVIDOR = 0x81,
@@ -53,6 +54,9 @@ enum class TipoMensaje : uint8_t {
 
     // Lo que se marca en el piso con el ítem de la mano
     CASILLA_CONSULTADA = 0x92,
+
+    // Fin del día: quién está acostado o desmayado y cuántos están listos
+    ESTADO_DEL_DESCANSO = 0x93,
 };
 
 #endif

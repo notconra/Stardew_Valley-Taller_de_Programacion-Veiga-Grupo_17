@@ -25,13 +25,14 @@ uint32_t Reloj::minutos_desde_el_inicio() const {
 }
 
 CambioDelReloj Reloj::avanzar() {
+    if (termino_el_dia()) {
+        return CambioDelReloj::NINGUNO;
+    }
     const uint32_t aviso_anterior = minutos_desde_el_inicio() / MINUTOS_ENTRE_AVISOS;
 
     ++ticks_del_dia;
-    if (ticks_del_dia >= ticks_por_dia) {
-        ticks_del_dia = 0;
-        ++dia;
-        return CambioDelReloj::DIA_NUEVO;
+    if (termino_el_dia()) {
+        return CambioDelReloj::FIN_DEL_DIA;
     }
 
     const uint32_t aviso_actual = minutos_desde_el_inicio() / MINUTOS_ENTRE_AVISOS;
@@ -55,4 +56,13 @@ HoraDelJuego Reloj::hora() const {
     hora_del_juego.estacion = static_cast<Estacion>(estaciones_pasadas % ESTACIONES_POR_ANIO);
     hora_del_juego.anio = static_cast<uint16_t>(estaciones_pasadas / ESTACIONES_POR_ANIO + 1);
     return hora_del_juego;
+}
+
+bool Reloj::termino_el_dia() const {
+    return ticks_del_dia >= ticks_por_dia;
+}
+
+void Reloj::empezar_dia_siguiente() {
+    ticks_del_dia = 0;
+    ++dia;
 }

@@ -29,6 +29,7 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
            [this] { return recibir_comando_solicitar_inventario(); }},
           {TipoMensaje::SOLTAR_ITEM, [this] { return recibir_comando_soltar_item(); }},
           {TipoMensaje::CONSULTAR_CASILLA, [this] { return recibir_comando_consultar_casilla(); }},
+          {TipoMensaje::DAR_EL_OK, [this] { return recibir_comando_dar_el_ok(); }},
       } {
 }
 
@@ -164,6 +165,7 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const TierraCambiada& e) { enviar_evento_tierra_cambiada(e); },
             [this](const HoraDelJuego& e) { enviar_evento_hora_del_juego(e); },
             [this](const CasillaConsultada& e) { enviar_evento_casilla_consultada(e); },
+            [this](const EstadoDelDescanso& e) { enviar_evento_estado_del_descanso(e); },
         },
         evento);
 }
@@ -383,4 +385,16 @@ void ProtocoloServidor::enviar_evento_casilla_consultada(const CasillaConsultada
     enviar_u8(consultada.ancho);
     enviar_u8(consultada.alto);
     enviar_u8(static_cast<uint8_t>(consultada.marca));
+}
+
+DarElOk ProtocoloServidor::recibir_comando_dar_el_ok() {
+    return DarElOk{};
+}
+
+void ProtocoloServidor::enviar_evento_estado_del_descanso(const EstadoDelDescanso& descanso) {
+    enviar_tipo(TipoMensaje::ESTADO_DEL_DESCANSO);
+    enviar_u8(static_cast<uint8_t>(descanso.estado));
+    enviar_booleano(descanso.dio_el_ok);
+    enviar_u8(descanso.listos);
+    enviar_u8(descanso.jugadores);
 }
