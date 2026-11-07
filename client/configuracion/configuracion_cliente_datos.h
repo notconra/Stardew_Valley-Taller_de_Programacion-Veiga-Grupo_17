@@ -58,6 +58,12 @@ struct ConfiguracionMapa {
     std::vector<ConfiguracionTileset> tilesets;
 
     bool es_mazmorra = false;
+
+    // Sonido de fondo de este mapa. Vacío = el [sonido].ruta_ambiente general.
+    std::string ruta_ambiente;
+
+    // Sonido de los pasos en este mapa. Vacío = el [sonido].ruta_caminar general.
+    std::string ruta_caminar;
 };
 
 constexpr int OFFSET_Y_REMERA_FEMENINO = 16;

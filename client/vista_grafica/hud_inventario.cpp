@@ -66,6 +66,21 @@ HudInventario::HudInventario(SDL_Renderer* renderer, const IconosDeItems& iconos
     } catch (const std::runtime_error& error) {
         std::cerr << "[Error] " << error.what() << std::endl;
     }
+    try {
+        fondo_barra.emplace(RUTA_ASSET_FONDO_BARRA, renderer);
+    } catch (const std::runtime_error& error) {
+        std::cerr << "[Error] " << error.what() << std::endl;
+    }
+    try {
+        casilla.emplace(RUTA_ASSET_CASILLA, renderer);
+    } catch (const std::runtime_error& error) {
+        std::cerr << "[Error] " << error.what() << std::endl;
+    }
+    try {
+        casilla_seleccionada.emplace(RUTA_ASSET_CASILLA_SELECCIONADA, renderer);
+    } catch (const std::runtime_error& error) {
+        std::cerr << "[Error] " << error.what() << std::endl;
+    }
 }
 
 void HudInventario::configurar(int ancho, int alto) {
@@ -90,7 +105,7 @@ HudInventario::Disposicion HudInventario::disponer(
     const int ancho_de_la_barra = (columnas * d.tamano) + ((columnas - 1) * SEPARACION_RANURAS);
     const int ancho_total = ancho_de_la_barra + (2 * SEPARACION_RANURAS) + d.tamano;
     const int x = std::max(MARGEN, (ancho_ventana - ancho_total) / 2);
-    const int y = alto_ventana - MARGEN - d.tamano;
+    const int y = alto_ventana - MARGEN_INFERIOR_BARRA - d.tamano;
     d.barra = SDL_Rect{x, y, ancho_de_la_barra, d.tamano};
     d.tacho = SDL_Rect{x + ancho_de_la_barra + (2 * SEPARACION_RANURAS), y, d.tamano, d.tamano};
     d.fondo_de_la_barra = SDL_Rect{
@@ -264,30 +279,11 @@ std::optional<ComandoCliente> HudInventario::procesar_clic(
 void HudInventario::dibujar_ranura(
     SDL_Renderer* renderer, const SDL_Rect& rectangulo, const RanuraInventario& ranura,
     bool resaltada) const {
-    SDL_SetRenderDrawColor(renderer, 180, 135, 95, 255);
-    SDL_RenderFillRect(renderer, &rectangulo);
-
-    const SDL_Rect interior{rectangulo.x + 2, rectangulo.y + 2, rectangulo.w - 4, rectangulo.h - 4};
-    SDL_SetRenderDrawColor(renderer, 201, 168, 122, 255);
-    SDL_RenderFillRect(renderer, &interior);
-
-    SDL_SetRenderDrawColor(renderer, 92, 53, 29, 255);
-    SDL_RenderDrawRect(renderer, &rectangulo);
-
-    if (resaltada) {
-        const SDL_Rect borde1{
-            rectangulo.x - 2,
-            rectangulo.y - 2,
-            rectangulo.w + 4,
-            rectangulo.h + 4};
-        const SDL_Rect borde2{
-            rectangulo.x - 3,
-            rectangulo.y - 3,
-            rectangulo.w + 6,
-            rectangulo.h + 6};
-        SDL_SetRenderDrawColor(renderer, 235, 50, 40, 255);
-        SDL_RenderDrawRect(renderer, &borde1);
-        SDL_RenderDrawRect(renderer, &borde2);
+    if (casilla.has_value()) {
+        SDL_RenderCopy(renderer, casilla->ptr(), nullptr, &rectangulo);
+    }
+    if (resaltada && casilla_seleccionada.has_value()) {
+        SDL_RenderCopy(renderer, casilla_seleccionada->ptr(), nullptr, &rectangulo);
     }
 
     if (ranura.tipo == TipoItem::NINGUNO) {
@@ -305,10 +301,9 @@ void HudInventario::dibujar_ranura(
 }
 
 void HudInventario::dibujar_tacho(SDL_Renderer* renderer, const SDL_Rect& rectangulo) const {
-    SDL_SetRenderDrawColor(renderer, 180, 135, 95, 255);
-    SDL_RenderFillRect(renderer, &rectangulo);
-    SDL_SetRenderDrawColor(renderer, 92, 53, 29, 255);
-    SDL_RenderDrawRect(renderer, &rectangulo);
+    if (casilla.has_value()) {
+        SDL_RenderCopy(renderer, casilla->ptr(), nullptr, &rectangulo);
+    }
 
     if (tacho.has_value()) {
         const int margen = rectangulo.w / 6;
@@ -413,6 +408,17 @@ void HudInventario::dibujar(
     const Disposicion disposicion = disponer(inventario, cofre);
 
     dibujar_panel_del_cofre(renderer, disposicion, cofre);
+
+    if (fondo_barra.has_value()) {
+        const int borde = 2;
+        const SDL_Rect& barra = disposicion.fondo_de_la_barra;
+        const SDL_Rect fondo{
+            barra.x - borde,
+            barra.y - borde,
+            barra.w + (2 * borde),
+            barra.h + (2 * borde)};
+        SDL_RenderCopy(renderer, fondo_barra->ptr(), nullptr, &fondo);
+    }
 
     for (int i = 0; i < disposicion.cantidad_de_ranuras; ++i) {
         dibujar_ranura(
