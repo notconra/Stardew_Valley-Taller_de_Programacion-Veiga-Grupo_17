@@ -32,6 +32,12 @@ public:
     // Si el cofre no tenía contenido guardado, devuelve un vector vacío.
     std::vector<RanuraInventario> retirar_contenido(int id_cofre);
 
+    // Obtiene una copia de todas las ranuras del cofre, o vector vacío si todavía no fue abierto.
+    std::vector<RanuraInventario> obtener_contenido(int id_cofre) const;
+
+    // Carga el contenido de un cofre al restaurar una partida guardada.
+    void cargar_contenido(int id_cofre, const std::vector<RanuraInventario>& ranuras);
+
 private:
     const CatalogoDeItems& catalogo;
     std::map<int, Inventario> contenidos;

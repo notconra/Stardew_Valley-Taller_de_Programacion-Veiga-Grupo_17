@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <string>
 
+#include "../apariencia_personaje.h"
 #include "../isocket.h"
 #include "error_protocolo.h"
 #include "tipo_mensaje.h"
@@ -60,6 +61,9 @@ protected:
 
     void enviar_texto(const std::string& texto);
     std::string recibir_texto();
+
+    void enviar_apariencia(const AparienciaPersonaje& apariencia);
+    AparienciaPersonaje recibir_apariencia();
 
 public:
     Protocolo(const Protocolo&) = delete;

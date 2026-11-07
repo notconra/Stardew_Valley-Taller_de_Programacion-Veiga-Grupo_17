@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <string>
 
+#include "../../common/apariencia_personaje.h"
+
 // Un jugador que tiene lugar en una partida, esté conectado o no.
 struct Jugador {
     // Mantiene el mismo id en todas las partidas y en todas las sesiones (lo guarda el cliente).
@@ -14,6 +16,7 @@ struct Jugador {
 
     std::string nombre_jugador;
     bool conectado;
+    AparienciaPersonaje apariencia;
 };
 
 #endif

@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "../apariencia_personaje.h"
 #include "../direccion.h"
 #include "../modo_uso.h"
 #include "../ranura_inventario.h"
@@ -22,6 +23,8 @@
 struct ActivarMultijugador {};
 
 struct SalirDePartida {};
+
+struct GuardarPartida {};
 
 // Hacia dónde quiere moverse el jugador, por eje: horizontal -1 (izquierda), 0 o 1 (derecha);
 // vertical -1 (arriba), 0 o 1 (abajo). Es un estado, NO es un paso, osea, el servidor lo sigue
@@ -112,6 +115,7 @@ struct EstadoJugador {
     TipoAccion accion_actual = TipoAccion::NINGUNA;
     uint8_t vida = VIDA_MAXIMA_JUGADOR;
     uint8_t energia = ENERGIA_MAXIMA_JUGADOR;
+    AparienciaPersonaje apariencia;
 
     // Esto sirve pq el servidor compara con lo último que mandó para no repetir un
     // JugadoresEnSector igual.

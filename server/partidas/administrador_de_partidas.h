@@ -11,6 +11,7 @@
 #include "../../common/mensajes/mensajes.h"
 #include "../configuracion/configuracion_servidor_datos.h"
 #include "../juego/recursos/recursos_de_juego.h"
+#include "../persistencia/indice_partidas.h"
 #include "ingreso_a_partida.h"
 #include "partida.h"
 #include "sesion_de_partida.h"
@@ -46,6 +47,13 @@ private:
     // Arranca una sesión nueva. Se llama sin el mutex tomado.
     std::unique_ptr<SesionDePartida> crear_sesion(const std::string& codigo_partida) const;
 
+    IndicePartidas indice;
+
+    void cargar_partidas_guardadas();
+    void cargar_partida(const std::string& ruta_archivo);
+    std::optional<DatosPartidaGuardada> cargar_datos_guardados(
+        const std::string& codigo_partida) const;
+
 public:
     AdministradorDePartidas(
         const ConfiguracionPartidaServidor& configuracion_partida,
@@ -58,10 +66,12 @@ public:
     // La partida por defecto tiene un sólo jugador y el cliente que la crea
     // entra a ella.
     IngresoAPartida crear(
-        uint32_t id_cliente, const std::string& nombre_jugador, const std::string& nombre_partida);
+        uint32_t id_cliente, const std::string& nombre_jugador, const std::string& nombre_partida,
+        const AparienciaPersonaje& apariencia);
 
     IngresoAPartida unirse(
-        uint32_t id_cliente, const std::string& nombre_jugador, const std::string& codigo_partida);
+        uint32_t id_cliente, const std::string& nombre_jugador, const std::string& codigo_partida,
+        const AparienciaPersonaje& apariencia);
 
     IngresoAPartida retomar(uint32_t id_cliente, const std::string& codigo_partida);
 
@@ -78,6 +88,9 @@ public:
     // conectado. Si el bucle de juego murió, el que borra es el último jugador
     // que se va.
     void limpiar_sesion_si_vacia(const std::string& codigo_partida);
+
+    // Guarda el estado actual de la partida indicada en disco (.dat) y actualiza el índice (.idx).
+    void guardar_partida(const std::string& codigo_partida);
 
     AdministradorDePartidas(const AdministradorDePartidas&) = delete;
     AdministradorDePartidas& operator=(const AdministradorDePartidas&) = delete;

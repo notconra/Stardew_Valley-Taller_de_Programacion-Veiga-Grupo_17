@@ -32,6 +32,7 @@ constexpr char AYUDA_DE_TECLAS[] =
     "  clic izq. (HUD)   agarrar el stack completo / soltarlo en otra ranura o en el tacho\n"
     "  clic der. (HUD)   agarrar un ítem (cada clic suma uno más) / soltar uno solo\n"
     "  clic afuera       con un stack agarrado de la barra, lo tira al piso\n"
+    "  G                 guardar la partida en el servidor\n"
     "  M                 permitir que otros jugadores se unan (el código sale acá)\n"
     "  ESC               salir de la partida y volver al lobby\n";
 
@@ -234,6 +235,11 @@ void VistaPartida::procesar_entrada(
 
     if (pedidos.multijugador) {
         conexion.enviar_comando(ActivarMultijugador{});
+    }
+
+    if (pedidos.guardar) {
+        conexion.enviar_comando(GuardarPartida{});
+        std::cout << "[partida] guardando partida en el servidor..." << std::endl;
     }
 
     elegir_ranura_de_la_barra(pedidos);

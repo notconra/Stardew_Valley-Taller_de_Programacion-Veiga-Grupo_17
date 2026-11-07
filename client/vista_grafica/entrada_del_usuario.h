@@ -12,6 +12,7 @@ class EntradaDelUsuario {
 public:
     struct Pedidos {
         bool salir = false;         // ESC
+        bool guardar = false;       // G (guardar partida)
         bool multijugador = false;  // M (para probar)
         bool clic_izquierdo = false;
         bool clic_derecho = false;

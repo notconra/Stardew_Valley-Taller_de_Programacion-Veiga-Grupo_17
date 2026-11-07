@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "../../common/mensajes/mensajes.h"
+#include "../persistencia/datos_partida_guardada.h"
 #include "jugador.h"
 
 // Registro de una partida, quiénes son sus jugadores y quiénes están conectados ahora.
@@ -33,13 +34,20 @@ private:
     Jugador* buscar_jugador(uint32_t id_cliente);
 
 public:
-    // El creador pasa a ser el primer jugador de la partida.
     Partida(
         const std::string& codigo_de_partida, const std::string& nombre_de_partida,
         uint8_t maximo_de_jugadores, uint32_t id_cliente_creador,
-        const std::string& nombre_jugador_creador);
+        const std::string& nombre_jugador_creador, const AparienciaPersonaje& apariencia_creador);
+
+    Partida(
+        const std::string& codigo_de_partida, const std::string& nombre_de_partida,
+        uint8_t maximo_de_jugadores, bool es_multijugador,
+        const std::vector<Jugador>& lista_jugadores);
 
     const std::string& obtener_nombre() const;
+    const std::vector<Jugador>& obtener_jugadores() const;
+    const AparienciaPersonaje& obtener_apariencia_jugador(uint32_t id_cliente) const;
+    DatosPartidaGuardada generar_datos_guardado(const DatosMundoGuardado& datos_mundo) const;
 
     // Devuelve true si el cliente tiene lugar en la partida, esté conectado o no.
     bool es_miembro(uint32_t id_cliente) const;
@@ -64,7 +72,9 @@ public:
     // Si el cliente ya es jugador de la partida vuelve a su lugar, si no, intenta ocupar uno nuevo.
     // Lanza ErrorDePartida si ya está conectado, si la partida no es multijugador o si no quedan
     // lugares.
-    EntradaExitosaAPartida conectar(uint32_t id_cliente, const std::string& nombre_jugador);
+    EntradaExitosaAPartida conectar(
+        uint32_t id_cliente, const std::string& nombre_jugador,
+        const AparienciaPersonaje& apariencia);
 
     // No hace nada si el cliente no es jugador de la partida.
     void desconectar(uint32_t id_cliente);

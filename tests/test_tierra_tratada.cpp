@@ -124,7 +124,8 @@ protected:
     uint8_t pico = 0;
 
     void SetUp() override {
-        mundo.conectar(1);
+        AparienciaPersonaje apariencia;
+        mundo.conectar(1, apariencia);
         ASSERT_TRUE(notificador.inventario.has_value());
         const std::vector<RanuraInventario>& ranuras = notificador.inventario->ranuras;
         for (std::size_t i = 0; i < ranuras.size(); ++i) {
@@ -355,7 +356,8 @@ TEST_F(TratarTierraEnElMundo, ElSnapshotAlVolverAEntrarTraeLaTierraTratada) {
 
     mundo.desconectar(1);
     notificador.limpiar();
-    mundo.conectar(1);
+    AparienciaPersonaje apariencia;
+    mundo.conectar(1, apariencia);
 
     ASSERT_TRUE(notificador.tiene_estado);
     ASSERT_EQ(notificador.estado.tierra.size(), 1u);

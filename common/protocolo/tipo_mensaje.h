@@ -23,6 +23,7 @@ enum class TipoMensaje : uint8_t {
     MOVER_ITEM_CON_COFRE = 0x0D,
     SOLICITAR_INVENTARIO = 0x0E,
     SOLTAR_ITEM = 0x0F,
+    GUARDAR_PARTIDA = 0x10,
 
     // Servidor a cliente
     ERROR_SERVIDOR = 0x81,
