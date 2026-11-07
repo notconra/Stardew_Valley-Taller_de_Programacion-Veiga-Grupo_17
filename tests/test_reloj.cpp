@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <map>
 #include <stdexcept>
 #include <variant>
 #include <vector>
@@ -11,6 +12,7 @@
 #include "../server/juego/mundo.h"
 #include "../server/juego/notificador.h"
 #include "../server/juego/recursos/recursos_de_juego.h"
+#include "../server/juego/sector/gestor_de_sectores.h"
 #include "../server/juego/tiempo/reloj.h"
 
 namespace {
@@ -33,7 +35,9 @@ HoraDelJuego hora(uint32_t dia, uint8_t hora_del_dia, uint8_t minuto) {
 
 void ir_al_dia(Reloj& reloj, uint32_t dia) {
     while (reloj.hora().dia < dia) {
-        reloj.avanzar();
+        if (reloj.avanzar() == CambioDelReloj::FIN_DEL_DIA) {
+            reloj.empezar_dia_siguiente();
+        }
     }
 }
 struct Avisos {
@@ -47,7 +51,7 @@ Avisos avanzar(Reloj& reloj, int ticks) {
         const CambioDelReloj cambio = reloj.avanzar();
         if (cambio == CambioDelReloj::HORA) {
             ++avisos.horas;
-        } else if (cambio == CambioDelReloj::DIA_NUEVO) {
+        } else if (cambio == CambioDelReloj::FIN_DEL_DIA) {
             ++avisos.dias;
         }
     }
@@ -101,29 +105,46 @@ TEST(Reloj, PasaLaMedianocheSinCambiarDeDia) {
     EXPECT_EQ(reloj.hora(), hora(1, 1, 30));
 }
 
-TEST(Reloj, ALasDosEmpiezaElDiaSiguienteALasSeis) {
+TEST(Reloj, ALasDosSeFrenaHastaQueEmpieceElDiaSiguiente) {
     Reloj reloj(UN_MINUTO, TICKS_POR_SEGUNDO, DIAS_POR_ESTACION);
     avanzar(reloj, TICKS_POR_DIA - 1);
     EXPECT_EQ(reloj.hora(), hora(1, 1, 50));
+    EXPECT_FALSE(reloj.termino_el_dia());
 
-    EXPECT_EQ(reloj.avanzar(), CambioDelReloj::DIA_NUEVO);
+    EXPECT_EQ(reloj.avanzar(), CambioDelReloj::FIN_DEL_DIA);
+    EXPECT_TRUE(reloj.termino_el_dia());
+    EXPECT_EQ(reloj.hora(), hora(1, 2, 0));
+
+    const Avisos esperando = avanzar(reloj, 500);
+    EXPECT_EQ(esperando.horas, 0);
+    EXPECT_EQ(esperando.dias, 0);
+    EXPECT_EQ(reloj.hora(), hora(1, 2, 0));
+
+    reloj.empezar_dia_siguiente();
+    EXPECT_FALSE(reloj.termino_el_dia());
+    EXPECT_EQ(reloj.hora(), hora(2, 6, 0));
+}
+
+TEST(Reloj, EmpezarElDiaSiguienteAntesDeLasDosTambienVaALasSeis) {
+    Reloj reloj(UN_MINUTO, TICKS_POR_SEGUNDO, DIAS_POR_ESTACION);
+    avanzar(reloj, 300);
+    reloj.empezar_dia_siguiente();
     EXPECT_EQ(reloj.hora(), hora(2, 6, 0));
 }
 
 TEST(Reloj, AvisaCientoVeinteVecesPorDia) {
     Reloj reloj(UN_MINUTO, TICKS_POR_SEGUNDO, DIAS_POR_ESTACION);
-    const Avisos avisos = avanzar(reloj, 3 * TICKS_POR_DIA);
+    const Avisos avisos = avanzar(reloj, TICKS_POR_DIA);
 
-    EXPECT_EQ(avisos.horas, 3 * 119);
-    EXPECT_EQ(avisos.dias, 3);
-    EXPECT_EQ(reloj.hora(), hora(4, 6, 0));
+    EXPECT_EQ(avisos.horas, 119);
+    EXPECT_EQ(avisos.dias, 1);
 }
 
 TEST(Reloj, UnDiaDeCatorceMinutosDuraLoQueDebe) {
     Reloj reloj(14.0, 40, DIAS_POR_ESTACION);
     const Avisos antes = avanzar(reloj, 33599);
     EXPECT_EQ(antes.dias, 0);
-    EXPECT_EQ(reloj.avanzar(), CambioDelReloj::DIA_NUEVO);
+    EXPECT_EQ(reloj.avanzar(), CambioDelReloj::FIN_DEL_DIA);
 }
 
 TEST(Reloj, NoAceptaDuracionesInvalidas) {
@@ -180,10 +201,31 @@ TEST(ConfiguracionDelDia, ElTomlPideUnDiaDeCatorceMinutos) {
 }
 
 TEST(ControladorDelDia, AvisaATodosCadaDiezMinutosYAlQueEntra) {
+    const ConfiguracionServidor configuracion_del_servidor("config/servidor.toml");
+    std::vector<ConfiguracionMapaServidor> mapas;
+    for (const ConfiguracionMapaServidor& mapa : configuracion_del_servidor.mapas()) {
+        if (mapa.id == "granja") {
+            mapas.push_back(mapa);
+        }
+    }
+    const RecursosDeJuego recursos(
+        mapas,
+        "granja",
+        configuracion_del_servidor.juego(),
+        ConfiguracionMazmorraServidor{});
     NotificadorDePrueba notificador;
+    std::map<uint32_t, Personaje> personajes;
+    GestorDeSectores sectores(recursos, TICKS_POR_SEGUNDO, personajes, notificador);
     ConfiguracionDiaServidor configuracion;
     configuracion.duracion_en_minutos = UN_MINUTO;
-    ControladorDelDia controlador(configuracion, TICKS_POR_SEGUNDO, notificador);
+    ControladorDelDia controlador(
+        configuracion,
+        TICKS_POR_SEGUNDO,
+        sectores,
+        personajes,
+        recursos,
+        notificador,
+        [](Personaje&) {});
 
     for (int i = 0; i < 25; ++i) {
         controlador.actualizar();
