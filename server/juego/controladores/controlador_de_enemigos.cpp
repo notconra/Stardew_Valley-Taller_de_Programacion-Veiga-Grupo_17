@@ -27,6 +27,17 @@ void ControladorDeEnemigos::atacar_en_sector(Sector& sector) {
         return;
     }
 
+    // Primero se mueven (los que ya están al lado no avanzan) y después pegan los que quedaron al
+    // lado.
+    for (int id_enemigo : sector.enemigos.mover_hacia(posiciones, sector.colisiones)) {
+        const Enemigo* enemigo = sector.enemigos.buscar(id_enemigo);
+        if (enemigo != nullptr) {
+            EnemigoActualizado evento;
+            evento.enemigo = GestorDeEnemigos::estado_de(*enemigo);
+            sector.avisar(notificador, evento);
+        }
+    }
+
     for (const GolpeDeEnemigo& golpe : sector.enemigos.atacar_adyacentes(posiciones)) {
         const auto personaje = personajes.find(golpe.id_jugador);
         if (personaje != personajes.end()) {
