@@ -28,6 +28,7 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::TIERRA_CAMBIADA, [this] { return recibir_tierra_cambiada(); }},
           {TipoMensaje::HORA_DEL_JUEGO, [this] { return recibir_hora_del_juego(); }},
           {TipoMensaje::CASILLA_CONSULTADA, [this] { return recibir_casilla_consultada(); }},
+          {TipoMensaje::ESTADO_DEL_DESCANSO, [this] { return recibir_estado_del_descanso(); }},
           {TipoMensaje::ACTUALIZACION_INVENTARIO,
            [this] { return recibir_actualizacion_inventario(); }},
           {TipoMensaje::ACTUALIZACION_COFRE, [this] { return recibir_actualizacion_cofre(); }},
@@ -56,6 +57,7 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const SolicitarInventario& m) { enviar_comando_solicitar_inventario(m); },
             [this](const SoltarItem& m) { enviar_comando_soltar_item(m); },
             [this](const ConsultarCasilla& m) { enviar_comando_consultar_casilla(m); },
+            [this](const DarElOk& m) { enviar_comando_dar_el_ok(m); },
         },
         comando);
 }
@@ -395,6 +397,23 @@ void ProtocoloCliente::enviar_comando_consultar_casilla(const ConsultarCasilla& 
     enviar_tipo(TipoMensaje::CONSULTAR_CASILLA);
     enviar_u32(consultar.columna);
     enviar_u32(consultar.fila);
+}
+
+void ProtocoloCliente::enviar_comando_dar_el_ok(const DarElOk&) {
+    enviar_tipo(TipoMensaje::DAR_EL_OK);
+}
+
+EstadoDelDescanso ProtocoloCliente::recibir_estado_del_descanso() {
+    EstadoDelDescanso descanso;
+    const uint8_t estado = recibir_u8();
+    if (estado > static_cast<uint8_t>(EstadoDeDescanso::DESMAYADO)) {
+        throw ErrorProtocolo("estado de descanso desconocido");
+    }
+    descanso.estado = static_cast<EstadoDeDescanso>(estado);
+    descanso.dio_el_ok = recibir_booleano();
+    descanso.listos = recibir_u8();
+    descanso.jugadores = recibir_u8();
+    return descanso;
 }
 
 CasillaConsultada ProtocoloCliente::recibir_casilla_consultada() {

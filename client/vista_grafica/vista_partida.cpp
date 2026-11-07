@@ -32,6 +32,8 @@ constexpr char AYUDA_DE_TECLAS[] =
     "  clic izq. (HUD)   agarrar el stack completo / soltarlo en otra ranura o en el tacho\n"
     "  clic der. (HUD)   agarrar un ítem (cada clic suma uno más) / soltar uno solo\n"
     "  clic afuera       con un stack agarrado de la barra, lo tira al piso\n"
+    "  clic der. (cama)  acostarse a dormir\n"
+    "  Enter             dar el OK para pasar al día siguiente (acostado o desmayado)\n"
     "  M                 permitir que otros jugadores se unan (el código sale acá)\n"
     "  ESC               salir de la partida y volver al lobby\n";
 
@@ -53,6 +55,10 @@ const ConfiguracionMapa& VistaPartida::configuracion_de(const std::string& id_ma
         throw std::runtime_error("el servidor mandó un mapa desconocido: " + id_mapa);
     }
     return *encontrado;
+}
+
+bool VistaPartida::son_las_dos() const {
+    return hora_del_juego.has_value() && hora_del_juego->hora == 2 && hora_del_juego->minuto == 0;
 }
 
 const EstadoJugador* VistaPartida::jugador_propio() const {
@@ -239,6 +245,9 @@ void VistaPartida::procesar_entrada(
 
     if (pedidos.multijugador) {
         conexion.enviar_comando(ActivarMultijugador{});
+    }
+    if (pedidos.confirmar && pantalla_de_descanso.visible(descanso) && !descanso.dio_el_ok) {
+        conexion.enviar_comando(DarElOk{});
     }
 
     elegir_ranura_de_la_barra(pedidos);
@@ -438,6 +447,7 @@ void VistaPartida::aplicar(const EventoServidor& evento) {
                 }
             },
             [&](const HoraDelJuego& e) { hora_del_juego = e; },
+            [&](const EstadoDelDescanso& e) { descanso = e; },
             [&](const MultijugadorActivado& e) {
                 std::cout << "[partida] multijugador activado, código para invitar: "
                           << e.codigo_partida << std::endl;
@@ -566,6 +576,13 @@ void VistaPartida::dibujar(
             configuracion.ventana.ancho,
             configuracion.ventana.alto);
     }
+
+    pantalla_de_descanso.dibujar(
+        renderer,
+        descanso,
+        !son_las_dos(),
+        configuracion.ventana.ancho,
+        configuracion.ventana.alto);
 
     SDL_RenderPresent(renderer);
 }

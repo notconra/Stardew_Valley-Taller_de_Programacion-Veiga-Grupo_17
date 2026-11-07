@@ -21,6 +21,7 @@
 #include "mapa_grafico.h"
 #include "marcador_de_casillas.h"
 #include "objetos_graficos.h"
+#include "pantalla_de_descanso.h"
 #include "personaje.h"
 #include "reloj_grafico.h"
 #include "renderizador.h"
@@ -46,6 +47,8 @@ private:
     std::set<std::pair<int, int>> tierra_tratada;
     std::optional<HoraDelJuego> hora_del_juego;
     RelojGrafico reloj_grafico;
+    EstadoDelDescanso descanso{};
+    PantallaDeDescanso pantalla_de_descanso;
 
     // Lo último que se le preguntó al servidor (ConsultarCasilla) sobre la casilla del mouse, y su
     // respuesta. El cliente no decide si se puede: solo pinta lo que contestó el servidor. Se
@@ -69,6 +72,10 @@ private:
     // Algo cambió en el mundo (el inventario, la tierra, los objetos): hay que volver a preguntar.
     void olvidar_el_piso();
     bool partida_terminada = false;
+
+    // Si son las 2 am: el reloj del servidor se queda ahí hasta que todos den el OK, y el que
+    // está acostado ya no se puede levantar.
+    bool son_las_dos() const;
     const EstadoJugador* jugador_propio() const;
     const ConfiguracionMapa& configuracion_de(const std::string& id_mapa) const;
     Camara camara_para(const MapaGrafico& mapa) const;

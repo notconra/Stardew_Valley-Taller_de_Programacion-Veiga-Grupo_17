@@ -32,6 +32,7 @@ private:
     void enviar_comando_solicitar_inventario(const SolicitarInventario& solicitar);
     void enviar_comando_soltar_item(const SoltarItem& soltar);
     void enviar_comando_consultar_casilla(const ConsultarCasilla& consultar);
+    void enviar_comando_dar_el_ok(const DarElOk& ok);
 
     // Recepción de eventos
     ErrorServidor recibir_error_servidor();
@@ -56,6 +57,7 @@ private:
     TierraCambiada recibir_tierra_cambiada();
     HoraDelJuego recibir_hora_del_juego();
     CasillaConsultada recibir_casilla_consultada();
+    EstadoDelDescanso recibir_estado_del_descanso();
     RanuraInventario recibir_ranura_inventario();
     std::vector<RanuraInventario> recibir_ranuras();
     InventarioJugador recibir_inventario_jugador();

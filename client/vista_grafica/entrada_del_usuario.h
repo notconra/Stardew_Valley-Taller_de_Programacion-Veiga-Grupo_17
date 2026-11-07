@@ -13,6 +13,7 @@ public:
     struct Pedidos {
         bool salir = false;         // ESC
         bool multijugador = false;  // M (para probar)
+        bool confirmar = false;     // Enter (el OK para pasar al día siguiente)
         bool clic_izquierdo = false;
         bool clic_derecho = false;
         int ranura_de_la_barra = -1;  // 1-9 y 0 (ranuras 0 a 9), -1 si no se apretó ninguna
