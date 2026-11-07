@@ -92,6 +92,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         configuracion.ventana.ancho,
         configuracion.ventana.alto);
     Renderizador renderizador(ventana, configuracion.sdl);
+    CursorDelJuego cursor_del_juego;
 
     std::map<std::string, MapaGrafico> mapas_cargados;
     const auto mapa_de = [&](const std::string& id_mapa) -> const MapaGrafico& {
