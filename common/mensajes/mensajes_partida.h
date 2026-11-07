@@ -156,6 +156,8 @@ struct EstadoEnemigo {
     // Si está en medio de la animación de morir. Con vida en 0 y esto en false, ya terminó de
     // morir: el cliente no tiene que dibujar nada hasta que vuelva a estar vivo.
     bool muriendo = false;
+    // Hacia dónde mira, para elegir la fila de la hoja de sprites al caminar.
+    Direccion mirando = Direccion::ABAJO;
 };
 
 // Una casilla de tierra tratada con la pala, por columna y fila del mapa.
