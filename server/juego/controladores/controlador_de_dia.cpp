@@ -34,8 +34,7 @@ bool ControladorDelDia::atender(Personaje& personaje, const ComandoCliente& coma
     }
     if (const Moverse* pedido = std::get_if<Moverse>(&comando)) {
         const bool quiere_moverse = pedido->horizontal != 0 || pedido->vertical != 0;
-        if (personaje.descanso == EstadoDeDescanso::ACOSTADO && !personaje.dio_el_ok &&
-            quiere_moverse && !reloj.termino_el_dia()) {
+        if (quiere_moverse && puede_levantarse(personaje)) {
             personaje.descanso = EstadoDeDescanso::DESPIERTO;
             return false;
         }
@@ -198,12 +197,18 @@ void ControladorDelDia::terminar_el_dia() {
     notificador.a_todos(reloj.hora());
 }
 
+bool ControladorDelDia::puede_levantarse(const Personaje& personaje) const {
+    return personaje.descanso == EstadoDeDescanso::ACOSTADO && !personaje.dio_el_ok &&
+           !reloj.termino_el_dia();
+}
+
 EstadoDelDescanso ControladorDelDia::descanso_de(const Personaje& personaje) const {
     EstadoDelDescanso estado;
     estado.estado = personaje.descanso;
     estado.dio_el_ok = personaje.dio_el_ok;
+    estado.puede_levantarse = puede_levantarse(personaje);
     if (personaje.descanso == EstadoDeDescanso::DESPIERTO) {
-        return estado;  // sin la cuenta, así no le llega un aviso cada vez que otro se acuesta
+        return estado;
     }
     for (const auto& [id_jugador, otro] : personajes) {
         if (!otro.conectado) {

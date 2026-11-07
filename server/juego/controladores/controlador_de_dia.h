@@ -67,6 +67,9 @@ private:
     // Lo pone con los pies en esa casilla del mapa indicado.
     void parar_en(Personaje& personaje, const std::string& id_mapa, const Casilla& casilla);
 
+    // Acostado, sin el OK y antes de las 2 am: si se mueve, se levanta.
+    bool puede_levantarse(const Personaje& personaje) const;
+
     EstadoDelDescanso descanso_de(const Personaje& personaje) const;
 
     // Le avisa a cada jugador conectado su estado de descanso, solo si cambió.

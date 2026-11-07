@@ -57,10 +57,6 @@ const ConfiguracionMapa& VistaPartida::configuracion_de(const std::string& id_ma
     return *encontrado;
 }
 
-bool VistaPartida::son_las_dos() const {
-    return hora_del_juego.has_value() && hora_del_juego->hora == 2 && hora_del_juego->minuto == 0;
-}
-
 const EstadoJugador* VistaPartida::jugador_propio() const {
     const auto propio = std::find_if(
         ultimo_estado_juego.jugadores.begin(),
@@ -576,12 +572,8 @@ void VistaPartida::dibujar(
             configuracion.ventana.alto);
     }
 
-    pantalla_de_descanso.dibujar(
-        renderer,
-        descanso,
-        !son_las_dos(),
-        configuracion.ventana.ancho,
-        configuracion.ventana.alto);
+    pantalla_de_descanso
+        .dibujar(renderer, descanso, configuracion.ventana.ancho, configuracion.ventana.alto);
 
     SDL_RenderPresent(renderer);
 }

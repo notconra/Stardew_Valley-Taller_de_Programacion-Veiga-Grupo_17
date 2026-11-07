@@ -233,6 +233,7 @@ struct EstadoDelDescanso {
     bool dio_el_ok = false;
     uint8_t listos = 0;
     uint8_t jugadores = 0;
+    bool puede_levantarse = false;
 
     bool operator==(const EstadoDelDescanso&) const = default;
 };

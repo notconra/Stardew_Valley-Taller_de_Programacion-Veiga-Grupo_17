@@ -413,6 +413,7 @@ EstadoDelDescanso ProtocoloCliente::recibir_estado_del_descanso() {
     descanso.dio_el_ok = recibir_booleano();
     descanso.listos = recibir_u8();
     descanso.jugadores = recibir_u8();
+    descanso.puede_levantarse = recibir_booleano();
     return descanso;
 }
 

@@ -12,8 +12,7 @@ bool PantallaDeDescanso::visible(const EstadoDelDescanso& descanso) const {
     return descanso.estado != EstadoDeDescanso::DESPIERTO;
 }
 
-std::vector<std::string> PantallaDeDescanso::lineas(
-    const EstadoDelDescanso& descanso, bool se_puede_levantar) const {
+std::vector<std::string> PantallaDeDescanso::lineas(const EstadoDelDescanso& descanso) const {
     std::vector<std::string> resultado;
     resultado.push_back(
         descanso.estado == EstadoDeDescanso::DESMAYADO ? "TE DESMAYASTE" : "A DORMIR");
@@ -23,7 +22,7 @@ std::vector<std::string> PantallaDeDescanso::lineas(
         resultado.push_back("ESPERANDO A LOS DEMAS");
     } else {
         resultado.push_back("ENTER: OK");
-        if (descanso.estado == EstadoDeDescanso::ACOSTADO && se_puede_levantar) {
+        if (descanso.puede_levantarse) {
             resultado.push_back("MOVERSE: LEVANTARSE");
         }
     }
@@ -31,8 +30,8 @@ std::vector<std::string> PantallaDeDescanso::lineas(
 }
 
 void PantallaDeDescanso::dibujar(
-    SDL_Renderer* renderer, const EstadoDelDescanso& descanso, bool se_puede_levantar,
-    int ancho_ventana, int alto_ventana) const {
+    SDL_Renderer* renderer, const EstadoDelDescanso& descanso, int ancho_ventana,
+    int alto_ventana) const {
     if (!visible(descanso)) {
         return;
     }
@@ -46,7 +45,7 @@ void PantallaDeDescanso::dibujar(
     SDL_SetRenderDrawBlendMode(renderer, modo_anterior);
 
     const int pixel = std::max(2, alto_ventana / ALTO_DE_VENTANA_POR_PIXEL);
-    const std::vector<std::string> texto_a_mostrar = lineas(descanso, se_puede_levantar);
+    const std::vector<std::string> texto_a_mostrar = lineas(descanso);
     int ancho_texto = 0;
     for (const std::string& linea : texto_a_mostrar) {
         ancho_texto = std::max(ancho_texto, texto.ancho(linea, pixel));

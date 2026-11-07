@@ -397,4 +397,5 @@ void ProtocoloServidor::enviar_evento_estado_del_descanso(const EstadoDelDescans
     enviar_booleano(descanso.dio_el_ok);
     enviar_u8(descanso.listos);
     enviar_u8(descanso.jugadores);
+    enviar_booleano(descanso.puede_levantarse);
 }

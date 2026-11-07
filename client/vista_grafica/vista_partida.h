@@ -72,10 +72,6 @@ private:
     // Algo cambió en el mundo (el inventario, la tierra, los objetos): hay que volver a preguntar.
     void olvidar_el_piso();
     bool partida_terminada = false;
-
-    // Si son las 2 am: el reloj del servidor se queda ahí hasta que todos den el OK, y el que
-    // está acostado ya no se puede levantar.
-    bool son_las_dos() const;
     const EstadoJugador* jugador_propio() const;
     const ConfiguracionMapa& configuracion_de(const std::string& id_mapa) const;
     Camara camara_para(const MapaGrafico& mapa) const;

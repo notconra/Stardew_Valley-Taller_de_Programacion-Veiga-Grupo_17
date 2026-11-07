@@ -17,18 +17,16 @@ class PantallaDeDescanso {
 private:
     TextoDePixeles texto;
 
-    std::vector<std::string> lineas(
-        const EstadoDelDescanso& descanso, bool se_puede_levantar) const;
+    std::vector<std::string> lineas(const EstadoDelDescanso& descanso) const;
 
 public:
     // Si hay que mostrarla (el jugador no está despierto).
     bool visible(const EstadoDelDescanso& descanso) const;
 
-    // Se dibuja al final, encima de todo (también del HUD). "se_puede_levantar" es false pasadas
-    // las 2 am, cuando el que está acostado ya no se levanta al moverse.
+    // Se dibuja al final, encima de todo (también del HUD).
     void dibujar(
-        SDL_Renderer* renderer, const EstadoDelDescanso& descanso, bool se_puede_levantar,
-        int ancho_ventana, int alto_ventana) const;
+        SDL_Renderer* renderer, const EstadoDelDescanso& descanso, int ancho_ventana,
+        int alto_ventana) const;
 };
 
 #endif
