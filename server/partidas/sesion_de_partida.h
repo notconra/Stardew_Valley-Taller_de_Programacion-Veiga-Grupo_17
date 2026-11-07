@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <mutex>
 #include <string>
@@ -36,8 +37,14 @@ struct CambioDeConexion {
     AparienciaPersonaje apariencia;
 };
 
+// Qué hacer cuando termina un día (todos dieron el OK): guardar la partida. Lo provee
+// AdministradorDePartidas, que es quien sabe guardarla.
+using GuardarAlTerminarElDia = std::function<void()>;
+
 // Implementa Notificador para proveer el servicio de envío sin acoplar el juego a la red.
 // El Mundo manda los eventos y esta clase solo los deposita en la cola del cliente.
+//
+// Cuando termina un día, la partida se guarda sola.
 class SesionDePartida : public Thread, public Notificador {
 private:
     const std::string codigo_partida;
@@ -50,17 +57,27 @@ private:
     std::mutex mutex_clientes;
     std::map<uint32_t, ColaDeEventosDelJugador> clientes;
     std::vector<CambioDeConexion> cambios_de_conexion;
+    GuardarAlTerminarElDia guardar_al_terminar_el_dia;
 
     // Le pasa a Mundo las altas y bajas anotadas desde el tick anterior.
     void aplicar_cambios_de_conexion();
     void procesar_comandos();
     void difundir_cierre();
 
+    // Si en el último tick terminó el día, guarda la partida. Un error al guardar se informa
+    // pero no corta el bucle de juego.
+    void guardar_si_termino_el_dia(bool termino);
+
+    std::vector<DatosJugadorGuardado> datos_de_los_jugadores(
+        const std::vector<Jugador>& miembros,
+        const std::map<uint32_t, DatosJugadorGuardado>& jugadores_guardados_previos);
+
 public:
     SesionDePartida(
         const std::string& codigo_partida,
         const ConfiguracionPartidaServidor& configuracion_partida, const RecursosDeJuego& recursos,
-        const DatosMundoGuardado& datos_guardados = {});
+        const DatosMundoGuardado& datos_guardados = {},
+        GuardarAlTerminarElDia guardar_al_terminar_el_dia = [] {});
 
     bool esta_viva() const;
     std::vector<std::string> obtener_niveles_mazmorra() const;
@@ -79,10 +96,6 @@ public:
     void detener();
 
     DatosMundoGuardado obtener_datos_guardado(
-        const std::vector<Jugador>& miembros,
-        const std::map<uint32_t, DatosJugadorGuardado>& jugadores_guardados_previos);
-
-    std::vector<DatosJugadorGuardado> obtener_datos_jugadores(
         const std::vector<Jugador>& miembros,
         const std::map<uint32_t, DatosJugadorGuardado>& jugadores_guardados_previos);
 

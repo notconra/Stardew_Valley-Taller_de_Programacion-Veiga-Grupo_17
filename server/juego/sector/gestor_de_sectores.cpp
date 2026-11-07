@@ -62,6 +62,24 @@ std::vector<DatosCofreGuardado> GestorDeSectores::obtener_cofres_guardados() con
     return cofres;
 }
 
+void GestorDeSectores::cargar_muebles_guardados(
+    const std::vector<DatosMuebleGuardado>& muebles_guardados) {
+    for (const auto& mueble : muebles_guardados) {
+        auto sector_encontrado = sectores.find(mueble.id_mapa);
+        if (sector_encontrado != sectores.end()) {
+            sector_encontrado->second.cargar_mueble(mueble.tipo, mueble.columna, mueble.fila);
+        }
+    }
+}
+
+std::vector<DatosMuebleGuardado> GestorDeSectores::obtener_muebles_guardados() const {
+    std::vector<DatosMuebleGuardado> muebles;
+    for (const auto& [id_mapa, sector] : sectores) {
+        sector.agregar_muebles_guardados_a(muebles);
+    }
+    return muebles;
+}
+
 bool GestorDeSectores::existe(const std::string& id_mapa) const {
     return sectores.contains(id_mapa);
 }

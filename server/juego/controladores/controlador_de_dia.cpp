@@ -245,6 +245,7 @@ void ControladorDelDia::actualizar() {
     if (todos_listos()) {
         reloj.empezar_dia_siguiente();
         terminar_el_dia();
+        dia_terminado = true;
     } else if (cambio != CambioDelReloj::NINGUNO) {
         notificador.a_todos(reloj.hora());
     }
@@ -266,4 +267,14 @@ void ControladorDelDia::al_desconectarse(Personaje& personaje) {
 
 HoraDelJuego ControladorDelDia::hora() const {
     return reloj.hora();
+}
+
+void ControladorDelDia::continuar_en_el_dia(uint32_t dia) {
+    reloj.continuar_en_el_dia(dia);
+}
+
+bool ControladorDelDia::tomar_dia_terminado() {
+    const bool terminado = dia_terminado;
+    dia_terminado = false;
+    return terminado;
 }

@@ -52,6 +52,13 @@ private:
 
     // Saca al personaje del mundo sin borrarlo, cada controlador limpia lo suyo y se le quita el
     // cuerpo del sector.
+    // Lo que se guarda del personaje y no depende de dónde está su cuerpo: inventario, apariencia,
+    // vida, energía y última cama.
+    void completar_datos_guardados(const Personaje& personaje, DatosJugadorGuardado& datos) const;
+
+    // Lo inverso, al cargar una partida guardada.
+    void restaurar(Personaje& personaje, const DatosJugadorGuardado& guardado) const;
+
     void dar_de_baja(Personaje& personaje);
 
 public:
@@ -75,6 +82,13 @@ public:
     std::vector<std::string> obtener_niveles_mazmorra() const;
     std::vector<DatosMapaGuardado> obtener_mapas_guardados() const;
     std::vector<DatosCofreGuardado> obtener_cofres_guardados() const;
+    std::vector<DatosMuebleGuardado> obtener_muebles_guardados() const;
+    uint32_t obtener_dia() const;
+
+    // Si terminó un día desde la última vez que se preguntó (todos dieron el OK). Es cuando hay
+    // que guardar la partida; devuelve true una sola vez por día.
+    bool tomar_dia_terminado();
+
     Mundo(const Mundo&) = delete;
     Mundo& operator=(const Mundo&) = delete;
 };

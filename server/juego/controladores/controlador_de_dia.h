@@ -40,6 +40,7 @@ private:
     Notificador& notificador;
     SacarDeLaMazmorra sacar_de_la_mazmorra;
     std::map<uint32_t, EstadoDelDescanso> descansos_enviados;
+    bool dia_terminado = false;
 
     // Los que se quedaron sin vida o sin energía se desmayan, y a las 2 am todos los que siguen
     // despiertos (también el que entra a esa hora).
@@ -98,6 +99,13 @@ public:
 
     // La hora de ahora (la misma que ve el jugador).
     HoraDelJuego hora() const;
+
+    // Al retomar una partida guardada: arranca a las 6 am de ese día.
+    void continuar_en_el_dia(uint32_t dia);
+
+    // Si desde la última vez que se preguntó terminó un día (todos dieron el OK). Devuelve true
+    // una sola vez por día terminado: es el aviso para guardar la partida.
+    bool tomar_dia_terminado();
 };
 
 #endif

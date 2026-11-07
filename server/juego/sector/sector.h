@@ -85,6 +85,10 @@ public:
         uint32_t columna, uint32_t fila, const std::vector<RanuraInventario>& ranuras);
     void agregar_cofres_guardados_a(std::vector<DatosCofreGuardado>& lista) const;
 
+    // Los muebles que puso el jugador (la cama), para guardarlos y volver a ponerlos al retomar.
+    void cargar_mueble(TipoObjeto tipo, uint32_t columna, uint32_t fila);
+    void agregar_muebles_guardados_a(std::vector<DatosMuebleGuardado>& lista) const;
+
     // Coloca un objeto y avisa a los jugadores del sector. Devuelve el id del objeto, o 0 si la
     // casilla ya tiene un objeto o está bloqueada.
     int colocar_objeto(Notificador& notificador, TipoObjeto tipo, int columna, int fila);

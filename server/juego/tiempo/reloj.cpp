@@ -66,3 +66,11 @@ void Reloj::empezar_dia_siguiente() {
     ticks_del_dia = 0;
     ++dia;
 }
+
+void Reloj::continuar_en_el_dia(uint32_t dia_guardado) {
+    if (dia_guardado == 0) {
+        throw std::invalid_argument("los días se cuentan desde 1");
+    }
+    ticks_del_dia = 0;
+    dia = dia_guardado;
+}
