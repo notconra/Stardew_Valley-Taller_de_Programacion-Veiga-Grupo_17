@@ -78,9 +78,9 @@ private:
 
     void dibujar(
         Renderizador& renderizador, const MapaGrafico& mapa, const ObjetosGraficos& objetos,
-        const EnemigosGraficos& enemigos, const Personaje& personaje, const TierraGrafica& tierra,
-        const Camara& camara, const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
-        const EntradaDelUsuario& entrada) const;
+        const EnemigosGraficos& enemigos, const Personaje& personaje, const IconosDeItems& iconos,
+        const TierraGrafica& tierra, const Camara& camara, const HudInventario& hud,
+        const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada) const;
 
 public:
     VistaPartida(ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion);

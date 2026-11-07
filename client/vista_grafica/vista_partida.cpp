@@ -109,7 +109,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     Personaje personaje(configuracion.jugador, configuracion.graficos, renderizador.ptr());
     EfectosDeSonido efectos(configuracion.sonido);
     efectos_actuales = &efectos;
-    efectos.reproducir_ambiente();
+    efectos.cambiar_ambiente(configuracion_de(mapa_actual).ruta_ambiente);
+    efectos.cambiar_paso(configuracion_de(mapa_actual).ruta_caminar);
     TierraGrafica tierra(configuracion.tierra, configuracion.graficos, renderizador.ptr());
     ObjetosGraficos objetos(renderizador.ptr(), configuracion.graficos, iconos);
     EnemigosGraficos enemigos(renderizador.ptr(), configuracion.graficos);
@@ -153,6 +154,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         const EstadoJugador* propio = jugador_propio();
         if (propio != nullptr && propio->mapa != mapa_actual) {
             mapa_actual = propio->mapa;
+            efectos.cambiar_ambiente(configuracion_de(mapa_actual).ruta_ambiente);
+            efectos.cambiar_paso(configuracion_de(mapa_actual).ruta_caminar);
             ultimo_cofre = CofreJugador{};
             camara = camara_para(mapa_de(mapa_actual));
         }
@@ -174,6 +177,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             objetos,
             enemigos,
             personaje,
+            iconos,
             tierra,
             camara,
             hud,
@@ -367,8 +371,6 @@ void VistaPartida::aplicar(const EventoServidor& evento) {
                 } else {
                     *existente = e.enemigo;
                 }
-                // Si murió (vida en 0) no hace falta sacarlo de la lista: EnemigosGraficos ya no
-                // lo dibuja, y si revive llega otro EnemigoActualizado que lo actualiza in situ.
             },
             [&](const ActualizacionInventario& e) { ultimo_inventario = e.inventario; },
             [&](const ActualizacionCofre& e) { ultimo_cofre = e.cofre; },
@@ -425,9 +427,9 @@ bool VistaPartida::salir_de_partida_y_confirmar() {
 
 void VistaPartida::dibujar(
     Renderizador& renderizador, const MapaGrafico& mapa, const ObjetosGraficos& objetos,
-    const EnemigosGraficos& enemigos, const Personaje& personaje, const TierraGrafica& tierra,
-    const Camara& camara, const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
-    const EntradaDelUsuario& entrada) const {
+    const EnemigosGraficos& enemigos, const Personaje& personaje, const IconosDeItems& iconos,
+    const TierraGrafica& tierra, const Camara& camara, const HudInventario& hud,
+    const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada) const {
     SDL_Renderer* renderer = renderizador.ptr();
 
     const ColorDeFondo& color = configuracion.graficos.color_de_fondo;
@@ -449,8 +451,19 @@ void VistaPartida::dibujar(
             const bool es_el_propio = jugador.id_jugador == id_jugador;
             const bool mostrar_accion = es_el_propio && haciendo_accion;
             const Uint32 ms_de_accion = mostrar_accion ? SDL_GetTicks() - inicio_accion_ms : 0;
-            personaje
-                .dibujar(renderer, jugador, mostrar_accion, ms_de_accion, camara.x(), camara.y());
+            RanuraInventario en_mano{};
+            if (es_el_propio && ultimo_inventario.ranura_activa < ultimo_inventario.ranuras.size()) {
+                en_mano = ultimo_inventario.ranuras[ultimo_inventario.ranura_activa];
+            }
+            personaje.dibujar(
+                renderer,
+                jugador,
+                mostrar_accion,
+                ms_de_accion,
+                camara.x(),
+                camara.y(),
+                en_mano,
+                iconos);
         }
     }
     mapa.dibujar_sobre_los_jugadores(renderer, camara.x(), camara.y());
