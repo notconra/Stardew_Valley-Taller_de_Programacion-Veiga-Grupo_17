@@ -177,6 +177,22 @@ TEST_F(ColocarCama, AlLevantarlaVuelveElItemYSeLiberanLasCasillas) {
     }
 }
 
+TEST_F(ColocarCama, NoSePuedePonerEncimaDeUnJugador) {
+    Sector casa(MAPA_DE_LA_CASA, recursos(), 40);
+    casa.jugadores.agregar_en(2, CONTRA_LA_PARED.columna * 16 + 8, CONTRA_LA_PARED.fila * 16);
+
+    EXPECT_FALSE(colocar(casa, CONTRA_LA_PARED));
+    EXPECT_TRUE(ranura_de_la_cama(personaje).has_value());
+}
+
+TEST_F(ColocarCama, NoSePuedePonerSiElJugadorQuedaConMedioCuerpoAdentro) {
+    Sector casa(MAPA_DE_LA_CASA, recursos(), 40);
+    casa.jugadores.agregar_en(2, 19.0, CONTRA_LA_PARED.fila * 16 + 8);
+    ASSERT_EQ(casa.jugadores.casilla_del_jugador(2)->columna, 1);
+
+    EXPECT_FALSE(colocar(casa, CONTRA_LA_PARED));
+}
+
 TEST_F(ColocarCama, NoSePuedePonerPegadaALaPuerta) {
     Sector casa(MAPA_DE_LA_CASA, recursos(), 40);
     EXPECT_FALSE(colocar(casa, Casilla{3, 8}));

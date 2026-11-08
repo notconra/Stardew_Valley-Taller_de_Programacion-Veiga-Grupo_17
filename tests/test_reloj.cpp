@@ -30,6 +30,7 @@ HoraDelJuego hora(uint32_t dia, uint8_t hora_del_dia, uint8_t minuto) {
     hora_del_juego.hora = hora_del_dia;
     hora_del_juego.minuto = minuto;
     hora_del_juego.dia_de_la_estacion = static_cast<uint8_t>(dia);
+    hora_del_juego.dia_de_la_semana = static_cast<uint8_t>((dia - 1) % 7);
     return hora_del_juego;
 }
 
@@ -191,6 +192,15 @@ TEST(Reloj, LasEstacionesVanEnOrdenYDespuesDelInviernoEmpiezaOtroAnio) {
     EXPECT_EQ(reloj.hora().estacion, Estacion::PRIMAVERA);
     EXPECT_EQ(reloj.hora().anio, 2);
     EXPECT_EQ(reloj.hora().dia, 5u);
+}
+
+TEST(Reloj, ElPrimerDiaEsLunesYLaSemanaVuelveAEmpezarCadaSieteDias) {
+    Reloj reloj(UN_MINUTO, TICKS_POR_SEGUNDO, DIAS_POR_ESTACION);
+    EXPECT_EQ(reloj.hora().dia_de_la_semana, 0);
+    ir_al_dia(reloj, 7);
+    EXPECT_EQ(reloj.hora().dia_de_la_semana, 6);
+    ir_al_dia(reloj, 8);
+    EXPECT_EQ(reloj.hora().dia_de_la_semana, 0);
 }
 
 TEST(ConfiguracionDelDia, ElTomlPideUnDiaDeCatorceMinutos) {

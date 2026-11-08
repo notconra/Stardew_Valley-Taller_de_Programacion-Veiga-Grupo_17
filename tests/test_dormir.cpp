@@ -11,6 +11,7 @@
 #include "../server/configuracion/configuracion_servidor.h"
 #include "../server/configuracion/configuracion_servidor_datos.h"
 #include "../server/juego/acciones/accion_dormir.h"
+#include "../server/juego/acciones/accion_picar.h"
 #include "../server/juego/controladores/controlador_de_dia.h"
 #include "../server/juego/jugadores/personaje.h"
 #include "../server/juego/muebles/muebles.h"
@@ -85,6 +86,7 @@ protected:
         notificador,
         [this](Personaje&) { ++sacados_de_la_mazmorra; }};
     ResolverDeTransicion sin_transiciones = [](Personaje&, const Transicion&) {};
+    CamasOcupadas camas{personajes};
 
     void SetUp() override {
         ASSERT_NE(
@@ -120,8 +122,30 @@ protected:
             notificador,
             ModoUso::SECUNDARIO,
             sin_transiciones};
-        AccionDormir accion(personajes);
+        AccionDormir accion(camas);
         return accion.aplica(contexto) && accion.ejecutar(contexto);
+    }
+
+    bool picar_la_cama(Personaje& personaje) {
+        ContextoDeAccion contexto{
+            personaje.id_jugador,
+            RanuraInventario{TipoItem::PICO, 1, Calidad::BASE},
+            INDICE_RANURA_ACTIVA,
+            CAMA,
+            sectores.en(personaje.mapa_actual),
+            personaje,
+            recursos(),
+            notificador,
+            ModoUso::PRINCIPAL,
+            sin_transiciones};
+        AccionPicar pico(camas);
+        return pico.aplica(contexto) && pico.ejecutar(contexto);
+    }
+
+    bool hay_cama() {
+        const ObjetoDelMundo* objeto =
+            sectores.en(MAPA_DE_LA_CASA).objetos.objeto_en(CAMA.columna, CAMA.fila);
+        return objeto != nullptr && objeto->tipo == TipoObjeto::CAMA;
     }
 
     void dar_el_ok(Personaje& personaje) {
@@ -205,6 +229,25 @@ TEST_F(Dormir, DosDesmayadosConLaMismaUltimaCamaNoAparecenUnoEncimaDelOtro) {
     EXPECT_FALSE(
         casilla_de(primero)->columna == casilla_de(segundo)->columna &&
         casilla_de(primero)->fila == casilla_de(segundo)->fila);
+}
+
+TEST_F(Dormir, NoSePuedeLevantarLaCamaMientrasAlguienDuermeEnElla) {
+    Personaje& durmiendo = entrar(PRIMERO);
+    Personaje& otro = entrar(SEGUNDO);
+    ASSERT_TRUE(acostar(durmiendo));
+
+    EXPECT_FALSE(picar_la_cama(otro));
+    EXPECT_TRUE(hay_cama());
+}
+
+TEST_F(Dormir, ConLaCamaLibreSePuedeLevantar) {
+    Personaje& durmiendo = entrar(PRIMERO);
+    Personaje& otro = entrar(SEGUNDO);
+    ASSERT_TRUE(acostar(durmiendo));
+    ASSERT_FALSE(dia.atender(durmiendo, ComandoCliente{Moverse{1, 0}}));
+
+    EXPECT_TRUE(picar_la_cama(otro));
+    EXPECT_FALSE(hay_cama());
 }
 
 TEST_F(Dormir, FueraDeLaCamaNoSeAcuesta) {
@@ -402,7 +445,6 @@ TEST_F(Dormir, ALasDosLosDespiertosSeDesmayanYTodosTienenQueDarElOk) {
     EXPECT_EQ(notificador.ultimo_descanso[PRIMERO].estado, EstadoDeDescanso::DESMAYADO);
     EXPECT_EQ(dia.hora().hora, 2);
 
-    // El reloj queda en las 2 am hasta que todos den el OK.
     avanzar(500);
     EXPECT_EQ(dia.hora().dia, 1u);
     EXPECT_EQ(dia.hora().hora, 2);
