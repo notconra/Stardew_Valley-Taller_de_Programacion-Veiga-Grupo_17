@@ -19,6 +19,8 @@ private:
     // vacía, la destruye.
     void rechazar_ingreso(const ErrorDePartida& error, const std::string& codigo_partida);
 
+    bool nombre_tiene_espacios(const std::string& nombre);
+
 public:
     explicit EstadoLobby(ContextoDeCliente& contexto_de_cliente);
 

@@ -1,6 +1,8 @@
 #ifndef INGRESO_A_PARTIDA_H
 #define INGRESO_A_PARTIDA_H
 
+#include <string>
+
 #include "../../common/mensajes/mensajes.h"
 #include "sesion_de_partida.h"
 
@@ -10,6 +12,8 @@
 // cliente siga conectado a la partida.
 struct IngresoAPartida {
     EntradaExitosaAPartida entrada;
+    std::string nombre_jugador;
+    ColorDeJugador color_jugador = ColorDeJugador::AZUL;
     SesionDePartida& sesion;
 };
 

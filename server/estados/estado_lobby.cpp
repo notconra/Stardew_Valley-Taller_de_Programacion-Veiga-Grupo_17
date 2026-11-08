@@ -23,6 +23,10 @@ EstadoDeConexion::ProximoEstado EstadoLobby::identificarse(const Identificarse& 
     return nullptr;
 }
 
+bool EstadoLobby::nombre_tiene_espacios(const std::string& nombre) {
+    return nombre.find_first_of(" \t\n\r") != std::string::npos;
+}
+
 EstadoDeConexion::ProximoEstado EstadoLobby::listar_partidas(const ListarPartidas&) {
     const std::vector<InfoPartida> info_partidas =
         contexto.administrador.listar(contexto.identidad.id_cliente);
@@ -37,6 +41,10 @@ EstadoDeConexion::ProximoEstado EstadoLobby::crear_partida(const CrearPartida& c
     }
     if (comando.nombre_jugador.empty()) {
         responder_error(CodigoError::NO_PERMITIDO, "el nombre del jugador no puede estar vacío");
+        return nullptr;
+    }
+    if (nombre_tiene_espacios(comando.nombre_jugador)) {
+        responder_error(CodigoError::NO_PERMITIDO, "el nombre del jugador no puede tener espacios");
         return nullptr;
     }
 
@@ -62,6 +70,10 @@ EstadoDeConexion::ProximoEstado EstadoLobby::unirse_a_partida(const UnirsePartid
     }
     if (comando.nombre_jugador.empty()) {
         responder_error(CodigoError::NO_PERMITIDO, "el nombre del jugador no puede estar vacío");
+        return nullptr;
+    }
+    if (nombre_tiene_espacios(comando.nombre_jugador)) {
+        responder_error(CodigoError::NO_PERMITIDO, "el nombre del jugador no puede tener espacios");
         return nullptr;
     }
 
@@ -97,7 +109,11 @@ EstadoDeConexion::ProximoEstado EstadoLobby::retomar_partida(const RetomarPartid
 
 void EstadoLobby::entrar_a_partida(const IngresoAPartida& ingreso) {
     encolar(ingreso.entrada);
-    ingreso.sesion.entrar(ingreso.entrada.id_jugador, contexto.cola_eventos);
+    ingreso.sesion.entrar(
+        ingreso.entrada.id_jugador,
+        ingreso.nombre_jugador,
+        ingreso.color_jugador,
+        contexto.cola_eventos);
 }
 
 void EstadoLobby::rechazar_ingreso(const ErrorDePartida& error, const std::string& codigo_partida) {

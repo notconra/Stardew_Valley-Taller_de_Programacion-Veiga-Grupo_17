@@ -32,6 +32,12 @@ private:
 
     Jugador* buscar_jugador(uint32_t id_cliente);
 
+    // Compara nombres sin distinguir mayúsculas ni minúsculas, porque el chat busca privados así.
+    static bool mismo_nombre(const std::string& uno, const std::string& otro);
+
+    // Primer color que ningún jugador de la partida usa.
+    ColorDeJugador proximo_color_libre() const;
+
 public:
     // El creador pasa a ser el primer jugador de la partida.
     Partida(
@@ -46,6 +52,12 @@ public:
 
     // Jugadores que tienen lugar en la partida, estén o no conectados.
     uint8_t cantidad_de_jugadores() const;
+
+    // Nombre con el que se muestra al jugador. Devuelve una cadena vacía si no es miembro.
+    std::string nombre_de_jugador(uint32_t id_cliente) const;
+
+    // Color asignado al jugador dentro de esta partida. Devuelve AZUL si no es miembro.
+    ColorDeJugador color_de_jugador(uint32_t id_cliente) const;
 
     // Jugadores que tienen lugar y están conectados ahora.
     uint8_t cantidad_de_conectados() const;
