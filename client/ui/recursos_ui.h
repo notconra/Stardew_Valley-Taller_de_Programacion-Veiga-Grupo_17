@@ -4,10 +4,12 @@
 #include <QIcon>
 #include <QPixmap>
 #include <QPushButton>
+#include <QString>
+#include <vector>
 
 // Gestiona y centraliza los sprites originales de la UI extraídos de Cursors.png
-// (dado, botón OK, flechas y símbolos de género), asegurando que se recorten
-// y escalen manteniendo el estilo pixel-art nítido.
+// (dado, botón OK, flechas, símbolos de género y tipos de granja), asegurando que se
+// recorten y escalen manteniendo el estilo pixel-art nítido.
 class RecursosUI {
 public:
     struct RegionSprite {
@@ -15,6 +17,13 @@ public:
         int y;
         int ancho;
         int alto;
+    };
+
+    struct InfoTipoGranja {
+        int id;
+        QString nombre;
+        QString mapa_id;
+        QString descripcion;
     };
 
     static RecursosUI& instancia();
@@ -38,20 +47,25 @@ public:
         return sprite_flecha_der;
     }
 
+    QPixmap icono_granja(int indice) const;
+
     void configurar_boton_dado(QPushButton* boton);
     void configurar_boton_ok(QPushButton* boton);
     void configurar_boton_masculino(QPushButton* boton);
     void configurar_boton_femenino(QPushButton* boton);
     void configurar_boton_flecha_izquierda(QPushButton* boton);
     void configurar_boton_flecha_derecha(QPushButton* boton);
+    void configurar_boton_granja(QPushButton* boton, int indice);
 
     void configurar_boton_icono(QPushButton* boton, const QPixmap& pixmap);
+
+    static const std::vector<InfoTipoGranja>& obtener_tipos_granja();
 
 private:
     RecursosUI();
 
     QPixmap recortar_y_escalar(
-        const RegionSprite& region, int ancho_destino, int alto_destino) const;
+        const QPixmap& hoja, const RegionSprite& region, int ancho_destino, int alto_destino) const;
 
     QPixmap hoja_cursors;
     QPixmap sprite_dado;
@@ -60,6 +74,7 @@ private:
     QPixmap sprite_femenino;
     QPixmap sprite_flecha_izq;
     QPixmap sprite_flecha_der;
+    std::vector<QPixmap> sprite_iconos_granja;
 };
 
 #endif  // RECURSOS_UI_H

@@ -238,6 +238,45 @@ QPushButton#btn_genero_femenino:checked {
     border-radius: 4px;
 }
 
+/* Botones de selección de tipo de granja */
+QFrame#contenedor_lateral_granjas {
+    border-image: url("Assets/LooseSprites/menu_box.png") 12 12 12 12 repeat;
+    border-width: 12px;
+    padding: 8px;
+    background-color: transparent;
+}
+
+QPushButton[class="btn_granja"] {
+    background-color: transparent;
+    border: 3px solid transparent;
+    border-radius: 4px;
+    min-width: 48px;
+    max-width: 48px;
+    min-height: 44px;
+    max-height: 44px;
+    padding: 0px;
+}
+
+QPushButton[class="btn_granja"]:hover {
+    border: 3px solid #e09642;
+    border-radius: 4px;
+}
+
+QPushButton[class="btn_granja"]:checked {
+    border: 3px solid #d22a2a;
+    border-radius: 4px;
+}
+
+QToolTip {
+    background-color: #ffeed3;
+    color: #4c2207;
+    border: 2px solid #8e4c19;
+    border-radius: 4px;
+    padding: 6px;
+    font-size: 14px;
+}
+
+
 QPushButton#btn_randomizar {
     background-color: transparent;
     border: none;
@@ -518,6 +557,11 @@ QSlider::handle:horizontal:pressed {
          </spacer>
         </item>
         <item row="1" column="1" alignment="Qt::AlignCenter">
+         <layout class="QHBoxLayout" name="layout_horizontal_creacion">
+          <property name="spacing">
+           <number>16</number>
+          </property>
+          <item>
          <widget class="QFrame" name="marco_madera">
           <property name="frameShape">
            <enum>QFrame::Shape::StyledPanel</enum>
@@ -1428,6 +1472,118 @@ QSlider::handle:horizontal:pressed {
             </item>
           </layout>
          </widget>
+          </item>
+          <item alignment="Qt::AlignVCenter">
+           <widget class="QFrame" name="contenedor_lateral_granjas">
+            <property name="frameShape">
+             <enum>QFrame::Shape::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Shadow::Raised</enum>
+            </property>
+            <layout class="QGridLayout" name="layout_granjas_grid">
+             <property name="spacing">
+              <number>8</number>
+             </property>
+             <property name="leftMargin">
+              <number>10</number>
+             </property>
+             <property name="topMargin">
+              <number>10</number>
+             </property>
+             <property name="rightMargin">
+              <number>10</number>
+             </property>
+             <property name="bottomMargin">
+              <number>10</number>
+             </property>
+             <item row="0" column="0">
+              <widget class="QPushButton" name="btn_granja_0">
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+               <property name="class" stdset="0">
+                <string>btn_granja</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QPushButton" name="btn_granja_6">
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="class" stdset="0">
+                <string>btn_granja</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QPushButton" name="btn_granja_1">
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="class" stdset="0">
+                <string>btn_granja</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QPushButton" name="btn_granja_7">
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="class" stdset="0">
+                <string>btn_granja</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QPushButton" name="btn_granja_2">
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="class" stdset="0">
+                <string>btn_granja</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QPushButton" name="btn_granja_3">
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="class" stdset="0">
+                <string>btn_granja</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0">
+              <widget class="QPushButton" name="btn_granja_4">
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="class" stdset="0">
+                <string>btn_granja</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="0">
+              <widget class="QPushButton" name="btn_granja_5">
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="class" stdset="0">
+                <string>btn_granja</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item row="1" column="2">
          <spacer name="horizontalSpacer_right">

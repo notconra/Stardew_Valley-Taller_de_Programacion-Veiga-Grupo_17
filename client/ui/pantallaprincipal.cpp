@@ -45,6 +45,7 @@ PantallaPrincipal::PantallaPrincipal(
     ui->setupUi(this);
     configurar_ventana();
     inicializar_selectores_personaje();
+    inicializar_selector_granjas();
     connect(ui->btn_salir, &QPushButton::clicked, this, &PantallaPrincipal::close);
     connect(
         ui->btn_nueva_partida,
@@ -194,7 +195,8 @@ void PantallaPrincipal::confirmar_personaje() {
         conexion.enviar_comando(UnirsePartida{codigo_partida_a_unirse, nombre.toStdString()});
     } else {
         std::cout << "Creando personaje: " << nombre.toStdString()
-                  << " | Granja: " << granja.toStdString() << "\n";
+                  << " | Granja: " << granja.toStdString()
+                  << " | Tipo de mapa: " << mapa_granja_seleccionado << "\n";
         conexion.enviar_comando(CrearPartida{granja.toStdString(), nombre.toStdString()});
     }
 
@@ -258,8 +260,54 @@ bool PantallaPrincipal::procesar_evento_ingreso(const EventoServidor& evento) {
 void PantallaPrincipal::configurar_formulario_granja(bool visible) {
     ui->label_3->setVisible(visible);
     ui->input_nombre_granja->setVisible(visible);
-    ui->label_mundo->setVisible(visible);
-    ui->combo_mundo->setVisible(visible);
+    ui->label_mundo->setVisible(false);
+    ui->combo_mundo->setVisible(false);
+    ui->contenedor_lateral_granjas->setVisible(visible);
+}
+
+void PantallaPrincipal::inicializar_selector_granjas() {
+    auto& recursos = RecursosUI::instancia();
+    botones_tipo_granja = {
+        ui->btn_granja_0,
+        ui->btn_granja_1,
+        ui->btn_granja_2,
+        ui->btn_granja_3,
+        ui->btn_granja_4,
+        ui->btn_granja_5,
+        ui->btn_granja_6,
+        ui->btn_granja_7};
+
+    grupo_botones_granja.setExclusive(true);
+    for (int i = 0; i < static_cast<int>(botones_tipo_granja.size()); ++i) {
+        QPushButton* boton = botones_tipo_granja[i];
+        recursos.configurar_boton_granja(boton, i);
+        grupo_botones_granja.addButton(boton, i);
+    }
+
+    connect(
+        &grupo_botones_granja,
+        &QButtonGroup::idClicked,
+        this,
+        &PantallaPrincipal::al_seleccionar_tipo_granja);
+
+    seleccionar_tipo_granja(0);
+}
+
+void PantallaPrincipal::al_seleccionar_tipo_granja(int indice) {
+    seleccionar_tipo_granja(indice);
+}
+
+void PantallaPrincipal::seleccionar_tipo_granja(int indice) {
+    const auto& tipos = RecursosUI::obtener_tipos_granja();
+    if (indice < 0 || indice >= static_cast<int>(tipos.size())) {
+        return;
+    }
+    indice_granja_seleccionada = indice;
+    mapa_granja_seleccionado = tipos[indice].mapa_id.toStdString();
+
+    if (auto* boton = grupo_botones_granja.button(indice)) {
+        boton->setChecked(true);
+    }
 }
 
 void PantallaPrincipal::inicializar_selectores_personaje() {
