@@ -1,6 +1,9 @@
 #include "personaje.h"
 
+#include <SDL2/SDL_image.h>
+
 #include <map>
+#include <string>
 
 namespace {
 
@@ -26,13 +29,11 @@ constexpr int FILA_SOMBRERO_POR_DIRECCION[3] = {0, 40, 60};
 constexpr int ANCHO_CELDA_PELO = 16;
 constexpr int ANCHO_CELDA_SOMBRERO = 20;
 constexpr int ANCHO_CELDA_REMERA = 8;
+constexpr int COLUMNAS_REMERA = 16;
 constexpr int ALTO_BLOQUE_PELO = 32 * 3;
-constexpr int ALTO_BLOQUE_REMERA = 8 * 3;
+constexpr int ALTO_BLOQUE_REMERA = 32;
 constexpr int ALTO_BLOQUE_SOMBRERO = 80;
 
-// Tu prototipo dibujaba todo a escala x4 "horneada" en los números (sprite de 16px -> 64px en
-// pantalla), así que estos desvíos estaban en píxeles de pantalla a esa escala. Acá se dividen
-// por 4 para expresarlos en unidades de mundo, y se multiplican por escala_de_tiles al dibujar.
 constexpr int DESVIO_ACCION_ABAJO[4] = {1, 0, -1, -2};
 constexpr int DESVIO_ACCION_LATERAL[4] = {0, -1, -2, -3};
 constexpr int DESVIO_ACCION_ARRIBA[4] = {1, 1, 0, 0};
@@ -57,17 +58,12 @@ int desvio_de_accion(int fila_direccion, int cuadro) {
     }
 }
 
-constexpr const char* RUTA_CUERPO_MASCULINO = "Assets/Characters/Farmer/farmer_base.png";
-constexpr const char* RUTA_CUERPO_FEMENINO = "Assets/Characters/Farmer/farmer_girl_base.png";
-
 }  // namespace
 
 Personaje::Personaje(
     const ConfiguracionJugador& configuracion_jugador,
     const ConfiguracionGraficos& configuracion_graficos, SDL_Renderer* renderer)
-    : cuerpo_masculino(RUTA_CUERPO_MASCULINO, renderer),
-      cuerpo_femenino(RUTA_CUERPO_FEMENINO, renderer),
-      pantalon(configuracion_jugador.ruta_pantalon, renderer),
+    : pantalon(configuracion_jugador.ruta_pantalon, renderer),
       pelo(configuracion_jugador.ruta_pelo, renderer),
       sombrero(configuracion_jugador.ruta_sombrero, renderer),
       remera(configuracion_jugador.ruta_remera, renderer),
@@ -75,11 +71,7 @@ Personaje::Personaje(
       alto(32),
       escala_de_tiles(configuracion_graficos.escala_de_tiles),
       ms_por_cuadro_caminando(configuracion_jugador.ms_por_cuadro_caminando) {
-    ancho_hoja_cuerpo = 0;
-    SDL_QueryTexture(cuerpo_masculino.ptr(), nullptr, nullptr, &ancho_hoja_cuerpo, nullptr);
-    if (ancho_hoja_cuerpo <= 0) {
-        SDL_QueryTexture(cuerpo_femenino.ptr(), nullptr, nullptr, &ancho_hoja_cuerpo, nullptr);
-    }
+    ancho_hoja_cuerpo = gestor_cuerpos.ancho_hoja_cuerpo();
 
     int ancho_hoja_pantalon = 0;
     SDL_QueryTexture(pantalon.ptr(), nullptr, nullptr, &ancho_hoja_pantalon, nullptr);
@@ -102,12 +94,7 @@ Personaje::Personaje(
         columnas_sombrero = 1;
     }
 
-    int ancho_hoja_remera = 0;
-    SDL_QueryTexture(remera.ptr(), nullptr, nullptr, &ancho_hoja_remera, nullptr);
-    columnas_remera = ancho_hoja_remera / ANCHO_CELDA_REMERA;
-    if (columnas_remera <= 0) {
-        columnas_remera = 1;
-    }
+    columnas_remera = COLUMNAS_REMERA;
 }
 
 int Personaje::ancho_del_sprite() const {
@@ -120,7 +107,7 @@ int Personaje::alto_del_sprite() const {
 
 void Personaje::dibujar(
     SDL_Renderer* renderer, const EstadoJugador& jugador, bool haciendo_accion, Uint32 ms_de_accion,
-    int x_en_mapa, int y_en_mapa, int cam_x, int cam_y) const {
+    int x_en_mapa, int y_en_mapa, int cam_x, int cam_y) {
     const auto encontrada = FILA_DE_DIRECCION.find(jugador.mirando);
     const int fila_direccion =
         encontrada != FILA_DE_DIRECCION.end() ? encontrada->second : FILA_ABAJO;
@@ -159,12 +146,12 @@ void Personaje::dibujar(
         alto * escala_de_tiles};
 
     const bool es_femenino = jugador.apariencia.es_femenino;
-    const Textura& cuerpo = es_femenino ? cuerpo_femenino : cuerpo_masculino;
+    SDL_Texture* cuerpo = gestor_cuerpos.obtener_o_crear_cuerpo(jugador, renderer);
     const int offset_y_remera = es_femenino ? OFFSET_Y_REMERA_FEMENINO : OFFSET_Y_REMERA_MASCULINO;
     const int offset_y_pelo = es_femenino ? OFFSET_Y_PELO_FEMENINO : OFFSET_Y_PELO_MASCULINO;
 
     const SDL_Rect origen_cuerpo{columna_cuerpo * ancho, fila_cuerpo * alto, ancho, alto};
-    SDL_RenderCopyEx(renderer, cuerpo.ptr(), &origen_cuerpo, &destino_cuerpo, 0.0, nullptr, flip);
+    SDL_RenderCopyEx(renderer, cuerpo, &origen_cuerpo, &destino_cuerpo, 0.0, nullptr, flip);
 
     SDL_SetTextureColorMod(
         pantalon.ptr(),
@@ -185,7 +172,7 @@ void Personaje::dibujar(
         flip);
 
     const SDL_Rect origen_brazos{columna_brazos * ancho, fila_brazos * alto, ancho, alto};
-    SDL_RenderCopyEx(renderer, cuerpo.ptr(), &origen_brazos, &destino_cuerpo, 0.0, nullptr, flip);
+    SDL_RenderCopyEx(renderer, cuerpo, &origen_brazos, &destino_cuerpo, 0.0, nullptr, flip);
 
     SDL_SetTextureColorMod(
         pelo.ptr(),
@@ -252,13 +239,6 @@ void Personaje::dibujar(
     SDL_RenderCopyEx(renderer, remera.ptr(), &origen_remera, &destino_remera, 0.0, nullptr, flip);
 
     if (haciendo_accion) {
-        SDL_RenderCopyEx(
-            renderer,
-            cuerpo.ptr(),
-            &origen_brazos,
-            &destino_cuerpo,
-            0.0,
-            nullptr,
-            flip);
+        SDL_RenderCopyEx(renderer, cuerpo, &origen_brazos, &destino_cuerpo, 0.0, nullptr, flip);
     }
 }

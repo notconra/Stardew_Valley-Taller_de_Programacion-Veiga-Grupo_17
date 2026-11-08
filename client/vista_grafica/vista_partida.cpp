@@ -510,7 +510,7 @@ bool VistaPartida::salir_de_partida_y_confirmar() {
 
 void VistaPartida::dibujar(
     Renderizador& renderizador, SDL_Texture* mundo, const MapaGrafico& mapa,
-    const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos, const Personaje& personaje,
+    const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos, Personaje& personaje,
     const TierraGrafica& tierra, const Camara& camara, const HudInventario& hud,
     const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada) const {
     SDL_Renderer* renderer = renderizador.ptr();

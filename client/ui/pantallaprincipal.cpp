@@ -191,6 +191,8 @@ void PantallaPrincipal::confirmar_personaje() {
 
     AparienciaPersonaje apariencia;
     apariencia.es_femenino = es_personaje_femenino;
+    apariencia.indice_piel = static_cast<uint8_t>(indice_piel_seleccionada);
+    apariencia.color_ojos = color_ojos_actual;
     apariencia.indice_pelo = static_cast<uint8_t>(indice_pelo_seleccionado);
     apariencia.color_pelo = color_pelo_actual;
     apariencia.indice_remera = static_cast<uint8_t>(indice_remera_seleccionado);

@@ -40,7 +40,7 @@ constexpr const char* RUTA_FONDO_DIA = "Assets/LooseSprites/daybg.png";
 constexpr int ANCHO_RECUADRO_PREVIEW = 116;
 constexpr int ALTO_RECUADRO_PREVIEW = 156;
 
-constexpr QRgb COLOR_BASE_OJOS = 0x00682B0F;  // RGB(104, 43, 15)
+const QColor COLOR_BASE_OJOS(104, 43, 15);
 
 CompositorPersonaje::CompositorPersonaje()
     : hoja_cuerpo_masculino(RUTA_CUERPO_MASCULINO),
@@ -76,13 +76,19 @@ QImage CompositorPersonaje::aplicar_tinte(const QImage& original, const ColorRGB
     return resultado;
 }
 
+bool CompositorPersonaje::mismo_rgb(QRgb primer_color, QRgb segundo_color) const {
+    return qRed(primer_color) == qRed(segundo_color) &&
+           qGreen(primer_color) == qGreen(segundo_color) &&
+           qBlue(primer_color) == qBlue(segundo_color);
+}
+
 QImage CompositorPersonaje::aplicar_piel(const QImage& original, int indice_piel) const {
     if (hoja_pieles.isNull() || indice_piel <= 0 || indice_piel >= hoja_pieles.height()) {
         return original;
     }
-    QRgb original_sombra = hoja_pieles.pixel(0, 0) & 0x00FFFFFF;
-    QRgb original_medio = hoja_pieles.pixel(1, 0) & 0x00FFFFFF;
-    QRgb original_luz = hoja_pieles.pixel(2, 0) & 0x00FFFFFF;
+    QRgb original_sombra = hoja_pieles.pixel(0, 0);
+    QRgb original_medio = hoja_pieles.pixel(1, 0);
+    QRgb original_luz = hoja_pieles.pixel(2, 0);
 
     QRgb destino_sombra = hoja_pieles.pixel(0, indice_piel);
     QRgb destino_medio = hoja_pieles.pixel(1, indice_piel);
@@ -97,17 +103,16 @@ QImage CompositorPersonaje::aplicar_piel(const QImage& original, int indice_piel
             if (alfa == 0) {
                 continue;
             }
-            QRgb rgb = pixel & 0x00FFFFFF;
-            if (rgb == original_sombra) {
+            if (mismo_rgb(pixel, original_sombra)) {
                 fila[x] = qRgba(
                     qRed(destino_sombra),
                     qGreen(destino_sombra),
                     qBlue(destino_sombra),
                     alfa);
-            } else if (rgb == original_medio) {
+            } else if (mismo_rgb(pixel, original_medio)) {
                 fila[x] =
                     qRgba(qRed(destino_medio), qGreen(destino_medio), qBlue(destino_medio), alfa);
-            } else if (rgb == original_luz) {
+            } else if (mismo_rgb(pixel, original_luz)) {
                 fila[x] = qRgba(qRed(destino_luz), qGreen(destino_luz), qBlue(destino_luz), alfa);
             }
         }
@@ -118,6 +123,7 @@ QImage CompositorPersonaje::aplicar_piel(const QImage& original, int indice_piel
 QImage CompositorPersonaje::aplicar_color_ojos(
     const QImage& original, const ColorRGB& color) const {
     QImage resultado = original.convertToFormat(QImage::Format_ARGB32);
+    QRgb rgb_base_ojos = COLOR_BASE_OJOS.rgb();
     for (int y = 0; y < resultado.height(); ++y) {
         QRgb* fila = reinterpret_cast<QRgb*>(resultado.scanLine(y));
         for (int x = 0; x < resultado.width(); ++x) {
@@ -126,7 +132,7 @@ QImage CompositorPersonaje::aplicar_color_ojos(
             if (alfa == 0) {
                 continue;
             }
-            if ((pixel & 0x00FFFFFF) == COLOR_BASE_OJOS) {
+            if (mismo_rgb(pixel, rgb_base_ojos)) {
                 fila[x] = qRgba(color.rojo, color.verde, color.azul, alfa);
             }
         }

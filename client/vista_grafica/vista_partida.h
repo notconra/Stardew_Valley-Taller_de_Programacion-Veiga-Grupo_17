@@ -110,10 +110,9 @@ private:
     // dibuja directo en la ventana.
     void dibujar(
         Renderizador& renderizador, SDL_Texture* mundo, const MapaGrafico& mapa,
-        const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos,
-        const Personaje& personaje, const TierraGrafica& tierra, const Camara& camara,
-        const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
-        const EntradaDelUsuario& entrada) const;
+        const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos, Personaje& personaje,
+        const TierraGrafica& tierra, const Camara& camara, const HudInventario& hud,
+        const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada) const;
 
 public:
     VistaPartida(ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion);

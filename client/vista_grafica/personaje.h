@@ -6,6 +6,7 @@
 #include "../../common/direccion.h"
 #include "../../common/mensajes/mensajes.h"
 #include "../configuracion/configuracion_cliente_datos.h"
+#include "gestor_texturas_personaje.h"
 #include "textura.h"
 
 // Aspecto de un personaje armado por capas: cuerpo (con brazos y la superposición de la acción
@@ -15,8 +16,7 @@
 // servidor: solo se ve la animación de acción en la pantalla de quien la hace.
 class Personaje {
 private:
-    Textura cuerpo_masculino;
-    Textura cuerpo_femenino;
+    GestorTexturasPersonaje gestor_cuerpos;
     Textura pantalon;
     Textura pelo;
     Textura sombrero;
@@ -43,7 +43,7 @@ public:
 
     void dibujar(
         SDL_Renderer* renderer, const EstadoJugador& jugador, bool haciendo_accion,
-        Uint32 ms_de_accion, int x_en_mapa, int y_en_mapa, int cam_x, int cam_y) const;
+        Uint32 ms_de_accion, int x_en_mapa, int y_en_mapa, int cam_x, int cam_y);
 };
 
 #endif

@@ -43,6 +43,10 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
         }
 
         escritor.escribir_bool(jugador.apariencia.es_femenino);
+        escritor.escribir_u8(jugador.apariencia.indice_piel);
+        escritor.escribir_u8(jugador.apariencia.color_ojos.rojo);
+        escritor.escribir_u8(jugador.apariencia.color_ojos.verde);
+        escritor.escribir_u8(jugador.apariencia.color_ojos.azul);
         escritor.escribir_u8(jugador.apariencia.indice_pelo);
         escritor.escribir_u8(jugador.apariencia.color_pelo.rojo);
         escritor.escribir_u8(jugador.apariencia.color_pelo.verde);
@@ -127,6 +131,10 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
         }
 
         jugador.apariencia.es_femenino = lector.leer_bool();
+        jugador.apariencia.indice_piel = lector.leer_u8();
+        jugador.apariencia.color_ojos.rojo = lector.leer_u8();
+        jugador.apariencia.color_ojos.verde = lector.leer_u8();
+        jugador.apariencia.color_ojos.azul = lector.leer_u8();
         jugador.apariencia.indice_pelo = lector.leer_u8();
         jugador.apariencia.color_pelo.rojo = lector.leer_u8();
         jugador.apariencia.color_pelo.verde = lector.leer_u8();
