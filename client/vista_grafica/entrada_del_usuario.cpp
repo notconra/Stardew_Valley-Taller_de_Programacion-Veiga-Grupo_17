@@ -17,10 +17,16 @@ EntradaDelUsuario::EntradaDelUsuario()
           {SDL_SCANCODE_ESCAPE, &Pedidos::salir},
           {SDL_SCANCODE_G, &Pedidos::guardar},
           {SDL_SCANCODE_M, &Pedidos::multijugador},
+          {SDL_SCANCODE_T, &Pedidos::alternar_chat},
       } {
 }
 
-void EntradaDelUsuario::leer() {
+void EntradaDelUsuario::leer(bool escribiendo_texto) {
+    modo_escritura = escribiendo_texto;
+    if (modo_escritura) {
+        teclas_de_movimiento.clear();
+    }
+
     pedidos_actuales = Pedidos{};
 
     SDL_Event evento;
@@ -32,8 +38,15 @@ void EntradaDelUsuario::leer() {
 void EntradaDelUsuario::procesar(const SDL_Event& evento) {
     if (evento.type == SDL_QUIT) {
         cierre_pedido = true;
-    } else if (evento.type == SDL_KEYDOWN && evento.key.repeat == 0) {
-        apretar(evento.key.keysym.scancode);
+    } else if (evento.type == SDL_TEXTINPUT) {
+        if (modo_escritura) {
+            pedidos_actuales.texto_ingresado += evento.text.text;
+        }
+    } else if (evento.type == SDL_KEYDOWN) {
+        const SDL_Scancode tecla = evento.key.keysym.scancode;
+        if (evento.key.repeat == 0 || (modo_escritura && tecla == SDL_SCANCODE_BACKSPACE)) {
+            apretar(tecla);
+        }
     } else if (evento.type == SDL_KEYUP) {
         soltar(evento.key.keysym.scancode);
     } else if (evento.type == SDL_MOUSEMOTION) {
@@ -41,6 +54,7 @@ void EntradaDelUsuario::procesar(const SDL_Event& evento) {
         posicion_raton_y = evento.motion.y;
     } else if (evento.type == SDL_MOUSEWHEEL) {
         pedidos_actuales.giro_de_la_barra -= evento.wheel.y;
+        pedidos_actuales.rueda += evento.wheel.y;
     } else if (evento.type == SDL_MOUSEBUTTONDOWN) {
         posicion_raton_x = evento.button.x;
         posicion_raton_y = evento.button.y;
@@ -56,6 +70,17 @@ void EntradaDelUsuario::procesar(const SDL_Event& evento) {
 }
 
 void EntradaDelUsuario::apretar(SDL_Scancode tecla) {
+    if (modo_escritura) {
+        if (tecla == SDL_SCANCODE_ESCAPE) {
+            pedidos_actuales.cancelar_escritura = true;
+        } else if (tecla == SDL_SCANCODE_RETURN || tecla == SDL_SCANCODE_KP_ENTER) {
+            pedidos_actuales.confirmar_chat = true;
+        } else if (tecla == SDL_SCANCODE_BACKSPACE) {
+            ++pedidos_actuales.caracteres_a_borrar;
+        }
+        return;
+    }
+
     if (const auto pedido = pedido_de_tecla.find(tecla); pedido != pedido_de_tecla.end()) {
         pedidos_actuales.*(pedido->second) = true;
     } else if (tecla >= SDL_SCANCODE_1 && tecla <= SDL_SCANCODE_0) {

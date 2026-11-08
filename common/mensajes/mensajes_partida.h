@@ -1,10 +1,12 @@
 #ifndef MENSAJES_PARTIDA_H
 #define MENSAJES_PARTIDA_H
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
 
+#include "../color_de_jugador.h"
 #include "../apariencia_personaje.h"
 #include "../direccion.h"
 #include "../modo_uso.h"
@@ -17,6 +19,10 @@
 // Política de tipos del protocolo: las cantidades, ids y posiciones viajan sin signo (u8/u16/u32),
 // porque nunca son negativas. El único campo con signo es el eje de Moverse (i8), donde el signo
 // distingue izquierda/arriba de derecha/abajo.
+
+// Largo máximo de un mensaje escrito, medido en bytes. Tiene que ser igual en cliente y servidor
+// para que el cliente no deje escribir algo que el servidor vaya a rechazar.
+constexpr size_t LARGO_MAXIMO_DE_MENSAJE_DE_CHAT = 240;
 
 // Cliente a servidor
 
@@ -81,6 +87,12 @@ struct SolicitarInventario {};
 struct SoltarItem {
     uint8_t ranura = 0;
     uint16_t cantidad = 0;
+};
+
+// El texto que escribió el jugador, tal cual. El servidor valida el largo, los
+// espacios y el significado (global, privado o comando).
+struct EnviarMensajeDeChat {
+    std::string texto;
 };
 
 // Servidor a cliente
@@ -247,6 +259,28 @@ struct ActualizacionInventario {
 // Actualización del cofre abierto por un jugador. Si el cofre se cerró, abierto == false.
 struct ActualizacionCofre {
     CofreJugador cofre;
+};
+
+// Canal de un mensaje que el servidor manda al cliente. "PRIVADO" avisa que el mensaje era para un
+// único destinatario, "SISTEMA" son respuestas del propio servidor (errores de envío, comandos
+// desconocidos) y "COMERCIANTE" queda reservado para las respuestas de los NPCs del mercado.
+enum class CanalDeChat : uint8_t {
+    GLOBAL = 0,
+    PRIVADO = 1,
+    SISTEMA = 2,
+    COMERCIANTE = 3,
+};
+
+// Un mensaje ya interpretado por el servidor. "remitente" es el nombre del
+// jugador o del NPC que habla, "destinatario" solo tiene valor en los privados. "texto" es el
+// contenido sin el prefijo "@nombre". "color_del_remitente" lo elige el servidor al entrar a la
+// partida y se conserva durante toda la partida.
+struct MensajeDeChat {
+    CanalDeChat canal = CanalDeChat::GLOBAL;
+    std::string remitente;
+    std::string destinatario;
+    std::string texto;
+    ColorDeJugador color_del_remitente = ColorDeJugador::AZUL;
 };
 
 #endif

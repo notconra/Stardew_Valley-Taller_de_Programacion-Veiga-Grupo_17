@@ -32,6 +32,7 @@ private:
     void enviar_comando_mover_item_con_cofre(const MoverItemConCofre& mover);
     void enviar_comando_solicitar_inventario(const SolicitarInventario& solicitar);
     void enviar_comando_soltar_item(const SoltarItem& soltar);
+    void enviar_comando_enviar_mensaje_de_chat(const EnviarMensajeDeChat& mensaje);
 
     // Recepción de eventos
     ErrorServidor recibir_error_servidor();
@@ -60,10 +61,13 @@ private:
     CofreJugador recibir_cofre_jugador();
     ActualizacionInventario recibir_actualizacion_inventario();
     ActualizacionCofre recibir_actualizacion_cofre();
+    MensajeDeChat recibir_mensaje_de_chat();
 
     // Auxiliares
     CodigoError codigo_error_desde(uint8_t valor) const;
     Direccion direccion_desde(uint8_t valor) const;
+    CanalDeChat canal_de_chat_desde(uint8_t valor) const;
+    ColorDeJugador color_de_jugador_desde(uint8_t valor) const;
 
 public:
     explicit ProtocoloCliente(ISocket& socket_conectado);

@@ -28,6 +28,14 @@ acelerado = false
 vsync = true
 fps_maximos = 30
 
+[chat]
+ruta_fuente = "Assets/fuentes/Stardew_Valley.ttf"
+tamano_de_fuente = 20
+maximo_de_mensajes = 1000
+ruta_icono = "Assets/chat/boton_chat.png"
+ruta_carpeta_de_emojis = "Assets/chat/emojis"
+ruta_carpeta_de_emotes = "Assets/chat/emotes"
+
 [graficos]
 zoom_automatico = false
 zoom_extra = 1.25

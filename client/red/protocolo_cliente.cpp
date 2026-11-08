@@ -29,6 +29,7 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::ACTUALIZACION_INVENTARIO,
            [this] { return recibir_actualizacion_inventario(); }},
           {TipoMensaje::ACTUALIZACION_COFRE, [this] { return recibir_actualizacion_cofre(); }},
+          {TipoMensaje::MENSAJE_DE_CHAT, [this] { return recibir_mensaje_de_chat(); }},
       } {
 }
 
@@ -54,6 +55,7 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const MoverItemConCofre& m) { enviar_comando_mover_item_con_cofre(m); },
             [this](const SolicitarInventario& m) { enviar_comando_solicitar_inventario(m); },
             [this](const SoltarItem& m) { enviar_comando_soltar_item(m); },
+            [this](const EnviarMensajeDeChat& m) { enviar_comando_enviar_mensaje_de_chat(m); },
         },
         comando);
 }
@@ -142,6 +144,11 @@ void ProtocoloCliente::enviar_comando_soltar_item(const SoltarItem& soltar) {
     enviar_tipo(TipoMensaje::SOLTAR_ITEM);
     enviar_u8(soltar.ranura);
     enviar_u16(soltar.cantidad);
+}
+
+void ProtocoloCliente::enviar_comando_enviar_mensaje_de_chat(const EnviarMensajeDeChat& mensaje) {
+    enviar_tipo(TipoMensaje::ENVIAR_MENSAJE_DE_CHAT);
+    enviar_texto(mensaje.texto);
 }
 
 // Recepción de eventos
@@ -275,6 +282,16 @@ ActualizacionInventario ProtocoloCliente::recibir_actualizacion_inventario() {
 
 ActualizacionCofre ProtocoloCliente::recibir_actualizacion_cofre() {
     return ActualizacionCofre{recibir_cofre_jugador()};
+}
+
+MensajeDeChat ProtocoloCliente::recibir_mensaje_de_chat() {
+    MensajeDeChat mensaje;
+    mensaje.canal = canal_de_chat_desde(recibir_u8());
+    mensaje.remitente = recibir_texto();
+    mensaje.destinatario = recibir_texto();
+    mensaje.texto = recibir_texto();
+    mensaje.color_del_remitente = color_de_jugador_desde(recibir_u8());
+    return mensaje;
 }
 
 EstadoDrop ProtocoloCliente::recibir_estado_drop() {
@@ -414,4 +431,18 @@ Direccion ProtocoloCliente::direccion_desde(uint8_t valor) const {
         throw ErrorProtocolo("dirección desconocida en el protocolo");
     }
     return static_cast<Direccion>(valor);
+}
+
+CanalDeChat ProtocoloCliente::canal_de_chat_desde(uint8_t valor) const {
+    if (valor > static_cast<uint8_t>(CanalDeChat::COMERCIANTE)) {
+        throw ErrorProtocolo("canal de chat desconocido en el protocolo");
+    }
+    return static_cast<CanalDeChat>(valor);
+}
+
+ColorDeJugador ProtocoloCliente::color_de_jugador_desde(uint8_t valor) const {
+    if (valor >= CANTIDAD_DE_COLORES_DE_JUGADOR) {
+        throw ErrorProtocolo("color de jugador desconocido en el protocolo");
+    }
+    return static_cast<ColorDeJugador>(valor);
 }

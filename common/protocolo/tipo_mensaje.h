@@ -23,7 +23,8 @@ enum class TipoMensaje : uint8_t {
     MOVER_ITEM_CON_COFRE = 0x0D,
     SOLICITAR_INVENTARIO = 0x0E,
     SOLTAR_ITEM = 0x0F,
-    GUARDAR_PARTIDA = 0x10,
+    ENVIAR_MENSAJE_DE_CHAT = 0x10,
+    GUARDAR_PARTIDA = 0x11,
 
     // Servidor a cliente
     ERROR_SERVIDOR = 0x81,
@@ -47,6 +48,8 @@ enum class TipoMensaje : uint8_t {
     DROP_RETIRADO = 0x8E,
     ENEMIGO_ACTUALIZADO = 0x8F,
     TIERRA_CAMBIADA = 0x90,
+
+    MENSAJE_DE_CHAT = 0x91,
 };
 
 #endif

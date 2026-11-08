@@ -68,6 +68,7 @@ IngresoAPartida AdministradorDePartidas::crear(
     uint32_t id_cliente, const std::string& nombre_jugador, const std::string& nombre_partida,
     const AparienciaPersonaje& apariencia) {
     EntradaExitosaAPartida entrada;
+    ColorDeJugador color_jugador = ColorDeJugador::AZUL;
     std::string codigo;
     {
         std::lock_guard<std::mutex> lock(mutex);
@@ -92,6 +93,7 @@ IngresoAPartida AdministradorDePartidas::crear(
             apariencia);
         try {
             entrada = insertada.first->second.conectar(id_cliente, nombre_jugador, apariencia);
+            color_jugador = insertada.first->second.color_de_jugador(id_cliente);
         } catch (...) {
             partidas.erase(insertada.first);
             throw;
@@ -113,7 +115,7 @@ IngresoAPartida AdministradorDePartidas::crear(
         std::lock_guard<std::mutex> lock(mutex);
         sesion_creada = sesiones.try_emplace(codigo, std::move(sesion)).first->second.get();
     }
-    return IngresoAPartida{entrada, *sesion_creada, apariencia};
+    return IngresoAPartida{entrada, nombre_jugador, color_jugador, *sesion_creada, apariencia};
 }
 
 IngresoAPartida AdministradorDePartidas::unirse(
@@ -143,6 +145,7 @@ IngresoAPartida AdministradorDePartidas::unirse(
     std::unique_ptr<SesionDePartida> sesion_sobrante;
     SesionDePartida* sesion = nullptr;
     EntradaExitosaAPartida entrada;
+    ColorDeJugador color_jugador = ColorDeJugador::AZUL;
     {
         std::lock_guard<std::mutex> lock(mutex);
 
@@ -173,6 +176,7 @@ IngresoAPartida AdministradorDePartidas::unirse(
 
         try {
             entrada = partida.conectar(id_cliente, nombre_jugador, apariencia);
+            color_jugador = partida.color_de_jugador(id_cliente);
         } catch (...) {
             if (sesion_insertada_aca) {
                 auto insertada = sesiones.find(codigo_partida);
@@ -182,11 +186,13 @@ IngresoAPartida AdministradorDePartidas::unirse(
             throw;
         }
     }
-    return IngresoAPartida{entrada, *sesion, apariencia};
+
+    return IngresoAPartida{entrada, nombre_jugador, color_jugador, *sesion, apariencia};
 }
 
 IngresoAPartida AdministradorDePartidas::retomar(
     uint32_t id_cliente, const std::string& codigo_partida) {
+    std::string nombre_jugador;
     bool hay_sesion = false;
     {
         std::lock_guard<std::mutex> lock(mutex);
@@ -215,6 +221,7 @@ IngresoAPartida AdministradorDePartidas::retomar(
     std::unique_ptr<SesionDePartida> sesion_sobrante;
     SesionDePartida* sesion = nullptr;
     EntradaExitosaAPartida entrada;
+    ColorDeJugador color_jugador = ColorDeJugador::AZUL;
     AparienciaPersonaje apariencia;
     {
         std::lock_guard<std::mutex> lock(mutex);
@@ -245,6 +252,8 @@ IngresoAPartida AdministradorDePartidas::retomar(
 
         try {
             entrada = partida.reconectar(id_cliente);
+            nombre_jugador = partida.nombre_de_jugador(id_cliente);
+            color_jugador = partida.color_de_jugador(id_cliente);
         } catch (...) {
             if (sesion_insertada_aca) {
                 auto insertada = sesiones.find(codigo_partida);
@@ -254,7 +263,7 @@ IngresoAPartida AdministradorDePartidas::retomar(
             throw;
         }
     }
-    return IngresoAPartida{entrada, *sesion, apariencia};
+    return IngresoAPartida{entrada, nombre_jugador, color_jugador, *sesion, apariencia};
 }
 
 void AdministradorDePartidas::hacer_multijugador(
@@ -315,6 +324,7 @@ void AdministradorDePartidas::cargar_partida(const std::string& ruta_archivo) {
             jugador_guardado.id_cliente,
             jugador_guardado.id_jugador,
             jugador_guardado.nombre_jugador,
+            ColorDeJugador::AZUL,
             false,
             jugador_guardado.apariencia});
     }

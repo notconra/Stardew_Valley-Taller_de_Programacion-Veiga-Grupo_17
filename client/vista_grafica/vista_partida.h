@@ -12,6 +12,7 @@
 #include "../configuracion/configuracion_cliente_datos.h"
 #include "../red/conexion_con_servidor.h"
 #include "camara.h"
+#include "chat/vista_chat.h"
 #include "efectos_de_sonido.h"
 #include "enemigos_graficos.h"
 #include "entrada_del_usuario.h"
@@ -96,14 +97,15 @@ private:
     void usar_item(uint8_t ranura, ModoUso modo, const std::optional<Casilla>& casilla);
 
     void procesar_entrada(
-        const EntradaDelUsuario& entrada, HudInventario& hud, const Camara& camara);
+        const EntradaDelUsuario& entrada, HudInventario& hud, const Camara& camara,
+        const VistaChat::ConsumoDeEntrada& consumo_del_chat);
     void elegir_ranura_de_la_barra(const EntradaDelUsuario::Pedidos& pedidos);
     void procesar_clic(
         const EntradaDelUsuario& entrada, HudInventario& hud, const Camara& camara,
         bool clic_derecho);
 
-    bool recibir_eventos();
-    void aplicar(const EventoServidor& evento);
+    bool recibir_eventos(VistaChat& chat);
+    void aplicar(const EventoServidor& evento, VistaChat& chat);
     bool salir_de_partida_y_confirmar();
 
     // "mundo" es la textura donde se dibuja el mundo cuando hay zoom extra, o nullptr si se
@@ -113,7 +115,7 @@ private:
         const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos,
         const Personaje& personaje, const TierraGrafica& tierra, const Camara& camara,
         const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
-        const EntradaDelUsuario& entrada) const;
+        const EntradaDelUsuario& entrada, const VistaChat& chat) const;
 
 public:
     VistaPartida(ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion);
