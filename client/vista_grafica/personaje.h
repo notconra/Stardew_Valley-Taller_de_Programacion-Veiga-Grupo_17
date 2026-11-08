@@ -43,7 +43,7 @@ public:
 
     void dibujar(
         SDL_Renderer* renderer, const EstadoJugador& jugador, bool haciendo_accion,
-        Uint32 ms_de_accion, int cam_x, int cam_y) const;
+        Uint32 ms_de_accion, int x_en_mapa, int y_en_mapa, int cam_x, int cam_y) const;
 };
 
 #endif

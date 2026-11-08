@@ -49,7 +49,8 @@ target_precompile_headers(lib_server PRIVATE ${ENCABEZADOS_PRECOMPILADOS})
 add_library(lib_client STATIC ${CLIENT_FUENTES})
 target_include_directories(
   lib_client PUBLIC ${PROJECT_SOURCE_DIR}/client ${SDL2_INCLUDE_DIRS}
-                    ${SDL2_IMAGE_INCLUDE_DIRS} ${SDL2_MIXER_INCLUDE_DIRS} ${SDL2_TTF_INCLUDE_DIRS})
+                    ${SDL2_IMAGE_INCLUDE_DIRS} ${SDL2_MIXER_INCLUDE_DIRS}
+                    ${SDL2_TTF_INCLUDE_DIRS})
 target_link_directories(
   lib_client PUBLIC ${SDL2_LIBRARY_DIRS} ${SDL2_IMAGE_LIBRARY_DIRS} ${SDL2_MIXER_LIBRARY_DIRS}
                     ${SDL2_TTF_LIBRARY_DIRS})

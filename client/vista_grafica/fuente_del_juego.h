@@ -4,30 +4,26 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
-#include <cstdint>
-#include <map>
+#include <memory>
 #include <string>
-#include <utility>
 
-// La letra de Stardew (Assets/Fonts/Stardew_Valley.ttf, la misma que usa el chat) en un tamaño
-// fijo. Esa fuente solo trae los caracteres básicos: sin tildes, ñ, ¿ ni ¡ (esos salen como un
-// cuadrado), así que los textos se escriben sin ellos.
+#include "chat/cache_de_texto.h"
+
+// La letra de Stardew (la misma .ttf del chat, la ruta sale de [chat] ruta_fuente en
+// cliente.toml) en un tamaño fijo, con el marrón y la sombra de los menús del juego. Esa fuente
+// solo trae los caracteres básicos: sin tildes, ñ, ¿ ni ¡ (esos salen como un cuadrado), así que
+// los textos se escriben sin ellos.
 //
-// Cada texto distinto se convierte una vez en una imagen y se guarda, así dibujar el mismo texto
-// en cada cuadro no cuesta nada. Si se acumulan muchos, se descartan todos y se vuelven a crear.
-// Lanza std::runtime_error si no puede abrir la fuente.
+// Las imágenes de los textos las guarda CacheDeTexto, la misma caché que usa el chat, así dibujar
+// el mismo texto en cada cuadro no cuesta nada. Lanza std::runtime_error si no puede abrir la
+// fuente.
 class FuenteDelJuego {
 private:
-    TTF_Font* fuente;
-    mutable std::map<std::pair<std::string, uint32_t>, SDL_Texture*> textos;
-
-    SDL_Texture* textura_de(
-        SDL_Renderer* renderer, const std::string& texto, SDL_Color color) const;
-    void olvidar_textos() const;
+    std::unique_ptr<TTF_Font, void (*)(TTF_Font*)> fuente;
+    mutable CacheDeTexto textos;
 
 public:
-    explicit FuenteDelJuego(int tamano_en_puntos);
-    ~FuenteDelJuego();
+    FuenteDelJuego(SDL_Renderer* renderer, const std::string& ruta, int tamano_en_puntos);
 
     // El texto (en UTF-8) con su esquina de arriba a la izquierda en (x, y).
     void dibujar(

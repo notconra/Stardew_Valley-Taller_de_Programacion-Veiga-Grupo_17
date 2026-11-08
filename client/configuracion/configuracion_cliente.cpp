@@ -70,6 +70,7 @@ void ConfiguracionCliente::cargar_toml(const toml::table& archivo_toml) {
     cargar_jugador(archivo_toml);
     cargar_sonido(archivo_toml);
     cargar_tierra(archivo_toml);
+    cargar_chat(archivo_toml);
 }
 
 void ConfiguracionCliente::cargar_servidor(const toml::table& archivo_toml) {
@@ -87,6 +88,10 @@ void ConfiguracionCliente::cargar_ventana(const toml::table& archivo_toml) {
         lector_toml::leer_entero_positivo(ventana, "ancho", "ventana");
     configuracion_vista.ventana.alto =
         lector_toml::leer_entero_positivo(ventana, "alto", "ventana");
+    configuracion_vista.ventana.pantalla_completa =
+        lector_toml::leer_booleano_opcional(ventana, "pantalla_completa", true);
+    configuracion_vista.ventana.redimensionable =
+        lector_toml::leer_booleano_opcional(ventana, "redimensionable", false);
 }
 
 void ConfiguracionCliente::cargar_sdl(const toml::table& archivo_toml) {
@@ -94,6 +99,8 @@ void ConfiguracionCliente::cargar_sdl(const toml::table& archivo_toml) {
 
     configuracion_vista.sdl.acelerado = lector_toml::leer_booleano(sdl, "acelerado", "sdl");
     configuracion_vista.sdl.vsync = lector_toml::leer_booleano(sdl, "vsync", "sdl");
+    configuracion_vista.sdl.fps_maximos =
+        lector_toml::leer_entero_opcional(sdl, "fps_maximos", "sdl", 60, 0, 1000);
 }
 
 void ConfiguracionCliente::cargar_graficos(const toml::table& archivo_toml) {
@@ -102,7 +109,23 @@ void ConfiguracionCliente::cargar_graficos(const toml::table& archivo_toml) {
     configuracion_vista.graficos.tamano_de_tile =
         lector_toml::leer_entero_positivo(graficos, "tamano_de_tile", "graficos");
     configuracion_vista.graficos.escala_de_tiles =
-        lector_toml::leer_entero_positivo(graficos, "escala_de_tiles", "graficos");
+        lector_toml::leer_entero_en_rango(graficos, "escala_de_tiles", "graficos", 1, 8);
+    configuracion_vista.graficos.escala_maxima_de_tiles =
+        lector_toml::leer_entero_opcional(graficos, "escala_maxima_de_tiles", "graficos", 8, 1, 8);
+    configuracion_vista.graficos.zoom_automatico =
+        lector_toml::leer_booleano_opcional(graficos, "zoom_automatico", true);
+    if (configuracion_vista.graficos.escala_maxima_de_tiles <
+        configuracion_vista.graficos.escala_de_tiles) {
+        throw std::runtime_error(
+            "configuración: 'escala_maxima_de_tiles' no puede ser menor que 'escala_de_tiles'");
+    }
+
+    configuracion_vista.graficos.zoom_extra = graficos["zoom_extra"].value_or(1.0);
+    if (configuracion_vista.graficos.zoom_extra < 1.0 ||
+        configuracion_vista.graficos.zoom_extra > 3.0) {
+        throw std::runtime_error(
+            "configuración: 'zoom_extra' de [graficos] debe estar entre 1.0 y 3.0");
+    }
     configuracion_vista.graficos.color_de_fondo = leer_color(graficos);
     configuracion_vista.graficos.radio_vision_mazmorra =
         lector_toml::leer_entero_opcional(graficos, "radio_vision_mazmorra", 0);
@@ -216,6 +239,21 @@ void ConfiguracionCliente::cargar_tierra(const toml::table& archivo_toml) {
 
     configuracion_vista.tierra.ruta_sprite =
         lector_toml::leer_texto(tierra, "ruta_sprite", "tierra");
+}
+
+void ConfiguracionCliente::cargar_chat(const toml::table& archivo_toml) {
+    const toml::table& chat = lector_toml::exigir_tabla(archivo_toml, "chat");
+
+    configuracion_vista.chat.ruta_fuente = lector_toml::leer_texto(chat, "ruta_fuente", "chat");
+    configuracion_vista.chat.tamano_de_fuente =
+        lector_toml::leer_entero_en_rango(chat, "tamano_de_fuente", "chat", 8, 48);
+    configuracion_vista.chat.maximo_de_mensajes =
+        lector_toml::leer_entero_opcional(chat, "maximo_de_mensajes", "chat", 100, 10, 1000);
+    configuracion_vista.chat.ruta_icono = lector_toml::leer_texto(chat, "ruta_icono", "chat");
+    configuracion_vista.chat.ruta_carpeta_de_emojis =
+        lector_toml::leer_texto(chat, "ruta_carpeta_de_emojis", "chat");
+    configuracion_vista.chat.ruta_carpeta_de_emotes =
+        lector_toml::leer_texto(chat, "ruta_carpeta_de_emotes", "chat");
 }
 
 ColorDeFondo ConfiguracionCliente::leer_color(const toml::table& graficos) const {

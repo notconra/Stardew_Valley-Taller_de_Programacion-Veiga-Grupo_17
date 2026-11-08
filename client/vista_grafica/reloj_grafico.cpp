@@ -66,10 +66,10 @@
 // Tamaño de la letra (en puntos) por cada vez que se agranda el reloj.
 #define PUNTOS_DE_LA_LETRA_POR_ESCALA 10
 
-RelojGrafico::RelojGrafico(SDL_Renderer* renderer, int alto_ventana)
+RelojGrafico::RelojGrafico(SDL_Renderer* renderer, const std::string& ruta_fuente, int alto_ventana)
     : cursores(RUTA_IMAGEN_DEL_RELOJ, renderer),
       escala(std::max(ESCALA_MINIMA, alto_ventana / ALTO_DE_VENTANA_POR_ESCALA)),
-      fuente(PUNTOS_DE_LA_LETRA_POR_ESCALA * escala) {
+      fuente(renderer, ruta_fuente, PUNTOS_DE_LA_LETRA_POR_ESCALA * escala) {
 }
 
 std::string RelojGrafico::abreviatura_del_dia(uint8_t dia_de_la_semana) const {

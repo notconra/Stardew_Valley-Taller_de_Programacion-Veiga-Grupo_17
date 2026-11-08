@@ -18,10 +18,11 @@
 #define DISTANCIA_AL_BORDE_DE_ABAJO 12
 #define ANCHO_MINIMO_EN_LA_VENTANA 0.55
 
-PantallaDeDescanso::PantallaDeDescanso(SDL_Renderer* renderer, int alto_ventana)
+PantallaDeDescanso::PantallaDeDescanso(
+    SDL_Renderer* renderer, const std::string& ruta_fuente, int alto_ventana)
     : caja(RUTA_IMAGEN_DE_LA_CAJA, renderer),
       escala(std::max(ESCALA_MINIMA, alto_ventana / ALTO_DE_VENTANA_POR_ESCALA)),
-      fuente(PUNTOS_DE_LA_LETRA_POR_ESCALA * escala) {
+      fuente(renderer, ruta_fuente, PUNTOS_DE_LA_LETRA_POR_ESCALA * escala) {
 }
 
 bool PantallaDeDescanso::visible(const EstadoDelDescanso& descanso) const {

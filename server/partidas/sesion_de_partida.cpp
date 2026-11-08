@@ -18,6 +18,7 @@ SesionDePartida::SesionDePartida(
       mundo(
           recursos, *this, static_cast<uint8_t>(configuracion_partida.ticks_por_segundo),
           datos_guardados),
+      chat(*this),
       comandos(static_cast<unsigned int>(configuracion_partida.capacidad_de_comandos)),
       guardar_al_terminar_el_dia(std::move(guardar)) {
     try {
@@ -34,18 +35,20 @@ bool SesionDePartida::esta_viva() const {
 }
 
 void SesionDePartida::entrar(
-    uint32_t id_jugador, Queue<EventoServidor>& cola_eventos,
-    const AparienciaPersonaje& apariencia) {
+    uint32_t id_jugador, const std::string& nombre_jugador, ColorDeJugador color_jugador,
+    Queue<EventoServidor>& cola_eventos, const AparienciaPersonaje& apariencia) {
     std::lock_guard<std::mutex> lock(mutex_clientes);
     clientes.erase(id_jugador);
     clientes.emplace(id_jugador, ColaDeEventosDelJugador{cola_eventos});
-    cambios_de_conexion.push_back(CambioDeConexion{id_jugador, true, apariencia});
+    cambios_de_conexion.push_back(
+        CambioDeConexion{id_jugador, nombre_jugador, color_jugador, true, apariencia});
 }
 
 void SesionDePartida::salir(uint32_t id_jugador) {
     std::lock_guard<std::mutex> lock(mutex_clientes);
     if (clientes.erase(id_jugador) > 0) {
-        cambios_de_conexion.push_back(CambioDeConexion{id_jugador, false, {}});
+        cambios_de_conexion.push_back(
+            CambioDeConexion{id_jugador, std::string(), ColorDeJugador::AZUL, false, {}});
     }
 }
 
@@ -59,8 +62,10 @@ void SesionDePartida::aplicar_cambios_de_conexion() {
     for (const CambioDeConexion& cambio : cambios) {
         if (cambio.entra) {
             mundo.conectar(cambio.id_jugador, cambio.apariencia);
+            chat.conectar(cambio.id_jugador, cambio.nombre_jugador, cambio.color_jugador);
         } else {
             mundo.desconectar(cambio.id_jugador);
+            chat.desconectar(cambio.id_jugador);
         }
     }
 }
@@ -82,6 +87,10 @@ void SesionDePartida::procesar_comandos() {
     try {
         ComandoDeJugador pedido;
         while (comandos.try_pop(pedido)) {
+            if (const auto* mensaje = std::get_if<EnviarMensajeDeChat>(&pedido.comando)) {
+                chat.recibir(pedido.id_jugador, *mensaje);
+                continue;
+            }
             mundo.atender(pedido.id_jugador, pedido.comando);
         }
     } catch (const ClosedQueue&) {
@@ -99,7 +108,8 @@ void SesionDePartida::a_jugador(uint32_t id_jugador, const EventoServidor& event
     } catch (const ClosedQueue&) {
         // La conexión se cerró, se lo da de baja en el próximo tick.
         clientes.erase(cliente);
-        cambios_de_conexion.push_back(CambioDeConexion{id_jugador, false, {}});
+        cambios_de_conexion.push_back(
+            CambioDeConexion{id_jugador, std::string(), ColorDeJugador::AZUL, false, {}});
     }
 }
 
@@ -110,7 +120,8 @@ void SesionDePartida::a_todos(const EventoServidor& evento) {
             cliente->second.cola_eventos.try_push(evento);
             ++cliente;
         } catch (const ClosedQueue&) {
-            cambios_de_conexion.push_back(CambioDeConexion{cliente->first, false, {}});
+            cambios_de_conexion.push_back(
+                CambioDeConexion{cliente->first, std::string(), ColorDeJugador::AZUL, false, {}});
             cliente = clientes.erase(cliente);
         }
     }

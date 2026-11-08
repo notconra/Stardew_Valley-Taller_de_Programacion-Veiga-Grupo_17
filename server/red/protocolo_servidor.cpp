@@ -31,6 +31,8 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::SOLTAR_ITEM, [this] { return recibir_comando_soltar_item(); }},
           {TipoMensaje::CONSULTAR_CASILLA, [this] { return recibir_comando_consultar_casilla(); }},
           {TipoMensaje::DAR_EL_OK, [this] { return recibir_comando_dar_el_ok(); }},
+          {TipoMensaje::ENVIAR_MENSAJE_DE_CHAT,
+           [this] { return recibir_comando_enviar_mensaje_de_chat(); }},
       } {
 }
 
@@ -149,6 +151,10 @@ SoltarItem ProtocoloServidor::recibir_comando_soltar_item() {
     return SoltarItem{ranura, cantidad};
 }
 
+EnviarMensajeDeChat ProtocoloServidor::recibir_comando_enviar_mensaje_de_chat() {
+    return EnviarMensajeDeChat{recibir_texto()};
+}
+
 // Envío de eventos
 
 void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
@@ -173,6 +179,7 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const HoraDelJuego& e) { enviar_evento_hora_del_juego(e); },
             [this](const CasillaConsultada& e) { enviar_evento_casilla_consultada(e); },
             [this](const EstadoDelDescanso& e) { enviar_evento_estado_del_descanso(e); },
+            [this](const MensajeDeChat& e) { enviar_evento_mensaje_de_chat(e); },
         },
         evento);
 }
@@ -407,4 +414,13 @@ void ProtocoloServidor::enviar_evento_estado_del_descanso(const EstadoDelDescans
     enviar_u8(descanso.listos);
     enviar_u8(descanso.jugadores);
     enviar_booleano(descanso.puede_levantarse);
+}
+
+void ProtocoloServidor::enviar_evento_mensaje_de_chat(const MensajeDeChat& mensaje) {
+    enviar_tipo(TipoMensaje::MENSAJE_DE_CHAT);
+    enviar_u8(static_cast<uint8_t>(mensaje.canal));
+    enviar_texto(mensaje.remitente);
+    enviar_texto(mensaje.destinatario);
+    enviar_texto(mensaje.texto);
+    enviar_u8(static_cast<uint8_t>(mensaje.color_del_remitente));
 }

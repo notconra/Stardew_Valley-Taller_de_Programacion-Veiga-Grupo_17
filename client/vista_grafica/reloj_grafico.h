@@ -44,8 +44,8 @@ private:
         SDL_Renderer* renderer, const HoraDelJuego& hora, int x_reloj, int y_reloj) const;
 
 public:
-    // El tamaño del reloj y de su letra salen del alto de la ventana.
-    RelojGrafico(SDL_Renderer* renderer, int alto_ventana);
+    // El tamaño del reloj y de su letra salen del alto de la ventana. "ruta_fuente" es la .ttf.
+    RelojGrafico(SDL_Renderer* renderer, const std::string& ruta_fuente, int alto_ventana);
 
     // Qué tan oscuro va el velo, de 0 (de día) a 255. Sube de 18 a 20 y sigue subiendo, más
     // despacio, hasta las 2 am.

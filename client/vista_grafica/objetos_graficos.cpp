@@ -28,6 +28,11 @@ uint64_t peso_total(const AspectoDeObjeto& aspecto) {
     return total;
 }
 
+bool esta_en_pantalla(const SDL_Rect& rectangulo, int ancho_de_pantalla, int alto_de_pantalla) {
+    return rectangulo.x < ancho_de_pantalla && rectangulo.y < alto_de_pantalla &&
+           rectangulo.x + rectangulo.w > 0 && rectangulo.y + rectangulo.h > 0;
+}
+
 // La variante que le toca a este objeto. Depende solo de su casilla, así que es siempre la misma.
 const VarianteDeAspecto& elegir_variante(
     const AspectoDeObjeto& aspecto, const EstadoObjetoDelMundo& objeto) {
@@ -137,6 +142,12 @@ void ObjetosGraficos::dibujar_sobre_los_jugadores(
 
 void ObjetosGraficos::dibujar_drops(
     SDL_Renderer* renderer, const EstadoJuego& estado, int cam_x, int cam_y) const {
+    int ancho_de_pantalla = 0;
+    int alto_de_pantalla = 0;
+    if (SDL_GetRendererOutputSize(renderer, &ancho_de_pantalla, &alto_de_pantalla) != 0) {
+        return;
+    }
+
     const int casilla = tamano_de_tile * escala_de_tiles;
     const int lado = casilla * 3 / 4;
     const int margen = (casilla - lado) / 2;
@@ -146,6 +157,9 @@ void ObjetosGraficos::dibujar_drops(
             static_cast<int>(drop.fila) * casilla - cam_y + margen,
             lado,
             lado};
+        if (!esta_en_pantalla(destino, ancho_de_pantalla, alto_de_pantalla)) {
+            continue;
+        }
         iconos.dibujar(renderer, drop.tipo, drop.calidad, destino);
     }
 }
@@ -180,6 +194,14 @@ void ObjetosGraficos::dibujar_filas(
 void ObjetosGraficos::dibujar_capa(
     SDL_Renderer* renderer, const EstadoJuego& estado, const std::string& mapa, int cam_x,
     int cam_y, CapaDeObjeto capa) const {
+    int ancho_de_pantalla = 0;
+    int alto_de_pantalla = 0;
+    if (SDL_GetRendererOutputSize(renderer, &ancho_de_pantalla, &alto_de_pantalla) != 0) {
+        return;
+    }
+
+    const int tamano_en_pantalla = tamano_de_tile * escala_de_tiles;
+
     for (const EstadoObjetoDelMundo& objeto : estado.objetos) {
         if (objeto.mapa != mapa) {
             continue;
@@ -190,6 +212,18 @@ void ObjetosGraficos::dibujar_capa(
         }
         const AspectoDeObjeto& aspecto = encontrado->second;
 
+        // Las filas de arriba (la cabecera de la cama) siempre van sobre los jugadores; el resto,
+        // en la capa que diga el aspecto. Lo que queda fuera de la pantalla no se dibuja.
+        const int fila_de_arriba = static_cast<int>(objeto.fila) - aspecto.casillas_por_encima;
+        const SDL_Rect ocupa{
+            static_cast<int>(objeto.columna) * tamano_en_pantalla - cam_x +
+                aspecto.desplazamiento_x,
+            fila_de_arriba * tamano_en_pantalla - cam_y + aspecto.desplazamiento_y,
+            aspecto.ancho_en_casillas * tamano_en_pantalla,
+            aspecto.alto_en_casillas * tamano_en_pantalla};
+        if (!esta_en_pantalla(ocupa, ancho_de_pantalla, alto_de_pantalla)) {
+            continue;
+        }
         // Las filas de arriba (la cabecera de la cama) siempre van sobre los jugadores; el resto,
         // en la capa que diga el aspecto.
         const int por_encima = aspecto.casillas_por_encima;

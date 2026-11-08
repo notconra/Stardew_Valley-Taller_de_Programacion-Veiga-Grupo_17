@@ -25,7 +25,10 @@ using ComandoCliente = std::variant<
     SolicitarInventario, SoltarItem, ConsultarCasilla,
 
     // Fin del día
-    DarElOk>;
+    DarElOk,
+
+    // Chat
+    EnviarMensajeDeChat>;
 
 using EventoServidor = std::variant<
     // Error
@@ -51,6 +54,9 @@ using EventoServidor = std::variant<
     EstadoDelDescanso,
 
     // - Inventario y cofres
-    ActualizacionInventario, ActualizacionCofre>;
+    ActualizacionInventario, ActualizacionCofre,
+
+    // - Chat
+    MensajeDeChat>;
 
 #endif

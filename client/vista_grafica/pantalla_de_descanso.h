@@ -29,8 +29,8 @@ private:
     void dibujar_caja(SDL_Renderer* renderer, const SDL_Rect& destino) const;
 
 public:
-    // El tamaño de la caja y de su letra salen del alto de la ventana.
-    PantallaDeDescanso(SDL_Renderer* renderer, int alto_ventana);
+    // El tamaño de la caja y de su letra salen del alto de la ventana. "ruta_fuente" es la .ttf.
+    PantallaDeDescanso(SDL_Renderer* renderer, const std::string& ruta_fuente, int alto_ventana);
 
     // Si hay que mostrarla (el jugador no está despierto).
     bool visible(const EstadoDelDescanso& descanso) const;

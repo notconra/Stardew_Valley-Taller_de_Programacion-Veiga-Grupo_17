@@ -33,6 +33,7 @@ private:
     SoltarItem recibir_comando_soltar_item();
     ConsultarCasilla recibir_comando_consultar_casilla();
     DarElOk recibir_comando_dar_el_ok();
+    EnviarMensajeDeChat recibir_comando_enviar_mensaje_de_chat();
 
     // Valida que el eje venga en el rango -1..1. Lanza ErrorProtocolo si no.
     int8_t eje_de_movimiento(int8_t valor) const;
@@ -71,6 +72,7 @@ private:
     void enviar_evento_hora_del_juego(const HoraDelJuego& hora);
     void enviar_evento_casilla_consultada(const CasillaConsultada& consultada);
     void enviar_evento_estado_del_descanso(const EstadoDelDescanso& descanso);
+    void enviar_evento_mensaje_de_chat(const MensajeDeChat& mensaje);
 
 public:
     explicit ProtocoloServidor(ISocket& socket_conectado);

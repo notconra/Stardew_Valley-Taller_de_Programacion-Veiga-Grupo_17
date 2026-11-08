@@ -4,10 +4,11 @@
 #include <string>
 
 Renderizador::Renderizador(Ventana& ventana, const ConfiguracionSDL& configuracion) {
-    Uint32 flags = 0;
-    if (configuracion.acelerado) {
-        flags |= SDL_RENDERER_ACCELERATED;
-    }
+    // acelerado = true usa el renderer de GPU (OpenGL, etc.).
+    // acelerado = false usa el renderer por software de SDL, que dibuja con la CPU.
+    // Pedir SDL_RENDERER_ACCELERATED solo "prefiere" la
+    // GPU, pero no hay forma de forzar software omitiéndolo, por eso se pide SOFTWARE explícito.
+    Uint32 flags = configuracion.acelerado ? SDL_RENDERER_ACCELERATED : SDL_RENDERER_SOFTWARE;
     if (configuracion.vsync) {
         flags |= SDL_RENDERER_PRESENTVSYNC;
     }
