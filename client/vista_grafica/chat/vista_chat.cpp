@@ -674,12 +674,21 @@ void VistaChat::dibujar_boton_de_apertura(SDL_Renderer* renderer, const Disposic
 }
 
 void VistaChat::dibujar_encabezado(SDL_Renderer* renderer, const DisposicionChat& d) const {
-    dibujar_texto(
-        renderer,
-        "Chat",
-        estilo::TITULO,
+    const TexturaDeTexto* texto = cache_de_texto.obtener("Chat", estilo::TITULO);
+
+    if (texto == nullptr) {
+        return;
+    }
+
+    constexpr float ESCALA_TITULO = 1.3f;
+    const int ancho = static_cast<int>(texto->ancho * ESCALA_TITULO);
+    const int alto = static_cast<int>(texto->alto * ESCALA_TITULO);
+    const SDL_Rect destino{
         d.header.x + estilo::RELLENO_DEL_TITULO,
-        d.header.y + ((d.header.h - alto_de_linea) / 2));
+        d.header.y + (d.header.h - alto) / 2 - 10,
+        ancho,
+        alto};
+    SDL_RenderCopy(renderer, texto->textura, nullptr, &destino);
 }
 
 void VistaChat::dibujar_mensajes(SDL_Renderer* renderer, const DisposicionChat& d) const {

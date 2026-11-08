@@ -38,7 +38,7 @@ constexpr RectanguloEnLaImagen CUERPO_EN_LA_IMAGEN{2, 17, 69, 51};
 constexpr int MARGEN_DE_PANTALLA = 8;
 constexpr int ANCHO_DE_LA_VENTANA = 400;  // se achican si la pantalla es más chica
 constexpr int ALTO_DE_LA_VENTANA = 384;   // misma proporción que chat.png (74 x 71)
-constexpr int RELLENO_DEL_CUERPO = 2;     // entre el borde del cuerpo y lo que va adentro
+constexpr int RELLENO_DEL_CUERPO = 8;     // entre el borde del cuerpo y lo que va adentro
 constexpr int RELLENO_DEL_TITULO = 8;
 constexpr int RELLENO_DE_ENTRADA = 4;
 constexpr int SEPARACION = 4;
@@ -52,7 +52,7 @@ constexpr uint32_t PERIODO_DEL_CURSOR_MS = 700;
 
 // Un emote mide ALTO_DE_EMOTE de lado y deja SEPARACION_ENTRE_EMOTES libres abajo, así dos emotes
 // seguidos no quedan pegados. Los emojis, en cambio, miden lo mismo que la fuente.
-constexpr int ALTO_DE_EMOTE = 64;
+constexpr int ALTO_DE_EMOTE = 72;
 constexpr int SEPARACION_ENTRE_EMOTES = 6;
 
 // Menú de emojis y emotes.

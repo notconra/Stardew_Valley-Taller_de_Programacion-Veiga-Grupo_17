@@ -34,6 +34,7 @@ tamano_de_fuente = 20
 maximo_de_mensajes = 1000
 ruta_icono = "Assets/chat/boton_chat.png"
 ruta_carpeta_de_emojis = "Assets/chat/emojis"
+ruta_carpeta_de_emotes = "Assets/chat/emotes"
 
 [graficos]
 zoom_automatico = false
