@@ -32,7 +32,7 @@ fps_maximos = 30
 ruta_fuente = "Assets/fuentes/Stardew_Valley.ttf"
 tamano_de_fuente = 20
 maximo_de_mensajes = 1000
-ruta_icono = "Assets/chat/emotes/Emote_Pause.png"
+ruta_icono = "Assets/chat/boton_chat.png"
 ruta_carpeta_de_emojis = "Assets/chat/emojis"
 
 [graficos]

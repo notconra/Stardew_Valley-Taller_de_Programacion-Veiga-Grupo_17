@@ -43,6 +43,7 @@ private:
     void cargar_jugador(const toml::table& archivo_toml);
     void cargar_sonido(const toml::table& archivo_toml);
     void cargar_tierra(const toml::table& archivo_toml);
+    void cargar_chat(const toml::table& archivo_toml);
 
     ColorDeFondo leer_color(const toml::table& graficos) const;
     ColorRGB leer_color_rgb(const toml::table& color, const std::string& seccion) const;

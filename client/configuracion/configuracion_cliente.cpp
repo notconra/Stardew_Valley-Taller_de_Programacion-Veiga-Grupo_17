@@ -70,6 +70,7 @@ void ConfiguracionCliente::cargar_toml(const toml::table& archivo_toml) {
     cargar_jugador(archivo_toml);
     cargar_sonido(archivo_toml);
     cargar_tierra(archivo_toml);
+    cargar_chat(archivo_toml);
 }
 
 void ConfiguracionCliente::cargar_servidor(const toml::table& archivo_toml) {
@@ -238,6 +239,21 @@ void ConfiguracionCliente::cargar_tierra(const toml::table& archivo_toml) {
 
     configuracion_vista.tierra.ruta_sprite =
         lector_toml::leer_texto(tierra, "ruta_sprite", "tierra");
+}
+
+void ConfiguracionCliente::cargar_chat(const toml::table& archivo_toml) {
+    const toml::table& chat = lector_toml::exigir_tabla(archivo_toml, "chat");
+
+    configuracion_vista.chat.ruta_fuente = lector_toml::leer_texto(chat, "ruta_fuente", "chat");
+    configuracion_vista.chat.tamano_de_fuente =
+        lector_toml::leer_entero_en_rango(chat, "tamano_de_fuente", "chat", 8, 48);
+    configuracion_vista.chat.maximo_de_mensajes =
+        lector_toml::leer_entero_opcional(chat, "maximo_de_mensajes", "chat", 100, 10, 1000);
+    configuracion_vista.chat.ruta_icono = lector_toml::leer_texto(chat, "ruta_icono", "chat");
+    configuracion_vista.chat.ruta_carpeta_de_emojis =
+        lector_toml::leer_texto(chat, "ruta_carpeta_de_emojis", "chat");
+    configuracion_vista.chat.ruta_carpeta_de_emotes =
+        lector_toml::leer_texto(chat, "ruta_carpeta_de_emotes", "chat");
 }
 
 ColorDeFondo ConfiguracionCliente::leer_color(const toml::table& graficos) const {

@@ -16,7 +16,7 @@ void ChatDePartida::conectar(
     const bool es_nuevo = jugadores.find(id_jugador) == jugadores.end();
     jugadores[id_jugador] = JugadorEnChat{nombre_jugador, color, std::string()};
     if (es_nuevo) {
-        avisar_a_los_demas(id_jugador, nombre_jugador + " se conectó.");
+        avisar_a_los_demas(id_jugador, nombre_jugador + " se acaba de conectar.");
     }
 }
 
@@ -27,7 +27,7 @@ void ChatDePartida::desconectar(uint32_t id_jugador) {
     }
     const std::string nombre = jugador->second.nombre;
     jugadores.erase(jugador);
-    avisar_a_los_demas(id_jugador, nombre + " se desconectó.");
+    avisar_a_los_demas(id_jugador, nombre + " se acaba de desconectar.");
 }
 
 void ChatDePartida::avisar_a_los_demas(uint32_t id_excluido, const std::string& texto) {
@@ -77,7 +77,7 @@ void ChatDePartida::recibir(uint32_t id_jugador, const EnviarMensajeDeChat& mens
     if (texto.size() > LARGO_MAXIMO_DE_MENSAJE_DE_CHAT) {
         enviar_sistema(
             id_jugador,
-            "El mensaje es demasiado largo: el máximo es " +
+            "El mensaje es demasiado largo: el maximo es " +
                 std::to_string(LARGO_MAXIMO_DE_MENSAJE_DE_CHAT) + " caracteres.");
         return;
     }
@@ -94,11 +94,11 @@ void ChatDePartida::recibir(uint32_t id_jugador, const EnviarMensajeDeChat& mens
                                        ? std::string()
                                        : sin_espacios_extremos(texto.substr(separador + 1));
         if (destinatario.empty()) {
-            enviar_sistema(id_jugador, "Escribí el nombre del jugador después de la arroba.");
+            enviar_sistema(id_jugador, "Escribe el nombre del jugador después de la arroba.");
             return;
         }
         if (cuerpo.empty()) {
-            enviar_sistema(id_jugador, "Escribí un mensaje después del nombre del jugador.");
+            enviar_sistema(id_jugador, "Escribe un mensaje después del nombre del jugador.");
             return;
         }
         enviar_privado(id_jugador, emisor->second, destinatario, cuerpo);
@@ -120,7 +120,7 @@ void ChatDePartida::enviar_privado(
     if (destino == jugadores.end()) {
         enviar_sistema(
             id_emisor,
-            "No se pudo enviar el mensaje: \"" + destinatario + "\" no está conectado.");
+            "No se pudo enviar el mensaje: \"" + destinatario + "\" no se encuentra conectado.");
         return;
     }
 
@@ -139,7 +139,7 @@ void ChatDePartida::enviar_privado(
 void ChatDePartida::enviar_sistema(uint32_t id_jugador, const std::string& texto) {
     notificador.a_jugador(
         id_jugador,
-        MensajeDeChat{CanalDeChat::SISTEMA, "Sistema", std::string(), texto});
+        MensajeDeChat{CanalDeChat::SISTEMA, "(Sistema)", std::string(), texto});
 }
 
 void ChatDePartida::responder_a_jugador(uint32_t id_jugador, const std::string& texto) {
