@@ -324,6 +324,7 @@ void AdministradorDePartidas::cargar_partida(const std::string& ruta_archivo) {
             jugador_guardado.id_cliente,
             jugador_guardado.id_jugador,
             jugador_guardado.nombre_jugador,
+            ColorDeJugador::AZUL,
             false,
             jugador_guardado.apariencia});
     }
