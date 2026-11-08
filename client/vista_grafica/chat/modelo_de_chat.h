@@ -14,7 +14,7 @@
 //  - si el jugador está escribiendo y el texto que lleva,
 //  - cuánto subió el historial con la rueda (0 es "pegado al último mensaje").
 //
-// El historial es de la partida actual, al cambiar de partida o volver al lobby, se llama a
+// El historial es de la partida actual, al cambiar de partida o volver al lobby se llama a
 // limpiar().
 class ModeloDeChat {
 public:
@@ -43,16 +43,15 @@ public:
     bool esta_escribiendo() const;
     const std::string& texto_en_edicion() const;
 
-    // Agrega texto tal como llega de SDL (UTF-8). Ignora lo que no entre en
-    // LARGO_MAXIMO_DE_MENSAJE_DE_CHAT.
+    // Agrega texto en UTF-8. Ignora lo que no entre en LARGO_MAXIMO_DE_MENSAJE_DE_CHAT.
     void agregar_texto(const std::string& texto_nuevo);
     void borrar_caracter();
 
     // Devuelve el texto sin espacios en los extremos y lo borra. Cadena vacía si no había nada.
     std::string confirmar_y_limpiar();
 
-    // Un valor positivo sube (mensajes más viejos) y uno negativo baja. El resultado se acota a
-    // [0, desplazamiento_maximo], que calcula la vista.
+    // Un valor positivo sube (mensajes más viejos) y uno negativo baja. El resultado queda entre 0
+    // y desplazamiento_maximo, que calcula la vista.
     void desplazar(int mensajes, size_t desplazamiento_maximo);
     void ir_al_final();
     size_t desplazamiento() const;

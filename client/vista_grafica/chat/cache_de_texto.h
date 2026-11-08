@@ -13,7 +13,7 @@ struct TexturaDeTexto {
     int alto = 0;
 };
 
-// Texturas de textos ya rasterizados, por texto y color.
+// Texturas de textos ya rasterizados, indexadas por texto y color.
 class CacheDeTexto {
 public:
     CacheDeTexto(SDL_Renderer* renderer, TTF_Font* fuente);
@@ -34,6 +34,7 @@ private:
     TTF_Font* fuente;
     std::unordered_map<std::string, TexturaDeTexto> texturas;
 
+    TexturaDeTexto rasterizar(const std::string& texto, SDL_Color color) const;
     void liberar_todo();
 };
 

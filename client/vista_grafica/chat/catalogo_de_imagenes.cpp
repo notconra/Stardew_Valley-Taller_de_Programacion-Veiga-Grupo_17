@@ -10,7 +10,8 @@
 
 CatalogoDeImagenes::CatalogoDeImagenes(SDL_Renderer* renderer, const std::string& carpeta) {
     std::vector<std::filesystem::path> archivos;
-    for (const auto& entrada : std::filesystem::directory_iterator(carpeta)) {
+    for (const std::filesystem::directory_entry& entrada :
+         std::filesystem::directory_iterator(carpeta)) {
         const std::string extension = entrada.path().extension().string();
         if (extension == ".png" || extension == ".gif") {
             archivos.push_back(entrada.path());
@@ -21,12 +22,14 @@ CatalogoDeImagenes::CatalogoDeImagenes(SDL_Renderer* renderer, const std::string
     for (const std::filesystem::path& archivo : archivos) {
         const std::string nombre = archivo.stem().string();
         if (nombre.find_first_of(":] \t") != std::string::npos) {
+            liberar();
             throw std::runtime_error(
                 "el nombre de la imagen no puede tener ':', ']' ni espacios: " + archivo.string());
         }
 
         SDL_Texture* textura = IMG_LoadTexture(renderer, archivo.string().c_str());
         if (textura == nullptr) {
+            liberar();
             throw std::runtime_error(
                 "no se pudo cargar " + archivo.string() + ": " + IMG_GetError());
         }
@@ -35,20 +38,26 @@ CatalogoDeImagenes::CatalogoDeImagenes(SDL_Renderer* renderer, const std::string
     }
 }
 
+void CatalogoDeImagenes::liberar() {
+    for (const ImagenChat& imagen : imagenes) {
+        SDL_DestroyTexture(imagen.textura);
+    }
+    imagenes.clear();
+}
+
 const std::vector<ImagenChat>& CatalogoDeImagenes::todas() const {
     return imagenes;
 }
 
 const ImagenChat* CatalogoDeImagenes::buscar(const std::string& nombre) const {
-    const auto encontrada =
-        std::find_if(imagenes.begin(), imagenes.end(), [&nombre](const ImagenChat& imagen) {
-            return imagen.nombre == nombre;
-        });
-    return encontrada == imagenes.end() ? nullptr : &*encontrada;
+    for (const ImagenChat& imagen : imagenes) {
+        if (imagen.nombre == nombre) {
+            return &imagen;
+        }
+    }
+    return nullptr;
 }
 
 CatalogoDeImagenes::~CatalogoDeImagenes() {
-    for (const ImagenChat& imagen : imagenes) {
-        SDL_DestroyTexture(imagen.textura);
-    }
+    liberar();
 }

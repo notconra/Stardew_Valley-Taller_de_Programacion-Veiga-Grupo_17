@@ -28,7 +28,11 @@ void ModeloDeChat::abrir(size_t mensajes_visibles) {
 
     const size_t sin_leer = std::min(mensajes_sin_leer, historial.size());
     const size_t entran = std::max<size_t>(1, mensajes_visibles);
-    posicion_del_historial = sin_leer > entran ? sin_leer - entran : 0;
+    if (sin_leer > entran) {
+        posicion_del_historial = sin_leer - entran;
+    } else {
+        posicion_del_historial = 0;
+    }
 }
 
 void ModeloDeChat::cerrar() {
@@ -74,7 +78,8 @@ const std::string& ModeloDeChat::texto_en_edicion() const {
 }
 
 void ModeloDeChat::agregar_texto(const std::string& texto_nuevo) {
-    for (size_t posicion = 0; posicion < texto_nuevo.size();) {
+    size_t posicion = 0;
+    while (posicion < texto_nuevo.size()) {
         const size_t largo = std::min(
             longitud_de_caracter_utf8(texto_nuevo, posicion),
             texto_nuevo.size() - posicion);
@@ -99,8 +104,8 @@ void ModeloDeChat::borrar_caracter() {
 }
 
 std::string ModeloDeChat::confirmar_y_limpiar() {
-    const size_t inicio = texto.find_first_not_of(" \t\n\r");
     std::string mensaje;
+    const size_t inicio = texto.find_first_not_of(" \t\n\r");
     if (inicio != std::string::npos) {
         const size_t fin = texto.find_last_not_of(" \t\n\r");
         mensaje = texto.substr(inicio, fin - inicio + 1);

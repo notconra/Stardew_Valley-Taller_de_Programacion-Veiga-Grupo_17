@@ -38,29 +38,44 @@ constexpr RectanguloEnLaImagen CUERPO_EN_LA_IMAGEN{2, 17, 69, 51};
 constexpr int MARGEN_DE_PANTALLA = 8;
 constexpr int ANCHO_DE_LA_VENTANA = 400;  // se achican si la pantalla es más chica
 constexpr int ALTO_DE_LA_VENTANA = 384;   // misma proporción que chat.png (74 x 71)
-constexpr int RELLENO_DEL_CUERPO = 8;     // entre el borde del cuerpo y lo que va adentro
+constexpr int RELLENO_DEL_CUERPO = 8;
 constexpr int RELLENO_DEL_TITULO = 8;
 constexpr int RELLENO_DE_ENTRADA = 4;
 constexpr int SEPARACION = 4;
 constexpr int LADO_DEL_BOTON_DE_APERTURA = 48;
 constexpr int LADO_DEL_BOTON_DE_BAJAR = 22;
 constexpr int LADO_DEL_BOTON_DE_EMOJIS = 22;
+constexpr int RELLENO_DEL_ICONO_DE_EMOJIS = 2;
 constexpr int MAXIMO_DE_LINEAS_DE_ENTRADA = 2;
 constexpr int MENSAJES_POR_MUESCA = 3;
 constexpr size_t MAXIMO_DE_NO_LEIDOS_VISIBLE = 99;
 constexpr uint32_t PERIODO_DEL_CURSOR_MS = 700;
+constexpr int ANCHO_DEL_CURSOR = 2;
+constexpr int MARGEN_VERTICAL_DEL_CURSOR = 2;
+
+// Título del encabezado
+constexpr float ESCALA_DEL_TITULO = 1.3f;
+constexpr int AJUSTE_VERTICAL_DEL_TITULO = -10;
+
+// Globo rojo de mensajes sin leer
+constexpr int RELLENO_DEL_AVISO = 10;
+constexpr int ALTO_EXTRA_DEL_AVISO = 2;
+constexpr int SALIENTE_DEL_AVISO = 4;
 
 // Un emote mide ALTO_DE_EMOTE de lado y deja SEPARACION_ENTRE_EMOTES libres abajo, así dos emotes
 // seguidos no quedan pegados. Los emojis, en cambio, miden lo mismo que la fuente.
 constexpr int ALTO_DE_EMOTE = 72;
 constexpr int SEPARACION_ENTRE_EMOTES = 6;
 
-// Menú de emojis y emotes.
+// Menú de emojis y emotes
 constexpr int RELLENO_DEL_MENU = 4;
 constexpr int RELLENO_DE_CELDA = 3;
 constexpr int MAXIMO_DE_FILAS_DEL_MENU = 4;
 constexpr int ALTO_DE_SOLAPAS = 30;
 constexpr int ANCHO_DE_SOLAPA = 60;
+constexpr int MARGEN_DE_SOLAPA = 4;
+constexpr int TEXTO_DE_SOLAPA_X = 6;
+constexpr int TEXTO_DE_SOLAPA_Y = 2;
 
 // Colores
 

@@ -13,25 +13,34 @@ const TexturaDeTexto* CacheDeTexto::obtener(const std::string& texto, SDL_Color 
         return nullptr;
     }
 
-    std::string clave{
-        static_cast<char>(color.r),
-        static_cast<char>(color.g),
-        static_cast<char>(color.b),
-        static_cast<char>(color.a)};
+    std::string clave;
+    clave.push_back(static_cast<char>(color.r));
+    clave.push_back(static_cast<char>(color.g));
+    clave.push_back(static_cast<char>(color.b));
+    clave.push_back(static_cast<char>(color.a));
     clave += texto;
 
-    auto existente = texturas.find(clave);
-    if (existente == texturas.end()) {
-        TexturaDeTexto nueva;
-        if (SDL_Surface* superficie = TTF_RenderUTF8_Blended(fuente, texto.c_str(), color)) {
-            nueva.textura = SDL_CreateTextureFromSurface(renderer, superficie);
-            nueva.ancho = superficie->w;
-            nueva.alto = superficie->h;
-            SDL_FreeSurface(superficie);
-        }
-        existente = texturas.emplace(clave, nueva).first;
+    if (texturas.find(clave) == texturas.end()) {
+        texturas[clave] = rasterizar(texto, color);
     }
-    return existente->second.textura != nullptr ? &existente->second : nullptr;
+
+    const TexturaDeTexto& entrada = texturas[clave];
+    if (entrada.textura == nullptr) {
+        return nullptr;
+    }
+    return &entrada;
+}
+
+TexturaDeTexto CacheDeTexto::rasterizar(const std::string& texto, SDL_Color color) const {
+    TexturaDeTexto resultado;
+    SDL_Surface* superficie = TTF_RenderUTF8_Blended(fuente, texto.c_str(), color);
+    if (superficie != nullptr) {
+        resultado.textura = SDL_CreateTextureFromSurface(renderer, superficie);
+        resultado.ancho = superficie->w;
+        resultado.alto = superficie->h;
+        SDL_FreeSurface(superficie);
+    }
+    return resultado;
 }
 
 void CacheDeTexto::liberar_si_excede_el_limite() {
