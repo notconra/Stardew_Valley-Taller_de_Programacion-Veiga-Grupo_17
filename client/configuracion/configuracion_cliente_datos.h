@@ -83,8 +83,9 @@ struct ConfiguracionJugador {
     int indice_pantalon = 0;
     int indice_piel = 0;
 
-    ColorRGB color_pelo;
-    ColorRGB color_pantalon;
+    ColorRGB color_pelo = {193, 90, 33};
+    ColorRGB color_pantalon = {45, 60, 140};
+    ColorRGB color_ojos = {104, 43, 15};
 
     int ms_por_cuadro_caminando = 150;
     int offset_y_remera = 16;

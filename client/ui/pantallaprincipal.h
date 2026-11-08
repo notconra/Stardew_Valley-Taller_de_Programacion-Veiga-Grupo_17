@@ -1,9 +1,12 @@
 #ifndef PANTALLAPRINCIPAL_H
 #define PANTALLAPRINCIPAL_H
 
+#include <QKeyEvent>
+#include <QLabel>
 #include <QMainWindow>
 #include <QPaintEvent>
 #include <QPixmap>
+#include <QSlider>
 #include <QTimer>
 #include <random>
 #include <string>
@@ -29,6 +32,7 @@ public:
 
 protected:
     void paintEvent(QPaintEvent* evento) override;
+    void keyPressEvent(QKeyEvent* evento) override;
 
 private slots:
     void preparar_nueva_partida();
@@ -41,6 +45,9 @@ private slots:
     void actualizar_seleccion_partida();
     void actualizar_animacion();
     void randomizar_personaje();
+    void actualizar_color_ojos();
+    void actualizar_color_pelo();
+    void actualizar_color_pantalon();
 
 private:
     Ui::PantallaPrincipal* ui;
@@ -48,6 +55,14 @@ private:
     void configurar_tabla_partidas();
     void configurar_formulario_granja(bool visible);
     void inicializar_selectores_personaje();
+    void sincronizar_sliders_desde_colores();
+    void sincronizar_canal_slider(QSlider* slider, QLabel* etiqueta_valor, int valor);
+    ColorRGB convertir_hsv_a_rgb(
+        int matiz_porcentaje, int saturacion_porcentaje, int luminosidad_porcentaje) const;
+    ColorRGB leer_color_desde_sliders(
+        const QSlider* slider_matiz, const QSlider* slider_saturacion,
+        const QSlider* slider_luminosidad, QLabel* etiqueta_matiz, QLabel* etiqueta_saturacion,
+        QLabel* etiqueta_luminosidad);
     void actualizar_previsualizacion_personaje();
     ConfiguracionJugador obtener_configuracion_actual() const;
     void llenar_lista_partidas(const ListaPartidas& lista);
@@ -62,11 +77,12 @@ private:
     CompositorPersonaje compositor_personaje;
     int indice_piel_seleccionada = 0;
     int indice_pelo_seleccionado = 0;
-    int indice_color_pelo_seleccionado = 0;
     int indice_remera_seleccionado = 0;
-    int indice_pantalon_color_seleccionado = 0;
     int indice_tipo_pantalon_seleccionado = 0;
     int indice_sombrero_seleccionado = -1;
+    ColorRGB color_ojos_actual = {104, 43, 15};
+    ColorRGB color_pelo_actual = {193, 90, 33};
+    ColorRGB color_pantalon_actual = {45, 60, 140};
     bool es_personaje_femenino = false;
     std::mt19937 generador_azar{std::random_device{}()};
 

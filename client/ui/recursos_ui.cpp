@@ -13,9 +13,9 @@ constexpr RecursosUI::RegionSprite REGION_FLECHA_DERECHA = {365, 495, 12, 11};
 // Dimensiones de visualización en la interfaz
 constexpr int TAMANIO_ICONO_DADO = 30;
 constexpr int TAMANIO_BOTON_OK = 64;
-constexpr int TAMANIO_ICONO_GENERO = 32;
-constexpr int ANCHO_BOTON_FLECHA = 28;
-constexpr int ALTO_BOTON_FLECHA = 26;
+constexpr int TAMANIO_ICONO_GENERO = 34;
+constexpr int ANCHO_BOTON_FLECHA = 36;
+constexpr int ALTO_BOTON_FLECHA = 33;
 
 RecursosUI& RecursosUI::instancia() {
     static RecursosUI singleton;

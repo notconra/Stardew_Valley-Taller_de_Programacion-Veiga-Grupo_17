@@ -66,20 +66,20 @@ int desvio_de_accion(int fila_direccion, int cuadro) {
 }
 
 SDL_Texture* cargar_textura_cuerpo(
-    const std::string& ruta, int indice_piel, SDL_Renderer* renderer) {
+    const std::string& ruta, int indice_piel, const ColorRGB& color_ojos, SDL_Renderer* renderer) {
     SDL_Surface* surface = IMG_Load(ruta.c_str());
     if (!surface) {
         throw std::runtime_error("no se pudo cargar la imagen " + ruta + ": " + IMG_GetError());
     }
+    SDL_Surface* surface_rgba = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA32, 0);
+    SDL_FreeSurface(surface);
+    surface = surface_rgba;
+
     if (indice_piel > 0) {
         SDL_Surface* pieles = IMG_Load(RUTA_HOJA_PIELES);
         if (pieles) {
             SDL_Surface* pieles_rgba = SDL_ConvertSurfaceFormat(pieles, SDL_PIXELFORMAT_RGBA32, 0);
-            SDL_Surface* surface_rgba =
-                SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA32, 0);
-            SDL_FreeSurface(surface);
             SDL_FreeSurface(pieles);
-            surface = surface_rgba;
 
             if (indice_piel < pieles_rgba->h) {
                 Uint32* pixeles_piel = static_cast<Uint32*>(pieles_rgba->pixels);
@@ -116,6 +116,25 @@ SDL_Texture* cargar_textura_cuerpo(
             SDL_FreeSurface(pieles_rgba);
         }
     }
+
+    // Tintado de ojos
+    Uint32 color_base_ojos = SDL_MapRGBA(surface->format, 104, 43, 15, 255) & 0x00FFFFFF;
+    Uint32 color_dest_ojos =
+        SDL_MapRGBA(surface->format, color_ojos.rojo, color_ojos.verde, color_ojos.azul, 255) &
+        0x00FFFFFF;
+
+    Uint32* pixeles = static_cast<Uint32*>(surface->pixels);
+    int total_pixeles = (surface->pitch / sizeof(Uint32)) * surface->h;
+    for (int i = 0; i < total_pixeles; ++i) {
+        Uint32 pixel_actual = pixeles[i];
+        if (((pixel_actual >> 24) & 0xFF) == 0) {
+            continue;
+        }
+        if ((pixel_actual & 0x00FFFFFF) == color_base_ojos) {
+            pixeles[i] = color_dest_ojos | (pixel_actual & 0xFF000000);
+        }
+    }
+
     SDL_Texture* textura_cuerpo = SDL_CreateTextureFromSurface(renderer, surface);
     SDL_FreeSurface(surface);
     if (!textura_cuerpo) {
@@ -130,7 +149,8 @@ Personaje::Personaje(
     const ConfiguracionJugador& configuracion_jugador,
     const ConfiguracionGraficos& configuracion_graficos, SDL_Renderer* renderer)
     : cuerpo(cargar_textura_cuerpo(
-          configuracion_jugador.ruta_cuerpo, configuracion_jugador.indice_piel, renderer)),
+          configuracion_jugador.ruta_cuerpo, configuracion_jugador.indice_piel,
+          configuracion_jugador.color_ojos, renderer)),
       pantalon(configuracion_jugador.ruta_pantalon, renderer),
       pelo(configuracion_jugador.ruta_pelo, renderer),
       sombrero(configuracion_jugador.ruta_sombrero, renderer),

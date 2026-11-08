@@ -40,6 +40,8 @@ constexpr const char* RUTA_FONDO_DIA = "Assets/LooseSprites/daybg.png";
 constexpr int ANCHO_RECUADRO_PREVIEW = 116;
 constexpr int ALTO_RECUADRO_PREVIEW = 156;
 
+constexpr QRgb COLOR_BASE_OJOS = 0x00682B0F;  // RGB(104, 43, 15)
+
 CompositorPersonaje::CompositorPersonaje()
     : hoja_cuerpo_masculino(RUTA_CUERPO_MASCULINO),
       hoja_cuerpo_femenino(RUTA_CUERPO_FEMENINO),
@@ -113,6 +115,25 @@ QImage CompositorPersonaje::aplicar_piel(const QImage& original, int indice_piel
     return resultado;
 }
 
+QImage CompositorPersonaje::aplicar_color_ojos(
+    const QImage& original, const ColorRGB& color) const {
+    QImage resultado = original.convertToFormat(QImage::Format_ARGB32);
+    for (int y = 0; y < resultado.height(); ++y) {
+        QRgb* fila = reinterpret_cast<QRgb*>(resultado.scanLine(y));
+        for (int x = 0; x < resultado.width(); ++x) {
+            QRgb pixel = fila[x];
+            int alfa = qAlpha(pixel);
+            if (alfa == 0) {
+                continue;
+            }
+            if ((pixel & 0x00FFFFFF) == COLOR_BASE_OJOS) {
+                fila[x] = qRgba(color.rojo, color.verde, color.azul, alfa);
+            }
+        }
+    }
+    return resultado;
+}
+
 QPixmap CompositorPersonaje::componer(
     const ConfiguracionJugador& jugador, int factor_escala) const {
     bool es_femenino = (jugador.ruta_cuerpo == RUTA_CUERPO_FEMENINO);
@@ -127,9 +148,11 @@ QPixmap CompositorPersonaje::componer(
 
     QPainter pintor(&lienzo);
 
-    QImage sprite_cuerpo = aplicar_piel(
-        hoja_cuerpo.copy(0, 0, ANCHO_BASE_SPRITE, ALTO_BASE_SPRITE),
-        jugador.indice_piel);
+    QImage sprite_cuerpo = aplicar_color_ojos(
+        aplicar_piel(
+            hoja_cuerpo.copy(0, 0, ANCHO_BASE_SPRITE, ALTO_BASE_SPRITE),
+            jugador.indice_piel),
+        jugador.color_ojos);
     pintor.drawImage(MARGEN_X_SOMBRERO, MARGEN_Y_SOMBRERO, sprite_cuerpo);
 
     if (!hoja_pantalones.isNull()) {

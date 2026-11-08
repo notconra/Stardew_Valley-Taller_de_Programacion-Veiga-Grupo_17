@@ -29,6 +29,7 @@ private:
 
     QImage aplicar_tinte(const QImage& original, const ColorRGB& color) const;
     QImage aplicar_piel(const QImage& original, int indice_piel) const;
+    QImage aplicar_color_ojos(const QImage& original, const ColorRGB& color) const;
 };
 
 #endif  // COMPOSITOR_PERSONAJE_H
