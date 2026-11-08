@@ -125,6 +125,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         configuracion.graficos.tamano_pixel_vision_mazmorra,
         configuracion.graficos.ancho_difuminado_vision_mazmorra);
     HudInventario hud(renderizador.ptr(), iconos);
+    const RelojGrafico reloj_grafico(renderizador.ptr(), configuracion.ventana.alto);
+    const PantallaDeDescanso pantalla_de_descanso(renderizador.ptr(), configuracion.ventana.alto);
     hud.configurar(configuracion.ventana.ancho, configuracion.ventana.alto);
     EntradaDelUsuario entrada;
     Camara camara = camara_para(mapa_de(mapa_actual));
@@ -186,7 +188,9 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             camara,
             hud,
             vision_mazmorra,
-            entrada);
+            entrada,
+            reloj_grafico,
+            pantalla_de_descanso);
     }
 }
 
@@ -244,7 +248,8 @@ void VistaPartida::procesar_entrada(
     if (pedidos.multijugador) {
         conexion.enviar_comando(ActivarMultijugador{});
     }
-    if (pedidos.confirmar && pantalla_de_descanso.visible(descanso) && !descanso.dio_el_ok) {
+    if (pedidos.confirmar && descanso.estado != EstadoDeDescanso::DESPIERTO &&
+        !descanso.dio_el_ok) {
         conexion.enviar_comando(DarElOk{});
     }
 
@@ -496,7 +501,8 @@ void VistaPartida::dibujar(
     Renderizador& renderizador, const MapaGrafico& mapa, const ObjetosGraficos& objetos,
     const EnemigosGraficos& enemigos, const Personaje& personaje, const TierraGrafica& tierra,
     const Camara& camara, const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
-    const EntradaDelUsuario& entrada) const {
+    const EntradaDelUsuario& entrada, const RelojGrafico& reloj_grafico,
+    const PantallaDeDescanso& pantalla_de_descanso) const {
     SDL_Renderer* renderer = renderizador.ptr();
 
     const ColorDeFondo& color = configuracion.graficos.color_de_fondo;
@@ -572,11 +578,7 @@ void VistaPartida::dibujar(
     }
 
     if (hora_del_juego.has_value()) {
-        reloj_grafico.dibujar(
-            renderer,
-            *hora_del_juego,
-            configuracion.ventana.ancho,
-            configuracion.ventana.alto);
+        reloj_grafico.dibujar(renderer, *hora_del_juego, configuracion.ventana.ancho);
     }
 
     pantalla_de_descanso

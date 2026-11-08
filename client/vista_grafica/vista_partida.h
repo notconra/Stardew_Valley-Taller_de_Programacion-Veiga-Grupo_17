@@ -46,9 +46,7 @@ private:
     std::string mapa_actual;
     std::set<std::pair<int, int>> tierra_tratada;
     std::optional<HoraDelJuego> hora_del_juego;
-    RelojGrafico reloj_grafico;
     EstadoDelDescanso descanso{};
-    PantallaDeDescanso pantalla_de_descanso;
 
     // Lo último que se le preguntó al servidor (ConsultarCasilla) sobre la casilla del mouse, y su
     // respuesta. El cliente no decide si se puede: solo pinta lo que contestó el servidor. Se
@@ -108,7 +106,8 @@ private:
         Renderizador& renderizador, const MapaGrafico& mapa, const ObjetosGraficos& objetos,
         const EnemigosGraficos& enemigos, const Personaje& personaje, const TierraGrafica& tierra,
         const Camara& camara, const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
-        const EntradaDelUsuario& entrada) const;
+        const EntradaDelUsuario& entrada, const RelojGrafico& reloj_grafico,
+        const PantallaDeDescanso& pantalla_de_descanso) const;
 
 public:
     VistaPartida(ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion);

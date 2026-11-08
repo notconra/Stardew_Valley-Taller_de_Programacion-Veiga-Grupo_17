@@ -451,6 +451,10 @@ HoraDelJuego ProtocoloCliente::recibir_hora_del_juego() {
     }
     hora.estacion = static_cast<Estacion>(estacion);
     hora.anio = recibir_u16();
+    hora.dia_de_la_semana = recibir_u8();
+    if (hora.dia_de_la_semana > DIA_DE_LA_SEMANA_MAXIMO) {
+        throw ErrorProtocolo("día de la semana desconocido");
+    }
     return hora;
 }
 
