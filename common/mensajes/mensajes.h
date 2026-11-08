@@ -3,6 +3,7 @@
 
 #include <variant>
 
+#include "mensajes_chat.h"
 #include "mensajes_error.h"
 #include "mensajes_lobby.h"
 #include "mensajes_partida.h"
@@ -22,7 +23,10 @@ using ComandoCliente = std::variant<
 
     // Inventario y acciones
     SeleccionarRanuraDeLaBarra, UsarItem, MoverItemEntreRanuras, MoverItemConCofre,
-    SolicitarInventario, SoltarItem>;
+    SolicitarInventario, SoltarItem,
+
+    // Chat
+    EnviarMensajeDeChat>;
 
 using EventoServidor = std::variant<
     // Error
@@ -36,10 +40,12 @@ using EventoServidor = std::variant<
 
     // - Sector
     EstadoJuego, JugadoresEnSector, ObjetoColocado, ObjetoRetirado, DropAparecido, DropRetirado,
-    EnemigoActualizado,
-    TierraCambiada,
+    EnemigoActualizado, TierraCambiada,
 
     // - Inventario y cofres
-    ActualizacionInventario, ActualizacionCofre>;
+    ActualizacionInventario, ActualizacionCofre,
+
+    // - Chat
+    MensajeDeChat>;
 
 #endif

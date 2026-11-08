@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <string>
 
-#include "../../common/mensajes/color_de_jugador.h"
+#include "../../common/color_de_jugador.h"
 
 // Un jugador que tiene lugar en una partida, esté conectado o no.
 struct Jugador {

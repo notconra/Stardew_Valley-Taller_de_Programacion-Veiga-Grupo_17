@@ -28,6 +28,8 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::SOLICITAR_INVENTARIO,
            [this] { return recibir_comando_solicitar_inventario(); }},
           {TipoMensaje::SOLTAR_ITEM, [this] { return recibir_comando_soltar_item(); }},
+          {TipoMensaje::ENVIAR_MENSAJE_DE_CHAT,
+           [this] { return recibir_comando_enviar_mensaje_de_chat(); }},
       } {
 }
 
@@ -140,6 +142,10 @@ SoltarItem ProtocoloServidor::recibir_comando_soltar_item() {
     return SoltarItem{ranura, cantidad};
 }
 
+EnviarMensajeDeChat ProtocoloServidor::recibir_comando_enviar_mensaje_de_chat() {
+    return EnviarMensajeDeChat{recibir_texto()};
+}
+
 // Envío de eventos
 
 void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
@@ -161,6 +167,7 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const DropRetirado& e) { enviar_evento_drop_retirado(e); },
             [this](const EnemigoActualizado& e) { enviar_evento_enemigo_actualizado(e); },
             [this](const TierraCambiada& e) { enviar_evento_tierra_cambiada(e); },
+            [this](const MensajeDeChat& e) { enviar_evento_mensaje_de_chat(e); },
         },
         evento);
 }
@@ -303,7 +310,7 @@ void ProtocoloServidor::enviar_estado_juego(const EstadoJuego& estado_juego) {
     for (const EstadoDrop& estado : estado_juego.drops) {
         enviar_estado_drop(estado);
     }
-enviar_largo(estado_juego.enemigos.size());
+    enviar_largo(estado_juego.enemigos.size());
     for (const EstadoEnemigo& estado : estado_juego.enemigos) {
         enviar_estado_enemigo(estado);
     }
@@ -355,4 +362,13 @@ void ProtocoloServidor::enviar_evento_tierra_cambiada(const TierraCambiada& tier
     enviar_tipo(TipoMensaje::TIERRA_CAMBIADA);
     enviar_casilla_tratada(tierra.casilla);
     enviar_booleano(tierra.tratada);
+}
+
+void ProtocoloServidor::enviar_evento_mensaje_de_chat(const MensajeDeChat& mensaje) {
+    enviar_tipo(TipoMensaje::MENSAJE_DE_CHAT);
+    enviar_u8(static_cast<uint8_t>(mensaje.canal));
+    enviar_texto(mensaje.remitente);
+    enviar_texto(mensaje.destinatario);
+    enviar_texto(mensaje.texto);
+    enviar_u8(static_cast<uint8_t>(mensaje.color_del_remitente));
 }

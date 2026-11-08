@@ -12,6 +12,7 @@
 #include "../../common/queue.h"
 #include "../../common/thread.h"
 #include "../configuracion/configuracion_servidor_datos.h"
+#include "../juego/chat/chat_de_partida.h"
 #include "../juego/mundo.h"
 #include "../juego/notificador.h"
 #include "../juego/recursos/recursos_de_juego.h"
@@ -29,6 +30,8 @@ struct ColaDeEventosDelJugador {
 // Un jugador que entró o se fue.
 struct CambioDeConexion {
     uint32_t id_jugador = 0;
+    std::string nombre_jugador;
+    ColorDeJugador color_jugador = ColorDeJugador::AZUL;
     bool entra = false;
 };
 
@@ -40,6 +43,7 @@ private:
     const std::chrono::milliseconds periodo_de_tick;
 
     Mundo mundo;
+    ChatDePartida chat;
 
     Queue<ComandoDeJugador> comandos;
     std::mutex mutex_clientes;
@@ -58,7 +62,9 @@ public:
 
     bool esta_viva() const;
 
-    void entrar(uint32_t id_jugador, Queue<EventoServidor>& cola_eventos);
+    void entrar(
+        uint32_t id_jugador, const std::string& nombre_jugador, ColorDeJugador color_jugador,
+        Queue<EventoServidor>& cola_eventos);
     void salir(uint32_t id_jugador);
     void recibir(uint32_t id_jugador, const ComandoCliente& comando);
 
