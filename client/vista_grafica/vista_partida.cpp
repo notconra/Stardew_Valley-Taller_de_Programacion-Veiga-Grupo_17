@@ -335,17 +335,13 @@ void VistaPartida::procesar_entrada(
         conexion.enviar_comando(ActivarMultijugador{});
     }
 
-    if (!consumo_del_chat.rueda) {
-        elegir_ranura_de_la_barra(pedidos);
     if (pedidos.guardar) {
         conexion.enviar_comando(GuardarPartida{});
         std::cout << "[partida] guardando partida en el servidor..." << std::endl;
     }
 
-    elegir_ranura_de_la_barra(pedidos);
-
-    if (pedidos.clic_izquierdo) {
-        procesar_clic(entrada, hud, camara, false);
+    if (!consumo_del_chat.rueda) {
+        elegir_ranura_de_la_barra(pedidos);
     }
 
     if (!consumo_del_chat.clic) {
