@@ -378,6 +378,7 @@ void ProtocoloServidor::enviar_evento_hora_del_juego(const HoraDelJuego& hora) {
     enviar_u8(hora.dia_de_la_estacion);
     enviar_u8(static_cast<uint8_t>(hora.estacion));
     enviar_u16(hora.anio);
+    enviar_u8(hora.dia_de_la_semana);
 }
 
 ConsultarCasilla ProtocoloServidor::recibir_comando_consultar_casilla() {

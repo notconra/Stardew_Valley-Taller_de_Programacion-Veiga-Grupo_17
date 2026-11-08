@@ -22,13 +22,15 @@ ControladorDeAcciones::ControladorDeAcciones(
       personajes(personajes),
       recursos(recursos),
       notificador(notificador),
-      resolver_transicion(std::move(resolver_transicion)) {
+      resolver_transicion(std::move(resolver_transicion)),
+      camas_ocupadas(personajes) {
     const ConfiguracionAccionesServidor& duraciones = recursos.juego.acciones;
 
     acciones.push_back(std::make_unique<AccionUsarTransicion>());
-    acciones.push_back(std::make_unique<AccionDormir>(personajes));
-    acciones.push_back(
-        std::make_unique<AccionPicar>(static_cast<uint16_t>(duraciones.duracion_picar_en_ticks)));
+    acciones.push_back(std::make_unique<AccionDormir>(camas_ocupadas));
+    acciones.push_back(std::make_unique<AccionPicar>(
+        camas_ocupadas,
+        static_cast<uint16_t>(duraciones.duracion_picar_en_ticks)));
     acciones.push_back(std::make_unique<AccionTratarTierra>(
         static_cast<uint16_t>(duraciones.duracion_tratar_tierra_en_ticks)));
     acciones.push_back(std::make_unique<AccionInteractuarCofre>());
@@ -109,8 +111,12 @@ CasillaConsultada ControladorDeAcciones::consultar(
         const ObjetoDelMundo* objeto = sector.objetos.objeto_en(objetivo.columna, objetivo.fila);
         const DefinicionDeObjeto* definicion =
             objeto == nullptr ? nullptr : recursos.catalogo_de_objetos.buscar(objeto->tipo);
-        tendria_efecto = (definicion != nullptr && definicion->herramienta == TipoItem::PICO) ||
-                         sector.tierra.esta_tratada(objetivo);
+        const bool cama_ocupada =
+            objeto != nullptr && objeto->tipo == TipoObjeto::CAMA &&
+            camas_ocupadas.esta_ocupada(sector.id, objeto->columna, objeto->fila);
+        tendria_efecto =
+            (definicion != nullptr && definicion->herramienta == TipoItem::PICO && !cama_ocupada) ||
+            sector.tierra.esta_tratada(objetivo);
     }
     respuesta.marca = tendria_efecto ? MarcaDeCasilla::VALIDA : MarcaDeCasilla::NINGUNA;
     return respuesta;

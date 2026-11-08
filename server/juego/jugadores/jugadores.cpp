@@ -209,3 +209,12 @@ void Jugadores::mirar_hacia(uint32_t id_jugador, const Casilla& casilla_destino)
 void Jugadores::agregar_en_aparicion(uint32_t id_jugador) {
     agregar_en(id_jugador, aparicion.x, aparicion.y);
 }
+
+bool Jugadores::hay_alguien_en(const Rectangulo& zona) const {
+    for (const auto& [id_jugador, jugador] : jugadores) {
+        if (se_superponen(rectangulo_de_pies(jugador.x, jugador.y), zona)) {
+            return true;
+        }
+    }
+    return false;
+}

@@ -55,6 +55,7 @@ HoraDelJuego Reloj::hora() const {
     hora_del_juego.dia_de_la_estacion = static_cast<uint8_t>(dias_pasados % dias_por_estacion + 1);
     hora_del_juego.estacion = static_cast<Estacion>(estaciones_pasadas % ESTACIONES_POR_ANIO);
     hora_del_juego.anio = static_cast<uint16_t>(estaciones_pasadas / ESTACIONES_POR_ANIO + 1);
+    hora_del_juego.dia_de_la_semana = static_cast<uint8_t>(dias_pasados % DIAS_POR_SEMANA);
     return hora_del_juego;
 }
 

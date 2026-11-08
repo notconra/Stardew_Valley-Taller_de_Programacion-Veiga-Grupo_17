@@ -9,6 +9,7 @@
 #include "../../../common/mensajes/mensajes.h"
 #include "../acciones/accion.h"
 #include "../jugadores/personaje.h"
+#include "../muebles/camas_ocupadas.h"
 #include "../notificador.h"
 #include "../recursos/recursos_de_juego.h"
 #include "../sector/gestor_de_sectores.h"
@@ -25,6 +26,7 @@ private:
     const RecursosDeJuego& recursos;
     Notificador& notificador;
     ResolverDeTransicion resolver_transicion;
+    CamasOcupadas camas_ocupadas;
     std::vector<std::unique_ptr<Accion>> acciones;
 
     bool al_alcance(const Sector& sector, const Casilla& propia, const Casilla& objetivo) const;

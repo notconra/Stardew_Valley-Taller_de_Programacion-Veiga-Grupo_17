@@ -10,6 +10,7 @@
 #define MINUTOS_POR_HORA 60
 #define MINUTOS_ENTRE_AVISOS 10
 #define ESTACIONES_POR_ANIO 4
+#define DIAS_POR_SEMANA 7
 
 enum class CambioDelReloj {
     NINGUNO,

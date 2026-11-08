@@ -18,15 +18,15 @@ bool AccionColocar::se_puede_colocar(const ContextoDeAccion& c) const {
         return false;
     }
 
-    const auto ids_jugadores = c.sector.jugadores.ids();
-    for (uint32_t id_j : ids_jugadores) {
-        auto casilla_j = c.sector.jugadores.casilla_del_jugador(id_j);
-        if (casilla_j.has_value() && casilla_j->columna >= c.objetivo.columna &&
-            casilla_j->columna < c.objetivo.columna + definicion->ancho_en_casillas &&
-            casilla_j->fila >= c.objetivo.fila &&
-            casilla_j->fila < c.objetivo.fila + definicion->alto_en_casillas) {
-            return false;  // No se puede colocar un objeto encima de un jugador
-        }
+    const int ancho_casilla = c.sector.mapa.ancho_de_casilla_en_pixeles();
+    const int alto_casilla = c.sector.mapa.alto_de_casilla_en_pixeles();
+    const Rectangulo zona{
+        c.objetivo.columna * ancho_casilla,
+        c.objetivo.fila * alto_casilla,
+        definicion->ancho_en_casillas * ancho_casilla,
+        definicion->alto_en_casillas * alto_casilla};
+    if (c.sector.jugadores.hay_alguien_en(zona)) {
+        return false;
     }
 
     for (int fila = c.objetivo.fila; fila < c.objetivo.fila + definicion->alto_en_casillas;

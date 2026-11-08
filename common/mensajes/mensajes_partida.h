@@ -265,6 +265,8 @@ struct CasillaConsultada {
 // de la mañana del día siguiente (hora = 0 y 1 son la madrugada del mismo día de juego).
 // "dia" cuenta todos los días desde que empezó la partida; dia_de_la_estacion, estacion y anio
 // salen de él (por defecto, 28 días por estación y 4 estaciones por año).
+#define DIA_DE_LA_SEMANA_MAXIMO 6
+
 struct HoraDelJuego {
     uint32_t dia = 1;
     uint8_t hora = 6;
@@ -272,6 +274,7 @@ struct HoraDelJuego {
     uint8_t dia_de_la_estacion = 1;
     Estacion estacion = Estacion::PRIMAVERA;
     uint16_t anio = 1;
+    uint8_t dia_de_la_semana = 0;
 
     bool operator==(const HoraDelJuego&) const = default;
 };
