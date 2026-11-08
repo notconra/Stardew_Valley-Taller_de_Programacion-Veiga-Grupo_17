@@ -33,6 +33,9 @@ constexpr char AYUDA_DE_TECLAS[] =
     "  clic izq. (HUD)   agarrar el stack completo / soltarlo en otra ranura o en el tacho\n"
     "  clic der. (HUD)   agarrar un ítem (cada clic suma uno más) / soltar uno solo\n"
     "  clic afuera       con un stack agarrado de la barra, lo tira al piso\n"
+    "  T / botón del chat abrir o cerrar el chat\n"
+    "  clic en el chat   casilla de abajo: escribir. Enter envía, ESC o clic afuera sueltan\n"
+    "  rueda sobre chat  recorrer los mensajes (el personaje puede seguir caminando)\n"
     "  M                 permitir que otros jugadores se unan (el código sale acá)\n"
     "  ESC               salir de la partida y volver al lobby\n";
 
@@ -150,6 +153,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     InicioDeSDL inicio_de_sdl;
     Ventana ventana(configuracion.ventana);
     Renderizador renderizador(ventana, configuracion.sdl);
+    VistaChat chat(configuracion.chat, renderizador.ptr());
+    chat.limpiar();
 
     ancho_de_pantalla = std::max(1, ventana.ancho());
     alto_de_pantalla = std::max(1, ventana.alto());
@@ -190,7 +195,14 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
 
     while (true) {
         const uint32_t inicio_del_cuadro = SDL_GetTicks();
-        entrada.leer();
+        entrada.leer(chat.esta_escribiendo());
+
+        const VistaChat::ConsumoDeEntrada consumo_del_chat =
+            chat.procesar_entrada(entrada, ancho_de_pantalla, alto_de_pantalla);
+        if (std::optional<EnviarMensajeDeChat> mensaje = chat.tomar_mensaje_a_enviar();
+            mensaje.has_value()) {
+            conexion.enviar_comando(*mensaje);
+        }
 
         if (entrada.pidio_cerrar()) {
             efectos_actuales = nullptr;
@@ -212,7 +224,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
                 ultimo_paso_ms = ahora;
             }
         }
-        if (!recibir_eventos()) {
+        if (!recibir_eventos(chat)) {
             efectos_actuales = nullptr;
             return true;
         }
@@ -240,8 +252,12 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
 
         hud.actualizar(ultimo_inventario, ultimo_cofre);
-        procesar_entrada(entrada, hud, camara);
-        enviar_intencion_si_cambio(entrada.intencion());
+        procesar_entrada(entrada, hud, camara, consumo_del_chat);
+        if (chat.esta_escribiendo()) {
+            enviar_intencion_si_cambio(Moverse{});
+        } else {
+            enviar_intencion_si_cambio(entrada.intencion());
+        }
 
         dibujar(
             renderizador,
@@ -254,7 +270,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             camara,
             hud,
             vision_mazmorra,
-            entrada);
+            entrada,
+            chat);
         limitar_cuadro(inicio_del_cuadro);
     }
 }
@@ -309,20 +326,25 @@ void VistaPartida::guardar_tierra(const EstadoJuego& estado) {
 }
 
 void VistaPartida::procesar_entrada(
-    const EntradaDelUsuario& entrada, HudInventario& hud, const Camara& camara) {
+    const EntradaDelUsuario& entrada, HudInventario& hud, const Camara& camara,
+    const VistaChat::ConsumoDeEntrada& consumo_del_chat) {
     const EntradaDelUsuario::Pedidos& pedidos = entrada.pedidos();
 
     if (pedidos.multijugador) {
         conexion.enviar_comando(ActivarMultijugador{});
     }
 
-    elegir_ranura_de_la_barra(pedidos);
-
-    if (pedidos.clic_izquierdo) {
-        procesar_clic(entrada, hud, camara, false);
+    if (!consumo_del_chat.rueda) {
+        elegir_ranura_de_la_barra(pedidos);
     }
-    if (pedidos.clic_derecho) {
-        procesar_clic(entrada, hud, camara, true);
+
+    if (!consumo_del_chat.clic) {
+        if (pedidos.clic_izquierdo) {
+            procesar_clic(entrada, hud, camara, false);
+        }
+        if (pedidos.clic_derecho) {
+            procesar_clic(entrada, hud, camara, true);
+        }
     }
 }
 
@@ -389,10 +411,10 @@ std::optional<std::pair<int, int>> VistaPartida::centro_de_pantalla_del_jugador(
     return std::make_pair(x, y);
 }
 
-bool VistaPartida::recibir_eventos() {
+bool VistaPartida::recibir_eventos(VistaChat& chat) {
     EventoServidor evento;
     while (conexion.intentar_evento(evento)) {
-        aplicar(evento);
+        aplicar(evento, chat);
         if (partida_terminada) {
             return false;
         }
@@ -400,7 +422,7 @@ bool VistaPartida::recibir_eventos() {
     return true;
 }
 
-void VistaPartida::aplicar(const EventoServidor& evento) {
+void VistaPartida::aplicar(const EventoServidor& evento, VistaChat& chat) {
     EstadoJuego& estado = ultimo_estado_juego;
 
     std::visit(
@@ -465,6 +487,7 @@ void VistaPartida::aplicar(const EventoServidor& evento) {
                 std::cout << "[partida] multijugador activado, código para invitar: "
                           << e.codigo_partida << std::endl;
             },
+            [&](const MensajeDeChat& e) { chat.recibir(e); },
             [&](const ErrorServidor& e) { std::cerr << "[error] " << e.detalle << std::endl; },
             [&](const PartidaCerradaPorError&) {
                 salir_de_partida_y_confirmar();
@@ -506,7 +529,8 @@ void VistaPartida::dibujar(
     Renderizador& renderizador, SDL_Texture* mundo, const MapaGrafico& mapa,
     const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos, const Personaje& personaje,
     const TierraGrafica& tierra, const Camara& camara, const HudInventario& hud,
-    const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada) const {
+    const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada,
+    const VistaChat& chat) const {
     SDL_Renderer* renderer = renderizador.ptr();
 
     if (mundo != nullptr) {
@@ -572,6 +596,8 @@ void VistaPartida::dibujar(
             hud.dibujar_vida(renderer, propio->vida, VIDA_MAXIMA_JUGADOR);
         }
     }
+
+    chat.dibujar(renderer, ancho_de_pantalla, alto_de_pantalla);
 
     SDL_RenderPresent(renderer);
 }
