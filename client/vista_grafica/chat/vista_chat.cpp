@@ -598,13 +598,15 @@ void VistaChat::recalcular_lineas_de_entrada() {
 
 size_t VistaChat::desplazamiento_maximo(int alto_disponible) const {
     int acumulado = 0;
+    size_t entran = 0;
     for (size_t i = 0; i < lineas_de_mensajes.size(); ++i) {
         acumulado += lineas_de_mensajes[i].alto;
-        if (acumulado >= alto_disponible) {
-            return lineas_de_mensajes.size() - (i + 1);
+        if (entran > 0 && acumulado > alto_disponible) {
+            break;
         }
+        ++entran;
     }
-    return 0;
+    return lineas_de_mensajes.size() - entran;
 }
 
 size_t VistaChat::desplazamiento_efectivo(int alto_disponible) const {
@@ -613,20 +615,6 @@ size_t VistaChat::desplazamiento_efectivo(int alto_disponible) const {
 
 size_t VistaChat::fin_de_la_ventana_de_mensajes(int alto_disponible) const {
     return lineas_de_mensajes.size() - desplazamiento_efectivo(alto_disponible);
-}
-
-size_t VistaChat::inicio_de_la_ventana_de_mensajes(size_t fin, int alto_disponible) const {
-    size_t inicio = fin;
-    int usado = 0;
-    while (inicio > 0) {
-        const int alto = lineas_de_mensajes[inicio - 1].alto;
-        if (inicio < fin && usado + alto > alto_disponible) {
-            break;
-        }
-        usado += alto;
-        --inicio;
-    }
-    return inicio;
 }
 
 void VistaChat::dibujar(SDL_Renderer* renderer, int ancho_pantalla, int alto_pantalla) const {
@@ -721,6 +709,14 @@ void VistaChat::dibujar_encabezado(SDL_Renderer* renderer, const DisposicionChat
     SDL_RenderCopy(renderer, texto->textura, nullptr, &destino);
 }
 
+void VistaChat::dibujar_mensaje(
+    SDL_Renderer* renderer, const TextoEnvueltoChat& mensaje, int x, int y) const {
+    for (const LineaChat& linea : mensaje.lineas) {
+        dibujar_linea(renderer, linea, x, y);
+        y += linea.alto;
+    }
+}
+
 void VistaChat::dibujar_mensajes(SDL_Renderer* renderer, const DisposicionChat& d) const {
     const SDL_Rect& area = d.area_de_mensajes;
     SDL_RenderSetClipRect(renderer, &area);
@@ -729,12 +725,25 @@ void VistaChat::dibujar_mensajes(SDL_Renderer* renderer, const DisposicionChat& 
         dibujar_texto(renderer, "No hay mensajes.", estilo::TEXTO_APAGADO, area.x, area.y);
     } else {
         const size_t fin = fin_de_la_ventana_de_mensajes(area.h);
-        const size_t inicio = inicio_de_la_ventana_de_mensajes(fin, area.h);
-        int y = area.y;
-        for (size_t i = inicio; i < fin; ++i) {
-            for (const LineaChat& linea : lineas_de_mensajes[i].lineas) {
-                dibujar_linea(renderer, linea, area.x, y);
-                y += linea.alto;
+
+        int alto_total = 0;
+        for (size_t i = 0; i < fin; ++i) {
+            alto_total += lineas_de_mensajes[i].alto;
+        }
+
+        if (alto_total <= area.h) {
+            int y = area.y;
+            for (size_t i = 0; i < fin; ++i) {
+                dibujar_mensaje(renderer, lineas_de_mensajes[i], area.x, y);
+                y += lineas_de_mensajes[i].alto;
+            }
+        } else {
+            int y = area.y + area.h;
+            size_t i = fin;
+            while (i > 0 && y > area.y) {
+                --i;
+                y -= lineas_de_mensajes[i].alto;
+                dibujar_mensaje(renderer, lineas_de_mensajes[i], area.x, y);
             }
         }
     }

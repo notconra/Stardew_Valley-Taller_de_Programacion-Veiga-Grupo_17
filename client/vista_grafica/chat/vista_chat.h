@@ -147,7 +147,6 @@ private:
     size_t desplazamiento_maximo(int alto_disponible) const;
     size_t desplazamiento_efectivo(int alto_disponible) const;
     size_t fin_de_la_ventana_de_mensajes(int alto_disponible) const;
-    size_t inicio_de_la_ventana_de_mensajes(size_t fin, int alto_disponible) const;
 
     // Entrada del usuario
     void abrir_chat(const DisposicionChat& d);
@@ -174,6 +173,8 @@ private:
     void dibujar_boton_de_apertura(SDL_Renderer* renderer, const DisposicionChat& d) const;
     void dibujar_encabezado(SDL_Renderer* renderer, const DisposicionChat& d) const;
     void dibujar_mensajes(SDL_Renderer* renderer, const DisposicionChat& d) const;
+    void dibujar_mensaje(
+        SDL_Renderer* renderer, const TextoEnvueltoChat& mensaje, int x, int y) const;
     void dibujar_boton_ir_al_final(SDL_Renderer* renderer, const DisposicionChat& d) const;
     void dibujar_entrada(SDL_Renderer* renderer, const DisposicionChat& d) const;
     void dibujar_menu_de_emojis(SDL_Renderer* renderer, const DisposicionChat& d) const;

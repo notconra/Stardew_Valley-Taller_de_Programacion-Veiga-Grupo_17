@@ -31,7 +31,7 @@ constexpr int ANCHO_DE_LA_IMAGEN = 74;
 constexpr int ALTO_DE_LA_IMAGEN = 71;
 constexpr RectanguloEnLaImagen TITULO_EN_LA_IMAGEN{2, 3, 55, 8};
 constexpr RectanguloEnLaImagen BOTON_CERRAR_EN_LA_IMAGEN{60, 1, 13, 12};
-constexpr RectanguloEnLaImagen CUERPO_EN_LA_IMAGEN{2, 17, 69, 51};
+constexpr RectanguloEnLaImagen CUERPO_EN_LA_IMAGEN{2, 12, 69, 56};
 
 // Medidas
 
