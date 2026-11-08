@@ -189,15 +189,26 @@ void PantallaPrincipal::confirmar_personaje() {
 
     ui->btn_confirmar_personaje->setEnabled(false);
 
+    AparienciaPersonaje apariencia;
+    apariencia.es_femenino = es_personaje_femenino;
+    apariencia.indice_pelo = static_cast<uint8_t>(indice_pelo_seleccionado);
+    apariencia.color_pelo = color_pelo_actual;
+    apariencia.indice_remera = static_cast<uint8_t>(indice_remera_seleccionado);
+    apariencia.indice_pantalon = static_cast<uint8_t>(indice_tipo_pantalon_seleccionado);
+    apariencia.color_pantalon = color_pantalon_actual;
+    apariencia.indice_sombrero = static_cast<int16_t>(indice_sombrero_seleccionado);
+
     if (es_modo_unirse) {
         std::cout << "Uniéndose a partida " << codigo_partida_a_unirse
                   << " con personaje: " << nombre.toStdString() << "\n";
-        conexion.enviar_comando(UnirsePartida{codigo_partida_a_unirse, nombre.toStdString()});
+        conexion.enviar_comando(
+            UnirsePartida{codigo_partida_a_unirse, nombre.toStdString(), apariencia});
     } else {
         std::cout << "Creando personaje: " << nombre.toStdString()
                   << " | Granja: " << granja.toStdString()
                   << " | Tipo de mapa: " << mapa_granja_seleccionado << "\n";
-        conexion.enviar_comando(CrearPartida{granja.toStdString(), nombre.toStdString()});
+        conexion.enviar_comando(
+            CrearPartida{granja.toStdString(), nombre.toStdString(), apariencia});
     }
 
     try {

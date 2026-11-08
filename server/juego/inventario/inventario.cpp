@@ -67,6 +67,12 @@ const std::vector<RanuraInventario>& Inventario::todas_las_ranuras() const {
     return ranuras;
 }
 
+void Inventario::cargar_ranuras(const std::vector<RanuraInventario>& ranuras_guardadas) {
+    for (size_t i = 0; i < ranuras.size() && i < ranuras_guardadas.size(); ++i) {
+        ranuras[i] = ranuras_guardadas[i];
+    }
+}
+
 bool Inventario::puede_agregar(TipoItem tipo, uint16_t cantidad, Calidad calidad) const {
     if (tipo == TipoItem::NINGUNO || catalogo.maximo_apilable(tipo) == 0) {
         return false;

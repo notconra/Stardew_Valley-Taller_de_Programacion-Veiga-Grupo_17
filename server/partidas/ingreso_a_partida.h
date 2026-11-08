@@ -1,6 +1,7 @@
 #ifndef INGRESO_A_PARTIDA_H
 #define INGRESO_A_PARTIDA_H
 
+#include "../../common/apariencia_personaje.h"
 #include "../../common/mensajes/mensajes.h"
 #include "sesion_de_partida.h"
 
@@ -11,6 +12,7 @@
 struct IngresoAPartida {
     EntradaExitosaAPartida entrada;
     SesionDePartida& sesion;
+    AparienciaPersonaje apariencia;
 };
 
 #endif

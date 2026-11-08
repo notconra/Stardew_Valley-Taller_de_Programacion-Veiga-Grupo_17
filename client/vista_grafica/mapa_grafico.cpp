@@ -36,8 +36,15 @@ std::vector<Tileset> MapaGrafico::crear_tilesets(
     std::vector<Tileset> creados;
     creados.reserve(configuraciones.size());
     for (std::size_t i = 0; i < configuraciones.size(); ++i) {
-        creados.push_back(
-            Tileset{texturas[i].ptr(), configuraciones[i].firstgid, configuraciones[i].columnas});
+        int ancho_de_textura = 0;
+        int alto_de_textura = 0;
+        SDL_QueryTexture(texturas[i].ptr(), nullptr, nullptr, &ancho_de_textura, &alto_de_textura);
+        creados.push_back(Tileset{
+            texturas[i].ptr(),
+            configuraciones[i].firstgid,
+            configuraciones[i].columnas,
+            ancho_de_textura,
+            alto_de_textura});
     }
     return creados;
 }

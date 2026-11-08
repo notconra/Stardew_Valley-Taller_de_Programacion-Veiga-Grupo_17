@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "../../../common/mensajes/mensajes.h"
+#include "../../persistencia/datos_partida_guardada.h"
 #include "../geometria.h"
 #include "../mapa/mapa.h"
 
@@ -35,6 +36,14 @@ public:
 
     // Si tratar() cambiaría la casilla: cultivable, sin bloquear y todavía sin tratar.
     bool se_puede_tratar(const Casilla& casilla) const;
+
+    // Carga una casilla tratada previamente al restaurar una partida guardada.
+    void cargar(int columna, int fila);
+
+    const std::set<std::pair<int, int>>& obtener_tratadas() const;
+
+    // Agrega las casillas tratadas al listado de modificaciones para guardar la partida.
+    void agregar_modificaciones_a(std::vector<ModificacionCasilla>& casillas) const;
 
     // Agrega las casillas tratadas de este mapa a la lista que se manda en el snapshot del sector.
     void agregar_a(std::vector<CasillaTratada>& casillas) const;

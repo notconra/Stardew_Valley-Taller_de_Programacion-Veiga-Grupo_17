@@ -87,6 +87,10 @@ void ConfiguracionCliente::cargar_ventana(const toml::table& archivo_toml) {
         lector_toml::leer_entero_positivo(ventana, "ancho", "ventana");
     configuracion_vista.ventana.alto =
         lector_toml::leer_entero_positivo(ventana, "alto", "ventana");
+    configuracion_vista.ventana.pantalla_completa =
+        lector_toml::leer_booleano_opcional(ventana, "pantalla_completa", true);
+    configuracion_vista.ventana.redimensionable =
+        lector_toml::leer_booleano_opcional(ventana, "redimensionable", false);
 }
 
 void ConfiguracionCliente::cargar_sdl(const toml::table& archivo_toml) {
@@ -94,6 +98,8 @@ void ConfiguracionCliente::cargar_sdl(const toml::table& archivo_toml) {
 
     configuracion_vista.sdl.acelerado = lector_toml::leer_booleano(sdl, "acelerado", "sdl");
     configuracion_vista.sdl.vsync = lector_toml::leer_booleano(sdl, "vsync", "sdl");
+    configuracion_vista.sdl.fps_maximos =
+        lector_toml::leer_entero_opcional(sdl, "fps_maximos", "sdl", 60, 0, 1000);
 }
 
 void ConfiguracionCliente::cargar_graficos(const toml::table& archivo_toml) {
@@ -102,7 +108,23 @@ void ConfiguracionCliente::cargar_graficos(const toml::table& archivo_toml) {
     configuracion_vista.graficos.tamano_de_tile =
         lector_toml::leer_entero_positivo(graficos, "tamano_de_tile", "graficos");
     configuracion_vista.graficos.escala_de_tiles =
-        lector_toml::leer_entero_positivo(graficos, "escala_de_tiles", "graficos");
+        lector_toml::leer_entero_en_rango(graficos, "escala_de_tiles", "graficos", 1, 8);
+    configuracion_vista.graficos.escala_maxima_de_tiles =
+        lector_toml::leer_entero_opcional(graficos, "escala_maxima_de_tiles", "graficos", 8, 1, 8);
+    configuracion_vista.graficos.zoom_automatico =
+        lector_toml::leer_booleano_opcional(graficos, "zoom_automatico", true);
+    if (configuracion_vista.graficos.escala_maxima_de_tiles <
+        configuracion_vista.graficos.escala_de_tiles) {
+        throw std::runtime_error(
+            "configuración: 'escala_maxima_de_tiles' no puede ser menor que 'escala_de_tiles'");
+    }
+
+    configuracion_vista.graficos.zoom_extra = graficos["zoom_extra"].value_or(1.0);
+    if (configuracion_vista.graficos.zoom_extra < 1.0 ||
+        configuracion_vista.graficos.zoom_extra > 3.0) {
+        throw std::runtime_error(
+            "configuración: 'zoom_extra' de [graficos] debe estar entre 1.0 y 3.0");
+    }
     configuracion_vista.graficos.color_de_fondo = leer_color(graficos);
     configuracion_vista.graficos.radio_vision_mazmorra =
         lector_toml::leer_entero_opcional(graficos, "radio_vision_mazmorra", 0);

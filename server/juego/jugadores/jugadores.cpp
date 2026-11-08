@@ -160,10 +160,11 @@ void Jugadores::quitar(uint32_t id_jugador) {
     jugadores.erase(id_jugador);
 }
 
-void Jugadores::agregar_en(uint32_t id_jugador, double x, double y) {
+void Jugadores::agregar_en(uint32_t id_jugador, double x, double y, Direccion mirando) {
     JugadorEnPartida nuevo;
     nuevo.x = x;
     nuevo.y = y;
+    nuevo.mirando = mirando;
     jugadores[id_jugador] = nuevo;
 }
 

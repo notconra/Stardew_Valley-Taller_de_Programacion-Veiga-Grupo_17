@@ -2,4 +2,5 @@ build/
 .qtcreator/
 *.autosave
 *.dat
-partidas/
+*.idx
+/partidas/

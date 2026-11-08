@@ -18,7 +18,7 @@ using ComandoCliente = std::variant<
     Identificarse, ListarPartidas, CrearPartida, UnirsePartida, RetomarPartida,
 
     // Partida
-    ActivarMultijugador, SalirDePartida, Moverse,
+    ActivarMultijugador, SalirDePartida, Moverse, GuardarPartida,
 
     // Inventario y acciones
     SeleccionarRanuraDeLaBarra, UsarItem, MoverItemEntreRanuras, MoverItemConCofre,
@@ -36,8 +36,7 @@ using EventoServidor = std::variant<
 
     // - Sector
     EstadoJuego, JugadoresEnSector, ObjetoColocado, ObjetoRetirado, DropAparecido, DropRetirado,
-    EnemigoActualizado,
-    TierraCambiada,
+    EnemigoActualizado, TierraCambiada,
 
     // - Inventario y cofres
     ActualizacionInventario, ActualizacionCofre>;

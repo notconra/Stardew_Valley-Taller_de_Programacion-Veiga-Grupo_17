@@ -35,3 +35,17 @@ std::vector<RanuraInventario> GestorDeCofres::retirar_contenido(int id_cofre) {
     contenidos.erase(encontrado);
     return ranuras;
 }
+
+std::vector<RanuraInventario> GestorDeCofres::obtener_contenido(int id_cofre) const {
+    const auto encontrado = contenidos.find(id_cofre);
+    if (encontrado != contenidos.end()) {
+        return encontrado->second.todas_las_ranuras();
+    }
+    return {};
+}
+
+void GestorDeCofres::cargar_contenido(int id_cofre, const std::vector<RanuraInventario>& ranuras) {
+    if (!ranuras.empty()) {
+        contenido(id_cofre).cargar_ranuras(ranuras);
+    }
+}

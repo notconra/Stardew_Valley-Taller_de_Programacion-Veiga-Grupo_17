@@ -15,7 +15,8 @@
 // servidor: solo se ve la animación de acción en la pantalla de quien la hace.
 class Personaje {
 private:
-    Textura cuerpo;
+    Textura cuerpo_masculino;
+    Textura cuerpo_femenino;
     Textura pantalon;
     Textura pelo;
     Textura sombrero;
@@ -26,14 +27,8 @@ private:
     int escala_de_tiles;
     int ms_por_cuadro_caminando;
 
-    int indice_pelo;
-    int indice_sombrero;
-    int indice_remera;
-    int indice_pantalon;
-    int offset_y_remera;
-    int offset_y_pelo;
-    int offset_y_sombrero;
-
+    int ancho_hoja_cuerpo;  // ancho total del PNG del cuerpo, lo usa el pantalón para alinearse
+    int columnas_pantalon;
     int columnas_pelo;
     int columnas_sombrero;
     int columnas_remera;
@@ -48,7 +43,7 @@ public:
 
     void dibujar(
         SDL_Renderer* renderer, const EstadoJugador& jugador, bool haciendo_accion,
-        Uint32 ms_de_accion, int cam_x, int cam_y) const;
+        Uint32 ms_de_accion, int x_en_mapa, int y_en_mapa, int cam_x, int cam_y) const;
 };
 
 #endif
