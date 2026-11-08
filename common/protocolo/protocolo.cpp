@@ -112,3 +112,33 @@ std::string Protocolo::recibir_texto() {
     }
     return texto;
 }
+
+void Protocolo::enviar_apariencia(const AparienciaPersonaje& apariencia) {
+    enviar_booleano(apariencia.es_femenino);
+    enviar_u8(apariencia.indice_pelo);
+    enviar_u8(apariencia.color_pelo.rojo);
+    enviar_u8(apariencia.color_pelo.verde);
+    enviar_u8(apariencia.color_pelo.azul);
+    enviar_u8(apariencia.indice_remera);
+    enviar_u8(apariencia.indice_pantalon);
+    enviar_u8(apariencia.color_pantalon.rojo);
+    enviar_u8(apariencia.color_pantalon.verde);
+    enviar_u8(apariencia.color_pantalon.azul);
+    enviar_u16(static_cast<uint16_t>(apariencia.indice_sombrero));
+}
+
+AparienciaPersonaje Protocolo::recibir_apariencia() {
+    AparienciaPersonaje apariencia;
+    apariencia.es_femenino = recibir_booleano();
+    apariencia.indice_pelo = recibir_u8();
+    apariencia.color_pelo.rojo = recibir_u8();
+    apariencia.color_pelo.verde = recibir_u8();
+    apariencia.color_pelo.azul = recibir_u8();
+    apariencia.indice_remera = recibir_u8();
+    apariencia.indice_pantalon = recibir_u8();
+    apariencia.color_pantalon.rojo = recibir_u8();
+    apariencia.color_pantalon.verde = recibir_u8();
+    apariencia.color_pantalon.azul = recibir_u8();
+    apariencia.indice_sombrero = static_cast<int16_t>(recibir_u16());
+    return apariencia;
+}

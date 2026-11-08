@@ -52,7 +52,8 @@ EstadoDeConexion::ProximoEstado EstadoLobby::crear_partida(const CrearPartida& c
         const IngresoAPartida ingreso = contexto.administrador.crear(
             contexto.identidad.id_cliente,
             comando.nombre_jugador,
-            comando.nombre_partida);
+            comando.nombre_partida,
+            comando.apariencia);
         entrar_a_partida(ingreso);
         return std::make_unique<EstadoEnPartida>(contexto, ingreso);
     } catch (const ErrorDePartida& error) {
@@ -81,7 +82,8 @@ EstadoDeConexion::ProximoEstado EstadoLobby::unirse_a_partida(const UnirsePartid
         const IngresoAPartida ingreso = contexto.administrador.unirse(
             contexto.identidad.id_cliente,
             comando.nombre_jugador,
-            comando.codigo_partida);
+            comando.codigo_partida,
+            comando.apariencia);
         entrar_a_partida(ingreso);
         return std::make_unique<EstadoEnPartida>(contexto, ingreso);
     } catch (const ErrorDePartida& error) {
@@ -113,7 +115,8 @@ void EstadoLobby::entrar_a_partida(const IngresoAPartida& ingreso) {
         ingreso.entrada.id_jugador,
         ingreso.nombre_jugador,
         ingreso.color_jugador,
-        contexto.cola_eventos);
+        contexto.cola_eventos,
+        ingreso.apariencia);
 }
 
 void EstadoLobby::rechazar_ingreso(const ErrorDePartida& error, const std::string& codigo_partida) {

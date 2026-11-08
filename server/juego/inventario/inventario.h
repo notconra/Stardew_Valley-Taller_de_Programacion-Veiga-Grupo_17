@@ -47,6 +47,9 @@ public:
     // Todas las ranuras, para armar los snapshots que se mandan al cliente.
     const std::vector<RanuraInventario>& todas_las_ranuras() const;
 
+    // Carga ranuras previamente guardadas.
+    void cargar_ranuras(const std::vector<RanuraInventario>& ranuras_guardadas);
+
     // Devuelve true si todo lo pedido entra sin modificar el inventario.
     bool puede_agregar(TipoItem tipo, uint16_t cantidad, Calidad calidad = Calidad::BASE) const;
 

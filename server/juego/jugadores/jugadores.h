@@ -56,7 +56,10 @@ public:
     std::optional<Casilla> casilla_de_enfrente(uint32_t id_jugador) const;
     std::vector<std::pair<uint32_t, const Transicion*>> en_transicion() const;
     void quitar(uint32_t id_jugador);
-    void agregar_en(uint32_t id_jugador, double x, double y);
+
+    // Mete al jugador en la posición dada, en píxeles. Lo usa Mundo cuando alguien llega desde
+    // otro mapa por una transición o se restaura una partida guardada.
+    void agregar_en(uint32_t id_jugador, double x, double y, Direccion mirando = Direccion::ABAJO);
     void agregar_en_aparicion(uint32_t id_jugador);
 
     // Rota la dirección del personaje hacia la casilla del objetivo

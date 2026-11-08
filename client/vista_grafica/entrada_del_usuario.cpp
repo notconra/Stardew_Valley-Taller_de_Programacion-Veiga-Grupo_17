@@ -15,6 +15,7 @@ EntradaDelUsuario::EntradaDelUsuario()
       },
       pedido_de_tecla{
           {SDL_SCANCODE_ESCAPE, &Pedidos::salir},
+          {SDL_SCANCODE_G, &Pedidos::guardar},
           {SDL_SCANCODE_M, &Pedidos::multijugador},
           {SDL_SCANCODE_T, &Pedidos::alternar_chat},
       } {
@@ -114,7 +115,6 @@ Moverse EntradaDelUsuario::intencion() const {
 bool EntradaDelUsuario::pidio_cerrar() const {
     return cierre_pedido;
 }
-
 int EntradaDelUsuario::raton_x() const {
     return posicion_raton_x;
 }

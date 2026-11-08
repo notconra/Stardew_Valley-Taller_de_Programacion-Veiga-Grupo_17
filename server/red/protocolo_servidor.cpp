@@ -17,6 +17,7 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::ACTIVAR_MULTIJUGADOR,
            [this] { return recibir_comando_activar_multijugador(); }},
           {TipoMensaje::SALIR_DE_PARTIDA, [this] { return recibir_comando_salir_de_partida(); }},
+          {TipoMensaje::GUARDAR_PARTIDA, [this] { return recibir_comando_guardar_partida(); }},
           {TipoMensaje::MOVERSE, [this] { return recibir_comando_moverse(); }},
           {TipoMensaje::SELECCIONAR_RANURA_DE_LA_BARRA,
            [this] { return recibir_comando_seleccionar_ranura_de_la_barra(); }},
@@ -64,15 +65,17 @@ ListarPartidas ProtocoloServidor::recibir_comando_listar_partidas() {
 CrearPartida ProtocoloServidor::recibir_comando_crear_partida() {
     std::string nombre_partida = recibir_texto();
     std::string nombre_jugador = recibir_texto();
+    AparienciaPersonaje apariencia = recibir_apariencia();
 
-    return CrearPartida{nombre_partida, nombre_jugador};
+    return CrearPartida{nombre_partida, nombre_jugador, apariencia};
 }
 
 UnirsePartida ProtocoloServidor::recibir_comando_unirse_partida() {
     std::string codigo_partida = recibir_texto();
     std::string nombre_jugador = recibir_texto();
+    AparienciaPersonaje apariencia = recibir_apariencia();
 
-    return UnirsePartida{codigo_partida, nombre_jugador};
+    return UnirsePartida{codigo_partida, nombre_jugador, apariencia};
 }
 
 RetomarPartida ProtocoloServidor::recibir_comando_retomar_partida() {
@@ -87,6 +90,10 @@ ActivarMultijugador ProtocoloServidor::recibir_comando_activar_multijugador() {
 
 SalirDePartida ProtocoloServidor::recibir_comando_salir_de_partida() {
     return SalirDePartida{};
+}
+
+GuardarPartida ProtocoloServidor::recibir_comando_guardar_partida() {
+    return GuardarPartida{};
 }
 
 Moverse ProtocoloServidor::recibir_comando_moverse() {
@@ -224,6 +231,7 @@ void ProtocoloServidor::enviar_estado_jugador(const EstadoJugador& estado) {
     enviar_u8(static_cast<uint8_t>(estado.accion_actual));
     enviar_u8(estado.vida);
     enviar_u8(estado.energia);
+    enviar_apariencia(estado.apariencia);
 }
 
 void ProtocoloServidor::enviar_estado_objeto_del_mundo(const EstadoObjetoDelMundo& estado) {

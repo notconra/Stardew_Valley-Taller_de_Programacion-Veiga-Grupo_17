@@ -36,6 +36,7 @@ constexpr char AYUDA_DE_TECLAS[] =
     "  T / botón del chat abrir o cerrar el chat\n"
     "  clic en el chat   casilla de abajo: escribir. Enter envía, ESC o clic afuera sueltan\n"
     "  rueda sobre chat  recorrer los mensajes (el personaje puede seguir caminando)\n"
+    "  G                 guardar la partida en el servidor\n"
     "  M                 permitir que otros jugadores se unan (el código sale acá)\n"
     "  ESC               salir de la partida y volver al lobby\n";
 
@@ -336,6 +337,15 @@ void VistaPartida::procesar_entrada(
 
     if (!consumo_del_chat.rueda) {
         elegir_ranura_de_la_barra(pedidos);
+    if (pedidos.guardar) {
+        conexion.enviar_comando(GuardarPartida{});
+        std::cout << "[partida] guardando partida en el servidor..." << std::endl;
+    }
+
+    elegir_ranura_de_la_barra(pedidos);
+
+    if (pedidos.clic_izquierdo) {
+        procesar_clic(entrada, hud, camara, false);
     }
 
     if (!consumo_del_chat.clic) {

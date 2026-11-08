@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "../../common/apariencia_personaje.h"
+
 // Datos de configuración del cliente. No saben nada de TOML, son solo los valores ya leídos y
 // validados, listos para pasarle a cada componente.
 //
@@ -74,11 +76,6 @@ struct ConfiguracionMapa {
     std::vector<ConfiguracionTileset> tilesets;
 
     bool es_mazmorra = false;
-};
-struct ColorRGB {
-    std::uint8_t rojo = 255;
-    std::uint8_t verde = 255;
-    std::uint8_t azul = 255;
 };
 
 constexpr int OFFSET_Y_REMERA_FEMENINO = 16;

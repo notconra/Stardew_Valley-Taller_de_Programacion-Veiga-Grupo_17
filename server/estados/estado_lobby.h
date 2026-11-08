@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "../../common/apariencia_personaje.h"
 #include "../partidas/error_de_partida.h"
 #include "../partidas/ingreso_a_partida.h"
 #include "estado_de_conexion.h"

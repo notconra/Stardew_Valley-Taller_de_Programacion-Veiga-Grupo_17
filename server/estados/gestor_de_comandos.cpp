@@ -20,6 +20,7 @@ void GestorDeComandos::manejar_comando(const ComandoCliente& comando) {
             [this](const UnirsePartida& c) { return estado->unirse_a_partida(c); },
             [this](const RetomarPartida& c) { return estado->retomar_partida(c); },
             [this](const SalirDePartida& c) { return estado->salir_de_partida(c); },
+            [this](const GuardarPartida& c) { return estado->guardar_partida(c); },
             [this](const ActivarMultijugador& c) { return estado->activar_multijugador(c); },
             // El resto son comandos de juego: los valida el estado actual (por ejemplo, la
             // partida).

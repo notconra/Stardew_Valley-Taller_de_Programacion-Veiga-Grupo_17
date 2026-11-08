@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "../../common/apariencia_personaje.h"
 #include "../../common/mensajes/mensajes.h"
 #include "../../common/queue.h"
 #include "../../common/thread.h"
@@ -16,7 +17,9 @@
 #include "../juego/mundo.h"
 #include "../juego/notificador.h"
 #include "../juego/recursos/recursos_de_juego.h"
+#include "../persistencia/datos_partida_guardada.h"
 #include "error_de_partida.h"
+#include "jugador.h"
 
 struct ComandoDeJugador {
     uint32_t id_jugador = 0;
@@ -33,6 +36,7 @@ struct CambioDeConexion {
     std::string nombre_jugador;
     ColorDeJugador color_jugador = ColorDeJugador::AZUL;
     bool entra = false;
+    AparienciaPersonaje apariencia;
 };
 
 // Implementa Notificador para proveer el servicio de envío sin acoplar el juego a la red.
@@ -42,6 +46,7 @@ private:
     const std::string codigo_partida;
     const std::chrono::milliseconds periodo_de_tick;
 
+    mutable std::mutex mutex_mundo;
     Mundo mundo;
     ChatDePartida chat;
 
@@ -58,13 +63,17 @@ private:
 public:
     SesionDePartida(
         const std::string& codigo_partida,
-        const ConfiguracionPartidaServidor& configuracion_partida, const RecursosDeJuego& recursos);
+        const ConfiguracionPartidaServidor& configuracion_partida, const RecursosDeJuego& recursos,
+        const DatosMundoGuardado& datos_guardados = {});
 
     bool esta_viva() const;
+    std::vector<std::string> obtener_niveles_mazmorra() const;
 
     void entrar(
-        uint32_t id_jugador, const std::string& nombre_jugador, ColorDeJugador color_jugador,
-        Queue<EventoServidor>& cola_eventos);
+        uint32_t id_jugador, const std::string& nombre_jugador,
+        ColorDeJugador color_jugador, Queue<EventoServidor>& cola_eventos,
+        const AparienciaPersonaje& apariencia);
+
     void salir(uint32_t id_jugador);
     void recibir(uint32_t id_jugador, const ComandoCliente& comando);
 
@@ -74,6 +83,14 @@ public:
 
     void run() override;
     void detener();
+
+    DatosMundoGuardado obtener_datos_guardado(
+        const std::vector<Jugador>& miembros,
+        const std::map<uint32_t, DatosJugadorGuardado>& jugadores_guardados_previos);
+
+    std::vector<DatosJugadorGuardado> obtener_datos_jugadores(
+        const std::vector<Jugador>& miembros,
+        const std::map<uint32_t, DatosJugadorGuardado>& jugadores_guardados_previos);
 
     SesionDePartida(const SesionDePartida&) = delete;
     SesionDePartida& operator=(const SesionDePartida&) = delete;

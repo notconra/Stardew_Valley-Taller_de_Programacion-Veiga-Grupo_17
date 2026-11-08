@@ -15,7 +15,8 @@
 // servidor: solo se ve la animación de acción en la pantalla de quien la hace.
 class Personaje {
 private:
-    Textura cuerpo;
+    Textura cuerpo_masculino;
+    Textura cuerpo_femenino;
     Textura pantalon;
     Textura pelo;
     Textura sombrero;
@@ -25,13 +26,6 @@ private:
     int alto;
     int escala_de_tiles;
     int ms_por_cuadro_caminando;
-
-    int indice_pelo;
-    int indice_sombrero;
-    int indice_remera;
-    int indice_pantalon;
-    int offset_y_remera;
-    int offset_y_pelo;
 
     int ancho_hoja_cuerpo;  // ancho total del PNG del cuerpo, lo usa el pantalón para alinearse
     int columnas_pantalon;

@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "../../common/apariencia_personaje.h"
 #include "../../common/mensajes/mensajes.h"
 #include "sesion_de_partida.h"
 
@@ -15,6 +16,7 @@ struct IngresoAPartida {
     std::string nombre_jugador;
     ColorDeJugador color_jugador = ColorDeJugador::AZUL;
     SesionDePartida& sesion;
+    AparienciaPersonaje apariencia;
 };
 
 #endif

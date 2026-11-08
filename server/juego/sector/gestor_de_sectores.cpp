@@ -16,6 +16,52 @@ GestorDeSectores::GestorDeSectores(
     }
 }
 
+void GestorDeSectores::cargar_mapas_guardados(
+    const std::vector<DatosMapaGuardado>& mapas_guardados) {
+    for (const auto& mapa_guardado : mapas_guardados) {
+        auto sector_encontrado = sectores.find(mapa_guardado.id_mapa);
+        if (sector_encontrado != sectores.end()) {
+            Sector& sector = sector_encontrado->second;
+            sector.cargar_casillas_modificadas(mapa_guardado.casillas_modificadas);
+        }
+    }
+}
+
+std::vector<DatosMapaGuardado> GestorDeSectores::obtener_mapas_guardados() const {
+    std::vector<DatosMapaGuardado> mapas;
+    for (const auto& [id_mapa, sector] : sectores) {
+        DatosMapaGuardado& mapa = mapas.emplace_back();
+        mapa.id_mapa = id_mapa;
+        sector.agregar_modificaciones_a(mapa.casillas_modificadas);
+        if (mapa.casillas_modificadas.empty()) {
+            mapas.pop_back();
+        }
+    }
+    return mapas;
+}
+
+void GestorDeSectores::cargar_cofres_guardados(
+    const std::vector<DatosCofreGuardado>& cofres_guardados) {
+    for (const auto& cofre_guardado : cofres_guardados) {
+        auto sector_encontrado = sectores.find(cofre_guardado.id_mapa);
+        if (sector_encontrado != sectores.end()) {
+            Sector& sector = sector_encontrado->second;
+            sector.cargar_cofre(
+                cofre_guardado.columna,
+                cofre_guardado.fila,
+                cofre_guardado.inventario);
+        }
+    }
+}
+
+std::vector<DatosCofreGuardado> GestorDeSectores::obtener_cofres_guardados() const {
+    std::vector<DatosCofreGuardado> cofres;
+    for (const auto& [id_mapa, sector] : sectores) {
+        sector.agregar_cofres_guardados_a(cofres);
+    }
+    return cofres;
+}
+
 bool GestorDeSectores::existe(const std::string& id_mapa) const {
     return sectores.contains(id_mapa);
 }
@@ -44,6 +90,16 @@ void GestorDeSectores::enviar_instantanea(uint32_t id_jugador, const std::string
 void GestorDeSectores::colocar_en_aparicion(Personaje& personaje, const std::string& id_mapa) {
     Sector& sector = sectores.at(id_mapa);
     sector.jugadores.agregar_en_aparicion(personaje.id_jugador);
+    personaje.mapa_actual = id_mapa;
+
+    enviar_instantanea(personaje.id_jugador, id_mapa);
+    difundir_jugadores(id_mapa);
+}
+
+void GestorDeSectores::colocar_en(
+    Personaje& personaje, const std::string& id_mapa, double x, double y, Direccion mirando) {
+    Sector& sector = sectores.at(id_mapa);
+    sector.jugadores.agregar_en(personaje.id_jugador, x, y, mirando);
     personaje.mapa_actual = id_mapa;
 
     enviar_instantanea(personaje.id_jugador, id_mapa);
@@ -138,6 +194,7 @@ std::vector<EstadoJugador> GestorDeSectores::armar_jugadores(const std::string& 
             estado.accion_actual = personaje->second.accion_actual;
             estado.vida = static_cast<uint8_t>(personaje->second.vida);
             estado.energia = static_cast<uint8_t>(personaje->second.energia);
+            estado.apariencia = personaje->second.apariencia;
         }
 
         resultado.push_back(estado);

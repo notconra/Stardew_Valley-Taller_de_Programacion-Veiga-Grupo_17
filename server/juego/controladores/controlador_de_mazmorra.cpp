@@ -10,7 +10,8 @@
 #include "./../mazmorra/minerales.h"
 
 ControladorDeMazmorra::ControladorDeMazmorra(
-    const RecursosDeJuego& recursos, GestorDeSectores& sectores)
+    const RecursosDeJuego& recursos, GestorDeSectores& sectores,
+    const std::vector<std::string>& niveles_guardados)
     : recursos(recursos), sectores(sectores) {
     if (recursos.mazmorra.mapas.empty()) {
         return;
@@ -18,7 +19,11 @@ ControladorDeMazmorra::ControladorDeMazmorra(
 
     std::random_device dispositivo;
     std::mt19937 generador(dispositivo());
-    niveles_de_mazmorra = CargadorMazmorra::elegir_niveles(recursos.mazmorra.mapas, generador);
+    if (!niveles_guardados.empty()) {
+        niveles_de_mazmorra = niveles_guardados;
+    } else {
+        niveles_de_mazmorra = CargadorMazmorra::elegir_niveles(recursos.mazmorra.mapas, generador);
+    }
 
     std::vector<GeografiaNivel> geografias;
     geografias.reserve(niveles_de_mazmorra.size());
@@ -30,6 +35,10 @@ ControladorDeMazmorra::ControladorDeMazmorra(
         recursos.mazmorra.enemigos_por_nivel,
         recursos.mazmorra.minerales_por_nivel,
         std::move(generador));
+}
+
+const std::vector<std::string>& ControladorDeMazmorra::obtener_niveles() const {
+    return niveles_de_mazmorra;
 }
 
 void ControladorDeMazmorra::limpiar_drops_de_niveles() {

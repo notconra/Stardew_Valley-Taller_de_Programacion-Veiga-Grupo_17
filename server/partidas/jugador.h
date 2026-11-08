@@ -5,6 +5,7 @@
 #include <string>
 
 #include "../../common/color_de_jugador.h"
+#include "../../common/apariencia_personaje.h"
 
 // Un jugador que tiene lugar en una partida, esté conectado o no.
 struct Jugador {
@@ -22,6 +23,7 @@ struct Jugador {
     ColorDeJugador color;
 
     bool conectado;
+    AparienciaPersonaje apariencia;
 };
 
 #endif

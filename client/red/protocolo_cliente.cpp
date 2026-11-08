@@ -45,6 +45,7 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const RetomarPartida& m) { enviar_comando_retomar_partida(m); },
             [this](const ActivarMultijugador& m) { enviar_comando_activar_multijugador(m); },
             [this](const SalirDePartida& m) { enviar_comando_salir_de_partida(m); },
+            [this](const GuardarPartida& m) { enviar_comando_guardar_partida(m); },
             [this](const Moverse& m) { enviar_comando_moverse(m); },
             [this](const SeleccionarRanuraDeLaBarra& m) {
                 enviar_comando_seleccionar_ranura_de_la_barra(m);
@@ -72,12 +73,14 @@ void ProtocoloCliente::enviar_comando_crear_partida(const CrearPartida& crear) {
     enviar_tipo(TipoMensaje::CREAR_PARTIDA);
     enviar_texto(crear.nombre_partida);
     enviar_texto(crear.nombre_jugador);
+    enviar_apariencia(crear.apariencia);
 }
 
 void ProtocoloCliente::enviar_comando_unirse_partida(const UnirsePartida& unirse) {
     enviar_tipo(TipoMensaje::UNIRSE_PARTIDA);
     enviar_texto(unirse.codigo_partida);
     enviar_texto(unirse.nombre_jugador);
+    enviar_apariencia(unirse.apariencia);
 }
 
 void ProtocoloCliente::enviar_comando_retomar_partida(const RetomarPartida& retomar) {
@@ -91,6 +94,10 @@ void ProtocoloCliente::enviar_comando_activar_multijugador(const ActivarMultijug
 
 void ProtocoloCliente::enviar_comando_salir_de_partida(const SalirDePartida&) {
     enviar_tipo(TipoMensaje::SALIR_DE_PARTIDA);
+}
+
+void ProtocoloCliente::enviar_comando_guardar_partida(const GuardarPartida&) {
+    enviar_tipo(TipoMensaje::GUARDAR_PARTIDA);
 }
 
 void ProtocoloCliente::enviar_comando_moverse(const Moverse& moverse) {
@@ -222,6 +229,7 @@ EstadoJugador ProtocoloCliente::recibir_estado_jugador() {
     estado.accion_actual = static_cast<TipoAccion>(recibir_u8());
     estado.vida = recibir_u8();
     estado.energia = recibir_u8();
+    estado.apariencia = recibir_apariencia();
     return estado;
 }
 
@@ -408,7 +416,6 @@ TierraCambiada ProtocoloCliente::recibir_tierra_cambiada() {
 void ProtocoloCliente::cerrar() {
     socket.shutdown(SHUT_RDWR);
 }
-
 // Auxiliares
 
 CodigoError ProtocoloCliente::codigo_error_desde(uint8_t valor) const {
