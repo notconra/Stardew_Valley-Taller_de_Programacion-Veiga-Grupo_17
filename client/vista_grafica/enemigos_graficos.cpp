@@ -12,6 +12,12 @@ EnemigosGraficos::EnemigosGraficos(SDL_Renderer* renderer, const ConfiguracionGr
 
 void EnemigosGraficos::dibujar(
     SDL_Renderer* renderer, const EstadoJuego& estado, int cam_x, int cam_y) const {
+    int ancho_de_pantalla = 0;
+    int alto_de_pantalla = 0;
+    if (SDL_GetRendererOutputSize(renderer, &ancho_de_pantalla, &alto_de_pantalla) != 0) {
+        return;
+    }
+
     const int casilla = tamano_de_tile * escala_de_tiles;
     const int ancho_px = FRAME_ANCHO * escala_de_tiles;
     const int alto_px = FRAME_ALTO * escala_de_tiles;
@@ -41,6 +47,10 @@ void EnemigosGraficos::dibujar(
             static_cast<int>(enemigo.fila + 1) * casilla - cam_y - alto_px,
             ancho_px,
             alto_px};
+        if (destino.x >= ancho_de_pantalla || destino.y >= alto_de_pantalla ||
+            destino.x + destino.w <= 0 || destino.y + destino.h <= 0) {
+            continue;
+        }
         SDL_RenderCopy(renderer, textura->second.ptr(), &origen, &destino);
         if (!enemigo.muriendo) {
             dibujar_barra_de_vida(renderer, destino, enemigo.vida, enemigo.vida_maxima);

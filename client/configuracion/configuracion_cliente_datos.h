@@ -21,11 +21,20 @@ struct ConfiguracionVentana {
     std::string titulo;
     int ancho = 0;
     int alto = 0;
+
+    // En pantalla completa se usa el tamaño del escritorio, así funciona en cualquier monitor.
+    // "ancho" y "alto" quedan solo como tamaño de la ventana cuando no está en pantalla completa.
+    bool pantalla_completa = true;
+
+    // Solo tiene efecto en modo ventana porque en pantalla completa la ventana no se redimensiona.
+    bool redimensionable = false;
 };
 
 struct ConfiguracionSDL {
     bool acelerado = true;
     bool vsync = true;
+    // 0 desactiva el límite.
+    int fps_maximos = 60;
 };
 
 struct ColorDeFondo {
@@ -37,7 +46,16 @@ struct ColorDeFondo {
 
 struct ConfiguracionGraficos {
     int tamano_de_tile = 0;
+    // Escala mínima. Con zoom automático se agranda en pantallas grandes para que no se vea
+    // demasiado mapa, sin pasar de "escala_maxima_de_tiles".
     int escala_de_tiles = 1;
+    int escala_maxima_de_tiles = 8;
+    bool zoom_automatico = true;
+
+    // Zoom adicional, no entero, que se aplica sobre la escala de tiles. 1.0 no hace nada, 1.25
+    // muestra el 80% del mapa que se vería con 1.0. Permite ajustes más finos que los saltos de
+    // la escala entera (por ejemplo, entre escala 2 y 3).
+    double zoom_extra = 1.0;
     ColorDeFondo color_de_fondo;
     int radio_vision_mazmorra = 0;
     int tamano_pixel_vision_mazmorra = 8;
