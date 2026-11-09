@@ -19,8 +19,11 @@
 #include "hud_inventario.h"
 #include "iconos_de_items.h"
 #include "mapa_grafico.h"
+#include "marcador_de_casillas.h"
 #include "objetos_graficos.h"
+#include "pantalla_de_descanso.h"
 #include "personaje.h"
+#include "reloj_grafico.h"
 #include "renderizador.h"
 #include "tierra_grafica.h"
 #include "ventana.h"
@@ -45,6 +48,30 @@ private:
     CofreJugador ultimo_cofre{};
     std::string mapa_actual;
     std::set<std::pair<int, int>> tierra_tratada;
+    std::optional<HoraDelJuego> hora_del_juego;
+    EstadoDelDescanso descanso{};
+
+    // Lo último que se le preguntó al servidor (ConsultarCasilla) sobre la casilla del mouse, y su
+    // respuesta. El cliente no decide si se puede: solo pinta lo que contestó el servidor. Se
+    // vuelve a preguntar cuando cambia algo de lo que depende la respuesta.
+    struct ConsultaDelPiso {
+        std::string mapa;
+        Casilla casilla;
+        int columna_del_jugador;
+        int fila_del_jugador;
+        uint8_t ranura_activa;
+    };
+    std::optional<ConsultaDelPiso> consulta_del_piso;
+    std::optional<CasillaConsultada> respuesta_del_piso;
+    MarcadorDeCasillas marcador_de_casillas;
+
+    // Si la casilla del mouse, el mapa, la posición del jugador o la ranura activa cambiaron desde
+    // la última consulta, vuelve a preguntar y deja de marcar hasta que llegue la respuesta.
+    void consultar_el_piso_si_cambio(
+        const EntradaDelUsuario& entrada, const HudInventario& hud, const Camara& camara);
+
+    // Algo cambió en el mundo (el inventario, la tierra, los objetos): hay que volver a preguntar.
+    void olvidar_el_piso();
     bool partida_terminada = false;
 
     // Tamaño real de la ventana y escala efectiva de los tiles. No se usan los valores del TOML
@@ -115,7 +142,8 @@ private:
         const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos,
         const Personaje& personaje, const TierraGrafica& tierra, const Camara& camara,
         const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
-        const EntradaDelUsuario& entrada, const VistaChat& chat) const;
+        const EntradaDelUsuario& entrada, const VistaChat& chat, const RelojGrafico& reloj_grafico,
+        const PantallaDeDescanso& pantalla_de_descanso) const;
 
 public:
     VistaPartida(ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion);

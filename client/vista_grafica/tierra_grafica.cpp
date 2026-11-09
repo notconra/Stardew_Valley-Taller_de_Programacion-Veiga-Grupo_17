@@ -75,21 +75,3 @@ void TierraGrafica::dibujar(
         SDL_RenderCopy(renderer, textura.ptr(), &origen, &destino);
     }
 }
-
-void TierraGrafica::remarcar_casilla(
-    SDL_Renderer* renderer, int columna, int fila, int cam_x, int cam_y) const {
-    const int tamano_en_pantalla = tamano_de_tile * escala_de_tiles;
-    const SDL_Rect casilla{
-        columna * tamano_en_pantalla - cam_x,
-        fila * tamano_en_pantalla - cam_y,
-        tamano_en_pantalla,
-        tamano_en_pantalla};
-    SDL_BlendMode modo_anterior;
-    SDL_GetRenderDrawBlendMode(renderer, &modo_anterior);
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(renderer, 60, 220, 60, 90);
-    SDL_RenderFillRect(renderer, &casilla);
-    SDL_SetRenderDrawColor(renderer, 40, 160, 40, 220);
-    SDL_RenderDrawRect(renderer, &casilla);
-    SDL_SetRenderDrawBlendMode(renderer, modo_anterior);
-}

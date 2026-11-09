@@ -30,9 +30,17 @@ InicioDeSDL::InicioDeSDL() {
         SDL_Quit();
         throw std::runtime_error("no se pudo iniciar SDL_mixer: " + motivo);
     }
+    if (TTF_Init() != 0) {
+        const std::string motivo = TTF_GetError();
+        Mix_CloseAudio();
+        IMG_Quit();
+        SDL_Quit();
+        throw std::runtime_error("no se pudo iniciar SDL_ttf: " + motivo);
+    }
 }
 
 InicioDeSDL::~InicioDeSDL() {
+    TTF_Quit();
     Mix_CloseAudio();
     TTF_Quit();
     IMG_Quit();

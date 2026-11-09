@@ -9,10 +9,12 @@ Personaje::Personaje(
       mapa_actual(mapa_inicial),
       inventario(catalogo, cantidad_ranuras_barra),
       ranura_activa(0) {
-    // Al crearse (solo la primera vez que el jugador entra) recibe únicamente las herramientas que
-    // el catálogo marque con cantidad inicial. Nada más: lo demás se consigue jugando.
+    // Al crearse (solo la primera vez que el jugador entra) recibe las herramientas que el
+    // catálogo marque con cantidad inicial y su cama, que pone él donde quiera de la casa. Nada
+    // más: lo demás se consigue jugando.
     for (const auto& [tipo, definicion] : catalogo.definiciones()) {
-        if (catalogo.es_herramienta(tipo) && definicion.cantidad_inicial > 0) {
+        const bool es_inicial = catalogo.es_herramienta(tipo) || tipo == TipoItem::CAMA;
+        if (es_inicial && definicion.cantidad_inicial > 0) {
             inventario.agregar_item(tipo, definicion.cantidad_inicial);
         }
     }

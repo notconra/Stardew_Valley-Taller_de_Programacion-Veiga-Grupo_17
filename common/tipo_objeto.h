@@ -14,6 +14,7 @@ enum class TipoObjeto : uint8_t {
     PLATA = 4,
     ORO = 5,
     COFRE = 6,
+    CAMA = 7,
 };
 
 #endif

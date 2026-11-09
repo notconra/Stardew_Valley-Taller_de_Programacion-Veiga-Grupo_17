@@ -9,7 +9,6 @@ CatalogoDeItems::CatalogoDeItems() {
     registrar(TipoItem::PALA, "Pala", CategoriaItem::HERRAMIENTA, 1, false, 1, 0);
     registrar(TipoItem::ESPADA, "Espada", CategoriaItem::HERRAMIENTA, 1, false, 1, 0);
     registrar(TipoItem::REGADERA, "Regadera", CategoriaItem::HERRAMIENTA, 1, false, 1, 0);
-    
 
     // Semillas y cultivos. Los cultivos llevan calidad, el resto no.
     registrar(TipoItem::SEMILLA_PAPA, "Semilla de papa", CategoriaItem::SEMILLA, 50, true, 10, 0);
@@ -24,6 +23,7 @@ CatalogoDeItems::CatalogoDeItems() {
 
     // Colocables
     registrar(TipoItem::COFRE, "Cofre", CategoriaItem::COLOCABLE, 50, true, 0, 0);
+    registrar(TipoItem::CAMA, "Cama", CategoriaItem::COLOCABLE, 1, false, 1, 0);
 }
 
 void CatalogoDeItems::registrar(

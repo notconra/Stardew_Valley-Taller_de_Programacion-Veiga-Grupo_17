@@ -43,13 +43,18 @@ Partida& AdministradorDePartidas::buscar_partida(const std::string& codigo_parti
 }
 
 std::unique_ptr<SesionDePartida> AdministradorDePartidas::crear_sesion(
-    const std::string& codigo_partida) const {
+    const std::string& codigo_partida) {
     auto datos_guardados = cargar_datos_guardados(codigo_partida);
     DatosMundoGuardado datos_mundo;
     if (datos_guardados.has_value()) {
         datos_mundo = datos_guardados->mundo;
     }
-    return std::make_unique<SesionDePartida>(codigo_partida, configuracion, recursos, datos_mundo);
+    return std::make_unique<SesionDePartida>(
+        codigo_partida,
+        configuracion,
+        recursos,
+        datos_mundo,
+        [this, codigo_partida] { guardar_partida(codigo_partida); });
 }
 
 std::vector<InfoPartida> AdministradorDePartidas::listar(uint32_t id_cliente) const {

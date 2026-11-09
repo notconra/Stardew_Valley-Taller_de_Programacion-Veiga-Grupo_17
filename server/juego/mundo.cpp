@@ -20,9 +20,17 @@ Mundo::Mundo(
       controlador_de_drops(
           sectores, personajes, notificador_de_juego, recursos_de_juego.juego.drops),
       controlador_de_mazmorra(recursos_de_juego, sectores, datos_guardados.niveles_mazmorra),
-      controlador_de_enemigos(sectores, personajes, notificador_de_juego) {
+      controlador_de_enemigos(sectores, personajes, notificador_de_juego),
+      controlador_del_dia(
+          recursos_de_juego.juego.dia, ticks_por_segundo, sectores, personajes, recursos_de_juego,
+          notificador_de_juego,
+          [this](Personaje& personaje) { controlador_de_mazmorra.al_desconectarse(personaje); }) {
     sectores.cargar_mapas_guardados(datos_guardados.mapas);
     sectores.cargar_cofres_guardados(datos_guardados.cofres);
+    sectores.cargar_muebles_guardados(datos_guardados.muebles);
+    if (datos_guardados.dia > 0) {
+        controlador_del_dia.continuar_en_el_dia(datos_guardados.dia);
+    }
     for (const auto& guardado : datos_guardados.jugadores) {
         datos_jugadores[guardado.id_jugador] = guardado;
         std::string mapa_destino =
@@ -33,11 +41,38 @@ Mundo::Mundo(
             mapa_destino,
             recursos.catalogo_de_items,
             recursos.juego.inventario.cantidad_ranuras_barra);
-        it->second.ranura_activa = guardado.ranura_activa;
-        it->second.apariencia = guardado.apariencia;
-        if (!guardado.inventario.empty()) {
-            it->second.inventario.cargar_ranuras(guardado.inventario);
-        }
+        restaurar(it->second, guardado);
+    }
+}
+
+void Mundo::completar_datos_guardados(
+    const Personaje& personaje, DatosJugadorGuardado& datos) const {
+    datos.id_jugador = personaje.id_jugador;
+    datos.ranura_activa = personaje.ranura_activa;
+    datos.inventario = personaje.inventario.todas_las_ranuras();
+    datos.apariencia = personaje.apariencia;
+    datos.vida = static_cast<uint16_t>(std::max(personaje.vida, 0));
+    datos.energia = static_cast<uint16_t>(std::max(personaje.energia, 0));
+    datos.tiene_cama = personaje.ultima_cama.has_value();
+    datos.mapa_cama = datos.tiene_cama ? personaje.ultima_cama->mapa : "";
+    datos.columna_cama =
+        datos.tiene_cama ? static_cast<uint32_t>(personaje.ultima_cama->columna) : 0;
+    datos.fila_cama = datos.tiene_cama ? static_cast<uint32_t>(personaje.ultima_cama->fila) : 0;
+}
+
+void Mundo::restaurar(Personaje& personaje, const DatosJugadorGuardado& guardado) const {
+    personaje.ranura_activa = guardado.ranura_activa;
+    personaje.apariencia = guardado.apariencia;
+    if (!guardado.inventario.empty()) {
+        personaje.inventario.cargar_ranuras(guardado.inventario);
+    }
+    personaje.vida = std::min<int>(guardado.vida, Personaje::VIDA_MAXIMA);
+    personaje.energia = std::min<int>(guardado.energia, Personaje::ENERGIA_MAXIMA);
+    if (guardado.tiene_cama) {
+        personaje.ultima_cama = UbicacionDeCama{
+            guardado.mapa_cama,
+            static_cast<int>(guardado.columna_cama),
+            static_cast<int>(guardado.fila_cama)};
     }
 }
 
@@ -47,19 +82,17 @@ void Mundo::dar_de_baja(Personaje& personaje) {
             sectores.en(personaje.mapa_actual).jugadores.buscar(personaje.id_jugador);
         if (jugador_en_partida != nullptr) {
             DatosJugadorGuardado& datos = datos_jugadores[personaje.id_jugador];
-            datos.id_jugador = personaje.id_jugador;
+            completar_datos_guardados(personaje, datos);
             datos.mapa_actual = personaje.mapa_actual;
             datos.x = jugador_en_partida->x;
             datos.y = jugador_en_partida->y;
             datos.mirando = jugador_en_partida->mirando;
-            datos.ranura_activa = personaje.ranura_activa;
-            datos.inventario = personaje.inventario.todas_las_ranuras();
-            datos.apariencia = personaje.apariencia;
         }
     }
     controlador_de_mazmorra.al_desconectarse(personaje);
     controlador_de_cofres.al_desconectarse(personaje);
     controlador_de_acciones.al_desconectarse(personaje);
+    controlador_del_dia.al_desconectarse(personaje);
     sectores.quitar(personaje);
     personaje.conectado = false;
 }
@@ -85,6 +118,7 @@ void Mundo::conectar(uint32_t id_jugador, const AparienciaPersonaje& apariencia)
 
     personaje.conectado = true;
     notificador.a_jugador(id_jugador, personaje.actualizacion_de_inventario());
+    controlador_del_dia.al_conectarse(personaje);
 
     auto guardado = datos_jugadores.find(id_jugador);
     if (guardado != datos_jugadores.end() && !guardado->second.mapa_actual.empty() &&
@@ -115,7 +149,9 @@ void Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
     }
     Personaje& personaje = encontrado->second;
 
-    // cada comando lo reconoce un solo controlador, el primero que lo toma lo consume.
+    if (controlador_del_dia.atender(personaje, comando)) {
+        return;
+    }
     if (controlador_de_jugador.atender(personaje, comando)) {
         return;
     }
@@ -144,24 +180,28 @@ void Mundo::resolver_transicion(Personaje& personaje, const Transicion& transici
         transicion.fila_destino);
 }
 
-bool Mundo::requiere_clic(const Transicion& transicion) const {
+bool Mundo::requiere_clic(const Personaje& personaje, const Transicion& transicion) const {
+    const std::vector<std::string>& niveles = recursos.mazmorra.mapas;
+    if (std::find(niveles.begin(), niveles.end(), personaje.mapa_actual) != niveles.end()) {
+        return true;
+    }
     const std::vector<std::string>& destinos = recursos.juego.transiciones.destinos_con_clic;
     return std::find(destinos.begin(), destinos.end(), transicion.mapa_destino) != destinos.end();
 }
 
 void Mundo::resolver_transiciones_automaticas() {
     for (const JugadorEnTransicion& en_transicion : sectores.jugadores_en_transicion()) {
-        if (requiere_clic(en_transicion.transicion)) {
+        auto encontrado = personajes.find(en_transicion.id_jugador);
+        if (encontrado == personajes.end() ||
+            requiere_clic(encontrado->second, en_transicion.transicion)) {
             continue;
         }
-        auto encontrado = personajes.find(en_transicion.id_jugador);
-        if (encontrado != personajes.end()) {
-            resolver_transicion(encontrado->second, en_transicion.transicion);
-        }
+        resolver_transicion(encontrado->second, en_transicion.transicion);
     }
 }
 
 void Mundo::actualizar() {
+    controlador_del_dia.actualizar();
     sectores.actualizar();
     resolver_transiciones_automaticas();
     controlador_de_enemigos.actualizar();
@@ -175,17 +215,13 @@ std::optional<DatosJugadorGuardado> Mundo::obtener_datos_jugador(uint32_t id_jug
     auto encontrado = personajes.find(id_jugador);
     if (encontrado != personajes.end()) {
         const Personaje& personaje = encontrado->second;
-        DatosJugadorGuardado datos;
-        datos.id_jugador = id_jugador;
-        datos.mapa_actual = personaje.mapa_actual;
-        datos.ranura_activa = personaje.ranura_activa;
-        datos.inventario = personaje.inventario.todas_las_ranuras();
-        datos.apariencia = personaje.apariencia;
-
         if (personaje.conectado && sectores.existe(personaje.mapa_actual)) {
             const JugadorEnPartida* cuerpo =
                 sectores.en(personaje.mapa_actual).jugadores.buscar(id_jugador);
             if (cuerpo != nullptr) {
+                DatosJugadorGuardado datos;
+                completar_datos_guardados(personaje, datos);
+                datos.mapa_actual = personaje.mapa_actual;
                 datos.x = cuerpo->x;
                 datos.y = cuerpo->y;
                 datos.mirando = cuerpo->mirando;
@@ -195,10 +231,14 @@ std::optional<DatosJugadorGuardado> Mundo::obtener_datos_jugador(uint32_t id_jug
     }
 
     auto guardado = datos_jugadores.find(id_jugador);
-    if (guardado != datos_jugadores.end()) {
-        return guardado->second;
+    if (guardado == datos_jugadores.end()) {
+        return std::nullopt;
     }
-    return std::nullopt;
+    DatosJugadorGuardado datos = guardado->second;
+    if (encontrado != personajes.end()) {
+        completar_datos_guardados(encontrado->second, datos);
+    }
+    return datos;
 }
 
 std::vector<std::string> Mundo::obtener_niveles_mazmorra() const {
@@ -211,4 +251,16 @@ std::vector<DatosMapaGuardado> Mundo::obtener_mapas_guardados() const {
 
 std::vector<DatosCofreGuardado> Mundo::obtener_cofres_guardados() const {
     return sectores.obtener_cofres_guardados();
+}
+
+std::vector<DatosMuebleGuardado> Mundo::obtener_muebles_guardados() const {
+    return sectores.obtener_muebles_guardados();
+}
+
+uint32_t Mundo::obtener_dia() const {
+    return controlador_del_dia.hora().dia;
+}
+
+bool Mundo::tomar_dia_terminado() {
+    return controlador_del_dia.tomar_dia_terminado();
 }

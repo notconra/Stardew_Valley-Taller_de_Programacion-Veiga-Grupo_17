@@ -9,6 +9,7 @@
 #include "../../../common/ranura_inventario.h"
 #include "../../../common/tipo_item.h"
 #include "../../../common/tipo_objeto.h"
+#include "../muebles/camas_ocupadas.h"
 #include "accion.h"
 
 class AccionPicar : public Accion {
@@ -17,13 +18,15 @@ private:
     static constexpr int COSTO_DE_ENERGIA = 3;
     static constexpr uint16_t DURACION_POR_DEFECTO = 8;
 
+    const CamasOcupadas& camas_ocupadas;
     const uint16_t duracion;
 
     static void soltar_contenido_de_cofre(ContextoDeAccion& c, int id_cofre, int columna, int fila);
 
 public:
-    explicit AccionPicar(uint16_t duracion_en_ticks = DURACION_POR_DEFECTO)
-        : duracion(duracion_en_ticks) {
+    explicit AccionPicar(
+        const CamasOcupadas& camas, uint16_t duracion_en_ticks = DURACION_POR_DEFECTO)
+        : camas_ocupadas(camas), duracion(duracion_en_ticks) {
     }
 
     TipoAccion tipo() const override {

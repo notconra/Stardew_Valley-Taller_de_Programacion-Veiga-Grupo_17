@@ -11,7 +11,7 @@
 #include "lector_binario.h"
 
 constexpr std::array<uint8_t, 4> FIRMA_ARCHIVO = {'S', 'V', 'P', 'T'};
-constexpr uint16_t VERSION_ACTUAL = 4;
+constexpr uint16_t VERSION_ACTUAL = 5;
 
 void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGuardada& datos) {
     EscritorBinario escritor(stream);
@@ -23,6 +23,7 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
     escritor.escribir_texto(datos.nombre);
     escritor.escribir_u8(datos.jugadores_maximos);
     escritor.escribir_bool(datos.multijugador);
+    escritor.escribir_u32(datos.mundo.dia);
 
     escritor.escribir_u8(static_cast<uint8_t>(datos.mundo.jugadores.size()));
     for (const auto& jugador : datos.mundo.jugadores) {
@@ -53,6 +54,13 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
         escritor.escribir_u8(jugador.apariencia.color_pantalon.verde);
         escritor.escribir_u8(jugador.apariencia.color_pantalon.azul);
         escritor.escribir_u16(static_cast<uint16_t>(jugador.apariencia.indice_sombrero));
+
+        escritor.escribir_u16(jugador.vida);
+        escritor.escribir_u16(jugador.energia);
+        escritor.escribir_bool(jugador.tiene_cama);
+        escritor.escribir_texto(jugador.mapa_cama);
+        escritor.escribir_u32(jugador.columna_cama);
+        escritor.escribir_u32(jugador.fila_cama);
     }
 
     escritor.escribir_u16(static_cast<uint16_t>(datos.mundo.mapas.size()));
@@ -83,6 +91,14 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
             escritor.escribir_u8(static_cast<uint8_t>(ranura.calidad));
         }
     }
+
+    escritor.escribir_u16(static_cast<uint16_t>(datos.mundo.muebles.size()));
+    for (const auto& mueble : datos.mundo.muebles) {
+        escritor.escribir_texto(mueble.id_mapa);
+        escritor.escribir_u8(static_cast<uint8_t>(mueble.tipo));
+        escritor.escribir_u32(mueble.columna);
+        escritor.escribir_u32(mueble.fila);
+    }
 }
 
 DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
@@ -104,6 +120,7 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
     datos.nombre = lector.leer_texto();
     datos.jugadores_maximos = lector.leer_u8();
     datos.multijugador = lector.leer_bool();
+    datos.mundo.dia = lector.leer_u32();
 
     uint8_t cant_jugadores = lector.leer_u8();
     for (uint8_t indice_jugador = 0; indice_jugador < cant_jugadores; ++indice_jugador) {
@@ -137,6 +154,13 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
         jugador.apariencia.color_pantalon.verde = lector.leer_u8();
         jugador.apariencia.color_pantalon.azul = lector.leer_u8();
         jugador.apariencia.indice_sombrero = static_cast<int16_t>(lector.leer_u16());
+
+        jugador.vida = lector.leer_u16();
+        jugador.energia = lector.leer_u16();
+        jugador.tiene_cama = lector.leer_bool();
+        jugador.mapa_cama = lector.leer_texto();
+        jugador.columna_cama = lector.leer_u32();
+        jugador.fila_cama = lector.leer_u32();
 
         datos.mundo.jugadores.push_back(jugador);
     }
@@ -178,6 +202,16 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
             cofre.inventario.push_back(ranura);
         }
         datos.mundo.cofres.push_back(cofre);
+    }
+
+    uint16_t cant_muebles = lector.leer_u16();
+    for (uint16_t i = 0; i < cant_muebles; ++i) {
+        DatosMuebleGuardado mueble;
+        mueble.id_mapa = lector.leer_texto();
+        mueble.tipo = static_cast<TipoObjeto>(lector.leer_u8());
+        mueble.columna = lector.leer_u32();
+        mueble.fila = lector.leer_u32();
+        datos.mundo.muebles.push_back(mueble);
     }
 
     return datos;
