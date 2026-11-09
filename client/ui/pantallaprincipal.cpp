@@ -1,5 +1,6 @@
 #include "pantallaprincipal.h"
 
+#include <QDialog>
 #include <QFontDatabase>
 #include <QHeaderView>
 #include <QIcon>
@@ -78,6 +79,7 @@ PantallaPrincipal::~PantallaPrincipal() {
 }
 
 void PantallaPrincipal::configurar_ventana() {
+    qApp->setStyleSheet(this->styleSheet());
     this->setMinimumSize(800, 600);
     this->resize(1024, 768);
     this->setMaximumSize(16777215, 16777215);
@@ -805,21 +807,73 @@ void PantallaPrincipal::eliminar_partida(const QString& codigo_partida) {
 }
 
 void PantallaPrincipal::preparar_unirse_partida() {
-    bool acepto = false;
-    QString codigo = QInputDialog::getText(
-        this,
-        "Unirse a partida",
-        "Ingresá el código de invitación de la partida (ej: P0):",
-        QLineEdit::Normal,
-        "",
-        &acepto);
+    QDialog dialogo(this);
+    dialogo.setObjectName("dialogo_modal_stardew");
+    dialogo.setWindowFlags(Qt::FramelessWindowHint | Qt::Dialog);
+    dialogo.setAttribute(Qt::WA_TranslucentBackground, true);
+    dialogo.setStyleSheet(styleSheet());
 
-    if (!acepto || codigo.trimmed().isEmpty()) {
+    QVBoxLayout layout_dialogo(&dialogo);
+    layout_dialogo.setContentsMargins(0, 0, 0, 0);
+
+    QFrame marco(&dialogo);
+    marco.setObjectName("marco_dialogo_stardew");
+
+    QVBoxLayout layout_interior(&marco);
+    layout_interior.setContentsMargins(28, 28, 28, 24);
+    layout_interior.setSpacing(18);
+
+    QLabel label_titulo(&marco);
+    label_titulo.setObjectName("label_texto_dialogo");
+    label_titulo.setAlignment(Qt::AlignCenter);
+    label_titulo.setText("Ingresa el codigo de invitacion:");
+    layout_interior.addWidget(&label_titulo);
+
+    QLineEdit input_codigo(&marco);
+    input_codigo.setObjectName("input_codigo_invitacion");
+    input_codigo.setAlignment(Qt::AlignCenter);
+    input_codigo.setMaxLength(16);
+    input_codigo.setPlaceholderText("ej: P0");
+    connect(&input_codigo, &QLineEdit::returnPressed, &dialogo, &QDialog::accept);
+    layout_interior.addWidget(&input_codigo, 0, Qt::AlignCenter);
+
+    QHBoxLayout layout_botones;
+    layout_botones.setSpacing(32);
+    layout_botones.setAlignment(Qt::AlignCenter);
+
+    QPushButton btn_cancelar(&marco);
+    btn_cancelar.setObjectName("btn_dialogo_cancelar");
+    btn_cancelar.setProperty("class", "btn_dialogo_accion");
+    RecursosUI::instancia().configurar_boton_cancelar(&btn_cancelar);
+    btn_cancelar.setFixedSize(52, 52);
+    btn_cancelar.setToolTip("Cancelar");
+    connect(&btn_cancelar, &QPushButton::clicked, &dialogo, &QDialog::reject);
+    layout_botones.addWidget(&btn_cancelar);
+
+    QPushButton btn_ok(&marco);
+    btn_ok.setObjectName("btn_dialogo_ok");
+    btn_ok.setProperty("class", "btn_dialogo_accion");
+    RecursosUI::instancia().configurar_boton_ok(&btn_ok);
+    btn_ok.setFixedSize(52, 52);
+    btn_ok.setToolTip("Unirse");
+    connect(&btn_ok, &QPushButton::clicked, &dialogo, &QDialog::accept);
+    layout_botones.addWidget(&btn_ok);
+
+    layout_interior.addLayout(&layout_botones);
+    layout_dialogo.addWidget(&marco);
+
+    dialogo.adjustSize();
+    if (dialogo.exec() != QDialog::Accepted) {
+        return;
+    }
+
+    QString codigo = input_codigo.text().trimmed();
+    if (codigo.isEmpty()) {
         return;
     }
 
     es_modo_unirse = true;
-    codigo_partida_a_unirse = codigo.trimmed().toStdString();
+    codigo_partida_a_unirse = codigo.toStdString();
     configurar_formulario_granja(false);
     ui->btn_confirmar_personaje->setEnabled(true);
     ui->stackedWidget->setCurrentIndex(1);

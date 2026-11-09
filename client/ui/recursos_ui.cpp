@@ -91,6 +91,11 @@ RecursosUI::RecursosUI() {
             recortar_y_escalar(hoja_cursors, REGION_DADO, TAMANIO_ICONO_DADO, TAMANIO_ICONO_DADO);
         sprite_ok =
             recortar_y_escalar(hoja_cursors, REGION_BOTON_OK, TAMANIO_BOTON_OK, TAMANIO_BOTON_OK);
+        sprite_cancelar = recortar_y_escalar(
+            hoja_cursors,
+            REGION_BOTON_CANCELAR,
+            TAMANIO_BOTON_OK,
+            TAMANIO_BOTON_OK);
         sprite_eliminar.load(RUTA_ICONO_ELIMINAR);
         if (!sprite_eliminar.isNull()) {
             sprite_eliminar = sprite_eliminar.scaled(
@@ -167,6 +172,10 @@ QPixmap RecursosUI::boton_ok() const {
     return sprite_ok;
 }
 
+QPixmap RecursosUI::boton_cancelar() const {
+    return sprite_cancelar;
+}
+
 QPixmap RecursosUI::boton_eliminar() const {
     return sprite_eliminar;
 }
@@ -218,6 +227,10 @@ void RecursosUI::configurar_boton_dado(QPushButton* boton) {
 
 void RecursosUI::configurar_boton_ok(QPushButton* boton) {
     configurar_boton_icono(boton, sprite_ok);
+}
+
+void RecursosUI::configurar_boton_cancelar(QPushButton* boton) {
+    configurar_boton_icono(boton, sprite_cancelar);
 }
 
 void RecursosUI::configurar_boton_eliminar(QPushButton* boton) {

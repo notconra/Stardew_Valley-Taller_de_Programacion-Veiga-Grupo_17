@@ -76,20 +76,9 @@ QPushButton:hover {
 QPushButton:pressed {
     background-color: #d8964d;
     padding-top: 12px;
-}</string>
-  </property>
-  <widget class="QWidget" name="centralwidget">
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-     <horstretch>0</horstretch>
-     <verstretch>0</verstretch>
-    </sizepolicy>
-   </property>
-   <layout class="QHBoxLayout" name="horizontalLayout_3">
-    <item>
-     <widget class="QStackedWidget" name="stackedWidget">
-      <property name="styleSheet">
-       <string notr="true">/* El cartel de madera */
+}
+
+/* El cartel de madera */
 QFrame#marco_madera {
     border-image: url("Assets/LooseSprites/menu_box.png") 12 12 12 12 repeat;
     border-width: 12px;
@@ -541,50 +530,82 @@ QLabel#label_sin_partidas {
     padding: 30px;
 }
 
-/* Diálogo de confirmación temático Stardew Valley */
-QDialog#dialogo_confirmacion {
+/* Diálogos modales con marco Stardew de madera y pergamino */
+QDialog#dialogo_modal_stardew {
     background: transparent;
 }
 
-QFrame#marco_dialogo_confirmacion {
-    border-image: url("Assets/LooseSprites/menu_box.png") 12 12 12 12 repeat;
-    border-width: 12px;
-    background-color: #f7e8c9;
+QFrame#marco_dialogo_stardew {
+    border-image: url("Assets/LooseSprites/menu_box_retomar.png") 12 12 12 12 repeat;
+    border-width: 16px;
+    background-color: #ffd284;
 }
 
-QLabel#label_texto_confirmacion {
+QLabel#label_texto_dialogo {
     color: #431f08;
     font-family: "Stardew Valley", "Ubuntu", sans-serif;
-    font-size: 20px;
+    font-size: 22px;
     background: transparent;
     border: none;
     min-width: 380px;
 }
 
-QPushButton#btn_confirmar_si,
-QPushButton#btn_confirmar_no {
-    background-color: #f7b46d;
-    border: 3px solid #8e4c19;
-    border-radius: 6px;
-    color: #8e4c19;
+/* El input para el código de invitación (centrado y estilizado) */
+QLineEdit#input_codigo_invitacion {
+    border-image: url("Assets/LooseSprites/textBox.png") 8 12 8 12 repeat;
+    border-width: 8px 12px 8px 12px;
+    background-color: transparent;
+    padding: 4px 12px;
+    font-size: 22px;
+    font-weight: normal;
+    color: #4a2105;
+    min-height: 32px;
+    min-width: 220px;
+    max-width: 260px;
     font-family: "Stardew Valley", "Ubuntu", sans-serif;
-    font-size: 20px;
-    font-weight: bold;
-    padding: 6px 26px;
-    min-width: 80px;
 }
 
-QPushButton#btn_confirmar_si:hover,
-QPushButton#btn_confirmar_no:hover {
-    background-color: #ffd89e;
+QLineEdit#input_codigo_invitacion:focus {
+    border-image: url("Assets/LooseSprites/textBox.png") 8 12 8 12 repeat;
+    border-width: 8px 12px 8px 12px;
 }
 
-QPushButton#btn_confirmar_si:pressed,
-QPushButton#btn_confirmar_no:pressed {
-    background-color: #d8964d;
-    padding-top: 8px;
-}</string>
-      </property>
+/* Botones de accion en dialogos modales (OK / Cancelar) */
+QPushButton#btn_dialogo_ok,
+QPushButton#btn_dialogo_cancelar,
+QPushButton.btn_dialogo_accion {
+    background-color: transparent;
+    border: none;
+    padding: 0px;
+}
+
+QPushButton#btn_dialogo_ok:hover,
+QPushButton#btn_dialogo_cancelar:hover,
+QPushButton.btn_dialogo_accion:hover {
+    background-color: transparent;
+    border: none;
+}
+
+QPushButton#btn_dialogo_ok:pressed,
+QPushButton#btn_dialogo_cancelar:pressed,
+QPushButton.btn_dialogo_accion:pressed {
+    background-color: transparent;
+    border: none;
+    padding-top: 3px;
+}
+</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout_3">
+    <item>
+     <widget class="QStackedWidget" name="stackedWidget">
+
       <property name="currentIndex">
        <number>0</number>
       </property>

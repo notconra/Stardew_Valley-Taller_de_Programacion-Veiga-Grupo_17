@@ -30,6 +30,7 @@ public:
 
     QPixmap icono_dado() const;
     QPixmap boton_ok() const;
+    QPixmap boton_cancelar() const;
     QPixmap boton_eliminar() const;
     QPixmap boton_eliminar_hover() const;
     QPixmap icono_reloj() const;
@@ -42,6 +43,7 @@ public:
 
     void configurar_boton_dado(QPushButton* boton);
     void configurar_boton_ok(QPushButton* boton);
+    void configurar_boton_cancelar(QPushButton* boton);
     void configurar_boton_eliminar(QPushButton* boton);
     void configurar_boton_masculino(QPushButton* boton);
     void configurar_boton_femenino(QPushButton* boton);
@@ -62,6 +64,7 @@ private:
     QPixmap hoja_cursors;
     QPixmap sprite_dado;
     QPixmap sprite_ok;
+    QPixmap sprite_cancelar;
     QPixmap sprite_eliminar;
     QPixmap sprite_eliminar_hover;
     QPixmap sprite_reloj;

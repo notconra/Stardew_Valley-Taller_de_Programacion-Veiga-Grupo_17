@@ -144,22 +144,25 @@ void TarjetaPartida::inicializar_interfaz(const CompositorPersonaje& compositor)
 
 void TarjetaPartida::al_hacer_clic_eliminar() {
     QDialog dialogo(window());
-    dialogo.setObjectName("dialogo_confirmacion");
+    dialogo.setObjectName("dialogo_modal_stardew");
     dialogo.setWindowFlags(Qt::FramelessWindowHint | Qt::Dialog);
     dialogo.setAttribute(Qt::WA_TranslucentBackground, true);
+    if (window()) {
+        dialogo.setStyleSheet(window()->styleSheet());
+    }
 
     QVBoxLayout layout_dialogo(&dialogo);
     layout_dialogo.setContentsMargins(0, 0, 0, 0);
 
     QFrame marco(&dialogo);
-    marco.setObjectName("marco_dialogo_confirmacion");
+    marco.setObjectName("marco_dialogo_stardew");
 
     QVBoxLayout layout_interior(&marco);
-    layout_interior.setContentsMargins(24, 24, 24, 24);
-    layout_interior.setSpacing(18);
+    layout_interior.setContentsMargins(28, 28, 28, 24);
+    layout_interior.setSpacing(20);
 
     QLabel label_texto(&marco);
-    label_texto.setObjectName("label_texto_confirmacion");
+    label_texto.setObjectName("label_texto_dialogo");
     label_texto.setAlignment(Qt::AlignCenter);
     label_texto.setWordWrap(true);
     label_texto.setText(
@@ -168,24 +171,31 @@ void TarjetaPartida::al_hacer_clic_eliminar() {
     layout_interior.addWidget(&label_texto);
 
     QHBoxLayout layout_botones;
-    layout_botones.setSpacing(24);
+    layout_botones.setSpacing(32);
     layout_botones.setAlignment(Qt::AlignCenter);
 
-    QPushButton btn_no("No", &marco);
-    btn_no.setObjectName("btn_confirmar_no");
-    btn_no.setCursor(Qt::PointingHandCursor);
-    connect(&btn_no, &QPushButton::clicked, &dialogo, &QDialog::reject);
-    layout_botones.addWidget(&btn_no);
+    QPushButton btn_cancelar(&marco);
+    btn_cancelar.setObjectName("btn_dialogo_cancelar");
+    btn_cancelar.setProperty("class", "btn_dialogo_accion");
+    RecursosUI::instancia().configurar_boton_cancelar(&btn_cancelar);
+    btn_cancelar.setFixedSize(52, 52);
+    btn_cancelar.setToolTip("Cancelar");
+    connect(&btn_cancelar, &QPushButton::clicked, &dialogo, &QDialog::reject);
+    layout_botones.addWidget(&btn_cancelar);
 
-    QPushButton btn_si("Si", &marco);
-    btn_si.setObjectName("btn_confirmar_si");
-    btn_si.setCursor(Qt::PointingHandCursor);
-    connect(&btn_si, &QPushButton::clicked, &dialogo, &QDialog::accept);
-    layout_botones.addWidget(&btn_si);
+    QPushButton btn_ok(&marco);
+    btn_ok.setObjectName("btn_dialogo_ok");
+    btn_ok.setProperty("class", "btn_dialogo_accion");
+    RecursosUI::instancia().configurar_boton_ok(&btn_ok);
+    btn_ok.setFixedSize(52, 52);
+    btn_ok.setToolTip("Eliminar");
+    connect(&btn_ok, &QPushButton::clicked, &dialogo, &QDialog::accept);
+    layout_botones.addWidget(&btn_ok);
 
     layout_interior.addLayout(&layout_botones);
     layout_dialogo.addWidget(&marco);
 
+    dialogo.adjustSize();
     if (dialogo.exec() == QDialog::Accepted) {
         emit partidaEliminarSolicitada(QString::fromStdString(info_partida.codigo_partida));
     }
