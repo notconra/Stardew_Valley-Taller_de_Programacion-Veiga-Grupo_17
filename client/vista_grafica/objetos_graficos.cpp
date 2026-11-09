@@ -2,23 +2,16 @@
 
 #include <SDL2/SDL.h>
 
+#include <cmath>
 #include <cstdint>
 #include <map>
+#include <random>
 #include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
 
 namespace {
-
-// Mezcla de bits (splitmix64): pasa casillas vecinas a números sin relación entre sí, y da lo
-// mismo en cualquier plataforma, a diferencia de std::hash.
-uint64_t mezclar(uint64_t valor) {
-    valor += 0x9E3779B97F4A7C15ULL;
-    valor = (valor ^ (valor >> 30)) * 0xBF58476D1CE4E5B9ULL;
-    valor = (valor ^ (valor >> 27)) * 0x94D049BB133111EBULL;
-    return valor ^ (valor >> 31);
-}
 
 uint64_t peso_total(const AspectoDeObjeto& aspecto) {
     uint64_t total = 0;
@@ -39,15 +32,18 @@ const VarianteDeAspecto& elegir_variante(
     if (aspecto.variantes.size() == 1) {
         return aspecto.variantes.front();
     }
-
-    const uint64_t casilla = (static_cast<uint64_t>(objeto.columna) << 32) | objeto.fila;
-    uint64_t punto = mezclar(casilla) % peso_total(aspecto);
+    std::seed_seq semilla{
+        static_cast<uint32_t>(objeto.columna),
+        static_cast<uint32_t>(objeto.fila)};
+    std::mt19937_64 generador(semilla);
+    uint64_t punto = generador() % peso_total(aspecto);
     for (const VarianteDeAspecto& variante : aspecto.variantes) {
         if (punto < variante.peso) {
             return variante;
         }
         punto -= variante.peso;
     }
+
     return aspecto.variantes.back();
 }
 
@@ -103,10 +99,16 @@ std::map<TipoObjeto, AspectoDeObjeto> ObjetosGraficos::crear_aspectos_conocidos(
         AspectoDeObjeto{{textura_completa(RUTA_ASSET_MENA_PLATA)}});
     conocidos.emplace(TipoObjeto::ORO, AspectoDeObjeto{{textura_completa(RUTA_ASSET_MENA_ORO)}});
 
-    // Cofre: un cuadro de 32x32 de su hoja.
-    conocidos.emplace(
-        TipoObjeto::COFRE,
-        AspectoDeObjeto{{VarianteDeAspecto{RUTA_ASSET_COFRE, SDL_Rect{0, 0, 32, 32}, 1}}});
+    // Cofre: su textura mide 48x96 pero el dibujo visible está en (0,18)-(48,90), o sea 48x72. Se
+    // dibuja una casilla de ancho y una y media de alto, apoyado en el pie de su casilla, y se
+    // ordena junto a los jugadores por Y para que se pueda pasar por detrás.
+    AspectoDeObjeto aspecto_cofre;
+    aspecto_cofre.variantes.push_back(
+        VarianteDeAspecto{RUTA_ASSET_COFRE, SDL_Rect{0, 18, 48, 72}, 1});
+    aspecto_cofre.alto_en_casillas = 1.5;
+    aspecto_cofre.anclar_al_pie = true;
+    aspecto_cofre.capa = CapaDeObjeto::CON_LOS_JUGADORES;
+    conocidos.emplace(TipoObjeto::COFRE, aspecto_cofre);
 
     return conocidos;
 }
@@ -121,6 +123,36 @@ void ObjetosGraficos::dibujar_sobre_los_jugadores(
     SDL_Renderer* renderer, const EstadoJuego& estado, const std::string& mapa, int cam_x,
     int cam_y) const {
     dibujar_capa(renderer, estado, mapa, cam_x, cam_y, CapaDeObjeto::SOBRE_LOS_JUGADORES);
+}
+
+void ObjetosGraficos::dibujar_objeto(
+    SDL_Renderer* renderer, const EstadoObjetoDelMundo& objeto, int cam_x, int cam_y) const {
+    const auto encontrado = aspectos.find(objeto.tipo);
+    if (encontrado == aspectos.end()) {
+        return;
+    }
+
+    int ancho_de_pantalla = 0;
+    int alto_de_pantalla = 0;
+    if (SDL_GetRendererOutputSize(renderer, &ancho_de_pantalla, &alto_de_pantalla) != 0) {
+        return;
+    }
+    dibujar_con_aspecto(
+        renderer,
+        objeto,
+        encontrado->second,
+        cam_x,
+        cam_y,
+        ancho_de_pantalla,
+        alto_de_pantalla);
+}
+
+std::optional<CapaDeObjeto> ObjetosGraficos::capa_de(const EstadoObjetoDelMundo& objeto) const {
+    const auto encontrado = aspectos.find(objeto.tipo);
+    if (encontrado == aspectos.end()) {
+        return std::nullopt;
+    }
+    return encontrado->second.capa;
 }
 
 void ObjetosGraficos::dibujar_drops(
@@ -156,8 +188,6 @@ void ObjetosGraficos::dibujar_capa(
         return;
     }
 
-    const int tamano_en_pantalla = tamano_de_tile * escala_de_tiles;
-
     for (const EstadoObjetoDelMundo& objeto : estado.objetos) {
         if (objeto.mapa != mapa) {
             continue;
@@ -167,22 +197,42 @@ void ObjetosGraficos::dibujar_capa(
         if (encontrado == aspectos.end() || encontrado->second.capa != capa) {
             continue;
         }
-        const AspectoDeObjeto& aspecto = encontrado->second;
-
-        const SDL_Rect destino{
-            static_cast<int>(objeto.columna) * tamano_en_pantalla - cam_x +
-                aspecto.desplazamiento_x,
-            static_cast<int>(objeto.fila) * tamano_en_pantalla - cam_y + aspecto.desplazamiento_y,
-            aspecto.ancho_en_casillas * tamano_en_pantalla,
-            aspecto.alto_en_casillas * tamano_en_pantalla};
-        if (!esta_en_pantalla(destino, ancho_de_pantalla, alto_de_pantalla)) {
-            continue;
-        }
-        const VarianteDeAspecto& variante = elegir_variante(aspecto, objeto);
-        SDL_RenderCopy(
+        dibujar_con_aspecto(
             renderer,
-            texturas.at(variante.ruta_de_textura).ptr(),
-            variante.origen.w > 0 ? &variante.origen : nullptr,
-            &destino);
+            objeto,
+            encontrado->second,
+            cam_x,
+            cam_y,
+            ancho_de_pantalla,
+            alto_de_pantalla);
     }
+}
+
+void ObjetosGraficos::dibujar_con_aspecto(
+    SDL_Renderer* renderer, const EstadoObjetoDelMundo& objeto, const AspectoDeObjeto& aspecto,
+    int cam_x, int cam_y, int ancho_de_pantalla, int alto_de_pantalla) const {
+    const int tamano_en_pantalla = tamano_de_tile * escala_de_tiles;
+    const int ancho = aspecto.ancho_en_casillas * tamano_en_pantalla;
+    const int alto = static_cast<int>(std::lround(aspecto.alto_en_casillas * tamano_en_pantalla));
+
+    int y = static_cast<int>(objeto.fila) * tamano_en_pantalla - cam_y + aspecto.desplazamiento_y;
+    if (aspecto.anclar_al_pie) {
+        y += tamano_en_pantalla - alto;
+    }
+
+    const SDL_Rect destino{
+        static_cast<int>(objeto.columna) * tamano_en_pantalla - cam_x + aspecto.desplazamiento_x,
+        y,
+        ancho,
+        alto};
+    if (!esta_en_pantalla(destino, ancho_de_pantalla, alto_de_pantalla)) {
+        return;
+    }
+
+    const VarianteDeAspecto& variante = elegir_variante(aspecto, objeto);
+    SDL_RenderCopy(
+        renderer,
+        texturas.at(variante.ruta_de_textura).ptr(),
+        variante.origen.w > 0 ? &variante.origen : nullptr,
+        &destino);
 }

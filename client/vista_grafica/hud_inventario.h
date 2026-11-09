@@ -15,6 +15,7 @@ enum class ZonaDelHud : uint8_t {
     BARRA,
     COFRE,
     TACHO,
+    CERRAR_COFRE,
 };
 
 struct RanuraApuntada {
@@ -93,6 +94,7 @@ private:
         int cantidad_del_cofre = 0;              // 0 si no hay cofre abierto
         int columnas_del_cofre = 1;
         SDL_Rect cofre{0, 0, 0, 0};
+        SDL_Rect boton_de_cierre{0, 0, 0, 0};
         SDL_Rect fondo_del_cofre{0, 0, 0, 0};
 
         SDL_Rect ranura_de_la_barra(int indice) const {
@@ -144,6 +146,7 @@ private:
         SDL_Renderer* renderer, const SDL_Rect& rectangulo, uint16_t cantidad) const;
     void dibujar_panel_del_cofre(
         SDL_Renderer* renderer, const Disposicion& disposicion, const CofreJugador& cofre) const;
+    void dibujar_boton_de_cierre(SDL_Renderer* renderer, const SDL_Rect& rectangulo) const;
     void dibujar_item_levantado(
         SDL_Renderer* renderer, const Disposicion& disposicion, const InventarioJugador& inventario,
         const CofreJugador& cofre, int raton_x, int raton_y) const;

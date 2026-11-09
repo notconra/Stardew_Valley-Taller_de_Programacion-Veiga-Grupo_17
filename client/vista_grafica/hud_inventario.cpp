@@ -99,7 +99,8 @@ HudInventario::Disposicion HudInventario::disponer(
         ancho_total + (2 * SEPARACION_RANURAS),
         d.tamano + (2 * SEPARACION_RANURAS)};
 
-    // El cofre abierto va centrado, justo arriba de la barra.
+    // El cofre abierto va centrado, justo arriba de la barra. Arriba de las ranuras tiene un botón
+    // para cerrarlo, que también se puede activar con Escape.
     if (cofre.abierto && !cofre.ranuras.empty()) {
         d.cantidad_del_cofre = static_cast<int>(cofre.ranuras.size());
         d.columnas_del_cofre = std::min(COLUMNAS_DEL_COFRE, d.cantidad_del_cofre);
@@ -107,14 +108,23 @@ HudInventario::Disposicion HudInventario::disponer(
         const int ancho =
             (d.columnas_del_cofre * d.tamano) + ((d.columnas_del_cofre - 1) * SEPARACION_RANURAS);
         const int alto = (filas * d.tamano) + ((filas - 1) * SEPARACION_RANURAS);
+        const int alto_del_boton = std::max(TAMANO_MINIMO_DE_RANURA, d.tamano * 3 / 5);
+        const int ancho_del_boton = std::max(1.5 * TAMANO_MINIMO_DE_RANURA, d.tamano);
         const int cofre_x = std::max(MARGEN, (ancho_ventana - ancho) / 2);
-        const int cofre_y = std::max(MARGEN, y - (2 * SEPARACION_RANURAS) - alto);
+        const int cofre_y = std::max(
+            MARGEN + alto_del_boton + (2 * SEPARACION_RANURAS),
+            y - (2 * SEPARACION_RANURAS) - alto);
         d.cofre = SDL_Rect{cofre_x, cofre_y, ancho, alto};
+        d.boton_de_cierre = SDL_Rect{
+            cofre_x + ancho - ancho_del_boton,
+            cofre_y - SEPARACION_RANURAS - alto_del_boton,
+            ancho_del_boton,
+            alto_del_boton};
         d.fondo_del_cofre = SDL_Rect{
             cofre_x - SEPARACION_RANURAS,
-            cofre_y - SEPARACION_RANURAS,
+            cofre_y - (2 * SEPARACION_RANURAS) - alto_del_boton,
             ancho + (2 * SEPARACION_RANURAS),
-            alto + (2 * SEPARACION_RANURAS)};
+            alto + (3 * SEPARACION_RANURAS) + alto_del_boton};
     }
     return d;
 }
@@ -122,6 +132,9 @@ HudInventario::Disposicion HudInventario::disponer(
 RanuraApuntada HudInventario::ranura_en(const Disposicion& d, int x, int y) const {
     const SDL_Point punto{x, y};
 
+    if (d.cantidad_del_cofre > 0 && SDL_PointInRect(&punto, &d.boton_de_cierre)) {
+        return RanuraApuntada{ZonaDelHud::CERRAR_COFRE, -1};
+    }
     for (int i = 0; i < d.cantidad_del_cofre; ++i) {
         const SDL_Rect rectangulo = d.ranura_del_cofre(i);
         if (SDL_PointInRect(&punto, &rectangulo)) {
@@ -207,6 +220,11 @@ std::optional<ComandoCliente> HudInventario::procesar_clic(
     bool clic_derecho) {
     const Disposicion disposicion = disponer(inventario, cofre);
     const RanuraApuntada destino = ranura_en(disposicion, x, y);
+
+    if (destino.zona == ZonaDelHud::CERRAR_COFRE) {
+        cancelar_levantamiento();
+        return ComandoCliente{CerrarCofre{}};
+    }
 
     // Mano vacía: agarrar.
     if (!hay_item_levantado()) {
@@ -377,6 +395,7 @@ void HudInventario::dibujar_panel_del_cofre(
     SDL_RenderFillRect(renderer, &disposicion.fondo_del_cofre);
     SDL_SetRenderDrawColor(renderer, 92, 53, 29, 255);
     SDL_RenderDrawRect(renderer, &disposicion.fondo_del_cofre);
+    dibujar_boton_de_cierre(renderer, disposicion.boton_de_cierre);
 
     for (int i = 0; i < disposicion.cantidad_del_cofre; ++i) {
         dibujar_ranura(
@@ -385,6 +404,28 @@ void HudInventario::dibujar_panel_del_cofre(
             mostrada(RanuraApuntada{ZonaDelHud::COFRE, i}, cofre.ranuras[i]),
             false);
     }
+}
+
+void HudInventario::dibujar_boton_de_cierre(
+    SDL_Renderer* renderer, const SDL_Rect& rectangulo) const {
+    SDL_SetRenderDrawColor(renderer, 180, 135, 95, 255);
+    SDL_RenderFillRect(renderer, &rectangulo);
+    SDL_SetRenderDrawColor(renderer, 92, 53, 29, 255);
+    SDL_RenderDrawRect(renderer, &rectangulo);
+
+    const int margen = std::max(4, rectangulo.h / 4);
+    SDL_RenderDrawLine(
+        renderer,
+        rectangulo.x + margen,
+        rectangulo.y + margen,
+        rectangulo.x + rectangulo.w - margen,
+        rectangulo.y + rectangulo.h - margen);
+    SDL_RenderDrawLine(
+        renderer,
+        rectangulo.x + rectangulo.w - margen,
+        rectangulo.y + margen,
+        rectangulo.x + margen,
+        rectangulo.y + rectangulo.h - margen);
 }
 
 void HudInventario::dibujar_item_levantado(
