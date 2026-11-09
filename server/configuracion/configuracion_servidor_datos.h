@@ -90,7 +90,8 @@ struct ConfiguracionMineralServidor {
     int golpes_para_picar = 1;
     double peso = 0.0;  // frecuencia relativa, no hace falta que sumen 100
     double probabilidad_de_no_dejar = 0.0;
-    int cantidad = 1;
+    int cantidad_minima = 1;
+    int cantidad_maxima = 1;
     int desde_nivel = 1;  // primer nivel donde puede aparecer
 };
 

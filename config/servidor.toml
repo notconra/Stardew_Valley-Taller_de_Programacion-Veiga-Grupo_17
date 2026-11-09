@@ -166,35 +166,48 @@ destino = "mazmorra"
 mapas = ["mina_1", "mina_2", "mina_3", "mina_4", "mina_5", "mina_6", "mina_7", "mina_8", "mina_9", "mina_11", "mina_12", "mina_13", "mina_14", "mina_15", "mina_16", "mina_17", "mina_18", "mina_19", "mina_21", "mina_24"]
 enemigos_por_nivel = 4
 minerales_por_nivel = 30
+# Probabilidad de que cada nivel tenga un cofre abandonado (entre 0.0 y 1.0).
+probabilidad_de_cofre = 0.90
 
 # Minerales (opcional). Si hay al menos un [[mazmorra.minerales]], reemplazan a los por defecto:
 # los que no listemos acá no aparecen en los niveles. "peso" es la frecuencia relativa y
 # "desde_nivel" el primer nivel donde puede aparecer (el enunciado pide el oro desde el 5).
+# "cantidad_minima" y "cantidad_maxima" son el rango de unidades que deja al picarse (inclusive).
 # Claves válidas: PIEDRA, CARBON, LAPISLAZULI, PLATA, ORO.
 
 [[mazmorra.minerales]]
 clave = "PIEDRA"
 golpes_para_picar = 1
-peso = 50
+peso = 100
+cantidad_minima = 1
+cantidad_maxima = 3
 
 [[mazmorra.minerales]]
 clave = "CARBON"
 golpes_para_picar = 1
-peso = 50
+peso = 25
+cantidad_minima = 1
+cantidad_maxima = 2
 
 [[mazmorra.minerales]]
 clave = "PLATA"
-golpes_para_picar = 2
-peso = 50
+golpes_para_picar = 3
+peso = 6
+cantidad_minima = 1
+cantidad_maxima = 2
 
 [[mazmorra.minerales]]
 clave = "LAPISLAZULI"
-golpes_para_picar = 3
-peso = 12
+golpes_para_picar = 2
+peso = 10
 probabilidad_de_no_dejar = 0.15
+cantidad_minima = 1
+cantidad_maxima = 2
 
 [[mazmorra.minerales]]
 clave = "ORO"
 golpes_para_picar = 4
-peso = 2
+peso = 1
+cantidad_minima = 1
+cantidad_maxima = 2
 desde_nivel = 5

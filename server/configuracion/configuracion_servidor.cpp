@@ -355,8 +355,24 @@ void ConfiguracionServidor::cargar_minerales(const toml::array& lista) {
             mineral.probabilidad_de_no_dejar,
             0.0,
             1.0);
-        mineral.cantidad =
-            lector_toml::leer_entero_opcional(tabla, "cantidad", seccion, mineral.cantidad, 1, 255);
+        mineral.cantidad_minima = lector_toml::leer_entero_opcional(
+            tabla,
+            "cantidad_minima",
+            seccion,
+            mineral.cantidad_minima,
+            1,
+            255);
+        mineral.cantidad_maxima = lector_toml::leer_entero_opcional(
+            tabla,
+            "cantidad_maxima",
+            seccion,
+            mineral.cantidad_maxima,
+            1,
+            255);
+        if (mineral.cantidad_maxima < mineral.cantidad_minima) {
+            throw std::runtime_error(
+                "configuración: '" + seccion + "' tiene cantidad_maxima menor que cantidad_minima");
+        }
         mineral.desde_nivel = lector_toml::leer_entero_opcional(
             tabla,
             "desde_nivel",

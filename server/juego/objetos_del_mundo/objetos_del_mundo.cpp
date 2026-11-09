@@ -39,10 +39,12 @@ CatalogoDeObjetos::CatalogoDeObjetos(const std::vector<DefinicionDeObjeto>& defi
                 "objetos del mundo: '" + definicion.clave +
                 "' tiene una probabilidad de no dejar producto fuera de [0, 1]");
         }
-        if (definicion.producto != TipoItem::NINGUNO && definicion.cantidad < 1) {
+        if (definicion.producto != TipoItem::NINGUNO &&
+            (definicion.cantidad_minima < 1 ||
+             definicion.cantidad_maxima < definicion.cantidad_minima)) {
             throw std::runtime_error(
                 "objetos del mundo: '" + definicion.clave +
-                "' deja un producto con cantidad menor a uno");
+                "' deja un producto con un rango de cantidad inválido");
         }
         definiciones_por_tipo.emplace(definicion.tipo, definicion);
     }
@@ -224,8 +226,11 @@ ResultadoDeRotura GestorDeObjetos::romper(int id) {
         return resultado;
     }
 
+    std::uniform_int_distribution<int> sorteo_de_cantidad(
+        definicion.cantidad_minima,
+        definicion.cantidad_maxima);
     resultado.producto = definicion.producto;
-    resultado.cantidad = definicion.cantidad;
+    resultado.cantidad = sorteo_de_cantidad(motor);
     return resultado;
 }
 

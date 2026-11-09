@@ -51,18 +51,38 @@ void validar(const std::vector<ConfiguracionMineralServidor>& configurados) {
 }  // namespace
 
 std::vector<ConfiguracionMineralServidor> Minerales::por_defecto() {
-    // Las frecuencias salen del enunciado, el carbón es muy común, el lapislázuli medianamente
-    // común, la plata poco común y el oro extremadamente raro (desde la quinta sala). La piedra
-    // es el relleno de la caverna.
+    // Las frecuencias salen del enunciado: la piedra es el relleno de la caverna y tiene que ser
+    // más común que todos los minerales juntos. El carbón es muy común, el lapislázuli
+    // medianamente común, la plata poco común y el oro extremadamente raro (desde la quinta sala).
+    // La cantidad que deja cada uno también es menor cuanto más raro es el mineral.
     return {
-        {.clave = "PIEDRA", .golpes_para_picar = 1, .peso = 50.0},
-        {.clave = "CARBON", .golpes_para_picar = 1, .peso = 25.0},
+        {.clave = "PIEDRA",
+         .golpes_para_picar = 1,
+         .peso = 100.0,
+         .cantidad_minima = 1,
+         .cantidad_maxima = 3},
+        {.clave = "CARBON",
+         .golpes_para_picar = 1,
+         .peso = 25.0,
+         .cantidad_minima = 1,
+         .cantidad_maxima = 2},
         {.clave = "LAPISLAZULI",
          .golpes_para_picar = 2,
-         .peso = 12.0,
-         .probabilidad_de_no_dejar = 0.15},
-        {.clave = "PLATA", .golpes_para_picar = 3, .peso = 7.0},
-        {.clave = "ORO", .golpes_para_picar = 4, .peso = 2.0, .desde_nivel = 5},
+         .peso = 10.0,
+         .probabilidad_de_no_dejar = 0.15,
+         .cantidad_minima = 1,
+         .cantidad_maxima = 2},
+        {.clave = "PLATA",
+         .golpes_para_picar = 3,
+         .peso = 6.0,
+         .cantidad_minima = 1,
+         .cantidad_maxima = 2},
+        {.clave = "ORO",
+         .golpes_para_picar = 4,
+         .peso = 1.0,
+         .cantidad_minima = 1,
+         .cantidad_maxima = 2,
+         .desde_nivel = 5},
     };
 }
 
@@ -90,7 +110,8 @@ std::vector<DefinicionDeObjeto> Minerales::definiciones(
         definicion.herramienta = TipoItem::PICO;
         definicion.probabilidad_de_no_dejar = mineral.probabilidad_de_no_dejar;
         definicion.producto = fijo.producto;
-        definicion.cantidad = mineral.cantidad;
+        definicion.cantidad_minima = mineral.cantidad_minima;
+        definicion.cantidad_maxima = mineral.cantidad_maxima;
         resultado.push_back(definicion);
     }
     return resultado;
