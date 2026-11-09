@@ -53,6 +53,7 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const UsarItem& m) { enviar_comando_usar_item(m); },
             [this](const MoverItemEntreRanuras& m) { enviar_comando_mover_item_entre_ranuras(m); },
             [this](const MoverItemConCofre& m) { enviar_comando_mover_item_con_cofre(m); },
+            [this](const CerrarCofre& m) { enviar_comando_cerrar_cofre(m); },
             [this](const SolicitarInventario& m) { enviar_comando_solicitar_inventario(m); },
             [this](const SoltarItem& m) { enviar_comando_soltar_item(m); },
             [this](const EnviarMensajeDeChat& m) { enviar_comando_enviar_mensaje_de_chat(m); },
@@ -134,6 +135,10 @@ void ProtocoloCliente::enviar_comando_mover_item_con_cofre(const MoverItemConCof
     enviar_u8(mover.destino);
     enviar_u16(mover.cantidad);
     enviar_booleano(mover.desde_el_cofre);
+}
+
+void ProtocoloCliente::enviar_comando_cerrar_cofre(const CerrarCofre&) {
+    enviar_tipo(TipoMensaje::CERRAR_COFRE);
 }
 
 void ProtocoloCliente::enviar_comando_solicitar_inventario(const SolicitarInventario&) {

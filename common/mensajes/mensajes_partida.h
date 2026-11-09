@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-#include "../color_de_jugador.h"
 #include "../apariencia_personaje.h"
+#include "../color_de_jugador.h"
 #include "../direccion.h"
 #include "../modo_uso.h"
 #include "../ranura_inventario.h"
@@ -78,6 +78,9 @@ struct MoverItemConCofre {
     uint16_t cantidad = 0;
     bool desde_el_cofre = false;
 };
+
+// Pide cerrar el cofre que el jugador tiene abierto. Si no tiene ninguno, el servidor lo ignora.
+struct CerrarCofre {};
 
 // Solicita el inventario completo (respuesta será ActualizacionInventario).
 struct SolicitarInventario {};

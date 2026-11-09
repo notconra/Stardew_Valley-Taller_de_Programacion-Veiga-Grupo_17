@@ -100,6 +100,13 @@ void ControladorDeCofres::mover(Personaje& personaje, const MoverItemConCofre& p
 }
 
 bool ControladorDeCofres::atender(Personaje& personaje, const ComandoCliente& comando) {
+    if (std::holds_alternative<CerrarCofre>(comando)) {
+        if (personaje.id_cofre_abierto != 0) {
+            cerrar(personaje);
+        }
+        return true;
+    }
+
     const MoverItemConCofre* pedido = std::get_if<MoverItemConCofre>(&comando);
     if (pedido == nullptr) {
         return false;
