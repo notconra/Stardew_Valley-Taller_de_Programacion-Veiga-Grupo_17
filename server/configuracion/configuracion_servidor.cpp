@@ -289,6 +289,32 @@ void ConfiguracionServidor::cargar_mazmorra(const toml::table& archivo_toml) {
         mazmorra.minerales_por_nivel,
         0,
         INT_MAX);
+    mazmorra.probabilidad_de_cofre = lector_toml::leer_decimal_opcional(
+        *tabla,
+        "probabilidad_de_cofre",
+        seccion,
+        mazmorra.probabilidad_de_cofre,
+        0.0,
+        1.0);
+    mazmorra.oro_minimo_en_cofre = lector_toml::leer_entero_opcional(
+        *tabla,
+        "oro_minimo_en_cofre",
+        seccion,
+        mazmorra.oro_minimo_en_cofre,
+        0,
+        UINT16_MAX);
+    mazmorra.oro_maximo_en_cofre = lector_toml::leer_entero_opcional(
+        *tabla,
+        "oro_maximo_en_cofre",
+        seccion,
+        mazmorra.oro_maximo_en_cofre,
+        0,
+        UINT16_MAX);
+    if (mazmorra.oro_minimo_en_cofre > mazmorra.oro_maximo_en_cofre) {
+        throw std::runtime_error(
+            "configuración: en [mazmorra] oro_minimo_en_cofre no puede ser mayor que "
+            "oro_maximo_en_cofre");
+    }
 
     const toml::array* minerales = (*tabla)["minerales"].as_array();
     if (minerales != nullptr) {

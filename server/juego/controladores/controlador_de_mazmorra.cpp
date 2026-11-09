@@ -1,11 +1,15 @@
 #include "controlador_de_mazmorra.h"
 
+#include <algorithm>
+#include <cstdint>
 #include <random>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "../../../common/tipo_enemigo.h"
+#include "../../../common/tipo_item.h"
+#include "../../../common/tipo_objeto.h"
 #include "./../mazmorra/cargador_mazmorra.h"
 #include "./../mazmorra/minerales.h"
 
@@ -19,6 +23,7 @@ ControladorDeMazmorra::ControladorDeMazmorra(
 
     std::random_device dispositivo;
     std::mt19937 generador(dispositivo());
+    generador_de_cofres.seed(dispositivo());
     if (!niveles_guardados.empty()) {
         niveles_de_mazmorra = niveles_guardados;
     } else {
@@ -34,6 +39,7 @@ ControladorDeMazmorra::ControladorDeMazmorra(
         std::move(geografias),
         recursos.mazmorra.enemigos_por_nivel,
         recursos.mazmorra.minerales_por_nivel,
+        recursos.mazmorra.probabilidad_de_cofre,
         std::move(generador));
 }
 
@@ -47,6 +53,33 @@ void ControladorDeMazmorra::limpiar_drops_de_niveles() {
     }
 }
 
+void ControladorDeMazmorra::retirar_cofres_de_nivel(Sector& sector) {
+    // La mazmorra se repuebla solo cuando quedó vacía. Sus cofres son contenido procedural, así que
+    // se retiran todos (incluidos los que haya dejado un jugador) para no duplicarlos al sortear
+    // los nuevos.
+    const std::vector<ObjetoDelMundo> cofres =
+        sector.objetos.obtener_objetos_de_tipo(TipoObjeto::COFRE);
+    for (const ObjetoDelMundo& cofre : cofres) {
+        sector.cofres.retirar_contenido(cofre.id);
+        sector.objetos.retirar(cofre.id);
+    }
+}
+
+void ControladorDeMazmorra::colocar_cofre(Sector& sector, Casilla casilla) {
+    const int id_cofre = sector.objetos.colocar(TipoObjeto::COFRE, casilla.columna, casilla.fila);
+    if (id_cofre == 0) {
+        return;
+    }
+
+    std::uniform_int_distribution<int> sorteo_de_oro(
+        recursos.mazmorra.oro_minimo_en_cofre,
+        recursos.mazmorra.oro_maximo_en_cofre);
+    const int oro = sorteo_de_oro(generador_de_cofres);
+    if (oro > 0) {
+        sector.cofres.contenido(id_cofre).agregar_item(TipoItem::ORO, static_cast<uint16_t>(oro));
+    }
+}
+
 void ControladorDeMazmorra::poblar_niveles() {
     // Un nivel se vuelve a poblar recién cuando la mazmorra quedó vacía, así que los drops y los
     // enemigos viejos ya no le sirven a nadie y se descartan con el resto del contenido procedural.
@@ -56,10 +89,15 @@ void ControladorDeMazmorra::poblar_niveles() {
         const int numero_de_nivel = static_cast<int>(i) + 1;
         Sector& sector = sectores.en(niveles_de_mazmorra.at(i));
 
+        retirar_cofres_de_nivel(sector);
         sector.objetos.retirar_objetos_naturales();
         sector.objetos.poblar_en(
             mazmorra->nivel(numero_de_nivel).obtener_celdas_de_objetos(),
             Minerales::pesos(numero_de_nivel, recursos.mazmorra.minerales));
+
+        for (const Casilla& casilla : mazmorra->nivel(numero_de_nivel).obtener_celdas_de_cofres()) {
+            colocar_cofre(sector, casilla);
+        }
 
         // TODO(enemigos): por ahora todas las casillas sorteadas por Nivel se pueblan con
         // esqueletos. Cuando estén Orcos, Vampiros y Skulls, esto tiene que repartir el tipo según

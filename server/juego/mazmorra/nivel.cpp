@@ -142,9 +142,11 @@ bool Nivel::hay_camino_a_la_escalera(const std::vector<bool>& bloqueadas) const 
     return false;
 }
 
-void Nivel::sortear(std::mt19937& generador, int cantidad_enemigos, int cantidad_objetos) {
+void Nivel::sortear(
+    std::mt19937& generador, int cantidad_enemigos, int cantidad_objetos, bool colocar_cofre) {
     enemigos.clear();
     celdas_de_objetos.clear();
+    celdas_de_cofres.clear();
 
     std::vector<Casilla> candidatas = casillas_generables();
     std::shuffle(candidatas.begin(), candidatas.end(), generador);
@@ -159,15 +161,27 @@ void Nivel::sortear(std::mt19937& generador, int cantidad_enemigos, int cantidad
     // escalera. Como los enemigos se mueven, no cuentan como obstáculos.
     const size_t total_objetos = static_cast<size_t>(std::max(0, cantidad_objetos));
     std::vector<bool> bloqueadas(geografia.transitable.size(), false);
-    for (size_t i = total_enemigos;
-         i < candidatas.size() && celdas_de_objetos.size() < total_objetos;
-         ++i) {
-        const Casilla casilla = candidatas[i];
+    size_t siguiente = total_enemigos;
+    for (; siguiente < candidatas.size() && celdas_de_objetos.size() < total_objetos; ++siguiente) {
+        const Casilla casilla = candidatas[siguiente];
         const size_t indice = indice_de(geografia, casilla);
         bloqueadas[indice] = true;
         if (hay_camino_a_la_escalera(bloqueadas)) {
             celdas_de_objetos.push_back(casilla);
         } else {
+            bloqueadas[indice] = false;
+        }
+    }
+
+    if (colocar_cofre) {
+        for (; siguiente < candidatas.size(); ++siguiente) {
+            const Casilla casilla = candidatas[siguiente];
+            const size_t indice = indice_de(geografia, casilla);
+            bloqueadas[indice] = true;
+            if (hay_camino_a_la_escalera(bloqueadas)) {
+                celdas_de_cofres.push_back(casilla);
+                break;
+            }
             bloqueadas[indice] = false;
         }
     }
@@ -183,4 +197,8 @@ const std::vector<Casilla>& Nivel::obtener_enemigos() const {
 
 const std::vector<Casilla>& Nivel::obtener_celdas_de_objetos() const {
     return celdas_de_objetos;
+}
+
+const std::vector<Casilla>& Nivel::obtener_celdas_de_cofres() const {
+    return celdas_de_cofres;
 }

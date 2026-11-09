@@ -101,7 +101,9 @@ struct ConfiguracionMazmorraServidor {
     std::vector<std::string> mapas;
     int enemigos_por_nivel = 4;
     int minerales_por_nivel = 30;
-    // Vacía significa "usar los minerales por defecto". Si hay alguno, reemplaza a los de defecto.
+    double probabilidad_de_cofre = 0.10;
+    int oro_minimo_en_cofre = 3;
+    int oro_maximo_en_cofre = 30;
     std::vector<ConfiguracionMineralServidor> minerales;
 };
 
