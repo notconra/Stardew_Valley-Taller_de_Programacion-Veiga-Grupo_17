@@ -9,6 +9,7 @@
 #include <QPixmap>
 #include <QSlider>
 #include <QTimer>
+#include <memory>
 #include <random>
 #include <string>
 #include <vector>
@@ -18,6 +19,7 @@
 #include "botones_menu.h"
 #include "compositor_personaje.h"
 #include "fondo_animado.h"
+#include "tarjeta_partida.h"
 
 namespace Ui {
 class PantallaPrincipal;
@@ -55,8 +57,9 @@ private slots:
 
     void volver_al_menu();
     void confirmar_personaje();
-    void confirmar_retomar_partida();
-    void actualizar_seleccion_partida();
+    void seleccionar_partida(const QString& codigo_partida);
+    void ejecutar_partida(const QString& codigo_partida);
+    void eliminar_partida(const QString& codigo_partida);
     void actualizar_animacion();
     void randomizar_personaje();
     void actualizar_color_ojos();
@@ -67,7 +70,8 @@ private slots:
 private:
     Ui::PantallaPrincipal* ui;
     void configurar_ventana();
-    void configurar_tabla_partidas();
+    void vaciar_tarjetas_partidas();
+    void actualizar_seleccion_tarjetas();
     void configurar_formulario_granja(bool visible);
     void inicializar_selectores_personaje();
     void inicializar_selector_granjas();
@@ -92,6 +96,8 @@ private:
     EntradaExitosaAPartida& partida_actual;
     bool es_modo_unirse = false;
     std::string codigo_partida_a_unirse;
+    std::string codigo_partida_seleccionada;
+    std::vector<std::unique_ptr<TarjetaPartida>> tarjetas_partidas;
     ConfiguracionJugador& configuracion_jugador;
     CompositorPersonaje compositor_personaje;
     int indice_piel_seleccionada = 0;

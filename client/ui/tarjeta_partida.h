@@ -1,8 +1,10 @@
 #ifndef TARJETA_PARTIDA_H
 #define TARJETA_PARTIDA_H
 
+#include <QEvent>
 #include <QFrame>
 #include <QHBoxLayout>
+#include <QImage>
 #include <QLabel>
 #include <QMouseEvent>
 #include <QPushButton>
@@ -29,9 +31,12 @@ public:
 signals:
     void partidaSeleccionada(const QString& codigo_partida);
     void partidaEliminarSolicitada(const QString& codigo_partida);
+    void partidaDobleClic(const QString& codigo_partida);
 
 protected:
     void mousePressEvent(QMouseEvent* evento) override;
+    void mouseDoubleClickEvent(QMouseEvent* evento) override;
+    bool eventFilter(QObject* objeto, QEvent* evento) override;
 
 private slots:
     void al_hacer_clic_eliminar();
@@ -40,6 +45,7 @@ private:
     void inicializar_interfaz(const CompositorPersonaje& compositor);
     ConfiguracionJugador crear_configuracion_desde_apariencia(
         const AparienciaPersonaje& apariencia) const;
+    QImage recortar_silueta(const QImage& imagen) const;
 
     InfoPartida info_partida;
     int numero_slot;
@@ -50,8 +56,10 @@ private:
     QLabel label_avatar;
     QVBoxLayout layout_info;
     QLabel label_nombre_personaje;
-    QLabel label_nombre_granja;
     QLabel label_estado;
+    QVBoxLayout layout_derecha;
+    QHBoxLayout layout_superior_derecha;
+    QLabel label_nombre_granja;
     QPushButton btn_eliminar;
 };
 

@@ -11,9 +11,11 @@
 #include <cmath>
 #include <iostream>
 #include <limits>
+#include <memory>
 #include <random>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "recursos_ui.h"
@@ -67,26 +69,6 @@ PantallaPrincipal::PantallaPrincipal(
         &QPushButton::clicked,
         this,
         &PantallaPrincipal::confirmar_personaje);
-    connect(
-        ui->btn_volver_retomar,
-        &QPushButton::clicked,
-        this,
-        &PantallaPrincipal::volver_al_menu);
-    connect(
-        ui->btn_jugar_retomar,
-        &QPushButton::clicked,
-        this,
-        &PantallaPrincipal::confirmar_retomar_partida);
-    connect(
-        ui->tabla_partidas,
-        &QTableWidget::itemSelectionChanged,
-        this,
-        &PantallaPrincipal::actualizar_seleccion_partida);
-    connect(
-        ui->tabla_partidas,
-        &QTableWidget::cellDoubleClicked,
-        this,
-        &PantallaPrincipal::confirmar_retomar_partida);
 }
 
 PantallaPrincipal::~PantallaPrincipal() {
@@ -118,7 +100,8 @@ void PantallaPrincipal::configurar_ventana() {
         ui->btn_unirse_codigo,
         ui->btn_salir);
 
-    configurar_tabla_partidas();
+    ui->layout_tarjetas_partidas->setAlignment(Qt::AlignTop);
+    ui->label_sin_partidas->setVisible(false);
     ui->stackedWidget->setCurrentIndex(0);
 
     temporizador_animacion = new QTimer(this);
@@ -146,12 +129,6 @@ void PantallaPrincipal::paintEvent(QPaintEvent* evento) {
     QPainter pintor(this);
     fondo_animado.dibujar(pintor, rect(), ui->stackedWidget->currentIndex() == 0);
     QMainWindow::paintEvent(evento);
-}
-
-void PantallaPrincipal::configurar_tabla_partidas() {
-    ui->tabla_partidas->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
-    ui->tabla_partidas->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
-    ui->tabla_partidas->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
 }
 
 void PantallaPrincipal::volver_al_menu() {
@@ -263,7 +240,6 @@ bool PantallaPrincipal::procesar_evento_ingreso(const EventoServidor& evento) {
         std::cerr << "Error del servidor: " << error.detalle << "\n";
         QMessageBox::warning(this, "Error", describir_error(error));
         ui->btn_confirmar_personaje->setEnabled(true);
-        ui->btn_jugar_retomar->setEnabled(true);
         return true;
     }
 
@@ -677,7 +653,7 @@ void PantallaPrincipal::actualizar_previsualizacion_personaje() {
     ui->btn_genero_femenino->setChecked(es_personaje_femenino);
 
     ConfiguracionJugador temp = obtener_configuracion_actual();
-    QPixmap sprite = compositor_personaje.componer(temp, 4);
+    QPixmap sprite = compositor_personaje.componer(temp, 4, true);
     ui->label_previsualizacion_personaje->setPixmap(sprite);
 }
 
@@ -691,8 +667,7 @@ void PantallaPrincipal::preparar_nueva_partida() {
 
 void PantallaPrincipal::preparar_retomar_partida() {
     conexion.enviar_comando(ListarPartidas{});
-    ui->tabla_partidas->setRowCount(0);
-    ui->btn_jugar_retomar->setEnabled(false);
+    vaciar_tarjetas_partidas();
 
     try {
         bool lista_recibida = false;
@@ -717,51 +692,73 @@ void PantallaPrincipal::preparar_retomar_partida() {
     ui->stackedWidget->setCurrentIndex(2);
 }
 
+void PantallaPrincipal::vaciar_tarjetas_partidas() {
+    codigo_partida_seleccionada.clear();
+    tarjetas_partidas.clear();
+}
+
 void PantallaPrincipal::llenar_lista_partidas(const ListaPartidas& lista) {
-    ui->tabla_partidas->setRowCount(0);
-    ui->tabla_partidas->setRowCount(static_cast<int>(lista.partidas.size()));
+    vaciar_tarjetas_partidas();
+
+    if (lista.partidas.empty()) {
+        ui->label_sin_partidas->setVisible(true);
+        ui->scroll_area_partidas->setVisible(false);
+        return;
+    }
+
+    ui->label_sin_partidas->setVisible(false);
+    ui->scroll_area_partidas->setVisible(true);
 
     for (int i = 0; i < static_cast<int>(lista.partidas.size()); ++i) {
         const auto& partida = lista.partidas[i];
+        int numero_slot = i + 1;
 
-        auto* item_nombre = new QTableWidgetItem(QString::fromStdString(partida.nombre_partida));
-        auto* item_codigo = new QTableWidgetItem(QString::fromStdString(partida.codigo_partida));
-        item_codigo->setTextAlignment(Qt::AlignCenter);
+        auto tarjeta = std::make_unique<TarjetaPartida>(
+            partida,
+            numero_slot,
+            compositor_personaje,
+            ui->contenido_scroll_partidas);
 
-        QString jugadores_str =
-            QString("%1/%2").arg(partida.jugadores_totales).arg(partida.jugadores_maximos);
-        auto* item_jugadores = new QTableWidgetItem(jugadores_str);
-        item_jugadores->setTextAlignment(Qt::AlignCenter);
+        connect(
+            tarjeta.get(),
+            &TarjetaPartida::partidaSeleccionada,
+            this,
+            &PantallaPrincipal::seleccionar_partida);
+        connect(
+            tarjeta.get(),
+            &TarjetaPartida::partidaDobleClic,
+            this,
+            &PantallaPrincipal::ejecutar_partida);
+        connect(
+            tarjeta.get(),
+            &TarjetaPartida::partidaEliminarSolicitada,
+            this,
+            &PantallaPrincipal::eliminar_partida);
 
-        ui->tabla_partidas->setItem(i, 0, item_nombre);
-        ui->tabla_partidas->setItem(i, 1, item_codigo);
-        ui->tabla_partidas->setItem(i, 2, item_jugadores);
+        ui->layout_tarjetas_partidas->addWidget(tarjeta.get());
+        tarjetas_partidas.push_back(std::move(tarjeta));
     }
 }
 
-void PantallaPrincipal::actualizar_seleccion_partida() {
-    bool hay_seleccion = !ui->tabla_partidas->selectedItems().isEmpty();
-    ui->btn_jugar_retomar->setEnabled(hay_seleccion);
+void PantallaPrincipal::seleccionar_partida(const QString& codigo_partida) {
+    codigo_partida_seleccionada = codigo_partida.toStdString();
+    actualizar_seleccion_tarjetas();
 }
 
-void PantallaPrincipal::confirmar_retomar_partida() {
-    int fila = ui->tabla_partidas->currentRow();
-    if (fila < 0) {
-        return;
+void PantallaPrincipal::actualizar_seleccion_tarjetas() {
+    for (const auto& tarjeta : tarjetas_partidas) {
+        tarjeta->establecer_seleccionada(
+            tarjeta->obtener_codigo_partida() == codigo_partida_seleccionada);
     }
+}
 
-    QTableWidgetItem* item_codigo = ui->tabla_partidas->item(fila, 1);
-    if (!item_codigo) {
-        return;
-    }
-
-    std::string codigo = item_codigo->text().trimmed().toStdString();
+void PantallaPrincipal::ejecutar_partida(const QString& codigo_partida) {
+    std::string codigo = codigo_partida.trimmed().toStdString();
     if (codigo.empty()) {
         return;
     }
 
     es_modo_unirse = true;
-    ui->btn_jugar_retomar->setEnabled(false);
 
     try {
         conexion.enviar_comando(RetomarPartida{codigo});
@@ -774,7 +771,34 @@ void PantallaPrincipal::confirmar_retomar_partida() {
     } catch (const std::exception& e) {
         std::cerr << "Error al retomar la partida: " << e.what() << "\n";
         QMessageBox::critical(this, "Error de conexión", "Se perdió la conexión con el servidor.");
-        ui->btn_jugar_retomar->setEnabled(true);
+    }
+}
+
+void PantallaPrincipal::eliminar_partida(const QString& codigo_partida) {
+    std::string codigo = codigo_partida.trimmed().toStdString();
+    if (codigo.empty()) {
+        return;
+    }
+
+    try {
+        conexion.enviar_comando(EliminarPartida{codigo});
+
+        bool procesado = false;
+        while (!procesado) {
+            EventoServidor evento = conexion.esperar_evento();
+            if (std::holds_alternative<ListaPartidas>(evento)) {
+                llenar_lista_partidas(std::get<ListaPartidas>(evento));
+                procesado = true;
+            } else if (std::holds_alternative<ErrorServidor>(evento)) {
+                const auto& error = std::get<ErrorServidor>(evento);
+                std::cerr << "Error del servidor al eliminar partida: " << error.detalle << "\n";
+                QMessageBox::warning(this, "Error", describir_error(error));
+                procesado = true;
+            }
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error de conexión al eliminar la partida: " << e.what() << "\n";
+        QMessageBox::critical(this, "Error de conexión", "Se perdió la conexión con el servidor.");
     }
 }
 

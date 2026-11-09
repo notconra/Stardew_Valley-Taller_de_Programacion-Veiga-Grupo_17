@@ -90,15 +90,22 @@ QPushButton:pressed {
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="styleSheet">
        <string notr="true">/* El cartel de madera */
-QFrame#marco_madera, QFrame#marco_madera_retomar {
+QFrame#marco_madera {
     border-image: url("Assets/LooseSprites/menu_box.png") 12 12 12 12 repeat;
     border-width: 12px;
     padding: 16px;
 }
 
+/* Marco de madera de retomar partida: 0 padding para que las tarjetas toquen el borde */
+QFrame#marco_madera_retomar {
+    border-image: url("Assets/LooseSprites/menu_box_retomar.png") 12 12 12 12 repeat;
+    border-width: 12px;
+    padding: 0px;
+}
+
 QLabel {
     color: #d11f00;
-    font-size: 22px;
+    font-size: 25px;
     font-weight: normal;
     font-family: "Stardew Valley", "Ubuntu", sans-serif;
 }
@@ -402,28 +409,30 @@ QSlider::handle:horizontal:pressed {
     background-color: #9c4c1a;
 }
 
-/* Ranura de partida guardada */
+/* Ranura de partida guardada idéntica al original de Stardew Valley */
 QFrame[class="tarjeta_partida"] {
-    background-color: #f7e8c9;
-    border: 2px solid #9e6b38;
-    border-radius: 8px;
+    border-image: url("Assets/LooseSprites/tarjeta_slot.png") 15 15 15 15 repeat;
+    border-width: 15px;
+    background-color: transparent;
 }
 
 QFrame[class="tarjeta_partida"]:hover {
-    background-color: #fff0d4;
-    border: 2px solid #b87a3e;
+    border-image: url("Assets/LooseSprites/tarjeta_slot_hover.png") 15 15 15 15 repeat;
+    border-width: 15px;
+    background-color: transparent;
 }
 
 QFrame[class="tarjeta_partida"][seleccionada="true"] {
-    background-color: #fff4dc;
-    border: 3px solid #d4881e;
+    border-image: url("Assets/LooseSprites/tarjeta_slot_seleccionada.png") 15 15 15 15 repeat;
+    border-width: 15px;
+    background-color: transparent;
 }
 
-/* Textos informativos de la tarjeta */
+/* Textos de la tarjeta */
 QLabel[class="label_partida_slot"] {
-    color: #7d441b;
+    color: #431f08;
     font-family: "Stardew Valley", "Ubuntu", sans-serif;
-    font-size: 20px;
+    font-size: 24px;
     font-weight: bold;
     background: transparent;
     border: none;
@@ -432,38 +441,131 @@ QLabel[class="label_partida_slot"] {
 QLabel[class="label_partida_nombre"] {
     color: #431f08;
     font-family: "Stardew Valley", "Ubuntu", sans-serif;
-    font-size: 18px;
+    font-size: 22px;
     font-weight: bold;
     background: transparent;
     border: none;
 }
 
 QLabel[class="label_partida_granja"] {
-    color: #6b401f;
+    color: #431f08;
     font-family: "Stardew Valley", "Ubuntu", sans-serif;
-    font-size: 15px;
+    font-size: 20px;
+    font-weight: bold;
     background: transparent;
     border: none;
 }
 
 QLabel[class="label_partida_estado"] {
-    color: #8c5828;
+    color: #6b401f;
     font-family: "Stardew Valley", "Ubuntu", sans-serif;
-    font-size: 13px;
+    font-size: 16px;
     background: transparent;
     border: none;
 }
 
-/* Boton de eliminar con feedback al presionar */
+/* Boton de eliminar chico sin bordes arriba a la derecha */
 QPushButton[class="btn_eliminar_partida"] {
     background-color: transparent;
     border: none;
     padding: 0px;
+    min-width: 22px;
+    max-width: 22px;
+    min-height: 22px;
+    max-height: 22px;
 }
 
 QPushButton[class="btn_eliminar_partida"]:pressed {
-    padding-top: 2px;
+    padding-top: 1px;
     padding-left: 1px;
+}
+
+/* ScrollArea de partidas guardadas */
+QScrollArea#scroll_area_partidas {
+    background-color: transparent;
+    border: none;
+}
+
+QWidget#contenido_scroll_partidas {
+    background-color: transparent;
+}
+
+/* Barra de scroll temática Stardew */
+QScrollBar:vertical {
+    border: 2px solid #8e4c19;
+    background: #e6b375;
+    width: 16px;
+    margin: 0px;
+    border-radius: 4px;
+}
+
+QScrollBar::handle:vertical {
+    background: #ba6328;
+    min-height: 24px;
+    border-radius: 3px;
+    border: 1px solid #5c2900;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #d87e38;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+/* Mensaje cuando no hay partidas guardadas */
+QLabel#label_sin_partidas {
+    color: #6b401f;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
+    font-size: 18px;
+    font-style: italic;
+    background: transparent;
+    padding: 30px;
+}
+
+/* Diálogo de confirmación temático Stardew Valley */
+QDialog#dialogo_confirmacion {
+    background: transparent;
+}
+
+QFrame#marco_dialogo_confirmacion {
+    border-image: url("Assets/LooseSprites/menu_box.png") 12 12 12 12 repeat;
+    border-width: 12px;
+    background-color: #f7e8c9;
+}
+
+QLabel#label_texto_confirmacion {
+    color: #431f08;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
+    font-size: 20px;
+    background: transparent;
+    border: none;
+    min-width: 380px;
+}
+
+QPushButton#btn_confirmar_si,
+QPushButton#btn_confirmar_no {
+    background-color: #f7b46d;
+    border: 3px solid #8e4c19;
+    border-radius: 6px;
+    color: #8e4c19;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 6px 26px;
+    min-width: 80px;
+}
+
+QPushButton#btn_confirmar_si:hover,
+QPushButton#btn_confirmar_no:hover {
+    background-color: #ffd89e;
+}
+
+QPushButton#btn_confirmar_si:pressed,
+QPushButton#btn_confirmar_no:pressed {
+    background-color: #d8964d;
+    padding-top: 8px;
 }</string>
       </property>
       <property name="currentIndex">
@@ -1710,6 +1812,12 @@ QPushButton[class="btn_eliminar_partida"]:pressed {
         </item>
         <item row="1" column="1" alignment="Qt::AlignCenter">
          <widget class="QFrame" name="marco_madera_retomar">
+          <property name="minimumSize">
+           <size>
+            <width>880</width>
+            <height>456</height>
+           </size>
+          </property>
           <property name="frameShape">
            <enum>QFrame::Shape::StyledPanel</enum>
           </property>
@@ -1717,10 +1825,25 @@ QPushButton[class="btn_eliminar_partida"]:pressed {
            <enum>QFrame::Shadow::Raised</enum>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_retomar">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
            <item>
-            <widget class="QLabel" name="label_titulo_retomar">
+            <widget class="QLabel" name="label_sin_partidas">
              <property name="text">
-              <string>Partidas Disponibles</string>
+              <string>No hay partidas guardadas</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignmentFlag::AlignCenter</set>
@@ -1728,88 +1851,44 @@ QPushButton[class="btn_eliminar_partida"]:pressed {
             </widget>
            </item>
            <item>
-            <widget class="QTableWidget" name="tabla_partidas">
-             <property name="minimumSize">
-              <size>
-               <width>450</width>
-               <height>250</height>
-              </size>
+            <widget class="QScrollArea" name="scroll_area_partidas">
+             <property name="frameShape">
+              <enum>QFrame::Shape::NoFrame</enum>
              </property>
-             <property name="editTriggers">
-              <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+             <property name="widgetResizable">
+              <bool>true</bool>
              </property>
-             <property name="selectionMode">
-              <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
+             <property name="horizontalScrollBarPolicy">
+              <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
              </property>
-             <property name="selectionBehavior">
-              <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
-             </property>
-             <attribute name="verticalHeaderVisible">
-              <bool>false</bool>
-             </attribute>
-             <column>
-              <property name="text">
-               <string>Nombre</string>
+             <widget class="QWidget" name="contenido_scroll_partidas">
+              <property name="geometry">
+               <rect>
+                <x>0</x>
+                <y>0</y>
+                <width>880</width>
+                <height>456</height>
+               </rect>
               </property>
-             </column>
-             <column>
-              <property name="text">
-               <string>Código</string>
-              </property>
-             </column>
-             <column>
-              <property name="text">
-               <string>Jugadores</string>
-              </property>
-             </column>
+              <layout class="QVBoxLayout" name="layout_tarjetas_partidas">
+               <property name="spacing">
+                <number>4</number>
+               </property>
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+              </layout>
+             </widget>
             </widget>
-           </item>
-           <item>
-            <spacer name="verticalSpacer_retomar_btn">
-             <property name="orientation">
-              <enum>Qt::Orientation::Vertical</enum>
-             </property>
-             <property name="sizeType">
-              <enum>QSizePolicy::Policy::Fixed</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>15</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_retomar">
-             <item>
-              <widget class="QPushButton" name="btn_volver_retomar">
-               <property name="text">
-                <string>Volver</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_retomar">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QPushButton" name="btn_jugar_retomar">
-               <property name="text">
-                <string>Jugar</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
            </item>
           </layout>
          </widget>

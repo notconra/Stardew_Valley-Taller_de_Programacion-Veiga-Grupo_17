@@ -37,6 +37,9 @@ public:
     QPixmap boton_eliminar() const {
         return sprite_eliminar;
     }
+    QPixmap boton_eliminar_hover() const {
+        return sprite_eliminar_hover;
+    }
     QPixmap icono_masculino() const {
         return sprite_masculino;
     }
@@ -75,6 +78,7 @@ private:
     QPixmap sprite_dado;
     QPixmap sprite_ok;
     QPixmap sprite_eliminar;
+    QPixmap sprite_eliminar_hover;
     QPixmap sprite_masculino;
     QPixmap sprite_femenino;
     QPixmap sprite_flecha_izq;

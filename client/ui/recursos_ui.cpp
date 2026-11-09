@@ -6,6 +6,8 @@ namespace {
 
 constexpr const char* RUTA_HOJA_CURSORS = "Assets/LooseSprites/Cursors.png";
 constexpr const char* RUTA_ICONO_PRADERA = "Assets/LooseSprites/farm_ranching_icon.png";
+constexpr const char* RUTA_ICONO_ELIMINAR = "Assets/LooseSprites/icono_eliminar.png";
+constexpr const char* RUTA_ICONO_ELIMINAR_HOVER = "Assets/LooseSprites/icono_eliminar_hover.png";
 
 // Coordenadas originales de los sprites dentro de Cursors.png
 constexpr RecursosUI::RegionSprite REGION_DADO = {381, 361, 10, 10};
@@ -30,7 +32,7 @@ constexpr RecursosUI::RegionSprite REGIONES_ICONOS_GRANJA[] = {
 // Dimensiones de visualización en la interfaz
 constexpr int TAMANIO_ICONO_DADO = 30;
 constexpr int TAMANIO_BOTON_OK = 64;
-constexpr int TAMANIO_BOTON_ELIMINAR = 40;
+constexpr int TAMANIO_BOTON_ELIMINAR = 22;
 constexpr int TAMANIO_ICONO_GENERO = 34;
 constexpr int ANCHO_BOTON_FLECHA = 36;
 constexpr int ALTO_BOTON_FLECHA = 33;
@@ -87,11 +89,22 @@ RecursosUI::RecursosUI() {
             recortar_y_escalar(hoja_cursors, REGION_DADO, TAMANIO_ICONO_DADO, TAMANIO_ICONO_DADO);
         sprite_ok =
             recortar_y_escalar(hoja_cursors, REGION_BOTON_OK, TAMANIO_BOTON_OK, TAMANIO_BOTON_OK);
-        sprite_eliminar = recortar_y_escalar(
-            hoja_cursors,
-            REGION_BOTON_CANCELAR,
-            TAMANIO_BOTON_ELIMINAR,
-            TAMANIO_BOTON_ELIMINAR);
+        sprite_eliminar.load(RUTA_ICONO_ELIMINAR);
+        if (!sprite_eliminar.isNull()) {
+            sprite_eliminar = sprite_eliminar.scaled(
+                TAMANIO_BOTON_ELIMINAR,
+                TAMANIO_BOTON_ELIMINAR,
+                Qt::KeepAspectRatio,
+                Qt::SmoothTransformation);
+        }
+        sprite_eliminar_hover.load(RUTA_ICONO_ELIMINAR_HOVER);
+        if (!sprite_eliminar_hover.isNull()) {
+            sprite_eliminar_hover = sprite_eliminar_hover.scaled(
+                TAMANIO_BOTON_ELIMINAR,
+                TAMANIO_BOTON_ELIMINAR,
+                Qt::KeepAspectRatio,
+                Qt::SmoothTransformation);
+        }
         sprite_masculino = recortar_y_escalar(
             hoja_cursors,
             REGION_GENERO_MASCULINO,

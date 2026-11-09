@@ -141,7 +141,7 @@ QImage CompositorPersonaje::aplicar_color_ojos(
 }
 
 QPixmap CompositorPersonaje::componer(
-    const ConfiguracionJugador& jugador, int factor_escala) const {
+    const ConfiguracionJugador& jugador, int factor_escala, bool incluir_fondo_dia) const {
     bool es_femenino = (jugador.ruta_cuerpo == RUTA_CUERPO_FEMENINO);
     const QImage& hoja_cuerpo = es_femenino ? hoja_cuerpo_femenino : hoja_cuerpo_masculino;
 
@@ -239,7 +239,7 @@ QPixmap CompositorPersonaje::componer(
         Qt::IgnoreAspectRatio,
         Qt::FastTransformation);
 
-    if (!hoja_fondo_dia.isNull()) {
+    if (incluir_fondo_dia && !hoja_fondo_dia.isNull()) {
         QImage retrato = hoja_fondo_dia.scaled(
             ANCHO_RECUADRO_PREVIEW,
             ALTO_RECUADRO_PREVIEW,

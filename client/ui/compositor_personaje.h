@@ -14,8 +14,10 @@ public:
     CompositorPersonaje();
 
     // Genera el sprite del personaje compuesto mirando al frente, escalado según el factor
-    // indicado.
-    QPixmap componer(const ConfiguracionJugador& jugador, int factor_escala) const;
+    // indicado, con opción de incluir el fondo de día de Stardew Valley.
+    QPixmap componer(
+        const ConfiguracionJugador& jugador, int factor_escala,
+        bool incluir_fondo_dia = false) const;
 
 private:
     QImage hoja_cuerpo_masculino;
