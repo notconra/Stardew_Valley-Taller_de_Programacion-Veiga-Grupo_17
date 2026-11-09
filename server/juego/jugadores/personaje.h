@@ -63,6 +63,12 @@ struct Personaje {
     static constexpr int ENERGIA_MAXIMA = ENERGIA_MAXIMA_JUGADOR;
     int energia = ENERGIA_MAXIMA;
 
+    // Monedas de oro del jugador (el enunciado pide una cantidad inicial de monedas de oro entre 0
+    // y 100, elegida de manera aleatoria al crearse por primera vez).
+    static constexpr uint32_t MONEDAS_INICIALES_MIN = 0;
+    static constexpr uint32_t MONEDAS_INICIALES_MAX = 100;
+    uint32_t monedas = 0;
+
     // El fin del día (ver ControladorDelDia). Acostado en una cama o desmayado, el jugador espera
     // el día siguiente y tiene que dar el OK. "ultima_cama" es donde se despierta si se desmaya.
     EstadoDeDescanso descanso = EstadoDeDescanso::DESPIERTO;
@@ -72,6 +78,12 @@ struct Personaje {
     Personaje(
         uint32_t id, const std::string& mapa_inicial, const CatalogoDeItems& catalogo,
         uint8_t cantidad_ranuras_barra);
+
+    // Acredita monedas de oro a la billetera del jugador.
+    void recibir_monedas(uint32_t cantidad);
+
+    // Descuenta monedas de oro si hay saldo suficiente. Devuelve false si no alcanza la plata.
+    bool gastar_monedas(uint32_t cantidad);
 
     // Traduce el índice que mandó el cliente (INDICE_RANURA_ACTIVA o una ranura real).
     uint8_t resolver_ranura(uint8_t indice_ranura) const;
@@ -110,6 +122,9 @@ struct Personaje {
     Personaje& operator=(const Personaje&) = delete;
     Personaje(Personaje&&) = default;
     Personaje& operator=(Personaje&&) = default;
+
+private:
+    static uint32_t sortear_monedas_iniciales();
 };
 
 #endif
