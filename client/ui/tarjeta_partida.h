@@ -1,0 +1,58 @@
+#ifndef TARJETA_PARTIDA_H
+#define TARJETA_PARTIDA_H
+
+#include <QFrame>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QMouseEvent>
+#include <QPushButton>
+#include <QString>
+#include <QVBoxLayout>
+#include <string>
+
+#include "../../common/mensajes/mensajes_lobby.h"
+#include "compositor_personaje.h"
+
+// Representa una ranura de guardado interactiva en el menú de "Retomar Partida".
+class TarjetaPartida : public QFrame {
+    Q_OBJECT
+
+public:
+    TarjetaPartida(
+        const InfoPartida& info, int numero_slot, const CompositorPersonaje& compositor,
+        QWidget* padre = nullptr);
+
+    void establecer_seleccionada(bool seleccionada);
+    bool esta_seleccionada() const;
+    std::string obtener_codigo_partida() const;
+
+signals:
+    void partidaSeleccionada(const QString& codigo_partida);
+    void partidaEliminarSolicitada(const QString& codigo_partida);
+
+protected:
+    void mousePressEvent(QMouseEvent* evento) override;
+
+private slots:
+    void al_hacer_clic_eliminar();
+
+private:
+    void inicializar_interfaz(const CompositorPersonaje& compositor);
+    ConfiguracionJugador crear_configuracion_desde_apariencia(
+        const AparienciaPersonaje& apariencia) const;
+
+    InfoPartida info_partida;
+    int numero_slot;
+    bool seleccionada;
+
+    QHBoxLayout layout_principal;
+    QLabel label_slot;
+    QLabel label_avatar;
+    QVBoxLayout layout_info;
+    QLabel label_nombre_personaje;
+    QLabel label_nombre_granja;
+    QLabel label_estado;
+    QPushButton btn_eliminar;
+};
+
+#endif  // TARJETA_PARTIDA_H

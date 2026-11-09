@@ -10,6 +10,7 @@ constexpr const char* RUTA_ICONO_PRADERA = "Assets/LooseSprites/farm_ranching_ic
 // Coordenadas originales de los sprites dentro de Cursors.png
 constexpr RecursosUI::RegionSprite REGION_DADO = {381, 361, 10, 10};
 constexpr RecursosUI::RegionSprite REGION_BOTON_OK = {128, 256, 64, 64};
+constexpr RecursosUI::RegionSprite REGION_BOTON_CANCELAR = {192, 256, 64, 64};
 constexpr RecursosUI::RegionSprite REGION_GENERO_MASCULINO = {128, 192, 16, 16};
 constexpr RecursosUI::RegionSprite REGION_GENERO_FEMENINO = {144, 192, 16, 16};
 constexpr RecursosUI::RegionSprite REGION_FLECHA_IZQUIERDA = {352, 495, 12, 11};
@@ -29,6 +30,7 @@ constexpr RecursosUI::RegionSprite REGIONES_ICONOS_GRANJA[] = {
 // Dimensiones de visualización en la interfaz
 constexpr int TAMANIO_ICONO_DADO = 30;
 constexpr int TAMANIO_BOTON_OK = 64;
+constexpr int TAMANIO_BOTON_ELIMINAR = 40;
 constexpr int TAMANIO_ICONO_GENERO = 34;
 constexpr int ANCHO_BOTON_FLECHA = 36;
 constexpr int ALTO_BOTON_FLECHA = 33;
@@ -85,6 +87,11 @@ RecursosUI::RecursosUI() {
             recortar_y_escalar(hoja_cursors, REGION_DADO, TAMANIO_ICONO_DADO, TAMANIO_ICONO_DADO);
         sprite_ok =
             recortar_y_escalar(hoja_cursors, REGION_BOTON_OK, TAMANIO_BOTON_OK, TAMANIO_BOTON_OK);
+        sprite_eliminar = recortar_y_escalar(
+            hoja_cursors,
+            REGION_BOTON_CANCELAR,
+            TAMANIO_BOTON_ELIMINAR,
+            TAMANIO_BOTON_ELIMINAR);
         sprite_masculino = recortar_y_escalar(
             hoja_cursors,
             REGION_GENERO_MASCULINO,
@@ -155,6 +162,15 @@ void RecursosUI::configurar_boton_dado(QPushButton* boton) {
 
 void RecursosUI::configurar_boton_ok(QPushButton* boton) {
     configurar_boton_icono(boton, sprite_ok);
+}
+
+void RecursosUI::configurar_boton_eliminar(QPushButton* boton) {
+    if (boton == nullptr) {
+        return;
+    }
+    configurar_boton_icono(boton, sprite_eliminar);
+    boton->setFixedSize(TAMANIO_BOTON_ELIMINAR, TAMANIO_BOTON_ELIMINAR);
+    boton->setProperty("class", "btn_eliminar_partida");
 }
 
 void RecursosUI::configurar_boton_masculino(QPushButton* boton) {

@@ -400,6 +400,70 @@ QSlider::handle:horizontal:hover {
 
 QSlider::handle:horizontal:pressed {
     background-color: #9c4c1a;
+}
+
+/* Ranura de partida guardada */
+QFrame[class="tarjeta_partida"] {
+    background-color: #f7e8c9;
+    border: 2px solid #9e6b38;
+    border-radius: 8px;
+}
+
+QFrame[class="tarjeta_partida"]:hover {
+    background-color: #fff0d4;
+    border: 2px solid #b87a3e;
+}
+
+QFrame[class="tarjeta_partida"][seleccionada="true"] {
+    background-color: #fff4dc;
+    border: 3px solid #d4881e;
+}
+
+/* Textos informativos de la tarjeta */
+QLabel[class="label_partida_slot"] {
+    color: #7d441b;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
+    font-size: 20px;
+    font-weight: bold;
+    background: transparent;
+    border: none;
+}
+
+QLabel[class="label_partida_nombre"] {
+    color: #431f08;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
+    font-size: 18px;
+    font-weight: bold;
+    background: transparent;
+    border: none;
+}
+
+QLabel[class="label_partida_granja"] {
+    color: #6b401f;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
+    font-size: 15px;
+    background: transparent;
+    border: none;
+}
+
+QLabel[class="label_partida_estado"] {
+    color: #8c5828;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
+    font-size: 13px;
+    background: transparent;
+    border: none;
+}
+
+/* Boton de eliminar con feedback al presionar */
+QPushButton[class="btn_eliminar_partida"] {
+    background-color: transparent;
+    border: none;
+    padding: 0px;
+}
+
+QPushButton[class="btn_eliminar_partida"]:pressed {
+    padding-top: 2px;
+    padding-left: 1px;
 }</string>
       </property>
       <property name="currentIndex">

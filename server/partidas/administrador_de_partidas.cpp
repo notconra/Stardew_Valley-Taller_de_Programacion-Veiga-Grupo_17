@@ -1,5 +1,6 @@
 #include "administrador_de_partidas.h"
 
+#include <algorithm>
 #include <filesystem>
 #include <limits>
 #include <map>
@@ -52,6 +53,21 @@ std::unique_ptr<SesionDePartida> AdministradorDePartidas::crear_sesion(
     return std::make_unique<SesionDePartida>(codigo_partida, configuracion, recursos, datos_mundo);
 }
 
+bool AdministradorDePartidas::comparar_por_ultima_modificacion(
+    const InfoPartida& primera_partida, const InfoPartida& segunda_partida) {
+    std::filesystem::path ruta_primera("partidas/" + primera_partida.codigo_partida + ".dat");
+    std::filesystem::path ruta_segunda("partidas/" + segunda_partida.codigo_partida + ".dat");
+
+    bool existe_primera = std::filesystem::exists(ruta_primera);
+    bool existe_segunda = std::filesystem::exists(ruta_segunda);
+
+    if (existe_primera && existe_segunda) {
+        return std::filesystem::last_write_time(ruta_primera) >
+               std::filesystem::last_write_time(ruta_segunda);
+    }
+    return existe_primera;
+}
+
 std::vector<InfoPartida> AdministradorDePartidas::listar(uint32_t id_cliente) const {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -61,6 +77,12 @@ std::vector<InfoPartida> AdministradorDePartidas::listar(uint32_t id_cliente) co
             info_partidas.push_back(entrada.second.info(id_cliente));
         }
     }
+
+    std::sort(
+        info_partidas.begin(),
+        info_partidas.end(),
+        &AdministradorDePartidas::comparar_por_ultima_modificacion);
+
     return info_partidas;
 }
 

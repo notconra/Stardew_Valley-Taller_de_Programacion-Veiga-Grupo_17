@@ -34,6 +34,9 @@ public:
     QPixmap boton_ok() const {
         return sprite_ok;
     }
+    QPixmap boton_eliminar() const {
+        return sprite_eliminar;
+    }
     QPixmap icono_masculino() const {
         return sprite_masculino;
     }
@@ -51,6 +54,7 @@ public:
 
     void configurar_boton_dado(QPushButton* boton);
     void configurar_boton_ok(QPushButton* boton);
+    void configurar_boton_eliminar(QPushButton* boton);
     void configurar_boton_masculino(QPushButton* boton);
     void configurar_boton_femenino(QPushButton* boton);
     void configurar_boton_flecha_izquierda(QPushButton* boton);
@@ -70,6 +74,7 @@ private:
     QPixmap hoja_cursors;
     QPixmap sprite_dado;
     QPixmap sprite_ok;
+    QPixmap sprite_eliminar;
     QPixmap sprite_masculino;
     QPixmap sprite_femenino;
     QPixmap sprite_flecha_izq;

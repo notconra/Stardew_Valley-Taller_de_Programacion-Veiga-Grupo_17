@@ -49,6 +49,9 @@ private:
 
     IndicePartidas indice;
 
+    static bool comparar_por_ultima_modificacion(
+        const InfoPartida& primera_partida, const InfoPartida& segunda_partida);
+
     void cargar_partidas_guardadas();
     void cargar_partida(const std::string& ruta_archivo);
     std::optional<DatosPartidaGuardada> cargar_datos_guardados(
