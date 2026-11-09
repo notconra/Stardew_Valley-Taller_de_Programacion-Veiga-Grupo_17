@@ -25,13 +25,6 @@ bool Nivel::es_zona_especial(const GeografiaNivel& datos, Casilla casilla) {
     return datos.escalera.contiene(casilla) || datos.salida.contiene(casilla);
 }
 
-bool Nivel::es_adyacente(Casilla casilla, const Zona& zona) {
-    return zona.contiene(Casilla{casilla.columna + 1, casilla.fila}) ||
-           zona.contiene(Casilla{casilla.columna - 1, casilla.fila}) ||
-           zona.contiene(Casilla{casilla.columna, casilla.fila + 1}) ||
-           zona.contiene(Casilla{casilla.columna, casilla.fila - 1});
-}
-
 std::vector<Casilla> Nivel::alcanzables(const GeografiaNivel& datos, Casilla desde) {
     std::vector<Casilla> resultado;
     if (!esta_adentro(datos, desde) || !datos.transitable[indice_de(datos, desde)]) {
@@ -109,39 +102,6 @@ std::vector<Casilla> Nivel::casillas_generables() const {
     return casillas;
 }
 
-bool Nivel::hay_camino_a_la_escalera(const std::vector<bool>& bloqueadas) const {
-    std::vector<bool> visitada(geografia.transitable.size(), false);
-    std::vector<Casilla> pendientes{geografia.entrada};
-    visitada[indice_de(geografia, geografia.entrada)] = true;
-
-    while (!pendientes.empty()) {
-        const Casilla actual = pendientes.back();
-        pendientes.pop_back();
-        if (es_adyacente(actual, geografia.escalera)) {
-            return true;
-        }
-
-        const Casilla vecinas[] = {
-            Casilla{actual.columna + 1, actual.fila},
-            Casilla{actual.columna - 1, actual.fila},
-            Casilla{actual.columna, actual.fila + 1},
-            Casilla{actual.columna, actual.fila - 1},
-        };
-        for (const Casilla& siguiente : vecinas) {
-            if (!esta_adentro(geografia, siguiente) || es_zona_especial(geografia, siguiente)) {
-                continue;
-            }
-            const size_t indice = indice_de(geografia, siguiente);
-            if (!geografia.transitable[indice] || bloqueadas[indice] || visitada[indice]) {
-                continue;
-            }
-            visitada[indice] = true;
-            pendientes.push_back(siguiente);
-        }
-    }
-    return false;
-}
-
 void Nivel::sortear(
     std::mt19937& generador, int cantidad_enemigos, int cantidad_objetos, bool colocar_cofre) {
     enemigos.clear();
@@ -157,33 +117,17 @@ void Nivel::sortear(
         candidatas.begin(),
         candidatas.begin() + static_cast<std::ptrdiff_t>(total_enemigos));
 
-    // Las casillas de objetos se eligen de a una y se descarta la que cortaría el paso a la
-    // escalera. Como los enemigos se mueven, no cuentan como obstáculos.
+    // Los objetos ocupan las casillas siguientes a las de los enemigos. No hace falta cuidar que
+    // quede un camino libre hasta la escalera: si el jugador la necesita, puede picar lo que haya
+    // en el medio.
     const size_t total_objetos = static_cast<size_t>(std::max(0, cantidad_objetos));
-    std::vector<bool> bloqueadas(geografia.transitable.size(), false);
     size_t siguiente = total_enemigos;
     for (; siguiente < candidatas.size() && celdas_de_objetos.size() < total_objetos; ++siguiente) {
-        const Casilla casilla = candidatas[siguiente];
-        const size_t indice = indice_de(geografia, casilla);
-        bloqueadas[indice] = true;
-        if (hay_camino_a_la_escalera(bloqueadas)) {
-            celdas_de_objetos.push_back(casilla);
-        } else {
-            bloqueadas[indice] = false;
-        }
+        celdas_de_objetos.push_back(candidatas[siguiente]);
     }
 
-    if (colocar_cofre) {
-        for (; siguiente < candidatas.size(); ++siguiente) {
-            const Casilla casilla = candidatas[siguiente];
-            const size_t indice = indice_de(geografia, casilla);
-            bloqueadas[indice] = true;
-            if (hay_camino_a_la_escalera(bloqueadas)) {
-                celdas_de_cofres.push_back(casilla);
-                break;
-            }
-            bloqueadas[indice] = false;
-        }
+    if (colocar_cofre && siguiente < candidatas.size()) {
+        celdas_de_cofres.push_back(candidatas[siguiente]);
     }
 }
 
