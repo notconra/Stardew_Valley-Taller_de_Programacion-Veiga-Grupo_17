@@ -496,28 +496,72 @@ QWidget#contenido_scroll_partidas {
     background-color: transparent;
 }
 
-/* Barra de scroll temática Stardew */
-QScrollBar:vertical {
+/* Barra de scroll temática Stardew exterior */
+QScrollBar#scrollbar_partidas:vertical {
     border: 2px solid #8e4c19;
-    background: #e6b375;
-    width: 16px;
-    margin: 0px;
+    background-color: #e6b375;
+    width: 24px;
+    margin: 28px 0px 28px 0px;
     border-radius: 4px;
 }
 
-QScrollBar::handle:vertical {
-    background: #ba6328;
-    min-height: 24px;
-    border-radius: 3px;
-    border: 1px solid #5c2900;
+QScrollBar#scrollbar_partidas::handle:vertical {
+    background-color: #ba6328;
+    border: 2px solid #5c2900;
+    border-radius: 4px;
+    min-height: 36px;
 }
 
-QScrollBar::handle:vertical:hover {
-    background: #d87e38;
+QScrollBar#scrollbar_partidas::handle:vertical:hover {
+    background-color: #d87e38;
 }
 
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-    height: 0px;
+QScrollBar#scrollbar_partidas::handle:vertical:pressed {
+    background-color: #9c4b18;
+}
+
+/* Boton de flecha arriba */
+QScrollBar#scrollbar_partidas::sub-line:vertical {
+    border: none;
+    background: transparent;
+    height: 26px;
+    subcontrol-position: top;
+    subcontrol-origin: margin;
+}
+
+QScrollBar#scrollbar_partidas::sub-line:vertical:pressed {
+    top: 1px;
+}
+
+/* Boton de flecha abajo */
+QScrollBar#scrollbar_partidas::add-line:vertical {
+    border: none;
+    background: transparent;
+    height: 26px;
+    subcontrol-position: bottom;
+    subcontrol-origin: margin;
+}
+
+QScrollBar#scrollbar_partidas::add-line:vertical:pressed {
+    bottom: -1px;
+}
+
+/* Iconos de flechas pixel-art Stardew */
+QScrollBar#scrollbar_partidas::up-arrow:vertical {
+    image: url("Assets/LooseSprites/scrollbar_flecha_arriba.png");
+    width: 20px;
+    height: 22px;
+}
+
+QScrollBar#scrollbar_partidas::down-arrow:vertical {
+    image: url("Assets/LooseSprites/scrollbar_flecha_abajo.png");
+    width: 20px;
+    height: 22px;
+}
+
+QScrollBar#scrollbar_partidas::add-page:vertical,
+QScrollBar#scrollbar_partidas::sub-page:vertical {
+    background: none;
 }
 
 /* Mensaje cuando no hay partidas guardadas */
@@ -1849,11 +1893,28 @@ QPushButton.btn_dialogo_accion:pressed {
          </spacer>
         </item>
         <item row="1" column="1" alignment="Qt::AlignCenter">
-         <widget class="QFrame" name="marco_madera_retomar">
+         <layout class="QHBoxLayout" name="layout_retomar_con_scroll">
+          <property name="spacing">
+           <number>16</number>
+          </property>
+          <item>
+           <widget class="QFrame" name="marco_madera_retomar">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="minimumSize">
            <size>
             <width>880</width>
-            <height>456</height>
+            <height>452</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>880</width>
+            <height>452</height>
            </size>
           </property>
           <property name="frameShape">
@@ -1905,7 +1966,7 @@ QPushButton.btn_dialogo_accion:pressed {
                 <x>0</x>
                 <y>0</y>
                 <width>880</width>
-                <height>456</height>
+                <height>428</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="layout_tarjetas_partidas">
@@ -1931,7 +1992,34 @@ QPushButton.btn_dialogo_accion:pressed {
           </layout>
          </widget>
         </item>
-        <item row="1" column="2">
+        <item>
+         <widget class="QScrollBar" name="scrollbar_partidas">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="orientation">
+           <enum>Qt::Orientation::Vertical</enum>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>24</width>
+            <height>452</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>24</width>
+            <height>452</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="1" column="2">
          <spacer name="horizontalSpacer_right_retomar">
           <property name="orientation">
            <enum>Qt::Orientation::Horizontal</enum>

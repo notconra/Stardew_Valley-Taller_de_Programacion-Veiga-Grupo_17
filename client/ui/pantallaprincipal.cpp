@@ -37,6 +37,9 @@ constexpr int MAX_MATIZ_HSV = 359;
 constexpr int MAX_CANAL_COLOR = 255;
 constexpr int MAX_VALOR_SLIDER_HSV = 100;
 
+constexpr size_t MAX_PARTIDAS_VISIBLES_SIN_SCROLL = 4;
+constexpr int PASO_SCROLL_POR_TARJETA = 108;
+
 PantallaPrincipal::PantallaPrincipal(
     ConexionConServidor& conexion, EntradaExitosaAPartida& partida_actual,
     ConfiguracionJugador& configuracion_jugador, QWidget* parent)
@@ -104,8 +107,35 @@ void PantallaPrincipal::configurar_ventana() {
         ui->btn_unirse_codigo,
         ui->btn_salir);
 
+    ui->marco_madera_retomar->setFixedSize(880, 452);
     ui->layout_tarjetas_partidas->setAlignment(Qt::AlignTop);
     ui->label_sin_partidas->setVisible(false);
+    ui->scrollbar_partidas->setFixedSize(24, 452);
+    ui->scrollbar_partidas->setVisible(false);
+    ui->scrollbar_partidas->setSingleStep(PASO_SCROLL_POR_TARJETA);
+
+    connect(
+        ui->scrollbar_partidas,
+        &QScrollBar::valueChanged,
+        ui->scroll_area_partidas->verticalScrollBar(),
+        &QScrollBar::setValue);
+    connect(
+        ui->scroll_area_partidas->verticalScrollBar(),
+        &QScrollBar::valueChanged,
+        ui->scrollbar_partidas,
+        &QScrollBar::setValue);
+    connect(
+        ui->scroll_area_partidas->verticalScrollBar(),
+        &QScrollBar::rangeChanged,
+        this,
+        [this](int min, int max) {
+            ui->scrollbar_partidas->setRange(min, max);
+            ui->scrollbar_partidas->setPageStep(
+                ui->scroll_area_partidas->verticalScrollBar()->pageStep());
+            ui->scrollbar_partidas->setVisible(
+                tarjetas_partidas.size() > MAX_PARTIDAS_VISIBLES_SIN_SCROLL && max > min);
+        });
+
     ui->stackedWidget->setCurrentIndex(0);
 
     temporizador_animacion = new QTimer(this);
@@ -699,6 +729,7 @@ void PantallaPrincipal::preparar_retomar_partida() {
 void PantallaPrincipal::vaciar_tarjetas_partidas() {
     codigo_partida_seleccionada.clear();
     tarjetas_partidas.clear();
+    ui->scrollbar_partidas->setVisible(false);
 }
 
 void PantallaPrincipal::llenar_lista_partidas(const ListaPartidas& lista) {
@@ -707,6 +738,7 @@ void PantallaPrincipal::llenar_lista_partidas(const ListaPartidas& lista) {
     if (lista.partidas.empty()) {
         ui->label_sin_partidas->setVisible(true);
         ui->scroll_area_partidas->setVisible(false);
+        ui->scrollbar_partidas->setVisible(false);
         return;
     }
 
@@ -742,6 +774,8 @@ void PantallaPrincipal::llenar_lista_partidas(const ListaPartidas& lista) {
         ui->layout_tarjetas_partidas->addWidget(tarjeta.get());
         tarjetas_partidas.push_back(std::move(tarjeta));
     }
+
+    ui->scrollbar_partidas->setVisible(tarjetas_partidas.size() > MAX_PARTIDAS_VISIBLES_SIN_SCROLL);
 }
 
 void PantallaPrincipal::seleccionar_partida(const QString& codigo_partida) {
