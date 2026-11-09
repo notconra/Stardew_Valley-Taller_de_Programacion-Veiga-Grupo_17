@@ -63,6 +63,8 @@ public:
     // muestran las de los demás.
     std::vector<InfoPartida> listar(uint32_t id_cliente) const;
 
+    void eliminar(const std::string& codigo_partida);
+
     // La partida por defecto tiene un sólo jugador y el cliente que la crea
     // entra a ella.
     IngresoAPartida crear(

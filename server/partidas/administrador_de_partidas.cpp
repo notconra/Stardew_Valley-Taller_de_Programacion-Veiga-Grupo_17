@@ -58,10 +58,33 @@ std::vector<InfoPartida> AdministradorDePartidas::listar(uint32_t id_cliente) co
     std::vector<InfoPartida> info_partidas;
     for (const auto& entrada : partidas) {
         if (entrada.second.es_miembro(id_cliente)) {
-            info_partidas.push_back(entrada.second.info());
+            info_partidas.push_back(entrada.second.info(id_cliente));
         }
     }
     return info_partidas;
+}
+
+void AdministradorDePartidas::eliminar(const std::string& codigo_partida) {
+    std::lock_guard<std::mutex> lock(mutex);
+
+    auto sesion_encontrada = sesiones.find(codigo_partida);
+    if (sesion_encontrada != sesiones.end()) {
+        throw ErrorDePartida(
+            CodigoError::NO_PERMITIDO,
+            "no se puede eliminar una partida en curso");
+    }
+
+    auto partida_encontrada = partidas.find(codigo_partida);
+    if (partida_encontrada != partidas.end()) {
+        std::filesystem::remove("partidas/" + codigo_partida + ".dat");
+        indice.eliminar(codigo_partida);
+        partidas.erase(partida_encontrada);
+        return;
+    }
+
+    throw ErrorDePartida(
+        CodigoError::PARTIDA_INEXISTENTE,
+        "la partida \"" + codigo_partida + "\" no existe");
 }
 
 IngresoAPartida AdministradorDePartidas::crear(

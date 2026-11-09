@@ -88,8 +88,29 @@ uint8_t Partida::cantidad_de_conectados() const {
     return conectados;
 }
 
-InfoPartida Partida::info() const {
-    return InfoPartida{codigo, nombre, cantidad_de_jugadores(), jugadores_maximos};
+InfoPartida Partida::info(uint32_t id_cliente) const {
+    std::string nombre_personaje;
+    AparienciaPersonaje apariencia;
+    size_t indice = 0;
+    bool encontrado = false;
+    while (indice < jugadores.size() && !encontrado) {
+        if (jugadores[indice].id_cliente == id_cliente) {
+            nombre_personaje = jugadores[indice].nombre_jugador;
+            apariencia = jugadores[indice].apariencia;
+            encontrado = true;
+        }
+        ++indice;
+    }
+
+    return InfoPartida{
+        codigo,
+        nombre,
+        nombre_personaje,
+        apariencia,
+        multijugador,
+        cantidad_de_conectados(),
+        cantidad_de_jugadores(),
+        jugadores_maximos};
 }
 
 void Partida::hacer_multijugador(uint32_t id_cliente) {

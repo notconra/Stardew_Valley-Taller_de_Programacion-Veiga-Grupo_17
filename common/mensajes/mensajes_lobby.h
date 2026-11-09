@@ -33,11 +33,19 @@ struct RetomarPartida {
     std::string codigo_partida;
 };
 
+struct EliminarPartida {
+    std::string codigo_partida;
+};
+
 // Servidor a cliente
 
 struct InfoPartida {
     std::string codigo_partida;
     std::string nombre_partida;
+    std::string nombre_personaje;
+    AparienciaPersonaje apariencia;
+    bool multijugador = false;
+    uint8_t jugadores_conectados = 0;
     uint8_t jugadores_totales = 0;
     uint8_t jugadores_maximos = 0;
 };

@@ -15,7 +15,7 @@
 
 using ComandoCliente = std::variant<
     // Lobby
-    Identificarse, ListarPartidas, CrearPartida, UnirsePartida, RetomarPartida,
+    Identificarse, ListarPartidas, CrearPartida, UnirsePartida, RetomarPartida, EliminarPartida,
 
     // Partida
     ActivarMultijugador, SalirDePartida, Moverse, GuardarPartida,

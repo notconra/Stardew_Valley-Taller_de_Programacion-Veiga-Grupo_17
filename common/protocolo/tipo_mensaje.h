@@ -24,6 +24,7 @@ enum class TipoMensaje : uint8_t {
     SOLICITAR_INVENTARIO = 0x0E,
     SOLTAR_ITEM = 0x0F,
     GUARDAR_PARTIDA = 0x10,
+    ELIMINAR_PARTIDA = 0x11,
 
     // Servidor a cliente
     ERROR_SERVIDOR = 0x81,

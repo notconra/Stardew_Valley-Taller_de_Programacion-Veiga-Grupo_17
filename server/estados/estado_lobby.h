@@ -29,6 +29,7 @@ public:
     ProximoEstado crear_partida(const CrearPartida& comando) override;
     ProximoEstado unirse_a_partida(const UnirsePartida& comando) override;
     ProximoEstado retomar_partida(const RetomarPartida& comando) override;
+    ProximoEstado eliminar_partida(const EliminarPartida& comando) override;
 
     void al_desconectar() override;
 };

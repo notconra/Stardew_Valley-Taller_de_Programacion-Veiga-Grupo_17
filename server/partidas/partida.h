@@ -59,7 +59,7 @@ public:
     uint8_t cantidad_de_conectados() const;
 
     // jugadores_totales es cantidad_de_jugadores(), los lugares ocupados.
-    InfoPartida info() const;
+    InfoPartida info(uint32_t id_cliente) const;
 
     // Permite que entren jugadores nuevos. Lanza ErrorDePartida si el cliente no es jugador de la
     // partida.

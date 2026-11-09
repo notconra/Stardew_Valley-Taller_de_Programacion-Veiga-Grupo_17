@@ -21,6 +21,7 @@ private:
     void enviar_comando_crear_partida(const CrearPartida& crear);
     void enviar_comando_unirse_partida(const UnirsePartida& unirse);
     void enviar_comando_retomar_partida(const RetomarPartida& retomar);
+    void enviar_comando_eliminar_partida(const EliminarPartida& eliminar);
     void enviar_comando_activar_multijugador(const ActivarMultijugador&);
     void enviar_comando_salir_de_partida(const SalirDePartida& salir_de_partida);
     void enviar_comando_guardar_partida(const GuardarPartida& guardar);

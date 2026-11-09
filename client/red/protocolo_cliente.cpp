@@ -42,6 +42,7 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const CrearPartida& m) { enviar_comando_crear_partida(m); },
             [this](const UnirsePartida& m) { enviar_comando_unirse_partida(m); },
             [this](const RetomarPartida& m) { enviar_comando_retomar_partida(m); },
+            [this](const EliminarPartida& m) { enviar_comando_eliminar_partida(m); },
             [this](const ActivarMultijugador& m) { enviar_comando_activar_multijugador(m); },
             [this](const SalirDePartida& m) { enviar_comando_salir_de_partida(m); },
             [this](const GuardarPartida& m) { enviar_comando_guardar_partida(m); },
@@ -84,6 +85,11 @@ void ProtocoloCliente::enviar_comando_unirse_partida(const UnirsePartida& unirse
 void ProtocoloCliente::enviar_comando_retomar_partida(const RetomarPartida& retomar) {
     enviar_tipo(TipoMensaje::RETOMAR_PARTIDA);
     enviar_texto(retomar.codigo_partida);
+}
+
+void ProtocoloCliente::enviar_comando_eliminar_partida(const EliminarPartida& eliminar) {
+    enviar_tipo(TipoMensaje::ELIMINAR_PARTIDA);
+    enviar_texto(eliminar.codigo_partida);
 }
 
 void ProtocoloCliente::enviar_comando_activar_multijugador(const ActivarMultijugador&) {
@@ -172,10 +178,22 @@ ErrorServidor ProtocoloCliente::recibir_error_servidor() {
 InfoPartida ProtocoloCliente::recibir_info_partida() {
     std::string codigo_partida = recibir_texto();
     std::string nombre_partida = recibir_texto();
+    std::string nombre_personaje = recibir_texto();
+    AparienciaPersonaje apariencia = recibir_apariencia();
+    bool multijugador = recibir_booleano();
+    uint8_t jugadores_conectados = recibir_u8();
     uint8_t jugadores_totales = recibir_u8();
     uint8_t jugadores_maximos = recibir_u8();
 
-    return InfoPartida{codigo_partida, nombre_partida, jugadores_totales, jugadores_maximos};
+    return InfoPartida{
+        codigo_partida,
+        nombre_partida,
+        nombre_personaje,
+        apariencia,
+        multijugador,
+        jugadores_conectados,
+        jugadores_totales,
+        jugadores_maximos};
 }
 
 ListaPartidas ProtocoloCliente::recibir_lista_partidas() {
