@@ -432,7 +432,7 @@ QFrame[class="tarjeta_partida"][seleccionada="true"] {
 QLabel[class="label_partida_slot"] {
     color: #431f08;
     font-family: "Stardew Valley", "Ubuntu", sans-serif;
-    font-size: 24px;
+    font-size: 28px;
     font-weight: bold;
     background: transparent;
     border: none;
@@ -440,9 +440,9 @@ QLabel[class="label_partida_slot"] {
 
 QLabel[class="label_partida_nombre"] {
     color: #431f08;
-    font-family: "Stardew Valley", "Ubuntu", sans-serif;
-    font-size: 22px;
-    font-weight: bold;
+    font-family: "Stardew Dialogue", "Stardew Valley", "Ubuntu", sans-serif;
+    font-size: 28px;
+    font-weight: normal;
     background: transparent;
     border: none;
 }
@@ -450,16 +450,33 @@ QLabel[class="label_partida_nombre"] {
 QLabel[class="label_partida_granja"] {
     color: #431f08;
     font-family: "Stardew Valley", "Ubuntu", sans-serif;
+    font-size: 24px;
+    font-weight: normal;
+    background: transparent;
+    border: none;
+}
+
+QLabel[class="label_partida_fecha"] {
+    color: #6b401f;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
+    font-size: 21px;
+    background: transparent;
+    border: none;
+}
+
+QLabel[class="label_partida_tiempo"] {
+    color: #431f08;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
     font-size: 20px;
-    font-weight: bold;
+    font-weight: normal;
     background: transparent;
     border: none;
 }
 
 QLabel[class="label_partida_estado"] {
-    color: #6b401f;
+    color: #8e5932;
     font-family: "Stardew Valley", "Ubuntu", sans-serif;
-    font-size: 16px;
+    font-size: 18px;
     background: transparent;
     border: none;
 }
@@ -469,10 +486,10 @@ QPushButton[class="btn_eliminar_partida"] {
     background-color: transparent;
     border: none;
     padding: 0px;
-    min-width: 22px;
-    max-width: 22px;
-    min-height: 22px;
-    max-height: 22px;
+    min-width: 20px;
+    max-width: 20px;
+    min-height: 20px;
+    max-height: 20px;
 }
 
 QPushButton[class="btn_eliminar_partida"]:pressed {

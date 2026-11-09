@@ -206,6 +206,8 @@ void ProtocoloServidor::enviar_info_partida(const InfoPartida& info_partida) {
     enviar_u8(info_partida.jugadores_conectados);
     enviar_u8(info_partida.jugadores_totales);
     enviar_u8(info_partida.jugadores_maximos);
+    enviar_u32(info_partida.dia);
+    enviar_u32(info_partida.segundos_jugados);
 }
 
 void ProtocoloServidor::enviar_evento_lista_partidas(const ListaPartidas& lista_partidas) {

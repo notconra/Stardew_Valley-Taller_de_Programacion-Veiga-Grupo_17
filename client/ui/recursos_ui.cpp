@@ -13,6 +13,7 @@ constexpr const char* RUTA_ICONO_ELIMINAR_HOVER = "Assets/LooseSprites/icono_eli
 constexpr RecursosUI::RegionSprite REGION_DADO = {381, 361, 10, 10};
 constexpr RecursosUI::RegionSprite REGION_BOTON_OK = {128, 256, 64, 64};
 constexpr RecursosUI::RegionSprite REGION_BOTON_CANCELAR = {192, 256, 64, 64};
+constexpr RecursosUI::RegionSprite REGION_RELOJ = {434, 475, 9, 9};
 constexpr RecursosUI::RegionSprite REGION_GENERO_MASCULINO = {128, 192, 16, 16};
 constexpr RecursosUI::RegionSprite REGION_GENERO_FEMENINO = {144, 192, 16, 16};
 constexpr RecursosUI::RegionSprite REGION_FLECHA_IZQUIERDA = {352, 495, 12, 11};
@@ -32,7 +33,8 @@ constexpr RecursosUI::RegionSprite REGIONES_ICONOS_GRANJA[] = {
 // Dimensiones de visualización en la interfaz
 constexpr int TAMANIO_ICONO_DADO = 30;
 constexpr int TAMANIO_BOTON_OK = 64;
-constexpr int TAMANIO_BOTON_ELIMINAR = 22;
+constexpr int TAMANIO_BOTON_ELIMINAR = 20;
+constexpr int TAMANIO_ICONO_RELOJ = 20;
 constexpr int TAMANIO_ICONO_GENERO = 34;
 constexpr int ANCHO_BOTON_FLECHA = 36;
 constexpr int ALTO_BOTON_FLECHA = 33;
@@ -105,6 +107,11 @@ RecursosUI::RecursosUI() {
                 Qt::KeepAspectRatio,
                 Qt::SmoothTransformation);
         }
+        sprite_reloj = recortar_y_escalar(
+            hoja_cursors,
+            REGION_RELOJ,
+            TAMANIO_ICONO_RELOJ,
+            TAMANIO_ICONO_RELOJ);
         sprite_masculino = recortar_y_escalar(
             hoja_cursors,
             REGION_GENERO_MASCULINO,
@@ -150,6 +157,42 @@ QPixmap RecursosUI::recortar_y_escalar(
     const QPixmap& hoja, const RegionSprite& region, int ancho_destino, int alto_destino) const {
     return hoja.copy(region.x, region.y, region.ancho, region.alto)
         .scaled(ancho_destino, alto_destino, Qt::IgnoreAspectRatio, Qt::FastTransformation);
+}
+
+QPixmap RecursosUI::icono_dado() const {
+    return sprite_dado;
+}
+
+QPixmap RecursosUI::boton_ok() const {
+    return sprite_ok;
+}
+
+QPixmap RecursosUI::boton_eliminar() const {
+    return sprite_eliminar;
+}
+
+QPixmap RecursosUI::boton_eliminar_hover() const {
+    return sprite_eliminar_hover;
+}
+
+QPixmap RecursosUI::icono_reloj() const {
+    return sprite_reloj;
+}
+
+QPixmap RecursosUI::icono_masculino() const {
+    return sprite_masculino;
+}
+
+QPixmap RecursosUI::icono_femenino() const {
+    return sprite_femenino;
+}
+
+QPixmap RecursosUI::flecha_izquierda() const {
+    return sprite_flecha_izq;
+}
+
+QPixmap RecursosUI::flecha_derecha() const {
+    return sprite_flecha_der;
 }
 
 QPixmap RecursosUI::icono_granja(int indice) const {

@@ -28,30 +28,15 @@ public:
 
     static RecursosUI& instancia();
 
-    QPixmap icono_dado() const {
-        return sprite_dado;
-    }
-    QPixmap boton_ok() const {
-        return sprite_ok;
-    }
-    QPixmap boton_eliminar() const {
-        return sprite_eliminar;
-    }
-    QPixmap boton_eliminar_hover() const {
-        return sprite_eliminar_hover;
-    }
-    QPixmap icono_masculino() const {
-        return sprite_masculino;
-    }
-    QPixmap icono_femenino() const {
-        return sprite_femenino;
-    }
-    QPixmap flecha_izquierda() const {
-        return sprite_flecha_izq;
-    }
-    QPixmap flecha_derecha() const {
-        return sprite_flecha_der;
-    }
+    QPixmap icono_dado() const;
+    QPixmap boton_ok() const;
+    QPixmap boton_eliminar() const;
+    QPixmap boton_eliminar_hover() const;
+    QPixmap icono_reloj() const;
+    QPixmap icono_masculino() const;
+    QPixmap icono_femenino() const;
+    QPixmap flecha_izquierda() const;
+    QPixmap flecha_derecha() const;
 
     QPixmap icono_granja(int indice) const;
 
@@ -79,6 +64,7 @@ private:
     QPixmap sprite_ok;
     QPixmap sprite_eliminar;
     QPixmap sprite_eliminar_hover;
+    QPixmap sprite_reloj;
     QPixmap sprite_masculino;
     QPixmap sprite_femenino;
     QPixmap sprite_flecha_izq;

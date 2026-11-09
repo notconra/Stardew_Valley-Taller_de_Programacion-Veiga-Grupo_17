@@ -12,6 +12,12 @@ constexpr int ALTO_TARJETA = 104;
 constexpr int FACTOR_ESCALA_AVATAR = 4;
 constexpr int ANCHO_AVATAR_MOSTRAR = 40;
 constexpr int ALTO_AVATAR_MOSTRAR = 68;
+constexpr uint32_t DIAS_POR_ESTACION = 28;
+constexpr uint32_t ESTACIONES_POR_ANIO = 4;
+constexpr uint32_t DIAS_POR_ANIO = DIAS_POR_ESTACION * ESTACIONES_POR_ANIO;
+constexpr uint32_t SEGUNDOS_POR_HORA = 3600;
+constexpr uint32_t SEGUNDOS_POR_MINUTO = 60;
+constexpr const char* NOMBRES_ESTACIONES[] = {"Primavera", "Verano", "Otono", "Invierno"};
 
 TarjetaPartida::TarjetaPartida(
     const InfoPartida& info, int slot, const CompositorPersonaje& compositor, QWidget* padre)
@@ -23,11 +29,15 @@ TarjetaPartida::TarjetaPartida(
       label_slot(this),
       label_avatar(this),
       label_nombre_personaje(this),
+      label_fecha(this),
       label_estado(this),
       layout_derecha(),
-      layout_superior_derecha(),
+      layout_textos_derecha(),
       label_nombre_granja(this),
-      btn_eliminar(this) {
+      btn_eliminar(this),
+      layout_tiempo_jugado(),
+      label_icono_reloj(this),
+      label_tiempo_jugado(this) {
     inicializar_interfaz(compositor);
 }
 
@@ -43,7 +53,7 @@ void TarjetaPartida::inicializar_interfaz(const CompositorPersonaje& compositor)
 
     // 1. Ranura: "1.", "2.", etc.
     label_slot.setText(QString("%1.").arg(numero_slot));
-    label_slot.setFixedWidth(30);
+    label_slot.setFixedWidth(38);
     label_slot.setAlignment(Qt::AlignTop | Qt::AlignLeft);
     label_slot.setAttribute(Qt::WA_TransparentForMouseEvents);
     label_slot.setProperty("class", "label_partida_slot");
@@ -67,14 +77,19 @@ void TarjetaPartida::inicializar_interfaz(const CompositorPersonaje& compositor)
     }
     layout_principal.addWidget(&label_avatar);
 
-    // 3. Columna izquierda de datos: Nombre y Estado
-    layout_info.setSpacing(6);
+    // 3. Columna izquierda de datos: Nombre, Fecha y Estado
+    layout_info.setSpacing(4);
     layout_info.setAlignment(Qt::AlignTop);
 
     label_nombre_personaje.setText(QString::fromStdString(info_partida.nombre_personaje));
     label_nombre_personaje.setAttribute(Qt::WA_TransparentForMouseEvents);
     label_nombre_personaje.setProperty("class", "label_partida_nombre");
     layout_info.addWidget(&label_nombre_personaje);
+
+    label_fecha.setText(formatear_fecha(info_partida.dia));
+    label_fecha.setAttribute(Qt::WA_TransparentForMouseEvents);
+    label_fecha.setProperty("class", "label_partida_fecha");
+    layout_info.addWidget(&label_fecha);
 
     QString texto_estado =
         info_partida.multijugador
@@ -88,27 +103,42 @@ void TarjetaPartida::inicializar_interfaz(const CompositorPersonaje& compositor)
     layout_principal.addLayout(&layout_info);
     layout_principal.addStretch();
 
-    // 4. Columna derecha: Fila superior con "Granja..." y botón eliminar en la punta
+    // 4. Columna derecha: Textos ("Granja..." y tiempo jugado) alineados a la derecha,
+    // y el botón de eliminar a la derecha de ambos.
     layout_derecha.setAlignment(Qt::AlignTop | Qt::AlignRight);
-    layout_derecha.setSpacing(0);
+    layout_derecha.setSpacing(12);
 
-    layout_superior_derecha.setSpacing(12);
-    layout_superior_derecha.setAlignment(Qt::AlignTop | Qt::AlignRight);
+    layout_textos_derecha.setAlignment(Qt::AlignTop | Qt::AlignRight);
+    layout_textos_derecha.setSpacing(10);
 
     label_nombre_granja.setText(
         QString("Granja %1").arg(QString::fromStdString(info_partida.nombre_partida)));
     label_nombre_granja.setAttribute(Qt::WA_TransparentForMouseEvents);
     label_nombre_granja.setProperty("class", "label_partida_granja");
     label_nombre_granja.setAlignment(Qt::AlignVCenter | Qt::AlignRight);
-    layout_superior_derecha.addWidget(&label_nombre_granja);
+    layout_textos_derecha.addWidget(&label_nombre_granja);
+
+    layout_tiempo_jugado.setSpacing(6);
+    layout_tiempo_jugado.setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+
+    label_icono_reloj.setPixmap(RecursosUI::instancia().icono_reloj());
+    label_icono_reloj.setAttribute(Qt::WA_TransparentForMouseEvents);
+    layout_tiempo_jugado.addWidget(&label_icono_reloj);
+
+    label_tiempo_jugado.setText(formatear_tiempo_jugado(info_partida.segundos_jugados));
+    label_tiempo_jugado.setAttribute(Qt::WA_TransparentForMouseEvents);
+    label_tiempo_jugado.setProperty("class", "label_partida_tiempo");
+    layout_tiempo_jugado.addWidget(&label_tiempo_jugado);
+
+    layout_textos_derecha.addLayout(&layout_tiempo_jugado);
+    layout_derecha.addLayout(&layout_textos_derecha);
 
     RecursosUI::instancia().configurar_boton_eliminar(&btn_eliminar);
     btn_eliminar.setToolTip("Eliminar partida guardada");
     btn_eliminar.installEventFilter(this);
     connect(&btn_eliminar, &QPushButton::clicked, this, &TarjetaPartida::al_hacer_clic_eliminar);
-    layout_superior_derecha.addWidget(&btn_eliminar);
+    layout_derecha.addWidget(&btn_eliminar, 0, Qt::AlignTop);
 
-    layout_derecha.addLayout(&layout_superior_derecha);
     layout_principal.addLayout(&layout_derecha);
 }
 
@@ -257,4 +287,25 @@ QImage TarjetaPartida::recortar_silueta(const QImage& imagen) const {
         return imagen;
     }
     return imagen.copy(min_x, min_y, max_x - min_x + 1, max_y - min_y + 1);
+}
+
+QString TarjetaPartida::formatear_fecha(uint32_t dia) const {
+    if (dia == 0) {
+        dia = 1;
+    }
+    const uint32_t dias_pasados = dia - 1;
+    const uint32_t dia_estacion = (dias_pasados % DIAS_POR_ESTACION) + 1;
+    const uint32_t indice_estacion = (dias_pasados / DIAS_POR_ESTACION) % ESTACIONES_POR_ANIO;
+    const uint32_t anio = (dias_pasados / DIAS_POR_ANIO) + 1;
+
+    return QString("Dia %1 de %2, Ano %3")
+        .arg(dia_estacion)
+        .arg(NOMBRES_ESTACIONES[indice_estacion])
+        .arg(anio);
+}
+
+QString TarjetaPartida::formatear_tiempo_jugado(uint32_t segundos) const {
+    const uint32_t horas = segundos / SEGUNDOS_POR_HORA;
+    const uint32_t minutos = (segundos % SEGUNDOS_POR_HORA) / SEGUNDOS_POR_MINUTO;
+    return QString("%1:%2").arg(horas).arg(minutos, 2, 10, QChar('0'));
 }

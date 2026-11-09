@@ -46,6 +46,8 @@ private:
     ConfiguracionJugador crear_configuracion_desde_apariencia(
         const AparienciaPersonaje& apariencia) const;
     QImage recortar_silueta(const QImage& imagen) const;
+    QString formatear_fecha(uint32_t dia) const;
+    QString formatear_tiempo_jugado(uint32_t segundos) const;
 
     InfoPartida info_partida;
     int numero_slot;
@@ -56,11 +58,15 @@ private:
     QLabel label_avatar;
     QVBoxLayout layout_info;
     QLabel label_nombre_personaje;
+    QLabel label_fecha;
     QLabel label_estado;
-    QVBoxLayout layout_derecha;
-    QHBoxLayout layout_superior_derecha;
+    QHBoxLayout layout_derecha;
+    QVBoxLayout layout_textos_derecha;
     QLabel label_nombre_granja;
     QPushButton btn_eliminar;
+    QHBoxLayout layout_tiempo_jugado;
+    QLabel label_icono_reloj;
+    QLabel label_tiempo_jugado;
 };
 
 #endif  // TARJETA_PARTIDA_H

@@ -48,6 +48,8 @@ struct InfoPartida {
     uint8_t jugadores_conectados = 0;
     uint8_t jugadores_totales = 0;
     uint8_t jugadores_maximos = 0;
+    uint32_t dia = 1;
+    uint32_t segundos_jugados = 0;
 };
 
 struct ListaPartidas {

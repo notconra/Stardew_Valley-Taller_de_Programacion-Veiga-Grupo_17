@@ -30,6 +30,8 @@ private:
     uint8_t jugadores_maximos;
     bool multijugador;
     std::vector<Jugador> jugadores;
+    uint32_t dia = 1;
+    uint32_t segundos_jugados = 0;
 
     Jugador* buscar_jugador(uint32_t id_cliente);
 
@@ -48,12 +50,17 @@ public:
     Partida(
         const std::string& codigo_de_partida, const std::string& nombre_de_partida,
         uint8_t maximo_de_jugadores, bool es_multijugador,
-        const std::vector<Jugador>& lista_jugadores);
+        const std::vector<Jugador>& lista_jugadores, uint32_t dia_partida = 1,
+        uint32_t segundos_partida = 0);
 
     const std::string& obtener_nombre() const;
     const std::vector<Jugador>& obtener_jugadores() const;
     const AparienciaPersonaje& obtener_apariencia_jugador(uint32_t id_cliente) const;
     DatosPartidaGuardada generar_datos_guardado(const DatosMundoGuardado& datos_mundo) const;
+    void actualizar_dia(uint32_t nuevo_dia);
+    void actualizar_segundos_jugados(uint32_t nuevos_segundos);
+    uint32_t obtener_dia() const;
+    uint32_t obtener_segundos_jugados() const;
 
     // Devuelve true si el cliente tiene lugar en la partida, esté conectado o no.
     bool es_miembro(uint32_t id_cliente) const;

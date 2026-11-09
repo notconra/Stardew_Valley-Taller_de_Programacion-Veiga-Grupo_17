@@ -24,6 +24,7 @@
 constexpr const char* RUTA_CUERPO_MASCULINO = "Assets/Characters/Farmer/farmer_base.png";
 constexpr const char* RUTA_CUERPO_FEMENINO = "Assets/Characters/Farmer/farmer_girl_base.png";
 constexpr const char* RUTA_FUENTE_STARDEW = "Assets/Fonts/stardew-valley.ttf/stardew-valley.ttf";
+constexpr const char* RUTA_FUENTE_DIALOGO = "Assets/fuentes/Stardew_Valley_Dialogue.ttf";
 
 constexpr int CANTIDAD_PIELES = 24;
 constexpr int CANTIDAD_PEINADOS = 56;
@@ -44,6 +45,7 @@ PantallaPrincipal::PantallaPrincipal(
       partida_actual(partida_actual),
       configuracion_jugador(configuracion_jugador) {
     QFontDatabase::addApplicationFont(RUTA_FUENTE_STARDEW);
+    QFontDatabase::addApplicationFont(RUTA_FUENTE_DIALOGO);
     ui->setupUi(this);
     configurar_ventana();
     inicializar_selectores_personaje();

@@ -196,6 +196,8 @@ InfoPartida ProtocoloCliente::recibir_info_partida() {
     uint8_t jugadores_conectados = recibir_u8();
     uint8_t jugadores_totales = recibir_u8();
     uint8_t jugadores_maximos = recibir_u8();
+    uint32_t dia = recibir_u32();
+    uint32_t segundos_jugados = recibir_u32();
 
     return InfoPartida{
         codigo_partida,
@@ -205,7 +207,9 @@ InfoPartida ProtocoloCliente::recibir_info_partida() {
         multijugador,
         jugadores_conectados,
         jugadores_totales,
-        jugadores_maximos};
+        jugadores_maximos,
+        dia,
+        segundos_jugados};
 }
 
 ListaPartidas ProtocoloCliente::recibir_lista_partidas() {

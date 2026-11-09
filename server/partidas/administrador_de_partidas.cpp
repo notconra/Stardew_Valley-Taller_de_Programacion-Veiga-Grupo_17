@@ -77,8 +77,14 @@ std::vector<InfoPartida> AdministradorDePartidas::listar(uint32_t id_cliente) co
     std::lock_guard<std::mutex> lock(mutex);
 
     std::vector<InfoPartida> info_partidas;
-    for (const auto& entrada : partidas) {
+    for (auto& entrada : const_cast<std::map<std::string, Partida>&>(partidas)) {
         if (entrada.second.es_miembro(id_cliente)) {
+            auto sesion_it = sesiones.find(entrada.first);
+            if (sesion_it != sesiones.end() && sesion_it->second) {
+                entrada.second.actualizar_dia(sesion_it->second->obtener_dia());
+                entrada.second.actualizar_segundos_jugados(
+                    sesion_it->second->obtener_segundos_jugados());
+            }
             info_partidas.push_back(entrada.second.info(id_cliente));
         }
     }
@@ -381,7 +387,14 @@ void AdministradorDePartidas::cargar_partida(const std::string& ruta_archivo) {
 
     partidas.emplace(
         datos.codigo,
-        Partida(datos.codigo, datos.nombre, datos.jugadores_maximos, datos.multijugador, miembros));
+        Partida(
+            datos.codigo,
+            datos.nombre,
+            datos.jugadores_maximos,
+            datos.multijugador,
+            miembros,
+            datos.mundo.dia,
+            datos.mundo.segundos_jugados));
 
     if (datos.codigo.size() > 1 && datos.codigo[0] == 'P') {
         try {
@@ -438,6 +451,9 @@ void AdministradorDePartidas::guardar_partida(const std::string& codigo_partida)
 
     DatosMundoGuardado datos_mundo =
         sesion.obtener_datos_guardado(partida.obtener_jugadores(), jugadores_guardados_previos);
+
+    partida.actualizar_dia(datos_mundo.dia);
+    partida.actualizar_segundos_jugados(datos_mundo.segundos_jugados);
 
     std::filesystem::create_directories("partidas");
     SerializadorPartida::guardar_en_archivo(
