@@ -109,7 +109,7 @@ HudInventario::Disposicion HudInventario::disponer(
             (d.columnas_del_cofre * d.tamano) + ((d.columnas_del_cofre - 1) * SEPARACION_RANURAS);
         const int alto = (filas * d.tamano) + ((filas - 1) * SEPARACION_RANURAS);
         const int alto_del_boton = std::max(TAMANO_MINIMO_DE_RANURA, d.tamano * 3 / 5);
-        const int ancho_del_boton = std::max(1.5 * TAMANO_MINIMO_DE_RANURA, d.tamano);
+        const int ancho_del_boton = std::max((3 * TAMANO_MINIMO_DE_RANURA) / 2, d.tamano);
         const int cofre_x = std::max(MARGEN, (ancho_ventana - ancho) / 2);
         const int cofre_y = std::max(
             MARGEN + alto_del_boton + (2 * SEPARACION_RANURAS),
@@ -215,15 +215,39 @@ bool HudInventario::captura_el_clic(
     return hay_item_levantado() || sobre_el_hud(disponer(inventario, cofre), x, y);
 }
 
-std::optional<ComandoCliente> HudInventario::procesar_clic(
-    const InventarioJugador& inventario, const CofreJugador& cofre, int x, int y,
+std::optional<ComandoCliente> HudInventario::transferir_rapido(
+    const InventarioJugador& inventario, const CofreJugador& cofre, const RanuraApuntada& origen,
     bool clic_derecho) {
+    const bool desde_el_cofre = origen.zona == ZonaDelHud::COFRE;
+    if (!desde_el_cofre && origen.zona != ZonaDelHud::BARRA) {
+        return std::nullopt;
+    }
+    if (!tiene_algo(ranura_de(inventario, cofre, origen))) {
+        return std::nullopt;
+    }
+
+    return ComandoCliente{MoverItemConCofre{
+        indice_u8(origen.indice),
+        INDICE_RANURA_AUTOMATICA,
+        clic_derecho ? uint16_t{1} : TODO_EL_STACK,
+        desde_el_cofre}};
+}
+
+std::optional<ComandoCliente> HudInventario::procesar_clic(
+    const InventarioJugador& inventario, const CofreJugador& cofre, int x, int y, bool clic_derecho,
+    bool con_shift) {
     const Disposicion disposicion = disponer(inventario, cofre);
     const RanuraApuntada destino = ranura_en(disposicion, x, y);
 
     if (destino.zona == ZonaDelHud::CERRAR_COFRE) {
         cancelar_levantamiento();
         return ComandoCliente{CerrarCofre{}};
+    }
+
+    // Shift + clic sobre la barra o el cofre: transferencia directa al otro contenedor.
+    if (con_shift && cofre.abierto && !hay_item_levantado() &&
+        (destino.zona == ZonaDelHud::BARRA || destino.zona == ZonaDelHud::COFRE)) {
+        return transferir_rapido(inventario, cofre, destino, clic_derecho);
     }
 
     // Mano vacía: agarrar.

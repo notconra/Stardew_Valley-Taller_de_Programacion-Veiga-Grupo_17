@@ -177,6 +177,35 @@ bool Inventario::transferir_a(
     return true;
 }
 
+bool Inventario::transferir_a_la_primera_ranura(
+    Inventario& destino, uint8_t indice_origen, uint16_t cantidad) {
+    if (&destino == this || !indice_valido(indice_origen)) {
+        return false;
+    }
+    const RanuraInventario& desde = ranuras[indice_origen];
+    if (desde.tipo == TipoItem::NINGUNO) {
+        return false;
+    }
+    const uint16_t a_mover = resolver_cantidad(cantidad, desde);
+    if (a_mover == 0) {
+        return false;
+    }
+
+    for (int i = 0; i < destino.cantidad_ranuras(); ++i) {
+        if (destino.ranuras[i].tipo != TipoItem::NINGUNO &&
+            destino.espacio_en(destino.ranuras[i], desde) >= a_mover) {
+            return transferir_a(destino, indice_origen, static_cast<uint8_t>(i), a_mover);
+        }
+    }
+
+    for (int i = 0; i < destino.cantidad_ranuras(); ++i) {
+        if (destino.ranuras[i].tipo == TipoItem::NINGUNO) {
+            return transferir_a(destino, indice_origen, static_cast<uint8_t>(i), a_mover);
+        }
+    }
+    return false;
+}
+
 void Inventario::vaciar_ranura(uint8_t indice) {
     if (indice_valido(indice)) {
         ranuras[indice] = RanuraInventario{};

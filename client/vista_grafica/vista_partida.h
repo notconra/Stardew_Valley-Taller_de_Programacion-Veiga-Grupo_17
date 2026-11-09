@@ -102,7 +102,7 @@ private:
     void elegir_ranura_de_la_barra(const EntradaDelUsuario::Pedidos& pedidos);
     void procesar_clic(
         const EntradaDelUsuario& entrada, HudInventario& hud, const Camara& camara,
-        bool clic_derecho);
+        bool clic_derecho, bool con_shift);
 
     bool recibir_eventos(VistaChat& chat);
     void aplicar(const EventoServidor& evento, VistaChat& chat);

@@ -17,6 +17,7 @@ public:
         bool multijugador = false;  // M (para probar)
         bool clic_izquierdo = false;
         bool clic_derecho = false;
+        bool con_shift = false;       // Shift estaba apretado al hacer el clic
         int ranura_de_la_barra = -1;  // 1-9 y 0 (ranuras 0 a 9), -1 si no se apretó ninguna
         int giro_de_la_barra = 0;     // rueda: positivo avanza a la ranura siguiente
         int rueda = 0;                // rueda sin interpretar: positivo hacia arriba

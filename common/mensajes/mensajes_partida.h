@@ -71,7 +71,9 @@ struct MoverItemEntreRanuras {
 
 // Mueve un stack entre la barra del jugador y el cofre que tiene abierto.
 // origen y destino son ranuras del contenedor que corresponda según desde_el_cofre.
-// cantidad == 0 mueve el stack completo. Si no entra todo, no se mueve nada.
+// destino == INDICE_RANURA_AUTOMATICA hace que el servidor elija la primera ranura compatible con
+// espacio o, si no hay, una vacía. cantidad == 0 mueve el stack completo. Si no entra todo, no se
+// mueve nada.
 struct MoverItemConCofre {
     uint8_t origen = 0;
     uint8_t destino = 0;

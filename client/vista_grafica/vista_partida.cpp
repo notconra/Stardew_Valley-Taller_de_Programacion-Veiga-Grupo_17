@@ -351,10 +351,10 @@ void VistaPartida::procesar_entrada(
 
     if (!consumo_del_chat.clic) {
         if (pedidos.clic_izquierdo) {
-            procesar_clic(entrada, hud, camara, false);
+            procesar_clic(entrada, hud, camara, false, pedidos.con_shift);
         }
         if (pedidos.clic_derecho) {
-            procesar_clic(entrada, hud, camara, true);
+            procesar_clic(entrada, hud, camara, true, pedidos.con_shift);
         }
     }
 }
@@ -379,7 +379,8 @@ void VistaPartida::elegir_ranura_de_la_barra(const EntradaDelUsuario::Pedidos& p
 }
 
 void VistaPartida::procesar_clic(
-    const EntradaDelUsuario& entrada, HudInventario& hud, const Camara& camara, bool clic_derecho) {
+    const EntradaDelUsuario& entrada, HudInventario& hud, const Camara& camara, bool clic_derecho,
+    bool con_shift) {
     if (hud.captura_el_clic(
             ultimo_inventario,
             ultimo_cofre,
@@ -390,7 +391,8 @@ void VistaPartida::procesar_clic(
             ultimo_cofre,
             entrada.raton_x(),
             entrada.raton_y(),
-            clic_derecho);
+            clic_derecho,
+            con_shift);
         if (comando.has_value()) {
             conexion.enviar_comando(*comando);
         }

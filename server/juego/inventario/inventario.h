@@ -72,6 +72,11 @@ public:
     bool transferir_a(
         Inventario& destino, uint8_t indice_origen, uint8_t indice_destino, uint16_t cantidad);
 
+    // Igual que transferir_a, pero elige la ranura destino, primero un stack compatible con
+    // espacio suficiente y, si no hay, una ranura vacía. Devuelve false si no entra en ninguna.
+    bool transferir_a_la_primera_ranura(
+        Inventario& destino, uint8_t indice_origen, uint16_t cantidad);
+
     void vaciar_ranura(uint8_t indice);
 };
 

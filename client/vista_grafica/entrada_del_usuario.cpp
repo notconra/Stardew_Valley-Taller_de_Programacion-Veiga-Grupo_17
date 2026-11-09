@@ -58,6 +58,7 @@ void EntradaDelUsuario::procesar(const SDL_Event& evento) {
     } else if (evento.type == SDL_MOUSEBUTTONDOWN) {
         posicion_raton_x = evento.button.x;
         posicion_raton_y = evento.button.y;
+        pedidos_actuales.con_shift = (SDL_GetModState() & KMOD_SHIFT) != 0;
         if (evento.button.button == SDL_BUTTON_LEFT) {
             pedidos_actuales.clic_izquierdo = true;
         } else if (evento.button.button == SDL_BUTTON_RIGHT) {
