@@ -1,6 +1,5 @@
 #include "mapa.h"
 
-#include <algorithm>
 #include <cstddef>
 #include <map>
 #include <set>
@@ -103,7 +102,6 @@ Mapa::Mapa(const ConfiguracionMapaServidor& configuracion) {
             transicion_tmx.fila_destino};
         transiciones.emplace_back(zona, transicion);
     }
-    liberar_transiciones();
 }
 
 void Mapa::marcar(const std::vector<int>& capa, uint8_t propiedad, const std::string& nombre_capa) {
@@ -127,26 +125,6 @@ void Mapa::marcar_si_es_alguno(
     for (std::size_t i = 0; i < capa.size(); ++i) {
         if (buscados.contains(capa[i] & MASCARA_ID_DE_TILE)) {
             propiedades[i] = static_cast<uint8_t>(propiedades[i] | propiedad);
-        }
-    }
-}
-
-void Mapa::liberar_transiciones() {
-    for (const std::pair<Rectangulo, Transicion>& par : transiciones) {
-        const Rectangulo& zona = par.first;
-        const int primera_columna = std::max(0, zona.x / ancho_de_casilla);
-        const int ultima_columna =
-            std::min(ancho_en_casillas - 1, (zona.x + zona.ancho - 1) / ancho_de_casilla);
-        const int primera_fila = std::max(0, zona.y / alto_de_casilla);
-        const int ultima_fila =
-            std::min(alto_en_casillas - 1, (zona.y + zona.alto - 1) / alto_de_casilla);
-        for (int fila = primera_fila; fila <= ultima_fila; ++fila) {
-            for (int columna = primera_columna; columna <= ultima_columna; ++columna) {
-                const std::size_t indice =
-                    static_cast<std::size_t>(fila) * ancho_en_casillas + columna;
-                propiedades[indice] =
-                    static_cast<uint8_t>(propiedades[indice] & ~PropiedadDeCasilla::BLOQUEA);
-            }
         }
     }
 }
@@ -206,6 +184,15 @@ const Transicion* Mapa::transicion_en_casilla(int columna, int fila) const {
         ancho_de_casilla,
         alto_de_casilla};
     return transicion_en(casilla);
+}
+
+bool Mapa::cerca_de_una_transicion(int columna, int fila) const {
+    const Rectangulo alrededor{
+        (columna - 1) * ancho_de_casilla,
+        (fila - 1) * alto_de_casilla,
+        3 * ancho_de_casilla,
+        3 * alto_de_casilla};
+    return transicion_en(alrededor) != nullptr;
 }
 
 const std::vector<std::pair<Rectangulo, Transicion>>& Mapa::obtener_transiciones() const {

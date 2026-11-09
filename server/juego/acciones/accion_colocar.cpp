@@ -1,21 +1,55 @@
 #include "accion_colocar.h"
 
-bool AccionColocar::ejecutar(ContextoDeAccion& c) {
+#include <algorithm>
+#include <string>
+#include <vector>
+
+bool AccionColocar::se_puede_colocar(const ContextoDeAccion& c) const {
     const DefinicionDeObjeto* definicion =
         c.recursos.catalogo_de_objetos.buscar_por_item(c.item.tipo);
     if (definicion == nullptr) {
         return false;
     }
 
-    // Validar que ningún jugador esté parado en la casilla objetivo para evitar atascamientos
-    const auto ids_jugadores = c.sector.jugadores.ids();
-    for (uint32_t id_j : ids_jugadores) {
-        auto casilla_j = c.sector.jugadores.casilla_del_jugador(id_j);
-        if (casilla_j.has_value() && casilla_j->columna == c.objetivo.columna &&
-            casilla_j->fila == c.objetivo.fila) {
-            return false;  // No se puede colocar un objeto encima de un jugador
+    // Algunos objetos solo van en ciertos mapas (la cama, en la casa).
+    const std::vector<std::string>& permitidos = definicion->mapas_permitidos;
+    if (!permitidos.empty() &&
+        std::find(permitidos.begin(), permitidos.end(), c.sector.id) == permitidos.end()) {
+        return false;
+    }
+
+    const int ancho_casilla = c.sector.mapa.ancho_de_casilla_en_pixeles();
+    const int alto_casilla = c.sector.mapa.alto_de_casilla_en_pixeles();
+    const Rectangulo zona{
+        c.objetivo.columna * ancho_casilla,
+        c.objetivo.fila * alto_casilla,
+        definicion->ancho_en_casillas * ancho_casilla,
+        definicion->alto_en_casillas * alto_casilla};
+    if (c.sector.jugadores.hay_alguien_en(zona)) {
+        return false;
+    }
+
+    for (int fila = c.objetivo.fila; fila < c.objetivo.fila + definicion->alto_en_casillas;
+         ++fila) {
+        for (int columna = c.objetivo.columna;
+             columna < c.objetivo.columna + definicion->ancho_en_casillas;
+             ++columna) {
+            if (c.sector.mapa.cerca_de_una_transicion(columna, fila)) {
+                return false;
+            }
         }
     }
+
+    // Que todas sus casillas estén dentro del mapa y libres.
+    return c.sector.objetos.se_puede_colocar(definicion->tipo, c.objetivo.columna, c.objetivo.fila);
+}
+
+bool AccionColocar::ejecutar(ContextoDeAccion& c) {
+    if (!se_puede_colocar(c)) {
+        return false;
+    }
+    const DefinicionDeObjeto* definicion =
+        c.recursos.catalogo_de_objetos.buscar_por_item(c.item.tipo);
 
     // Falla si la casilla ya tiene un objeto o está bloqueada. Si sale bien, el sector ya avisó
     // a los jugadores.

@@ -70,6 +70,17 @@ ObjetosGraficos::ObjetosGraficos(
             throw std::invalid_argument(
                 "objetos gráficos: un aspecto necesita al menos una variante con peso");
         }
+        if (aspecto.casillas_por_encima < 0 ||
+            aspecto.casillas_por_encima >= aspecto.alto_en_casillas) {
+            throw std::invalid_argument(
+                "objetos gráficos: casillas_por_encima tiene que ser menor que el alto");
+        }
+        for (const VarianteDeAspecto& variante : aspecto.variantes) {
+            if (aspecto.casillas_por_encima > 0 && variante.origen.w <= 0) {
+                throw std::invalid_argument(
+                    "objetos gráficos: un aspecto con casillas_por_encima necesita un recorte");
+            }
+        }
         for (const VarianteDeAspecto& variante : aspecto.variantes) {
             if (!texturas.contains(variante.ruta_de_textura)) {
                 texturas.try_emplace(variante.ruta_de_textura, variante.ruta_de_textura, renderer);
@@ -107,6 +118,12 @@ std::map<TipoObjeto, AspectoDeObjeto> ObjetosGraficos::crear_aspectos_conocidos(
     conocidos.emplace(
         TipoObjeto::COFRE,
         AspectoDeObjeto{{VarianteDeAspecto{RUTA_ASSET_COFRE, SDL_Rect{0, 0, 32, 32}, 1}}});
+
+    AspectoDeObjeto cama{{VarianteDeAspecto{RUTA_ASSET_MUEBLES, SDL_Rect{112, 144, 32, 64}, 1}}};
+    cama.ancho_en_casillas = 2;
+    cama.alto_en_casillas = 4;
+    cama.casillas_por_encima = 1;
+    conocidos.emplace(TipoObjeto::CAMA, cama);
 
     return conocidos;
 }
@@ -147,6 +164,33 @@ void ObjetosGraficos::dibujar_drops(
     }
 }
 
+void ObjetosGraficos::dibujar_filas(
+    SDL_Renderer* renderer, const EstadoObjetoDelMundo& objeto, const AspectoDeObjeto& aspecto,
+    int primera_fila, int ultima_fila, int cam_x, int cam_y) const {
+    const int tamano_en_pantalla = tamano_de_tile * escala_de_tiles;
+    const VarianteDeAspecto& variante = elegir_variante(aspecto, objeto);
+    const int fila_de_arriba = static_cast<int>(objeto.fila) - aspecto.casillas_por_encima;
+    const SDL_Rect destino{
+        static_cast<int>(objeto.columna) * tamano_en_pantalla - cam_x + aspecto.desplazamiento_x,
+        (fila_de_arriba + primera_fila) * tamano_en_pantalla - cam_y + aspecto.desplazamiento_y,
+        aspecto.ancho_en_casillas * tamano_en_pantalla,
+        (ultima_fila - primera_fila) * tamano_en_pantalla};
+
+    // Sin recorte (textura completa) se dibuja entera: solo pasa con casillas_por_encima = 0, que
+    // es cuando se pide del principio al final.
+    if (variante.origen.w <= 0) {
+        SDL_RenderCopy(renderer, texturas.at(variante.ruta_de_textura).ptr(), nullptr, &destino);
+        return;
+    }
+    const int alto_de_fila = variante.origen.h / aspecto.alto_en_casillas;
+    const SDL_Rect origen{
+        variante.origen.x,
+        variante.origen.y + primera_fila * alto_de_fila,
+        variante.origen.w,
+        (ultima_fila - primera_fila) * alto_de_fila};
+    SDL_RenderCopy(renderer, texturas.at(variante.ruta_de_textura).ptr(), &origen, &destino);
+}
+
 void ObjetosGraficos::dibujar_capa(
     SDL_Renderer* renderer, const EstadoJuego& estado, const std::string& mapa, int cam_x,
     int cam_y, CapaDeObjeto capa) const {
@@ -162,27 +206,39 @@ void ObjetosGraficos::dibujar_capa(
         if (objeto.mapa != mapa) {
             continue;
         }
-
         const auto encontrado = aspectos.find(objeto.tipo);
-        if (encontrado == aspectos.end() || encontrado->second.capa != capa) {
+        if (encontrado == aspectos.end()) {
             continue;
         }
         const AspectoDeObjeto& aspecto = encontrado->second;
 
-        const SDL_Rect destino{
+        // Las filas de arriba (la cabecera de la cama) siempre van sobre los jugadores; el resto,
+        // en la capa que diga el aspecto. Lo que queda fuera de la pantalla no se dibuja.
+        const int fila_de_arriba = static_cast<int>(objeto.fila) - aspecto.casillas_por_encima;
+        const SDL_Rect ocupa{
             static_cast<int>(objeto.columna) * tamano_en_pantalla - cam_x +
                 aspecto.desplazamiento_x,
-            static_cast<int>(objeto.fila) * tamano_en_pantalla - cam_y + aspecto.desplazamiento_y,
+            fila_de_arriba * tamano_en_pantalla - cam_y + aspecto.desplazamiento_y,
             aspecto.ancho_en_casillas * tamano_en_pantalla,
             aspecto.alto_en_casillas * tamano_en_pantalla};
-        if (!esta_en_pantalla(destino, ancho_de_pantalla, alto_de_pantalla)) {
+        if (!esta_en_pantalla(ocupa, ancho_de_pantalla, alto_de_pantalla)) {
             continue;
         }
-        const VarianteDeAspecto& variante = elegir_variante(aspecto, objeto);
-        SDL_RenderCopy(
-            renderer,
-            texturas.at(variante.ruta_de_textura).ptr(),
-            variante.origen.w > 0 ? &variante.origen : nullptr,
-            &destino);
+        // Las filas de arriba (la cabecera de la cama) siempre van sobre los jugadores; el resto,
+        // en la capa que diga el aspecto.
+        const int por_encima = aspecto.casillas_por_encima;
+        if (capa == CapaDeObjeto::SOBRE_LOS_JUGADORES && por_encima > 0) {
+            dibujar_filas(renderer, objeto, aspecto, 0, por_encima, cam_x, cam_y);
+        }
+        if (aspecto.capa == capa && por_encima < aspecto.alto_en_casillas) {
+            dibujar_filas(
+                renderer,
+                objeto,
+                aspecto,
+                por_encima,
+                aspecto.alto_en_casillas,
+                cam_x,
+                cam_y);
+        }
     }
 }

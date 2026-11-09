@@ -23,8 +23,11 @@ enum class TipoMensaje : uint8_t {
     MOVER_ITEM_CON_COFRE = 0x0D,
     SOLICITAR_INVENTARIO = 0x0E,
     SOLTAR_ITEM = 0x0F,
-    GUARDAR_PARTIDA = 0x10,
-    ELIMINAR_PARTIDA = 0x11,
+    ENVIAR_MENSAJE_DE_CHAT = 0x10,
+    GUARDAR_PARTIDA = 0x11,
+    CONSULTAR_CASILLA = 0x12,
+    DAR_EL_OK = 0x13,
+    ELIMINAR_PARTIDA = 0x14,
 
     // Servidor a cliente
     ERROR_SERVIDOR = 0x81,
@@ -48,6 +51,17 @@ enum class TipoMensaje : uint8_t {
     DROP_RETIRADO = 0x8E,
     ENEMIGO_ACTUALIZADO = 0x8F,
     TIERRA_CAMBIADA = 0x90,
+
+    MENSAJE_DE_CHAT = 0x91,
+
+    // Reloj de la partida
+    HORA_DEL_JUEGO = 0x92,
+
+    // Lo que se marca en el piso con el ítem de la mano
+    CASILLA_CONSULTADA = 0x93,
+
+    // Fin del día: quién está acostado o desmayado y cuántos están listos
+    ESTADO_DEL_DESCANSO = 0x94,
 };
 
 #endif

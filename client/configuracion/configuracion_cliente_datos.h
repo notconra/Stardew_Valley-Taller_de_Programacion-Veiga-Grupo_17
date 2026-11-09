@@ -120,6 +120,21 @@ struct ConfiguracionTierra {
     std::string ruta_sprite;
 };
 
+// Chat in-game.
+struct ConfiguracionChat {
+    std::string ruta_fuente;
+    int tamano_de_fuente = 16;
+    int maximo_de_mensajes = 100;
+
+    // Imagen (.png) del botón cuadrado con el que se abre el chat.
+    std::string ruta_icono;
+
+    // Carpetas con un .png por emoji/emote, el nombre del archivo es el nombre del emoji/emote.
+    // Los archivos se cargan solos al iniciar.
+    std::string ruta_carpeta_de_emojis = "Assets/chat/emojis";
+    std::string ruta_carpeta_de_emotes = "Assets/chat/emotes";
+};
+
 struct ConfiguracionVista {
     ConfiguracionVentana ventana;
     ConfiguracionSDL sdl;
@@ -129,6 +144,7 @@ struct ConfiguracionVista {
     ConfiguracionJugador jugador;
     ConfiguracionSonido sonido;
     ConfiguracionTierra tierra;
+    ConfiguracionChat chat;
 };
 
 #endif

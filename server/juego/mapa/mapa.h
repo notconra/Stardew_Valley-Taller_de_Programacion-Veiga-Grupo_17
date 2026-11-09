@@ -50,10 +50,6 @@ private:
         const std::vector<int>& capa, const std::vector<int>& ids, uint8_t propiedad,
         const std::string& nombre_capa);
 
-    // Las casillas de una transición siempre se pueden pisar, aunque tengan dibujo en la capa de
-    // colisiones.
-    void liberar_transiciones();
-
 public:
     // Lanza std::runtime_error si no puede leer el TMX o la capa de colisiones.
     explicit Mapa(const ConfiguracionMapaServidor& configuracion);
@@ -79,6 +75,11 @@ public:
     // nullptr si no hay ninguna o la casilla está fuera del mapa. Es lo que usa el clic sobre
     // puertas, salidas y escaleras.
     const Transicion* transicion_en_casilla(int columna, int fila) const;
+
+    // Si la casilla es parte de una transición (una puerta, una escalera) o está pegada a una,
+    // también en diagonal. Ahí no se pueden poner objetos: taparían la entrada o la salida, o la
+    // casilla donde aparece el que llega.
+    bool cerca_de_una_transicion(int columna, int fila) const;
 
     // Todas las zonas de transición del mapa, para validarlas al cargar los recursos.
     const std::vector<std::pair<Rectangulo, Transicion>>& obtener_transiciones() const;

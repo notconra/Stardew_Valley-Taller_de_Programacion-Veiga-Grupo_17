@@ -26,9 +26,13 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::DROP_RETIRADO, [this] { return recibir_drop_retirado(); }},
           {TipoMensaje::ENEMIGO_ACTUALIZADO, [this] { return recibir_enemigo_actualizado(); }},
           {TipoMensaje::TIERRA_CAMBIADA, [this] { return recibir_tierra_cambiada(); }},
+          {TipoMensaje::HORA_DEL_JUEGO, [this] { return recibir_hora_del_juego(); }},
+          {TipoMensaje::CASILLA_CONSULTADA, [this] { return recibir_casilla_consultada(); }},
+          {TipoMensaje::ESTADO_DEL_DESCANSO, [this] { return recibir_estado_del_descanso(); }},
           {TipoMensaje::ACTUALIZACION_INVENTARIO,
            [this] { return recibir_actualizacion_inventario(); }},
           {TipoMensaje::ACTUALIZACION_COFRE, [this] { return recibir_actualizacion_cofre(); }},
+          {TipoMensaje::MENSAJE_DE_CHAT, [this] { return recibir_mensaje_de_chat(); }},
       } {
 }
 
@@ -55,6 +59,9 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const MoverItemConCofre& m) { enviar_comando_mover_item_con_cofre(m); },
             [this](const SolicitarInventario& m) { enviar_comando_solicitar_inventario(m); },
             [this](const SoltarItem& m) { enviar_comando_soltar_item(m); },
+            [this](const ConsultarCasilla& m) { enviar_comando_consultar_casilla(m); },
+            [this](const DarElOk& m) { enviar_comando_dar_el_ok(m); },
+            [this](const EnviarMensajeDeChat& m) { enviar_comando_enviar_mensaje_de_chat(m); },
         },
         comando);
 }
@@ -148,6 +155,11 @@ void ProtocoloCliente::enviar_comando_soltar_item(const SoltarItem& soltar) {
     enviar_tipo(TipoMensaje::SOLTAR_ITEM);
     enviar_u8(soltar.ranura);
     enviar_u16(soltar.cantidad);
+}
+
+void ProtocoloCliente::enviar_comando_enviar_mensaje_de_chat(const EnviarMensajeDeChat& mensaje) {
+    enviar_tipo(TipoMensaje::ENVIAR_MENSAJE_DE_CHAT);
+    enviar_texto(mensaje.texto);
 }
 
 // Recepción de eventos
@@ -295,6 +307,16 @@ ActualizacionCofre ProtocoloCliente::recibir_actualizacion_cofre() {
     return ActualizacionCofre{recibir_cofre_jugador()};
 }
 
+MensajeDeChat ProtocoloCliente::recibir_mensaje_de_chat() {
+    MensajeDeChat mensaje;
+    mensaje.canal = canal_de_chat_desde(recibir_u8());
+    mensaje.remitente = recibir_texto();
+    mensaje.destinatario = recibir_texto();
+    mensaje.texto = recibir_texto();
+    mensaje.color_del_remitente = color_de_jugador_desde(recibir_u8());
+    return mensaje;
+}
+
 EstadoDrop ProtocoloCliente::recibir_estado_drop() {
     EstadoDrop estado;
     estado.id = recibir_u32();
@@ -414,6 +436,63 @@ TierraCambiada ProtocoloCliente::recibir_tierra_cambiada() {
     return tierra;
 }
 
+void ProtocoloCliente::enviar_comando_consultar_casilla(const ConsultarCasilla& consultar) {
+    enviar_tipo(TipoMensaje::CONSULTAR_CASILLA);
+    enviar_u32(consultar.columna);
+    enviar_u32(consultar.fila);
+}
+
+void ProtocoloCliente::enviar_comando_dar_el_ok(const DarElOk&) {
+    enviar_tipo(TipoMensaje::DAR_EL_OK);
+}
+
+EstadoDelDescanso ProtocoloCliente::recibir_estado_del_descanso() {
+    EstadoDelDescanso descanso;
+    const uint8_t estado = recibir_u8();
+    if (estado > static_cast<uint8_t>(EstadoDeDescanso::DESMAYADO)) {
+        throw ErrorProtocolo("estado de descanso desconocido");
+    }
+    descanso.estado = static_cast<EstadoDeDescanso>(estado);
+    descanso.dio_el_ok = recibir_booleano();
+    descanso.listos = recibir_u8();
+    descanso.jugadores = recibir_u8();
+    descanso.puede_levantarse = recibir_booleano();
+    return descanso;
+}
+
+CasillaConsultada ProtocoloCliente::recibir_casilla_consultada() {
+    CasillaConsultada consultada;
+    consultada.columna = recibir_u32();
+    consultada.fila = recibir_u32();
+    consultada.ancho = recibir_u8();
+    consultada.alto = recibir_u8();
+    const uint8_t marca = recibir_u8();
+    if (marca > static_cast<uint8_t>(MarcaDeCasilla::INVALIDA)) {
+        throw ErrorProtocolo("marca de casilla desconocida");
+    }
+    consultada.marca = static_cast<MarcaDeCasilla>(marca);
+    return consultada;
+}
+
+HoraDelJuego ProtocoloCliente::recibir_hora_del_juego() {
+    HoraDelJuego hora;
+    hora.dia = recibir_u32();
+    hora.hora = recibir_u8();
+    hora.minuto = recibir_u8();
+    hora.dia_de_la_estacion = recibir_u8();
+    const uint8_t estacion = recibir_u8();
+    if (estacion > static_cast<uint8_t>(Estacion::INVIERNO)) {
+        throw ErrorProtocolo("estación desconocida");
+    }
+    hora.estacion = static_cast<Estacion>(estacion);
+    hora.anio = recibir_u16();
+    hora.dia_de_la_semana = recibir_u8();
+    if (hora.dia_de_la_semana > DIA_DE_LA_SEMANA_MAXIMO) {
+        throw ErrorProtocolo("día de la semana desconocido");
+    }
+    return hora;
+}
+
 void ProtocoloCliente::cerrar() {
     socket.shutdown(SHUT_RDWR);
 }
@@ -432,4 +511,18 @@ Direccion ProtocoloCliente::direccion_desde(uint8_t valor) const {
         throw ErrorProtocolo("dirección desconocida en el protocolo");
     }
     return static_cast<Direccion>(valor);
+}
+
+CanalDeChat ProtocoloCliente::canal_de_chat_desde(uint8_t valor) const {
+    if (valor > static_cast<uint8_t>(CanalDeChat::COMERCIANTE)) {
+        throw ErrorProtocolo("canal de chat desconocido en el protocolo");
+    }
+    return static_cast<CanalDeChat>(valor);
+}
+
+ColorDeJugador ProtocoloCliente::color_de_jugador_desde(uint8_t valor) const {
+    if (valor >= CANTIDAD_DE_COLORES_DE_JUGADOR) {
+        throw ErrorProtocolo("color de jugador desconocido en el protocolo");
+    }
+    return static_cast<ColorDeJugador>(valor);
 }
