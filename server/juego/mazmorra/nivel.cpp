@@ -117,9 +117,6 @@ void Nivel::sortear(
         candidatas.begin(),
         candidatas.begin() + static_cast<std::ptrdiff_t>(total_enemigos));
 
-    // Los objetos ocupan las casillas siguientes a las de los enemigos. No hace falta cuidar que
-    // quede un camino libre hasta la escalera: si el jugador la necesita, puede picar lo que haya
-    // en el medio.
     const size_t total_objetos = static_cast<size_t>(std::max(0, cantidad_objetos));
     size_t siguiente = total_enemigos;
     for (; siguiente < candidatas.size() && celdas_de_objetos.size() < total_objetos; ++siguiente) {

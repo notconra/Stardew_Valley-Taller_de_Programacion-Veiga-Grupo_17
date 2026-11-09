@@ -21,7 +21,7 @@ RecursosDeJuego::RecursosDeJuego(
       catalogo_de_enemigos(crear_catalogo_de_enemigos()),
       mazmorra(configuracion_mazmorra) {
     for (const ConfiguracionMapaServidor& configuracion_mapa : configuracion_mapas) {
-        mapas.emplace(configuracion_mapa.id, Mapa(configuracion_mapa));
+        mapas.emplace(configuracion_mapa.id, Mapa(configuracion_mapa, {DESTINO_ESCALERA}));
         this->configuraciones_mapas.emplace(configuracion_mapa.id, configuracion_mapa);
     }
     validar_catalogo_de_objetos();

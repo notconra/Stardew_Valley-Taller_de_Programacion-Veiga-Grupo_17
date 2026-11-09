@@ -51,10 +51,9 @@ void validar(const std::vector<ConfiguracionMineralServidor>& configurados) {
 }  // namespace
 
 std::vector<ConfiguracionMineralServidor> Minerales::por_defecto() {
-    // Las frecuencias salen del enunciado: la piedra es el relleno de la caverna y tiene que ser
-    // más común que todos los minerales juntos. El carbón es muy común, el lapislázuli
-    // medianamente común, la plata poco común y el oro extremadamente raro (desde la quinta sala).
-    // La cantidad que deja cada uno también es menor cuanto más raro es el mineral.
+    // Las frecuencias salen del enunciado, el carbón es muy común, el lapislázuli medianamente
+    // común, la plata poco común y el oro extremadamente raro (desde la quinta sala). La piedra
+    // es el relleno de la caverna.
     return {
         {.clave = "PIEDRA",
          .golpes_para_picar = 1,

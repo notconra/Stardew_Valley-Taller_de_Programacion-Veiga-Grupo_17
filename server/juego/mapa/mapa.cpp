@@ -28,7 +28,9 @@ const std::map<std::string, uint8_t>& propiedades_disponibles() {
 
 }  // namespace
 
-Mapa::Mapa(const ConfiguracionMapaServidor& configuracion) {
+Mapa::Mapa(
+    const ConfiguracionMapaServidor& configuracion,
+    const std::vector<std::string>& destinos_que_conservan_colision) {
     const LectorDeMapasTMX lector(configuracion.ruta_tmx);
     const TamanioMapa tamanio = lector.leer_tamanio();
 
@@ -103,7 +105,7 @@ Mapa::Mapa(const ConfiguracionMapaServidor& configuracion) {
             transicion_tmx.fila_destino};
         transiciones.emplace_back(zona, transicion);
     }
-    liberar_transiciones();
+    ajustar_colisiones_de_transiciones(destinos_que_conservan_colision);
 }
 
 void Mapa::marcar(const std::vector<int>& capa, uint8_t propiedad, const std::string& nombre_capa) {
@@ -131,8 +133,14 @@ void Mapa::marcar_si_es_alguno(
     }
 }
 
-void Mapa::liberar_transiciones() {
+void Mapa::ajustar_colisiones_de_transiciones(
+    const std::vector<std::string>& destinos_que_conservan_colision) {
     for (const std::pair<Rectangulo, Transicion>& par : transiciones) {
+        const bool conserva_colision =
+            std::find(
+                destinos_que_conservan_colision.begin(),
+                destinos_que_conservan_colision.end(),
+                par.second.mapa_destino) != destinos_que_conservan_colision.end();
         const Rectangulo& zona = par.first;
         const int primera_columna = std::max(0, zona.x / ancho_de_casilla);
         const int ultima_columna =
@@ -144,8 +152,13 @@ void Mapa::liberar_transiciones() {
             for (int columna = primera_columna; columna <= ultima_columna; ++columna) {
                 const std::size_t indice =
                     static_cast<std::size_t>(fila) * ancho_en_casillas + columna;
-                propiedades[indice] =
-                    static_cast<uint8_t>(propiedades[indice] & ~PropiedadDeCasilla::BLOQUEA);
+                if (conserva_colision) {
+                    propiedades[indice] =
+                        static_cast<uint8_t>(propiedades[indice] | PropiedadDeCasilla::BLOQUEA);
+                } else {
+                    propiedades[indice] =
+                        static_cast<uint8_t>(propiedades[indice] & ~PropiedadDeCasilla::BLOQUEA);
+                }
             }
         }
     }
