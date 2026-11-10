@@ -20,6 +20,8 @@ private:
     Notificador& notificador;
 
     void atacar_en_sector(Sector& sector);
+    // Revisa si algún jugador del sector está gravemente herido o caído cerca de un vampiro muerto.
+    void derramar_sangre_en_sector(Sector& sector);
 
 public:
     ControladorDeEnemigos(
