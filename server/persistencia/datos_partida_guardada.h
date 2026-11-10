@@ -24,6 +24,7 @@ struct DatosJugadorGuardado {
     AparienciaPersonaje apariencia;
     uint16_t vida = VIDA_MAXIMA_JUGADOR;
     uint16_t energia = ENERGIA_MAXIMA_JUGADOR;
+    uint32_t monedas = 0;
     bool tiene_cama = false;
     std::string mapa_cama;
     uint32_t columna_cama = 0;
