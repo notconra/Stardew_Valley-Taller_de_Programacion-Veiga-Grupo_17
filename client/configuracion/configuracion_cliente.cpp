@@ -269,6 +269,14 @@ void ConfiguracionCliente::cargar_sonido(const toml::table& archivo_toml) {
         configuracion_vista.sonido.ruta_pico_rotura =
             lector_toml::leer_texto_opcional(*pico, "rotura", "sonido.pico", "");
     }
+    if (const toml::table* trampas = sonido["trampas"].as_table()) {
+        configuracion_vista.sonido.ruta_trampa_activada =
+            lector_toml::leer_texto_opcional(*trampas, "activar", "sonido.trampas", "");
+    }
+    if (const toml::table* jugador = sonido["jugador"].as_table()) {
+        configuracion_vista.sonido.ruta_jugador_danio =
+            lector_toml::leer_texto_opcional(*jugador, "danio", "sonido.jugador", "");
+    }
     if (const toml::table* enemigos = sonido["enemigos"].as_table()) {
         for (const auto& [clave, tipo] : ENEMIGOS_CON_SONIDO) {
             const toml::table* enemigo = (*enemigos)[clave].as_table();

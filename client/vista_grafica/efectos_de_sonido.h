@@ -40,6 +40,8 @@ private:
     Mix_Chunk* pico_golpe = nullptr;
     Mix_Chunk* pico_rotura = nullptr;
     std::map<TipoEnemigo, SonidosCargadosDeEnemigo> sonidos_de_enemigos;
+    Mix_Chunk* trampa_activada = nullptr;
+    Mix_Chunk* jugador_danio = nullptr;
 
     Mix_Chunk* cargar(const std::string& ruta);
     static void reproducir(Mix_Chunk* sonido);
@@ -72,6 +74,12 @@ public:
     // Un enemigo apareció en el sector mientras el jugador ya estaba ahí. Suena el grito de
     // aparición de su tipo, como mucho uno cada MS_ENTRE_GRITOS_DE_APARICION.
     void enemigo_aparecio(const EstadoEnemigo& enemigo) const;
+
+    // Unos pinches cerca del jugador salieron.
+    void reproducir_trampa_activada() const;
+
+    // El jugador propio perdió vida (lo golpeó un enemigo o lo quemó una trampa).
+    void reproducir_jugador_danio() const;
 };
 
 #endif

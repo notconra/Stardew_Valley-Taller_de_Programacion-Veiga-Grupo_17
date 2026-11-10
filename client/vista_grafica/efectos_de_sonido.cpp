@@ -30,6 +30,12 @@ EfectosDeSonido::EfectosDeSonido(const ConfiguracionSonido& configuracion):
                                 ? nullptr
                                 : cargar(rutas.ruta_aparicion);
     }
+    trampa_activada = configuracion.ruta_trampa_activada.empty()
+                          ? nullptr
+                          : cargar(configuracion.ruta_trampa_activada);
+    jugador_danio = configuracion.ruta_jugador_danio.empty()
+                        ? nullptr
+                        : cargar(configuracion.ruta_jugador_danio);
     cambiar_paso("");
 }
 
@@ -71,6 +77,14 @@ void EfectosDeSonido::reproducir(Mix_Chunk* sonido) {
     if (sonido != nullptr) {
         Mix_PlayChannel(-1, sonido, 0);
     }
+}
+
+void EfectosDeSonido::reproducir_trampa_activada() const {
+    reproducir(trampa_activada);
+}
+
+void EfectosDeSonido::reproducir_jugador_danio() const {
+    reproducir(jugador_danio);
 }
 
 void EfectosDeSonido::reproducir_paso() const {

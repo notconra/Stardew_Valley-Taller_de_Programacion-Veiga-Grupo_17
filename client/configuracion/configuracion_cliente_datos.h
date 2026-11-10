@@ -123,6 +123,9 @@ struct ConfiguracionSonido {
     std::string ruta_pico_golpe;
     std::string ruta_pico_rotura;
     std::map<TipoEnemigo, SonidosDeEnemigo> sonidos_de_enemigos;
+    // Vacías: no suena nada.
+    std::string ruta_trampa_activada;  // [sonido.trampas] activar
+    std::string ruta_jugador_danio;    // [sonido.jugador] danio: el jugador propio perdió vida
 };
 
 // Cómo se ve la tierra tratada. La textura es la de Stardew (hoeDirt.png); el resto del dibujado

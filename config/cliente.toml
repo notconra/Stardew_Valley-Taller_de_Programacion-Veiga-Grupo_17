@@ -26,7 +26,7 @@ redimensionable = false
 # el renderer por software de SDL, que evita que use OpenGL los hilos para de llvmpipe emular la GPU.
 acelerado = false
 vsync = true
-fps_maximos = 30
+fps_maximos = 60
 
 [chat]
 ruta_fuente = "Assets/fuentes/Stardew_Valley.ttf"
@@ -494,6 +494,12 @@ regadera = "Assets/sfx/regadera.wav"
 [sonido.pico]
 golpe = "Assets/sfx/pico_golpe.wav"
 rotura = "Assets/sfx/pico_rotura.wav"
+
+[sonido.trampas]
+activar = "Assets/sfx/activar_trampa_pinches.wav"
+
+[sonido.jugador]
+danio = "Assets/sfx/recibir_dano.wav"
 
 [sonido.enemigos.esqueleto]
 golpe = "Assets/sfx/esqueleto_golpe.wav"
