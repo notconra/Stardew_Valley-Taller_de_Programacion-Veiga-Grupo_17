@@ -52,10 +52,12 @@ struct DefinicionDeEnemigo {
 
     // Oro que suelta al morir (ver sección "Oro" del enunciado: "todos los enemigos pueden
     // droppear oro al morir"). Se sortea un entero uniforme en [oro_minimo, oro_maximo]; ambos en
-    // cero significa que ese tipo no deja oro directamente (por ejemplo, si solo puede dejar
-    // plata, como el Orco).
+    // cero significa que ese tipo no deja oro.
     uint16_t oro_minimo = 0;
     uint16_t oro_maximo = 0;
+
+    // Probabilidad (0.0 a 1.0) de que al morir deje además una plata (los Orcos: 20%).
+    double probabilidad_de_plata = 0.0;
 
     // Vampiros: muertos no reviven solos (ticks_para_revivir se cuenta recién desde que cae
     // sangre), y la sangre cae cuando un jugador queda gravemente herido o inconsciente a

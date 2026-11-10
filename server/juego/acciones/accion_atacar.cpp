@@ -43,5 +43,9 @@ bool AccionAtacar::ejecutar(ContextoDeAccion& c) {
                 posicion.fila);
         }
     }
+    if (definicion != nullptr && Azar::con_probabilidad(definicion->probabilidad_de_plata)) {
+        c.sector.soltar(
+            c.notificador, TipoItem::PLATA, 1, Calidad::BASE, posicion.columna, posicion.fila);
+    }
     return true;
 }
