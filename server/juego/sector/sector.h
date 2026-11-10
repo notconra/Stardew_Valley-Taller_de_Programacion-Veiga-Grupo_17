@@ -41,6 +41,7 @@ public:
     Jugadores jugadores;
     Drops drops;
     GestorDeEnemigos enemigos;
+    int nivel_de_mazmorra = 0;
 
     // "recursos" tiene que vivir más que el Sector y tener el mapa "id_mapa" cargado.
     Sector(const std::string& id_mapa, const RecursosDeJuego& recursos, uint8_t ticks_por_segundo)
@@ -53,7 +54,7 @@ public:
           jugadores(
               mapa, colisiones, ticks_por_segundo, recursos.juego.movimiento,
               recursos.juego.aparicion),
-          enemigos(recursos.catalogo_de_enemigos) {
+          enemigos(recursos.catalogo_de_enemigos, ticks_por_segundo) {
         registrar_manejadores_de_modificaciones();
     }
 
@@ -100,6 +101,14 @@ public:
     // EnemigoActualizado (con vida en 0 si lo mató). El oro que suelta lo maneja quien llama, con
     // soltar().
     ResultadoDeGolpeEnemigo golpear_enemigo(Notificador& notificador, int id_enemigo, int danio);
+
+    // Hace aparecer un grupo de hasta "cantidad" enemigos juntos, a unas "distancia" casillas del
+    // jugador (justo fuera de lo que ve) y en un lugar al que se puede llegar caminando desde él.
+    // Aparecen ya persiguiéndolo. Avisa a los jugadores del sector con un EnemigoActualizado por
+    // cada uno. Devuelve cuántos aparecieron.
+    int aparecer_grupo_persiguiendo(
+        Notificador& notificador, uint32_t id_jugador, int distancia, int cantidad,
+        TipoEnemigo tipo);
 
     // Deja un ítem en el piso y avisa a los jugadores del sector. Devuelve el id del drop, o 0 si
     // la casilla está fuera del mapa o no había nada que dejar.
