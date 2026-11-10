@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#include "../azar.h"
+
 void AccionPicar::soltar_contenido_de_cofre(
     ContextoDeAccion& c, int id_cofre, int columna, int fila) {
     const std::vector<RanuraInventario> contenido = c.sector.cofres.retirar_contenido(id_cofre);
@@ -11,6 +13,20 @@ void AccionPicar::soltar_contenido_de_cofre(
         }
         c.sector.soltar(c.notificador, ranura.tipo, ranura.cantidad, ranura.calidad, columna, fila);
     }
+}
+
+void AccionPicar::quizas_avecinar_manada_de_orcos(ContextoDeAccion& c) {
+    if (c.sector.nivel_de_mazmorra <= 0) {
+        return;
+    }
+    const ConfiguracionOrcosServidor& orcos = c.recursos.mazmorra.orco;
+    if (!Azar::con_probabilidad(orcos.probabilidad_de_manada_por_plata)) {
+        return;
+    }
+    const int tamano = Azar::entero(orcos.tamano_grupo_minimo, orcos.tamano_grupo_maximo);
+    c.sector.aparecer_grupo_persiguiendo(
+        c.notificador, c.id_jugador, orcos.distancia_de_aparicion_de_manada, tamano,
+        TipoEnemigo::ORCO);
 }
 
 bool AccionPicar::ejecutar(ContextoDeAccion& c) {
@@ -46,6 +62,9 @@ bool AccionPicar::ejecutar(ContextoDeAccion& c) {
             Calidad::BASE,
             columna,
             fila);
+        if (golpe.rotura.producto == TipoItem::PLATA) {
+            quizas_avecinar_manada_de_orcos(c);
+        }
     }
     c.personaje.gastar_energia(COSTO_DE_ENERGIA);
     return true;

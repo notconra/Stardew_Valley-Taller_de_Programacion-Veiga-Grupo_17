@@ -21,6 +21,11 @@ private:
 
     static void soltar_contenido_de_cofre(ContextoDeAccion& c, int id_cofre, int columna, int fila);
 
+    // Enunciado: al conseguir plata hay una probabilidad (10% por defecto) de que se avecine una
+    // manada de orcos. Solo pasa en la mazmorra; la manada aparece fuera de la vista del jugador
+    // y ya viene persiguiéndolo.
+    static void quizas_avecinar_manada_de_orcos(ContextoDeAccion& c);
+
 public:
     explicit AccionPicar(uint16_t duracion_en_ticks = DURACION_POR_DEFECTO)
         : duracion(duracion_en_ticks) {
