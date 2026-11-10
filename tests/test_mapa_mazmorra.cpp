@@ -11,6 +11,7 @@
 #include "../server/configuracion/configuracion_servidor_datos.h"
 #include "../server/juego/mapa/mapa.h"
 #include "../server/juego/mazmorra/cargador_mazmorra.h"
+#include "../server/juego/recursos/recursos_de_juego.h"
 
 #define ESCALERA_DE_SUBIDA 116
 #define ESCALERA_DE_BAJADA 174
@@ -20,6 +21,17 @@ namespace {
 const ConfiguracionServidor& configuracion() {
     static const ConfiguracionServidor configuracion_servidor("config/servidor.toml");
     return configuracion_servidor;
+}
+
+// Los mapas armados como los arma el juego, para que las colisiones de las escaleras sean las
+// mismas que en una partida.
+const RecursosDeJuego& recursos() {
+    static const RecursosDeJuego recursos_de_juego(
+        configuracion().mapas(),
+        configuracion().mapa_inicial(),
+        configuracion().juego(),
+        configuracion().mazmorra());
+    return recursos_de_juego;
 }
 
 std::vector<ConfiguracionMapaServidor> niveles_de_la_mazmorra() {
@@ -48,7 +60,7 @@ TEST(MapaDeLaMazmorra, LasParedesYLasEscalerasBloquean) {
     ASSERT_FALSE(niveles.empty());
 
     for (const ConfiguracionMapaServidor& nivel : niveles) {
-        const Mapa mapa(nivel);
+        const Mapa& mapa = recursos().mapas.at(nivel.id);
         const std::vector<int> buildings =
             LectorDeMapasTMX(nivel.ruta_tmx).cargar_capa("Buildings");
         ASSERT_FALSE(buildings.empty()) << nivel.id;
@@ -74,7 +86,7 @@ TEST(MapaDeLaMazmorra, LaEscaleraDeSubidaSeAlcanzaDesdeLaEntrada) {
     const int alcance = configuracion().juego().acciones.alcance_en_casillas;
 
     for (const ConfiguracionMapaServidor& nivel : niveles_de_la_mazmorra()) {
-        const Mapa mapa(nivel);
+        const Mapa& mapa = recursos().mapas.at(nivel.id);
         const GeografiaNivel geografia = CargadorMazmorra::crear_geografia(nivel.id, mapa);
         bool al_alcance = false;
         for (int columna = geografia.salida.origen.columna;
