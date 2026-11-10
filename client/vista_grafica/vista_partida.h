@@ -16,6 +16,7 @@
 #include "chat/vista_chat.h"
 #include "efectos_de_sonido.h"
 #include "enemigos_graficos.h"
+#include "trampas_graficas.h"
 #include "entrada_del_usuario.h"
 #include "hud_inventario.h"
 #include "iconos_de_items.h"
@@ -90,6 +91,7 @@ private:
     int alto_del_mundo = 0;
 
     const EstadoJugador* jugador_propio() const;
+    bool trampa_se_escucha(const EstadoTrampa& trampa) const;
     const ConfiguracionMapa& configuracion_de(const std::string& id_mapa) const;
     Camara camara_para(const MapaGrafico& mapa) const;
 
@@ -146,6 +148,7 @@ private:
     void dibujar(
         Renderizador& renderizador, SDL_Texture* mundo, const MapaGrafico& mapa,
         const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos,
+        const TrampasGraficas& trampas,
         const Personaje& personaje, const IconosDeItems& iconos, const TierraGrafica& tierra,
         const Camara& camara, const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
         const EntradaDelUsuario& entrada, const VistaChat& chat, const RelojGrafico& reloj_grafico,

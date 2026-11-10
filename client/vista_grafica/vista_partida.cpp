@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdlib>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -198,6 +199,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     TierraGrafica tierra(configuracion.tierra, graficos, renderizador.ptr());
     ObjetosGraficos objetos(renderizador.ptr(), graficos, iconos);
     EnemigosGraficos enemigos(renderizador.ptr(), graficos);
+    TrampasGraficas trampas(renderizador.ptr(), graficos);
     VisionMazmorra vision_mazmorra(
         configuracion.graficos.radio_vision_mazmorra,
         configuracion.graficos.tamano_pixel_vision_mazmorra,
@@ -304,6 +306,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             mapa_de(mapa_actual),
             objetos,
             enemigos,
+            trampas,
             personaje,
             iconos,
             tierra,
@@ -522,6 +525,19 @@ bool VistaPartida::recibir_eventos(VistaChat& chat) {
     return true;
 }
 
+bool VistaPartida::trampa_se_escucha(const EstadoTrampa& trampa) const {
+    constexpr int CASILLAS_PARA_ESCUCHARLO = 7;
+    const EstadoJugador* propio = jugador_propio();
+    if (propio == nullptr) {
+        return false;
+    }
+    const int tile = std::max(1, configuracion.graficos.tamano_de_tile);
+    const int columna = static_cast<int>(propio->x) / tile;
+    const int fila = static_cast<int>(propio->y) / tile;
+    return std::abs(columna - static_cast<int>(trampa.columna)) <= CASILLAS_PARA_ESCUCHARLO &&
+           std::abs(fila - static_cast<int>(trampa.fila)) <= CASILLAS_PARA_ESCUCHARLO;
+}
+
 void VistaPartida::aplicar(const EventoServidor& evento, VistaChat& chat) {
     EstadoJuego& estado = ultimo_estado_juego;
 
@@ -535,10 +551,17 @@ void VistaPartida::aplicar(const EventoServidor& evento, VistaChat& chat) {
             [&](const JugadoresEnSector& e) {
                 const EstadoJugador* antes = jugador_propio();
                 const bool picaba = antes != nullptr && antes->accion_actual == TipoAccion::PICAR;
+                // Se copia antes de reemplazar la lista: "antes" apunta adentro de ella.
+                const bool antes_tenia_vida = antes != nullptr && estado.mapa == e.mapa;
+                const uint8_t vida_antes = antes != nullptr ? antes->vida : 0;
                 estado.mapa = e.mapa;
                 estado.jugadores = e.jugadores;
                 const EstadoJugador* ahora = jugador_propio();
                 const bool pica = ahora != nullptr && ahora->accion_actual == TipoAccion::PICAR;
+                if (antes_tenia_vida && ahora != nullptr && ahora->vida < vida_antes &&
+                    efectos_actuales != nullptr) {
+                    efectos_actuales->reproducir_jugador_danio();
+                }
                 if (pico_pendiente_desde_ms != 0 && !picaba && pica) {
                     pico_pendiente_desde_ms = 0;
                     if (efectos_actuales != nullptr) {
@@ -600,6 +623,22 @@ void VistaPartida::aplicar(const EventoServidor& evento, VistaChat& chat) {
                         efectos_actuales->enemigo_actualizado(*existente, e.enemigo);
                     }
                     *existente = e.enemigo;
+                }
+            },
+            [&](const TrampaActualizada& e) {
+                const auto existente = std::find_if(
+                    estado.trampas.begin(),
+                    estado.trampas.end(),
+                    [&e](const EstadoTrampa& otra) { return otra.id == e.trampa.id; });
+                const bool se_encendio =
+                    e.trampa.activa && (existente == estado.trampas.end() || !existente->activa);
+                if (se_encendio && trampa_se_escucha(e.trampa) && efectos_actuales != nullptr) {
+                    efectos_actuales->reproducir_trampa_activada();
+                }
+                if (existente == estado.trampas.end()) {
+                    estado.trampas.push_back(e.trampa);
+                } else {
+                    *existente = e.trampa;
                 }
             },
             [&](const ActualizacionInventario& e) {
@@ -671,7 +710,7 @@ bool VistaPartida::salir_de_partida_y_confirmar() {
 
 void VistaPartida::dibujar(
     Renderizador& renderizador, SDL_Texture* mundo, const MapaGrafico& mapa,
-    const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos,
+    const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos, const TrampasGraficas& trampas,
     const Personaje& personaje, const IconosDeItems& iconos, const TierraGrafica& tierra,
     const Camara& camara, const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
     const EntradaDelUsuario& entrada, const VistaChat& chat, const RelojGrafico& reloj_grafico,
@@ -707,6 +746,7 @@ void VistaPartida::dibujar(
             camara.x(),
             camara.y());
     }
+    trampas.dibujar(renderer, ultimo_estado_juego, camara.x(), camara.y());
     enemigos.dibujar(renderer, ultimo_estado_juego, camara.x(), camara.y());
     for (const EstadoJugador& jugador : ultimo_estado_juego.jugadores) {
         if (jugador.mapa == mapa_actual) {
