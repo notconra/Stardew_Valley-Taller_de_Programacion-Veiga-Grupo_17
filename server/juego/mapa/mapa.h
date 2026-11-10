@@ -57,10 +57,13 @@ private:
 
 public:
     // Lanza std::runtime_error si no puede leer el TMX o la capa de colisiones.
-    // "destinos_que_conservan_colision" son los mapa_destino cuyas casillas no se liberan.
+    // "destinos_que_conservan_colision" son los mapa_destino cuyas casillas no se liberan. Con
+    // "todas_conservan_colision" no se libera ninguna (los niveles de la mazmorra, donde las dos
+    // escaleras se usan con clic).
     explicit Mapa(
         const ConfiguracionMapaServidor& configuracion,
-        const std::vector<std::string>& destinos_que_conservan_colision = {});
+        const std::vector<std::string>& destinos_que_conservan_colision = {},
+        bool todas_conservan_colision = false);
 
     int cantidad_de_columnas() const;
     int cantidad_de_filas() const;

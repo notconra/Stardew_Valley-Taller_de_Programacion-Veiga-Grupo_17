@@ -30,7 +30,8 @@ const std::map<std::string, uint8_t>& propiedades_disponibles() {
 
 Mapa::Mapa(
     const ConfiguracionMapaServidor& configuracion,
-    const std::vector<std::string>& destinos_que_conservan_colision) {
+    const std::vector<std::string>& destinos_que_conservan_colision,
+    bool todas_conservan_colision) {
     const LectorDeMapasTMX lector(configuracion.ruta_tmx);
     const TamanioMapa tamanio = lector.leer_tamanio();
 
@@ -105,7 +106,9 @@ Mapa::Mapa(
             transicion_tmx.fila_destino};
         transiciones.emplace_back(zona, transicion);
     }
-    ajustar_colisiones_de_transiciones(destinos_que_conservan_colision);
+    if (!todas_conservan_colision) {
+        ajustar_colisiones_de_transiciones(destinos_que_conservan_colision);
+    }
 }
 
 void Mapa::marcar(const std::vector<int>& capa, uint8_t propiedad, const std::string& nombre_capa) {
