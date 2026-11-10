@@ -236,5 +236,6 @@ DatosMundoGuardado SesionDePartida::obtener_datos_guardado(
     datos_mundo.mapas = mundo.obtener_mapas_guardados();
     datos_mundo.cofres = mundo.obtener_cofres_guardados();
     datos_mundo.muebles = mundo.obtener_muebles_guardados();
+    datos_mundo.animales = mundo.obtener_animales_guardados();
     return datos_mundo;
 }

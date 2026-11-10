@@ -14,7 +14,7 @@ public:
     static constexpr uint32_t PRECIO_VENTA_LECHE = 30;
     static constexpr uint8_t CANTIDAD_VARIANTES = 2;  // 0: Blanca, 1: Marrón
 
-    Vaca(uint32_t id, int columna, int fila, uint8_t variante = 0);
+    Vaca(uint32_t id, uint32_t columna, uint32_t fila, uint8_t variante = 0);
 
     // Avanza un día en el ciclo de producción de la vaca.
     void avanzar_dia();
@@ -23,6 +23,7 @@ public:
     bool ordeniar();
 
     bool esta_lista_para_ordeniar() const;
+    void marcar_lista_para_ordeniar(bool lista);
 };
 
 #endif

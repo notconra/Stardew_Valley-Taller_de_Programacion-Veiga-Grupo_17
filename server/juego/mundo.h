@@ -83,6 +83,7 @@ public:
     std::vector<DatosMapaGuardado> obtener_mapas_guardados() const;
     std::vector<DatosCofreGuardado> obtener_cofres_guardados() const;
     std::vector<DatosMuebleGuardado> obtener_muebles_guardados() const;
+    std::vector<DatosAnimalGuardado> obtener_animales_guardados() const;
     uint32_t obtener_dia() const;
 
     // Si terminó un día desde la última vez que se preguntó (todos dieron el OK). Es cuando hay

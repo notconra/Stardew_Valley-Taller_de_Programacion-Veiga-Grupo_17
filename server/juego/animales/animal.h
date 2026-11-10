@@ -11,15 +11,15 @@ struct Animal {
     uint32_t id = 0;
     TipoAnimal tipo = TipoAnimal::VACA;
     uint8_t variante = 0;  // Raza o color aleatorio
-    int columna = 0;
-    int fila = 0;
+    uint32_t columna = 0;
+    uint32_t fila = 0;
     Direccion mirando = Direccion::ABAJO;
     bool caminando = false;
 
     // Ciclo de producción
     uint32_t dias_acumulados = 0;
 
-    Animal(uint32_t id, TipoAnimal tipo, int columna, int fila, uint8_t variante);
+    Animal(uint32_t id, TipoAnimal tipo, uint32_t columna, uint32_t fila, uint8_t variante);
     virtual ~Animal() = default;
 };
 

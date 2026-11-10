@@ -11,7 +11,7 @@ public:
     static constexpr uint8_t CANTIDAD_VARIANTES =
         5;  // 0: Blanca, 1: Marrón, 2: Azul, 3: Dorada, 4: Void
 
-    Gallina(uint32_t id, int columna, int fila, uint8_t variante = 0);
+    Gallina(uint32_t id, uint32_t columna, uint32_t fila, uint8_t variante = 0);
 
     // Avanza un día en el ciclo del animal.
     void avanzar_dia();

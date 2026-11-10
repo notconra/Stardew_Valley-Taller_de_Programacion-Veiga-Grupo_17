@@ -80,6 +80,23 @@ std::vector<DatosMuebleGuardado> GestorDeSectores::obtener_muebles_guardados() c
     return muebles;
 }
 
+void GestorDeSectores::cargar_animales_guardados(
+    const std::vector<DatosAnimalGuardado>& animales_guardados) {
+    auto sector_granja = sectores.find("granja");
+    if (sector_granja != sectores.end()) {
+        sector_granja->second.cargar_animales_guardados(animales_guardados);
+    }
+}
+
+std::vector<DatosAnimalGuardado> GestorDeSectores::obtener_animales_guardados() const {
+    std::vector<DatosAnimalGuardado> animales;
+    auto sector_granja = sectores.find("granja");
+    if (sector_granja != sectores.end()) {
+        sector_granja->second.agregar_animales_guardados_a(animales);
+    }
+    return animales;
+}
+
 bool GestorDeSectores::existe(const std::string& id_mapa) const {
     return sectores.contains(id_mapa);
 }

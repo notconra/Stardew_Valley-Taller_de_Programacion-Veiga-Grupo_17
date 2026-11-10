@@ -2,6 +2,7 @@
 
 #include <map>
 #include <random>
+#include <vector>
 
 GestorDeAnimales::GestorDeAnimales() {
 }
@@ -20,11 +21,11 @@ uint8_t GestorDeAnimales::sortear_variante_gallina() {
     return dist(gen);
 }
 
-bool GestorDeAnimales::agregar_vaca(int columna, int fila) {
+bool GestorDeAnimales::agregar_vaca(uint32_t columna, uint32_t fila) {
     return agregar_vaca(columna, fila, sortear_variante_vaca());
 }
 
-bool GestorDeAnimales::agregar_vaca(int columna, int fila, uint8_t variante) {
+bool GestorDeAnimales::agregar_vaca(uint32_t columna, uint32_t fila, uint8_t variante) {
     if (vacas.size() >= Vaca::LIMITE_POR_GRANJA) {
         return false;
     }
@@ -33,11 +34,11 @@ bool GestorDeAnimales::agregar_vaca(int columna, int fila, uint8_t variante) {
     return true;
 }
 
-bool GestorDeAnimales::agregar_gallina(int columna, int fila) {
+bool GestorDeAnimales::agregar_gallina(uint32_t columna, uint32_t fila) {
     return agregar_gallina(columna, fila, sortear_variante_gallina());
 }
 
-bool GestorDeAnimales::agregar_gallina(int columna, int fila, uint8_t variante) {
+bool GestorDeAnimales::agregar_gallina(uint32_t columna, uint32_t fila, uint8_t variante) {
     if (gallinas.size() >= Gallina::LIMITE_POR_GRANJA) {
         return false;
     }
@@ -117,4 +118,56 @@ const std::map<uint32_t, Vaca>& GestorDeAnimales::obtener_vacas() const {
 
 const std::map<uint32_t, Gallina>& GestorDeAnimales::obtener_gallinas() const {
     return gallinas;
+}
+
+void GestorDeAnimales::agregar_animales_guardados_a(std::vector<DatosAnimalGuardado>& lista) const {
+    for (const auto& [id, vaca] : vacas) {
+        DatosAnimalGuardado datos;
+        datos.id = vaca.id;
+        datos.tipo = TipoAnimal::VACA;
+        datos.variante = vaca.variante;
+        datos.columna = vaca.columna;
+        datos.fila = vaca.fila;
+        datos.mirando = vaca.mirando;
+        datos.dias_acumulados = vaca.dias_acumulados;
+        datos.lista_para_ordeniar = vaca.esta_lista_para_ordeniar();
+        lista.push_back(datos);
+    }
+    for (const auto& [id, gallina] : gallinas) {
+        DatosAnimalGuardado datos;
+        datos.id = gallina.id;
+        datos.tipo = TipoAnimal::GALLINA;
+        datos.variante = gallina.variante;
+        datos.columna = gallina.columna;
+        datos.fila = gallina.fila;
+        datos.mirando = gallina.mirando;
+        datos.dias_acumulados = gallina.dias_acumulados;
+        datos.lista_para_ordeniar = false;
+        lista.push_back(datos);
+    }
+}
+
+void GestorDeAnimales::cargar_animales_guardados(const std::vector<DatosAnimalGuardado>& lista) {
+    if (lista.empty()) {
+        return;
+    }
+    vacas.clear();
+    gallinas.clear();
+    for (const auto& datos : lista) {
+        if (datos.tipo == TipoAnimal::VACA) {
+            Vaca vaca(datos.id, datos.columna, datos.fila, datos.variante);
+            vaca.mirando = datos.mirando;
+            vaca.dias_acumulados = datos.dias_acumulados;
+            vaca.marcar_lista_para_ordeniar(datos.lista_para_ordeniar);
+            vacas.emplace(datos.id, vaca);
+        } else if (datos.tipo == TipoAnimal::GALLINA) {
+            Gallina gallina(datos.id, datos.columna, datos.fila, datos.variante);
+            gallina.mirando = datos.mirando;
+            gallina.dias_acumulados = datos.dias_acumulados;
+            gallinas.emplace(datos.id, gallina);
+        }
+        if (datos.id >= siguiente_id) {
+            siguiente_id = datos.id + 1;
+        }
+    }
 }

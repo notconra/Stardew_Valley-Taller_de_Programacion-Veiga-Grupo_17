@@ -2,7 +2,9 @@
 #define GESTOR_DE_ANIMALES_H
 
 #include <map>
+#include <vector>
 
+#include "../../persistencia/datos_partida_guardada.h"
 #include "../drops/drops.h"
 #include "gallina.h"
 #include "vaca.h"
@@ -21,15 +23,15 @@ public:
 
     // Intentan agregar un animal a la granja sorteando su variante. Devuelven false si se supera el
     // límite.
-    bool agregar_vaca(int columna, int fila);
+    bool agregar_vaca(uint32_t columna, uint32_t fila);
     // Agrega una vaca asignando una variante específica (para persistencia o tests).
-    bool agregar_vaca(int columna, int fila, uint8_t variante);
+    bool agregar_vaca(uint32_t columna, uint32_t fila, uint8_t variante);
 
     // Intentan agregar una gallina a la granja sorteando su variante. Devuelven false si se supera
     // el límite.
-    bool agregar_gallina(int columna, int fila);
+    bool agregar_gallina(uint32_t columna, uint32_t fila);
     // Agrega una gallina asignando una variante específica (para persistencia o tests).
-    bool agregar_gallina(int columna, int fila, uint8_t variante);
+    bool agregar_gallina(uint32_t columna, uint32_t fila, uint8_t variante);
 
     // NOTA PROVISORIA: Inicializa 1 vaca y 1 gallina para permitir pruebas y visualización
     // en tiempo de ejecución mientras no existan los comerciantes.
@@ -43,6 +45,10 @@ public:
 
     // Intenta ordeñar una vaca por su id. Devuelve true si tenía leche y se completó la extracción.
     bool ordeniar_vaca(uint32_t id_vaca);
+
+    // Guarda y restaura el estado de los animales en el archivo de partida
+    void agregar_animales_guardados_a(std::vector<DatosAnimalGuardado>& lista) const;
+    void cargar_animales_guardados(const std::vector<DatosAnimalGuardado>& lista);
 
     int cantidad_vacas() const;
     int cantidad_gallinas() const;

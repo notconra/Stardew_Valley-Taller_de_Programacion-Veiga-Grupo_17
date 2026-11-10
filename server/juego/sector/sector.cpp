@@ -116,6 +116,18 @@ void Sector::agregar_muebles_guardados_a(std::vector<DatosMuebleGuardado>& lista
     }
 }
 
+void Sector::agregar_animales_guardados_a(std::vector<DatosAnimalGuardado>& lista) const {
+    if (id == "granja") {
+        animales.agregar_animales_guardados_a(lista);
+    }
+}
+
+void Sector::cargar_animales_guardados(const std::vector<DatosAnimalGuardado>& lista) {
+    if (id == "granja") {
+        animales.cargar_animales_guardados(lista);
+    }
+}
+
 int Sector::colocar_objeto(Notificador& notificador, TipoObjeto tipo, int columna, int fila) {
     const int id = objetos.colocar(tipo, columna, fila);
     if (id == 0) {

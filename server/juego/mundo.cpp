@@ -28,6 +28,7 @@ Mundo::Mundo(
     sectores.cargar_mapas_guardados(datos_guardados.mapas);
     sectores.cargar_cofres_guardados(datos_guardados.cofres);
     sectores.cargar_muebles_guardados(datos_guardados.muebles);
+    sectores.cargar_animales_guardados(datos_guardados.animales);
     if (datos_guardados.dia > 0) {
         controlador_del_dia.continuar_en_el_dia(datos_guardados.dia);
     }
@@ -255,6 +256,10 @@ std::vector<DatosCofreGuardado> Mundo::obtener_cofres_guardados() const {
 
 std::vector<DatosMuebleGuardado> Mundo::obtener_muebles_guardados() const {
     return sectores.obtener_muebles_guardados();
+}
+
+std::vector<DatosAnimalGuardado> Mundo::obtener_animales_guardados() const {
+    return sectores.obtener_animales_guardados();
 }
 
 uint32_t Mundo::obtener_dia() const {

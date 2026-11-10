@@ -1,6 +1,6 @@
 #include "vaca.h"
 
-Vaca::Vaca(uint32_t id_vaca, int col, int fil, uint8_t variante_inicial)
+Vaca::Vaca(uint32_t id_vaca, uint32_t col, uint32_t fil, uint8_t variante_inicial)
     : Animal(id_vaca, TipoAnimal::VACA, col, fil, variante_inicial) {
 }
 
@@ -22,4 +22,8 @@ bool Vaca::ordeniar() {
 
 bool Vaca::esta_lista_para_ordeniar() const {
     return lista_para_ordeniar;
+}
+
+void Vaca::marcar_lista_para_ordeniar(bool lista) {
+    lista_para_ordeniar = lista;
 }
