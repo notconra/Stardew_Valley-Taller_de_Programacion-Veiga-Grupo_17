@@ -14,6 +14,7 @@
 #include "../modo_uso.h"
 #include "../ranura_inventario.h"
 #include "../tipo_accion.h"
+#include "../tipo_cultivo.h"
 #include "../tipo_enemigo.h"
 #include "../tipo_item.h"
 #include "../tipo_objeto.h"
@@ -210,9 +211,19 @@ struct EstadoTrampa {
 };
 
 // Una casilla de tierra tratada con la pala, por columna y fila del mapa.
+#define ETAPA_DE_CULTIVO_MAXIMA 3
+
+// Una casilla de tierra tratada y lo que tiene plantado. "etapa" va de 0 (recién plantada) a
+// ETAPA_DE_CULTIVO_MAXIMA mientras crece; cuando "madura" es true está lista para cosechar.
+// "regada" es si ya se regó en el turno de riego de ahora y "pide_agua" si todavía hay que regarla.
 struct CasillaTratada {
     uint32_t columna = 0;
     uint32_t fila = 0;
+    TipoCultivo cultivo = TipoCultivo::NINGUNO;
+    uint8_t etapa = 0;
+    bool madura = false;
+    bool regada = false;
+    bool pide_agua = false;
 
     bool operator==(const CasillaTratada&) const = default;
 };

@@ -34,7 +34,8 @@ bool AccionColocar::se_puede_colocar(const ContextoDeAccion& c) const {
         for (int columna = c.objetivo.columna;
              columna < c.objetivo.columna + definicion->ancho_en_casillas;
              ++columna) {
-            if (c.sector.mapa.cerca_de_una_transicion(columna, fila)) {
+            if (c.sector.mapa.cerca_de_una_transicion(columna, fila) ||
+                c.sector.huerta.hay_cultivo(Casilla{columna, fila})) {
                 return false;
             }
         }
