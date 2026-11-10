@@ -201,9 +201,24 @@ struct EstadoAnimal {
     uint32_t fila = 0;
     Direccion mirando = Direccion::ABAJO;
     bool caminando = false;
-    bool lista_para_ordeniar = false;
+    bool durmiendo = false;
 
     bool operator==(const EstadoAnimal&) const = default;
+};
+
+// Evento cuando cambia el estado, posición o dirección de un animal en el sector
+struct AnimalActualizado {
+    EstadoAnimal animal;
+
+    bool operator==(const AnimalActualizado&) const = default;
+};
+
+// Notificación cuando una vaca queda lista para ordeñar o cuando se completa su ordeñe
+struct VacaOrdeniable {
+    uint32_t id_vaca = 0;
+    bool lista = false;
+
+    bool operator==(const VacaOrdeniable&) const = default;
 };
 
 // Snapshot completa de UN sector. Se manda una sola vez cuando el jugador entra o cambia de
@@ -216,6 +231,7 @@ struct EstadoJuego {
     std::vector<EstadoEnemigo> enemigos;
     std::vector<CasillaTratada> tierra;
     std::vector<EstadoAnimal> animales;
+    std::vector<uint32_t> vacas_para_ordeniar;
 };
 
 // Posición y estado de todos los jugadores del sector del receptor. Se manda cada tick, pero solo

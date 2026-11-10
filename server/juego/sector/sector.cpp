@@ -202,6 +202,76 @@ int Sector::soltar(
     return id;
 }
 
+void Sector::avanzar_dia(Notificador& notificador) {
+    animales.avanzar_dia(drops);
+    for (const auto& [id, vaca] : animales.obtener_vacas()) {
+        if (vaca.esta_lista_para_ordeniar()) {
+            VacaOrdeniable evento;
+            evento.id_vaca = vaca.id;
+            evento.lista = true;
+            avisar(notificador, evento);
+        }
+    }
+}
+
 void Sector::avanzar_dia() {
     animales.avanzar_dia(drops);
+}
+
+bool Sector::vaca_lista_en(uint32_t columna, uint32_t fila) const {
+    const Vaca* vaca = animales.vaca_en(columna, fila);
+    return vaca != nullptr && vaca->esta_lista_para_ordeniar();
+}
+
+bool Sector::ordeniar_vaca(Notificador& notificador, uint32_t columna, uint32_t fila) {
+    Vaca* vaca = animales.buscar_vaca_en(columna, fila);
+    if (!vaca || !vaca->esta_lista_para_ordeniar()) {
+        return false;
+    }
+    if (!animales.ordeniar_vaca(vaca->id)) {
+        return false;
+    }
+    VacaOrdeniable evento;
+    evento.id_vaca = vaca->id;
+    evento.lista = false;
+    avisar(notificador, evento);
+    return true;
+}
+
+bool Sector::agregar_vaca(Notificador& notificador, uint32_t columna, uint32_t fila) {
+    if (!animales.agregar_vaca(columna, fila)) {
+        return false;
+    }
+    const Vaca* vaca = animales.vaca_en(columna, fila);
+    if (vaca) {
+        AnimalActualizado evento;
+        evento.animal = GestorDeAnimales::estado_de(*vaca);
+        avisar(notificador, evento);
+    }
+    return true;
+}
+
+bool Sector::agregar_gallina(Notificador& notificador, uint32_t columna, uint32_t fila) {
+    if (!animales.agregar_gallina(columna, fila)) {
+        return false;
+    }
+    const Gallina* gallina = animales.gallina_en(columna, fila);
+    if (gallina) {
+        AnimalActualizado evento;
+        evento.animal = GestorDeAnimales::estado_de(*gallina);
+        avisar(notificador, evento);
+    }
+    return true;
+}
+
+void Sector::actualizar(const HoraDelJuego& hora, Notificador& notificador) {
+    if (id == "granja") {
+        std::vector<EstadoAnimal> actualizados =
+            animales.actualizar(hora, mapa.cantidad_de_columnas(), mapa.cantidad_de_filas());
+        for (const auto& animal : actualizados) {
+            AnimalActualizado evento;
+            evento.animal = animal;
+            avisar(notificador, evento);
+        }
+    }
 }

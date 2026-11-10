@@ -6,6 +6,7 @@
 
 #include "../../../common/mensajes/mensajes_partida.h"
 #include "../../persistencia/datos_partida_guardada.h"
+#include "../colisiones/colisiones.h"
 #include "../drops/drops.h"
 #include "gallina.h"
 #include "vaca.h"
@@ -13,14 +14,25 @@
 class GestorDeAnimales {
 private:
     uint32_t siguiente_id = 1;
+    Colisiones& colisiones;
     std::map<uint32_t, Vaca> vacas;
     std::map<uint32_t, Gallina> gallinas;
 
     uint8_t sortear_variante_vaca();
     uint8_t sortear_variante_gallina();
 
+    void ocupar_colisiones(const Animal& animal);
+    void liberar_colisiones(const Animal& animal);
+    bool casilla_libre(uint32_t col, uint32_t fila, int ancho, int alto) const;
+
+    void actualizar_rutina(
+        Animal& animal, const HoraDelJuego& hora, std::vector<EstadoAnimal>& actualizados);
+    void decidir_movimiento(
+        Animal& animal, int ancho_mapa, int alto_mapa, std::vector<EstadoAnimal>& actualizados);
+    bool intentar_mover(Animal& animal, Direccion dir, int ancho_mapa, int alto_mapa);
+
 public:
-    GestorDeAnimales();
+    explicit GestorDeAnimales(Colisiones& colisiones_mapa);
 
     // Intentan agregar un animal a la granja sorteando su variante. Devuelven false si se supera el
     // límite.
@@ -46,6 +58,20 @@ public:
 
     // Intenta ordeñar una vaca por su id. Devuelve true si tenía leche y se completó la extracción.
     bool ordeniar_vaca(uint32_t id_vaca);
+
+    // Consulta de vaca por casilla (cualquiera de sus casillas 2x2)
+    const Vaca* vaca_en(uint32_t columna, uint32_t fila) const;
+    Vaca* buscar_vaca_en(uint32_t columna, uint32_t fila);
+
+    // Consulta de gallina por casilla (1x1)
+    const Gallina* gallina_en(uint32_t columna, uint32_t fila) const;
+    Gallina* buscar_gallina_en(uint32_t columna, uint32_t fila);
+
+    // Actualiza movimiento aleatorio y rutina según la hora del día. Devuelve los animales que
+    // cambiaron de estado o posición.
+    std::vector<EstadoAnimal> actualizar(const HoraDelJuego& hora, int ancho_mapa, int alto_mapa);
+
+    static EstadoAnimal estado_de(const Animal& animal);
 
     // Agrega el estado actual de los animales al snapshot del sector
     void agregar_a(EstadoJuego& estado) const;

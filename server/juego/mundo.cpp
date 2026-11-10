@@ -203,7 +203,7 @@ void Mundo::resolver_transiciones_automaticas() {
 
 void Mundo::actualizar() {
     controlador_del_dia.actualizar();
-    sectores.actualizar();
+    sectores.actualizar(controlador_del_dia.hora());
     resolver_transiciones_automaticas();
     controlador_de_enemigos.actualizar();
     sectores.difundir_jugadores();
@@ -268,4 +268,103 @@ uint32_t Mundo::obtener_dia() const {
 
 bool Mundo::tomar_dia_terminado() {
     return controlador_del_dia.tomar_dia_terminado();
+}
+
+bool Mundo::agregar_vaca_en_granja_cerca(uint32_t id_jugador) {
+    if (!sectores.existe("granja")) {
+        return false;
+    }
+    Sector& granja = sectores.en("granja");
+    uint32_t centro_x = 20;
+    uint32_t centro_y = 15;
+    auto it_jugador = personajes.find(id_jugador);
+    if (it_jugador != personajes.end() && it_jugador->second.conectado &&
+        it_jugador->second.mapa_actual == "granja") {
+        const auto casilla = granja.jugadores.casilla_del_jugador(id_jugador);
+        if (casilla.has_value()) {
+            centro_x = static_cast<uint32_t>(std::max(casilla->columna, 0));
+            centro_y = static_cast<uint32_t>(std::max(casilla->fila, 0));
+        }
+    }
+    for (int radio = 1; radio <= 10; ++radio) {
+        for (int dx = -radio; dx <= radio; ++dx) {
+            for (int dy = -radio; dy <= radio; ++dy) {
+                if (std::abs(dx) != radio && std::abs(dy) != radio) {
+                    continue;
+                }
+                int col = static_cast<int>(centro_x) + dx;
+                int fila = static_cast<int>(centro_y) + dy;
+                if (col >= 0 && col + 1 < granja.mapa.cantidad_de_columnas() && fila >= 0 &&
+                    fila + 1 < granja.mapa.cantidad_de_filas()) {
+                    if (granja.agregar_vaca(
+                            notificador,
+                            static_cast<uint32_t>(col),
+                            static_cast<uint32_t>(fila))) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool Mundo::agregar_gallina_en_granja_cerca(uint32_t id_jugador) {
+    if (!sectores.existe("granja")) {
+        return false;
+    }
+    Sector& granja = sectores.en("granja");
+    uint32_t centro_x = 22;
+    uint32_t centro_y = 15;
+    auto it_jugador = personajes.find(id_jugador);
+    if (it_jugador != personajes.end() && it_jugador->second.conectado &&
+        it_jugador->second.mapa_actual == "granja") {
+        const auto casilla = granja.jugadores.casilla_del_jugador(id_jugador);
+        if (casilla.has_value()) {
+            centro_x = static_cast<uint32_t>(std::max(casilla->columna, 0));
+            centro_y = static_cast<uint32_t>(std::max(casilla->fila, 0));
+        }
+    }
+    for (int radio = 1; radio <= 10; ++radio) {
+        for (int dx = -radio; dx <= radio; ++dx) {
+            for (int dy = -radio; dy <= radio; ++dy) {
+                if (std::abs(dx) != radio && std::abs(dy) != radio) {
+                    continue;
+                }
+                int col = static_cast<int>(centro_x) + dx;
+                int fila = static_cast<int>(centro_y) + dy;
+                if (col >= 0 && col < granja.mapa.cantidad_de_columnas() && fila >= 0 &&
+                    fila < granja.mapa.cantidad_de_filas()) {
+                    if (granja.agregar_gallina(
+                            notificador,
+                            static_cast<uint32_t>(col),
+                            static_cast<uint32_t>(fila))) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+std::string Mundo::estado_animales_granja() const {
+    if (!sectores.existe("granja")) {
+        return "No existe el sector granja.";
+    }
+    const Sector& granja = sectores.en("granja");
+    int total_vacas = granja.animales.cantidad_vacas();
+    int vacas_listas = 0;
+    for (const auto& [id, vaca] : granja.animales.obtener_vacas()) {
+        if (vaca.esta_lista_para_ordeniar()) {
+            ++vacas_listas;
+        }
+    }
+    int total_gallinas = granja.animales.cantidad_gallinas();
+    return "Granja: " + std::to_string(total_vacas) + " vacas (" + std::to_string(vacas_listas) +
+           " listas para ordeniar), " + std::to_string(total_gallinas) + " gallinas.";
+}
+
+void Mundo::avanzar_dia_cheat() {
+    controlador_del_dia.avanzar_dia_inmediato();
 }

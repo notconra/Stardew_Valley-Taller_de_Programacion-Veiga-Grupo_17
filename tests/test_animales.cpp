@@ -1,12 +1,40 @@
 #include <gtest/gtest.h>
 
+#include <vector>
+
 #include "../common/tipo_animal.h"
 #include "../common/tipo_item.h"
+#include "../server/configuracion/configuracion_servidor.h"
 #include "../server/juego/animales/gallina.h"
 #include "../server/juego/animales/gestor_de_animales.h"
 #include "../server/juego/animales/vaca.h"
 #include "../server/juego/drops/drops.h"
 #include "../server/juego/objetos/catalogo_de_items.h"
+#include "../server/juego/recursos/recursos_de_juego.h"
+
+namespace {
+const RecursosDeJuego& recursos_test() {
+    static const RecursosDeJuego recursos_de_juego = [] {
+        const ConfiguracionServidor configuracion("config/servidor.toml");
+        std::vector<ConfiguracionMapaServidor> mapas;
+        for (const ConfiguracionMapaServidor& mapa : configuracion.mapas()) {
+            if (mapa.id == "granja") {
+                mapas.push_back(mapa);
+            }
+        }
+        return RecursosDeJuego(
+            mapas,
+            "granja",
+            configuracion.juego(),
+            ConfiguracionMazmorraServidor{});
+    }();
+    return recursos_de_juego;
+}
+
+Colisiones crear_colisiones_test() {
+    return Colisiones(recursos_test().mapas.at("granja"));
+}
+}  // namespace
 
 TEST(Animales, VacaCicloDeProduccionDeLecheCadaDosDias) {
     Vaca vaca(1, 10, 10, 0);
@@ -40,15 +68,16 @@ TEST(Animales, VacaOrdeniarReiniciaCicloYDesactivaFlag) {
 }
 
 TEST(Animales, VacaLimiteDeCincoPorGranja) {
-    GestorDeAnimales gestor;
+    Colisiones colisiones = crear_colisiones_test();
+    GestorDeAnimales gestor(colisiones);
 
     for (uint32_t i = 0; i < Vaca::LIMITE_POR_GRANJA; ++i) {
-        EXPECT_TRUE(gestor.agregar_vaca(10 + static_cast<int>(i), 10));
+        EXPECT_TRUE(gestor.agregar_vaca(10 + static_cast<int>(i * 2), 10));
     }
     EXPECT_EQ(gestor.cantidad_vacas(), 5);
 
     // La sexta vaca debe ser rechazada por límite de tope
-    EXPECT_FALSE(gestor.agregar_vaca(20, 20));
+    EXPECT_FALSE(gestor.agregar_vaca(22, 22));
     EXPECT_EQ(gestor.cantidad_vacas(), 5);
 }
 
@@ -64,20 +93,22 @@ TEST(Animales, GallinaProduccionDiariaAutomaticaDeHuevos) {
 }
 
 TEST(Animales, AgregarConVarianteEspecifica) {
-    GestorDeAnimales gestor;
-    EXPECT_TRUE(gestor.agregar_vaca(5, 5, 1));
+    Colisiones colisiones = crear_colisiones_test();
+    GestorDeAnimales gestor(colisiones);
+    EXPECT_TRUE(gestor.agregar_vaca(15, 15, 1));
     const Vaca* vaca = gestor.buscar_vaca(1);
     ASSERT_NE(vaca, nullptr);
     EXPECT_EQ(vaca->variante, 1);
 
-    EXPECT_TRUE(gestor.agregar_gallina(6, 6, 3));
+    EXPECT_TRUE(gestor.agregar_gallina(20, 20, 3));
     const Gallina* gallina = gestor.buscar_gallina(2);
     ASSERT_NE(gallina, nullptr);
     EXPECT_EQ(gallina->variante, 3);
 }
 
 TEST(Animales, GallinaLimiteDeDiezPorGranja) {
-    GestorDeAnimales gestor;
+    Colisiones colisiones = crear_colisiones_test();
+    GestorDeAnimales gestor(colisiones);
 
     for (uint32_t i = 0; i < Gallina::LIMITE_POR_GRANJA; ++i) {
         EXPECT_TRUE(gestor.agregar_gallina(10 + static_cast<int>(i), 10));
@@ -109,13 +140,14 @@ TEST(Animales, CatalogoContieneLecheYHuevosConPreciosDelEnunciado) {
 
 TEST(Animales, VariantesAleatoriasDeRazasEnRangoValido) {
     for (int i = 0; i < 20; ++i) {
-        GestorDeAnimales gestor;
-        EXPECT_TRUE(gestor.agregar_vaca(1, 1));
+        Colisiones colisiones = crear_colisiones_test();
+        GestorDeAnimales gestor(colisiones);
+        EXPECT_TRUE(gestor.agregar_vaca(15, 15));
         const Vaca* vaca = gestor.buscar_vaca(1);
         ASSERT_NE(vaca, nullptr);
         EXPECT_LT(vaca->variante, Vaca::CANTIDAD_VARIANTES);
 
-        EXPECT_TRUE(gestor.agregar_gallina(2, 2));
+        EXPECT_TRUE(gestor.agregar_gallina(20, 20));
         const Gallina* gallina = gestor.buscar_gallina(2);
         ASSERT_NE(gallina, nullptr);
         EXPECT_LT(gallina->variante, Gallina::CANTIDAD_VARIANTES);
@@ -123,7 +155,8 @@ TEST(Animales, VariantesAleatoriasDeRazasEnRangoValido) {
 }
 
 TEST(Animales, GranjaProvisoriaArrancaConUnaVacaYUnaGallina) {
-    GestorDeAnimales gestor;
+    Colisiones colisiones = crear_colisiones_test();
+    GestorDeAnimales gestor(colisiones);
     gestor.inicializar_granja_provisoria();
 
     EXPECT_EQ(gestor.cantidad_vacas(), 1);
@@ -132,7 +165,8 @@ TEST(Animales, GranjaProvisoriaArrancaConUnaVacaYUnaGallina) {
 }
 
 TEST(Animales, GestorAvanzarDiaDepositaHuevoComoDropEnElPiso) {
-    GestorDeAnimales gestor;
+    Colisiones colisiones = crear_colisiones_test();
+    GestorDeAnimales gestor(colisiones);
     EXPECT_TRUE(gestor.agregar_gallina(12, 14));
 
     Drops drops;
@@ -148,7 +182,8 @@ TEST(Animales, GestorAvanzarDiaDepositaHuevoComoDropEnElPiso) {
 }
 
 TEST(Animales, GestorOrdeniarVacaAlSegundoDia) {
-    GestorDeAnimales gestor;
+    Colisiones colisiones = crear_colisiones_test();
+    GestorDeAnimales gestor(colisiones);
     EXPECT_TRUE(gestor.agregar_vaca(10, 10));
 
     Drops drops;
@@ -162,4 +197,78 @@ TEST(Animales, GestorOrdeniarVacaAlSegundoDia) {
 
     // Ya no tiene leche
     EXPECT_FALSE(gestor.ordeniar_vaca(1));
+}
+
+TEST(Animales, ColisionesVacaOcupaDosPorDosYGallinaUnoPorUno) {
+    Colisiones colisiones = crear_colisiones_test();
+    GestorDeAnimales gestor(colisiones);
+
+    // (15, 15) y alrededores son pasto abierto en la granja
+    EXPECT_TRUE(gestor.agregar_vaca(15, 15));
+    EXPECT_FALSE(colisiones.esta_libre(15, 15));
+    EXPECT_FALSE(colisiones.esta_libre(16, 15));
+    EXPECT_FALSE(colisiones.esta_libre(15, 16));
+    EXPECT_FALSE(colisiones.esta_libre(16, 16));
+    EXPECT_TRUE(colisiones.esta_libre(17, 15));
+
+    EXPECT_TRUE(gestor.agregar_gallina(20, 20));
+    EXPECT_FALSE(colisiones.esta_libre(20, 20));
+    EXPECT_TRUE(colisiones.esta_libre(20, 21));
+
+    // No se puede agregar otro animal encima
+    EXPECT_FALSE(gestor.agregar_gallina(15, 15));
+    EXPECT_FALSE(gestor.agregar_vaca(19, 19));
+}
+
+TEST(Animales, RutinaHorariaALasCincoPMQuietosYALasSietePMDuermen) {
+    Colisiones colisiones = crear_colisiones_test();
+    GestorDeAnimales gestor(colisiones);
+    EXPECT_TRUE(gestor.agregar_vaca(10, 10));
+    EXPECT_TRUE(gestor.agregar_gallina(15, 15));
+
+    HoraDelJuego hora_tarde;
+    hora_tarde.hora = 17;
+    hora_tarde.minuto = 0;
+    gestor.actualizar(hora_tarde, 50, 50);
+
+    const Vaca* vaca = gestor.buscar_vaca(1);
+    const Gallina* gallina = gestor.buscar_gallina(2);
+    ASSERT_NE(vaca, nullptr);
+    ASSERT_NE(gallina, nullptr);
+    EXPECT_FALSE(vaca->caminando);
+    EXPECT_FALSE(vaca->durmiendo);
+    EXPECT_FALSE(gallina->caminando);
+    EXPECT_FALSE(gallina->durmiendo);
+
+    HoraDelJuego hora_noche;
+    hora_noche.hora = 19;
+    hora_noche.minuto = 0;
+    gestor.actualizar(hora_noche, 50, 50);
+    EXPECT_TRUE(vaca->durmiendo);
+    EXPECT_FALSE(vaca->caminando);
+    EXPECT_TRUE(gallina->durmiendo);
+    EXPECT_FALSE(gallina->caminando);
+
+    // Ordeñar una vaca dormida sigue funcionando si tiene leche
+    Drops drops;
+    gestor.avanzar_dia(drops);
+    gestor.avanzar_dia(drops);
+    EXPECT_TRUE(vaca->esta_lista_para_ordeniar());
+    EXPECT_TRUE(gestor.ordeniar_vaca(1));
+    EXPECT_FALSE(vaca->esta_lista_para_ordeniar());
+}
+
+TEST(Animales, BuscarVacaPorCasillaDosPorDos) {
+    Colisiones colisiones = crear_colisiones_test();
+    GestorDeAnimales gestor(colisiones);
+    EXPECT_TRUE(gestor.agregar_vaca(10, 10));
+
+    EXPECT_NE(gestor.vaca_en(10, 10), nullptr);
+    EXPECT_NE(gestor.vaca_en(11, 10), nullptr);
+    EXPECT_NE(gestor.vaca_en(10, 11), nullptr);
+    EXPECT_NE(gestor.vaca_en(11, 11), nullptr);
+
+    EXPECT_EQ(gestor.vaca_en(9, 10), nullptr);
+    EXPECT_EQ(gestor.vaca_en(12, 10), nullptr);
+    EXPECT_EQ(gestor.vaca_en(10, 12), nullptr);
 }

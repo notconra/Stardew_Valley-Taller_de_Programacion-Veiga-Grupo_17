@@ -1,7 +1,7 @@
 #include "vaca.h"
 
 Vaca::Vaca(uint32_t id_vaca, uint32_t col, uint32_t fil, uint8_t variante_inicial)
-    : Animal(id_vaca, TipoAnimal::VACA, col, fil, variante_inicial) {
+    : Animal(id_vaca, TipoAnimal::VACA, col, fil, variante_inicial, 2, 2) {
 }
 
 void Vaca::avanzar_dia() {

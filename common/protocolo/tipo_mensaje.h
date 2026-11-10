@@ -61,6 +61,12 @@ enum class TipoMensaje : uint8_t {
 
     // Fin del día: quién está acostado o desmayado y cuántos están listos
     ESTADO_DEL_DESCANSO = 0x94,
+
+    // Actualización de estado o posición de un animal
+    ANIMAL_ACTUALIZADO = 0x95,
+
+    // Cambio en la disponibilidad de leche de una vaca
+    VACA_ORDENIABLE = 0x96,
 };
 
 #endif

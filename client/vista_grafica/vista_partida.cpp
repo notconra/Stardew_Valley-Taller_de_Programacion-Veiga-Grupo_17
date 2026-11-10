@@ -553,6 +553,29 @@ void VistaPartida::aplicar(const EventoServidor& evento, VistaChat& chat) {
                 // Si murió (vida en 0) no hace falta sacarlo de la lista: EnemigosGraficos ya no
                 // lo dibuja, y si revive llega otro EnemigoActualizado que lo actualiza in situ.
             },
+            [&](const AnimalActualizado& e) {
+                const auto existente = std::find_if(
+                    estado.animales.begin(),
+                    estado.animales.end(),
+                    [&e](const EstadoAnimal& otro) { return otro.id == e.animal.id; });
+                if (existente == estado.animales.end()) {
+                    estado.animales.push_back(e.animal);
+                } else {
+                    *existente = e.animal;
+                }
+            },
+            [&](const VacaOrdeniable& e) {
+                if (e.lista) {
+                    if (std::find(
+                            estado.vacas_para_ordeniar.begin(),
+                            estado.vacas_para_ordeniar.end(),
+                            e.id_vaca) == estado.vacas_para_ordeniar.end()) {
+                        estado.vacas_para_ordeniar.push_back(e.id_vaca);
+                    }
+                } else {
+                    std::erase(estado.vacas_para_ordeniar, e.id_vaca);
+                }
+            },
             [&](const ActualizacionInventario& e) {
                 ultimo_inventario = e.inventario;
                 olvidar_el_piso();

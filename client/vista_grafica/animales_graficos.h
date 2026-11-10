@@ -26,8 +26,9 @@ public:
     static constexpr const char* RUTA_GALLINA_DORADA = "Assets/Animals/Golden Chicken.png";
     static constexpr const char* RUTA_GALLINA_VOID = "Assets/Animals/Void Chicken.png";
 
-    static constexpr const char* RUTA_ICONO_LECHE = "Assets/Farm/Animals/milk.png";
+    static constexpr const char* RUTA_ICONO_LECHE = "Assets/items/leche.png";
     static constexpr const char* RUTA_BURBUJA_EMOTE = "Assets/TileSheets/emotes.png";
+    static constexpr const char* RUTA_EMOTE_SUENO = "Assets/chat/emotes/Emote_Sleep.png";
 
     static constexpr int VACA_ANCHO = 32;
     static constexpr int VACA_ALTO = 32;
@@ -35,6 +36,8 @@ public:
     static constexpr int GALLINA_ALTO = 16;
     static constexpr int ICONO_LECHE_ANCHO = 10;
     static constexpr int ICONO_LECHE_ALTO = 12;
+    static constexpr int TAMANO_SUENO_VACA = 16;
+    static constexpr int TAMANO_SUENO_GALLINA = 12;
 
     static constexpr int BURBUJA_ORIGEN_X = 48;
     static constexpr int BURBUJA_ORIGEN_Y = 0;
@@ -46,6 +49,8 @@ public:
     static constexpr int FILA_ABAJO = 0;
     static constexpr int FILA_LATERAL = 1;
     static constexpr int FILA_ARRIBA = 2;
+    static constexpr int FILA_DORMIDA_VACA = 4;
+    static constexpr int FILA_DORMIDA_GALLINA = 5;
 
     static constexpr int CUADROS_CAMINANDO = 4;
     static constexpr uint32_t MS_POR_CUADRO_CAMINANDO = 160;
@@ -61,6 +66,12 @@ public:
         int cam_x, int cam_y) const;
 
 private:
+    enum class PosicionNotificacion {
+        CENTRO,
+        IZQUIERDA,
+        DERECHA,
+    };
+
     struct DisposicionFrame {
         int fila;
         SDL_RendererFlip flip;
@@ -73,16 +84,22 @@ private:
     std::vector<Textura> texturas_gallinas;
     Textura icono_leche;
     Textura textura_burbuja;
+    Textura textura_sueno;
     std::map<Direccion, DisposicionFrame> disposicion_por_direccion;
 
     SDL_Texture* obtener_textura(TipoAnimal tipo, uint8_t variante) const;
 
     void dibujar_animal(
-        SDL_Renderer* renderer, const EstadoAnimal& animal, int cam_x, int cam_y,
+        SDL_Renderer* renderer, const EstadoAnimal& animal, bool tiene_leche, int cam_x, int cam_y,
         int ancho_pantalla, int alto_pantalla, uint32_t ahora) const;
 
     void dibujar_notificacion_ordenie(
-        SDL_Renderer* renderer, const SDL_Rect& destino_vaca, uint32_t ahora) const;
+        SDL_Renderer* renderer, const SDL_Rect& destino_vaca, uint32_t ahora,
+        PosicionNotificacion posicion) const;
+
+    void dibujar_notificacion_sueno(
+        SDL_Renderer* renderer, const SDL_Rect& destino_animal, bool es_vaca, uint32_t ahora,
+        PosicionNotificacion posicion) const;
 
     bool esta_en_pantalla(const SDL_Rect& rect, int ancho_pantalla, int alto_pantalla) const;
 };

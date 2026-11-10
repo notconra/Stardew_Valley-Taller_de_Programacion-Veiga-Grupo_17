@@ -174,10 +174,11 @@ void GestorDeSectores::quitar(const Personaje& personaje) {
     difundir_jugadores(encontrado->first);
 }
 
-void GestorDeSectores::actualizar() {
+void GestorDeSectores::actualizar(const HoraDelJuego& hora) {
     for (auto& entrada : sectores) {
         Sector& sector = entrada.second;
         sector.jugadores.actualizar();
+        sector.actualizar(hora, notificador);
 
         for (int id_enemigo : sector.enemigos.actualizar()) {
             const Enemigo* enemigo = sector.enemigos.buscar(id_enemigo);
@@ -192,7 +193,7 @@ void GestorDeSectores::actualizar() {
 
 void GestorDeSectores::avanzar_dia() {
     for (auto& entrada : sectores) {
-        entrada.second.avanzar_dia();
+        entrada.second.avanzar_dia(notificador);
     }
 }
 

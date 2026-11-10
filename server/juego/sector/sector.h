@@ -55,7 +55,8 @@ public:
           jugadores(
               mapa, colisiones, ticks_por_segundo, recursos.juego.movimiento,
               recursos.juego.aparicion),
-          enemigos(recursos.catalogo_de_enemigos) {
+          enemigos(recursos.catalogo_de_enemigos),
+          animales(colisiones) {
         registrar_manejadores_de_modificaciones();
         if (id == "granja") {
             // NOTA PROVISORIA: Inicializa 1 vaca y 1 gallina para pruebas en tiempo de ejecución
@@ -125,7 +126,15 @@ public:
 
     // Notificación de nuevo día en el sector:
     // Actualiza la producción de animales y genera drops de huevos.
+    void avanzar_dia(Notificador& notificador);
     void avanzar_dia();
+
+    // Interacciones y ciclo con animales
+    bool vaca_lista_en(uint32_t columna, uint32_t fila) const;
+    bool ordeniar_vaca(Notificador& notificador, uint32_t columna, uint32_t fila);
+    bool agregar_vaca(Notificador& notificador, uint32_t columna, uint32_t fila);
+    bool agregar_gallina(Notificador& notificador, uint32_t columna, uint32_t fila);
+    void actualizar(const HoraDelJuego& hora, Notificador& notificador);
 
 private:
     std::unordered_map<TipoModificacionCasilla, std::function<void(uint32_t, uint32_t)>>

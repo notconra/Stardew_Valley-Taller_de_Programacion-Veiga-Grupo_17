@@ -69,6 +69,8 @@ private:
     void enviar_evento_drop_aparecido(const DropAparecido& drop);
     void enviar_evento_drop_retirado(const DropRetirado& drop);
     void enviar_evento_enemigo_actualizado(const EnemigoActualizado& enemigo);
+    void enviar_evento_animal_actualizado(const AnimalActualizado& animal);
+    void enviar_evento_vaca_ordeniable(const VacaOrdeniable& vaca);
     void enviar_evento_tierra_cambiada(const TierraCambiada& tierra);
     void enviar_evento_hora_del_juego(const HoraDelJuego& hora);
     void enviar_evento_casilla_consultada(const CasillaConsultada& consultada);

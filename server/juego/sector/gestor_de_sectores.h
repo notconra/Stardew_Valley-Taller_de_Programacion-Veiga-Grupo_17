@@ -82,7 +82,7 @@ public:
     void quitar(const Personaje& personaje);
 
     // Un tick de física en todos los sectores.
-    void actualizar();
+    void actualizar(const HoraDelJuego& hora);
 
     // Notifica el avance de un día a todos los sectores.
     void avanzar_dia();

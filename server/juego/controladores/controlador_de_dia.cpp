@@ -274,6 +274,13 @@ void ControladorDelDia::continuar_en_el_dia(uint32_t dia) {
     reloj.continuar_en_el_dia(dia);
 }
 
+void ControladorDelDia::avanzar_dia_inmediato() {
+    reloj.empezar_dia_siguiente();
+    terminar_el_dia();
+    dia_terminado = true;
+    avisar_descansos();
+}
+
 bool ControladorDelDia::tomar_dia_terminado() {
     const bool terminado = dia_terminado;
     dia_terminado = false;

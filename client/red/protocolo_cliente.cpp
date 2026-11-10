@@ -25,6 +25,8 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::DROP_APARECIDO, [this] { return recibir_drop_aparecido(); }},
           {TipoMensaje::DROP_RETIRADO, [this] { return recibir_drop_retirado(); }},
           {TipoMensaje::ENEMIGO_ACTUALIZADO, [this] { return recibir_enemigo_actualizado(); }},
+          {TipoMensaje::ANIMAL_ACTUALIZADO, [this] { return recibir_animal_actualizado(); }},
+          {TipoMensaje::VACA_ORDENIABLE, [this] { return recibir_vaca_ordeniable(); }},
           {TipoMensaje::TIERRA_CAMBIADA, [this] { return recibir_tierra_cambiada(); }},
           {TipoMensaje::HORA_DEL_JUEGO, [this] { return recibir_hora_del_juego(); }},
           {TipoMensaje::CASILLA_CONSULTADA, [this] { return recibir_casilla_consultada(); }},
@@ -332,8 +334,18 @@ EstadoAnimal ProtocoloCliente::recibir_estado_animal() {
     estado.fila = recibir_u32();
     estado.mirando = static_cast<Direccion>(recibir_u8());
     estado.caminando = recibir_booleano();
-    estado.lista_para_ordeniar = recibir_booleano();
+    estado.durmiendo = recibir_booleano();
     return estado;
+}
+
+AnimalActualizado ProtocoloCliente::recibir_animal_actualizado() {
+    return AnimalActualizado{recibir_estado_animal()};
+}
+
+VacaOrdeniable ProtocoloCliente::recibir_vaca_ordeniable() {
+    uint32_t id_vaca = recibir_u32();
+    bool lista = recibir_booleano();
+    return VacaOrdeniable{id_vaca, lista};
 }
 
 CasillaTratada ProtocoloCliente::recibir_casilla_tratada() {
@@ -381,6 +393,12 @@ EstadoJuego ProtocoloCliente::recibir_estado_juego() {
     estado_juego.animales.reserve(cantidad_de_animales);
     for (uint16_t i = 0; i < cantidad_de_animales; ++i) {
         estado_juego.animales.push_back(recibir_estado_animal());
+    }
+
+    uint16_t cantidad_de_vacas = recibir_u16();
+    estado_juego.vacas_para_ordeniar.reserve(cantidad_de_vacas);
+    for (uint16_t i = 0; i < cantidad_de_vacas; ++i) {
+        estado_juego.vacas_para_ordeniar.push_back(recibir_u32());
     }
 
     return estado_juego;

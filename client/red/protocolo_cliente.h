@@ -57,6 +57,8 @@ private:
     DropAparecido recibir_drop_aparecido();
     DropRetirado recibir_drop_retirado();
     EnemigoActualizado recibir_enemigo_actualizado();
+    AnimalActualizado recibir_animal_actualizado();
+    VacaOrdeniable recibir_vaca_ordeniable();
     TierraCambiada recibir_tierra_cambiada();
     HoraDelJuego recibir_hora_del_juego();
     CasillaConsultada recibir_casilla_consultada();
