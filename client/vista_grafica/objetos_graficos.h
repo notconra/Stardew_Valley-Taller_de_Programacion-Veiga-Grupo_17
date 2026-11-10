@@ -68,7 +68,6 @@ public:
         "Assets/Caverns/Mining/mena_lapislazuli.png";
     static constexpr const char* RUTA_ASSET_MENA_PLATA = "Assets/Caverns/Mining/mena_plata.png";
     static constexpr const char* RUTA_ASSET_MENA_ORO = "Assets/Caverns/Mining/mena_oro.png";
-    static constexpr const char* RUTA_ASSET_MENA_ORO = "Assets/Caverns/Mining/mena_oro.png";
     static constexpr const char* RUTA_ASSET_COFRE = "Assets/items/cofre.png";
     static constexpr const char* RUTA_ASSET_MUEBLES = "Assets/TileSheets/furniture_2.png";
 

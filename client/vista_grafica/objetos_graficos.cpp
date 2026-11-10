@@ -232,6 +232,8 @@ void ObjetosGraficos::dibujar_capa(
         return;
     }
 
+    const int tamano_en_pantalla = tamano_de_tile * escala_de_tiles;
+
     for (const EstadoObjetoDelMundo& objeto : estado.objetos) {
         if (objeto.mapa != mapa) {
             continue;
