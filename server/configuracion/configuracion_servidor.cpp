@@ -248,6 +248,11 @@ void ConfiguracionServidor::cargar_acciones(const toml::table& tabla) {
         tabla, "danio_espada", seccion, acciones.danio_espada, 0, INT_MAX);
     acciones.energia_por_golpe = lector_toml::leer_entero_opcional(
         tabla, "energia_por_golpe", seccion, acciones.energia_por_golpe, 0, INT_MAX);
+    acciones.energia_por_picar = lector_toml::leer_entero_opcional(
+        tabla, "energia_por_picar", seccion, acciones.energia_por_picar, 0, INT_MAX);
+    acciones.energia_por_tratar_tierra = lector_toml::leer_entero_opcional(
+        tabla, "energia_por_tratar_tierra", seccion, acciones.energia_por_tratar_tierra, 0,
+        INT_MAX);
 }
 
 void ConfiguracionServidor::cargar_drops(const toml::table& tabla) {
@@ -362,6 +367,9 @@ void ConfiguracionServidor::cargar_mazmorra(const toml::table& archivo_toml) {
             mazmorra.orco.tamano_grupo_maximo = lector_toml::leer_entero_opcional(
                 *orco, "tamano_grupo_maximo", seccion_orco, mazmorra.orco.tamano_grupo_maximo, 1,
                 INT_MAX);
+            mazmorra.orco.probabilidad_de_plata_al_morir = lector_toml::leer_decimal_opcional(
+                *orco, "probabilidad_de_plata_al_morir", seccion_orco,
+                mazmorra.orco.probabilidad_de_plata_al_morir, 0.0, 1.0);
             mazmorra.orco.probabilidad_de_manada_por_plata = lector_toml::leer_decimal_opcional(
                 *orco, "probabilidad_de_manada_por_plata", seccion_orco,
                 mazmorra.orco.probabilidad_de_manada_por_plata, 0.0, 1.0);
@@ -392,6 +400,19 @@ void ConfiguracionServidor::cargar_mazmorra(const toml::table& archivo_toml) {
                 cargar_enemigo(*vampiro, seccion_vampiros + ".vampiro", config.vampiro);
             }
         }
+    }
+
+    if (const toml::table* trampas = (*tabla)["trampas"].as_table()) {
+        const std::string seccion_trampas = "mazmorra.trampas";
+        ConfiguracionTrampasServidor& config = mazmorra.trampas;
+        config.por_nivel = lector_toml::leer_entero_opcional(
+            *trampas, "por_nivel", seccion_trampas, config.por_nivel, 0, INT_MAX);
+        config.danio = lector_toml::leer_entero_opcional(
+            *trampas, "danio", seccion_trampas, config.danio, 0, INT_MAX);
+        config.ticks_inactiva = lector_toml::leer_entero_opcional(
+            *trampas, "ticks_inactiva", seccion_trampas, config.ticks_inactiva, 1, INT_MAX);
+        config.ticks_activa = lector_toml::leer_entero_opcional(
+            *trampas, "ticks_activa", seccion_trampas, config.ticks_activa, 1, INT_MAX);
     }
 
     const toml::array* minerales = (*tabla)["minerales"].as_array();

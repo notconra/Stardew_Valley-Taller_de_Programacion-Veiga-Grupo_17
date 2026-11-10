@@ -49,7 +49,7 @@ CatalogoDeEnemigos RecursosDeJuego::crear_catalogo_de_enemigos(
     const ConfiguracionMazmorraServidor& configuracion_mazmorra) {
     std::vector<DefinicionDeEnemigo> definiciones = {
         Esqueletos::definicion(configuracion_mazmorra.esqueleto),
-        Orcos::definicion(configuracion_mazmorra.orco.combate),
+        Orcos::definicion(configuracion_mazmorra.orco),
         Vampiros::vampira(configuracion_mazmorra.vampiros),
         Vampiros::vampiro(configuracion_mazmorra.vampiros)};
 

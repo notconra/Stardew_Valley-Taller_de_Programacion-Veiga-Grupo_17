@@ -65,6 +65,10 @@ struct ConfiguracionAccionesServidor {
     // que gasta cada golpe que conecta.
     int danio_espada = 10;
     int energia_por_golpe = 3;
+    // Energía que gasta cada golpe de pico que conecta (rompa o no el mineral) y cada vez que se
+    // trata la tierra con la pala o se vuelve a tierra común con el pico.
+    int energia_por_picar = 3;
+    int energia_por_tratar_tierra = 3;
 };
 
 // Reglas de los ítems tirados en el piso.
@@ -120,7 +124,7 @@ struct ConfiguracionEnemigoServidor {
     int radio_de_vision = 5;
     int radio_de_deambulo = 3;
     int oro_minimo = 0;
-    int oro_maximo = 0;
+    int oro_maximo = 10;
 };
 
 // Los orcos aparecen en grupos: cada punto de aparición de orcos se llena con un grupo de entre
@@ -135,7 +139,9 @@ struct ConfiguracionOrcosServidor {
         .radio_de_vision = 6,
         .radio_de_deambulo = 3,
         .oro_minimo = 0,
-        .oro_maximo = 0};
+        .oro_maximo = 10};
+    // Probabilidad de que un orco suelte una plata al morir (enunciado: 20%).
+    double probabilidad_de_plata_al_morir = 0.20;
     int grupos_por_nivel = 1;  // cuántos de los enemigos_por_nivel puntos son grupos de orcos
     int tamano_grupo_minimo = 3;
     int tamano_grupo_maximo = 6;
@@ -178,6 +184,17 @@ struct ConfiguracionVampirosServidor {
     int radio_de_sangre = 3;
 };
 
+// Los pinches de la mazmorra, [mazmorra.trampas]. Están en el suelo y se activan por tiempo:
+// pasan ticks_inactiva guardados y ticks_activa afuera, y vuelven a empezar. Cada uno arranca su
+// ciclo en un momento distinto. Mientras están afuera le sacan "danio" de vida una sola vez por
+// activación a cada jugador parado encima.
+struct ConfiguracionTrampasServidor {
+    int por_nivel = 6;
+    int danio = 10;
+    int ticks_inactiva = 90;
+    int ticks_activa = 30;
+};
+
 // La mazmorra: qué mapas pueden ser niveles y qué mapa_destino lleva a ella.
 // Si no hay mazmorra en el archivo, "mapas" queda vacío y la partida no tiene mazmorra.
 struct ConfiguracionMazmorraServidor {
@@ -192,6 +209,7 @@ struct ConfiguracionMazmorraServidor {
     ConfiguracionEnemigoServidor esqueleto;
     ConfiguracionOrcosServidor orco;
     ConfiguracionVampirosServidor vampiros;
+    ConfiguracionTrampasServidor trampas;
 };
 
 struct ConfiguracionServidorDatos {

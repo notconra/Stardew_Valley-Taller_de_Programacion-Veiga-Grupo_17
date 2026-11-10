@@ -169,6 +169,8 @@ duracion_tratar_tierra_en_ticks = 16
 duracion_atacar_en_ticks = 18
 danio_espada = 25
 energia_por_golpe = 3
+energia_por_picar = 3
+energia_por_tratar_tierra = 3
 
 [juego.drops]
 # radio_de_recogida_en_casillas = 1
@@ -188,6 +190,8 @@ ticks_para_revivir = 600
 ticks_por_casilla = 20
 radio_de_vision = 5
 radio_de_deambulo = 3
+oro_minimo = 0
+oro_maximo = 10
 
 [mazmorra.enemigos.orco]
 vida = 60
@@ -197,7 +201,10 @@ ticks_para_revivir = 0
 ticks_por_casilla = 16
 radio_de_vision = 6
 radio_de_deambulo = 3
-grupos_por_nivel = 0
+oro_minimo = 0
+oro_maximo = 10
+probabilidad_de_plata_al_morir = 0.20
+grupos_por_nivel = 1
 tamano_grupo_minimo = 3
 tamano_grupo_maximo = 6
 probabilidad_de_manada_por_plata = 0.10
@@ -229,6 +236,14 @@ radio_de_vision = 7
 radio_de_deambulo = 3
 oro_minimo = 5
 oro_maximo = 15
+
+# Pinches en el suelo (enunciado: se activan por tiempo). Pasan ticks_inactiva guardados y
+# ticks_activa afuera; a cada jugador parado encima le sacan "danio" una vez por activación.
+[mazmorra.trampas]
+por_nivel = 24
+danio = 10
+ticks_inactiva = 90
+ticks_activa = 30
 
 # Minerales (opcional). Si hay al menos un [[mazmorra.minerales]], reemplazan a los por defecto:
 # los que no listemos acá no aparecen en los niveles. "peso" es la frecuencia relativa y
