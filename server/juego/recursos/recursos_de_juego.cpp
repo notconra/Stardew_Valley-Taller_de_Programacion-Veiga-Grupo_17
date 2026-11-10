@@ -24,7 +24,12 @@ RecursosDeJuego::RecursosDeJuego(
       catalogo_de_enemigos(crear_catalogo_de_enemigos(configuracion_mazmorra)),
       mazmorra(configuracion_mazmorra) {
     for (const ConfiguracionMapaServidor& configuracion_mapa : configuracion_mapas) {
-        mapas.emplace(configuracion_mapa.id, Mapa(configuracion_mapa, {DESTINO_ESCALERA}));
+        // Las transiciones que se usan con clic (la puerta de la casa, la escalera) tienen que
+        // conservar la colisión del TMX para que no se puedan atravesar caminando. Las que se
+        // activan al pisarlas se liberan para poder entrar en ellas.
+        mapas.emplace(
+            configuracion_mapa.id,
+            Mapa(configuracion_mapa, juego.transiciones.destinos_con_clic));
         this->configuraciones_mapas.emplace(configuracion_mapa.id, configuracion_mapa);
     }
     validar_catalogo_de_objetos();

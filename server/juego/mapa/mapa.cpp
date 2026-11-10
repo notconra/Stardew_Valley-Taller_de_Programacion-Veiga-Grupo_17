@@ -1,5 +1,6 @@
 #include "mapa.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <map>
 #include <set>
@@ -140,6 +141,10 @@ void Mapa::ajustar_colisiones_de_transiciones(
                 destinos_que_conservan_colision.begin(),
                 destinos_que_conservan_colision.end(),
                 par.second.mapa_destino) != destinos_que_conservan_colision.end();
+        if (conserva_colision) {
+            continue;
+        }
+
         const Rectangulo& zona = par.first;
         const int primera_columna = std::max(0, zona.x / ancho_de_casilla);
         const int ultima_columna =
@@ -151,13 +156,8 @@ void Mapa::ajustar_colisiones_de_transiciones(
             for (int columna = primera_columna; columna <= ultima_columna; ++columna) {
                 const std::size_t indice =
                     static_cast<std::size_t>(fila) * ancho_en_casillas + columna;
-                if (conserva_colision) {
-                    propiedades[indice] =
-                        static_cast<uint8_t>(propiedades[indice] | PropiedadDeCasilla::BLOQUEA);
-                } else {
-                    propiedades[indice] =
-                        static_cast<uint8_t>(propiedades[indice] & ~PropiedadDeCasilla::BLOQUEA);
-                }
+                propiedades[indice] =
+                    static_cast<uint8_t>(propiedades[indice] & ~PropiedadDeCasilla::BLOQUEA);
             }
         }
     }

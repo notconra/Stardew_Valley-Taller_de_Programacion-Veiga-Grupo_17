@@ -50,8 +50,8 @@ private:
         const std::vector<int>& capa, const std::vector<int>& ids, uint8_t propiedad,
         const std::string& nombre_capa);
 
-    // Ajusta la colisión de las casillas de cada transición. Las de los destinos indicados quedan
-    // bloqueadas, el resto se liberan para poder pisarlas.
+    // Ajusta la colisión de las casillas de cada transición. Las de los destinos indicados
+    // conservan la colisión que trae el TMX; las demás se liberan para poder pisarlas.
     void ajustar_colisiones_de_transiciones(
         const std::vector<std::string>& destinos_que_conservan_colision);
 
