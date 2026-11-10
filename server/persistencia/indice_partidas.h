@@ -23,6 +23,7 @@ public:
 
     void registrar_o_actualizar(const EntradaIndicePartida& entrada);
     std::vector<EntradaIndicePartida> listar_todas() const;
+    bool eliminar(const std::string& codigo);
 
     void guardar() const;
     void cargar();

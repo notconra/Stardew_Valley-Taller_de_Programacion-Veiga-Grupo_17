@@ -191,12 +191,12 @@ TEST(Dinero, ComandoDineroConsultarSaldo) {
 
     const uint32_t saldo = mundo.obtener_monedas(ID_JUGADOR);
     EXPECT_EQ(respuestas.ultimo_destinatario, ID_JUGADOR);
-    EXPECT_EQ(respuestas.ultimo_mensaje, "Tenés " + std::to_string(saldo) + " monedas de oro.");
+    EXPECT_EQ(respuestas.ultimo_mensaje, "Tenes " + std::to_string(saldo) + " monedas de oro.");
 
     ContextoDeComandoDeChat
         contexto_saldo{ID_JUGADOR, "Jugador1", "dinero", {"saldo"}, "", respuestas};
     comando.ejecutar(contexto_saldo);
-    EXPECT_EQ(respuestas.ultimo_mensaje, "Tenés " + std::to_string(saldo) + " monedas de oro.");
+    EXPECT_EQ(respuestas.ultimo_mensaje, "Tenes " + std::to_string(saldo) + " monedas de oro.");
 }
 
 TEST(Dinero, ComandoDineroRecibirMonedas) {
@@ -261,8 +261,8 @@ TEST(Dinero, ComandoDineroGastarMonedasSinSaldoSuficiente) {
     EXPECT_EQ(mundo.obtener_monedas(ID_JUGADOR), saldo_actual);
     EXPECT_EQ(
         respuestas.ultimo_mensaje,
-        "Saldo insuficiente. Tenés " + std::to_string(saldo_actual) +
-            " monedas y querés gastar 1000000.");
+        "Saldo insuficiente. Tenes " + std::to_string(saldo_actual) +
+            " monedas y queres gastar 1000000.");
 }
 
 TEST(Dinero, ComandoDineroValidacionDeArgumentosYAyuda) {
@@ -286,13 +286,13 @@ TEST(Dinero, ComandoDineroValidacionDeArgumentosYAyuda) {
     comando.ejecutar(cantidad_invalida);
     EXPECT_EQ(
         respuestas.ultimo_mensaje,
-        "La cantidad debe ser un número entero positivo menor a 100 millones.");
+        "La cantidad debe ser un numero entero positivo menor a 100 millones.");
 
     // Cantidad cero
     ContextoDeComandoDeChat
         cantidad_cero{ID_JUGADOR, "Jugador1", "dinero", {"gastar", "0"}, "", respuestas};
     comando.ejecutar(cantidad_cero);
-    EXPECT_EQ(respuestas.ultimo_mensaje, "La cantidad debe ser un número entero positivo.");
+    EXPECT_EQ(respuestas.ultimo_mensaje, "La cantidad debe ser un numero entero positivo.");
 
     // Subcomando desconocido
     ContextoDeComandoDeChat

@@ -23,7 +23,9 @@ SesionDePartida::SesionDePartida(
           datos_guardados),
       chat(*this),
       comandos(static_cast<unsigned int>(configuracion_partida.capacidad_de_comandos)),
-      guardar_al_terminar_el_dia(std::move(guardar)) {
+      guardar_al_terminar_el_dia(std::move(guardar)),
+      segundos_jugados_iniciales(datos_guardados.segundos_jugados),
+      tiempo_inicio_sesion(std::chrono::steady_clock::now()) {
     chat.agregar_comando(std::make_unique<ComandoDinero>(mundo));
     try {
         start();
@@ -227,6 +229,18 @@ std::vector<std::string> SesionDePartida::obtener_niveles_mazmorra() const {
     return mundo.obtener_niveles_mazmorra();
 }
 
+uint32_t SesionDePartida::obtener_dia() const {
+    std::lock_guard<std::mutex> lock(mutex_mundo);
+    return mundo.obtener_dia();
+}
+
+uint32_t SesionDePartida::obtener_segundos_jugados() const {
+    auto ahora = std::chrono::steady_clock::now();
+    auto segundos =
+        std::chrono::duration_cast<std::chrono::seconds>(ahora - tiempo_inicio_sesion).count();
+    return segundos_jugados_iniciales + static_cast<uint32_t>(segundos);
+}
+
 DatosMundoGuardado SesionDePartida::obtener_datos_guardado(
     const std::vector<Jugador>& miembros,
     const std::map<uint32_t, DatosJugadorGuardado>& jugadores_guardados_previos) {
@@ -235,6 +249,7 @@ DatosMundoGuardado SesionDePartida::obtener_datos_guardado(
     std::lock_guard<std::mutex> lock(mutex_mundo);
     DatosMundoGuardado datos_mundo;
     datos_mundo.dia = mundo.obtener_dia();
+    datos_mundo.segundos_jugados = obtener_segundos_jugados();
     datos_mundo.jugadores = datos_de_los_jugadores(miembros, jugadores_guardados_previos);
     datos_mundo.niveles_mazmorra = mundo.obtener_niveles_mazmorra();
     datos_mundo.mapas = mundo.obtener_mapas_guardados();

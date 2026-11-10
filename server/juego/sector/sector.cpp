@@ -1,8 +1,11 @@
 #include "sector.h"
 
+#include <algorithm>
+#include <cstdlib>
 #include <optional>
 #include <vector>
 
+#include "../azar.h"
 #include "../muebles/muebles.h"
 
 const ObjetoDelMundo* Sector::objeto_al_frente(uint32_t id_jugador) const {
@@ -160,6 +163,14 @@ ResultadoDeGolpeEnemigo Sector::golpear_enemigo(
             evento.enemigo = GestorDeEnemigos::estado_de(*enemigo);
             avisar(notificador, evento);
         }
+        for (int id_afectado : golpe.afectados) {
+            const Enemigo* afectado = enemigos.buscar(id_afectado);
+            if (afectado != nullptr) {
+                EnemigoActualizado evento;
+                evento.enemigo = GestorDeEnemigos::estado_de(*afectado);
+                avisar(notificador, evento);
+            }
+        }
     }
     return golpe;
 }
@@ -188,4 +199,85 @@ int Sector::soltar(
     evento.drop = estado;
     avisar(notificador, evento);
     return id;
+}
+
+int Sector::aparecer_grupo_persiguiendo(
+    Notificador& notificador, uint32_t id_jugador, int distancia, int cantidad,
+    TipoEnemigo tipo) {
+    const std::optional<Casilla> origen = jugadores.casilla_del_jugador(id_jugador);
+    if (!origen.has_value() || cantidad <= 0) {
+        return 0;
+    }
+    std::vector<Casilla> ocupadas_por_jugadores;
+    for (uint32_t otro : jugadores.ids()) {
+        const std::optional<Casilla> casilla = jugadores.casilla_del_jugador(otro);
+        if (casilla.has_value()) {
+            ocupadas_por_jugadores.push_back(*casilla);
+        }
+    }
+    const auto lejania = [&origen](const Casilla& casilla) {
+        return std::max(
+            std::abs(casilla.columna - origen->columna), std::abs(casilla.fila - origen->fila));
+    };
+    const auto se_puede_aparecer = [&](const Casilla& casilla) {
+        return enemigos.enemigo_vivo_en(casilla.columna, casilla.fila) == nullptr &&
+               std::find(ocupadas_por_jugadores.begin(), ocupadas_por_jugadores.end(), casilla) ==
+                   ocupadas_por_jugadores.end();
+    };
+
+    const int alcance = distancia + 3;
+    std::vector<Casilla> visitadas{*origen};
+    std::vector<Casilla> candidatas;
+    std::vector<Casilla> mas_lejanas;
+    for (size_t i = 0; i < visitadas.size(); ++i) {
+        const Casilla actual = visitadas[i];
+        const int lejos = lejania(actual);
+        if (lejos >= 2 && se_puede_aparecer(actual)) {
+            (lejos >= distancia ? candidatas : mas_lejanas).push_back(actual);
+        }
+        const Casilla vecinas[] = {
+            {actual.columna + 1, actual.fila},
+            {actual.columna - 1, actual.fila},
+            {actual.columna, actual.fila + 1},
+            {actual.columna, actual.fila - 1}};
+        for (const Casilla& vecina : vecinas) {
+            if (lejania(vecina) > alcance ||
+                std::find(visitadas.begin(), visitadas.end(), vecina) != visitadas.end() ||
+                !mapa.esta_dentro(vecina.columna, vecina.fila) ||
+                !colisiones.esta_libre(vecina.columna, vecina.fila)) {
+                continue;
+            }
+            visitadas.push_back(vecina);
+        }
+    }
+    if (candidatas.empty()) {
+        candidatas = mas_lejanas;
+    }
+    if (candidatas.empty()) {
+        return 0;
+    }
+    const Casilla ancla = candidatas[static_cast<size_t>(
+        Azar::entero(0, static_cast<int>(candidatas.size()) - 1))];
+    std::sort(candidatas.begin(), candidatas.end(), [&ancla](const Casilla& a, const Casilla& b) {
+        const auto d = [&ancla](const Casilla& c) {
+            return std::abs(c.columna - ancla.columna) + std::abs(c.fila - ancla.fila);
+        };
+        return d(a) < d(b);
+    });
+    if (static_cast<int>(candidatas.size()) > cantidad) {
+        candidatas.resize(static_cast<size_t>(cantidad));
+    }
+
+    const int colocados = enemigos.poblar_grupo_en(candidatas, tipo);
+    for (const Casilla& casilla : candidatas) {
+        const Enemigo* enemigo = enemigos.enemigo_vivo_en(casilla.columna, casilla.fila);
+        if (enemigo == nullptr) {
+            continue;
+        }
+        enemigos.perseguir(enemigo->id, id_jugador);
+        EnemigoActualizado evento;
+        evento.enemigo = GestorDeEnemigos::estado_de(*enemigo);
+        avisar(notificador, evento);
+    }
+    return colocados;
 }

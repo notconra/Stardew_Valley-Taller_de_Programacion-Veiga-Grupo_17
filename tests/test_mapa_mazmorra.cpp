@@ -48,7 +48,7 @@ TEST(MapaDeLaMazmorra, LasParedesYLasEscalerasBloquean) {
     ASSERT_FALSE(niveles.empty());
 
     for (const ConfiguracionMapaServidor& nivel : niveles) {
-        const Mapa mapa(nivel);
+        const Mapa mapa(nivel, {DESTINO_ESCALERA, "granja"});
         const std::vector<int> buildings =
             LectorDeMapasTMX(nivel.ruta_tmx).cargar_capa("Buildings");
         ASSERT_FALSE(buildings.empty()) << nivel.id;

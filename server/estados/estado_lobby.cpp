@@ -109,6 +109,23 @@ EstadoDeConexion::ProximoEstado EstadoLobby::retomar_partida(const RetomarPartid
     }
 }
 
+EstadoDeConexion::ProximoEstado EstadoLobby::eliminar_partida(const EliminarPartida& comando) {
+    if (comando.codigo_partida.empty()) {
+        responder_error(CodigoError::NO_PERMITIDO, "el código de la partida no puede estar vacío");
+        return nullptr;
+    }
+
+    try {
+        contexto.administrador.eliminar(comando.codigo_partida);
+        const std::vector<InfoPartida> info_partidas =
+            contexto.administrador.listar(contexto.identidad.id_cliente);
+        encolar(ListaPartidas{info_partidas});
+    } catch (const ErrorDePartida& error) {
+        responder_error(error.codigo(), error.what());
+    }
+    return nullptr;
+}
+
 void EstadoLobby::entrar_a_partida(const IngresoAPartida& ingreso) {
     encolar(ingreso.entrada);
     ingreso.sesion.entrar(

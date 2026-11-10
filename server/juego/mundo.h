@@ -15,6 +15,7 @@
 #include "controladores/controlador_de_enemigos.h"
 #include "controladores/controlador_de_jugador.h"
 #include "controladores/controlador_de_mazmorra.h"
+#include "controladores/controlador_de_trampas.h"
 #include "jugadores/personaje.h"
 #include "mapa/mapa.h"
 #include "notificador.h"
@@ -39,6 +40,7 @@ private:
     ControladorDeDrops controlador_de_drops;
     ControladorDeMazmorra controlador_de_mazmorra;
     ControladorDeEnemigos controlador_de_enemigos;
+    ControladorDeTrampas controlador_de_trampas;
     ControladorDelDia controlador_del_dia;
 
     void resolver_transicion(Personaje& personaje, const Transicion& transicion);
@@ -49,6 +51,8 @@ private:
 
     // Mueve a quienes pisan una transición que no pide clic.
     void resolver_transiciones_automaticas();
+    // Con poca energía los jugadores caminan más lento: se revisa cada tick antes de moverlos.
+    void ajustar_velocidad_por_energia();
 
     // Saca al personaje del mundo sin borrarlo, cada controlador limpia lo suyo y se le quita el
     // cuerpo del sector.

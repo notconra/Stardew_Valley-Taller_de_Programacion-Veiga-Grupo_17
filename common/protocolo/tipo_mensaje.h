@@ -25,8 +25,10 @@ enum class TipoMensaje : uint8_t {
     SOLTAR_ITEM = 0x0F,
     ENVIAR_MENSAJE_DE_CHAT = 0x10,
     GUARDAR_PARTIDA = 0x11,
-    CONSULTAR_CASILLA = 0x12,
-    DAR_EL_OK = 0x13,
+    CERRAR_COFRE = 0x12,
+    CONSULTAR_CASILLA = 0x13,
+    DAR_EL_OK = 0x14,
+    ELIMINAR_PARTIDA = 0x15,
 
     // Servidor a cliente
     ERROR_SERVIDOR = 0x81,
@@ -61,6 +63,9 @@ enum class TipoMensaje : uint8_t {
 
     // Fin del día: quién está acostado o desmayado y cuántos están listos
     ESTADO_DEL_DESCANSO = 0x94,
+
+    // Una trampa de la mazmorra que se activó o se desactivó
+    TRAMPA_ACTUALIZADA = 0x95,
 };
 
 #endif

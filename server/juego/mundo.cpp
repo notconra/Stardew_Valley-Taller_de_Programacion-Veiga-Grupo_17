@@ -21,6 +21,7 @@ Mundo::Mundo(
           sectores, personajes, notificador_de_juego, recursos_de_juego.juego.drops),
       controlador_de_mazmorra(recursos_de_juego, sectores, datos_guardados.niveles_mazmorra),
       controlador_de_enemigos(sectores, personajes, notificador_de_juego),
+      controlador_de_trampas(sectores, personajes, notificador_de_juego),
       controlador_del_dia(
           recursos_de_juego.juego.dia, ticks_por_segundo, sectores, personajes, recursos_de_juego,
           notificador_de_juego,
@@ -113,6 +114,9 @@ void Mundo::conectar(uint32_t id_jugador, const AparienciaPersonaje& apariencia)
         encontrado->second.apariencia = apariencia;
     }
     Personaje& personaje = encontrado->second;
+    if (personaje.esta_inconsciente()) {
+        return;
+    }
 
     if (personaje.conectado) {
         dar_de_baja(personaje);
@@ -202,11 +206,22 @@ void Mundo::resolver_transiciones_automaticas() {
     }
 }
 
+void Mundo::ajustar_velocidad_por_energia() {
+    for (auto& [id_jugador, personaje] : personajes) {
+        if (personaje.conectado && sectores.existe(personaje.mapa_actual)) {
+            sectores.en(personaje.mapa_actual)
+                .jugadores.fijar_velocidad(id_jugador, personaje.multiplicador_de_velocidad());
+        }
+    }
+}
+
 void Mundo::actualizar() {
     controlador_del_dia.actualizar();
+    ajustar_velocidad_por_energia();
     sectores.actualizar();
     resolver_transiciones_automaticas();
     controlador_de_enemigos.actualizar();
+    controlador_de_trampas.actualizar();
     sectores.difundir_jugadores();
     controlador_de_acciones.actualizar();
     controlador_de_cofres.actualizar();

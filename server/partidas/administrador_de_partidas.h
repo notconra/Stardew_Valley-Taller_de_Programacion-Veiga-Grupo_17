@@ -50,6 +50,9 @@ private:
 
     IndicePartidas indice;
 
+    static bool comparar_por_ultima_modificacion(
+        const InfoPartida& primera_partida, const InfoPartida& segunda_partida);
+
     void cargar_partidas_guardadas();
     void cargar_partida(const std::string& ruta_archivo);
     std::optional<DatosPartidaGuardada> cargar_datos_guardados(
@@ -63,6 +66,8 @@ public:
     // Sólo muestra las partidas en las que el cliente es jugador, nunca se
     // muestran las de los demás.
     std::vector<InfoPartida> listar(uint32_t id_cliente) const;
+
+    void eliminar(const std::string& codigo_partida);
 
     // La partida por defecto tiene un sólo jugador y el cliente que la crea
     // entra a ella.

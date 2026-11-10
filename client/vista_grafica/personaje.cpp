@@ -1,6 +1,9 @@
 #include "personaje.h"
 
+#include <SDL2/SDL_image.h>
+
 #include <map>
+#include <string>
 
 namespace {
 
@@ -26,16 +29,36 @@ constexpr int FILA_SOMBRERO_POR_DIRECCION[3] = {0, 40, 60};
 constexpr int ANCHO_CELDA_PELO = 16;
 constexpr int ANCHO_CELDA_SOMBRERO = 20;
 constexpr int ANCHO_CELDA_REMERA = 8;
+constexpr int COLUMNAS_REMERA = 16;
 constexpr int ALTO_BLOQUE_PELO = 32 * 3;
-constexpr int ALTO_BLOQUE_REMERA = 8 * 3;
+constexpr int ALTO_BLOQUE_REMERA = 32;
 constexpr int ALTO_BLOQUE_SOMBRERO = 80;
 
-// Tu prototipo dibujaba todo a escala x4 "horneada" en los números (sprite de 16px -> 64px en
-// pantalla), así que estos desvíos estaban en píxeles de pantalla a esa escala. Acá se dividen
-// por 4 para expresarlos en unidades de mundo, y se multiplican por escala_de_tiles al dibujar.
 constexpr int DESVIO_ACCION_ABAJO[4] = {1, 0, -1, -2};
 constexpr int DESVIO_ACCION_LATERAL[4] = {0, -1, -2, -3};
 constexpr int DESVIO_ACCION_ARRIBA[4] = {1, 1, 0, 0};
+constexpr int FILA_BRAZOS_EN_ALTO = 9;
+constexpr int COLUMNA_BRAZOS_EN_ALTO_FRENTE = 8;
+constexpr int COLUMNA_BRAZOS_EN_ALTO_LATERAL = 9;
+constexpr int TAMANO_ITEM_EN_ALTO = 16;
+constexpr int Y_ITEM_EN_ALTO = -6;
+constexpr int CORRIMIENTO_ITEM_LATERAL = 1;
+constexpr int TAMANO_HERRAMIENTA = 16;
+
+struct PoseDeMano {
+    int x;
+    int y;
+    double angulo;
+};
+constexpr PoseDeMano MANO_ACCION[3][4] = {
+    {{2, 13, -45}, {5, 16, -15}, {6, 20, 25}, {6, 22, 50}},
+    {{5, 15, -60}, {9, 14, -20}, {15, 16, 40}, {14, 19, 70}},
+    {{9, 16, -45}, {9, 18, -15}, {9, 20, 25}, {9, 22, 50}},
+};
+
+bool es_herramienta_de_mano(TipoItem tipo) {
+    return tipo == TipoItem::PICO || tipo == TipoItem::PALA || tipo == TipoItem::ESPADA;
+}
 
 int cuadro_de_accion(Uint32 ms_de_accion) {
     int cuadro = 0;
@@ -57,17 +80,12 @@ int desvio_de_accion(int fila_direccion, int cuadro) {
     }
 }
 
-constexpr const char* RUTA_CUERPO_MASCULINO = "Assets/Characters/Farmer/farmer_base.png";
-constexpr const char* RUTA_CUERPO_FEMENINO = "Assets/Characters/Farmer/farmer_girl_base.png";
-
 }  // namespace
 
 Personaje::Personaje(
     const ConfiguracionJugador& configuracion_jugador,
     const ConfiguracionGraficos& configuracion_graficos, SDL_Renderer* renderer)
-    : cuerpo_masculino(RUTA_CUERPO_MASCULINO, renderer),
-      cuerpo_femenino(RUTA_CUERPO_FEMENINO, renderer),
-      pantalon(configuracion_jugador.ruta_pantalon, renderer),
+    : pantalon(configuracion_jugador.ruta_pantalon, renderer),
       pelo(configuracion_jugador.ruta_pelo, renderer),
       sombrero(configuracion_jugador.ruta_sombrero, renderer),
       remera(configuracion_jugador.ruta_remera, renderer),
@@ -75,11 +93,7 @@ Personaje::Personaje(
       alto(32),
       escala_de_tiles(configuracion_graficos.escala_de_tiles),
       ms_por_cuadro_caminando(configuracion_jugador.ms_por_cuadro_caminando) {
-    ancho_hoja_cuerpo = 0;
-    SDL_QueryTexture(cuerpo_masculino.ptr(), nullptr, nullptr, &ancho_hoja_cuerpo, nullptr);
-    if (ancho_hoja_cuerpo <= 0) {
-        SDL_QueryTexture(cuerpo_femenino.ptr(), nullptr, nullptr, &ancho_hoja_cuerpo, nullptr);
-    }
+    ancho_hoja_cuerpo = gestor_cuerpos.ancho_hoja_cuerpo();
 
     int ancho_hoja_pantalon = 0;
     SDL_QueryTexture(pantalon.ptr(), nullptr, nullptr, &ancho_hoja_pantalon, nullptr);
@@ -102,12 +116,7 @@ Personaje::Personaje(
         columnas_sombrero = 1;
     }
 
-    int ancho_hoja_remera = 0;
-    SDL_QueryTexture(remera.ptr(), nullptr, nullptr, &ancho_hoja_remera, nullptr);
-    columnas_remera = ancho_hoja_remera / ANCHO_CELDA_REMERA;
-    if (columnas_remera <= 0) {
-        columnas_remera = 1;
-    }
+    columnas_remera = COLUMNAS_REMERA;
 }
 
 int Personaje::ancho_del_sprite() const {
@@ -120,7 +129,8 @@ int Personaje::alto_del_sprite() const {
 
 void Personaje::dibujar(
     SDL_Renderer* renderer, const EstadoJugador& jugador, bool haciendo_accion, Uint32 ms_de_accion,
-    int x_en_mapa, int y_en_mapa, int cam_x, int cam_y) const {
+    int x_en_mapa, int y_en_mapa, int cam_x, int cam_y, const RanuraInventario& en_mano,
+    const IconosDeItems& iconos) const {
     const auto encontrada = FILA_DE_DIRECCION.find(jugador.mirando);
     const int fila_direccion =
         encontrada != FILA_DE_DIRECCION.end() ? encontrada->second : FILA_ABAJO;
@@ -132,14 +142,19 @@ void Personaje::dibujar(
     int fila_cuerpo = fila_direccion;
     int fila_brazos = fila_direccion;
     int desvio_y_accesorios = 0;
+    const int cuadro_accion = cuadro_de_accion(ms_de_accion) % 4;
+
+    const bool tiene_item = en_mano.tipo != TipoItem::NINGUNO;
+    const bool item_en_la_mano = tiene_item && haciendo_accion;
+    const bool item_en_alto =
+        tiene_item && !haciendo_accion && !es_herramienta_de_mano(en_mano.tipo);
 
     if (haciendo_accion) {
-        const int cuadro = cuadro_de_accion(ms_de_accion);
         fila_cuerpo = FILA_ACCION_POR_DIRECCION[fila_direccion];
         fila_brazos = fila_cuerpo;
-        columna_cuerpo = cuadro % 4;
-        columna_brazos = 6 + (cuadro % 4);
-        desvio_y_accesorios = desvio_de_accion(fila_direccion, cuadro);
+        columna_cuerpo = cuadro_accion;
+        columna_brazos = 6 + cuadro_accion;
+        desvio_y_accesorios = desvio_de_accion(fila_direccion, cuadro_accion);
     } else if (jugador.camina) {
         const Uint32 ahora = SDL_GetTicks();
         const int cuadro = static_cast<int>((ahora / ms_por_cuadro_caminando) % 3);
@@ -157,14 +172,39 @@ void Personaje::dibujar(
         y_pantalla,
         ancho * escala_de_tiles,
         alto * escala_de_tiles};
+    if (item_en_alto) {
+        fila_brazos = FILA_BRAZOS_EN_ALTO;
+        columna_brazos = fila_direccion == FILA_LATERAL ? COLUMNA_BRAZOS_EN_ALTO_LATERAL
+                                                        : COLUMNA_BRAZOS_EN_ALTO_FRENTE;
+    }
+    const auto dibujar_item_en_la_mano = [&]() {
+        const PoseDeMano& pose = MANO_ACCION[fila_direccion][cuadro_accion];
+        const bool espejado = flip == SDL_FLIP_HORIZONTAL;
+        const int x_mano = espejado ? ancho - pose.x : pose.x;
+        const SDL_Rect destino{
+            x_pantalla + (x_mano - TAMANO_HERRAMIENTA / 2) * escala_de_tiles,
+            y_pantalla + (pose.y - TAMANO_HERRAMIENTA / 2) * escala_de_tiles,
+            TAMANO_HERRAMIENTA * escala_de_tiles,
+            TAMANO_HERRAMIENTA * escala_de_tiles};
+        iconos.dibujar(
+            renderer,
+            en_mano.tipo,
+            en_mano.calidad,
+            destino,
+            flip,
+            espejado ? -pose.angulo : pose.angulo);
+    };
+    if (item_en_la_mano && fila_direccion == FILA_ARRIBA) {
+        dibujar_item_en_la_mano();
+    }
 
     const bool es_femenino = jugador.apariencia.es_femenino;
-    const Textura& cuerpo = es_femenino ? cuerpo_femenino : cuerpo_masculino;
+    SDL_Texture* cuerpo = gestor_cuerpos.obtener_o_crear_cuerpo(jugador, renderer);
     const int offset_y_remera = es_femenino ? OFFSET_Y_REMERA_FEMENINO : OFFSET_Y_REMERA_MASCULINO;
     const int offset_y_pelo = es_femenino ? OFFSET_Y_PELO_FEMENINO : OFFSET_Y_PELO_MASCULINO;
 
     const SDL_Rect origen_cuerpo{columna_cuerpo * ancho, fila_cuerpo * alto, ancho, alto};
-    SDL_RenderCopyEx(renderer, cuerpo.ptr(), &origen_cuerpo, &destino_cuerpo, 0.0, nullptr, flip);
+    SDL_RenderCopyEx(renderer, cuerpo, &origen_cuerpo, &destino_cuerpo, 0.0, nullptr, flip);
 
     SDL_SetTextureColorMod(
         pantalon.ptr(),
@@ -185,7 +225,7 @@ void Personaje::dibujar(
         flip);
 
     const SDL_Rect origen_brazos{columna_brazos * ancho, fila_brazos * alto, ancho, alto};
-    SDL_RenderCopyEx(renderer, cuerpo.ptr(), &origen_brazos, &destino_cuerpo, 0.0, nullptr, flip);
+    SDL_RenderCopyEx(renderer, cuerpo, &origen_brazos, &destino_cuerpo, 0.0, nullptr, flip);
 
     SDL_SetTextureColorMod(
         pelo.ptr(),
@@ -251,14 +291,23 @@ void Personaje::dibujar(
         ANCHO_CELDA_REMERA * escala_de_tiles};
     SDL_RenderCopyEx(renderer, remera.ptr(), &origen_remera, &destino_remera, 0.0, nullptr, flip);
 
-    if (haciendo_accion) {
-        SDL_RenderCopyEx(
-            renderer,
-            cuerpo.ptr(),
-            &origen_brazos,
-            &destino_cuerpo,
-            0.0,
-            nullptr,
-            flip);
+    if (haciendo_accion || item_en_alto) {
+        SDL_RenderCopyEx(renderer, cuerpo, &origen_brazos, &destino_cuerpo, 0.0, nullptr, flip);
+    }
+
+    if (item_en_alto) {
+        int corrimiento = 0;
+        if (fila_direccion == FILA_LATERAL) {
+            corrimiento = jugador.mirando == Direccion::IZQUIERDA ? -CORRIMIENTO_ITEM_LATERAL
+                                                                  : CORRIMIENTO_ITEM_LATERAL;
+        }
+        const SDL_Rect destino_item{
+            x_pantalla + ((ancho - TAMANO_ITEM_EN_ALTO) / 2 + corrimiento) * escala_de_tiles,
+            y_pantalla + (Y_ITEM_EN_ALTO + desvio_y_accesorios) * escala_de_tiles,
+            TAMANO_ITEM_EN_ALTO * escala_de_tiles,
+            TAMANO_ITEM_EN_ALTO * escala_de_tiles};
+        iconos.dibujar(renderer, en_mano.tipo, en_mano.calidad, destino_item, flip);
+    } else if (item_en_la_mano && fila_direccion != FILA_ARRIBA) {
+        dibujar_item_en_la_mano();
     }
 }

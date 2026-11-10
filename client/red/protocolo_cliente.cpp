@@ -25,6 +25,7 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::DROP_APARECIDO, [this] { return recibir_drop_aparecido(); }},
           {TipoMensaje::DROP_RETIRADO, [this] { return recibir_drop_retirado(); }},
           {TipoMensaje::ENEMIGO_ACTUALIZADO, [this] { return recibir_enemigo_actualizado(); }},
+          {TipoMensaje::TRAMPA_ACTUALIZADA, [this] { return recibir_trampa_actualizada(); }},
           {TipoMensaje::TIERRA_CAMBIADA, [this] { return recibir_tierra_cambiada(); }},
           {TipoMensaje::HORA_DEL_JUEGO, [this] { return recibir_hora_del_juego(); }},
           {TipoMensaje::CASILLA_CONSULTADA, [this] { return recibir_casilla_consultada(); }},
@@ -46,6 +47,7 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const CrearPartida& m) { enviar_comando_crear_partida(m); },
             [this](const UnirsePartida& m) { enviar_comando_unirse_partida(m); },
             [this](const RetomarPartida& m) { enviar_comando_retomar_partida(m); },
+            [this](const EliminarPartida& m) { enviar_comando_eliminar_partida(m); },
             [this](const ActivarMultijugador& m) { enviar_comando_activar_multijugador(m); },
             [this](const SalirDePartida& m) { enviar_comando_salir_de_partida(m); },
             [this](const GuardarPartida& m) { enviar_comando_guardar_partida(m); },
@@ -56,6 +58,7 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const UsarItem& m) { enviar_comando_usar_item(m); },
             [this](const MoverItemEntreRanuras& m) { enviar_comando_mover_item_entre_ranuras(m); },
             [this](const MoverItemConCofre& m) { enviar_comando_mover_item_con_cofre(m); },
+            [this](const CerrarCofre& m) { enviar_comando_cerrar_cofre(m); },
             [this](const SolicitarInventario& m) { enviar_comando_solicitar_inventario(m); },
             [this](const SoltarItem& m) { enviar_comando_soltar_item(m); },
             [this](const ConsultarCasilla& m) { enviar_comando_consultar_casilla(m); },
@@ -91,6 +94,11 @@ void ProtocoloCliente::enviar_comando_unirse_partida(const UnirsePartida& unirse
 void ProtocoloCliente::enviar_comando_retomar_partida(const RetomarPartida& retomar) {
     enviar_tipo(TipoMensaje::RETOMAR_PARTIDA);
     enviar_texto(retomar.codigo_partida);
+}
+
+void ProtocoloCliente::enviar_comando_eliminar_partida(const EliminarPartida& eliminar) {
+    enviar_tipo(TipoMensaje::ELIMINAR_PARTIDA);
+    enviar_texto(eliminar.codigo_partida);
 }
 
 void ProtocoloCliente::enviar_comando_activar_multijugador(const ActivarMultijugador&) {
@@ -141,6 +149,10 @@ void ProtocoloCliente::enviar_comando_mover_item_con_cofre(const MoverItemConCof
     enviar_booleano(mover.desde_el_cofre);
 }
 
+void ProtocoloCliente::enviar_comando_cerrar_cofre(const CerrarCofre&) {
+    enviar_tipo(TipoMensaje::CERRAR_COFRE);
+}
+
 void ProtocoloCliente::enviar_comando_solicitar_inventario(const SolicitarInventario&) {
     enviar_tipo(TipoMensaje::SOLICITAR_INVENTARIO);
 }
@@ -184,10 +196,26 @@ ErrorServidor ProtocoloCliente::recibir_error_servidor() {
 InfoPartida ProtocoloCliente::recibir_info_partida() {
     std::string codigo_partida = recibir_texto();
     std::string nombre_partida = recibir_texto();
+    std::string nombre_personaje = recibir_texto();
+    AparienciaPersonaje apariencia = recibir_apariencia();
+    bool multijugador = recibir_booleano();
+    uint8_t jugadores_conectados = recibir_u8();
     uint8_t jugadores_totales = recibir_u8();
     uint8_t jugadores_maximos = recibir_u8();
+    uint32_t dia = recibir_u32();
+    uint32_t segundos_jugados = recibir_u32();
 
-    return InfoPartida{codigo_partida, nombre_partida, jugadores_totales, jugadores_maximos};
+    return InfoPartida{
+        codigo_partida,
+        nombre_partida,
+        nombre_personaje,
+        apariencia,
+        multijugador,
+        jugadores_conectados,
+        jugadores_totales,
+        jugadores_maximos,
+        dia,
+        segundos_jugados};
 }
 
 ListaPartidas ProtocoloCliente::recibir_lista_partidas() {
@@ -321,8 +349,22 @@ EstadoEnemigo ProtocoloCliente::recibir_estado_enemigo() {
     estado.vida_maxima = recibir_u16();
     estado.atacando = recibir_booleano();
     estado.muriendo = recibir_booleano();
+    estado.mirando = direccion_desde(recibir_u8());
+    estado.ms_por_casilla = recibir_u16();
+    estado.frenesi = recibir_booleano();
+    estado.sangre = recibir_booleano();
     return estado;
 }
+EstadoTrampa ProtocoloCliente::recibir_estado_trampa() {
+    EstadoTrampa estado;
+    estado.id = recibir_u32();
+    estado.tipo = static_cast<TipoTrampa>(recibir_u8());
+    estado.columna = recibir_u32();
+    estado.fila = recibir_u32();
+    estado.activa = recibir_booleano();
+    return estado;
+}
+
 CasillaTratada ProtocoloCliente::recibir_casilla_tratada() {
     CasillaTratada casilla;
     casilla.columna = recibir_u32();
@@ -362,6 +404,12 @@ EstadoJuego ProtocoloCliente::recibir_estado_juego() {
     estado_juego.tierra.reserve(cantidad_de_tierra);
     for (uint16_t i = 0; i < cantidad_de_tierra; ++i) {
         estado_juego.tierra.push_back(recibir_casilla_tratada());
+    }
+
+    uint16_t cantidad_de_trampas = recibir_u16();
+    estado_juego.trampas.reserve(cantidad_de_trampas);
+    for (uint16_t i = 0; i < cantidad_de_trampas; ++i) {
+        estado_juego.trampas.push_back(recibir_estado_trampa());
     }
 
     return estado_juego;
@@ -410,6 +458,12 @@ EnemigoActualizado ProtocoloCliente::recibir_enemigo_actualizado() {
     EnemigoActualizado actualizado;
     actualizado.enemigo = recibir_estado_enemigo();
     return actualizado;
+}
+
+TrampaActualizada ProtocoloCliente::recibir_trampa_actualizada() {
+    TrampaActualizada actualizada;
+    actualizada.trampa = recibir_estado_trampa();
+    return actualizada;
 }
 
 TierraCambiada ProtocoloCliente::recibir_tierra_cambiada() {

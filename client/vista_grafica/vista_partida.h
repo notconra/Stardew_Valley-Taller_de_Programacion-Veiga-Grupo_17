@@ -13,6 +13,7 @@
 #include "../red/conexion_con_servidor.h"
 #include "camara.h"
 #include "chat/vista_chat.h"
+#include "cursor_del_juego.h"
 #include "efectos_de_sonido.h"
 #include "enemigos_graficos.h"
 #include "entrada_del_usuario.h"
@@ -26,6 +27,7 @@
 #include "reloj_grafico.h"
 #include "renderizador.h"
 #include "tierra_grafica.h"
+#include "trampas_graficas.h"
 #include "ventana.h"
 #include "vision_mazmorra.h"
 
@@ -89,6 +91,7 @@ private:
     int alto_del_mundo = 0;
 
     const EstadoJugador* jugador_propio() const;
+    bool trampa_se_escucha(const EstadoTrampa& trampa) const;
     const ConfiguracionMapa& configuracion_de(const std::string& id_mapa) const;
     Camara camara_para(const MapaGrafico& mapa) const;
 
@@ -117,6 +120,11 @@ private:
 
     bool haciendo_accion = false;
     uint32_t inicio_accion_ms = 0;
+    // Un clic con el pico cuyo sonido todavía no se eligió: depende de lo que conteste el
+    // servidor (golpe si confirma que picó, rotura si se rompió un mineral, aire si no pasa nada
+    // en MS_ESPERA_SONIDO_PICO). 0: no hay ninguno pendiente.
+    uint32_t pico_pendiente_desde_ms = 0;
+    static constexpr uint32_t MS_ESPERA_SONIDO_PICO = 200;
     uint32_t ultimo_paso_ms = 0;
     EfectosDeSonido* efectos_actuales = nullptr;
 
@@ -129,7 +137,7 @@ private:
     void elegir_ranura_de_la_barra(const EntradaDelUsuario::Pedidos& pedidos);
     void procesar_clic(
         const EntradaDelUsuario& entrada, HudInventario& hud, const Camara& camara,
-        bool clic_derecho);
+        bool clic_derecho, bool con_shift);
 
     bool recibir_eventos(VistaChat& chat);
     void aplicar(const EventoServidor& evento, VistaChat& chat);
@@ -140,9 +148,10 @@ private:
     void dibujar(
         Renderizador& renderizador, SDL_Texture* mundo, const MapaGrafico& mapa,
         const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos,
-        const Personaje& personaje, const TierraGrafica& tierra, const Camara& camara,
-        const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
-        const EntradaDelUsuario& entrada, const VistaChat& chat, RelojGrafico& reloj_grafico,
+        const TrampasGraficas& trampas, const Personaje& personaje, const IconosDeItems& iconos,
+        const TierraGrafica& tierra, const Camara& camara, const HudInventario& hud,
+        const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada,
+        const VistaChat& chat, RelojGrafico& reloj_grafico,
         const PantallaDeDescanso& pantalla_de_descanso) const;
 
 public:

@@ -13,19 +13,29 @@ Partida::Partida(
     : codigo(codigo_de_partida),
       nombre(nombre_de_partida),
       jugadores_maximos(maximo_de_jugadores),
-      multijugador(false) {
-    jugadores.push_back(
-        Jugador{id_cliente_creador, 1, nombre_jugador_creador, proximo_color_libre(), false, apariencia_creador});
+      multijugador(false),
+      dia(1),
+      segundos_jugados(0) {
+    jugadores.push_back(Jugador{
+        id_cliente_creador,
+        1,
+        nombre_jugador_creador,
+        proximo_color_libre(),
+        false,
+        apariencia_creador});
 }
 
 Partida::Partida(
     const std::string& codigo_de_partida, const std::string& nombre_de_partida,
-    uint8_t maximo_de_jugadores, bool es_multijugador, const std::vector<Jugador>& lista_jugadores)
+    uint8_t maximo_de_jugadores, bool es_multijugador, const std::vector<Jugador>& lista_jugadores,
+    uint32_t dia_partida, uint32_t segundos_partida)
     : codigo(codigo_de_partida),
       nombre(nombre_de_partida),
       jugadores_maximos(maximo_de_jugadores),
       multijugador(es_multijugador),
-      jugadores(lista_jugadores) {
+      jugadores(lista_jugadores),
+      dia(dia_partida),
+      segundos_jugados(segundos_partida) {
 }
 
 Jugador* Partida::buscar_jugador(uint32_t id_cliente) {
@@ -96,6 +106,24 @@ DatosPartidaGuardada Partida::generar_datos_guardado(const DatosMundoGuardado& d
     return datos;
 }
 
+void Partida::actualizar_dia(uint32_t nuevo_dia) {
+    if (nuevo_dia > 0) {
+        dia = nuevo_dia;
+    }
+}
+
+void Partida::actualizar_segundos_jugados(uint32_t nuevos_segundos) {
+    segundos_jugados = nuevos_segundos;
+}
+
+uint32_t Partida::obtener_dia() const {
+    return dia;
+}
+
+uint32_t Partida::obtener_segundos_jugados() const {
+    return segundos_jugados;
+}
+
 bool Partida::es_miembro(uint32_t id_cliente) const {
     for (const Jugador& jugador : jugadores) {
         if (jugador.id_cliente == id_cliente) {
@@ -137,8 +165,31 @@ uint8_t Partida::cantidad_de_conectados() const {
     return conectados;
 }
 
-InfoPartida Partida::info() const {
-    return InfoPartida{codigo, nombre, cantidad_de_jugadores(), jugadores_maximos};
+InfoPartida Partida::info(uint32_t id_cliente) const {
+    std::string nombre_personaje;
+    AparienciaPersonaje apariencia;
+    size_t indice = 0;
+    bool encontrado = false;
+    while (indice < jugadores.size() && !encontrado) {
+        if (jugadores[indice].id_cliente == id_cliente) {
+            nombre_personaje = jugadores[indice].nombre_jugador;
+            apariencia = jugadores[indice].apariencia;
+            encontrado = true;
+        }
+        ++indice;
+    }
+
+    return InfoPartida{
+        codigo,
+        nombre,
+        nombre_personaje,
+        apariencia,
+        multijugador,
+        cantidad_de_conectados(),
+        cantidad_de_jugadores(),
+        jugadores_maximos,
+        dia,
+        segundos_jugados};
 }
 
 void Partida::hacer_multijugador(uint32_t id_cliente) {

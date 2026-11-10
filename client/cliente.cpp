@@ -1,11 +1,16 @@
 #include "cliente.h"
 
 #include <QApplication>
+#include <QFontDatabase>
 #include <QIcon>
 #include <iostream>
 #include <string>
 
 #include "ui/pantallaprincipal.h"
+
+constexpr const char* RUTA_ICONO_VENTANA = "Assets/LooseSprites/logo.png";
+constexpr const char* RUTA_FUENTE_STARDEW = "Assets/Fonts/stardew-valley.ttf/stardew-valley.ttf";
+constexpr const char* RUTA_FUENTE_DIALOGO = "Assets/fuentes/Stardew_Valley_Dialogue.ttf";
 
 Cliente::Cliente(const ConfiguracionCliente& configuracion_cliente)
     : configuracion(configuracion_cliente),
@@ -33,7 +38,9 @@ EstadoDelJuego Cliente::ejecutar_lobby() {
     char nombre_app[] = "StardewValley";
     char* argv[] = {nombre_app, nullptr};
     QApplication app(argc, argv);
-    app.setWindowIcon(QIcon("Assets/LooseSprites/logo.png"));
+    app.setWindowIcon(QIcon(RUTA_ICONO_VENTANA));
+    QFontDatabase::addApplicationFont(RUTA_FUENTE_STARDEW);
+    QFontDatabase::addApplicationFont(RUTA_FUENTE_DIALOGO);
 
     PantallaPrincipal ventana_lobby(conexion, partida_actual, configuracion.jugador());
     ventana_lobby.showMaximized();
