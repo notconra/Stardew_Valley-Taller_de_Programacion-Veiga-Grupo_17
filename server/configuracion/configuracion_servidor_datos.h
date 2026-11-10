@@ -69,6 +69,22 @@ struct ConfiguracionAccionesServidor {
     // trata la tierra con la pala o se vuelve a tierra común con el pico.
     int energia_por_picar = 3;
     int energia_por_tratar_tierra = 3;
+    // Energía que gasta plantar una semilla, regar una planta y cosecharla.
+    int energia_por_plantar = 1;
+    int energia_por_regar = 2;
+    int energia_por_cosechar = 1;
+};
+
+// Cómo se calcula la calidad de lo que se cosecha. Cada riego tardío (en la segunda mitad de su
+// turno), cada riego perdido (todo el turno sin regar) y cada día que la planta madura espera sin
+// cosechar suman faltas; al cosechar, la calidad baja un nivel desde perfecta por cada falta.
+// Después la suerte la puede subir o bajar un nivel.
+struct ConfiguracionCultivosServidor {
+    int faltas_por_riego_tardio = 1;
+    int faltas_por_riego_perdido = 2;
+    int faltas_por_dia_sin_cosechar = 1;
+    double probabilidad_de_subir_calidad = 0.2;
+    double probabilidad_de_bajar_calidad = 0.1;
 };
 
 // Reglas de los ítems tirados en el piso.
@@ -97,6 +113,7 @@ struct ConfiguracionJuegoServidor {
     ConfiguracionAparicionJugador aparicion;
     ConfiguracionInventarioServidor inventario;
     ConfiguracionAccionesServidor acciones;
+    ConfiguracionCultivosServidor cultivos;
     ConfiguracionDropsServidor drops;
     ConfiguracionTransicionesServidor transiciones;
     ConfiguracionDiaServidor dia;

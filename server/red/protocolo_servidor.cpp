@@ -288,6 +288,11 @@ void ProtocoloServidor::enviar_estado_trampa(const EstadoTrampa& estado) {
 void ProtocoloServidor::enviar_casilla_tratada(const CasillaTratada& casilla) {
     enviar_u32(casilla.columna);
     enviar_u32(casilla.fila);
+    enviar_u8(static_cast<uint8_t>(casilla.cultivo));
+    enviar_u8(casilla.etapa);
+    enviar_booleano(casilla.madura);
+    enviar_booleano(casilla.regada);
+    enviar_booleano(casilla.pide_agua);
 }
 
 void ProtocoloServidor::enviar_ranura_inventario(const RanuraInventario& ranura) {

@@ -3,11 +3,14 @@
 #include <exception>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <thread>
 #include <utility>
 #include <vector>
+
+#include "../juego/cheats/comando_semillas.h"
 
 SesionDePartida::SesionDePartida(
     const std::string& codigo_de_partida, const ConfiguracionPartidaServidor& configuracion_partida,
@@ -21,6 +24,7 @@ SesionDePartida::SesionDePartida(
       chat(*this),
       comandos(static_cast<unsigned int>(configuracion_partida.capacidad_de_comandos)),
       guardar_al_terminar_el_dia(std::move(guardar)) {
+    chat.agregar_comando(std::make_unique<ComandoSemillas>(mundo, recursos.catalogo_de_cultivos));
     try {
         start();
     } catch (...) {
@@ -236,5 +240,6 @@ DatosMundoGuardado SesionDePartida::obtener_datos_guardado(
     datos_mundo.mapas = mundo.obtener_mapas_guardados();
     datos_mundo.cofres = mundo.obtener_cofres_guardados();
     datos_mundo.muebles = mundo.obtener_muebles_guardados();
+    datos_mundo.cultivos = mundo.obtener_cultivos_guardados();
     return datos_mundo;
 }

@@ -40,6 +40,7 @@ private:
     void cargar_aparicion(const toml::table& tabla);
     void cargar_inventario(const toml::table& tabla);
     void cargar_acciones(const toml::table& tabla);
+    void cargar_cultivos(const toml::table& tabla);
     void cargar_drops(const toml::table& tabla);
     void cargar_transiciones(const toml::table& tabla);
     void cargar_dia(const toml::table& tabla);
