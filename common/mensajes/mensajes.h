@@ -21,7 +21,7 @@ using ComandoCliente = std::variant<
     ActivarMultijugador, SalirDePartida, Moverse, GuardarPartida,
 
     // Inventario y acciones
-    SeleccionarRanuraDeLaBarra, UsarItem, MoverItemEntreRanuras, MoverItemConCofre,
+    SeleccionarRanuraDeLaBarra, UsarItem, MoverItemEntreRanuras, MoverItemConCofre, CerrarCofre,
     SolicitarInventario, SoltarItem, ConsultarCasilla,
 
     // Fin del día
@@ -42,7 +42,7 @@ using EventoServidor = std::variant<
 
     // - Sector
     EstadoJuego, JugadoresEnSector, ObjetoColocado, ObjetoRetirado, DropAparecido, DropRetirado,
-    EnemigoActualizado, TierraCambiada,
+    EnemigoActualizado, TrampaActualizada, TierraCambiada,
 
     // - Tiempo
     HoraDelJuego,

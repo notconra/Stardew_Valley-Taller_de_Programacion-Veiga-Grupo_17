@@ -31,22 +31,19 @@ class Nivel {
 private:
     GeografiaNivel geografia;
     std::vector<Casilla> enemigos;
-    // Casillas donde el mundo puede poner objetos (minerales). Se eligen dejando siempre un camino
-    // libre entre la entrada y la escalera.
+    // Casillas donde el mundo puede poner objetos (minerales).
     std::vector<Casilla> celdas_de_objetos;
+    // Casillas donde el mundo puede poner cofres. Como máximo hay una por nivel.
+    std::vector<Casilla> celdas_de_cofres;
 
     static size_t indice_de(const GeografiaNivel& datos, Casilla casilla);
     static bool esta_adentro(const GeografiaNivel& datos, Casilla casilla);
     static bool es_zona_especial(const GeografiaNivel& datos, Casilla casilla);
-    static bool es_adyacente(Casilla casilla, const Zona& zona);
     void validar_zona(const Zona& zona, const char* nombre) const;
 
     // Casillas caminables a las que se llega desde la entrada, sin contar la entrada ni las zonas
     // especiales. Son las únicas donde tiene sentido generar algo.
     std::vector<Casilla> casillas_generables() const;
-
-    // Si desde la entrada se llega a una casilla pegada a la escalera sin pisar las bloqueadas.
-    bool hay_camino_a_la_escalera(const std::vector<bool>& bloqueadas) const;
 
 public:
     /*
@@ -59,15 +56,17 @@ public:
     explicit Nivel(GeografiaNivel geografia_del_nivel);
 
     /*
-     * Sortea los enemigos y las casillas donde se van a poner objetos, en casillas distintas y sin
-     * que los objetos corten el paso entre la entrada y la escalera. Los objetos en sí los coloca
-     * quien conoce el catálogo (Mundo), a partir de obtener_celdas_de_objetos().
+     * Sortea los enemigos y las casillas donde se van a poner objetos y cofres, en casillas
+     * distintas. Los objetos y cofres en sí los coloca quien conoce el catálogo (Mundo), a partir
+     * de obtener_celdas_de_objetos() y obtener_celdas_de_cofres().
      */
-    void sortear(std::mt19937& generador, int cantidad_enemigos, int cantidad_objetos);
+    void sortear(
+        std::mt19937& generador, int cantidad_enemigos, int cantidad_objetos, bool colocar_cofre);
 
     const GeografiaNivel& obtener_geografia() const;
     const std::vector<Casilla>& obtener_enemigos() const;
     const std::vector<Casilla>& obtener_celdas_de_objetos() const;
+    const std::vector<Casilla>& obtener_celdas_de_cofres() const;
 };
 
 #endif

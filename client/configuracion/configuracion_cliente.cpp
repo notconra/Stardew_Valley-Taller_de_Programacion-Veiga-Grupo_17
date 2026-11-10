@@ -7,10 +7,27 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "../../common/configuracion/lector_toml.h"
 #include "../persistencia/identidad_cliente.h"
+
+namespace {
+// Nombres con los que cada herramienta y cada enemigo se escriben en [sonido.*] del toml.
+const std::pair<const char*, TipoItem> HERRAMIENTAS_CON_SONIDO[] = {
+    {"espada", TipoItem::ESPADA},
+    {"pico", TipoItem::PICO},
+    {"pala", TipoItem::PALA},
+    {"regadera", TipoItem::REGADERA},
+};
+const std::pair<const char*, TipoEnemigo> ENEMIGOS_CON_SONIDO[] = {
+    {"esqueleto", TipoEnemigo::ESQUELETO},
+    {"orco", TipoEnemigo::ORCO},
+    {"vampira", TipoEnemigo::VAMPIRA},
+    {"vampiro", TipoEnemigo::VAMPIRO},
+};
+}  // namespace
 
 ConfiguracionCliente::ConfiguracionCliente(int argc, char* argv[]) {
     if (argc != 2 && argc != 4) {
@@ -171,6 +188,10 @@ void ConfiguracionCliente::cargar_mapas(const toml::table& archivo_toml) {
         configuracion_mapa.tilesets = leer_tilesets(*mapa, seccion);
         configuracion_mapa.es_mazmorra =
             lector_toml::leer_booleano_opcional(*mapa, "es_mazmorra", false);
+        configuracion_mapa.ruta_ambiente =
+            lector_toml::leer_texto_opcional(*mapa, "ruta_ambiente", seccion, "");
+        configuracion_mapa.ruta_caminar =
+            lector_toml::leer_texto_opcional(*mapa, "ruta_caminar", seccion, "");
 
         configuracion_vista.mapas.push_back(configuracion_mapa);
     }
@@ -232,6 +253,44 @@ void ConfiguracionCliente::cargar_sonido(const toml::table& archivo_toml) {
         lector_toml::leer_texto(sonido, "ruta_caminar", "sonido");
     configuracion_vista.sonido.ruta_accion =
         lector_toml::leer_texto(sonido, "ruta_accion", "sonido");
+
+    if (const toml::table* herramientas = sonido["herramientas"].as_table()) {
+        for (const auto& [clave, tipo] : HERRAMIENTAS_CON_SONIDO) {
+            const std::string ruta =
+                lector_toml::leer_texto_opcional(*herramientas, clave, "sonido.herramientas", "");
+            if (!ruta.empty()) {
+                configuracion_vista.sonido.rutas_de_uso[tipo] = ruta;
+            }
+        }
+    }
+    if (const toml::table* pico = sonido["pico"].as_table()) {
+        configuracion_vista.sonido.ruta_pico_golpe =
+            lector_toml::leer_texto_opcional(*pico, "golpe", "sonido.pico", "");
+        configuracion_vista.sonido.ruta_pico_rotura =
+            lector_toml::leer_texto_opcional(*pico, "rotura", "sonido.pico", "");
+    }
+    if (const toml::table* trampas = sonido["trampas"].as_table()) {
+        configuracion_vista.sonido.ruta_trampa_activada =
+            lector_toml::leer_texto_opcional(*trampas, "activar", "sonido.trampas", "");
+    }
+    if (const toml::table* jugador = sonido["jugador"].as_table()) {
+        configuracion_vista.sonido.ruta_jugador_danio =
+            lector_toml::leer_texto_opcional(*jugador, "danio", "sonido.jugador", "");
+    }
+    if (const toml::table* enemigos = sonido["enemigos"].as_table()) {
+        for (const auto& [clave, tipo] : ENEMIGOS_CON_SONIDO) {
+            const toml::table* enemigo = (*enemigos)[clave].as_table();
+            if (enemigo == nullptr) {
+                continue;
+            }
+            const std::string seccion = std::string("sonido.enemigos.") + clave;
+            configuracion_vista.sonido.sonidos_de_enemigos[tipo] = SonidosDeEnemigo{
+                lector_toml::leer_texto_opcional(*enemigo, "golpe", seccion, ""),
+                lector_toml::leer_texto_opcional(*enemigo, "danio", seccion, ""),
+                lector_toml::leer_texto_opcional(*enemigo, "muerte", seccion, ""),
+                lector_toml::leer_texto_opcional(*enemigo, "aparicion", seccion, "")};
+        }
+    }
 }
 
 void ConfiguracionCliente::cargar_tierra(const toml::table& archivo_toml) {

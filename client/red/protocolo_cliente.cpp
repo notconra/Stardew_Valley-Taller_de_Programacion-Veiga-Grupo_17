@@ -25,6 +25,7 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::DROP_APARECIDO, [this] { return recibir_drop_aparecido(); }},
           {TipoMensaje::DROP_RETIRADO, [this] { return recibir_drop_retirado(); }},
           {TipoMensaje::ENEMIGO_ACTUALIZADO, [this] { return recibir_enemigo_actualizado(); }},
+          {TipoMensaje::TRAMPA_ACTUALIZADA, [this] { return recibir_trampa_actualizada(); }},
           {TipoMensaje::TIERRA_CAMBIADA, [this] { return recibir_tierra_cambiada(); }},
           {TipoMensaje::HORA_DEL_JUEGO, [this] { return recibir_hora_del_juego(); }},
           {TipoMensaje::CASILLA_CONSULTADA, [this] { return recibir_casilla_consultada(); }},
@@ -57,6 +58,7 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const UsarItem& m) { enviar_comando_usar_item(m); },
             [this](const MoverItemEntreRanuras& m) { enviar_comando_mover_item_entre_ranuras(m); },
             [this](const MoverItemConCofre& m) { enviar_comando_mover_item_con_cofre(m); },
+            [this](const CerrarCofre& m) { enviar_comando_cerrar_cofre(m); },
             [this](const SolicitarInventario& m) { enviar_comando_solicitar_inventario(m); },
             [this](const SoltarItem& m) { enviar_comando_soltar_item(m); },
             [this](const ConsultarCasilla& m) { enviar_comando_consultar_casilla(m); },
@@ -145,6 +147,10 @@ void ProtocoloCliente::enviar_comando_mover_item_con_cofre(const MoverItemConCof
     enviar_u8(mover.destino);
     enviar_u16(mover.cantidad);
     enviar_booleano(mover.desde_el_cofre);
+}
+
+void ProtocoloCliente::enviar_comando_cerrar_cofre(const CerrarCofre&) {
+    enviar_tipo(TipoMensaje::CERRAR_COFRE);
 }
 
 void ProtocoloCliente::enviar_comando_solicitar_inventario(const SolicitarInventario&) {
@@ -342,8 +348,22 @@ EstadoEnemigo ProtocoloCliente::recibir_estado_enemigo() {
     estado.vida_maxima = recibir_u16();
     estado.atacando = recibir_booleano();
     estado.muriendo = recibir_booleano();
+    estado.mirando = direccion_desde(recibir_u8());
+    estado.ms_por_casilla = recibir_u16();
+    estado.frenesi = recibir_booleano();
+    estado.sangre = recibir_booleano();
     return estado;
 }
+EstadoTrampa ProtocoloCliente::recibir_estado_trampa() {
+    EstadoTrampa estado;
+    estado.id = recibir_u32();
+    estado.tipo = static_cast<TipoTrampa>(recibir_u8());
+    estado.columna = recibir_u32();
+    estado.fila = recibir_u32();
+    estado.activa = recibir_booleano();
+    return estado;
+}
+
 CasillaTratada ProtocoloCliente::recibir_casilla_tratada() {
     CasillaTratada casilla;
     casilla.columna = recibir_u32();
@@ -383,6 +403,12 @@ EstadoJuego ProtocoloCliente::recibir_estado_juego() {
     estado_juego.tierra.reserve(cantidad_de_tierra);
     for (uint16_t i = 0; i < cantidad_de_tierra; ++i) {
         estado_juego.tierra.push_back(recibir_casilla_tratada());
+    }
+
+    uint16_t cantidad_de_trampas = recibir_u16();
+    estado_juego.trampas.reserve(cantidad_de_trampas);
+    for (uint16_t i = 0; i < cantidad_de_trampas; ++i) {
+        estado_juego.trampas.push_back(recibir_estado_trampa());
     }
 
     return estado_juego;
@@ -431,6 +457,12 @@ EnemigoActualizado ProtocoloCliente::recibir_enemigo_actualizado() {
     EnemigoActualizado actualizado;
     actualizado.enemigo = recibir_estado_enemigo();
     return actualizado;
+}
+
+TrampaActualizada ProtocoloCliente::recibir_trampa_actualizada() {
+    TrampaActualizada actualizada;
+    actualizada.trampa = recibir_estado_trampa();
+    return actualizada;
 }
 
 TierraCambiada ProtocoloCliente::recibir_tierra_cambiada() {

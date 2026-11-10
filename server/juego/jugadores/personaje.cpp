@@ -52,8 +52,17 @@ bool Personaje::esta_ocupado() const {
 }
 
 double Personaje::multiplicador_de_ataque() const {
-    constexpr int UMBRAL_VIDA_BAJA = VIDA_MAXIMA / 5;  // 20%
+    constexpr int UMBRAL_VIDA_BAJA = VIDA_MAXIMA / 5;
     return vida <= UMBRAL_VIDA_BAJA ? 0.5 : 1.0;
+}
+
+double Personaje::multiplicador_de_velocidad() const {
+    constexpr int UMBRAL_ENERGIA_BAJA = ENERGIA_MAXIMA / 10;
+    return energia <= UMBRAL_ENERGIA_BAJA ? 0.5 : 1.0;
+}
+
+bool Personaje::puede_ser_lastimado() const {
+    return !esta_inconsciente() && descanso == EstadoDeDescanso::DESPIERTO;
 }
 
 bool Personaje::esta_inconsciente() const {
