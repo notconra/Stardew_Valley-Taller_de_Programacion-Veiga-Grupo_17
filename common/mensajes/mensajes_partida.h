@@ -158,6 +158,14 @@ struct EstadoEnemigo {
     bool muriendo = false;
     // Hacia dónde mira, para elegir la fila de la hoja de sprites al caminar.
     Direccion mirando = Direccion::ABAJO;
+    // Lo que tarda en cruzar una casilla el paso que está dando, para que el cliente deslice el
+    // dibujo a la misma velocidad (cambia por tipo y con el frenesí de los vampiros). 0 = el
+    // valor por defecto del cliente.
+    uint16_t ms_por_casilla = 0;
+    // Vampiros: su pareja murió y está en frenesí (más rápida la vampira, más fuerte el vampiro).
+    bool frenesi = false;
+    // Vampiros: muerto, y ya cayó sangre sobre su cadáver: está por revivir.
+    bool sangre = false;
 };
 
 // Una casilla de tierra tratada con la pala, por columna y fila del mapa.

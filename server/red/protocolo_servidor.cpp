@@ -254,6 +254,9 @@ void ProtocoloServidor::enviar_estado_enemigo(const EstadoEnemigo& estado) {
     enviar_booleano(estado.atacando);
     enviar_booleano(estado.muriendo);
     enviar_u8(static_cast<uint8_t>(estado.mirando));
+    enviar_u16(estado.ms_por_casilla);
+    enviar_booleano(estado.frenesi);
+    enviar_booleano(estado.sangre);
 }
 
 void ProtocoloServidor::enviar_casilla_tratada(const CasillaTratada& casilla) {

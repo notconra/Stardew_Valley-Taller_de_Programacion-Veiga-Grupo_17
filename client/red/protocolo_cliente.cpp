@@ -299,6 +299,9 @@ EstadoEnemigo ProtocoloCliente::recibir_estado_enemigo() {
     estado.atacando = recibir_booleano();
     estado.muriendo = recibir_booleano();
     estado.mirando = direccion_desde(recibir_u8());
+    estado.ms_por_casilla = recibir_u16();
+    estado.frenesi = recibir_booleano();
+    estado.sangre = recibir_booleano();
     return estado;
 }
 CasillaTratada ProtocoloCliente::recibir_casilla_tratada() {
