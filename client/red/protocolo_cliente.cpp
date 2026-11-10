@@ -346,6 +346,18 @@ CasillaTratada ProtocoloCliente::recibir_casilla_tratada() {
     CasillaTratada casilla;
     casilla.columna = recibir_u32();
     casilla.fila = recibir_u32();
+    const uint8_t cultivo = recibir_u8();
+    if (cultivo > static_cast<uint8_t>(TipoCultivo::CALABAZA)) {
+        throw ErrorProtocolo("cultivo desconocido");
+    }
+    casilla.cultivo = static_cast<TipoCultivo>(cultivo);
+    casilla.etapa = recibir_u8();
+    if (casilla.etapa > ETAPA_DE_CULTIVO_MAXIMA) {
+        throw ErrorProtocolo("etapa de cultivo inválida");
+    }
+    casilla.madura = recibir_booleano();
+    casilla.regada = recibir_booleano();
+    casilla.pide_agua = recibir_booleano();
     return casilla;
 }
 

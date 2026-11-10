@@ -12,6 +12,42 @@ CatalogoDeItems::CatalogoDeItems() {
 
     // Semillas y cultivos. Los cultivos llevan calidad, el resto no.
     registrar(TipoItem::SEMILLA_PAPA, "Semilla de papa", CategoriaItem::SEMILLA, 50, true, 10, 0);
+    registrar(
+        TipoItem::SEMILLA_FRUTILLA,
+        "Semilla de frutilla",
+        CategoriaItem::SEMILLA,
+        50,
+        true,
+        0,
+        0);
+    registrar(
+        TipoItem::SEMILLA_CEBOLLA_DE_VERDEO,
+        "Semilla de cebolla de verdeo",
+        CategoriaItem::SEMILLA,
+        50,
+        true,
+        0,
+        0);
+    registrar(
+        TipoItem::SEMILLA_CALABAZA,
+        "Semilla de calabaza",
+        CategoriaItem::SEMILLA,
+        50,
+        true,
+        0,
+        0);
+    // El precio es el base del enunciado; el mercado lo multiplica según la calidad.
+    registrar(TipoItem::FRUTILLA, "Frutilla", CategoriaItem::CULTIVO, 50, true, 0, 25);
+    registrar(
+        TipoItem::CEBOLLA_DE_VERDEO,
+        "Cebolla de verdeo",
+        CategoriaItem::CULTIVO,
+        50,
+        true,
+        0,
+        12);
+    registrar(TipoItem::PAPA, "Papa", CategoriaItem::CULTIVO, 50, true, 0, 18);
+    registrar(TipoItem::CALABAZA, "Calabaza", CategoriaItem::CULTIVO, 50, true, 0, 50);
 
     // Recursos y minerales. Los minerales se pueden vender en el mercado.
     registrar(TipoItem::PIEDRA, "Piedra", CategoriaItem::RECURSO, 50, true, 0, 0);
