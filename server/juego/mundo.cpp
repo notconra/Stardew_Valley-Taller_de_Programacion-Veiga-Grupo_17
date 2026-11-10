@@ -78,6 +78,9 @@ void Mundo::conectar(uint32_t id_jugador, const AparienciaPersonaje& apariencia)
         encontrado->second.apariencia = apariencia;
     }
     Personaje& personaje = encontrado->second;
+    if (personaje.esta_inconsciente()) {
+        return;
+    }
 
     if (personaje.conectado) {
         dar_de_baja(personaje);
