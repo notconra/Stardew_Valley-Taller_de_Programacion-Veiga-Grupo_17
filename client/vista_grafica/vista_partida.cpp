@@ -623,7 +623,7 @@ void VistaPartida::dibujar(
     const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos, const Personaje& personaje,
     const TierraGrafica& tierra, const Camara& camara, const HudInventario& hud,
     const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada, const VistaChat& chat,
-    const RelojGrafico& reloj_grafico, const PantallaDeDescanso& pantalla_de_descanso) const {
+    RelojGrafico& reloj_grafico, const PantallaDeDescanso& pantalla_de_descanso) const {
     SDL_Renderer* renderer = renderizador.ptr();
 
     if (mundo != nullptr) {
@@ -705,6 +705,7 @@ void VistaPartida::dibujar(
         if (mapa_actual_es_mazmorra() || propio->vida < VIDA_MAXIMA_JUGADOR) {
             hud.dibujar_vida(renderer, propio->vida, VIDA_MAXIMA_JUGADOR);
         }
+        reloj_grafico.dibujar_dinero(renderer, propio->monedas, ancho_de_pantalla);
     }
 
     if (hora_del_juego.has_value()) {

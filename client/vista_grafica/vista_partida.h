@@ -142,7 +142,7 @@ private:
         const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos,
         const Personaje& personaje, const TierraGrafica& tierra, const Camara& camara,
         const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
-        const EntradaDelUsuario& entrada, const VistaChat& chat, const RelojGrafico& reloj_grafico,
+        const EntradaDelUsuario& entrada, const VistaChat& chat, RelojGrafico& reloj_grafico,
         const PantallaDeDescanso& pantalla_de_descanso) const;
 
 public:
