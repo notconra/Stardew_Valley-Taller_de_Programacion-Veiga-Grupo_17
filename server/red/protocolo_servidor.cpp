@@ -175,6 +175,7 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const DropAparecido& e) { enviar_evento_drop_aparecido(e); },
             [this](const DropRetirado& e) { enviar_evento_drop_retirado(e); },
             [this](const EnemigoActualizado& e) { enviar_evento_enemigo_actualizado(e); },
+            [this](const TrampaActualizada& e) { enviar_evento_trampa_actualizada(e); },
             [this](const TierraCambiada& e) { enviar_evento_tierra_cambiada(e); },
             [this](const HoraDelJuego& e) { enviar_evento_hora_del_juego(e); },
             [this](const CasillaConsultada& e) { enviar_evento_casilla_consultada(e); },
@@ -265,6 +266,18 @@ void ProtocoloServidor::enviar_estado_enemigo(const EstadoEnemigo& estado) {
     enviar_u16(estado.vida_maxima);
     enviar_booleano(estado.atacando);
     enviar_booleano(estado.muriendo);
+    enviar_u8(static_cast<uint8_t>(estado.mirando));
+    enviar_u16(estado.ms_por_casilla);
+    enviar_booleano(estado.frenesi);
+    enviar_booleano(estado.sangre);
+}
+
+void ProtocoloServidor::enviar_estado_trampa(const EstadoTrampa& estado) {
+    enviar_u32(estado.id);
+    enviar_u8(static_cast<uint8_t>(estado.tipo));
+    enviar_u32(estado.columna);
+    enviar_u32(estado.fila);
+    enviar_booleano(estado.activa);
 }
 
 void ProtocoloServidor::enviar_casilla_tratada(const CasillaTratada& casilla) {
@@ -331,6 +344,10 @@ void ProtocoloServidor::enviar_estado_juego(const EstadoJuego& estado_juego) {
     for (const CasillaTratada& casilla : estado_juego.tierra) {
         enviar_casilla_tratada(casilla);
     }
+    enviar_largo(estado_juego.trampas.size());
+    for (const EstadoTrampa& trampa : estado_juego.trampas) {
+        enviar_estado_trampa(trampa);
+    }
 }
 
 void ProtocoloServidor::enviar_evento_jugadores_en_sector(const JugadoresEnSector& jugadores) {
@@ -369,6 +386,11 @@ void ProtocoloServidor::enviar_evento_drop_retirado(const DropRetirado& drop) {
 void ProtocoloServidor::enviar_evento_enemigo_actualizado(const EnemigoActualizado& enemigo) {
     enviar_tipo(TipoMensaje::ENEMIGO_ACTUALIZADO);
     enviar_estado_enemigo(enemigo.enemigo);
+}
+
+void ProtocoloServidor::enviar_evento_trampa_actualizada(const TrampaActualizada& trampa) {
+    enviar_tipo(TipoMensaje::TRAMPA_ACTUALIZADA);
+    enviar_estado_trampa(trampa.trampa);
 }
 
 void ProtocoloServidor::enviar_evento_tierra_cambiada(const TierraCambiada& tierra) {

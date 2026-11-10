@@ -35,7 +35,8 @@ ControladorDeAcciones::ControladorDeAcciones(
         static_cast<uint16_t>(duraciones.duracion_tratar_tierra_en_ticks)));
     acciones.push_back(std::make_unique<AccionInteractuarCofre>());
     acciones.push_back(std::make_unique<AccionColocar>());
-    acciones.push_back(std::make_unique<AccionAtacar>());
+    acciones.push_back(std::make_unique<AccionAtacar>(
+        static_cast<uint16_t>(duraciones.duracion_atacar_en_ticks)));
 }
 
 bool ControladorDeAcciones::al_alcance(

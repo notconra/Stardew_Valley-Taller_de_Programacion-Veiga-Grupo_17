@@ -52,7 +52,8 @@ private:
 
     // Junta las definiciones de todos los módulos que aportan tipos de enemigo. Para sumar Orcos,
     // Vampiros o Skulls alcanza con sumar su definición acá, igual que con los objetos.
-    static CatalogoDeEnemigos crear_catalogo_de_enemigos();
+    static CatalogoDeEnemigos crear_catalogo_de_enemigos(
+        const ConfiguracionMazmorraServidor& configuracion_mazmorra);
 
     // Verifica que el producto, la herramienta y el ítem colocable de cada objeto del mundo sean
     // ítems registrados en catalogo_de_items (y el colocable, de categoría COLOCABLE), para que un

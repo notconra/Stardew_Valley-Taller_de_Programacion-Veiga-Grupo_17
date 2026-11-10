@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdlib>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -21,6 +22,7 @@
 #include "iconos_de_items.h"
 #include "inicio_de_sdl.h"
 #include "ventana.h"
+
 
 namespace {
 
@@ -162,6 +164,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     InicioDeSDL inicio_de_sdl;
     Ventana ventana(configuracion.ventana);
     Renderizador renderizador(ventana, configuracion.sdl);
+    CursorDelJuego cursor_del_juego;
     VistaChat chat(configuracion.chat, renderizador.ptr());
     chat.limpiar();
 
@@ -191,10 +194,12 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     Personaje personaje(configuracion.jugador, graficos, renderizador.ptr());
     EfectosDeSonido efectos(configuracion.sonido);
     efectos_actuales = &efectos;
-    efectos.reproducir_ambiente();
+    efectos.cambiar_ambiente(configuracion_de(mapa_actual).ruta_ambiente);
+    efectos.cambiar_paso(configuracion_de(mapa_actual).ruta_caminar);
     TierraGrafica tierra(configuracion.tierra, graficos, renderizador.ptr());
     ObjetosGraficos objetos(renderizador.ptr(), graficos, iconos);
     EnemigosGraficos enemigos(renderizador.ptr(), graficos);
+    TrampasGraficas trampas(renderizador.ptr(), graficos);
     VisionMazmorra vision_mazmorra(
         configuracion.graficos.radio_vision_mazmorra,
         configuracion.graficos.tamano_pixel_vision_mazmorra,
@@ -235,6 +240,11 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         if (haciendo_accion && SDL_GetTicks() - inicio_accion_ms >= 475) {
             haciendo_accion = false;
         }
+        if (pico_pendiente_desde_ms != 0 &&
+            SDL_GetTicks() - pico_pendiente_desde_ms >= MS_ESPERA_SONIDO_PICO) {
+            pico_pendiente_desde_ms = 0;
+            efectos.reproducir_uso(TipoItem::PICO);
+        }
 
         const auto propio_para_sonido = jugador_propio();
         if (propio_para_sonido != nullptr && propio_para_sonido->camina) {
@@ -268,6 +278,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
         if (propio != nullptr && propio->mapa != mapa_actual) {
             mapa_actual = propio->mapa;
+            efectos.cambiar_ambiente(configuracion_de(mapa_actual).ruta_ambiente);
+            efectos.cambiar_paso(configuracion_de(mapa_actual).ruta_caminar);
             ultimo_cofre = CofreJugador{};
             camara = camara_para(mapa_de(mapa_actual));
         }
@@ -294,7 +306,9 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             mapa_de(mapa_actual),
             objetos,
             enemigos,
+            trampas,
             personaje,
+            iconos,
             tierra,
             camara,
             hud,
@@ -317,10 +331,22 @@ void VistaPartida::enviar_intencion_si_cambio(const Moverse& intencion) {
 
 void VistaPartida::usar_item(uint8_t ranura, ModoUso modo, const std::optional<Casilla>& casilla) {
     if (!haciendo_accion) {
-        haciendo_accion = true;
-        inicio_accion_ms = SDL_GetTicks();
-        if (efectos_actuales != nullptr) {
-            efectos_actuales->reproducir_accion();
+        const size_t indice =
+            ranura == INDICE_RANURA_ACTIVA ? ultimo_inventario.ranura_activa : ranura;
+        const TipoItem en_mano = indice < ultimo_inventario.ranuras.size()
+                                     ? ultimo_inventario.ranuras[indice].tipo
+                                     : TipoItem::NINGUNO;
+        const bool es_herramienta_de_golpe = en_mano == TipoItem::PICO ||
+                                             en_mano == TipoItem::PALA ||
+                                             en_mano == TipoItem::ESPADA;
+        if (es_herramienta_de_golpe) {
+            haciendo_accion = true;
+            inicio_accion_ms = SDL_GetTicks();
+        }
+        if (en_mano == TipoItem::PICO && modo == ModoUso::PRINCIPAL) {
+            pico_pendiente_desde_ms = SDL_GetTicks() | 1;
+        } else if (efectos_actuales != nullptr) {
+            efectos_actuales->reproducir_uso(en_mano);
         }
     }
     UsarItem uso;
@@ -499,6 +525,19 @@ bool VistaPartida::recibir_eventos(VistaChat& chat) {
     return true;
 }
 
+bool VistaPartida::trampa_se_escucha(const EstadoTrampa& trampa) const {
+    constexpr int CASILLAS_PARA_ESCUCHARLO = 7;
+    const EstadoJugador* propio = jugador_propio();
+    if (propio == nullptr) {
+        return false;
+    }
+    const int tile = std::max(1, configuracion.graficos.tamano_de_tile);
+    const int columna = static_cast<int>(propio->x) / tile;
+    const int fila = static_cast<int>(propio->y) / tile;
+    return std::abs(columna - static_cast<int>(trampa.columna)) <= CASILLAS_PARA_ESCUCHARLO &&
+           std::abs(fila - static_cast<int>(trampa.fila)) <= CASILLAS_PARA_ESCUCHARLO;
+}
+
 void VistaPartida::aplicar(const EventoServidor& evento, VistaChat& chat) {
     EstadoJuego& estado = ultimo_estado_juego;
 
@@ -510,8 +549,25 @@ void VistaPartida::aplicar(const EventoServidor& evento, VistaChat& chat) {
                 guardar_tierra(e);
             },
             [&](const JugadoresEnSector& e) {
+                const EstadoJugador* antes = jugador_propio();
+                const bool picaba = antes != nullptr && antes->accion_actual == TipoAccion::PICAR;
+                // Se copia antes de reemplazar la lista: "antes" apunta adentro de ella.
+                const bool antes_tenia_vida = antes != nullptr && estado.mapa == e.mapa;
+                const uint8_t vida_antes = antes != nullptr ? antes->vida : 0;
                 estado.mapa = e.mapa;
                 estado.jugadores = e.jugadores;
+                const EstadoJugador* ahora = jugador_propio();
+                const bool pica = ahora != nullptr && ahora->accion_actual == TipoAccion::PICAR;
+                if (antes_tenia_vida && ahora != nullptr && ahora->vida < vida_antes &&
+                    efectos_actuales != nullptr) {
+                    efectos_actuales->reproducir_jugador_danio();
+                }
+                if (pico_pendiente_desde_ms != 0 && !picaba && pica) {
+                    pico_pendiente_desde_ms = 0;
+                    if (efectos_actuales != nullptr) {
+                        efectos_actuales->reproducir_pico_golpe();
+                    }
+                }
             },
             [&](const ObjetoColocado& e) {
                 olvidar_el_piso();
@@ -527,6 +583,20 @@ void VistaPartida::aplicar(const EventoServidor& evento, VistaChat& chat) {
                 }
             },
             [&](const ObjetoRetirado& e) {
+                const auto retirado = std::find_if(
+                    estado.objetos.begin(),
+                    estado.objetos.end(),
+                    [&e](const EstadoObjetoDelMundo& objeto) { return objeto.id == e.id; });
+                const bool era_mineral = retirado != estado.objetos.end() &&
+                                         retirado->tipo != TipoObjeto::COFRE &&
+                                         retirado->tipo != TipoObjeto::NINGUNO;
+                if (era_mineral) {
+                    pico_pendiente_desde_ms = 0;
+                    if (efectos_actuales != nullptr) {
+                        efectos_actuales->reproducir_pico_golpe();
+                        efectos_actuales->reproducir_pico_rotura();
+                    }
+                }
                 olvidar_el_piso();
                 std::erase_if(estado.objetos, [&e](const EstadoObjetoDelMundo& objeto) {
                     return objeto.id == e.id;
@@ -544,12 +614,32 @@ void VistaPartida::aplicar(const EventoServidor& evento, VistaChat& chat) {
                     estado.enemigos.end(),
                     [&e](const EstadoEnemigo& otro) { return otro.id == e.enemigo.id; });
                 if (existente == estado.enemigos.end()) {
+                    if (efectos_actuales != nullptr) {
+                        efectos_actuales->enemigo_aparecio(e.enemigo);
+                    }
                     estado.enemigos.push_back(e.enemigo);
                 } else {
+                    if (efectos_actuales != nullptr) {
+                        efectos_actuales->enemigo_actualizado(*existente, e.enemigo);
+                    }
                     *existente = e.enemigo;
                 }
-                // Si murió (vida en 0) no hace falta sacarlo de la lista: EnemigosGraficos ya no
-                // lo dibuja, y si revive llega otro EnemigoActualizado que lo actualiza in situ.
+            },
+            [&](const TrampaActualizada& e) {
+                const auto existente = std::find_if(
+                    estado.trampas.begin(),
+                    estado.trampas.end(),
+                    [&e](const EstadoTrampa& otra) { return otra.id == e.trampa.id; });
+                const bool se_encendio =
+                    e.trampa.activa && (existente == estado.trampas.end() || !existente->activa);
+                if (se_encendio && trampa_se_escucha(e.trampa) && efectos_actuales != nullptr) {
+                    efectos_actuales->reproducir_trampa_activada();
+                }
+                if (existente == estado.trampas.end()) {
+                    estado.trampas.push_back(e.trampa);
+                } else {
+                    *existente = e.trampa;
+                }
             },
             [&](const ActualizacionInventario& e) {
                 ultimo_inventario = e.inventario;
@@ -620,10 +710,11 @@ bool VistaPartida::salir_de_partida_y_confirmar() {
 
 void VistaPartida::dibujar(
     Renderizador& renderizador, SDL_Texture* mundo, const MapaGrafico& mapa,
-    const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos, const Personaje& personaje,
-    const TierraGrafica& tierra, const Camara& camara, const HudInventario& hud,
-    const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada, const VistaChat& chat,
-    const RelojGrafico& reloj_grafico, const PantallaDeDescanso& pantalla_de_descanso) const {
+    const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos, const TrampasGraficas& trampas,
+    const Personaje& personaje, const IconosDeItems& iconos, const TierraGrafica& tierra,
+    const Camara& camara, const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
+    const EntradaDelUsuario& entrada, const VistaChat& chat, const RelojGrafico& reloj_grafico,
+    const PantallaDeDescanso& pantalla_de_descanso) const {
     SDL_Renderer* renderer = renderizador.ptr();
 
     if (mundo != nullptr) {
@@ -655,12 +746,17 @@ void VistaPartida::dibujar(
             camara.x(),
             camara.y());
     }
+    trampas.dibujar(renderer, ultimo_estado_juego, camara.x(), camara.y());
     enemigos.dibujar(renderer, ultimo_estado_juego, camara.x(), camara.y());
     for (const EstadoJugador& jugador : ultimo_estado_juego.jugadores) {
         if (jugador.mapa == mapa_actual) {
             const bool es_el_propio = jugador.id_jugador == id_jugador;
             const bool mostrar_accion = es_el_propio && haciendo_accion;
             const Uint32 ms_de_accion = mostrar_accion ? SDL_GetTicks() - inicio_accion_ms : 0;
+            RanuraInventario en_mano{};
+            if (es_el_propio && ultimo_inventario.ranura_activa < ultimo_inventario.ranuras.size()) {
+                en_mano = ultimo_inventario.ranuras[ultimo_inventario.ranura_activa];
+            }
             personaje.dibujar(
                 renderer,
                 jugador,
@@ -669,7 +765,9 @@ void VistaPartida::dibujar(
                 static_cast<int>(jugador.x),
                 static_cast<int>(jugador.y),
                 camara.x(),
-                camara.y());
+                camara.y(),
+                en_mano,
+                iconos);
         }
     }
     mapa.dibujar_sobre_los_jugadores(renderer, camara.x(), camara.y());

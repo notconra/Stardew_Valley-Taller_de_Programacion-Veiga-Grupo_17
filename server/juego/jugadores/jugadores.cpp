@@ -87,13 +87,21 @@ void Jugadores::avanzar(JugadorEnPartida& jugador, double delta, bool sobre_x) c
     }
 }
 
+void Jugadores::fijar_velocidad(uint32_t id_jugador, double multiplicador) {
+    const auto encontrado = jugadores.find(id_jugador);
+    if (encontrado != jugadores.end()) {
+        encontrado->second.multiplicador_de_velocidad = multiplicador;
+    }
+}
+
 void Jugadores::actualizar() {
     for (auto& [id_jugador, jugador] : jugadores) {
         const double x_anterior = jugador.x;
         const double y_anterior = jugador.y;
 
         const bool en_diagonal = jugador.horizontal != 0 && jugador.vertical != 0;
-        const double paso = en_diagonal ? paso_por_tick * FACTOR_DIAGONAL : paso_por_tick;
+        const double paso_base = paso_por_tick * jugador.multiplicador_de_velocidad;
+        const double paso = en_diagonal ? paso_base * FACTOR_DIAGONAL : paso_base;
 
         // Un eje por vez, si choca de costado igual avanza por el otro y "se desliza" por la pared.
         avanzar(jugador, jugador.horizontal * paso, true);

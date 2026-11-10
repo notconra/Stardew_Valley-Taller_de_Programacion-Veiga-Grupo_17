@@ -59,6 +59,16 @@ struct ConfiguracionAccionesServidor {
     int alcance_en_casillas = 1;
     int duracion_picar_en_ticks = 8;
     int duracion_tratar_tierra_en_ticks = 8;
+    // Tiempo mínimo entre golpes de espada (18 ticks = 0,45 s, lo que dura la animación).
+    int duracion_atacar_en_ticks = 18;
+    // Golpe de espada del jugador: daño base (antes del multiplicador por vida baja) y energía
+    // que gasta cada golpe que conecta.
+    int danio_espada = 10;
+    int energia_por_golpe = 3;
+    // Energía que gasta cada golpe de pico que conecta (rompa o no el mineral) y cada vez que se
+    // trata la tierra con la pala o se vuelve a tierra común con el pico.
+    int energia_por_picar = 3;
+    int energia_por_tratar_tierra = 3;
 };
 
 // Reglas de los ítems tirados en el piso.
@@ -103,6 +113,88 @@ struct ConfiguracionMineralServidor {
     int desde_nivel = 1;  // primer nivel donde puede aparecer
 };
 
+// Los números de combate de un tipo de enemigo. Los tiempos se miden en ticks del servidor.
+// Los valores por defecto son los del esqueleto.
+struct ConfiguracionEnemigoServidor {
+    int vida = 30;
+    int danio = 5;
+    int ticks_entre_ataques = 70;
+    int ticks_para_revivir = 600;
+    int ticks_por_casilla = 20;
+    int radio_de_vision = 5;
+    int radio_de_deambulo = 3;
+    int oro_minimo = 0;
+    int oro_maximo = 10;
+};
+
+// Los orcos aparecen en grupos: cada punto de aparición de orcos se llena con un grupo de entre
+// tamano_grupo_minimo y tamano_grupo_maximo orcos alrededor.
+struct ConfiguracionOrcosServidor {
+    ConfiguracionEnemigoServidor combate{
+        .vida = 60,
+        .danio = 8,
+        .ticks_entre_ataques = 60,
+        .ticks_para_revivir = 0,
+        .ticks_por_casilla = 16,
+        .radio_de_vision = 6,
+        .radio_de_deambulo = 3,
+        .oro_minimo = 0,
+        .oro_maximo = 10};
+    // Probabilidad de que un orco suelte una plata al morir (enunciado: 20%).
+    double probabilidad_de_plata_al_morir = 0.20;
+    int grupos_por_nivel = 1;  // cuántos de los enemigos_por_nivel puntos son grupos de orcos
+    int tamano_grupo_minimo = 3;
+    int tamano_grupo_maximo = 6;
+    // Probabilidad de que al conseguir plata picando se avecine una manada de orcos (enunciado:
+    // 10%).
+    double probabilidad_de_manada_por_plata = 0.10;
+    // A cuántas casillas del jugador aparece la manada: justo fuera de lo que se ve en la mazmorra
+    // (radio_vision_mazmorra del cliente: 220 px / 32 px por casilla ≈ 7 casillas).
+    int distancia_de_aparicion_de_manada = 8;
+};
+
+// Los vampiros aparecen en pareja, una vampira y un vampiro. La vampira es más rápida y el vampiro
+// pega más fuerte (eso sale de sus números de combate). Al morir uno, el otro entra en frenesí y
+// su habilidad se multiplica por multiplicador_de_frenesi. Muertos no reviven solos: esperan a que
+// un jugador caiga o quede gravemente herido a radio_de_sangre casillas o menos de su cadáver; ahí
+// cae sangre y reviven ticks_para_revivir después.
+struct ConfiguracionVampirosServidor {
+    ConfiguracionEnemigoServidor vampira{
+        .vida = 80,
+        .danio = 8,
+        .ticks_entre_ataques = 50,
+        .ticks_para_revivir = 200,
+        .ticks_por_casilla = 10,
+        .radio_de_vision = 7,
+        .radio_de_deambulo = 3,
+        .oro_minimo = 5,
+        .oro_maximo = 15};
+    ConfiguracionEnemigoServidor vampiro{
+        .vida = 100,
+        .danio = 14,
+        .ticks_entre_ataques = 60,
+        .ticks_para_revivir = 200,
+        .ticks_por_casilla = 18,
+        .radio_de_vision = 7,
+        .radio_de_deambulo = 3,
+        .oro_minimo = 5,
+        .oro_maximo = 15};
+    int parejas_por_nivel = 1;
+    double multiplicador_de_frenesi = 2.0;
+    int radio_de_sangre = 3;
+};
+
+// Los pinches de la mazmorra, [mazmorra.trampas]. Están en el suelo y se activan por tiempo:
+// pasan ticks_inactiva guardados y ticks_activa afuera, y vuelven a empezar. Cada uno arranca su
+// ciclo en un momento distinto. Mientras están afuera le sacan "danio" de vida una sola vez por
+// activación a cada jugador parado encima.
+struct ConfiguracionTrampasServidor {
+    int por_nivel = 6;
+    int danio = 10;
+    int ticks_inactiva = 90;
+    int ticks_activa = 30;
+};
+
 // La mazmorra: qué mapas pueden ser niveles y qué mapa_destino lleva a ella.
 // Si no hay mazmorra en el archivo, "mapas" queda vacío y la partida no tiene mazmorra.
 struct ConfiguracionMazmorraServidor {
@@ -112,6 +204,12 @@ struct ConfiguracionMazmorraServidor {
     int minerales_por_nivel = 30;
     // Vacía significa "usar los minerales por defecto". Si hay alguno, reemplaza a los de defecto.
     std::vector<ConfiguracionMineralServidor> minerales;
+    // [mazmorra.enemigos.esqueleto] y [mazmorra.enemigos.orco]. Vampiros y skulls se suman como
+    // campos hermanos.
+    ConfiguracionEnemigoServidor esqueleto;
+    ConfiguracionOrcosServidor orco;
+    ConfiguracionVampirosServidor vampiros;
+    ConfiguracionTrampasServidor trampas;
 };
 
 struct ConfiguracionServidorDatos {
