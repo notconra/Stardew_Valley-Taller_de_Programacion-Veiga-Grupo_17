@@ -7,6 +7,7 @@
 #include "../../common/mensajes/mensajes.h"
 #include "../../common/ranura_inventario.h"
 #include "../configuracion/configuracion_cliente_datos.h"
+#include "gestor_texturas_personaje.h"
 #include "iconos_de_items.h"
 #include "textura.h"
 
@@ -17,8 +18,7 @@
 // servidor: solo se ve la animación de acción en la pantalla de quien la hace.
 class Personaje {
 private:
-    Textura cuerpo_masculino;
-    Textura cuerpo_femenino;
+    mutable GestorTexturasPersonaje gestor_cuerpos;
     Textura pantalon;
     Textura pelo;
     Textura sombrero;

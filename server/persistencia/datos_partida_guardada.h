@@ -73,6 +73,7 @@ struct DatosMuebleGuardado {
 
 struct DatosMundoGuardado {
     uint32_t dia = 1;
+    uint32_t segundos_jugados = 0;
     std::vector<DatosJugadorGuardado> jugadores;
     std::vector<DatosMapaGuardado> mapas;
     std::vector<std::string> niveles_mazmorra;

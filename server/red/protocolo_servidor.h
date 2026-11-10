@@ -21,6 +21,7 @@ private:
     CrearPartida recibir_comando_crear_partida();
     UnirsePartida recibir_comando_unirse_partida();
     RetomarPartida recibir_comando_retomar_partida();
+    EliminarPartida recibir_comando_eliminar_partida();
     ActivarMultijugador recibir_comando_activar_multijugador();
     SalirDePartida recibir_comando_salir_de_partida();
     GuardarPartida recibir_comando_guardar_partida();

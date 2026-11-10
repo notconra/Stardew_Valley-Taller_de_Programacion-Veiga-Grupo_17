@@ -44,6 +44,7 @@ public:
     virtual ProximoEstado crear_partida(const CrearPartida& comando);
     virtual ProximoEstado unirse_a_partida(const UnirsePartida& comando);
     virtual ProximoEstado retomar_partida(const RetomarPartida& comando);
+    virtual ProximoEstado eliminar_partida(const EliminarPartida& comando);
     virtual ProximoEstado activar_multijugador(const ActivarMultijugador& comando);
     virtual ProximoEstado salir_de_partida(const SalirDePartida& comando);
     virtual ProximoEstado guardar_partida(const GuardarPartida& comando);

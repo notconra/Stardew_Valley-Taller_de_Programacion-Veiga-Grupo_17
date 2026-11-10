@@ -12,12 +12,10 @@
 #include "../configuracion/configuracion_cliente_datos.h"
 #include "../red/conexion_con_servidor.h"
 #include "camara.h"
-#include "cursor_del_juego.h"
 #include "chat/vista_chat.h"
 #include "cursor_del_juego.h"
 #include "efectos_de_sonido.h"
 #include "enemigos_graficos.h"
-#include "trampas_graficas.h"
 #include "entrada_del_usuario.h"
 #include "hud_inventario.h"
 #include "iconos_de_items.h"
@@ -29,6 +27,7 @@
 #include "reloj_grafico.h"
 #include "renderizador.h"
 #include "tierra_grafica.h"
+#include "trampas_graficas.h"
 #include "ventana.h"
 #include "vision_mazmorra.h"
 
@@ -149,10 +148,10 @@ private:
     void dibujar(
         Renderizador& renderizador, SDL_Texture* mundo, const MapaGrafico& mapa,
         const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos,
-        const TrampasGraficas& trampas,
-        const Personaje& personaje, const IconosDeItems& iconos, const TierraGrafica& tierra,
-        const Camara& camara, const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
-        const EntradaDelUsuario& entrada, const VistaChat& chat, const RelojGrafico& reloj_grafico,
+        const TrampasGraficas& trampas, const Personaje& personaje, const IconosDeItems& iconos,
+        const TierraGrafica& tierra, const Camara& camara, const HudInventario& hud,
+        const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada,
+        const VistaChat& chat, const RelojGrafico& reloj_grafico,
         const PantallaDeDescanso& pantalla_de_descanso) const;
 
 public:

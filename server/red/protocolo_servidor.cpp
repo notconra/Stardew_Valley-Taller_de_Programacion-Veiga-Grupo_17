@@ -14,6 +14,7 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::CREAR_PARTIDA, [this] { return recibir_comando_crear_partida(); }},
           {TipoMensaje::UNIRSE_PARTIDA, [this] { return recibir_comando_unirse_partida(); }},
           {TipoMensaje::RETOMAR_PARTIDA, [this] { return recibir_comando_retomar_partida(); }},
+          {TipoMensaje::ELIMINAR_PARTIDA, [this] { return recibir_comando_eliminar_partida(); }},
           {TipoMensaje::ACTIVAR_MULTIJUGADOR,
            [this] { return recibir_comando_activar_multijugador(); }},
           {TipoMensaje::SALIR_DE_PARTIDA, [this] { return recibir_comando_salir_de_partida(); }},
@@ -85,6 +86,12 @@ RetomarPartida ProtocoloServidor::recibir_comando_retomar_partida() {
     std::string codigo_partida = recibir_texto();
 
     return RetomarPartida{codigo_partida};
+}
+
+EliminarPartida ProtocoloServidor::recibir_comando_eliminar_partida() {
+    std::string codigo_partida = recibir_texto();
+
+    return EliminarPartida{codigo_partida};
 }
 
 ActivarMultijugador ProtocoloServidor::recibir_comando_activar_multijugador() {
@@ -199,8 +206,14 @@ void ProtocoloServidor::enviar_evento_error_servidor(const ErrorServidor& error_
 void ProtocoloServidor::enviar_info_partida(const InfoPartida& info_partida) {
     enviar_texto(info_partida.codigo_partida);
     enviar_texto(info_partida.nombre_partida);
+    enviar_texto(info_partida.nombre_personaje);
+    enviar_apariencia(info_partida.apariencia);
+    enviar_booleano(info_partida.multijugador);
+    enviar_u8(info_partida.jugadores_conectados);
     enviar_u8(info_partida.jugadores_totales);
     enviar_u8(info_partida.jugadores_maximos);
+    enviar_u32(info_partida.dia);
+    enviar_u32(info_partida.segundos_jugados);
 }
 
 void ProtocoloServidor::enviar_evento_lista_partidas(const ListaPartidas& lista_partidas) {
