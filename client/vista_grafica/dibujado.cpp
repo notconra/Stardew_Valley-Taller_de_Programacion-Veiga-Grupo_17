@@ -1,5 +1,6 @@
 #include "dibujado.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <vector>
 
@@ -34,32 +35,78 @@ void Dibujado::dibujar_capa(
 
     const int alto_en_casillas = static_cast<int>(capa.size()) / ancho_en_casillas;
     const int tamano_en_pantalla = tamano_de_tile * escala_de_tiles;
+    if (tamano_en_pantalla <= 0) {
+        return;
+    }
 
-    for (int y = 0; y < alto_en_casillas; ++y) {
-        for (int x = 0; x < ancho_en_casillas; ++x) {
+    // Área en la que se dibuja ahora, la ventana, o la textura del mundo si hay zoom extra.
+    // No se usa SDL_GetRendererOutputSize porque ignora el render target y devolvería siempre el
+    // tamaño de la ventana, con lo que se recorrerían casillas de más.
+    SDL_Rect area{};
+    SDL_RenderGetViewport(renderer, &area);
+    if (area.w <= 0 || area.h <= 0) {
+        return;
+    }
+    const int ancho_de_area = area.w;
+    const int alto_de_area = area.h;
+
+    // Se usan los bordes parciales: la casilla donde empieza la cámara también se dibuja.
+    const int primera_columna = std::clamp(cam_x / tamano_en_pantalla, 0, ancho_en_casillas - 1);
+    const int ultima_columna =
+        std::clamp((cam_x + ancho_de_area - 1) / tamano_en_pantalla, 0, ancho_en_casillas - 1);
+    const int primera_fila = std::clamp(cam_y / tamano_en_pantalla, 0, alto_en_casillas - 1);
+    const int ultima_fila =
+        std::clamp((cam_y + alto_de_area - 1) / tamano_en_pantalla, 0, alto_en_casillas - 1);
+
+    for (int y = primera_fila; y <= ultima_fila; ++y) {
+        for (int x = primera_columna; x <= ultima_columna; ++x) {
             const int id_de_tile = capa[static_cast<std::size_t>(y) * ancho_en_casillas + x];
             if (id_de_tile <= 0) {
                 continue;
             }
 
             const Tileset* tileset = buscar_tileset(id_de_tile);
-            if (tileset == nullptr || tileset->textura == nullptr) {
+            if (tileset == nullptr || tileset->textura == nullptr || tileset->columnas <= 0) {
                 continue;
             }
 
             const int indice = id_de_tile - tileset->firstgid;
+            SDL_Rect origen{
+                (indice % tileset->columnas) * tamano_de_tile,
+                (indice / tileset->columnas) * tamano_de_tile,
+                tamano_de_tile,
+                tamano_de_tile};
+            SDL_Rect destino{
+                x * tamano_en_pantalla - cam_x,
+                y * tamano_en_pantalla - cam_y,
+                tamano_en_pantalla,
+                tamano_en_pantalla};
 
-            SDL_Rect origen;
-            origen.x = (indice % tileset->columnas) * tamano_de_tile;
-            origen.y = (indice / tileset->columnas) * tamano_de_tile;
-            origen.w = tamano_de_tile;
-            origen.h = tamano_de_tile;
+            const int recorte_izq = std::max(0, -destino.x);
+            const int recorte_der = std::max(0, destino.x + destino.w - ancho_de_area);
+            const int recorte_arr = std::max(0, -destino.y);
+            const int recorte_aba = std::max(0, destino.y + destino.h - alto_de_area);
 
-            SDL_Rect destino;
-            destino.x = (x * tamano_en_pantalla) - cam_x;
-            destino.y = (y * tamano_en_pantalla) - cam_y;
-            destino.w = tamano_en_pantalla;
-            destino.h = tamano_en_pantalla;
+            if (recorte_izq > 0 || recorte_der > 0 || recorte_arr > 0 || recorte_aba > 0) {
+                const int origen_izq = recorte_izq / escala_de_tiles;
+                const int origen_der = recorte_der / escala_de_tiles;
+                const int origen_arr = recorte_arr / escala_de_tiles;
+                const int origen_aba = recorte_aba / escala_de_tiles;
+
+                origen.x += origen_izq;
+                origen.y += origen_arr;
+                origen.w -= origen_izq + origen_der;
+                origen.h -= origen_arr + origen_aba;
+
+                destino.x += recorte_izq;
+                destino.y += recorte_arr;
+                destino.w -= recorte_izq + recorte_der;
+                destino.h -= recorte_arr + recorte_aba;
+
+                if (origen.w <= 0 || origen.h <= 0 || destino.w <= 0 || destino.h <= 0) {
+                    continue;
+                }
+            }
 
             SDL_RenderCopy(renderer, tileset->textura, &origen, &destino);
         }

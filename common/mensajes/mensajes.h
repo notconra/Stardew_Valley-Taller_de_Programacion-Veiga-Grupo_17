@@ -22,7 +22,13 @@ using ComandoCliente = std::variant<
 
     // Inventario y acciones
     SeleccionarRanuraDeLaBarra, UsarItem, MoverItemEntreRanuras, MoverItemConCofre,
-    SolicitarInventario, SoltarItem>;
+    SolicitarInventario, SoltarItem, ConsultarCasilla,
+
+    // Fin del día
+    DarElOk,
+
+    // Chat
+    EnviarMensajeDeChat>;
 
 using EventoServidor = std::variant<
     // Error
@@ -38,7 +44,19 @@ using EventoServidor = std::variant<
     EstadoJuego, JugadoresEnSector, ObjetoColocado, ObjetoRetirado, DropAparecido, DropRetirado,
     EnemigoActualizado, TierraCambiada,
 
+    // - Tiempo
+    HoraDelJuego,
+
+    // - Lo que se marca en el piso
+    CasillaConsultada,
+
+    // - Fin del día
+    EstadoDelDescanso,
+
     // - Inventario y cofres
-    ActualizacionInventario, ActualizacionCofre>;
+    ActualizacionInventario, ActualizacionCofre,
+
+    // - Chat
+    MensajeDeChat>;
 
 #endif

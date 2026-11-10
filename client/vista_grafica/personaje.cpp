@@ -138,7 +138,8 @@ int Personaje::alto_del_sprite() const {
 
 void Personaje::dibujar(
     SDL_Renderer* renderer, const EstadoJugador& jugador, bool haciendo_accion, Uint32 ms_de_accion,
-    int cam_x, int cam_y, const RanuraInventario& en_mano, const IconosDeItems& iconos) const {
+    int x_en_mapa, int y_en_mapa, int cam_x, int cam_y, const RanuraInventario& en_mano,
+    const IconosDeItems& iconos) const {
     const auto encontrada = FILA_DE_DIRECCION.find(jugador.mirando);
     const int fila_direccion =
         encontrada != FILA_DE_DIRECCION.end() ? encontrada->second : FILA_ABAJO;
@@ -173,8 +174,8 @@ void Personaje::dibujar(
         }
     }
 
-    const int x_pantalla = static_cast<int>(jugador.x) * escala_de_tiles - cam_x;
-    const int y_pantalla = static_cast<int>(jugador.y) * escala_de_tiles - cam_y;
+    const int x_pantalla = x_en_mapa * escala_de_tiles - cam_x;
+    const int y_pantalla = y_en_mapa * escala_de_tiles - cam_y;
     const SDL_Rect destino_cuerpo{
         x_pantalla,
         y_pantalla,

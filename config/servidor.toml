@@ -135,6 +135,17 @@ ruta_tmx = "Assets/Maps/Mines/24.tmx"
 # cambiar de mapa) se activa al pisarlo.
 destinos_con_clic = ["FarmHouse", "siguiente"]
 
+[juego.dia]
+# Un día de juego va de las 6 am a las 2 am (20 horas de juego). velocidad elige cuánto dura en
+# tiempo real: "lento" = 20 minutos, "medio" = 14 minutos (lo que pide el enunciado), "rapido" = 7.
+velocidad = "medio"
+# Si está, pisa a la velocidad (en minutos reales, acepta decimales). Útil para probar: con 1.0
+# cada día dura un minuto.
+# duracion_en_minutos = 1.0
+# Días de cada estación. Hay 4 estaciones por año (primavera, verano, otoño, invierno): con 28,
+# Para probar el cambio de estación se puede bajar a 1.
+dias_por_estacion = 28
+
 [juego.movimiento]
 # velocidad = 200.0
 # hitbox_x = 2
@@ -163,7 +174,6 @@ energia_por_golpe = 3
 # radio_de_recogida_en_casillas = 1
 # distancia_de_soltado_en_casillas = 2   # tiene que ser mayor que el radio
 
-# La mazmorra. Una transición con mapa_destino = destino (en Farm.tmx) entra al nivel 1.
 [mazmorra]
 destino = "mazmorra"
 mapas = ["mina_1", "mina_2", "mina_3", "mina_4", "mina_5", "mina_6", "mina_7", "mina_8", "mina_9", "mina_11", "mina_12", "mina_13", "mina_14", "mina_15", "mina_16", "mina_17", "mina_18", "mina_19", "mina_21", "mina_24"]

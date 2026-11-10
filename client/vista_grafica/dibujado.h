@@ -26,6 +26,8 @@ public:
 
     // cam_x y cam_y son la esquina de la cámara, en píxeles de pantalla. El ancho del mapa se usa
     // para recorrer la capa fila por fila, el alto sale de la cantidad de casillas de la capa.
+    // Solo se recorren las casillas visibles en el área de dibujo actual (ventana o textura del
+    // mundo si hay zoom extra).
     void dibujar_capa(
         SDL_Renderer* renderer, const std::vector<int>& capa, int ancho_en_casillas, int cam_x,
         int cam_y) const;

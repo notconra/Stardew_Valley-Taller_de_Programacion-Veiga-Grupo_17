@@ -47,8 +47,8 @@ public:
     // Pico, pala y espada se ven en la mano; cualquier otro ítem se sostiene sobre la cabeza.
     void dibujar(
         SDL_Renderer* renderer, const EstadoJugador& jugador, bool haciendo_accion,
-        Uint32 ms_de_accion, int cam_x, int cam_y, const RanuraInventario& en_mano,
-        const IconosDeItems& iconos) const;
+        Uint32 ms_de_accion, int x_en_mapa, int y_en_mapa, int cam_x, int cam_y,
+        const RanuraInventario& en_mano, const IconosDeItems& iconos) const;
 };
 
 #endif

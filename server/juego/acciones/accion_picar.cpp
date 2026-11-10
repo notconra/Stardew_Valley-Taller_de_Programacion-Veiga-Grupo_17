@@ -40,6 +40,10 @@ bool AccionPicar::ejecutar(ContextoDeAccion& c) {
     const TipoObjeto tipo_objeto = objeto->tipo;
     const int columna = objeto->columna;
     const int fila = objeto->fila;
+    if (tipo_objeto == TipoObjeto::CAMA &&
+        camas_ocupadas.esta_ocupada(c.sector.id, columna, fila)) {
+        return false;
+    }
 
     // Si se rompe, el sector ya avisó que el objeto se retiró.
     const ResultadoDeGolpe golpe = c.sector.golpear_objeto(c.notificador, id_objeto, c.item.tipo);

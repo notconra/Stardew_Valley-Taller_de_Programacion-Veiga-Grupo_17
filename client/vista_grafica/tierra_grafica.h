@@ -32,10 +32,6 @@ public:
     void dibujar(
         SDL_Renderer* renderer, const std::set<std::pair<int, int>>& tratadas, int cam_x,
         int cam_y) const;
-
-    // Marca en verde la casilla sobre la que la herramienta tendría efecto, como en Stardew.
-    void remarcar_casilla(
-        SDL_Renderer* renderer, int columna, int fila, int cam_x, int cam_y) const;
 };
 
 #endif

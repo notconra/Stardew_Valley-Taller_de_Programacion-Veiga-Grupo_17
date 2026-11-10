@@ -50,37 +50,28 @@ std::pair<int, int> TierraGrafica::dibujo_segun_vecinas(
 void TierraGrafica::dibujar(
     SDL_Renderer* renderer, const std::set<std::pair<int, int>>& tratadas, int cam_x,
     int cam_y) const {
+    int ancho_de_pantalla = 0;
+    int alto_de_pantalla = 0;
+    if (SDL_GetRendererOutputSize(renderer, &ancho_de_pantalla, &alto_de_pantalla) != 0) {
+        return;
+    }
+
     const int tamano_en_pantalla = tamano_de_tile * escala_de_tiles;
     for (const auto& [columna, fila] : tratadas) {
+        const int x = columna * tamano_en_pantalla - cam_x;
+        const int y = fila * tamano_en_pantalla - cam_y;
+        if (x >= ancho_de_pantalla || y >= alto_de_pantalla || x + tamano_en_pantalla <= 0 ||
+            y + tamano_en_pantalla <= 0) {
+            continue;
+        }
+
         const auto [columna_dibujo, fila_dibujo] = dibujo_segun_vecinas(tratadas, columna, fila);
         const SDL_Rect origen{
             columna_dibujo * tamano_de_tile,
             fila_dibujo * tamano_de_tile,
             tamano_de_tile,
             tamano_de_tile};
-        const SDL_Rect destino{
-            columna * tamano_en_pantalla - cam_x,
-            fila * tamano_en_pantalla - cam_y,
-            tamano_en_pantalla,
-            tamano_en_pantalla};
+        const SDL_Rect destino{x, y, tamano_en_pantalla, tamano_en_pantalla};
         SDL_RenderCopy(renderer, textura.ptr(), &origen, &destino);
     }
-}
-
-void TierraGrafica::remarcar_casilla(
-    SDL_Renderer* renderer, int columna, int fila, int cam_x, int cam_y) const {
-    const int tamano_en_pantalla = tamano_de_tile * escala_de_tiles;
-    const SDL_Rect casilla{
-        columna * tamano_en_pantalla - cam_x,
-        fila * tamano_en_pantalla - cam_y,
-        tamano_en_pantalla,
-        tamano_en_pantalla};
-    SDL_BlendMode modo_anterior;
-    SDL_GetRenderDrawBlendMode(renderer, &modo_anterior);
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(renderer, 60, 220, 60, 90);
-    SDL_RenderFillRect(renderer, &casilla);
-    SDL_SetRenderDrawColor(renderer, 40, 160, 40, 220);
-    SDL_RenderDrawRect(renderer, &casilla);
-    SDL_SetRenderDrawBlendMode(renderer, modo_anterior);
 }

@@ -1,5 +1,6 @@
 #include "partida.h"
 
+#include <cctype>
 #include <string>
 #include <vector>
 
@@ -14,7 +15,7 @@ Partida::Partida(
       jugadores_maximos(maximo_de_jugadores),
       multijugador(false) {
     jugadores.push_back(
-        Jugador{id_cliente_creador, 1, nombre_jugador_creador, false, apariencia_creador});
+        Jugador{id_cliente_creador, 1, nombre_jugador_creador, proximo_color_libre(), false, apariencia_creador});
 }
 
 Partida::Partida(
@@ -34,6 +35,36 @@ Jugador* Partida::buscar_jugador(uint32_t id_cliente) {
         }
     }
     return nullptr;
+}
+
+bool Partida::mismo_nombre(const std::string& uno, const std::string& otro) {
+    if (uno.size() != otro.size()) {
+        return false;
+    }
+    for (size_t i = 0; i < uno.size(); ++i) {
+        if (std::tolower(static_cast<unsigned char>(uno[i])) !=
+            std::tolower(static_cast<unsigned char>(otro[i]))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+ColorDeJugador Partida::proximo_color_libre() const {
+    const int cantidad_de_colores = static_cast<int>(CANTIDAD_DE_COLORES_DE_JUGADOR);
+    for (int i = 0; i < cantidad_de_colores; ++i) {
+        const ColorDeJugador candidato = static_cast<ColorDeJugador>(i);
+        bool en_uso = false;
+        for (const Jugador& jugador : jugadores) {
+            if (jugador.color == candidato) {
+                en_uso = true;
+            }
+        }
+        if (!en_uso) {
+            return candidato;
+        }
+    }
+    return static_cast<ColorDeJugador>(static_cast<int>(jugadores.size()) % cantidad_de_colores);
 }
 
 const std::string& Partida::obtener_nombre() const {
@@ -76,6 +107,24 @@ bool Partida::es_miembro(uint32_t id_cliente) const {
 
 uint8_t Partida::cantidad_de_jugadores() const {
     return static_cast<uint8_t>(jugadores.size());  // nunca supera jugadores_maximos
+}
+
+std::string Partida::nombre_de_jugador(uint32_t id_cliente) const {
+    for (const Jugador& jugador : jugadores) {
+        if (jugador.id_cliente == id_cliente) {
+            return jugador.nombre_jugador;
+        }
+    }
+    return std::string();
+}
+
+ColorDeJugador Partida::color_de_jugador(uint32_t id_cliente) const {
+    for (const Jugador& jugador : jugadores) {
+        if (jugador.id_cliente == id_cliente) {
+            return jugador.color;
+        }
+    }
+    return ColorDeJugador::AZUL;
 }
 
 uint8_t Partida::cantidad_de_conectados() const {
@@ -136,8 +185,19 @@ EntradaExitosaAPartida Partida::conectar(
             "la partida \"" + nombre + "\" está llena");
     }
 
+    // El chat privado busca por nombre, así que dentro de una partida no puede haber dos iguales.
+    for (const Jugador& existente : jugadores) {
+        if (mismo_nombre(existente.nombre_jugador, nombre_jugador)) {
+            throw ErrorDePartida(
+                CodigoError::NOMBRE_JUGADOR_REPETIDO,
+                "ya hay un jugador llamado \"" + nombre_jugador + "\" en la partida \"" + nombre +
+                    "\"");
+        }
+    }
+
     const uint32_t id_jugador = static_cast<uint32_t>(jugadores.size()) + 1;
-    jugadores.push_back(Jugador{id_cliente, id_jugador, nombre_jugador, true, apariencia});
+    jugadores.push_back(
+        Jugador{id_cliente, id_jugador, nombre_jugador, proximo_color_libre(), true, apariencia});
     return EntradaExitosaAPartida{codigo, id_jugador};
 }
 

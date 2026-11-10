@@ -29,6 +29,10 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::SOLICITAR_INVENTARIO,
            [this] { return recibir_comando_solicitar_inventario(); }},
           {TipoMensaje::SOLTAR_ITEM, [this] { return recibir_comando_soltar_item(); }},
+          {TipoMensaje::CONSULTAR_CASILLA, [this] { return recibir_comando_consultar_casilla(); }},
+          {TipoMensaje::DAR_EL_OK, [this] { return recibir_comando_dar_el_ok(); }},
+          {TipoMensaje::ENVIAR_MENSAJE_DE_CHAT,
+           [this] { return recibir_comando_enviar_mensaje_de_chat(); }},
       } {
 }
 
@@ -147,6 +151,10 @@ SoltarItem ProtocoloServidor::recibir_comando_soltar_item() {
     return SoltarItem{ranura, cantidad};
 }
 
+EnviarMensajeDeChat ProtocoloServidor::recibir_comando_enviar_mensaje_de_chat() {
+    return EnviarMensajeDeChat{recibir_texto()};
+}
+
 // Envío de eventos
 
 void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
@@ -168,6 +176,10 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const DropRetirado& e) { enviar_evento_drop_retirado(e); },
             [this](const EnemigoActualizado& e) { enviar_evento_enemigo_actualizado(e); },
             [this](const TierraCambiada& e) { enviar_evento_tierra_cambiada(e); },
+            [this](const HoraDelJuego& e) { enviar_evento_hora_del_juego(e); },
+            [this](const CasillaConsultada& e) { enviar_evento_casilla_consultada(e); },
+            [this](const EstadoDelDescanso& e) { enviar_evento_estado_del_descanso(e); },
+            [this](const MensajeDeChat& e) { enviar_evento_mensaje_de_chat(e); },
         },
         evento);
 }
@@ -367,4 +379,52 @@ void ProtocoloServidor::enviar_evento_tierra_cambiada(const TierraCambiada& tier
     enviar_tipo(TipoMensaje::TIERRA_CAMBIADA);
     enviar_casilla_tratada(tierra.casilla);
     enviar_booleano(tierra.tratada);
+}
+
+void ProtocoloServidor::enviar_evento_hora_del_juego(const HoraDelJuego& hora) {
+    enviar_tipo(TipoMensaje::HORA_DEL_JUEGO);
+    enviar_u32(hora.dia);
+    enviar_u8(hora.hora);
+    enviar_u8(hora.minuto);
+    enviar_u8(hora.dia_de_la_estacion);
+    enviar_u8(static_cast<uint8_t>(hora.estacion));
+    enviar_u16(hora.anio);
+    enviar_u8(hora.dia_de_la_semana);
+}
+
+ConsultarCasilla ProtocoloServidor::recibir_comando_consultar_casilla() {
+    const uint32_t columna = recibir_u32();
+    const uint32_t fila = recibir_u32();
+    return ConsultarCasilla{columna, fila};
+}
+
+void ProtocoloServidor::enviar_evento_casilla_consultada(const CasillaConsultada& consultada) {
+    enviar_tipo(TipoMensaje::CASILLA_CONSULTADA);
+    enviar_u32(consultada.columna);
+    enviar_u32(consultada.fila);
+    enviar_u8(consultada.ancho);
+    enviar_u8(consultada.alto);
+    enviar_u8(static_cast<uint8_t>(consultada.marca));
+}
+
+DarElOk ProtocoloServidor::recibir_comando_dar_el_ok() {
+    return DarElOk{};
+}
+
+void ProtocoloServidor::enviar_evento_estado_del_descanso(const EstadoDelDescanso& descanso) {
+    enviar_tipo(TipoMensaje::ESTADO_DEL_DESCANSO);
+    enviar_u8(static_cast<uint8_t>(descanso.estado));
+    enviar_booleano(descanso.dio_el_ok);
+    enviar_u8(descanso.listos);
+    enviar_u8(descanso.jugadores);
+    enviar_booleano(descanso.puede_levantarse);
+}
+
+void ProtocoloServidor::enviar_evento_mensaje_de_chat(const MensajeDeChat& mensaje) {
+    enviar_tipo(TipoMensaje::MENSAJE_DE_CHAT);
+    enviar_u8(static_cast<uint8_t>(mensaje.canal));
+    enviar_texto(mensaje.remitente);
+    enviar_texto(mensaje.destinatario);
+    enviar_texto(mensaje.texto);
+    enviar_u8(static_cast<uint8_t>(mensaje.color_del_remitente));
 }

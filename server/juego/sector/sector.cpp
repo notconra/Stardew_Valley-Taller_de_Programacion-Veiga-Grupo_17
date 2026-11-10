@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "../azar.h"
+#include "../muebles/muebles.h"
 
 const ObjetoDelMundo* Sector::objeto_al_frente(uint32_t id_jugador) const {
     const std::optional<Casilla> casilla = jugadores.casilla_de_enfrente(id_jugador);
@@ -98,6 +99,23 @@ void Sector::agregar_cofres_guardados_a(std::vector<DatosCofreGuardado>& lista) 
         cofre.fila = static_cast<uint32_t>(objeto.fila);
         cofre.inventario = cofres.obtener_contenido(objeto.id);
         lista.push_back(cofre);
+    }
+}
+
+void Sector::cargar_mueble(TipoObjeto tipo, uint32_t columna, uint32_t fila) {
+    objetos.colocar(tipo, static_cast<int>(columna), static_cast<int>(fila));
+}
+
+void Sector::agregar_muebles_guardados_a(std::vector<DatosMuebleGuardado>& lista) const {
+    for (const DefinicionDeObjeto& mueble : Muebles::definiciones()) {
+        for (const auto& objeto : objetos.obtener_objetos_de_tipo(mueble.tipo)) {
+            DatosMuebleGuardado guardado;
+            guardado.id_mapa = id;
+            guardado.tipo = objeto.tipo;
+            guardado.columna = static_cast<uint32_t>(objeto.columna);
+            guardado.fila = static_cast<uint32_t>(objeto.fila);
+            lista.push_back(guardado);
+        }
     }
 }
 

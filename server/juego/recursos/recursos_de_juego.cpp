@@ -12,6 +12,7 @@
 #include "../mazmorra/cargador_mazmorra.h"
 #include "../mazmorra/mazmorra.h"
 #include "../mazmorra/minerales.h"
+#include "../muebles/muebles.h"
 
 RecursosDeJuego::RecursosDeJuego(
     const std::vector<ConfiguracionMapaServidor>& configuracion_mapas,
@@ -35,6 +36,8 @@ CatalogoDeObjetos RecursosDeJuego::crear_catalogo_de_objetos(
     std::vector<DefinicionDeObjeto> definiciones = Minerales::definiciones(minerales);
     const std::vector<DefinicionDeObjeto> cofres = GestorDeCofres::definiciones();
     definiciones.insert(definiciones.end(), cofres.begin(), cofres.end());
+    const std::vector<DefinicionDeObjeto> muebles = Muebles::definiciones();
+    definiciones.insert(definiciones.end(), muebles.begin(), muebles.end());
 
     // Acá se suman las definiciones de árboles, muebles y cualquier otro módulo futuro,
     //   std::vector<DefinicionDeObjeto> arboles = Arboles::definiciones();

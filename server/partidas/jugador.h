@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <string>
 
+#include "../../common/color_de_jugador.h"
 #include "../../common/apariencia_personaje.h"
 
 // Un jugador que tiene lugar en una partida, esté conectado o no.
@@ -15,6 +16,12 @@ struct Jugador {
     uint32_t id_jugador;
 
     std::string nombre_jugador;
+
+    // Se asigna al entrar por primera vez a la partida, el primer color que ningún otro jugador de
+    // ella tenga. Se conserva aunque se desconecte y vuelva a entrar, y se usa para pintar su
+    // nombre en el chat.
+    ColorDeJugador color;
+
     bool conectado;
     AparienciaPersonaje apariencia;
 };

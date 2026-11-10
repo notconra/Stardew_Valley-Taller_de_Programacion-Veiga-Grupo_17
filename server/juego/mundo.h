@@ -10,6 +10,7 @@
 #include "../persistencia/datos_partida_guardada.h"
 #include "controladores/controlador_de_acciones.h"
 #include "controladores/controlador_de_cofres.h"
+#include "controladores/controlador_de_dia.h"
 #include "controladores/controlador_de_drops.h"
 #include "controladores/controlador_de_enemigos.h"
 #include "controladores/controlador_de_jugador.h"
@@ -38,17 +39,26 @@ private:
     ControladorDeDrops controlador_de_drops;
     ControladorDeMazmorra controlador_de_mazmorra;
     ControladorDeEnemigos controlador_de_enemigos;
+    ControladorDelDia controlador_del_dia;
 
     void resolver_transicion(Personaje& personaje, const Transicion& transicion);
 
-    // Si la transición se usa con clic derecho en vez de activarse al pisarla.
-    bool requiere_clic(const Transicion& transicion) const;
+    // Si la transición se usa con clic derecho en vez de activarse al pisarla: las que tienen un
+    // destino de destinos_con_clic y todas las de los niveles de la mazmorra.
+    bool requiere_clic(const Personaje& personaje, const Transicion& transicion) const;
 
     // Mueve a quienes pisan una transición que no pide clic.
     void resolver_transiciones_automaticas();
 
     // Saca al personaje del mundo sin borrarlo, cada controlador limpia lo suyo y se le quita el
     // cuerpo del sector.
+    // Lo que se guarda del personaje y no depende de dónde está su cuerpo: inventario, apariencia,
+    // vida, energía y última cama.
+    void completar_datos_guardados(const Personaje& personaje, DatosJugadorGuardado& datos) const;
+
+    // Lo inverso, al cargar una partida guardada.
+    void restaurar(Personaje& personaje, const DatosJugadorGuardado& guardado) const;
+
     void dar_de_baja(Personaje& personaje);
 
 public:
@@ -72,6 +82,13 @@ public:
     std::vector<std::string> obtener_niveles_mazmorra() const;
     std::vector<DatosMapaGuardado> obtener_mapas_guardados() const;
     std::vector<DatosCofreGuardado> obtener_cofres_guardados() const;
+    std::vector<DatosMuebleGuardado> obtener_muebles_guardados() const;
+    uint32_t obtener_dia() const;
+
+    // Si terminó un día desde la última vez que se preguntó (todos dieron el OK). Es cuando hay
+    // que guardar la partida; devuelve true una sola vez por día.
+    bool tomar_dia_terminado();
+
     Mundo(const Mundo&) = delete;
     Mundo& operator=(const Mundo&) = delete;
 };
