@@ -197,6 +197,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     efectos.cambiar_ambiente(configuracion_de(mapa_actual).ruta_ambiente);
     efectos.cambiar_paso(configuracion_de(mapa_actual).ruta_caminar);
     TierraGrafica tierra(configuracion.tierra, graficos, renderizador.ptr());
+    CultivosGraficos cultivos(graficos, renderizador.ptr());
     ObjetosGraficos objetos(renderizador.ptr(), graficos, iconos);
     EnemigosGraficos enemigos(renderizador.ptr(), graficos);
     TrampasGraficas trampas(renderizador.ptr(), graficos);
@@ -314,6 +315,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             personaje,
             iconos,
             tierra,
+            cultivos,
             camara,
             hud,
             vision_mazmorra,
@@ -381,7 +383,8 @@ std::optional<VistaPartida::Casilla> VistaPartida::casilla_apuntada(
 void VistaPartida::guardar_tierra(const EstadoJuego& estado) {
     tierra_tratada.clear();
     for (const CasillaTratada& casilla : estado.tierra) {
-        tierra_tratada.insert({static_cast<int>(casilla.columna), static_cast<int>(casilla.fila)});
+        tierra_tratada[{static_cast<int>(casilla.columna), static_cast<int>(casilla.fila)}] =
+            casilla;
     }
 }
 
@@ -669,7 +672,7 @@ void VistaPartida::aplicar(const EventoServidor& evento, VistaChat& chat) {
                     static_cast<int>(e.casilla.columna),
                     static_cast<int>(e.casilla.fila)};
                 if (e.tratada) {
-                    tierra_tratada.insert(casilla);
+                    tierra_tratada[casilla] = e.casilla;
                 } else {
                     tierra_tratada.erase(casilla);
                 }
@@ -722,9 +725,10 @@ void VistaPartida::dibujar(
     Renderizador& renderizador, SDL_Texture* mundo, const MapaGrafico& mapa,
     const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos,
     const TrampasGraficas& trampas, const Personaje& personaje, const IconosDeItems& iconos,
-    const TierraGrafica& tierra, const Camara& camara, const HudInventario& hud,
-    const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada, const VistaChat& chat,
-    const RelojGrafico& reloj_grafico, const PantallaDeDescanso& pantalla_de_descanso) const {
+    const TierraGrafica& tierra, const CultivosGraficos& cultivos, const Camara& camara,
+    const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
+    const EntradaDelUsuario& entrada, const VistaChat& chat, const RelojGrafico& reloj_grafico,
+    const PantallaDeDescanso& pantalla_de_descanso) const {
     SDL_Renderer* renderer = renderizador.ptr();
     if (mundo != nullptr) {
         SDL_SetRenderTarget(renderer, mundo);
@@ -736,6 +740,7 @@ void VistaPartida::dibujar(
 
     mapa.dibujar_bajo_los_jugadores(renderer, camara.x(), camara.y());
     tierra.dibujar(renderer, tierra_tratada, camara.x(), camara.y());
+    cultivos.dibujar(renderer, tierra_tratada, camara.x(), camara.y());
     objetos.dibujar_debajo_de_los_jugadores(
         renderer,
         ultimo_estado_juego,
