@@ -8,9 +8,12 @@
 
 #include "../acciones/accion_atacar.h"
 #include "../acciones/accion_colocar.h"
+#include "../acciones/accion_cosechar.h"
 #include "../acciones/accion_dormir.h"
 #include "../acciones/accion_interactuar_cofre.h"
 #include "../acciones/accion_picar.h"
+#include "../acciones/accion_plantar.h"
+#include "../acciones/accion_regar.h"
 #include "../acciones/accion_tratar_tierra.h"
 #include "../acciones/accion_usar_transicion.h"
 
@@ -28,15 +31,18 @@ ControladorDeAcciones::ControladorDeAcciones(
 
     acciones.push_back(std::make_unique<AccionUsarTransicion>());
     acciones.push_back(std::make_unique<AccionDormir>(camas_ocupadas));
+    acciones.push_back(std::make_unique<AccionCosechar>());
     acciones.push_back(std::make_unique<AccionPicar>(
         camas_ocupadas,
         static_cast<uint16_t>(duraciones.duracion_picar_en_ticks)));
     acciones.push_back(std::make_unique<AccionTratarTierra>(
         static_cast<uint16_t>(duraciones.duracion_tratar_tierra_en_ticks)));
+    acciones.push_back(std::make_unique<AccionRegar>());
+    acciones.push_back(std::make_unique<AccionPlantar>());
     acciones.push_back(std::make_unique<AccionInteractuarCofre>());
     acciones.push_back(std::make_unique<AccionColocar>());
-    acciones.push_back(std::make_unique<AccionAtacar>(
-        static_cast<uint16_t>(duraciones.duracion_atacar_en_ticks)));
+    acciones.push_back(
+        std::make_unique<AccionAtacar>(static_cast<uint16_t>(duraciones.duracion_atacar_en_ticks)));
 }
 
 bool ControladorDeAcciones::al_alcance(
@@ -100,13 +106,18 @@ CasillaConsultada ControladorDeAcciones::consultar(
         return respuesta;
     }
 
-    // La pala y el pico: una casilla en verde solo si harían algo. Igual que al usarlos, el pico
-    // primero rompe lo que haya en la casilla y si no hay nada, vuelve la tierra a común.
+    // La pala, el pico, la regadera y las semillas: una casilla en verde solo si harían algo. Igual
+    // que al usarlos, el pico primero rompe lo que haya en la casilla y si no hay nada, vuelve la
+    // tierra a común.
     if (!alcanza) {
         return respuesta;
     }
     bool tendria_efecto = false;
-    if (item.tipo == TipoItem::PALA) {
+    if (item.tipo == TipoItem::REGADERA) {
+        tendria_efecto = sector.huerta.pide_agua(objetivo);
+    } else if (recursos.catalogo_de_cultivos.de_la_semilla(item.tipo) != nullptr) {
+        tendria_efecto = sector.se_puede_plantar(objetivo);
+    } else if (item.tipo == TipoItem::PALA) {
         tendria_efecto = sector.tierra.se_puede_tratar(objetivo);
     } else if (item.tipo == TipoItem::PICO) {
         const ObjetoDelMundo* objeto = sector.objetos.objeto_en(objetivo.columna, objetivo.fila);

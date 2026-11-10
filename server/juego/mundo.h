@@ -10,6 +10,7 @@
 #include "../persistencia/datos_partida_guardada.h"
 #include "controladores/controlador_de_acciones.h"
 #include "controladores/controlador_de_cofres.h"
+#include "controladores/controlador_de_cultivos.h"
 #include "controladores/controlador_de_dia.h"
 #include "controladores/controlador_de_drops.h"
 #include "controladores/controlador_de_enemigos.h"
@@ -42,6 +43,7 @@ private:
     ControladorDeEnemigos controlador_de_enemigos;
     ControladorDeTrampas controlador_de_trampas;
     ControladorDelDia controlador_del_dia;
+    ControladorDeCultivos controlador_de_cultivos;
 
     void resolver_transicion(Personaje& personaje, const Transicion& transicion);
 
@@ -79,6 +81,10 @@ public:
     void desconectar(uint32_t id_jugador);
 
     void atender(uint32_t id_jugador, const ComandoCliente& comando);
+
+    // Le da ítems a un jugador conectado (para los cheats) y le avisa cómo quedó su inventario.
+    // Devuelve cuántos entraron.
+    int dar_items(uint32_t id_jugador, TipoItem tipo, uint16_t cantidad);
     void actualizar();
 
     // Devuelve los datos guardados o en vivo de un jugador (posición, inventario, etc.).
@@ -87,6 +93,7 @@ public:
     std::vector<DatosMapaGuardado> obtener_mapas_guardados() const;
     std::vector<DatosCofreGuardado> obtener_cofres_guardados() const;
     std::vector<DatosMuebleGuardado> obtener_muebles_guardados() const;
+    std::vector<DatosCultivoGuardado> obtener_cultivos_guardados() const;
     uint32_t obtener_dia() const;
 
     // Si terminó un día desde la última vez que se preguntó (todos dieron el OK). Es cuando hay
