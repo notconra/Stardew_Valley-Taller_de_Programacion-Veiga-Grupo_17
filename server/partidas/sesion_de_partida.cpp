@@ -10,7 +10,7 @@
 #include <utility>
 #include <vector>
 
-#include "../juego/chat/comando_dinero.h"
+#include "../juego/cheats/comando_dinero.h"
 #include "../juego/cheats/comando_semillas.h"
 
 SesionDePartida::SesionDePartida(
