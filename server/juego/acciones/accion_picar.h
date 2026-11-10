@@ -15,7 +15,6 @@
 class AccionPicar : public Accion {
 private:
     static constexpr uint16_t DURACION_EN_TICKS = 8;
-    static constexpr int COSTO_DE_ENERGIA = 3;
     static constexpr uint16_t DURACION_POR_DEFECTO = 8;
 
     const CamasOcupadas& camas_ocupadas;

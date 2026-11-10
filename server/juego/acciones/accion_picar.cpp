@@ -50,6 +50,7 @@ bool AccionPicar::ejecutar(ContextoDeAccion& c) {
     if (!golpe.golpeo) {
         return false;
     }
+    c.personaje.gastar_energia(c.recursos.juego.acciones.energia_por_picar);
     if (!golpe.rotura.se_rompio) {
         return true;
     }
@@ -70,6 +71,5 @@ bool AccionPicar::ejecutar(ContextoDeAccion& c) {
             quizas_avecinar_manada_de_orcos(c);
         }
     }
-    c.personaje.gastar_energia(COSTO_DE_ENERGIA);
     return true;
 }
