@@ -3,16 +3,122 @@
 #include <algorithm>
 #include <cstdlib>
 
+#include "../azar.h"
+
 namespace {
 constexpr uint32_t DURACION_ANIMACION_ATAQUE_TICKS = 16;
 constexpr uint32_t DURACION_ANIMACION_MUERTE_TICKS = 36;
+// Probabilidad de que un enemigo que no ve a nadie se quede un rato quieto en vez de dar un paso.
+constexpr double PROBABILIDAD_DE_DESCANSAR = 0.4;
 }  // namespace
 
-GestorDeEnemigos::GestorDeEnemigos(const CatalogoDeEnemigos& catalogo_de_enemigos)
-    : catalogo(catalogo_de_enemigos) {
+GestorDeEnemigos::GestorDeEnemigos(
+    const CatalogoDeEnemigos& catalogo_de_enemigos, uint8_t ticks_por_segundo)
+    : catalogo(catalogo_de_enemigos),
+      ms_por_tick(ticks_por_segundo > 0 ? 1000u / ticks_por_segundo : 25u) {
 }
 
-int GestorDeEnemigos::poblar_en(const std::vector<Casilla>& casillas, TipoEnemigo tipo) {
+uint32_t GestorDeEnemigos::ticks_por_paso(
+    const Enemigo& enemigo, const DefinicionDeEnemigo& definicion) const {
+    if (enemigo.en_frenesi && definicion.habilidad_de_frenesi == HabilidadDeFrenesi::VELOCIDAD) {
+        const auto ticks = static_cast<uint32_t>(
+            static_cast<double>(definicion.ticks_por_casilla) / definicion.multiplicador_de_frenesi);
+        return std::max<uint32_t>(1, ticks);
+    }
+    return definicion.ticks_por_casilla;
+}
+
+int GestorDeEnemigos::danio_de(const Enemigo& enemigo, const DefinicionDeEnemigo& definicion) const {
+    if (enemigo.en_frenesi && definicion.habilidad_de_frenesi == HabilidadDeFrenesi::DANIO) {
+        return static_cast<int>(definicion.danio * definicion.multiplicador_de_frenesi);
+    }
+    return definicion.danio;
+}
+
+void GestorDeEnemigos::dar_paso(Enemigo& enemigo, uint32_t ticks) {
+    enemigo.ticks_para_moverse = ticks;
+    enemigo.ms_por_casilla = static_cast<uint16_t>(std::min<uint32_t>(ticks * ms_por_tick, 65535));
+}
+
+void GestorDeEnemigos::recalcular_frenesi(int grupo, std::vector<int>& cambiaron) {
+    if (grupo == 0) {
+        return;
+    }
+    const int muertos = static_cast<int>(std::count_if(
+        enemigos_por_id.begin(), enemigos_por_id.end(), [grupo](const auto& entrada) {
+            return entrada.second.grupo == grupo && !entrada.second.esta_vivo();
+        }));
+    // Un vivo está en frenesí si hay algún otro del grupo muerto (y él está vivo, así que no
+    // cuenta entre los muertos).
+    const bool en_frenesi = muertos > 0;
+    for (auto& [id, enemigo] : enemigos_por_id) {
+        if (enemigo.grupo != grupo || !enemigo.esta_vivo()) {
+            continue;
+        }
+        const DefinicionDeEnemigo* definicion = catalogo.buscar(enemigo.tipo);
+        if (definicion == nullptr ||
+            definicion->habilidad_de_frenesi == HabilidadDeFrenesi::NINGUNA) {
+            continue;
+        }
+        if (en_frenesi != enemigo.en_frenesi) {
+            enemigo.en_frenesi = en_frenesi;
+            cambiaron.push_back(id);
+        }
+    }
+}
+
+int GestorDeEnemigos::poblar_pareja(
+    const Casilla& primera, TipoEnemigo tipo_primera, const Casilla& segunda,
+    TipoEnemigo tipo_segunda) {
+    if (catalogo.buscar(tipo_primera) == nullptr || catalogo.buscar(tipo_segunda) == nullptr) {
+        return 0;
+    }
+    const int grupo = siguiente_grupo++;
+    return poblar_en({primera}, tipo_primera, grupo) + poblar_en({segunda}, tipo_segunda, grupo);
+}
+
+std::vector<int> GestorDeEnemigos::derramar_sangre(const std::vector<Casilla>& heridos) {
+    std::vector<int> ensangrentados;
+    if (heridos.empty()) {
+        return ensangrentados;
+    }
+    for (auto& [id, enemigo] : enemigos_por_id) {
+        if (enemigo.esta_vivo() || !enemigo.espera_sangre) {
+            continue;
+        }
+        const DefinicionDeEnemigo* definicion = catalogo.buscar(enemigo.tipo);
+        if (definicion == nullptr) {
+            continue;
+        }
+        const bool hay_herido_cerca =
+            std::any_of(heridos.begin(), heridos.end(), [&](const Casilla& herido) {
+                return distancia_en_casillas(herido, enemigo.posicion) <=
+                       definicion->radio_de_sangre;
+            });
+        if (!hay_herido_cerca) {
+            continue;
+        }
+        enemigo.espera_sangre = false;
+        enemigo.con_sangre = true;
+        enemigo.ticks_para_revivir = std::max<uint32_t>(1, definicion->ticks_para_revivir);
+        ensangrentados.push_back(id);
+    }
+    return ensangrentados;
+}
+
+int GestorDeEnemigos::poblar_grupo_en(const std::vector<Casilla>& casillas, TipoEnemigo tipo) {
+    return poblar_en(casillas, tipo, siguiente_grupo++);
+}
+
+void GestorDeEnemigos::perseguir(int id, uint32_t id_jugador) {
+    const auto encontrado = enemigos_por_id.find(id);
+    if (encontrado != enemigos_por_id.end()) {
+        encontrado->second.jugador_perseguido = id_jugador;
+    }
+}
+
+int GestorDeEnemigos::poblar_en(
+    const std::vector<Casilla>& casillas, TipoEnemigo tipo, int grupo) {
     const DefinicionDeEnemigo* definicion = catalogo.buscar(tipo);
     if (definicion == nullptr) {
         return 0;
@@ -25,9 +131,12 @@ int GestorDeEnemigos::poblar_en(const std::vector<Casilla>& casillas, TipoEnemig
         enemigo.tipo = tipo;
         enemigo.posicion = casilla;
         enemigo.origen = casilla;
+        enemigo.grupo = grupo;
         enemigo.vida_maxima = definicion->vida_maxima;
         enemigo.vida = definicion->vida_maxima;
         enemigo.invulnerable = definicion->invulnerable;
+        enemigo.ms_por_casilla = static_cast<uint16_t>(
+            std::min<uint32_t>(definicion->ticks_por_casilla * ms_por_tick, 65535));
         enemigos_por_id.emplace(enemigo.id, enemigo);
         ++colocados;
     }
@@ -46,14 +155,20 @@ ResultadoDeGolpeEnemigo GestorDeEnemigos::golpear(int id, int danio) {
     if (enemigo.recibir_golpe(danio)) {
         resultado.murio = true;
         const DefinicionDeEnemigo* definicion = catalogo.buscar(enemigo.tipo);
-        enemigo.ticks_para_revivir = definicion != nullptr ? definicion->ticks_para_revivir : 0;
+        const bool con_sangre = definicion != nullptr && definicion->revive_con_sangre;
+        enemigo.ticks_para_revivir =
+            (definicion != nullptr && !con_sangre) ? definicion->ticks_para_revivir : 0;
+        enemigo.espera_sangre = con_sangre;
+        enemigo.en_frenesi = false;
         enemigo.ticks_de_animacion_muerte = DURACION_ANIMACION_MUERTE_TICKS;
+        recalcular_frenesi(enemigo.grupo, resultado.afectados);
     }
     return resultado;
 }
 
 std::vector<int> GestorDeEnemigos::actualizar() {
     std::vector<int> cambiaron;
+    std::vector<int> revividos_en_grupo;
     for (auto& [id, enemigo] : enemigos_por_id) {
         if (enemigo.esta_vivo()) {
             if (enemigo.ticks_para_poder_atacar > 0) {
@@ -82,12 +197,17 @@ std::vector<int> GestorDeEnemigos::actualizar() {
             --enemigo.ticks_para_revivir;
             if (enemigo.ticks_para_revivir == 0) {
                 enemigo.vida = enemigo.vida_maxima;
+                enemigo.con_sangre = false;
                 cambio_visible = true;
+                revividos_en_grupo.push_back(enemigo.grupo);
             }
         }
         if (cambio_visible) {
             cambiaron.push_back(id);
         }
+    }
+    for (int grupo : revividos_en_grupo) {
+        recalcular_frenesi(grupo, cambiaron);
     }
     return cambiaron;
 }
@@ -98,7 +218,6 @@ int signo(int valor) {
     return (valor > 0) - (valor < 0);
 }
 
-// Hacia dónde hay que mirar para ver al otro: el eje con más distancia manda.
 Direccion direccion_hacia(const Casilla& desde, const Casilla& hasta) {
     const int dc = hasta.columna - desde.columna;
     const int df = hasta.fila - desde.fila;
@@ -122,18 +241,17 @@ bool GestorDeEnemigos::deambular(
     if (definicion.radio_de_deambulo <= 0) {
         return false;
     }
-    const uint32_t paso = definicion.ticks_por_casilla;
+    const uint32_t paso = ticks_por_paso(enemigo, definicion);
 
-    // Camina a ratos: cuatro de cada diez veces se queda parado un rato en vez de dar un paso.
-    if (azar() % 10 < 4) {
-        enemigo.ticks_para_moverse = paso + (azar() % (2 * paso));
+    if (Azar::con_probabilidad(PROBABILIDAD_DE_DESCANSAR)) {
+        enemigo.ticks_para_moverse = static_cast<uint32_t>(Azar::entero(paso, 3 * paso - 1));
         return false;
     }
 
     static constexpr Casilla PASOS[4] = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
     static constexpr Direccion DIRECCIONES[4] = {
         Direccion::ARRIBA, Direccion::ABAJO, Direccion::IZQUIERDA, Direccion::DERECHA};
-    const int elegido = static_cast<int>(azar() % 4);
+    const int elegido = Azar::entero(0, 3);
     const Casilla destino{
         enemigo.posicion.columna + PASOS[elegido].columna,
         enemigo.posicion.fila + PASOS[elegido].fila};
@@ -142,13 +260,72 @@ bool GestorDeEnemigos::deambular(
         std::abs(destino.fila - enemigo.origen.fila) > definicion.radio_de_deambulo;
     if (muy_lejos || !colisiones.esta_libre(destino.columna, destino.fila) ||
         enemigo_vivo_en(destino.columna, destino.fila) != nullptr) {
-        enemigo.ticks_para_moverse = paso / 2;  // reintenta pronto, con otra dirección
+        enemigo.ticks_para_moverse = paso / 2;
         return false;
     }
     enemigo.mirando = DIRECCIONES[elegido];
     enemigo.posicion = destino;
-    enemigo.ticks_para_moverse = paso;
+    dar_paso(enemigo, paso);
     return true;
+}
+
+const Casilla* GestorDeEnemigos::elegir_objetivo(
+    Enemigo& enemigo, const DefinicionDeEnemigo& definicion,
+    const std::vector<std::pair<uint32_t, Casilla>>& jugadores, int& distancia) const {
+    // Si tiene un jugador marcado (la manada que se avecina), va por él sin mirar la visión.
+    if (enemigo.jugador_perseguido != 0) {
+        const auto perseguido = std::find_if(
+            jugadores.begin(), jugadores.end(), [&enemigo](const auto& jugador) {
+                return jugador.first == enemigo.jugador_perseguido;
+            });
+        if (perseguido != jugadores.end()) {
+            distancia = distancia_en_casillas(perseguido->second, enemigo.posicion);
+            return &perseguido->second;
+        }
+        enemigo.jugador_perseguido = 0;  // ya no está en el sector: vuelve a la regla normal
+    }
+
+    const Casilla* objetivo = nullptr;
+    distancia = definicion.radio_de_vision + 1;
+    for (const auto& [id_jugador, casilla] : jugadores) {
+        const int lejos = distancia_en_casillas(casilla, enemigo.posicion);
+        if (lejos < distancia) {
+            distancia = lejos;
+            objetivo = &casilla;
+        }
+    }
+    return objetivo;
+}
+
+bool GestorDeEnemigos::acercarse(
+    Enemigo& enemigo, const DefinicionDeEnemigo& definicion, const Casilla& objetivo,
+    const std::vector<std::pair<uint32_t, Casilla>>& jugadores, const Colisiones& colisiones) {
+    const int dc = objetivo.columna - enemigo.posicion.columna;
+    const int df = objetivo.fila - enemigo.posicion.fila;
+    const Casilla paso_horizontal{enemigo.posicion.columna + signo(dc), enemigo.posicion.fila};
+    const Casilla paso_vertical{enemigo.posicion.columna, enemigo.posicion.fila + signo(df)};
+    const bool horizontal_primero = std::abs(dc) >= std::abs(df);
+    const Casilla pasos[2] = {
+        horizontal_primero ? paso_horizontal : paso_vertical,
+        horizontal_primero ? paso_vertical : paso_horizontal};
+
+    for (const Casilla& paso : pasos) {
+        if (paso == enemigo.posicion || !colisiones.esta_libre(paso.columna, paso.fila) ||
+            enemigo_vivo_en(paso.columna, paso.fila) != nullptr) {
+            continue;
+        }
+        const bool ocupada_por_jugador = std::any_of(
+            jugadores.begin(), jugadores.end(),
+            [&paso](const auto& jugador) { return jugador.second == paso; });
+        if (ocupada_por_jugador) {
+            continue;
+        }
+        enemigo.mirando = direccion_hacia(enemigo.posicion, paso);
+        enemigo.posicion = paso;
+        dar_paso(enemigo, ticks_por_paso(enemigo, definicion));
+        return true;
+    }
+    return false;
 }
 
 std::vector<int> GestorDeEnemigos::mover_hacia(
@@ -161,55 +338,16 @@ std::vector<int> GestorDeEnemigos::mover_hacia(
             continue;
         }
 
-        // El jugador más cercano dentro del radio de visión.
-        const Casilla* objetivo = nullptr;
-        int distancia_al_objetivo = definicion->radio_de_vision + 1;
-        for (const auto& [id_jugador, casilla] : jugadores) {
-            const int distancia = std::max(
-                std::abs(casilla.columna - enemigo.posicion.columna),
-                std::abs(casilla.fila - enemigo.posicion.fila));
-            if (distancia < distancia_al_objetivo) {
-                distancia_al_objetivo = distancia;
-                objetivo = &casilla;
-            }
-        }
+        int distancia = 0;
+        const Casilla* objetivo = elegir_objetivo(enemigo, *definicion, jugadores, distancia);
+        bool se_movio = false;
         if (objetivo == nullptr) {
-            if (deambular(enemigo, *definicion, colisiones)) {
-                movidos.push_back(id);
-            }
-            continue;
+            se_movio = deambular(enemigo, *definicion, colisiones);
+        } else if (distancia > 1) {  // a distancia 1 ya está al lado: le toca pegar
+            se_movio = acercarse(enemigo, *definicion, *objetivo, jugadores, colisiones);
         }
-        if (distancia_al_objetivo <= 1) {
-            continue;  // ya está al lado y le toca pegar
-        }
-
-        const int dc = objetivo->columna - enemigo.posicion.columna;
-        const int df = objetivo->fila - enemigo.posicion.fila;
-        const Casilla paso_horizontal{enemigo.posicion.columna + signo(dc), enemigo.posicion.fila};
-        const Casilla paso_vertical{enemigo.posicion.columna, enemigo.posicion.fila + signo(df)};
-        // Primero el eje donde está más lejos; un eje con distancia 0 no es un paso válido.
-        const bool horizontal_primero = std::abs(dc) >= std::abs(df);
-        const Casilla* pasos[2] = {
-            horizontal_primero ? &paso_horizontal : &paso_vertical,
-            horizontal_primero ? &paso_vertical : &paso_horizontal};
-
-        for (const Casilla* paso : pasos) {
-            if (*paso == enemigo.posicion || !colisiones.esta_libre(paso->columna, paso->fila) ||
-                enemigo_vivo_en(paso->columna, paso->fila) != nullptr) {
-                continue;
-            }
-            const bool ocupada_por_jugador = std::any_of(
-                jugadores.begin(), jugadores.end(), [paso](const auto& jugador) {
-                    return jugador.second == *paso;
-                });
-            if (ocupada_por_jugador) {
-                continue;
-            }
-            enemigo.mirando = direccion_hacia(enemigo.posicion, *paso);
-            enemigo.posicion = *paso;
-            enemigo.ticks_para_moverse = definicion->ticks_por_casilla;
+        if (se_movio) {
             movidos.push_back(id);
-            break;
         }
     }
     return movidos;
@@ -227,7 +365,7 @@ std::vector<GolpeDeEnemigo> GestorDeEnemigos::atacar_adyacentes(
                 continue;
             }
             const DefinicionDeEnemigo* definicion = catalogo.buscar(enemigo.tipo);
-            const int danio = definicion != nullptr ? definicion->danio : 0;
+            const int danio = definicion != nullptr ? danio_de(enemigo, *definicion) : 0;
             golpes.push_back(GolpeDeEnemigo{static_cast<uint32_t>(id), id_jugador, danio});
             enemigo.ticks_para_poder_atacar =
                 definicion != nullptr ? definicion->ticks_entre_ataques : 1;
@@ -281,5 +419,8 @@ EstadoEnemigo GestorDeEnemigos::estado_de(const Enemigo& enemigo) {
     estado.atacando = enemigo.ticks_de_animacion_ataque > 0;
     estado.muriendo = enemigo.ticks_de_animacion_muerte > 0;
     estado.mirando = enemigo.mirando;
+    estado.ms_por_casilla = enemigo.ms_por_casilla;
+    estado.frenesi = enemigo.en_frenesi;
+    estado.sangre = enemigo.con_sangre;
     return estado;
 }
