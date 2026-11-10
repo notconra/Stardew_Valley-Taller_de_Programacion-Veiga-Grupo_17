@@ -74,6 +74,14 @@ struct ConfiguracionTransicionesServidor {
     std::vector<std::string> destinos_con_clic{"siguiente"};
 };
 
+// Cuánto dura un día de juego (de 6 am a 2 am) en tiempo real. "velocidad" es lento, medio o
+// rapido; si el archivo trae duracion_en_minutos, esa duración pisa la del preset.
+struct ConfiguracionDiaServidor {
+    std::string velocidad = "medio";
+    double duracion_en_minutos = 14.0;
+    int dias_por_estacion = 28;
+};
+
 struct ConfiguracionJuegoServidor {
     ConfiguracionMovimientoJugador movimiento;
     ConfiguracionAparicionJugador aparicion;
@@ -81,6 +89,7 @@ struct ConfiguracionJuegoServidor {
     ConfiguracionAccionesServidor acciones;
     ConfiguracionDropsServidor drops;
     ConfiguracionTransicionesServidor transiciones;
+    ConfiguracionDiaServidor dia;
 };
 
 // Un mineral de la mazmorra. La clave elige cuál es (PIEDRA, CARBON, LAPISLAZULI, PLATA u ORO),

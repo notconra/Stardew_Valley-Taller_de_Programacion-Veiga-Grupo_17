@@ -64,6 +64,10 @@ public:
 
     // Rota la dirección del personaje hacia la casilla del objetivo
     void mirar_hacia(uint32_t id_jugador, const Casilla& casilla_destino);
+
+    // Si los pies de algún jugador tocan esa zona (en píxeles del mapa). Sirve para no colocar
+    // un mueble encima de alguien, que quedaría trabado adentro.
+    bool hay_alguien_en(const Rectangulo& zona) const;
 };
 
 #endif

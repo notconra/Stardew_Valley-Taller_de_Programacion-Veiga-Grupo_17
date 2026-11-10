@@ -15,8 +15,10 @@ EntradaDelUsuario::EntradaDelUsuario()
       },
       pedido_de_tecla{
           {SDL_SCANCODE_ESCAPE, &Pedidos::salir},
-          {SDL_SCANCODE_G, &Pedidos::guardar},
+          {SDL_SCANCODE_F5, &Pedidos::guardar},
           {SDL_SCANCODE_M, &Pedidos::multijugador},
+          {SDL_SCANCODE_RETURN, &Pedidos::confirmar},
+          {SDL_SCANCODE_KP_ENTER, &Pedidos::confirmar},
           {SDL_SCANCODE_T, &Pedidos::alternar_chat},
       } {
 }

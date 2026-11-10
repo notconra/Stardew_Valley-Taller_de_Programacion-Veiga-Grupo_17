@@ -16,6 +16,8 @@ public:
 
     bool ejecutar(ContextoDeAccion& c) override;
 
+    bool se_puede_colocar(const ContextoDeAccion& c) const;
+
     bool modifica_inventario() const override {
         return true;
     }

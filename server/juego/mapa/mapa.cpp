@@ -1,6 +1,5 @@
 #include "mapa.h"
 
-#include <algorithm>
 #include <cstddef>
 #include <map>
 #include <set>
@@ -219,6 +218,15 @@ const Transicion* Mapa::transicion_en_casilla(int columna, int fila) const {
         ancho_de_casilla,
         alto_de_casilla};
     return transicion_en(casilla);
+}
+
+bool Mapa::cerca_de_una_transicion(int columna, int fila) const {
+    const Rectangulo alrededor{
+        (columna - 1) * ancho_de_casilla,
+        (fila - 1) * alto_de_casilla,
+        3 * ancho_de_casilla,
+        3 * alto_de_casilla};
+    return transicion_en(alrededor) != nullptr;
 }
 
 const std::vector<std::pair<Rectangulo, Transicion>>& Mapa::obtener_transiciones() const {

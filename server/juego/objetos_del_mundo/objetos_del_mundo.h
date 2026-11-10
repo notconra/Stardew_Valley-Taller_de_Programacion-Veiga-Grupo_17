@@ -15,8 +15,9 @@
 #include "../mapa/mapa.h"
 #include "../mapa/propiedad_de_casilla.h"
 
-// Un objeto ya colocado en un mapa. Ocupa una sola casilla. El id lo asigna GestorDeObjetos y es
-// único dentro de ese mapa.
+// Un objeto ya colocado en un mapa. (columna, fila) es su casilla de arriba a la izquierda: casi
+// todos ocupan solo esa, los muebles grandes (la cama) ocupan las que diga su definición hacia la
+// derecha y hacia abajo. El id lo asigna GestorDeObjetos y es único dentro de ese mapa.
 struct ObjetoDelMundo {
     int id = 0;
     int columna = 0;
@@ -55,6 +56,12 @@ struct DefinicionDeObjeto {
     // NINGUNO si el jugador no puede colocarlo, como pasa con minerales y árboles, que solo
     // genera el mundo. Dos objetos no pueden compartir el mismo ítem.
     TipoItem item_colocable = TipoItem::NINGUNO;
+    // Cuántas casillas ocupa, contando desde la de arriba a la izquierda. Casi todo es 1x1.
+    int ancho_en_casillas = 1;
+    int alto_en_casillas = 1;
+    // Los únicos mapas donde el jugador lo puede colocar (la cama, solo en la casa). Vacío: en
+    // cualquiera.
+    std::vector<std::string> mapas_permitidos;
 };
 
 // Todos los tipos de objeto que existen. Se arma una sola vez al arrancar (RecursosDeJuego) y
@@ -106,6 +113,10 @@ private:
     // Posición de la casilla en id_por_casilla. La casilla tiene que estar dentro del mapa.
     std::size_t indice(int columna, int fila) const;
 
+    // Las casillas que ocupa un objeto de esa definición puesto con su esquina en (columna, fila).
+    std::vector<Casilla> casillas_ocupadas(
+        const DefinicionDeObjeto& definicion, int columna, int fila) const;
+
     // Valida los pesos y coloca un objeto sorteado en cada casilla que se pueda usar.
     int colocar_al_azar(
         const std::vector<Casilla>& casillas, const std::vector<PesoDeObjeto>& pesos);
@@ -116,9 +127,12 @@ public:
         const std::string& id_del_mapa, const Mapa& mapa_de_partida,
         const CatalogoDeObjetos& catalogo_de_objetos, Colisiones& colisiones_del_mapa);
 
-    // Coloca un objeto y devuelve su id, o 0 si no se pudo (tipo inexistente, casilla fuera del
-    // mapa, bloqueada por el terreno u ocupada). Si falla no cambia nada.
+    // Coloca un objeto y devuelve su id, o 0 si no se pudo (tipo inexistente, alguna de sus
+    // casillas fuera del mapa, bloqueada por el terreno u ocupada). Si falla no cambia nada.
     int colocar(TipoObjeto tipo, int columna, int fila);
+
+    // Si colocar() funcionaría: el tipo existe y todas sus casillas están dentro del mapa y libres.
+    bool se_puede_colocar(TipoObjeto tipo, int columna, int fila) const;
 
     // Golpea el objeto con la herramienta indicada. Si no es la que pide su definición, no pasa
     // nada. Al llegar a golpes_para_picar lo rompe.

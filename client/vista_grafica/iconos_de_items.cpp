@@ -30,6 +30,7 @@ const RutaDeItem RUTAS_INDIVIDUALES[] = {
     {TipoItem::PLATA, "Assets/items/plata.png"},
     {TipoItem::ORO, "Assets/items/oro.png"},
     {TipoItem::COFRE, "Assets/items/cofre.png"},
+    {TipoItem::CAMA, "Assets/items/cama.png"},
 };
 
 // Cada semilla se dibuja con la primera columna de la tira de su cultivo.

@@ -597,8 +597,9 @@ void HudInventario::dibujar_vida(SDL_Renderer* renderer, uint8_t vida, uint8_t v
         return;
     }
     // La vida va a la izquierda de la energía. Se calcula a partir del ancho de la energía (y no
-    // al revés) porque la energía es la que está siempre en un lugar fijo: la vida solo aparece
-    // en la mazmorra, así que no puede ser la referencia de posición de la otra.
+    // al revés) porque la energía es la que está siempre en un lugar fijo: la vida no siempre
+    // aparece (en la mazmorra o cuando le falta), así que no puede ser la referencia de posición de
+    // la otra.
     const int alto = alto_del_gauge(alto_ventana);
     const int ancho_energia = alto * ANCHO_NATIVO_GAUGE / ALTO_NATIVO_GAUGE;
     const int borde_derecho = ancho_ventana - MARGEN - ancho_energia - SEPARACION_ENTRE_GAUGES;

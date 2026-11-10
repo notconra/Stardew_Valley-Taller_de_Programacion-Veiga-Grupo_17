@@ -44,8 +44,9 @@ private:
     // Lanza ErrorDePartida si no existe.
     Partida& buscar_partida(const std::string& codigo_partida);
 
-    // Arranca una sesión nueva. Se llama sin el mutex tomado.
-    std::unique_ptr<SesionDePartida> crear_sesion(const std::string& codigo_partida) const;
+    // Arranca una sesión nueva. Se llama sin el mutex tomado. La sesión guarda la partida sola
+    // cada vez que termina un día.
+    std::unique_ptr<SesionDePartida> crear_sesion(const std::string& codigo_partida);
 
     IndicePartidas indice;
 

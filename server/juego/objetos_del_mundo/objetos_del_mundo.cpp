@@ -39,6 +39,10 @@ CatalogoDeObjetos::CatalogoDeObjetos(const std::vector<DefinicionDeObjeto>& defi
                 "objetos del mundo: '" + definicion.clave +
                 "' tiene una probabilidad de no dejar producto fuera de [0, 1]");
         }
+        if (definicion.ancho_en_casillas < 1 || definicion.alto_en_casillas < 1) {
+            throw std::runtime_error(
+                "objetos del mundo: '" + definicion.clave + "' tiene que ocupar al menos 1x1");
+        }
         if (definicion.producto != TipoItem::NINGUNO &&
             (definicion.cantidad_minima < 1 ||
              definicion.cantidad_maxima < definicion.cantidad_minima)) {
@@ -97,16 +101,45 @@ std::size_t GestorDeObjetos::indice(int columna, int fila) const {
     return static_cast<std::size_t>(fila) * mapa.cantidad_de_columnas() + columna;
 }
 
+std::vector<Casilla> GestorDeObjetos::casillas_ocupadas(
+    const DefinicionDeObjeto& definicion, int columna, int fila) const {
+    std::vector<Casilla> casillas;
+    for (int fila_ocupada = fila; fila_ocupada < fila + definicion.alto_en_casillas;
+         ++fila_ocupada) {
+        for (int columna_ocupada = columna;
+             columna_ocupada < columna + definicion.ancho_en_casillas;
+             ++columna_ocupada) {
+            casillas.push_back(Casilla{columna_ocupada, fila_ocupada});
+        }
+    }
+    return casillas;
+}
+
+bool GestorDeObjetos::se_puede_colocar(TipoObjeto tipo, int columna, int fila) const {
+    const DefinicionDeObjeto* definicion = catalogo.buscar(tipo);
+    if (definicion == nullptr) {
+        return false;
+    }
+    for (const Casilla& casilla : casillas_ocupadas(*definicion, columna, fila)) {
+        if (!colisiones.esta_libre(casilla.columna, casilla.fila)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 int GestorDeObjetos::colocar(TipoObjeto tipo, int columna, int fila) {
-    // esta_libre también devuelve false si la casilla cae fuera del mapa.
-    if (catalogo.buscar(tipo) == nullptr || !colisiones.esta_libre(columna, fila)) {
+    if (!se_puede_colocar(tipo, columna, fila)) {
         return 0;
     }
+    const std::vector<Casilla> casillas = casillas_ocupadas(*catalogo.buscar(tipo), columna, fila);
 
     const int id = siguiente_id++;
     objetos_por_id.emplace(id, ObjetoDelMundo{id, columna, fila, tipo});
-    id_por_casilla[indice(columna, fila)] = id;
-    colisiones.colocar(columna, fila);
+    for (const Casilla& casilla : casillas) {
+        id_por_casilla[indice(casilla.columna, casilla.fila)] = id;
+        colisiones.colocar(casilla.columna, casilla.fila);
+    }
     return id;
 }
 
@@ -240,9 +273,13 @@ bool GestorDeObjetos::retirar(int id) {
         return false;
     }
 
+    // colocar solo acepta tipos del catálogo, así que la definición siempre existe.
     const ObjetoDelMundo& objeto = encontrado->second;
-    id_por_casilla[indice(objeto.columna, objeto.fila)] = 0;
-    colisiones.eliminar(objeto.columna, objeto.fila);
+    const DefinicionDeObjeto& definicion = *catalogo.buscar(objeto.tipo);
+    for (const Casilla& casilla : casillas_ocupadas(definicion, objeto.columna, objeto.fila)) {
+        id_por_casilla[indice(casilla.columna, casilla.fila)] = 0;
+        colisiones.eliminar(casilla.columna, casilla.fila);
+    }
     objetos_por_id.erase(encontrado);
     return true;
 }
