@@ -24,7 +24,6 @@
 #include "inicio_de_sdl.h"
 #include "ventana.h"
 
-
 namespace {
 
 constexpr char AYUDA_DE_TECLAS[] =
@@ -168,7 +167,6 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     CursorDelJuego cursor_del_juego;
     VistaChat chat(configuracion.chat, renderizador.ptr());
     chat.limpiar();
-    CursorDelJuego cursor_del_juego;
 
     ancho_de_pantalla = std::max(1, ventana.ancho());
     alto_de_pantalla = std::max(1, ventana.alto());
@@ -342,9 +340,8 @@ void VistaPartida::usar_item(uint8_t ranura, ModoUso modo, const std::optional<C
         const TipoItem en_mano = indice < ultimo_inventario.ranuras.size()
                                      ? ultimo_inventario.ranuras[indice].tipo
                                      : TipoItem::NINGUNO;
-        const bool es_herramienta_de_golpe = en_mano == TipoItem::PICO ||
-                                             en_mano == TipoItem::PALA ||
-                                             en_mano == TipoItem::ESPADA;
+        const bool es_herramienta_de_golpe =
+            en_mano == TipoItem::PICO || en_mano == TipoItem::PALA || en_mano == TipoItem::ESPADA;
         if (es_herramienta_de_golpe) {
             haciendo_accion = true;
             inicio_accion_ms = SDL_GetTicks();
@@ -724,11 +721,10 @@ bool VistaPartida::salir_de_partida_y_confirmar() {
 void VistaPartida::dibujar(
     Renderizador& renderizador, SDL_Texture* mundo, const MapaGrafico& mapa,
     const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos,
-    const TrampasGraficas& trampas, const Personaje& personaje,
-    const IconosDeItems& iconos, const TierraGrafica& tierra, const Camara& camara,
-    const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
-    const EntradaDelUsuario& entrada, const VistaChat& chat, const RelojGrafico& reloj_grafico,
-    const PantallaDeDescanso& pantalla_de_descanso) const {
+    const TrampasGraficas& trampas, const Personaje& personaje, const IconosDeItems& iconos,
+    const TierraGrafica& tierra, const Camara& camara, const HudInventario& hud,
+    const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada, const VistaChat& chat,
+    const RelojGrafico& reloj_grafico, const PantallaDeDescanso& pantalla_de_descanso) const {
     SDL_Renderer* renderer = renderizador.ptr();
     if (mundo != nullptr) {
         SDL_SetRenderTarget(renderer, mundo);

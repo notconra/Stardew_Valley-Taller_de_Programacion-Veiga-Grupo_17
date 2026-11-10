@@ -164,21 +164,6 @@ void dibujar_marco_del_cofre(
     for (const ColumnaDelMarco& columna : columnas) {
         dibujar_columna_del_marco(renderer, textura, nativo, columna, panel, escala);
     }
-    try {
-        fondo_barra.emplace(RUTA_ASSET_FONDO_BARRA, renderer);
-    } catch (const std::runtime_error& error) {
-        std::cerr << "[Error] " << error.what() << std::endl;
-    }
-    try {
-        casilla.emplace(RUTA_ASSET_CASILLA, renderer);
-    } catch (const std::runtime_error& error) {
-        std::cerr << "[Error] " << error.what() << std::endl;
-    }
-    try {
-        casilla_seleccionada.emplace(RUTA_ASSET_CASILLA_SELECCIONADA, renderer);
-    } catch (const std::runtime_error& error) {
-        std::cerr << "[Error] " << error.what() << std::endl;
-    }
 }
 
 }  // namespace
