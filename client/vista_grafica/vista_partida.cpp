@@ -138,6 +138,11 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         if (haciendo_accion && SDL_GetTicks() - inicio_accion_ms >= 475) {
             haciendo_accion = false;
         }
+        if (pico_pendiente_desde_ms != 0 &&
+            SDL_GetTicks() - pico_pendiente_desde_ms >= MS_ESPERA_SONIDO_PICO) {
+            pico_pendiente_desde_ms = 0;
+            efectos.reproducir_uso(TipoItem::PICO);
+        }
 
         const auto propio_para_sonido = jugador_propio();
         if (propio_para_sonido != nullptr && propio_para_sonido->camina) {
@@ -197,10 +202,22 @@ void VistaPartida::enviar_intencion_si_cambio(const Moverse& intencion) {
 
 void VistaPartida::usar_item(uint8_t ranura, ModoUso modo, const std::optional<Casilla>& casilla) {
     if (!haciendo_accion) {
-        haciendo_accion = true;
-        inicio_accion_ms = SDL_GetTicks();
-        if (efectos_actuales != nullptr) {
-            efectos_actuales->reproducir_accion();
+        const size_t indice =
+            ranura == INDICE_RANURA_ACTIVA ? ultimo_inventario.ranura_activa : ranura;
+        const TipoItem en_mano = indice < ultimo_inventario.ranuras.size()
+                                     ? ultimo_inventario.ranuras[indice].tipo
+                                     : TipoItem::NINGUNO;
+        const bool es_herramienta_de_golpe = en_mano == TipoItem::PICO ||
+                                             en_mano == TipoItem::PALA ||
+                                             en_mano == TipoItem::ESPADA;
+        if (es_herramienta_de_golpe) {
+            haciendo_accion = true;
+            inicio_accion_ms = SDL_GetTicks();
+        }
+        if (en_mano == TipoItem::PICO && modo == ModoUso::PRINCIPAL) {
+            pico_pendiente_desde_ms = SDL_GetTicks() | 1;
+        } else if (efectos_actuales != nullptr) {
+            efectos_actuales->reproducir_uso(en_mano);
         }
     }
     UsarItem uso;
@@ -341,8 +358,18 @@ void VistaPartida::aplicar(const EventoServidor& evento) {
                 guardar_tierra(e);
             },
             [&](const JugadoresEnSector& e) {
+                const EstadoJugador* antes = jugador_propio();
+                const bool picaba = antes != nullptr && antes->accion_actual == TipoAccion::PICAR;
                 estado.mapa = e.mapa;
                 estado.jugadores = e.jugadores;
+                const EstadoJugador* ahora = jugador_propio();
+                const bool pica = ahora != nullptr && ahora->accion_actual == TipoAccion::PICAR;
+                if (pico_pendiente_desde_ms != 0 && !picaba && pica) {
+                    pico_pendiente_desde_ms = 0;
+                    if (efectos_actuales != nullptr) {
+                        efectos_actuales->reproducir_pico_golpe();
+                    }
+                }
             },
             [&](const ObjetoColocado& e) {
                 const EstadoObjetoDelMundo objeto{e.id, estado.mapa, e.columna, e.fila, e.tipo};
@@ -357,6 +384,20 @@ void VistaPartida::aplicar(const EventoServidor& evento) {
                 }
             },
             [&](const ObjetoRetirado& e) {
+                const auto retirado = std::find_if(
+                    estado.objetos.begin(),
+                    estado.objetos.end(),
+                    [&e](const EstadoObjetoDelMundo& objeto) { return objeto.id == e.id; });
+                const bool era_mineral = retirado != estado.objetos.end() &&
+                                         retirado->tipo != TipoObjeto::COFRE &&
+                                         retirado->tipo != TipoObjeto::NINGUNO;
+                if (era_mineral) {
+                    pico_pendiente_desde_ms = 0;
+                    if (efectos_actuales != nullptr) {
+                        efectos_actuales->reproducir_pico_golpe();
+                        efectos_actuales->reproducir_pico_rotura();
+                    }
+                }
                 std::erase_if(estado.objetos, [&e](const EstadoObjetoDelMundo& objeto) {
                     return objeto.id == e.id;
                 });
@@ -373,8 +414,14 @@ void VistaPartida::aplicar(const EventoServidor& evento) {
                     estado.enemigos.end(),
                     [&e](const EstadoEnemigo& otro) { return otro.id == e.enemigo.id; });
                 if (existente == estado.enemigos.end()) {
+                    if (efectos_actuales != nullptr) {
+                        efectos_actuales->enemigo_aparecio(e.enemigo);
+                    }
                     estado.enemigos.push_back(e.enemigo);
                 } else {
+                    if (efectos_actuales != nullptr) {
+                        efectos_actuales->enemigo_actualizado(*existente, e.enemigo);
+                    }
                     *existente = e.enemigo;
                 }
             },
