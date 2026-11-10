@@ -267,6 +267,17 @@ void ProtocoloServidor::enviar_estado_enemigo(const EstadoEnemigo& estado) {
     enviar_booleano(estado.muriendo);
 }
 
+void ProtocoloServidor::enviar_estado_animal(const EstadoAnimal& estado) {
+    enviar_u32(estado.id);
+    enviar_u8(static_cast<uint8_t>(estado.tipo));
+    enviar_u8(estado.variante);
+    enviar_u32(estado.columna);
+    enviar_u32(estado.fila);
+    enviar_u8(static_cast<uint8_t>(estado.mirando));
+    enviar_booleano(estado.caminando);
+    enviar_booleano(estado.lista_para_ordeniar);
+}
+
 void ProtocoloServidor::enviar_casilla_tratada(const CasillaTratada& casilla) {
     enviar_u32(casilla.columna);
     enviar_u32(casilla.fila);
@@ -330,6 +341,10 @@ void ProtocoloServidor::enviar_estado_juego(const EstadoJuego& estado_juego) {
     enviar_largo(estado_juego.tierra.size());
     for (const CasillaTratada& casilla : estado_juego.tierra) {
         enviar_casilla_tratada(casilla);
+    }
+    enviar_largo(estado_juego.animales.size());
+    for (const EstadoAnimal& estado : estado_juego.animales) {
+        enviar_estado_animal(estado);
     }
 }
 

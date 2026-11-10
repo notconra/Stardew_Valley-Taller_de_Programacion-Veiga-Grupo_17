@@ -72,6 +72,33 @@ bool GestorDeAnimales::ordeniar_vaca(uint32_t id_vaca) {
     return encontrado->second.ordeniar();
 }
 
+void GestorDeAnimales::agregar_a(EstadoJuego& estado) const {
+    for (const auto& [id, vaca] : vacas) {
+        EstadoAnimal animal;
+        animal.id = vaca.id;
+        animal.tipo = TipoAnimal::VACA;
+        animal.variante = vaca.variante;
+        animal.columna = vaca.columna;
+        animal.fila = vaca.fila;
+        animal.mirando = vaca.mirando;
+        animal.caminando = vaca.caminando;
+        animal.lista_para_ordeniar = vaca.esta_lista_para_ordeniar();
+        estado.animales.push_back(animal);
+    }
+    for (const auto& [id, gallina] : gallinas) {
+        EstadoAnimal animal;
+        animal.id = gallina.id;
+        animal.tipo = TipoAnimal::GALLINA;
+        animal.variante = gallina.variante;
+        animal.columna = gallina.columna;
+        animal.fila = gallina.fila;
+        animal.mirando = gallina.mirando;
+        animal.caminando = gallina.caminando;
+        animal.lista_para_ordeniar = false;
+        estado.animales.push_back(animal);
+    }
+}
+
 int GestorDeAnimales::cantidad_vacas() const {
     return static_cast<int>(vacas.size());
 }

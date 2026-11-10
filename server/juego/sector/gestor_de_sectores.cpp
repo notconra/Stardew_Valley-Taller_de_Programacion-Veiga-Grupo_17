@@ -253,6 +253,7 @@ EstadoJuego GestorDeSectores::armar_instantanea(const std::string& id_mapa) cons
     sector.drops.agregar_a(estado);
     sector.enemigos.agregar_a(estado);
     sector.tierra.agregar_a(estado.tierra);
+    sector.animales.agregar_a(estado);
     return estado;
 }
 

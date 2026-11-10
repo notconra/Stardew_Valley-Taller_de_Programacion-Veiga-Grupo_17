@@ -48,6 +48,7 @@ private:
     EstadoObjetoDelMundo recibir_estado_objeto_del_mundo();
     EstadoDrop recibir_estado_drop();
     EstadoEnemigo recibir_estado_enemigo();
+    EstadoAnimal recibir_estado_animal();
     CasillaTratada recibir_casilla_tratada();
     EstadoJuego recibir_estado_juego();
     JugadoresEnSector recibir_jugadores_en_sector();

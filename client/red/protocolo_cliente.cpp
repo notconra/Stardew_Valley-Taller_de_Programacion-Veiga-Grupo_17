@@ -322,6 +322,20 @@ EstadoEnemigo ProtocoloCliente::recibir_estado_enemigo() {
     estado.muriendo = recibir_booleano();
     return estado;
 }
+
+EstadoAnimal ProtocoloCliente::recibir_estado_animal() {
+    EstadoAnimal estado;
+    estado.id = recibir_u32();
+    estado.tipo = static_cast<TipoAnimal>(recibir_u8());
+    estado.variante = recibir_u8();
+    estado.columna = recibir_u32();
+    estado.fila = recibir_u32();
+    estado.mirando = static_cast<Direccion>(recibir_u8());
+    estado.caminando = recibir_booleano();
+    estado.lista_para_ordeniar = recibir_booleano();
+    return estado;
+}
+
 CasillaTratada ProtocoloCliente::recibir_casilla_tratada() {
     CasillaTratada casilla;
     casilla.columna = recibir_u32();
@@ -361,6 +375,12 @@ EstadoJuego ProtocoloCliente::recibir_estado_juego() {
     estado_juego.tierra.reserve(cantidad_de_tierra);
     for (uint16_t i = 0; i < cantidad_de_tierra; ++i) {
         estado_juego.tierra.push_back(recibir_casilla_tratada());
+    }
+
+    uint16_t cantidad_de_animales = recibir_u16();
+    estado_juego.animales.reserve(cantidad_de_animales);
+    for (uint16_t i = 0; i < cantidad_de_animales; ++i) {
+        estado_juego.animales.push_back(recibir_estado_animal());
     }
 
     return estado_juego;

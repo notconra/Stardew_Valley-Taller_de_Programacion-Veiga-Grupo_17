@@ -54,6 +54,7 @@ private:
     void enviar_estado_objeto_del_mundo(const EstadoObjetoDelMundo& estado);
     void enviar_estado_drop(const EstadoDrop& estado);
     void enviar_estado_enemigo(const EstadoEnemigo& estado);
+    void enviar_estado_animal(const EstadoAnimal& estado);
     void enviar_casilla_tratada(const CasillaTratada& casilla);
     void enviar_ranura_inventario(const RanuraInventario& ranura);
     void enviar_ranuras(const std::vector<RanuraInventario>& ranuras);

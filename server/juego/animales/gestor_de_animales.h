@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 
+#include "../../../common/mensajes/mensajes_partida.h"
 #include "../../persistencia/datos_partida_guardada.h"
 #include "../drops/drops.h"
 #include "gallina.h"
@@ -45,6 +46,9 @@ public:
 
     // Intenta ordeñar una vaca por su id. Devuelve true si tenía leche y se completó la extracción.
     bool ordeniar_vaca(uint32_t id_vaca);
+
+    // Agrega el estado actual de los animales al snapshot del sector
+    void agregar_a(EstadoJuego& estado) const;
 
     // Guarda y restaura el estado de los animales en el archivo de partida
     void agregar_animales_guardados_a(std::vector<DatosAnimalGuardado>& lista) const;
