@@ -111,7 +111,7 @@ void ComandoDinero::gastar_dinero(const ContextoDeComandoDeChat& contexto) const
         contexto.respuestas.responder_a_jugador(
             contexto.id_jugador,
             "Saldo insuficiente. Tenes " + std::to_string(saldo_actual) +
-                " monedas y querés gastar " + std::to_string(cantidad) + ".");
+                " monedas y queres gastar " + std::to_string(cantidad) + ".");
         return;
     }
 
