@@ -2,6 +2,23 @@
 
 #include <stdexcept>
 
+DefinicionDeEnemigo definicion_de_combate(
+    TipoEnemigo tipo, const std::string& clave, const ConfiguracionEnemigoServidor& configuracion) {
+    DefinicionDeEnemigo definicion;
+    definicion.tipo = tipo;
+    definicion.clave = clave;
+    definicion.vida_maxima = configuracion.vida;
+    definicion.danio = configuracion.danio;
+    definicion.ticks_entre_ataques = static_cast<uint32_t>(configuracion.ticks_entre_ataques);
+    definicion.ticks_para_revivir = static_cast<uint32_t>(configuracion.ticks_para_revivir);
+    definicion.ticks_por_casilla = static_cast<uint32_t>(configuracion.ticks_por_casilla);
+    definicion.radio_de_vision = configuracion.radio_de_vision;
+    definicion.radio_de_deambulo = configuracion.radio_de_deambulo;
+    definicion.oro_minimo = static_cast<uint16_t>(configuracion.oro_minimo);
+    definicion.oro_maximo = static_cast<uint16_t>(configuracion.oro_maximo);
+    return definicion;
+}
+
 CatalogoDeEnemigos::CatalogoDeEnemigos(const std::vector<DefinicionDeEnemigo>& definiciones) {
     for (const DefinicionDeEnemigo& definicion : definiciones) {
         if (definicion.tipo == TipoEnemigo::NINGUNO) {

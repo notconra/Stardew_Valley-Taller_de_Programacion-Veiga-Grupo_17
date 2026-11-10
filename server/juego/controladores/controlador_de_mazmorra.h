@@ -23,6 +23,17 @@ private:
     std::vector<std::string> niveles_de_mazmorra;  // id del mapa de cada nivel, en orden
     std::mt19937 generador_de_cofres;
 
+    // Reparte los puntos de aparición sorteados del nivel: los primeros son grupos de orcos y el
+    // resto esqueletos solos.
+    void poblar_enemigos(Sector& sector, const Nivel& nivel);
+    // Pone los pinches en casillas del piso lejos de la entrada, fuera de la escalera y la salida y
+    // donde no haya un enemigo ni un mineral.
+    void poblar_trampas(Sector& sector, const Nivel& nivel);
+    // Las casillas libres más cercanas a "centro" (incluida), hasta "cantidad".
+    std::vector<Casilla> casillas_para_grupo(
+        const Sector& sector, const Nivel& nivel, const Casilla& centro, int cantidad,
+        const std::vector<Casilla>& ocupadas) const;
+
     void poblar_niveles();
     void limpiar_drops_de_niveles();
     void retirar_cofres_de_nivel(Sector& sector);

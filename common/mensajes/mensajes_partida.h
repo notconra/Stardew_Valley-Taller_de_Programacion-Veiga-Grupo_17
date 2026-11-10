@@ -17,6 +17,7 @@
 #include "../tipo_enemigo.h"
 #include "../tipo_item.h"
 #include "../tipo_objeto.h"
+#include "../tipo_trampa.h"
 
 // Política de tipos del protocolo: las cantidades, ids y posiciones viajan sin signo (u8/u16/u32),
 // porque nunca son negativas. El único campo con signo es el eje de Moverse (i8), donde el signo
@@ -186,6 +187,26 @@ struct EstadoEnemigo {
     // Si está en medio de la animación de morir. Con vida en 0 y esto en false, ya terminó de
     // morir: el cliente no tiene que dibujar nada hasta que vuelva a estar vivo.
     bool muriendo = false;
+    // Hacia dónde mira, para elegir la fila de la hoja de sprites al caminar.
+    Direccion mirando = Direccion::ABAJO;
+    // Lo que tarda en cruzar una casilla el paso que está dando, para que el cliente deslice el
+    // dibujo a la misma velocidad (cambia por tipo y con el frenesí de los vampiros). 0 = el
+    // valor por defecto del cliente.
+    uint16_t ms_por_casilla = 0;
+    // Vampiros: su pareja murió y está en frenesí (más rápida la vampira, más fuerte el vampiro).
+    bool frenesi = false;
+    // Vampiros: muerto, y ya cayó sangre sobre su cadáver: está por revivir.
+    bool sangre = false;
+};
+
+// Una trampa de la mazmorra, en la casilla (columna, fila). "activa": los pinches están afuera y
+// lastiman.
+struct EstadoTrampa {
+    uint32_t id = 0;
+    TipoTrampa tipo = TipoTrampa::NINGUNA;
+    uint32_t columna = 0;
+    uint32_t fila = 0;
+    bool activa = false;
 };
 
 // Una casilla de tierra tratada con la pala, por columna y fila del mapa.
@@ -205,6 +226,7 @@ struct EstadoJuego {
     std::vector<EstadoDrop> drops;
     std::vector<EstadoEnemigo> enemigos;
     std::vector<CasillaTratada> tierra;
+    std::vector<EstadoTrampa> trampas;
 };
 
 // Posición y estado de todos los jugadores del sector del receptor. Se manda cada tick, pero solo
@@ -244,6 +266,11 @@ struct DropRetirado {
 // lo agrega; si ya existía, lo reemplaza entero.
 struct EnemigoActualizado {
     EstadoEnemigo enemigo;
+};
+
+// Una trampa del sector del receptor que se activó o se desactivó.
+struct TrampaActualizada {
+    EstadoTrampa trampa;
 };
 // Cómo está el jugador que lo recibe respecto del fin del día, y cuántos ya están listos. Se manda
 // a cada jugador cuando cambia algo (alguien se acuesta, se levanta, se desmaya o da el Ok).

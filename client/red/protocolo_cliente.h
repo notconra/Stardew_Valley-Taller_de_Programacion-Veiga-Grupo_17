@@ -49,6 +49,7 @@ private:
     EstadoObjetoDelMundo recibir_estado_objeto_del_mundo();
     EstadoDrop recibir_estado_drop();
     EstadoEnemigo recibir_estado_enemigo();
+    EstadoTrampa recibir_estado_trampa();
     CasillaTratada recibir_casilla_tratada();
     EstadoJuego recibir_estado_juego();
     JugadoresEnSector recibir_jugadores_en_sector();
@@ -57,6 +58,7 @@ private:
     DropAparecido recibir_drop_aparecido();
     DropRetirado recibir_drop_retirado();
     EnemigoActualizado recibir_enemigo_actualizado();
+    TrampaActualizada recibir_trampa_actualizada();
     TierraCambiada recibir_tierra_cambiada();
     HoraDelJuego recibir_hora_del_juego();
     CasillaConsultada recibir_casilla_consultada();

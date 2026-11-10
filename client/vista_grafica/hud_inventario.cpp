@@ -164,6 +164,21 @@ void dibujar_marco_del_cofre(
     for (const ColumnaDelMarco& columna : columnas) {
         dibujar_columna_del_marco(renderer, textura, nativo, columna, panel, escala);
     }
+    try {
+        fondo_barra.emplace(RUTA_ASSET_FONDO_BARRA, renderer);
+    } catch (const std::runtime_error& error) {
+        std::cerr << "[Error] " << error.what() << std::endl;
+    }
+    try {
+        casilla.emplace(RUTA_ASSET_CASILLA, renderer);
+    } catch (const std::runtime_error& error) {
+        std::cerr << "[Error] " << error.what() << std::endl;
+    }
+    try {
+        casilla_seleccionada.emplace(RUTA_ASSET_CASILLA_SELECCIONADA, renderer);
+    } catch (const std::runtime_error& error) {
+        std::cerr << "[Error] " << error.what() << std::endl;
+    }
 }
 
 }  // namespace
@@ -436,9 +451,11 @@ std::optional<ComandoCliente> HudInventario::procesar_clic(
 void HudInventario::dibujar_ranura(
     SDL_Renderer* renderer, const SDL_Rect& rectangulo, const RanuraInventario& ranura,
     bool resaltada) const {
-    dibujar_textura(renderer, casilla, rectangulo);
-    if (resaltada) {
-        dibujar_textura(renderer, casilla_seleccionada, rectangulo);
+    if (casilla.has_value()) {
+        SDL_RenderCopy(renderer, casilla->ptr(), nullptr, &rectangulo);
+    }
+    if (resaltada && casilla_seleccionada.has_value()) {
+        SDL_RenderCopy(renderer, casilla_seleccionada->ptr(), nullptr, &rectangulo);
     }
     if (ranura.tipo == TipoItem::NINGUNO) {
         return;
@@ -452,8 +469,19 @@ void HudInventario::dibujar_ranura(
 }
 
 void HudInventario::dibujar_tacho(SDL_Renderer* renderer, const SDL_Rect& rectangulo) const {
-    dibujar_textura(renderer, casilla, rectangulo);
-    dibujar_textura(renderer, tacho, con_margen(rectangulo, -(rectangulo.w / 6)));
+    if (casilla.has_value()) {
+        SDL_RenderCopy(renderer, casilla->ptr(), nullptr, &rectangulo);
+    }
+
+    if (tacho.has_value()) {
+        const int margen = rectangulo.w / 6;
+        const SDL_Rect imagen{
+            rectangulo.x + margen,
+            rectangulo.y + margen,
+            rectangulo.w - (2 * margen),
+            rectangulo.h - (2 * margen)};
+        SDL_RenderCopy(renderer, tacho->ptr(), nullptr, &imagen);
+    }
 }
 
 void HudInventario::dibujar_cantidad(
@@ -580,6 +608,17 @@ void HudInventario::dibujar(
 
     dibujar_textura(renderer, fondo_barra, con_margen(disposicion.fondo_de_la_barra, 2));
     dibujar_panel_del_cofre(renderer, disposicion, cofre);
+
+    if (fondo_barra.has_value()) {
+        const int borde = 2;
+        const SDL_Rect& barra = disposicion.fondo_de_la_barra;
+        const SDL_Rect fondo{
+            barra.x - borde,
+            barra.y - borde,
+            barra.w + (2 * borde),
+            barra.h + (2 * borde)};
+        SDL_RenderCopy(renderer, fondo_barra->ptr(), nullptr, &fondo);
+    }
 
     for (int i = 0; i < disposicion.cantidad_de_ranuras; ++i) {
         dibujar_ranura(

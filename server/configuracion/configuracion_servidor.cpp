@@ -237,6 +237,22 @@ void ConfiguracionServidor::cargar_acciones(const toml::table& tabla) {
         acciones.duracion_tratar_tierra_en_ticks,
         1,
         UINT16_MAX);
+    acciones.duracion_atacar_en_ticks = lector_toml::leer_entero_opcional(
+        tabla,
+        "duracion_atacar_en_ticks",
+        seccion,
+        acciones.duracion_atacar_en_ticks,
+        1,
+        UINT16_MAX);
+    acciones.danio_espada = lector_toml::leer_entero_opcional(
+        tabla, "danio_espada", seccion, acciones.danio_espada, 0, INT_MAX);
+    acciones.energia_por_golpe = lector_toml::leer_entero_opcional(
+        tabla, "energia_por_golpe", seccion, acciones.energia_por_golpe, 0, INT_MAX);
+    acciones.energia_por_picar = lector_toml::leer_entero_opcional(
+        tabla, "energia_por_picar", seccion, acciones.energia_por_picar, 0, INT_MAX);
+    acciones.energia_por_tratar_tierra = lector_toml::leer_entero_opcional(
+        tabla, "energia_por_tratar_tierra", seccion, acciones.energia_por_tratar_tierra, 0,
+        INT_MAX);
 }
 
 void ConfiguracionServidor::cargar_drops(const toml::table& tabla) {
@@ -361,6 +377,70 @@ void ConfiguracionServidor::cargar_mazmorra(const toml::table& archivo_toml) {
             "oro_maximo_en_cofre");
     }
 
+    if (const toml::table* enemigos = (*tabla)["enemigos"].as_table()) {
+        if (const toml::table* esqueleto = (*enemigos)["esqueleto"].as_table()) {
+            cargar_enemigo(*esqueleto, "mazmorra.enemigos.esqueleto", mazmorra.esqueleto);
+        }
+        if (const toml::table* orco = (*enemigos)["orco"].as_table()) {
+            const std::string seccion_orco = "mazmorra.enemigos.orco";
+            cargar_enemigo(*orco, seccion_orco, mazmorra.orco.combate);
+            mazmorra.orco.grupos_por_nivel = lector_toml::leer_entero_opcional(
+                *orco, "grupos_por_nivel", seccion_orco, mazmorra.orco.grupos_por_nivel, 0,
+                INT_MAX);
+            mazmorra.orco.tamano_grupo_minimo = lector_toml::leer_entero_opcional(
+                *orco, "tamano_grupo_minimo", seccion_orco, mazmorra.orco.tamano_grupo_minimo, 1,
+                INT_MAX);
+            mazmorra.orco.tamano_grupo_maximo = lector_toml::leer_entero_opcional(
+                *orco, "tamano_grupo_maximo", seccion_orco, mazmorra.orco.tamano_grupo_maximo, 1,
+                INT_MAX);
+            mazmorra.orco.probabilidad_de_plata_al_morir = lector_toml::leer_decimal_opcional(
+                *orco, "probabilidad_de_plata_al_morir", seccion_orco,
+                mazmorra.orco.probabilidad_de_plata_al_morir, 0.0, 1.0);
+            mazmorra.orco.probabilidad_de_manada_por_plata = lector_toml::leer_decimal_opcional(
+                *orco, "probabilidad_de_manada_por_plata", seccion_orco,
+                mazmorra.orco.probabilidad_de_manada_por_plata, 0.0, 1.0);
+            mazmorra.orco.distancia_de_aparicion_de_manada = lector_toml::leer_entero_opcional(
+                *orco, "distancia_de_aparicion_de_manada", seccion_orco,
+                mazmorra.orco.distancia_de_aparicion_de_manada, 1, 100);
+            if (mazmorra.orco.tamano_grupo_minimo > mazmorra.orco.tamano_grupo_maximo) {
+                throw std::runtime_error(
+                    "configuración: [" + seccion_orco +
+                    "] tiene tamano_grupo_minimo > tamano_grupo_maximo");
+            }
+        }
+        if (const toml::table* vampiros = (*enemigos)["vampiros"].as_table()) {
+            const std::string seccion_vampiros = "mazmorra.enemigos.vampiros";
+            ConfiguracionVampirosServidor& config = mazmorra.vampiros;
+            config.parejas_por_nivel = lector_toml::leer_entero_opcional(
+                *vampiros, "parejas_por_nivel", seccion_vampiros, config.parejas_por_nivel, 0,
+                INT_MAX);
+            config.multiplicador_de_frenesi = lector_toml::leer_decimal_opcional(
+                *vampiros, "multiplicador_de_frenesi", seccion_vampiros,
+                config.multiplicador_de_frenesi, 1.0, 10.0);
+            config.radio_de_sangre = lector_toml::leer_entero_opcional(
+                *vampiros, "radio_de_sangre", seccion_vampiros, config.radio_de_sangre, 0, 100);
+            if (const toml::table* vampira = (*vampiros)["vampira"].as_table()) {
+                cargar_enemigo(*vampira, seccion_vampiros + ".vampira", config.vampira);
+            }
+            if (const toml::table* vampiro = (*vampiros)["vampiro"].as_table()) {
+                cargar_enemigo(*vampiro, seccion_vampiros + ".vampiro", config.vampiro);
+            }
+        }
+    }
+
+    if (const toml::table* trampas = (*tabla)["trampas"].as_table()) {
+        const std::string seccion_trampas = "mazmorra.trampas";
+        ConfiguracionTrampasServidor& config = mazmorra.trampas;
+        config.por_nivel = lector_toml::leer_entero_opcional(
+            *trampas, "por_nivel", seccion_trampas, config.por_nivel, 0, INT_MAX);
+        config.danio = lector_toml::leer_entero_opcional(
+            *trampas, "danio", seccion_trampas, config.danio, 0, INT_MAX);
+        config.ticks_inactiva = lector_toml::leer_entero_opcional(
+            *trampas, "ticks_inactiva", seccion_trampas, config.ticks_inactiva, 1, INT_MAX);
+        config.ticks_activa = lector_toml::leer_entero_opcional(
+            *trampas, "ticks_activa", seccion_trampas, config.ticks_activa, 1, INT_MAX);
+    }
+
     const toml::array* minerales = (*tabla)["minerales"].as_array();
     if (minerales != nullptr) {
         cargar_minerales(*minerales);
@@ -461,4 +541,23 @@ const ConfiguracionJuegoServidor& ConfiguracionServidor::juego() const {
 
 const ConfiguracionMazmorraServidor& ConfiguracionServidor::mazmorra() const {
     return datos_configuracion.mazmorra;
+}
+
+void ConfiguracionServidor::cargar_enemigo(
+    const toml::table& tabla, const std::string& seccion, ConfiguracionEnemigoServidor& enemigo) {
+    const auto leer = [&](const char* clave, int& valor, int minimo) {
+        valor = lector_toml::leer_entero_opcional(tabla, clave, seccion, valor, minimo, INT_MAX);
+    };
+    leer("vida", enemigo.vida, 1);
+    leer("danio", enemigo.danio, 0);
+    leer("ticks_entre_ataques", enemigo.ticks_entre_ataques, 1);
+    leer("ticks_para_revivir", enemigo.ticks_para_revivir, 0);
+    leer("ticks_por_casilla", enemigo.ticks_por_casilla, 0);
+    leer("radio_de_vision", enemigo.radio_de_vision, 0);
+    leer("radio_de_deambulo", enemigo.radio_de_deambulo, 0);
+    leer("oro_minimo", enemigo.oro_minimo, 0);
+    leer("oro_maximo", enemigo.oro_maximo, 0);
+    if (enemigo.oro_minimo > enemigo.oro_maximo) {
+        throw std::runtime_error("configuración: [" + seccion + "] tiene oro_minimo > oro_maximo");
+    }
 }

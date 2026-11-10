@@ -19,6 +19,8 @@ struct JugadorEnPartida {
     double y = 0.0;
     int8_t horizontal = 0;
     int8_t vertical = 0;
+    // 1.0 es la velocidad normal; 0.5 camina a la mitad (poca energía).
+    double multiplicador_de_velocidad = 1.0;
     Direccion mirando = Direccion::ABAJO;
     bool camina = false;
 };
@@ -49,6 +51,8 @@ public:
         const ConfiguracionAparicionJugador& configuracion_aparicion);
 
     void moverse(uint32_t id_jugador, int8_t horizontal, int8_t vertical);
+    // Cambia la velocidad del jugador respecto de la normal (1.0). No hace nada si no existe.
+    void fijar_velocidad(uint32_t id_jugador, double multiplicador);
     void actualizar();
     std::vector<uint32_t> ids() const;
     const JugadorEnPartida* buscar(uint32_t id_jugador) const;
