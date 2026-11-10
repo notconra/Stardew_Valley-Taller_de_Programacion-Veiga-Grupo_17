@@ -36,7 +36,7 @@ constexpr int FILA_BRAZOS_EN_ALTO = 9;
 constexpr int COLUMNA_BRAZOS_EN_ALTO_FRENTE = 8;
 constexpr int COLUMNA_BRAZOS_EN_ALTO_LATERAL = 9;
 constexpr int TAMANO_ITEM_EN_ALTO = 16;
-constexpr int Y_ITEM_EN_ALTO = -9;
+constexpr int Y_ITEM_EN_ALTO = -6;
 constexpr int CORRIMIENTO_ITEM_LATERAL = 1;
 constexpr int TAMANO_HERRAMIENTA = 16;
 
