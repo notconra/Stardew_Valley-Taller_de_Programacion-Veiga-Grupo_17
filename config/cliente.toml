@@ -464,3 +464,35 @@ b = 113
 ruta_ambiente = "Assets/sfx/ambiente.wav"
 ruta_caminar = "Assets/sfx/caminar.wav"
 ruta_accion = "Assets/sfx/pico_aire.wav"
+
+[sonido.herramientas]
+espada = "Assets/sfx/espada.wav"
+pico = "Assets/sfx/pico_aire.wav"
+pala = "Assets/sfx/pala.wav"
+regadera = "Assets/sfx/regadera.wav"
+
+[sonido.pico]
+golpe = "Assets/sfx/pico_golpe.wav"
+rotura = "Assets/sfx/pico_rotura.wav"
+
+[sonido.enemigos.esqueleto]
+golpe = "Assets/sfx/esqueleto_golpe.wav"
+danio = "Assets/sfx/esqueleto_hit.wav"
+muerte = "Assets/sfx/esqueleto_muerte.wav"
+
+[sonido.enemigos.orco]
+golpe = "Assets/sfx/orc_golpe.wav"
+danio = "Assets/sfx/orc_hit.wav"
+muerte = "Assets/sfx/orc_muerte.wav"
+aparicion = "Assets/sfx/orc_grito.wav"
+
+[sonido.enemigos.vampiro]
+golpe = "Assets/sfx/vampiro_golpe.wav"
+danio = "Assets/sfx/vampira_hit.wav"
+muerte = "Assets/sfx/vampiro_golpe.wav"
+
+[sonido.enemigos.vampira]
+golpe = "Assets/sfx/vampira_golpe.wav"
+danio = "Assets/sfx/vampira_hit.wav"
+muerte = "Assets/sfx/vampira_muerte.wav"
+aparicion = "Assets/sfx/vampira_aparicion.wav"
