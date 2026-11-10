@@ -13,6 +13,7 @@
 #include "../red/conexion_con_servidor.h"
 #include "camara.h"
 #include "chat/vista_chat.h"
+#include "cursor_del_juego.h"
 #include "efectos_de_sonido.h"
 #include "enemigos_graficos.h"
 #include "entrada_del_usuario.h"
@@ -113,8 +114,8 @@ private:
     void dibujar(
         Renderizador& renderizador, SDL_Texture* mundo, const MapaGrafico& mapa,
         const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos,
-        const Personaje& personaje, const TierraGrafica& tierra, const Camara& camara,
-        const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
+        const Personaje& personaje, const IconosDeItems& iconos, const TierraGrafica& tierra,
+        const Camara& camara, const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
         const EntradaDelUsuario& entrada, const VistaChat& chat) const;
 
 public:

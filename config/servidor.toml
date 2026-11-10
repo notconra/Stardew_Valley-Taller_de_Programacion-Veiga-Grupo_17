@@ -165,7 +165,7 @@ duracion_tratar_tierra_en_ticks = 16
 destino = "mazmorra"
 mapas = ["mina_1", "mina_2", "mina_3", "mina_4", "mina_5", "mina_6", "mina_7", "mina_8", "mina_9", "mina_11", "mina_12", "mina_13", "mina_14", "mina_15", "mina_16", "mina_17", "mina_18", "mina_19", "mina_21", "mina_24"]
 enemigos_por_nivel = 4
-minerales_por_nivel = 30
+minerales_por_nivel = 50
 # Probabilidad de que cada nivel tenga un cofre abandonado (entre 0.0 y 1.0).
 probabilidad_de_cofre = 0.90
 

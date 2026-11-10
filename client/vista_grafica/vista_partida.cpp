@@ -157,6 +157,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     Renderizador renderizador(ventana, configuracion.sdl);
     VistaChat chat(configuracion.chat, renderizador.ptr());
     chat.limpiar();
+    CursorDelJuego cursor_del_juego;
 
     ancho_de_pantalla = std::max(1, ventana.ancho());
     alto_de_pantalla = std::max(1, ventana.alto());
@@ -182,7 +183,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     Personaje personaje(configuracion.jugador, graficos, renderizador.ptr());
     EfectosDeSonido efectos(configuracion.sonido);
     efectos_actuales = &efectos;
-    efectos.reproducir_ambiente();
+    efectos.cambiar_ambiente(configuracion_de(mapa_actual).ruta_ambiente);
+    efectos.cambiar_paso(configuracion_de(mapa_actual).ruta_caminar);
     TierraGrafica tierra(configuracion.tierra, graficos, renderizador.ptr());
     ObjetosGraficos objetos(renderizador.ptr(), graficos, iconos);
     EnemigosGraficos enemigos(renderizador.ptr(), graficos);
@@ -246,6 +248,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
         if (propio != nullptr && propio->mapa != mapa_actual) {
             mapa_actual = propio->mapa;
+            efectos.cambiar_ambiente(configuracion_de(mapa_actual).ruta_ambiente);
+            efectos.cambiar_paso(configuracion_de(mapa_actual).ruta_caminar);
             ultimo_cofre = CofreJugador{};
             camara = camara_para(mapa_de(mapa_actual));
         }
@@ -272,6 +276,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             objetos,
             enemigos,
             personaje,
+            iconos,
             tierra,
             camara,
             hud,
@@ -486,8 +491,6 @@ void VistaPartida::aplicar(const EventoServidor& evento, VistaChat& chat) {
                 } else {
                     *existente = e.enemigo;
                 }
-                // Si murió (vida en 0) no hace falta sacarlo de la lista: EnemigosGraficos ya no
-                // lo dibuja, y si revive llega otro EnemigoActualizado que lo actualiza in situ.
             },
             [&](const ActualizacionInventario& e) { ultimo_inventario = e.inventario; },
             [&](const ActualizacionCofre& e) { ultimo_cofre = e.cofre; },
@@ -546,9 +549,9 @@ bool VistaPartida::salir_de_partida_y_confirmar() {
 void VistaPartida::dibujar(
     Renderizador& renderizador, SDL_Texture* mundo, const MapaGrafico& mapa,
     const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos, const Personaje& personaje,
-    const TierraGrafica& tierra, const Camara& camara, const HudInventario& hud,
-    const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada,
-    const VistaChat& chat) const {
+    const IconosDeItems& iconos, const TierraGrafica& tierra, const Camara& camara,
+    const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
+    const EntradaDelUsuario& entrada, const VistaChat& chat) const {
     SDL_Renderer* renderer = renderizador.ptr();
 
     if (mundo != nullptr) {
@@ -607,6 +610,11 @@ void VistaPartida::dibujar(
             const bool es_el_propio = jugador.id_jugador == id_jugador;
             const bool mostrar_accion = es_el_propio && haciendo_accion;
             const Uint32 ms_de_accion = mostrar_accion ? SDL_GetTicks() - inicio_accion_ms : 0;
+            RanuraInventario en_mano{};
+            if (es_el_propio &&
+                ultimo_inventario.ranura_activa < ultimo_inventario.ranuras.size()) {
+                en_mano = ultimo_inventario.ranuras[ultimo_inventario.ranura_activa];
+            }
             personaje.dibujar(
                 renderer,
                 jugador,
@@ -615,7 +623,9 @@ void VistaPartida::dibujar(
                 static_cast<int>(jugador.x),
                 static_cast<int>(jugador.y),
                 camara.x(),
-                camara.y());
+                camara.y(),
+                en_mano,
+                iconos);
         } else if (dibujable.objeto != nullptr) {
             objetos.dibujar_objeto(renderer, *dibujable.objeto, camara.x(), camara.y());
         }

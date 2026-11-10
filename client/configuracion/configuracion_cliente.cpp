@@ -171,6 +171,10 @@ void ConfiguracionCliente::cargar_mapas(const toml::table& archivo_toml) {
         configuracion_mapa.tilesets = leer_tilesets(*mapa, seccion);
         configuracion_mapa.es_mazmorra =
             lector_toml::leer_booleano_opcional(*mapa, "es_mazmorra", false);
+        configuracion_mapa.ruta_ambiente =
+            lector_toml::leer_texto_opcional(*mapa, "ruta_ambiente", seccion, "");
+        configuracion_mapa.ruta_caminar =
+            lector_toml::leer_texto_opcional(*mapa, "ruta_caminar", seccion, "");
 
         configuracion_vista.mapas.push_back(configuracion_mapa);
     }

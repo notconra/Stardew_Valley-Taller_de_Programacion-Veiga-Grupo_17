@@ -46,6 +46,12 @@ public:
     static constexpr const char* RUTA_ASSET_TACHO = "Assets/hud/tacho.png";
     static constexpr const char* RUTA_ASSET_VIDA = "Assets/hud/vida.png";
     static constexpr const char* RUTA_ASSET_ENERGIA = "Assets/hud/energia.png";
+    static constexpr const char* RUTA_ASSET_FONDO_BARRA = "Assets/hud/fondo_barra.png";
+    static constexpr const char* RUTA_ASSET_CASILLA = "Assets/hud/casilla.png";
+    static constexpr const char* RUTA_ASSET_CASILLA_SELECCIONADA =
+        "Assets/hud/casilla_seleccionada.png";
+    static constexpr const char* RUTA_ASSET_BOTON_CERRAR_COFRE =
+        "Assets/hud/boton_cerrar_cofre.png";
 
     HudInventario(SDL_Renderer* renderer, const IconosDeItems& iconos);
 
@@ -81,6 +87,7 @@ public:
 
 private:
     static constexpr int MARGEN = 8;
+    static constexpr int MARGEN_INFERIOR_BARRA = 14;  // deja lugar al fondo de madera de la barra
     static constexpr int SEPARACION_RANURAS = 4;
     static constexpr int TAMANO_MINIMO_DE_RANURA = 16;
     static constexpr int TAMANO_MAXIMO_DE_RANURA = 40;
@@ -99,6 +106,7 @@ private:
         SDL_Rect cofre{0, 0, 0, 0};
         SDL_Rect boton_de_cierre{0, 0, 0, 0};
         SDL_Rect fondo_del_cofre{0, 0, 0, 0};
+        SDL_Rect cabecera_del_cofre{0, 0, 0, 0};
 
         SDL_Rect ranura_de_la_barra(int indice) const {
             return SDL_Rect{
@@ -124,6 +132,10 @@ private:
     std::optional<Textura> tacho;
     std::optional<Textura> marco_de_vida;
     std::optional<Textura> marco_de_energia;
+    std::optional<Textura> fondo_barra;
+    std::optional<Textura> casilla;
+    std::optional<Textura> casilla_seleccionada;
+    std::optional<Textura> boton_cerrar_cofre;
 
     // Stack que el mouse tiene en la mano: de qué ranura salió y cuántos ítems agarró.
     RanuraApuntada levantada;

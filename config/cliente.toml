@@ -53,6 +53,8 @@ id = "granja"
 ruta = "Assets/Maps/Farm.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front", "AlwaysFront", "AlwaysFront2"]
+ruta_ambiente = "Assets/sfx/ambiente.wav"
+ruta_caminar = "Assets/sfx/caminar_granja.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/spring_outdoorTileSheet_extra.png"
@@ -79,6 +81,7 @@ id = "BusStop"
 ruta = "Assets/Maps/BusStop.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings", "Buildings2", "Paths"]
 capas_sobre_los_jugadores = ["Front", "AlwaysFront", "AlwaysFront2", "AlwaysFront3"]
+ruta_caminar = "Assets/sfx/caminar_granja.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/spring_outdoorsTileSheet.png"
@@ -115,6 +118,7 @@ id = "Town"
 ruta = "Assets/Maps/Town.tmx"
 capas_bajo_los_jugadores = ["Back", "Back2", "Back3", "Buildings", "Buildings2", "Paths"]
 capas_sobre_los_jugadores = ["Front", "AlwaysFront"]
+ruta_caminar = "Assets/sfx/caminar_granja.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/spring_outdoorsTileSheet.png"
@@ -151,6 +155,7 @@ id = "FarmHouse"
 ruta = "Assets/Maps/FarmHouse.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
+ruta_caminar = "Assets/sfx/caminar_casa.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/townInterior.png"
@@ -173,6 +178,8 @@ ruta = "Assets/Maps/Mines/1.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
 es_mazmorra = true
+ruta_ambiente = "Assets/sfx/minas.wav"
+ruta_caminar = "Assets/sfx/caminar_cueva.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -185,6 +192,8 @@ ruta = "Assets/Maps/Mines/2.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
 es_mazmorra = true
+ruta_ambiente = "Assets/sfx/minas.wav"
+ruta_caminar = "Assets/sfx/caminar_cueva.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -197,6 +206,8 @@ ruta = "Assets/Maps/Mines/3.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
 es_mazmorra = true
+ruta_ambiente = "Assets/sfx/minas.wav"
+ruta_caminar = "Assets/sfx/caminar_cueva.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -209,6 +220,8 @@ ruta = "Assets/Maps/Mines/4.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
 es_mazmorra = true
+ruta_ambiente = "Assets/sfx/minas.wav"
+ruta_caminar = "Assets/sfx/caminar_cueva.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -221,6 +234,8 @@ ruta = "Assets/Maps/Mines/5.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
 es_mazmorra = true
+ruta_ambiente = "Assets/sfx/minas.wav"
+ruta_caminar = "Assets/sfx/caminar_cueva.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -233,6 +248,8 @@ ruta = "Assets/Maps/Mines/6.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
 es_mazmorra = true
+ruta_ambiente = "Assets/sfx/minas.wav"
+ruta_caminar = "Assets/sfx/caminar_cueva.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -245,6 +262,8 @@ ruta = "Assets/Maps/Mines/7.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
 es_mazmorra = true
+ruta_ambiente = "Assets/sfx/minas.wav"
+ruta_caminar = "Assets/sfx/caminar_cueva.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -257,6 +276,8 @@ ruta = "Assets/Maps/Mines/8.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
 es_mazmorra = true
+ruta_ambiente = "Assets/sfx/minas.wav"
+ruta_caminar = "Assets/sfx/caminar_cueva.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -269,6 +290,8 @@ ruta = "Assets/Maps/Mines/9.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
 es_mazmorra = true
+ruta_ambiente = "Assets/sfx/minas.wav"
+ruta_caminar = "Assets/sfx/caminar_cueva.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -281,6 +304,8 @@ ruta = "Assets/Maps/Mines/11.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
 es_mazmorra = true
+ruta_ambiente = "Assets/sfx/minas.wav"
+ruta_caminar = "Assets/sfx/caminar_cueva.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -293,6 +318,8 @@ ruta = "Assets/Maps/Mines/12.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
 es_mazmorra = true
+ruta_ambiente = "Assets/sfx/minas.wav"
+ruta_caminar = "Assets/sfx/caminar_cueva.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -305,6 +332,8 @@ ruta = "Assets/Maps/Mines/13.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
 es_mazmorra = true
+ruta_ambiente = "Assets/sfx/minas.wav"
+ruta_caminar = "Assets/sfx/caminar_cueva.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -317,6 +346,8 @@ ruta = "Assets/Maps/Mines/14.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
 es_mazmorra = true
+ruta_ambiente = "Assets/sfx/minas.wav"
+ruta_caminar = "Assets/sfx/caminar_cueva.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -329,6 +360,8 @@ ruta = "Assets/Maps/Mines/15.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
 es_mazmorra = true
+ruta_ambiente = "Assets/sfx/minas.wav"
+ruta_caminar = "Assets/sfx/caminar_cueva.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -341,6 +374,8 @@ ruta = "Assets/Maps/Mines/16.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
 es_mazmorra = true
+ruta_ambiente = "Assets/sfx/minas.wav"
+ruta_caminar = "Assets/sfx/caminar_cueva.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -353,6 +388,8 @@ ruta = "Assets/Maps/Mines/17.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
 es_mazmorra = true
+ruta_ambiente = "Assets/sfx/minas.wav"
+ruta_caminar = "Assets/sfx/caminar_cueva.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -365,6 +402,8 @@ ruta = "Assets/Maps/Mines/18.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
 es_mazmorra = true
+ruta_ambiente = "Assets/sfx/minas.wav"
+ruta_caminar = "Assets/sfx/caminar_cueva.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -377,6 +416,8 @@ ruta = "Assets/Maps/Mines/19.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
 es_mazmorra = true
+ruta_ambiente = "Assets/sfx/minas.wav"
+ruta_caminar = "Assets/sfx/caminar_cueva.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -389,6 +430,8 @@ ruta = "Assets/Maps/Mines/21.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
 es_mazmorra = true
+ruta_ambiente = "Assets/sfx/minas.wav"
+ruta_caminar = "Assets/sfx/caminar_cueva.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
@@ -401,6 +444,8 @@ ruta = "Assets/Maps/Mines/24.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
 capas_sobre_los_jugadores = ["Front"]
 es_mazmorra = true
+ruta_ambiente = "Assets/sfx/minas.wav"
+ruta_caminar = "Assets/sfx/caminar_cueva.wav"
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/Mines/mine.png"
