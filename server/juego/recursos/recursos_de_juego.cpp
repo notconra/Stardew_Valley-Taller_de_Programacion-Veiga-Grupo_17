@@ -7,6 +7,8 @@
 
 #include "../cofres/gestor_de_cofres.h"
 #include "../enemigos/esqueletos.h"
+#include "../enemigos/orcos.h"
+#include "../enemigos/vampiros.h"
 #include "../mazmorra/cargador_mazmorra.h"
 #include "../mazmorra/mazmorra.h"
 #include "../mazmorra/minerales.h"
@@ -18,7 +20,7 @@ RecursosDeJuego::RecursosDeJuego(
     : mapa_inicial(id_mapa_inicial),
       juego(configuracion_juego),
       catalogo_de_objetos(crear_catalogo_de_objetos(configuracion_mazmorra.minerales)),
-      catalogo_de_enemigos(crear_catalogo_de_enemigos()),
+      catalogo_de_enemigos(crear_catalogo_de_enemigos(configuracion_mazmorra)),
       mazmorra(configuracion_mazmorra) {
     for (const ConfiguracionMapaServidor& configuracion_mapa : configuracion_mapas) {
         mapas.emplace(configuracion_mapa.id, Mapa(configuracion_mapa));
@@ -40,12 +42,15 @@ CatalogoDeObjetos RecursosDeJuego::crear_catalogo_de_objetos(
     return CatalogoDeObjetos(definiciones);
 }
 
-CatalogoDeEnemigos RecursosDeJuego::crear_catalogo_de_enemigos() {
-    std::vector<DefinicionDeEnemigo> definiciones = {Esqueletos::definicion()};
+CatalogoDeEnemigos RecursosDeJuego::crear_catalogo_de_enemigos(
+    const ConfiguracionMazmorraServidor& configuracion_mazmorra) {
+    std::vector<DefinicionDeEnemigo> definiciones = {
+        Esqueletos::definicion(configuracion_mazmorra.esqueleto),
+        Orcos::definicion(configuracion_mazmorra.orco.combate),
+        Vampiros::vampira(configuracion_mazmorra.vampiros),
+        Vampiros::vampiro(configuracion_mazmorra.vampiros)};
 
-    // Acá se suman las definiciones de Orcos, Vampiros y Skulls cuando estén listas,
-    //   definiciones.push_back(Orcos::definicion());
-    //   ...
+    // Acá se suman las definiciones de Skulls cuando estén listas.
     return CatalogoDeEnemigos(definiciones);
 }
 
