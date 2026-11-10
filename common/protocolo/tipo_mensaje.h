@@ -61,6 +61,9 @@ enum class TipoMensaje : uint8_t {
 
     // Fin del día: quién está acostado o desmayado y cuántos están listos
     ESTADO_DEL_DESCANSO = 0x94,
+
+    // Una trampa de la mazmorra que se activó o se desactivó
+    TRAMPA_ACTUALIZADA = 0x95,
 };
 
 #endif

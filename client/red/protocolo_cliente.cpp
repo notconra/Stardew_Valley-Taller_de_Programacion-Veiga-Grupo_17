@@ -25,6 +25,7 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::DROP_APARECIDO, [this] { return recibir_drop_aparecido(); }},
           {TipoMensaje::DROP_RETIRADO, [this] { return recibir_drop_retirado(); }},
           {TipoMensaje::ENEMIGO_ACTUALIZADO, [this] { return recibir_enemigo_actualizado(); }},
+          {TipoMensaje::TRAMPA_ACTUALIZADA, [this] { return recibir_trampa_actualizada(); }},
           {TipoMensaje::TIERRA_CAMBIADA, [this] { return recibir_tierra_cambiada(); }},
           {TipoMensaje::HORA_DEL_JUEGO, [this] { return recibir_hora_del_juego(); }},
           {TipoMensaje::CASILLA_CONSULTADA, [this] { return recibir_casilla_consultada(); }},
@@ -326,6 +327,16 @@ EstadoEnemigo ProtocoloCliente::recibir_estado_enemigo() {
     estado.sangre = recibir_booleano();
     return estado;
 }
+EstadoTrampa ProtocoloCliente::recibir_estado_trampa() {
+    EstadoTrampa estado;
+    estado.id = recibir_u32();
+    estado.tipo = static_cast<TipoTrampa>(recibir_u8());
+    estado.columna = recibir_u32();
+    estado.fila = recibir_u32();
+    estado.activa = recibir_booleano();
+    return estado;
+}
+
 CasillaTratada ProtocoloCliente::recibir_casilla_tratada() {
     CasillaTratada casilla;
     casilla.columna = recibir_u32();
@@ -365,6 +376,12 @@ EstadoJuego ProtocoloCliente::recibir_estado_juego() {
     estado_juego.tierra.reserve(cantidad_de_tierra);
     for (uint16_t i = 0; i < cantidad_de_tierra; ++i) {
         estado_juego.tierra.push_back(recibir_casilla_tratada());
+    }
+
+    uint16_t cantidad_de_trampas = recibir_u16();
+    estado_juego.trampas.reserve(cantidad_de_trampas);
+    for (uint16_t i = 0; i < cantidad_de_trampas; ++i) {
+        estado_juego.trampas.push_back(recibir_estado_trampa());
     }
 
     return estado_juego;
@@ -413,6 +430,12 @@ EnemigoActualizado ProtocoloCliente::recibir_enemigo_actualizado() {
     EnemigoActualizado actualizado;
     actualizado.enemigo = recibir_estado_enemigo();
     return actualizado;
+}
+
+TrampaActualizada ProtocoloCliente::recibir_trampa_actualizada() {
+    TrampaActualizada actualizada;
+    actualizada.trampa = recibir_estado_trampa();
+    return actualizada;
 }
 
 TierraCambiada ProtocoloCliente::recibir_tierra_cambiada() {

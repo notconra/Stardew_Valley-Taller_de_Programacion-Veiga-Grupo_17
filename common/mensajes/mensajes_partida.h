@@ -17,6 +17,7 @@
 #include "../tipo_enemigo.h"
 #include "../tipo_item.h"
 #include "../tipo_objeto.h"
+#include "../tipo_trampa.h"
 
 // Política de tipos del protocolo: las cantidades, ids y posiciones viajan sin signo (u8/u16/u32),
 // porque nunca son negativas. El único campo con signo es el eje de Moverse (i8), donde el signo
@@ -193,6 +194,16 @@ struct EstadoEnemigo {
     bool sangre = false;
 };
 
+// Una trampa de la mazmorra, en la casilla (columna, fila). "activa": los pinches están afuera y
+// lastiman.
+struct EstadoTrampa {
+    uint32_t id = 0;
+    TipoTrampa tipo = TipoTrampa::NINGUNA;
+    uint32_t columna = 0;
+    uint32_t fila = 0;
+    bool activa = false;
+};
+
 // Una casilla de tierra tratada con la pala, por columna y fila del mapa.
 struct CasillaTratada {
     uint32_t columna = 0;
@@ -210,6 +221,7 @@ struct EstadoJuego {
     std::vector<EstadoDrop> drops;
     std::vector<EstadoEnemigo> enemigos;
     std::vector<CasillaTratada> tierra;
+    std::vector<EstadoTrampa> trampas;
 };
 
 // Posición y estado de todos los jugadores del sector del receptor. Se manda cada tick, pero solo
@@ -249,6 +261,11 @@ struct DropRetirado {
 // lo agrega; si ya existía, lo reemplaza entero.
 struct EnemigoActualizado {
     EstadoEnemigo enemigo;
+};
+
+// Una trampa del sector del receptor que se activó o se desactivó.
+struct TrampaActualizada {
+    EstadoTrampa trampa;
 };
 // Cómo está el jugador que lo recibe respecto del fin del día, y cuántos ya están listos. Se manda
 // a cada jugador cuando cambia algo (alguien se acuesta, se levanta, se desmaya o da el Ok).
