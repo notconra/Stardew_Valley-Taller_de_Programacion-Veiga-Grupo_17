@@ -350,6 +350,32 @@ void ConfiguracionServidor::cargar_mazmorra(const toml::table& archivo_toml) {
         mazmorra.minerales_por_nivel,
         0,
         INT_MAX);
+    mazmorra.probabilidad_de_cofre = lector_toml::leer_decimal_opcional(
+        *tabla,
+        "probabilidad_de_cofre",
+        seccion,
+        mazmorra.probabilidad_de_cofre,
+        0.0,
+        1.0);
+    mazmorra.oro_minimo_en_cofre = lector_toml::leer_entero_opcional(
+        *tabla,
+        "oro_minimo_en_cofre",
+        seccion,
+        mazmorra.oro_minimo_en_cofre,
+        0,
+        UINT16_MAX);
+    mazmorra.oro_maximo_en_cofre = lector_toml::leer_entero_opcional(
+        *tabla,
+        "oro_maximo_en_cofre",
+        seccion,
+        mazmorra.oro_maximo_en_cofre,
+        0,
+        UINT16_MAX);
+    if (mazmorra.oro_minimo_en_cofre > mazmorra.oro_maximo_en_cofre) {
+        throw std::runtime_error(
+            "configuración: en [mazmorra] oro_minimo_en_cofre no puede ser mayor que "
+            "oro_maximo_en_cofre");
+    }
 
     if (const toml::table* enemigos = (*tabla)["enemigos"].as_table()) {
         if (const toml::table* esqueleto = (*enemigos)["esqueleto"].as_table()) {
@@ -454,8 +480,24 @@ void ConfiguracionServidor::cargar_minerales(const toml::array& lista) {
             mineral.probabilidad_de_no_dejar,
             0.0,
             1.0);
-        mineral.cantidad =
-            lector_toml::leer_entero_opcional(tabla, "cantidad", seccion, mineral.cantidad, 1, 255);
+        mineral.cantidad_minima = lector_toml::leer_entero_opcional(
+            tabla,
+            "cantidad_minima",
+            seccion,
+            mineral.cantidad_minima,
+            1,
+            255);
+        mineral.cantidad_maxima = lector_toml::leer_entero_opcional(
+            tabla,
+            "cantidad_maxima",
+            seccion,
+            mineral.cantidad_maxima,
+            1,
+            255);
+        if (mineral.cantidad_maxima < mineral.cantidad_minima) {
+            throw std::runtime_error(
+                "configuración: '" + seccion + "' tiene cantidad_maxima menor que cantidad_minima");
+        }
         mineral.desde_nivel = lector_toml::leer_entero_opcional(
             tabla,
             "desde_nivel",

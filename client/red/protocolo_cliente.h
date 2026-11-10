@@ -30,6 +30,7 @@ private:
     void enviar_comando_usar_item(const UsarItem& usar);
     void enviar_comando_mover_item_entre_ranuras(const MoverItemEntreRanuras& mover);
     void enviar_comando_mover_item_con_cofre(const MoverItemConCofre& mover);
+    void enviar_comando_cerrar_cofre(const CerrarCofre& cerrar);
     void enviar_comando_solicitar_inventario(const SolicitarInventario& solicitar);
     void enviar_comando_soltar_item(const SoltarItem& soltar);
     void enviar_comando_consultar_casilla(const ConsultarCasilla& consultar);

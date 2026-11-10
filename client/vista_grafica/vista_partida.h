@@ -14,6 +14,7 @@
 #include "camara.h"
 #include "cursor_del_juego.h"
 #include "chat/vista_chat.h"
+#include "cursor_del_juego.h"
 #include "efectos_de_sonido.h"
 #include "enemigos_graficos.h"
 #include "trampas_graficas.h"
@@ -137,7 +138,7 @@ private:
     void elegir_ranura_de_la_barra(const EntradaDelUsuario::Pedidos& pedidos);
     void procesar_clic(
         const EntradaDelUsuario& entrada, HudInventario& hud, const Camara& camara,
-        bool clic_derecho);
+        bool clic_derecho, bool con_shift);
 
     bool recibir_eventos(VistaChat& chat);
     void aplicar(const EventoServidor& evento, VistaChat& chat);

@@ -29,6 +29,7 @@ private:
     UsarItem recibir_comando_usar_item();
     MoverItemEntreRanuras recibir_comando_mover_item_entre_ranuras();
     MoverItemConCofre recibir_comando_mover_item_con_cofre();
+    CerrarCofre recibir_comando_cerrar_cofre();
     SolicitarInventario recibir_comando_solicitar_inventario();
     SoltarItem recibir_comando_soltar_item();
     ConsultarCasilla recibir_comando_consultar_casilla();

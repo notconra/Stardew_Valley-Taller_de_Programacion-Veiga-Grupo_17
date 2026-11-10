@@ -134,6 +134,12 @@ bool ControladorDeAcciones::atender(Personaje& personaje, const ComandoCliente& 
         return false;
     }
 
+    // Mientras un cofre está abierto el jugador queda en la pantalla del cofre. no puede usar
+    // herramientas ni interactuar con el mapa.
+    if (personaje.id_cofre_abierto != 0) {
+        return true;
+    }
+
     if (personaje.esta_ocupado()) {
         return true;
     }

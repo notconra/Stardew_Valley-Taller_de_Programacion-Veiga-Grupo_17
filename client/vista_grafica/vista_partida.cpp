@@ -15,6 +15,7 @@
 #include <thread>
 #include <utility>
 #include <variant>
+#include <vector>
 
 #include "../../common/modo_uso.h"
 #include "../../common/visitantes.h"
@@ -22,7 +23,6 @@
 #include "iconos_de_items.h"
 #include "inicio_de_sdl.h"
 #include "ventana.h"
-
 
 namespace {
 
@@ -234,8 +234,12 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             return false;
         }
         if (entrada.pedidos().salir) {
-            efectos_actuales = nullptr;
-            return salir_de_partida_y_confirmar();
+            if (ultimo_cofre.abierto) {
+                conexion.enviar_comando(CerrarCofre{});
+            } else {
+                efectos_actuales = nullptr;
+                return salir_de_partida_y_confirmar();
+            }
         }
         if (haciendo_accion && SDL_GetTicks() - inicio_accion_ms >= 475) {
             haciendo_accion = false;
@@ -294,7 +298,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         hud.actualizar(ultimo_inventario, ultimo_cofre);
         procesar_entrada(entrada, hud, camara, consumo_del_chat);
         consultar_el_piso_si_cambio(entrada, hud, camara);
-        if (chat.esta_escribiendo()) {
+        if (chat.esta_escribiendo() || ultimo_cofre.abierto) {
             enviar_intencion_si_cambio(Moverse{});
         } else {
             enviar_intencion_si_cambio(entrada.intencion());
@@ -336,9 +340,8 @@ void VistaPartida::usar_item(uint8_t ranura, ModoUso modo, const std::optional<C
         const TipoItem en_mano = indice < ultimo_inventario.ranuras.size()
                                      ? ultimo_inventario.ranuras[indice].tipo
                                      : TipoItem::NINGUNO;
-        const bool es_herramienta_de_golpe = en_mano == TipoItem::PICO ||
-                                             en_mano == TipoItem::PALA ||
-                                             en_mano == TipoItem::ESPADA;
+        const bool es_herramienta_de_golpe =
+            en_mano == TipoItem::PICO || en_mano == TipoItem::PALA || en_mano == TipoItem::ESPADA;
         if (es_herramienta_de_golpe) {
             haciendo_accion = true;
             inicio_accion_ms = SDL_GetTicks();
@@ -406,10 +409,10 @@ void VistaPartida::procesar_entrada(
 
     if (!consumo_del_chat.clic) {
         if (pedidos.clic_izquierdo) {
-            procesar_clic(entrada, hud, camara, false);
+            procesar_clic(entrada, hud, camara, false, pedidos.con_shift);
         }
         if (pedidos.clic_derecho) {
-            procesar_clic(entrada, hud, camara, true);
+            procesar_clic(entrada, hud, camara, true, pedidos.con_shift);
         }
     }
 }
@@ -434,7 +437,8 @@ void VistaPartida::elegir_ranura_de_la_barra(const EntradaDelUsuario::Pedidos& p
 }
 
 void VistaPartida::procesar_clic(
-    const EntradaDelUsuario& entrada, HudInventario& hud, const Camara& camara, bool clic_derecho) {
+    const EntradaDelUsuario& entrada, HudInventario& hud, const Camara& camara, bool clic_derecho,
+    bool con_shift) {
     if (hud.captura_el_clic(
             ultimo_inventario,
             ultimo_cofre,
@@ -445,7 +449,8 @@ void VistaPartida::procesar_clic(
             ultimo_cofre,
             entrada.raton_x(),
             entrada.raton_y(),
-            clic_derecho);
+            clic_derecho,
+            con_shift);
         if (comando.has_value()) {
             conexion.enviar_comando(*comando);
         }
@@ -453,10 +458,15 @@ void VistaPartida::procesar_clic(
     }
 
     const std::optional<Casilla> casilla = casilla_apuntada(entrada, camara);
-    if (casilla.has_value()) {
-        ModoUso modo = clic_derecho ? ModoUso::SECUNDARIO : ModoUso::PRINCIPAL;
-        usar_item(INDICE_RANURA_ACTIVA, modo, casilla);
+    if (!casilla.has_value()) {
+        return;
     }
+    if (ultimo_cofre.abierto) {
+        return;
+    }
+
+    ModoUso modo = clic_derecho ? ModoUso::SECUNDARIO : ModoUso::PRINCIPAL;
+    usar_item(INDICE_RANURA_ACTIVA, modo, casilla);
 }
 
 void VistaPartida::consultar_el_piso_si_cambio(
@@ -710,13 +720,12 @@ bool VistaPartida::salir_de_partida_y_confirmar() {
 
 void VistaPartida::dibujar(
     Renderizador& renderizador, SDL_Texture* mundo, const MapaGrafico& mapa,
-    const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos, const TrampasGraficas& trampas,
-    const Personaje& personaje, const IconosDeItems& iconos, const TierraGrafica& tierra,
-    const Camara& camara, const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
-    const EntradaDelUsuario& entrada, const VistaChat& chat, const RelojGrafico& reloj_grafico,
-    const PantallaDeDescanso& pantalla_de_descanso) const {
+    const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos,
+    const TrampasGraficas& trampas, const Personaje& personaje, const IconosDeItems& iconos,
+    const TierraGrafica& tierra, const Camara& camara, const HudInventario& hud,
+    const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada, const VistaChat& chat,
+    const RelojGrafico& reloj_grafico, const PantallaDeDescanso& pantalla_de_descanso) const {
     SDL_Renderer* renderer = renderizador.ptr();
-
     if (mundo != nullptr) {
         SDL_SetRenderTarget(renderer, mundo);
     }
@@ -748,13 +757,47 @@ void VistaPartida::dibujar(
     }
     trampas.dibujar(renderer, ultimo_estado_juego, camara.x(), camara.y());
     enemigos.dibujar(renderer, ultimo_estado_juego, camara.x(), camara.y());
+
+    struct Dibujable {
+        int pie = 0;
+        const EstadoJugador* jugador = nullptr;
+        const EstadoObjetoDelMundo* objeto = nullptr;
+    };
+    std::vector<Dibujable> dibujables;
+    const int tamano_de_tile = configuracion.graficos.tamano_de_tile;
     for (const EstadoJugador& jugador : ultimo_estado_juego.jugadores) {
         if (jugador.mapa == mapa_actual) {
+            dibujables.push_back(Dibujable{
+                static_cast<int>(jugador.y) + personaje.alto_del_sprite(),
+                &jugador,
+                nullptr});
+        }
+    }
+    for (const EstadoObjetoDelMundo& objeto : ultimo_estado_juego.objetos) {
+        if (objeto.mapa != mapa_actual) {
+            continue;
+        }
+        const std::optional<CapaDeObjeto> capa = objetos.capa_de(objeto);
+        if (!capa.has_value() || *capa != CapaDeObjeto::CON_LOS_JUGADORES) {
+            continue;
+        }
+        dibujables.push_back(
+            Dibujable{(static_cast<int>(objeto.fila) + 1) * tamano_de_tile, nullptr, &objeto});
+    }
+    std::sort(
+        dibujables.begin(),
+        dibujables.end(),
+        [](const Dibujable& uno, const Dibujable& otro) { return uno.pie < otro.pie; });
+
+    for (const Dibujable& dibujable : dibujables) {
+        if (dibujable.jugador != nullptr) {
+            const EstadoJugador& jugador = *dibujable.jugador;
             const bool es_el_propio = jugador.id_jugador == id_jugador;
             const bool mostrar_accion = es_el_propio && haciendo_accion;
             const Uint32 ms_de_accion = mostrar_accion ? SDL_GetTicks() - inicio_accion_ms : 0;
             RanuraInventario en_mano{};
-            if (es_el_propio && ultimo_inventario.ranura_activa < ultimo_inventario.ranuras.size()) {
+            if (es_el_propio &&
+                ultimo_inventario.ranura_activa < ultimo_inventario.ranuras.size()) {
                 en_mano = ultimo_inventario.ranuras[ultimo_inventario.ranura_activa];
             }
             personaje.dibujar(
@@ -768,6 +811,8 @@ void VistaPartida::dibujar(
                 camara.y(),
                 en_mano,
                 iconos);
+        } else if (dibujable.objeto != nullptr) {
+            objetos.dibujar_objeto(renderer, *dibujable.objeto, camara.x(), camara.y());
         }
     }
     mapa.dibujar_sobre_los_jugadores(renderer, camara.x(), camara.y());

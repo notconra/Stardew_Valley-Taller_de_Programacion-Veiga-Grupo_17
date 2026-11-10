@@ -21,6 +21,7 @@ private:
     GestorDeSectores& sectores;
     std::optional<Mazmorra> mazmorra;
     std::vector<std::string> niveles_de_mazmorra;  // id del mapa de cada nivel, en orden
+    std::mt19937 generador_de_cofres;
 
     // Reparte los puntos de aparición sorteados del nivel: los primeros son grupos de orcos y el
     // resto esqueletos solos.
@@ -35,6 +36,8 @@ private:
 
     void poblar_niveles();
     void limpiar_drops_de_niveles();
+    void retirar_cofres_de_nivel(Sector& sector);
+    void colocar_cofre(Sector& sector, Casilla casilla);
     void salir_de_la_mazmorra(Personaje& personaje);
     void llevar_al_nivel_actual(Personaje& personaje);
     void entrar(Personaje& personaje);

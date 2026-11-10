@@ -77,16 +77,33 @@ void ControladorDeCofres::mover(Personaje& personaje, const MoverItemConCofre& p
     }
 
     Inventario& contenido = sectores.en(personaje.mapa_actual).cofres.contenido(cofre->id);
-    const bool se_movio = pedido.desde_el_cofre ? contenido.transferir_a(
-                                                      personaje.inventario,
-                                                      pedido.origen,
-                                                      pedido.destino,
-                                                      pedido.cantidad)
-                                                : personaje.inventario.transferir_a(
-                                                      contenido,
-                                                      pedido.origen,
-                                                      pedido.destino,
-                                                      pedido.cantidad);
+    const bool destino_automatico = pedido.destino == INDICE_RANURA_AUTOMATICA;
+
+    bool se_movio = false;
+    if (pedido.desde_el_cofre) {
+        if (destino_automatico) {
+            se_movio = contenido.transferir_a_la_primera_ranura(
+                personaje.inventario,
+                pedido.origen,
+                pedido.cantidad);
+        } else {
+            se_movio = contenido.transferir_a(
+                personaje.inventario,
+                pedido.origen,
+                pedido.destino,
+                pedido.cantidad);
+        }
+    } else {
+        if (destino_automatico) {
+            se_movio = personaje.inventario.transferir_a_la_primera_ranura(
+                contenido,
+                pedido.origen,
+                pedido.cantidad);
+        } else {
+            se_movio = personaje.inventario
+                           .transferir_a(contenido, pedido.origen, pedido.destino, pedido.cantidad);
+        }
+    }
     if (!se_movio) {
         return;
     }
@@ -100,6 +117,13 @@ void ControladorDeCofres::mover(Personaje& personaje, const MoverItemConCofre& p
 }
 
 bool ControladorDeCofres::atender(Personaje& personaje, const ComandoCliente& comando) {
+    if (std::holds_alternative<CerrarCofre>(comando)) {
+        if (personaje.id_cofre_abierto != 0) {
+            cerrar(personaje);
+        }
+        return true;
+    }
+
     const MoverItemConCofre* pedido = std::get_if<MoverItemConCofre>(&comando);
     if (pedido == nullptr) {
         return false;

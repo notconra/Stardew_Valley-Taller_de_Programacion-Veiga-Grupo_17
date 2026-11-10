@@ -57,6 +57,7 @@ bool AccionInteractuarCofre::ejecutar(ContextoDeAccion& c) {
 
     // Gira automáticamente hacia el cofre al interactuar
     c.sector.jugadores.mirar_hacia(c.personaje.id_jugador, c.objetivo);
+    c.sector.jugadores.moverse(c.personaje.id_jugador, 0, 0);
 
     c.personaje.id_cofre_abierto = cofre->id;
     c.personaje.mapa_cofre_abierto = c.sector.id;

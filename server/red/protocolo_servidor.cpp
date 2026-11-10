@@ -26,6 +26,7 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
            [this] { return recibir_comando_mover_item_entre_ranuras(); }},
           {TipoMensaje::MOVER_ITEM_CON_COFRE,
            [this] { return recibir_comando_mover_item_con_cofre(); }},
+          {TipoMensaje::CERRAR_COFRE, [this] { return recibir_comando_cerrar_cofre(); }},
           {TipoMensaje::SOLICITAR_INVENTARIO,
            [this] { return recibir_comando_solicitar_inventario(); }},
           {TipoMensaje::SOLTAR_ITEM, [this] { return recibir_comando_soltar_item(); }},
@@ -139,6 +140,10 @@ MoverItemConCofre ProtocoloServidor::recibir_comando_mover_item_con_cofre() {
     uint16_t cantidad = recibir_u16();
     bool desde_el_cofre = recibir_booleano();
     return MoverItemConCofre{origen, destino, cantidad, desde_el_cofre};
+}
+
+CerrarCofre ProtocoloServidor::recibir_comando_cerrar_cofre() {
+    return CerrarCofre{};
 }
 
 SolicitarInventario ProtocoloServidor::recibir_comando_solicitar_inventario() {

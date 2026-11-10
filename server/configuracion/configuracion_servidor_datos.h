@@ -109,7 +109,8 @@ struct ConfiguracionMineralServidor {
     int golpes_para_picar = 1;
     double peso = 0.0;  // frecuencia relativa, no hace falta que sumen 100
     double probabilidad_de_no_dejar = 0.0;
-    int cantidad = 1;
+    int cantidad_minima = 1;
+    int cantidad_maxima = 1;
     int desde_nivel = 1;  // primer nivel donde puede aparecer
 };
 
@@ -202,7 +203,9 @@ struct ConfiguracionMazmorraServidor {
     std::vector<std::string> mapas;
     int enemigos_por_nivel = 4;
     int minerales_por_nivel = 30;
-    // Vacía significa "usar los minerales por defecto". Si hay alguno, reemplaza a los de defecto.
+    double probabilidad_de_cofre = 0.10;
+    int oro_minimo_en_cofre = 3;
+    int oro_maximo_en_cofre = 30;
     std::vector<ConfiguracionMineralServidor> minerales;
     // [mazmorra.enemigos.esqueleto] y [mazmorra.enemigos.orco]. Vampiros y skulls se suman como
     // campos hermanos.

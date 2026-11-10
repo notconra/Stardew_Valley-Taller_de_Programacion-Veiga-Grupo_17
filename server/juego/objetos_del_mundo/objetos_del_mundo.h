@@ -50,7 +50,8 @@ struct DefinicionDeObjeto {
     TipoItem herramienta = TipoItem::NINGUNO;
     double probabilidad_de_no_dejar = 0.0;
     TipoItem producto = TipoItem::NINGUNO;
-    int cantidad = 1;
+    int cantidad_minima = 1;
+    int cantidad_maxima = 1;
     // El ítem del inventario que el jugador gasta para colocar este objeto (el cofre, un mueble).
     // NINGUNO si el jugador no puede colocarlo, como pasa con minerales y árboles, que solo
     // genera el mundo. Dos objetos no pueden compartir el mismo ítem.
