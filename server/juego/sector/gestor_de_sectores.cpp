@@ -80,6 +80,24 @@ std::vector<DatosMuebleGuardado> GestorDeSectores::obtener_muebles_guardados() c
     return muebles;
 }
 
+void GestorDeSectores::cargar_cultivos_guardados(
+    const std::vector<DatosCultivoGuardado>& cultivos_guardados) {
+    for (const auto& cultivo : cultivos_guardados) {
+        auto sector_encontrado = sectores.find(cultivo.id_mapa);
+        if (sector_encontrado != sectores.end()) {
+            sector_encontrado->second.cargar_cultivo(cultivo);
+        }
+    }
+}
+
+std::vector<DatosCultivoGuardado> GestorDeSectores::obtener_cultivos_guardados() const {
+    std::vector<DatosCultivoGuardado> cultivos;
+    for (const auto& [id_mapa, sector] : sectores) {
+        sector.agregar_cultivos_guardados_a(cultivos);
+    }
+    return cultivos;
+}
+
 bool GestorDeSectores::existe(const std::string& id_mapa) const {
     return sectores.contains(id_mapa);
 }
@@ -231,6 +249,7 @@ EstadoJuego GestorDeSectores::armar_instantanea(const std::string& id_mapa) cons
     sector.enemigos.agregar_a(estado);
     sector.trampas.agregar_a(estado);
     sector.tierra.agregar_a(estado.tierra);
+    sector.huerta.completar(estado.tierra);
     return estado;
 }
 

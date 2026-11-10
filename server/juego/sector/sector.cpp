@@ -39,12 +39,7 @@ bool Sector::tratar_tierra(Notificador& notificador, const Casilla& casilla) {
     if (!tierra.tratar(casilla)) {
         return false;
     }
-
-    TierraCambiada evento;
-    evento.casilla =
-        CasillaTratada{static_cast<uint32_t>(casilla.columna), static_cast<uint32_t>(casilla.fila)};
-    evento.tratada = true;
-    avisar(notificador, evento);
+    avisar_casilla(notificador, casilla);
     return true;
 }
 
@@ -52,13 +47,66 @@ bool Sector::volver_tierra_a_comun(Notificador& notificador, const Casilla& casi
     if (!tierra.volver_a_comun(casilla)) {
         return false;
     }
+    huerta.quitar(casilla);  // lo que estaba plantado se pierde
+    avisar_casilla(notificador, casilla);
+    return true;
+}
 
+bool Sector::se_puede_plantar(const Casilla& casilla) const {
+    return tierra.esta_tratada(casilla) && !huerta.hay_cultivo(casilla);
+}
+
+bool Sector::plantar(Notificador& notificador, const Casilla& casilla, TipoCultivo tipo) {
+    if (!se_puede_plantar(casilla) || !huerta.plantar(casilla, tipo)) {
+        return false;
+    }
+    avisar_casilla(notificador, casilla);
+    return true;
+}
+
+bool Sector::regar(Notificador& notificador, const Casilla& casilla) {
+    if (!huerta.regar(casilla)) {
+        return false;
+    }
+    avisar_casilla(notificador, casilla);
+    return true;
+}
+
+std::optional<Cosecha> Sector::cosechar(Notificador& notificador, const Casilla& casilla) {
+    std::optional<Cosecha> cosecha = huerta.cosechar(casilla);
+    if (cosecha.has_value()) {
+        avisar_casilla(notificador, casilla);
+    }
+    return cosecha;
+}
+
+void Sector::avanzar_cultivos(Notificador& notificador, int minuto_del_dia) {
+    for (const Casilla& casilla : huerta.avanzar_hasta(minuto_del_dia)) {
+        avisar_casilla(notificador, casilla);
+    }
+}
+
+void Sector::terminar_el_dia_de_los_cultivos(Notificador& notificador) {
+    for (const Casilla& casilla : huerta.terminar_el_dia()) {
+        avisar_casilla(notificador, casilla);
+    }
+}
+
+void Sector::avisar_casilla(Notificador& notificador, const Casilla& casilla) const {
     TierraCambiada evento;
     evento.casilla =
         CasillaTratada{static_cast<uint32_t>(casilla.columna), static_cast<uint32_t>(casilla.fila)};
-    evento.tratada = false;
+    evento.tratada = tierra.esta_tratada(casilla);
+    huerta.completar(evento.casilla);
     avisar(notificador, evento);
-    return true;
+}
+
+void Sector::cargar_cultivo(const DatosCultivoGuardado& guardado) {
+    huerta.cargar(guardado);
+}
+
+void Sector::agregar_cultivos_guardados_a(std::vector<DatosCultivoGuardado>& lista) const {
+    huerta.agregar_guardados_a(id, lista);
 }
 
 void Sector::registrar_manejadores_de_modificaciones() {
@@ -202,8 +250,7 @@ int Sector::soltar(
 }
 
 int Sector::aparecer_grupo_persiguiendo(
-    Notificador& notificador, uint32_t id_jugador, int distancia, int cantidad,
-    TipoEnemigo tipo) {
+    Notificador& notificador, uint32_t id_jugador, int distancia, int cantidad, TipoEnemigo tipo) {
     const std::optional<Casilla> origen = jugadores.casilla_del_jugador(id_jugador);
     if (!origen.has_value() || cantidad <= 0) {
         return 0;
@@ -217,7 +264,8 @@ int Sector::aparecer_grupo_persiguiendo(
     }
     const auto lejania = [&origen](const Casilla& casilla) {
         return std::max(
-            std::abs(casilla.columna - origen->columna), std::abs(casilla.fila - origen->fila));
+            std::abs(casilla.columna - origen->columna),
+            std::abs(casilla.fila - origen->fila));
     };
     const auto se_puede_aparecer = [&](const Casilla& casilla) {
         return enemigos.enemigo_vivo_en(casilla.columna, casilla.fila) == nullptr &&
@@ -256,8 +304,8 @@ int Sector::aparecer_grupo_persiguiendo(
     if (candidatas.empty()) {
         return 0;
     }
-    const Casilla ancla = candidatas[static_cast<size_t>(
-        Azar::entero(0, static_cast<int>(candidatas.size()) - 1))];
+    const Casilla ancla =
+        candidatas[static_cast<size_t>(Azar::entero(0, static_cast<int>(candidatas.size()) - 1))];
     std::sort(candidatas.begin(), candidatas.end(), [&ancla](const Casilla& a, const Casilla& b) {
         const auto d = [&ancla](const Casilla& c) {
             return std::abs(c.columna - ancla.columna) + std::abs(c.fila - ancla.fila);

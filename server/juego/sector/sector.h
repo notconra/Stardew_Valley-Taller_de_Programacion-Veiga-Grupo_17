@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -14,6 +15,7 @@
 #include "../../persistencia/datos_partida_guardada.h"
 #include "../cofres/gestor_de_cofres.h"
 #include "../colisiones/colisiones.h"
+#include "../cultivos/huerta.h"
 #include "../drops/drops.h"
 #include "../enemigos/gestor_de_enemigos.h"
 #include "../jugadores/jugadores.h"
@@ -36,6 +38,7 @@ public:
     std::string id;
     const Mapa& mapa;
     TierraTratada tierra;
+    Huerta huerta;
     Colisiones colisiones;
     GestorDeObjetos objetos;
     GestorDeCofres cofres;
@@ -50,6 +53,7 @@ public:
         : id(id_mapa),
           mapa(recursos.mapas.at(id_mapa)),
           tierra(mapa),
+          huerta(recursos.catalogo_de_cultivos, recursos.juego.cultivos),
           colisiones(mapa),
           objetos(id, mapa, recursos.catalogo_de_objetos, colisiones),
           cofres(recursos.catalogo_de_items),
@@ -80,6 +84,24 @@ public:
     // Vuelve la casilla a tierra común con el pico y avisa a los jugadores del sector. Devuelve
     // true si estaba tratada.
     bool volver_tierra_a_comun(Notificador& notificador, const Casilla& casilla);
+
+    // Cultivos. Cada uno avisa a los jugadores del sector cómo quedó la casilla.
+    //
+    // Planta si la casilla está tratada y vacía.
+    bool plantar(Notificador& notificador, const Casilla& casilla, TipoCultivo tipo);
+    bool se_puede_plantar(const Casilla& casilla) const;
+    bool regar(Notificador& notificador, const Casilla& casilla);
+    std::optional<Cosecha> cosechar(Notificador& notificador, const Casilla& casilla);
+
+    // El tiempo de los cultivos (ver Huerta). Avisan de las casillas que cambiaron.
+    void avanzar_cultivos(Notificador& notificador, int minuto_del_dia);
+    void terminar_el_dia_de_los_cultivos(Notificador& notificador);
+
+    // Cómo está una casilla de tierra (tratada o no, y lo que tiene plantado), para avisarla.
+    void avisar_casilla(Notificador& notificador, const Casilla& casilla) const;
+
+    void cargar_cultivo(const DatosCultivoGuardado& guardado);
+    void agregar_cultivos_guardados_a(std::vector<DatosCultivoGuardado>& lista) const;
 
     void cargar_casillas_modificadas(const std::vector<ModificacionCasilla>& modificaciones);
     void agregar_modificaciones_a(std::vector<ModificacionCasilla>& modificaciones) const;
