@@ -29,7 +29,11 @@ Personaje::Personaje(
 }
 
 void Personaje::recibir_monedas(uint32_t cantidad) {
-    monedas += cantidad;
+    if (MONEDAS_MAXIMAS - monedas < cantidad) {
+        monedas = MONEDAS_MAXIMAS;
+    } else {
+        monedas += cantidad;
+    }
 }
 
 bool Personaje::gastar_monedas(uint32_t cantidad) {

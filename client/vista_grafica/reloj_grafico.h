@@ -22,6 +22,7 @@ private:
     // Cuántas veces se agranda la imagen del reloj. Depende del alto de la ventana.
     const int escala;
     const FuenteDelJuego fuente;
+    const FuenteDelJuego fuente_dinero;
 
     // "Lun.", "Mar.", ... para el día de la semana (0 es lunes).
     std::string abreviatura_del_dia(uint8_t dia_de_la_semana) const;

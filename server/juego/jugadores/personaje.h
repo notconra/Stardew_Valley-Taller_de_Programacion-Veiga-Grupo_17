@@ -67,6 +67,7 @@ struct Personaje {
     // y 100, elegida de manera aleatoria al crearse por primera vez).
     static constexpr uint32_t MONEDAS_INICIALES_MIN = 0;
     static constexpr uint32_t MONEDAS_INICIALES_MAX = 100;
+    static constexpr uint32_t MONEDAS_MAXIMAS = 99'999'999;
     uint32_t monedas = 0;
 
     // El fin del día (ver ControladorDelDia). Acostado en una cama o desmayado, el jugador espera

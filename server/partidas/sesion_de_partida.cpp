@@ -3,11 +3,14 @@
 #include <exception>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <thread>
 #include <utility>
 #include <vector>
+
+#include "../juego/chat/comando_dinero.h"
 
 SesionDePartida::SesionDePartida(
     const std::string& codigo_de_partida, const ConfiguracionPartidaServidor& configuracion_partida,
@@ -21,6 +24,7 @@ SesionDePartida::SesionDePartida(
       chat(*this),
       comandos(static_cast<unsigned int>(configuracion_partida.capacidad_de_comandos)),
       guardar_al_terminar_el_dia(std::move(guardar)) {
+    chat.agregar_comando(std::make_unique<ComandoDinero>(mundo));
     try {
         start();
     } catch (...) {

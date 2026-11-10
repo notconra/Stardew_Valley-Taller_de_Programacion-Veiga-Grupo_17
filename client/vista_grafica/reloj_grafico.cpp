@@ -75,11 +75,13 @@
 #define ESCALA_MINIMA 2
 // Tamaño de la letra (en puntos) por cada vez que se agranda el reloj.
 #define PUNTOS_DE_LA_LETRA_POR_ESCALA 10
+#define PUNTOS_DE_LA_LETRA_DINERO_POR_ESCALA 12
 
 RelojGrafico::RelojGrafico(SDL_Renderer* renderer, const std::string& ruta_fuente, int alto_ventana)
     : cursores(RUTA_IMAGEN_DEL_RELOJ, renderer),
       escala(std::max(ESCALA_MINIMA, alto_ventana / ALTO_DE_VENTANA_POR_ESCALA)),
-      fuente(renderer, ruta_fuente, PUNTOS_DE_LA_LETRA_POR_ESCALA * escala) {
+      fuente(renderer, ruta_fuente, PUNTOS_DE_LA_LETRA_POR_ESCALA * escala),
+      fuente_dinero(renderer, ruta_fuente, PUNTOS_DE_LA_LETRA_DINERO_POR_ESCALA * escala) {
 }
 
 std::string RelojGrafico::abreviatura_del_dia(uint8_t dia_de_la_semana) const {
@@ -203,12 +205,12 @@ int RelojGrafico::actualizar_animacion(uint32_t monedas_objetivo) {
 void RelojGrafico::dibujar_digito_en_slot(
     SDL_Renderer* renderer, int digito, int centro_x, int centro_y) const {
     std::string texto = std::to_string(digito);
-    int x = centro_x - fuente.ancho(texto) / 2;
-    int y = centro_y - fuente.centro_de_las_letras();
+    int x = centro_x - fuente_dinero.ancho(texto) / 2;
+    int y = centro_y - fuente_dinero.centro_de_las_letras();
     int sombra = std::max(1, escala / 2);
 
-    fuente.dibujar_con_sombra(renderer, texto, x, y, sombra);
-    fuente.dibujar_con_sombra(renderer, texto, x + 1, y, sombra);
+    fuente_dinero.dibujar_con_sombra(renderer, texto, x, y, sombra);
+    fuente_dinero.dibujar_con_sombra(renderer, texto, x + 1, y, sombra);
 }
 
 void RelojGrafico::dibujar_ranura(

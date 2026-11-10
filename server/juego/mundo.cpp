@@ -266,3 +266,28 @@ uint32_t Mundo::obtener_dia() const {
 bool Mundo::tomar_dia_terminado() {
     return controlador_del_dia.tomar_dia_terminado();
 }
+
+bool Mundo::sumar_monedas(uint32_t id_jugador, uint32_t cantidad) {
+    auto encontrado = personajes.find(id_jugador);
+    if (encontrado == personajes.end() || !encontrado->second.conectado) {
+        return false;
+    }
+    encontrado->second.recibir_monedas(cantidad);
+    return true;
+}
+
+bool Mundo::gastar_monedas(uint32_t id_jugador, uint32_t cantidad) {
+    auto encontrado = personajes.find(id_jugador);
+    if (encontrado == personajes.end() || !encontrado->second.conectado) {
+        return false;
+    }
+    return encontrado->second.gastar_monedas(cantidad);
+}
+
+uint32_t Mundo::obtener_monedas(uint32_t id_jugador) const {
+    auto encontrado = personajes.find(id_jugador);
+    if (encontrado == personajes.end() || !encontrado->second.conectado) {
+        return 0;
+    }
+    return encontrado->second.monedas;
+}
