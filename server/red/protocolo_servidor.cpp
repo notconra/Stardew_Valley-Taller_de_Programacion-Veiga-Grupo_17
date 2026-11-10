@@ -14,6 +14,7 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::CREAR_PARTIDA, [this] { return recibir_comando_crear_partida(); }},
           {TipoMensaje::UNIRSE_PARTIDA, [this] { return recibir_comando_unirse_partida(); }},
           {TipoMensaje::RETOMAR_PARTIDA, [this] { return recibir_comando_retomar_partida(); }},
+          {TipoMensaje::ELIMINAR_PARTIDA, [this] { return recibir_comando_eliminar_partida(); }},
           {TipoMensaje::ACTIVAR_MULTIJUGADOR,
            [this] { return recibir_comando_activar_multijugador(); }},
           {TipoMensaje::SALIR_DE_PARTIDA, [this] { return recibir_comando_salir_de_partida(); }},
@@ -26,6 +27,7 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
            [this] { return recibir_comando_mover_item_entre_ranuras(); }},
           {TipoMensaje::MOVER_ITEM_CON_COFRE,
            [this] { return recibir_comando_mover_item_con_cofre(); }},
+          {TipoMensaje::CERRAR_COFRE, [this] { return recibir_comando_cerrar_cofre(); }},
           {TipoMensaje::SOLICITAR_INVENTARIO,
            [this] { return recibir_comando_solicitar_inventario(); }},
           {TipoMensaje::SOLTAR_ITEM, [this] { return recibir_comando_soltar_item(); }},
@@ -86,6 +88,12 @@ RetomarPartida ProtocoloServidor::recibir_comando_retomar_partida() {
     return RetomarPartida{codigo_partida};
 }
 
+EliminarPartida ProtocoloServidor::recibir_comando_eliminar_partida() {
+    std::string codigo_partida = recibir_texto();
+
+    return EliminarPartida{codigo_partida};
+}
+
 ActivarMultijugador ProtocoloServidor::recibir_comando_activar_multijugador() {
     return ActivarMultijugador{};
 }
@@ -141,6 +149,10 @@ MoverItemConCofre ProtocoloServidor::recibir_comando_mover_item_con_cofre() {
     return MoverItemConCofre{origen, destino, cantidad, desde_el_cofre};
 }
 
+CerrarCofre ProtocoloServidor::recibir_comando_cerrar_cofre() {
+    return CerrarCofre{};
+}
+
 SolicitarInventario ProtocoloServidor::recibir_comando_solicitar_inventario() {
     return SolicitarInventario{};
 }
@@ -175,6 +187,7 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const DropAparecido& e) { enviar_evento_drop_aparecido(e); },
             [this](const DropRetirado& e) { enviar_evento_drop_retirado(e); },
             [this](const EnemigoActualizado& e) { enviar_evento_enemigo_actualizado(e); },
+            [this](const TrampaActualizada& e) { enviar_evento_trampa_actualizada(e); },
             [this](const AnimalActualizado& e) { enviar_evento_animal_actualizado(e); },
             [this](const VacaOrdeniable& e) { enviar_evento_vaca_ordeniable(e); },
             [this](const TierraCambiada& e) { enviar_evento_tierra_cambiada(e); },
@@ -195,8 +208,14 @@ void ProtocoloServidor::enviar_evento_error_servidor(const ErrorServidor& error_
 void ProtocoloServidor::enviar_info_partida(const InfoPartida& info_partida) {
     enviar_texto(info_partida.codigo_partida);
     enviar_texto(info_partida.nombre_partida);
+    enviar_texto(info_partida.nombre_personaje);
+    enviar_apariencia(info_partida.apariencia);
+    enviar_booleano(info_partida.multijugador);
+    enviar_u8(info_partida.jugadores_conectados);
     enviar_u8(info_partida.jugadores_totales);
     enviar_u8(info_partida.jugadores_maximos);
+    enviar_u32(info_partida.dia);
+    enviar_u32(info_partida.segundos_jugados);
 }
 
 void ProtocoloServidor::enviar_evento_lista_partidas(const ListaPartidas& lista_partidas) {
@@ -238,6 +257,7 @@ void ProtocoloServidor::enviar_estado_jugador(const EstadoJugador& estado) {
     enviar_u8(static_cast<uint8_t>(estado.accion_actual));
     enviar_u8(estado.vida);
     enviar_u8(estado.energia);
+    enviar_u32(estado.monedas);
     enviar_apariencia(estado.apariencia);
 }
 
@@ -267,6 +287,18 @@ void ProtocoloServidor::enviar_estado_enemigo(const EstadoEnemigo& estado) {
     enviar_u16(estado.vida_maxima);
     enviar_booleano(estado.atacando);
     enviar_booleano(estado.muriendo);
+    enviar_u8(static_cast<uint8_t>(estado.mirando));
+    enviar_u16(estado.ms_por_casilla);
+    enviar_booleano(estado.frenesi);
+    enviar_booleano(estado.sangre);
+}
+
+void ProtocoloServidor::enviar_estado_trampa(const EstadoTrampa& estado) {
+    enviar_u32(estado.id);
+    enviar_u8(static_cast<uint8_t>(estado.tipo));
+    enviar_u32(estado.columna);
+    enviar_u32(estado.fila);
+    enviar_booleano(estado.activa);
 }
 
 void ProtocoloServidor::enviar_estado_animal(const EstadoAnimal& estado) {
@@ -344,6 +376,10 @@ void ProtocoloServidor::enviar_estado_juego(const EstadoJuego& estado_juego) {
     for (const CasillaTratada& casilla : estado_juego.tierra) {
         enviar_casilla_tratada(casilla);
     }
+    enviar_largo(estado_juego.trampas.size());
+    for (const EstadoTrampa& trampa : estado_juego.trampas) {
+        enviar_estado_trampa(trampa);
+    }
     enviar_largo(estado_juego.animales.size());
     for (const EstadoAnimal& estado : estado_juego.animales) {
         enviar_estado_animal(estado);
@@ -390,6 +426,11 @@ void ProtocoloServidor::enviar_evento_drop_retirado(const DropRetirado& drop) {
 void ProtocoloServidor::enviar_evento_enemigo_actualizado(const EnemigoActualizado& enemigo) {
     enviar_tipo(TipoMensaje::ENEMIGO_ACTUALIZADO);
     enviar_estado_enemigo(enemigo.enemigo);
+}
+
+void ProtocoloServidor::enviar_evento_trampa_actualizada(const TrampaActualizada& trampa) {
+    enviar_tipo(TipoMensaje::TRAMPA_ACTUALIZADA);
+    enviar_estado_trampa(trampa.trampa);
 }
 
 void ProtocoloServidor::enviar_evento_animal_actualizado(const AnimalActualizado& animal) {

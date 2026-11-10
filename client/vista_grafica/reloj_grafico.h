@@ -22,6 +22,7 @@ private:
     // Cuántas veces se agranda la imagen del reloj. Depende del alto de la ventana.
     const int escala;
     const FuenteDelJuego fuente;
+    const FuenteDelJuego fuente_dinero;
 
     // "Lun.", "Mar.", ... para el día de la semana (0 es lunes).
     std::string abreviatura_del_dia(uint8_t dia_de_la_semana) const;
@@ -39,6 +40,23 @@ private:
     void escribir_centrado(
         SDL_Renderer* renderer, const std::string& texto, const SDL_Rect& recuadro, int x_reloj,
         int y_reloj) const;
+
+    // Estado interno para la animación del odómetro
+    double monedas_animadas = 0.0;
+    bool monedas_inicializadas = false;
+    int contador_vibracion = 0;
+
+    // Avanza el saldo rodante hacia el objetivo y devuelve el temblor vertical (-1, 0, 1)
+    int actualizar_animacion(uint32_t monedas_objetivo);
+
+    // Dibuja un dígito centrado en una ranura con trazo grueso
+    void dibujar_digito_en_slot(
+        SDL_Renderer* renderer, int digito, int centro_x, int centro_y) const;
+
+    // Resuelve el giro del rodillo de una ranura (unidades, decenas, etc.)
+    void dibujar_ranura(
+        SDL_Renderer* renderer, int posicion, int x_dinero, int y_dinero, bool animando,
+        double diferencia) const;
 
     void dibujar_aguja(
         SDL_Renderer* renderer, const HoraDelJuego& hora, int x_reloj, int y_reloj) const;
@@ -59,6 +77,9 @@ public:
 
     // El reloj, arriba a la derecha.
     void dibujar(SDL_Renderer* renderer, const HoraDelJuego& hora, int ancho_ventana) const;
+
+    // El recuadro del dinero, justo debajo del reloj con odómetro animado.
+    void dibujar_dinero(SDL_Renderer* renderer, uint32_t monedas_objetivo, int ancho_ventana);
 };
 
 #endif

@@ -21,6 +21,7 @@ private:
     void enviar_comando_crear_partida(const CrearPartida& crear);
     void enviar_comando_unirse_partida(const UnirsePartida& unirse);
     void enviar_comando_retomar_partida(const RetomarPartida& retomar);
+    void enviar_comando_eliminar_partida(const EliminarPartida& eliminar);
     void enviar_comando_activar_multijugador(const ActivarMultijugador&);
     void enviar_comando_salir_de_partida(const SalirDePartida& salir_de_partida);
     void enviar_comando_guardar_partida(const GuardarPartida& guardar);
@@ -30,6 +31,7 @@ private:
     void enviar_comando_usar_item(const UsarItem& usar);
     void enviar_comando_mover_item_entre_ranuras(const MoverItemEntreRanuras& mover);
     void enviar_comando_mover_item_con_cofre(const MoverItemConCofre& mover);
+    void enviar_comando_cerrar_cofre(const CerrarCofre& cerrar);
     void enviar_comando_solicitar_inventario(const SolicitarInventario& solicitar);
     void enviar_comando_soltar_item(const SoltarItem& soltar);
     void enviar_comando_consultar_casilla(const ConsultarCasilla& consultar);
@@ -48,6 +50,7 @@ private:
     EstadoObjetoDelMundo recibir_estado_objeto_del_mundo();
     EstadoDrop recibir_estado_drop();
     EstadoEnemigo recibir_estado_enemigo();
+    EstadoTrampa recibir_estado_trampa();
     EstadoAnimal recibir_estado_animal();
     CasillaTratada recibir_casilla_tratada();
     EstadoJuego recibir_estado_juego();
@@ -57,6 +60,7 @@ private:
     DropAparecido recibir_drop_aparecido();
     DropRetirado recibir_drop_retirado();
     EnemigoActualizado recibir_enemigo_actualizado();
+    TrampaActualizada recibir_trampa_actualizada();
     AnimalActualizado recibir_animal_actualizado();
     VacaOrdeniable recibir_vaca_ordeniable();
     TierraCambiada recibir_tierra_cambiada();

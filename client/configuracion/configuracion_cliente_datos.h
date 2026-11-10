@@ -2,10 +2,13 @@
 #define CONFIGURACION_CLIENTE_DATOS_H
 
 #include <cstdint>
+#include <map>
 #include <string>
 #include <vector>
 
 #include "../../common/apariencia_personaje.h"
+#include "../../common/tipo_enemigo.h"
+#include "../../common/tipo_item.h"
 
 // Datos de configuración del cliente. No saben nada de TOML, son solo los valores ya leídos y
 // validados, listos para pasarle a cada componente.
@@ -76,12 +79,16 @@ struct ConfiguracionMapa {
     std::vector<ConfiguracionTileset> tilesets;
 
     bool es_mazmorra = false;
+    std::string ruta_ambiente;
+    std::string ruta_caminar;
 };
 
 constexpr int OFFSET_Y_REMERA_FEMENINO = 16;
 constexpr int OFFSET_Y_REMERA_MASCULINO = 15;
 constexpr int OFFSET_Y_PELO_FEMENINO = 1;
 constexpr int OFFSET_Y_PELO_MASCULINO = 0;
+constexpr int OFFSET_Y_SOMBRERO_FEMENINO = 1;
+constexpr int OFFSET_Y_SOMBRERO_MASCULINO = 0;
 
 struct ConfiguracionJugador {
     std::string ruta_cuerpo;
@@ -94,19 +101,36 @@ struct ConfiguracionJugador {
     int indice_sombrero = -1;
     int indice_remera = 0;
     int indice_pantalon = 0;
+    int indice_piel = 0;
 
-    ColorRGB color_pelo;
-    ColorRGB color_pantalon;
+    ColorRGB color_pelo = {193, 90, 33};
+    ColorRGB color_pantalon = {45, 60, 140};
+    ColorRGB color_ojos = {104, 43, 15};
 
     int ms_por_cuadro_caminando = 150;
     int offset_y_remera = 16;
     int offset_y_pelo = 0;
+    int offset_y_sombrero = 0;
+};
+
+struct SonidosDeEnemigo {
+    std::string ruta_golpe;
+    std::string ruta_danio;
+    std::string ruta_muerte;
+    std::string ruta_aparicion;
 };
 
 struct ConfiguracionSonido {
     std::string ruta_ambiente;
     std::string ruta_caminar;
     std::string ruta_accion;
+    std::map<TipoItem, std::string> rutas_de_uso;
+    std::string ruta_pico_golpe;
+    std::string ruta_pico_rotura;
+    std::map<TipoEnemigo, SonidosDeEnemigo> sonidos_de_enemigos;
+    // Vacías: no suena nada.
+    std::string ruta_trampa_activada;  // [sonido.trampas] activar
+    std::string ruta_jugador_danio;    // [sonido.jugador] danio: el jugador propio perdió vida
 };
 
 // Cómo se ve la tierra tratada. La textura es la de Stardew (hoeDirt.png); el resto del dibujado

@@ -47,21 +47,27 @@ struct Personaje {
     uint16_t ticks_restantes_accion = 0;
     AparienciaPersonaje apariencia;
 
-    // Vida del jugador en combate (ver "Un día en el juego" del enunciado). Arranca a tope y se
-    // repone entera al dormir; por ahora el único lado implementado es "la mazmorra le pega al
-    // jugador": el reposo al dormir y el desmayo automático a las 2am los va a manejar el ciclo de
-    // día, que todavía no existe. VIDA_MAXIMA toma el valor de VIDA_MAXIMA_JUGADOR (común con el
-    // cliente) para que el servidor y la barra de vida del HUD nunca se desincronicen.
+    // Vida del jugador en combate (ver "Un día en el juego" del enunciado). Arranca a tope, baja
+    // con los golpes de los enemigos y se repone al dormir (ver ControladorDelDia). VIDA_MAXIMA
+    // toma el valor de VIDA_MAXIMA_JUGADOR (común con el cliente) para que el servidor y la barra
+    // de vida del HUD nunca se desincronicen.
     static constexpr int VIDA_MAXIMA = VIDA_MAXIMA_JUGADOR;
     int vida = VIDA_MAXIMA;
 
-    // Energía del jugador. El enunciado la gasta con cualquier acción y la liga a la velocidad de
-    // movimiento al 10%; por ahora lo único implementado es que atacar con la espada la gasta
-    // (ver AccionAtacar); el resto de las acciones y el efecto en la velocidad quedan para cuando
-    // se sume el ciclo de día completo. ENERGIA_MAXIMA toma ENERGIA_MAXIMA_JUGADOR por la misma
-    // razón que VIDA_MAXIMA.
+    // Energía del jugador. El enunciado la gasta con cualquier acción: por ahora la gastan atacar
+    // con la espada (ver AccionAtacar) y picar (ver AccionPicar). Con el 10% o menos camina a la
+    // mitad de velocidad (ver multiplicador_de_velocidad()) y en 0 se desmaya (ver
+    // ControladorDelDia). ENERGIA_MAXIMA toma ENERGIA_MAXIMA_JUGADOR por la misma razón que
+    // VIDA_MAXIMA.
     static constexpr int ENERGIA_MAXIMA = ENERGIA_MAXIMA_JUGADOR;
     int energia = ENERGIA_MAXIMA;
+
+    // Monedas de oro del jugador (el enunciado pide una cantidad inicial de monedas de oro entre 0
+    // y 100, elegida de manera aleatoria al crearse por primera vez).
+    static constexpr uint32_t MONEDAS_INICIALES_MIN = 0;
+    static constexpr uint32_t MONEDAS_INICIALES_MAX = 100;
+    static constexpr uint32_t MONEDAS_MAXIMAS = 99'999'999;
+    uint32_t monedas = 0;
 
     // El fin del día (ver ControladorDelDia). Acostado en una cama o desmayado, el jugador espera
     // el día siguiente y tiene que dar el OK. "ultima_cama" es donde se despierta si se desmaya.
@@ -72,6 +78,12 @@ struct Personaje {
     Personaje(
         uint32_t id, const std::string& mapa_inicial, const CatalogoDeItems& catalogo,
         uint8_t cantidad_ranuras_barra);
+
+    // Acredita monedas de oro a la billetera del jugador.
+    void recibir_monedas(uint32_t cantidad);
+
+    // Descuenta monedas de oro si hay saldo suficiente. Devuelve false si no alcanza la plata.
+    bool gastar_monedas(uint32_t cantidad);
 
     // Traduce el índice que mandó el cliente (INDICE_RANURA_ACTIVA o una ranura real).
     uint8_t resolver_ranura(uint8_t indice_ranura) const;
@@ -92,8 +104,14 @@ struct Personaje {
     // que esto es lo que hay que multiplicar al daño que reparte con la espada.
     double multiplicador_de_ataque() const;
 
+    // Con el 10% de energía o menos el jugador camina a la mitad de velocidad (regla del
+    // enunciado). Es lo que hay que multiplicar a su velocidad de movimiento.
+    double multiplicador_de_velocidad() const;
+
     // Si está a tope de vida (no puede subir más) o a cero (no baja de ahí).
     bool esta_inconsciente() const;
+    // Los enemigos y las trampas solo lastiman a quien está despierto y en pie.
+    bool puede_ser_lastimado() const;
 
     // Le aplica daño recibido en combate. No hace nada si "danio" no es positivo o si ya está
     // inconsciente.
@@ -110,6 +128,9 @@ struct Personaje {
     Personaje& operator=(const Personaje&) = delete;
     Personaje(Personaje&&) = default;
     Personaje& operator=(Personaje&&) = default;
+
+private:
+    static uint32_t sortear_monedas_iniciales();
 };
 
 #endif

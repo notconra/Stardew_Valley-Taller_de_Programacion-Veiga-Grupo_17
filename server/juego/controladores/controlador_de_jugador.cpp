@@ -8,6 +8,10 @@ ControladorDeJugador::ControladorDeJugador(GestorDeSectores& sectores, Notificad
 
 void ControladorDeJugador::mover(Personaje& personaje, const Moverse& pedido) {
     Sector& sector = sectores.en(personaje.mapa_actual);
+    if (personaje.id_cofre_abierto != 0) {
+        sector.jugadores.moverse(personaje.id_jugador, 0, 0);
+        return;
+    }
     sector.jugadores.moverse(personaje.id_jugador, pedido.horizontal, pedido.vertical);
 }
 

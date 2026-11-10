@@ -58,6 +58,7 @@ DatosMundoGuardado un_mundo_guardado() {
     jugador.y = 120.0;
     jugador.vida = 50;
     jugador.energia = 35;
+    jugador.monedas = 75;
     jugador.tiene_cama = true;
     jugador.mapa_cama = MAPA_DE_LA_CASA;
     jugador.columna_cama = 2;
@@ -92,6 +93,7 @@ TEST(GuardadoDelDia, ElArchivoConservaElDiaLosMueblesYElDescansoDeCadaJugador) {
     EXPECT_EQ(leida.mundo.muebles[0].tipo, TipoObjeto::CAMA);
     ASSERT_EQ(leida.mundo.jugadores.size(), 1u);
     EXPECT_EQ(leida.mundo.jugadores[0].vida, 50);
+    EXPECT_EQ(leida.mundo.jugadores[0].monedas, 75u);
     EXPECT_TRUE(leida.mundo.jugadores[0].tiene_cama);
 }
 
@@ -121,6 +123,7 @@ TEST(GuardadoDelDia, AlRetomarElJugadorConservaVidaEnergiaYUltimaCama) {
     ASSERT_TRUE(datos.has_value());
     EXPECT_EQ(datos->vida, 50);
     EXPECT_EQ(datos->energia, 35);
+    EXPECT_EQ(datos->monedas, 75u);
     EXPECT_TRUE(datos->tiene_cama);
     EXPECT_EQ(datos->mapa_cama, MAPA_DE_LA_CASA);
     EXPECT_EQ(datos->columna_cama, 2u);
@@ -137,6 +140,7 @@ TEST(GuardadoDelDia, ElDesconectadoSeGuardaConLoQueTeniaAlIrse) {
     const std::optional<DatosJugadorGuardado> datos = mundo.obtener_datos_jugador(ID_JUGADOR);
     ASSERT_TRUE(datos.has_value());
     EXPECT_EQ(datos->vida, 50);
+    EXPECT_EQ(datos->monedas, 75u);
     EXPECT_TRUE(datos->tiene_cama);
 }
 

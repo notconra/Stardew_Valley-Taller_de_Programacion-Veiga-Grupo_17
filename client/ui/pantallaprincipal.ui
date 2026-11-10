@@ -59,11 +59,11 @@ QPushButton {
     border: 4px solid #8e4c19;
     border-radius: 8px;
     color: #8e4c19;
-    font-size: 20px;
-    font-weight: bold;
+    font-size: 22px;
+    font-weight: normal;
     padding: 10px 20px;
 	outline: none;
-    font-family: &quot;Courier New&quot;; /* Cambiar a una pixel-art */
+    font-family: &quot;Stardew Valley&quot;, &quot;Ubuntu&quot;, sans-serif;
 }
 
 
@@ -76,70 +76,63 @@ QPushButton:hover {
 QPushButton:pressed {
     background-color: #d8964d;
     padding-top: 12px;
-}</string>
-  </property>
-  <widget class="QWidget" name="centralwidget">
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-     <horstretch>0</horstretch>
-     <verstretch>0</verstretch>
-    </sizepolicy>
-   </property>
-   <layout class="QHBoxLayout" name="horizontalLayout_3">
-    <item>
-     <widget class="QStackedWidget" name="stackedWidget">
-      <property name="styleSheet">
-       <string notr="true">/* El cartel de madera */
-QFrame#marco_madera, QFrame#marco_madera_retomar {
-    background-color: #f7b46d;
-    border: 6px solid #8e4c19;
-    border-radius: 12px;
-    padding: 20px;
+}
+
+/* El cartel de madera */
+QFrame#marco_madera {
+    border-image: url("Assets/LooseSprites/menu_box.png") 12 12 12 12 repeat;
+    border-width: 12px;
+    padding: 16px;
+}
+
+/* Marco de madera de retomar partida: 0 padding para que las tarjetas toquen el borde */
+QFrame#marco_madera_retomar {
+    border-image: url("Assets/LooseSprites/menu_box_retomar.png") 12 12 12 12 repeat;
+    border-width: 12px;
+    padding: 0px;
 }
 
 QLabel {
     color: #d11f00;
-    font-size: 18px;
-    font-weight: bold;
-    font-family: &quot;Courier New&quot;;
+    font-size: 25px;
+    font-weight: normal;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
 }
-
 
 QLineEdit {
-    background-color: #ffc47a;
-    border: 3px solid #8e4c19;
-    border-radius: 4px;
-    padding: 4px 8px;
-    font-size: 16px;
-    font-weight: bold;
-    color: #5c2900;
-	min-height: 35px;
-	min-width: 250px;
-	font-size: 20px;
+    border-image: url("Assets/LooseSprites/textBox.png") 8 12 8 12 repeat;
+    border-width: 8px 12px 8px 12px;
+    background-color: transparent;
+    padding: 2px 8px;
+    font-size: 20px;
+    font-weight: normal;
+    color: #4a2105;
+    min-height: 28px;
+    min-width: 150px;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
 }
 
-
 QLineEdit:focus {
-    background-color: #ffffff;
-    border: 3px solid #d11f00;
+    border-image: url("Assets/LooseSprites/textBox.png") 8 12 8 12 repeat;
+    border-width: 8px 12px 8px 12px;
 }
 
 QComboBox {
-    background-color: #ffc47a;
-    border: 3px solid #8e4c19;
-    border-radius: 4px;
-    padding: 4px 8px;
-    font-size: 16px;
-    font-weight: bold;
-    color: #5c2900;
-    min-height: 35px;
-    min-width: 250px;
-    font-family: &quot;Courier New&quot;;
+    border-image: url("Assets/LooseSprites/textBox.png") 8 12 8 12 repeat;
+    border-width: 8px 12px 8px 12px;
+    background-color: transparent;
+    padding: 2px 8px;
+    font-size: 18px;
+    font-weight: normal;
+    color: #4a2105;
+    min-height: 28px;
+    min-width: 150px;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
 }
 
 QComboBox:focus {
-    background-color: #ffffff;
-    border: 3px solid #d11f00;
+    border-image: url("Assets/LooseSprites/textBox.png") 8 12 8 12 repeat;
+    border-width: 8px 12px 8px 12px;
 }
 
 QComboBox::drop-down {
@@ -153,9 +146,9 @@ QComboBox QAbstractItemView {
     color: #5c2900;
     selection-background-color: #8e4c19;
     selection-color: #ffffff;
-    font-size: 16px;
-    font-weight: bold;
-    font-family: &quot;Courier New&quot;;
+    font-size: 18px;
+    font-weight: normal;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
 }
 
 QTableWidget {
@@ -164,9 +157,9 @@ QTableWidget {
     border-radius: 4px;
     gridline-color: #8e4c19;
     color: #5c2900;
-    font-size: 16px;
-    font-weight: bold;
-    font-family: &quot;Courier New&quot;;
+    font-size: 18px;
+    font-weight: normal;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
     selection-background-color: #8e4c19;
     selection-color: #ffffff;
 }
@@ -179,92 +172,484 @@ QTableWidget::item:selected {
 QHeaderView::section {
     background-color: #f7b46d;
     color: #8e4c19;
-    font-size: 16px;
-    font-weight: bold;
-    font-family: &quot;Courier New&quot;;
+    font-size: 18px;
+    font-weight: normal;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
     border: 2px solid #8e4c19;
     padding: 4px;
 }
 
 QLabel#label_previsualizacion_personaje {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #4fa4f4, stop:0.65 #89c5f8, stop:0.66 #48a02a, stop:1 #35781e);
-    border: 4px solid #8e4c19;
-    border-radius: 6px;
+    background: transparent;
+    border: none;
 }
 
+QPushButton[class="btn_flecha"],
 QPushButton.btn_flecha {
-    background-color: #ffc47a;
-    border: 3px solid #8e4c19;
-    border-radius: 4px;
-    font-size: 16px;
-    font-weight: bold;
-    color: #8e4c19;
-    min-width: 28px;
-    max-width: 28px;
-    min-height: 28px;
-    max-height: 28px;
+    background-color: transparent;
+    border: none;
+    min-width: 36px;
+    max-width: 36px;
+    min-height: 33px;
+    max-height: 33px;
     padding: 0px;
 }
 
+QPushButton[class="btn_flecha"]:hover,
 QPushButton.btn_flecha:hover {
-    background-color: #ffd89e;
+    background-color: transparent;
 }
 
+QPushButton[class="btn_flecha"]:pressed,
 QPushButton.btn_flecha:pressed {
-    background-color: #d8964d;
     padding-top: 2px;
 }
 
-QPushButton.btn_genero {
-    background-color: #ffc47a;
-    border: 3px solid #8e4c19;
-    border-radius: 6px;
-    font-size: 22px;
-    font-weight: bold;
-    min-width: 44px;
-    max-width: 44px;
+QPushButton[class="btn_genero"],
+QPushButton#btn_genero_masculino,
+QPushButton#btn_genero_femenino {
+    background-color: transparent;
+    border: 3px solid transparent;
+    border-radius: 4px;
+    min-width: 40px;
+    max-width: 40px;
+    min-height: 40px;
+    max-height: 40px;
+    padding: 0px;
+}
+
+QPushButton[class="btn_genero"]:hover,
+QPushButton#btn_genero_masculino:hover,
+QPushButton#btn_genero_femenino:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 3px solid transparent;
+    border-radius: 4px;
+}
+
+QPushButton[class="btn_genero"]:checked,
+QPushButton#btn_genero_masculino:checked,
+QPushButton#btn_genero_femenino:checked {
+    background-color: transparent;
+    border: 3px solid #b33617;
+    border-radius: 4px;
+}
+
+/* Botones de selección de tipo de granja */
+QFrame#contenedor_lateral_granjas {
+    border-image: url("Assets/LooseSprites/menu_box.png") 12 12 12 12 repeat;
+    border-width: 12px;
+    padding: 8px;
+    background-color: transparent;
+}
+
+QPushButton[class="btn_granja"] {
+    background-color: transparent;
+    border: 3px solid transparent;
+    border-radius: 4px;
+    min-width: 48px;
+    max-width: 48px;
     min-height: 44px;
     max-height: 44px;
     padding: 0px;
 }
 
-QPushButton.btn_genero:hover {
-    background-color: #ffd89e;
+QPushButton[class="btn_granja"]:hover {
+    border: 3px solid #e09642;
+    border-radius: 4px;
 }
 
-QPushButton.btn_genero:checked {
-    background-color: #ffd89e;
-    border: 3px solid #d11f00;
+QPushButton[class="btn_granja"]:checked {
+    border: 3px solid #d22a2a;
+    border-radius: 4px;
 }
 
-QLabel.label_valor_selector {
-    color: #5c2900;
-    font-size: 15px;
-    font-weight: bold;
-    min-width: 130px;
-    max-width: 130px;
+QToolTip {
+    background-color: #ffeed3;
+    color: #4c2207;
+    border: 2px solid #8e4c19;
+    border-radius: 4px;
+    padding: 6px;
+    font-size: 14px;
+}
+
+
+QPushButton#btn_randomizar {
+    background-color: transparent;
+    border: none;
+    min-width: 30px;
+    max-width: 30px;
+    min-height: 30px;
+    max-height: 30px;
+    padding: 0px;
+}
+
+QPushButton#btn_randomizar:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+QPushButton#btn_randomizar:pressed {
+    padding-top: 2px;
+}
+
+QLabel[class="label_titulo_selector"] {
+    color: #000000;
+    font-size: 20px;
+    font-weight: normal;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
     qproperty-alignment: AlignCenter;
 }
 
-QPushButton#btn_confirmar_personaje {
-    min-width: 80px;
+QLabel[class="label_valor_selector"],
+QLabel.label_valor_selector {
+    color: #000000;
     font-size: 20px;
-    font-weight: bold;
-    color: #2b6d17;
-    border: 4px solid #8e4c19;
-    padding: 8px 20px;
+    font-weight: normal;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
+    qproperty-alignment: AlignCenter;
+    margin: 0px;
+    padding: 0px;
+}
+
+QPushButton#btn_confirmar_personaje {
+    background-color: transparent;
+    border: none;
+    min-width: 64px;
+    max-width: 64px;
+    min-height: 64px;
+    max-height: 64px;
+    padding: 0px;
 }
 
 QPushButton#btn_confirmar_personaje:hover {
-    background-color: #ffd89e;
-    color: #3b9020;
+    background-color: transparent;
 }
 
 QPushButton#btn_confirmar_personaje:pressed {
-    background-color: #d8964d;
-    padding-top: 10px;
-}</string>
-      </property>
+    padding-top: 3px;
+}
+
+QLabel[class="label_seccion_color"] {
+    color: #000000;
+    font-size: 20px;
+    font-weight: normal;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
+    min-width: 175px;
+}
+
+QLabel[class="label_slider_valor"] {
+    color: #000000;
+    font-size: 18px;
+    font-weight: normal;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
+    min-width: 32px;
+    max-width: 32px;
+    qproperty-alignment: 'AlignRight | AlignVCenter';
+}
+
+QSlider {
+    max-width: 170px;
+    min-width: 130px;
+    min-height: 14px;
+    max-height: 14px;
+}
+
+QSlider::groove:horizontal {
+    height: 4px;
+    background: #ffc47a;
+    border: 1px solid #5c2b0e;
+    border-radius: 2px;
+}
+
+QSlider[class="slider_h"]::groove:horizontal {
+    height: 4px;
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ff0000, stop:0.17 #ffff00, stop:0.33 #00ff00, stop:0.5 #00ffff, stop:0.67 #0000ff, stop:0.83 #ff00ff, stop:1 #ff0000);
+    border: 1px solid #5c2b0e;
+    border-radius: 2px;
+}
+
+QSlider[class="slider_s"]::groove:horizontal {
+    height: 4px;
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #909090, stop:1 #ff3333);
+    border: 1px solid #5c2b0e;
+    border-radius: 2px;
+}
+
+QSlider[class="slider_v"]::groove:horizontal {
+    height: 4px;
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1a1a1a, stop:1 #ffffff);
+    border: 1px solid #5c2b0e;
+    border-radius: 2px;
+}
+
+QSlider::handle:horizontal {
+    background-color: #ba6328;
+    border: 1px solid #4a2105;
+    width: 8px;
+    margin: -5px 0;
+    border-radius: 3px;
+}
+
+QSlider::handle:horizontal:hover {
+    background-color: #d87e38;
+}
+
+QSlider::handle:horizontal:pressed {
+    background-color: #9c4c1a;
+}
+
+/* Ranura de partida guardada idéntica al original de Stardew Valley */
+QFrame[class="tarjeta_partida"] {
+    border-image: url("Assets/LooseSprites/tarjeta_slot.png") 15 15 15 15 repeat;
+    border-width: 15px;
+    background-color: transparent;
+}
+
+QFrame[class="tarjeta_partida"]:hover {
+    border-image: url("Assets/LooseSprites/tarjeta_slot_hover.png") 15 15 15 15 repeat;
+    border-width: 15px;
+    background-color: transparent;
+}
+
+QFrame[class="tarjeta_partida"][seleccionada="true"] {
+    border-image: url("Assets/LooseSprites/tarjeta_slot_seleccionada.png") 15 15 15 15 repeat;
+    border-width: 15px;
+    background-color: transparent;
+}
+
+/* Textos de la tarjeta */
+QLabel[class="label_partida_slot"] {
+    color: #431f08;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
+    font-size: 28px;
+    font-weight: bold;
+    background: transparent;
+    border: none;
+}
+
+QLabel[class="label_partida_nombre"] {
+    color: #431f08;
+    font-family: "Stardew Dialogue", "Stardew Valley", "Ubuntu", sans-serif;
+    font-size: 28px;
+    font-weight: normal;
+    background: transparent;
+    border: none;
+}
+
+QLabel[class="label_partida_granja"] {
+    color: #431f08;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
+    font-size: 24px;
+    font-weight: normal;
+    background: transparent;
+    border: none;
+}
+
+QLabel[class="label_partida_fecha"] {
+    color: #6b401f;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
+    font-size: 21px;
+    background: transparent;
+    border: none;
+}
+
+QLabel[class="label_partida_tiempo"] {
+    color: #431f08;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
+    font-size: 20px;
+    font-weight: normal;
+    background: transparent;
+    border: none;
+}
+
+QLabel[class="label_partida_estado"] {
+    color: #8e5932;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
+    font-size: 18px;
+    background: transparent;
+    border: none;
+}
+
+/* Boton de eliminar chico sin bordes arriba a la derecha */
+QPushButton[class="btn_eliminar_partida"] {
+    background-color: transparent;
+    border: none;
+    padding: 0px;
+    min-width: 20px;
+    max-width: 20px;
+    min-height: 20px;
+    max-height: 20px;
+}
+
+QPushButton[class="btn_eliminar_partida"]:pressed {
+    padding-top: 1px;
+    padding-left: 1px;
+}
+
+/* ScrollArea de partidas guardadas */
+QScrollArea#scroll_area_partidas {
+    background-color: transparent;
+    border: none;
+}
+
+QWidget#contenido_scroll_partidas {
+    background-color: transparent;
+}
+
+/* Barra de scroll temática Stardew exterior */
+QScrollBar#scrollbar_partidas:vertical {
+    border: 2px solid #8e4c19;
+    background-color: #e6b375;
+    width: 24px;
+    margin: 28px 0px 28px 0px;
+    border-radius: 4px;
+}
+
+QScrollBar#scrollbar_partidas::handle:vertical {
+    background-color: #ba6328;
+    border: 2px solid #5c2900;
+    border-radius: 4px;
+    min-height: 36px;
+}
+
+QScrollBar#scrollbar_partidas::handle:vertical:hover {
+    background-color: #d87e38;
+}
+
+QScrollBar#scrollbar_partidas::handle:vertical:pressed {
+    background-color: #9c4b18;
+}
+
+/* Boton de flecha arriba */
+QScrollBar#scrollbar_partidas::sub-line:vertical {
+    border: none;
+    background: transparent;
+    height: 26px;
+    subcontrol-position: top;
+    subcontrol-origin: margin;
+}
+
+QScrollBar#scrollbar_partidas::sub-line:vertical:pressed {
+    top: 1px;
+}
+
+/* Boton de flecha abajo */
+QScrollBar#scrollbar_partidas::add-line:vertical {
+    border: none;
+    background: transparent;
+    height: 26px;
+    subcontrol-position: bottom;
+    subcontrol-origin: margin;
+}
+
+QScrollBar#scrollbar_partidas::add-line:vertical:pressed {
+    bottom: -1px;
+}
+
+/* Iconos de flechas pixel-art Stardew */
+QScrollBar#scrollbar_partidas::up-arrow:vertical {
+    image: url("Assets/LooseSprites/scrollbar_flecha_arriba.png");
+    width: 20px;
+    height: 22px;
+}
+
+QScrollBar#scrollbar_partidas::down-arrow:vertical {
+    image: url("Assets/LooseSprites/scrollbar_flecha_abajo.png");
+    width: 20px;
+    height: 22px;
+}
+
+QScrollBar#scrollbar_partidas::add-page:vertical,
+QScrollBar#scrollbar_partidas::sub-page:vertical {
+    background: none;
+}
+
+/* Mensaje cuando no hay partidas guardadas */
+QLabel#label_sin_partidas {
+    color: #6b401f;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
+    font-size: 18px;
+    font-style: italic;
+    background: transparent;
+    padding: 30px;
+}
+
+/* Diálogos modales con marco Stardew de madera y pergamino */
+QDialog#dialogo_modal_stardew {
+    background: transparent;
+}
+
+QFrame#marco_dialogo_stardew {
+    border-image: url("Assets/LooseSprites/menu_box_retomar.png") 12 12 12 12 repeat;
+    border-width: 16px;
+    background-color: #ffd284;
+}
+
+QLabel#label_texto_dialogo {
+    color: #431f08;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
+    font-size: 22px;
+    background: transparent;
+    border: none;
+    min-width: 380px;
+}
+
+/* El input para el código de invitación (centrado y estilizado) */
+QLineEdit#input_codigo_invitacion {
+    border-image: url("Assets/LooseSprites/textBox.png") 8 12 8 12 repeat;
+    border-width: 8px 12px 8px 12px;
+    background-color: transparent;
+    padding: 4px 12px;
+    font-size: 22px;
+    font-weight: normal;
+    color: #4a2105;
+    min-height: 32px;
+    min-width: 220px;
+    max-width: 260px;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
+}
+
+QLineEdit#input_codigo_invitacion:focus {
+    border-image: url("Assets/LooseSprites/textBox.png") 8 12 8 12 repeat;
+    border-width: 8px 12px 8px 12px;
+}
+
+/* Botones de accion en dialogos modales (OK / Cancelar) */
+QPushButton#btn_dialogo_ok,
+QPushButton#btn_dialogo_cancelar,
+QPushButton.btn_dialogo_accion {
+    background-color: transparent;
+    border: none;
+    padding: 0px;
+}
+
+QPushButton#btn_dialogo_ok:hover,
+QPushButton#btn_dialogo_cancelar:hover,
+QPushButton.btn_dialogo_accion:hover {
+    background-color: transparent;
+    border: none;
+}
+
+QPushButton#btn_dialogo_ok:pressed,
+QPushButton#btn_dialogo_cancelar:pressed,
+QPushButton.btn_dialogo_accion:pressed {
+    background-color: transparent;
+    border: none;
+    padding-top: 3px;
+}
+</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout_3">
+    <item>
+     <widget class="QStackedWidget" name="stackedWidget">
+
       <property name="currentIndex">
        <number>0</number>
       </property>
@@ -395,10 +780,13 @@ QPushButton#btn_confirmar_personaje:pressed {
           <property name="orientation">
            <enum>Qt::Orientation::Vertical</enum>
           </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Policy::Expanding</enum>
+          </property>
           <property name="sizeHint" stdset="0">
            <size>
             <width>20</width>
-            <height>40</height>
+            <height>10</height>
            </size>
           </property>
          </spacer>
@@ -417,6 +805,11 @@ QPushButton#btn_confirmar_personaje:pressed {
          </spacer>
         </item>
         <item row="1" column="1" alignment="Qt::AlignCenter">
+         <layout class="QHBoxLayout" name="layout_horizontal_creacion">
+          <property name="spacing">
+           <number>16</number>
+          </property>
+          <item>
          <widget class="QFrame" name="marco_madera">
           <property name="frameShape">
            <enum>QFrame::Shape::StyledPanel</enum>
@@ -432,375 +825,191 @@ QPushButton#btn_confirmar_personaje:pressed {
              </property>
              <item>
               <layout class="QVBoxLayout" name="layout_columna_izquierda">
-               <property name="spacing">
-                <number>10</number>
-               </property>
-               <item alignment="Qt::AlignCenter">
-                <widget class="QLabel" name="label_previsualizacion_personaje">
-                 <property name="minimumSize">
-                  <size>
-                   <width>116</width>
-                   <height>156</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>116</width>
-                   <height>156</height>
-                  </size>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignmentFlag::AlignCenter</set>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <layout class="QHBoxLayout" name="layout_botones_genero">
-                 <property name="spacing">
-                  <number>16</number>
-                 </property>
-                 <item>
-                  <spacer name="espaciador_genero_izq">
-                   <property name="orientation">
-                    <enum>Qt::Orientation::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>20</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="btn_genero_masculino">
-                   <property name="text">
-                    <string>♂</string>
-                   </property>
-                   <property name="checkable">
-                    <bool>true</bool>
-                   </property>
-                   <property name="checked">
-                    <bool>true</bool>
-                   </property>
-                   <property name="autoExclusive">
-                    <bool>true</bool>
-                   </property>
-                   <property name="class" stdset="0">
-                    <string>btn_genero</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="btn_genero_femenino">
-                   <property name="text">
-                    <string>♀</string>
-                   </property>
-                   <property name="checkable">
-                    <bool>true</bool>
-                   </property>
-                   <property name="autoExclusive">
-                    <bool>true</bool>
-                   </property>
-                   <property name="class" stdset="0">
-                    <string>btn_genero</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <spacer name="espaciador_genero_der">
-                   <property name="orientation">
-                    <enum>Qt::Orientation::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>20</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                </layout>
-               </item>
-               <item>
-                <layout class="QHBoxLayout" name="layout_sombrero">
-                 <item>
-                  <widget class="QLabel" name="label_sombrero_titulo">
-                   <property name="text">
-                    <string>Sombrero</string>
-                   </property>
-                   <property name="minimumSize">
-                    <size>
-                     <width>115</width>
-                     <height>0</height>
-                    </size>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="btn_sombrero_anterior">
-                   <property name="text">
-                    <string>&lt;</string>
-                   </property>
-                   <property name="class" stdset="0">
-                    <string>btn_flecha</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QLabel" name="label_sombrero_valor">
-                   <property name="text">
-                    <string>Ninguno</string>
-                   </property>
-                   <property name="alignment">
-                    <set>Qt::AlignmentFlag::AlignCenter</set>
-                   </property>
-                   <property name="class" stdset="0">
-                    <string>label_valor_selector</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="btn_sombrero_siguiente">
-                   <property name="text">
-                    <string>&gt;</string>
-                   </property>
-                   <property name="class" stdset="0">
-                    <string>btn_flecha</string>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </item>
-               <item>
-                <layout class="QHBoxLayout" name="layout_pelo">
-                 <item>
-                  <widget class="QLabel" name="label_pelo_titulo">
-                   <property name="text">
-                    <string>Pelo</string>
-                   </property>
-                   <property name="minimumSize">
-                    <size>
-                     <width>115</width>
-                     <height>0</height>
-                    </size>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="btn_pelo_anterior">
-                   <property name="text">
-                    <string>&lt;</string>
-                   </property>
-                   <property name="class" stdset="0">
-                    <string>btn_flecha</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QLabel" name="label_pelo_valor">
-                   <property name="text">
-                    <string>1</string>
-                   </property>
-                   <property name="alignment">
-                    <set>Qt::AlignmentFlag::AlignCenter</set>
-                   </property>
-                   <property name="class" stdset="0">
-                    <string>label_valor_selector</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="btn_pelo_siguiente">
-                   <property name="text">
-                    <string>&gt;</string>
-                   </property>
-                   <property name="class" stdset="0">
-                    <string>btn_flecha</string>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </item>
-               <item>
-                <layout class="QHBoxLayout" name="layout_color_pelo">
-                 <item>
-                  <widget class="QLabel" name="label_color_pelo_titulo">
-                   <property name="text">
-                    <string>Color pelo</string>
-                   </property>
-                   <property name="minimumSize">
-                    <size>
-                     <width>115</width>
-                     <height>0</height>
-                    </size>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="btn_color_pelo_anterior">
-                   <property name="text">
-                    <string>&lt;</string>
-                   </property>
-                   <property name="class" stdset="0">
-                    <string>btn_flecha</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QLabel" name="label_color_pelo_valor">
-                   <property name="text">
-                    <string>Castaño</string>
-                   </property>
-                   <property name="alignment">
-                    <set>Qt::AlignmentFlag::AlignCenter</set>
-                   </property>
-                   <property name="class" stdset="0">
-                    <string>label_valor_selector</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="btn_color_pelo_siguiente">
-                   <property name="text">
-                    <string>&gt;</string>
-                   </property>
-                   <property name="class" stdset="0">
-                    <string>btn_flecha</string>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </item>
-               <item>
-                <layout class="QHBoxLayout" name="layout_remera">
-                 <item>
-                  <widget class="QLabel" name="label_remera_titulo">
-                   <property name="text">
-                    <string>Camisa</string>
-                   </property>
-                   <property name="minimumSize">
-                    <size>
-                     <width>115</width>
-                     <height>0</height>
-                    </size>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="btn_remera_anterior">
-                   <property name="text">
-                    <string>&lt;</string>
-                   </property>
-                   <property name="class" stdset="0">
-                    <string>btn_flecha</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QLabel" name="label_remera_valor">
-                   <property name="text">
-                    <string>1</string>
-                   </property>
-                   <property name="alignment">
-                    <set>Qt::AlignmentFlag::AlignCenter</set>
-                   </property>
-                   <property name="class" stdset="0">
-                    <string>label_valor_selector</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="btn_remera_siguiente">
-                   <property name="text">
-                    <string>&gt;</string>
-                   </property>
-                   <property name="class" stdset="0">
-                    <string>btn_flecha</string>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </item>
-               <item>
-                <layout class="QHBoxLayout" name="layout_pantalon">
-                 <item>
-                  <widget class="QLabel" name="label_pantalon_titulo">
-                   <property name="text">
-                    <string>Pantalón</string>
-                   </property>
-                   <property name="minimumSize">
-                    <size>
-                     <width>115</width>
-                     <height>0</height>
-                    </size>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="btn_pantalon_anterior">
-                   <property name="text">
-                    <string>&lt;</string>
-                   </property>
-                   <property name="class" stdset="0">
-                    <string>btn_flecha</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QLabel" name="label_pantalon_valor">
-                   <property name="text">
-                    <string>1</string>
-                   </property>
-                   <property name="alignment">
-                    <set>Qt::AlignmentFlag::AlignCenter</set>
-                   </property>
-                   <property name="class" stdset="0">
-                    <string>label_valor_selector</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="btn_pantalon_siguiente">
-                   <property name="text">
-                    <string>&gt;</string>
-                   </property>
-                   <property name="class" stdset="0">
-                    <string>btn_flecha</string>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </item>
+                <property name="spacing">
+                 <number>12</number>
+                </property>
                 <item>
-                 <layout class="QHBoxLayout" name="layout_color_pantalon">
-                  <item>
-                   <widget class="QLabel" name="label_color_pantalon_titulo">
-                    <property name="text">
-                     <string>Color pant.</string>
+                 <layout class="QHBoxLayout" name="layout_preview_y_dado">
+                  <property name="spacing">
+                   <number>8</number>
+                  </property>
+                  <item alignment="Qt::AlignTop">
+                   <widget class="QPushButton" name="btn_randomizar">
+                    <property name="toolTip">
+                     <string>Aleatorio</string>
                     </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_previsualizacion_personaje">
                     <property name="minimumSize">
                      <size>
-                      <width>115</width>
-                      <height>0</height>
+                      <width>116</width>
+                      <height>156</height>
                      </size>
                     </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>116</width>
+                      <height>156</height>
+                     </size>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignmentFlag::AlignCenter</set>
+                    </property>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QPushButton" name="btn_color_pantalon_anterior">
+                   <spacer name="espaciador_dado_simetria">
+                    <property name="orientation">
+                     <enum>Qt::Orientation::Horizontal</enum>
+                    </property>
+                    <property name="sizeType">
+                     <enum>QSizePolicy::Policy::Fixed</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>30</width>
+                      <height>30</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <spacer name="espaciador_preview_genero">
+                  <property name="orientation">
+                   <enum>Qt::Orientation::Vertical</enum>
+                  </property>
+                  <property name="sizeType">
+                   <enum>QSizePolicy::Policy::Fixed</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>20</width>
+                    <height>12</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="layout_botones_genero">
+                  <property name="spacing">
+                   <number>16</number>
+                  </property>
+                  <item>
+                   <spacer name="espaciador_genero_izq">
+                    <property name="orientation">
+                     <enum>Qt::Orientation::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>20</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="btn_genero_masculino">
                     <property name="text">
-                     <string>&lt;</string>
+                     <string>♂</string>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                    <property name="autoExclusive">
+                     <bool>true</bool>
                     </property>
                     <property name="class" stdset="0">
-                     <string>btn_flecha</string>
+                     <string>btn_genero</string>
                     </property>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLabel" name="label_color_pantalon_valor">
+                   <widget class="QPushButton" name="btn_genero_femenino">
                     <property name="text">
-                     <string>Azul clásico</string>
+                     <string>♀</string>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <property name="autoExclusive">
+                     <bool>true</bool>
+                    </property>
+                    <property name="class" stdset="0">
+                     <string>btn_genero</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="espaciador_genero_der">
+                    <property name="orientation">
+                     <enum>Qt::Orientation::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>20</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QVBoxLayout" name="layout_selector_piel">
+                  <property name="spacing">
+                   <number>4</number>
+                  </property>
+                  <item>
+                   <layout class="QHBoxLayout" name="layout_fila_piel">
+                    <property name="spacing">
+                     <number>6</number>
+                    </property>
+                    <item>
+                     <widget class="QPushButton" name="btn_piel_anterior">
+                      <property name="text">
+                       <string>&lt;</string>
+                      </property>
+                      <property name="class" stdset="0">
+                       <string>btn_flecha</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="label_piel_titulo">
+                      <property name="text">
+                       <string>Piel</string>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignmentFlag::AlignCenter</set>
+                      </property>
+                      <property name="class" stdset="0">
+                       <string>label_titulo_selector</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="btn_piel_siguiente">
+                      <property name="text">
+                       <string>&gt;</string>
+                      </property>
+                      <property name="class" stdset="0">
+                       <string>btn_flecha</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_piel_valor">
+                    <property name="text">
+                     <string>1</string>
                     </property>
                     <property name="alignment">
                      <set>Qt::AlignmentFlag::AlignCenter</set>
@@ -810,29 +1019,259 @@ QPushButton#btn_confirmar_personaje:pressed {
                     </property>
                    </widget>
                   </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QVBoxLayout" name="layout_selector_sombrero">
+                  <property name="spacing">
+                   <number>4</number>
+                  </property>
                   <item>
-                   <widget class="QPushButton" name="btn_color_pantalon_siguiente">
+                   <layout class="QHBoxLayout" name="layout_fila_sombrero">
+                    <property name="spacing">
+                     <number>6</number>
+                    </property>
+                    <item>
+                     <widget class="QPushButton" name="btn_sombrero_anterior">
+                      <property name="text">
+                       <string>&lt;</string>
+                      </property>
+                      <property name="class" stdset="0">
+                       <string>btn_flecha</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="label_sombrero_titulo">
+                      <property name="text">
+                       <string>Sombrero</string>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignmentFlag::AlignCenter</set>
+                      </property>
+                      <property name="class" stdset="0">
+                       <string>label_titulo_selector</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="btn_sombrero_siguiente">
+                      <property name="text">
+                       <string>&gt;</string>
+                      </property>
+                      <property name="class" stdset="0">
+                       <string>btn_flecha</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_sombrero_valor">
                     <property name="text">
-                     <string>&gt;</string>
+                     <string>Ninguno</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignmentFlag::AlignCenter</set>
                     </property>
                     <property name="class" stdset="0">
-                     <string>btn_flecha</string>
+                     <string>label_valor_selector</string>
                     </property>
                    </widget>
                   </item>
                  </layout>
                 </item>
-              </layout>
-             </item>
-             <item>
-              <layout class="QVBoxLayout" name="layout_columna_derecha">
+                <item>
+                 <layout class="QVBoxLayout" name="layout_selector_pelo">
+                  <property name="spacing">
+                   <number>4</number>
+                  </property>
+                  <item>
+                   <layout class="QHBoxLayout" name="layout_fila_pelo">
+                    <property name="spacing">
+                     <number>6</number>
+                    </property>
+                    <item>
+                     <widget class="QPushButton" name="btn_pelo_anterior">
+                      <property name="text">
+                       <string>&lt;</string>
+                      </property>
+                      <property name="class" stdset="0">
+                       <string>btn_flecha</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="label_pelo_titulo">
+                      <property name="text">
+                       <string>Pelo</string>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignmentFlag::AlignCenter</set>
+                      </property>
+                      <property name="class" stdset="0">
+                       <string>label_titulo_selector</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="btn_pelo_siguiente">
+                      <property name="text">
+                       <string>&gt;</string>
+                      </property>
+                      <property name="class" stdset="0">
+                       <string>btn_flecha</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_pelo_valor">
+                    <property name="text">
+                     <string>1</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignmentFlag::AlignCenter</set>
+                    </property>
+                    <property name="class" stdset="0">
+                     <string>label_valor_selector</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QVBoxLayout" name="layout_selector_remera">
+                  <property name="spacing">
+                   <number>4</number>
+                  </property>
+                  <item>
+                   <layout class="QHBoxLayout" name="layout_fila_remera">
+                    <property name="spacing">
+                     <number>6</number>
+                    </property>
+                    <item>
+                     <widget class="QPushButton" name="btn_remera_anterior">
+                      <property name="text">
+                       <string>&lt;</string>
+                      </property>
+                      <property name="class" stdset="0">
+                       <string>btn_flecha</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="label_remera_titulo">
+                      <property name="text">
+                       <string>Camisa</string>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignmentFlag::AlignCenter</set>
+                      </property>
+                      <property name="class" stdset="0">
+                       <string>label_titulo_selector</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="btn_remera_siguiente">
+                      <property name="text">
+                       <string>&gt;</string>
+                      </property>
+                      <property name="class" stdset="0">
+                       <string>btn_flecha</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_remera_valor">
+                    <property name="text">
+                     <string>1</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignmentFlag::AlignCenter</set>
+                    </property>
+                    <property name="class" stdset="0">
+                     <string>label_valor_selector</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QVBoxLayout" name="layout_selector_pantalon">
+                  <property name="spacing">
+                   <number>4</number>
+                  </property>
+                  <item>
+                   <layout class="QHBoxLayout" name="layout_fila_pantalon">
+                    <property name="spacing">
+                     <number>6</number>
+                    </property>
+                    <item>
+                     <widget class="QPushButton" name="btn_pantalon_anterior">
+                      <property name="text">
+                       <string>&lt;</string>
+                      </property>
+                      <property name="class" stdset="0">
+                       <string>btn_flecha</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="label_pantalon_titulo">
+                      <property name="text">
+                       <string>Pantalon</string>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignmentFlag::AlignCenter</set>
+                      </property>
+                      <property name="class" stdset="0">
+                       <string>label_titulo_selector</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="btn_pantalon_siguiente">
+                      <property name="text">
+                       <string>&gt;</string>
+                      </property>
+                      <property name="class" stdset="0">
+                       <string>btn_flecha</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_pantalon_valor">
+                    <property name="text">
+                     <string>1</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignmentFlag::AlignCenter</set>
+                    </property>
+                    <property name="class" stdset="0">
+                     <string>label_valor_selector</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QVBoxLayout" name="layout_columna_derecha">
                <property name="spacing">
-                <number>15</number>
+                <number>8</number>
                </property>
                <item>
                 <layout class="QFormLayout" name="formLayout">
                  <property name="verticalSpacing">
-                  <number>16</number>
+                  <number>10</number>
                  </property>
                  <item row="0" column="0">
                   <widget class="QLabel" name="label_2">
@@ -857,7 +1296,7 @@ QPushButton#btn_confirmar_personaje:pressed {
                  <item row="2" column="0">
                   <widget class="QLabel" name="label_4">
                    <property name="text">
-                    <string>Tu cosa favorita</string>
+                    <string>Cosa favorita</string>
                    </property>
                   </widget>
                  </item>
@@ -883,71 +1322,516 @@ QPushButton#btn_confirmar_personaje:pressed {
                 </layout>
                </item>
                <item>
-                <spacer name="verticalSpacer_derecha">
-                 <property name="orientation">
-                  <enum>Qt::Orientation::Vertical</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>20</width>
-                   <height>40</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-              </layout>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <spacer name="verticalSpacer_6">
-             <property name="orientation">
-              <enum>Qt::Orientation::Vertical</enum>
-             </property>
-             <property name="sizeType">
-              <enum>QSizePolicy::Policy::Fixed</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>15</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_2">
-             <item>
-              <widget class="QPushButton" name="btn_volver_menu">
-               <property name="text">
-                <string>Volver</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_3">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QPushButton" name="btn_confirmar_personaje">
-               <property name="text">
-                <string>OK</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
+                <layout class="QHBoxLayout" name="layout_seccion_ojos">
+                  <property name="spacing">
+                   <number>10</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="label_titulo_color_ojos">
+                    <property name="text">
+                     <string>Color de ojos:</string>
+                    </property>
+                    <property name="class" stdset="0">
+                     <string>label_seccion_color</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <layout class="QVBoxLayout" name="layout_sliders_ojos">
+                    <property name="spacing">
+                     <number>4</number>
+                    </property>
+                    <item>
+                     <layout class="QHBoxLayout" name="layout_ojos_h">
+                      <property name="spacing">
+                       <number>6</number>
+                      </property>
+                      <item>
+                       <widget class="QSlider" name="slider_ojos_h">
+                        <property name="maximum">
+                         <number>100</number>
+                        </property>
+                        <property name="orientation">
+                         <enum>Qt::Orientation::Horizontal</enum>
+                        </property>
+                        <property name="class" stdset="0">
+                         <string>slider_h</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QLabel" name="label_ojos_h_valor">
+                        <property name="text">
+                         <string>104</string>
+                        </property>
+                        <property name="alignment">
+                         <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignVCenter</set>
+                        </property>
+                        <property name="class" stdset="0">
+                         <string>label_slider_valor</string>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                    <item>
+                     <layout class="QHBoxLayout" name="layout_ojos_s">
+                      <property name="spacing">
+                       <number>6</number>
+                      </property>
+                      <item>
+                       <widget class="QSlider" name="slider_ojos_s">
+                        <property name="maximum">
+                         <number>100</number>
+                        </property>
+                        <property name="orientation">
+                         <enum>Qt::Orientation::Horizontal</enum>
+                        </property>
+                        <property name="class" stdset="0">
+                         <string>slider_s</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QLabel" name="label_ojos_s_valor">
+                        <property name="text">
+                         <string>43</string>
+                        </property>
+                        <property name="alignment">
+                         <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignVCenter</set>
+                        </property>
+                        <property name="class" stdset="0">
+                         <string>label_slider_valor</string>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                    <item>
+                     <layout class="QHBoxLayout" name="layout_ojos_v">
+                      <property name="spacing">
+                       <number>6</number>
+                      </property>
+                      <item>
+                       <widget class="QSlider" name="slider_ojos_v">
+                        <property name="maximum">
+                         <number>100</number>
+                        </property>
+                        <property name="orientation">
+                         <enum>Qt::Orientation::Horizontal</enum>
+                        </property>
+                        <property name="class" stdset="0">
+                         <string>slider_v</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QLabel" name="label_ojos_v_valor">
+                        <property name="text">
+                         <string>15</string>
+                        </property>
+                        <property name="alignment">
+                         <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignVCenter</set>
+                        </property>
+                        <property name="class" stdset="0">
+                         <string>label_slider_valor</string>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                   </layout>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="layout_seccion_pelo">
+                  <property name="spacing">
+                   <number>10</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="label_titulo_color_pelo">
+                    <property name="text">
+                     <string>Color de pelo:</string>
+                    </property>
+                    <property name="class" stdset="0">
+                     <string>label_seccion_color</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <layout class="QVBoxLayout" name="layout_sliders_pelo">
+                    <property name="spacing">
+                     <number>4</number>
+                    </property>
+                    <item>
+                     <layout class="QHBoxLayout" name="layout_pelo_h">
+                      <property name="spacing">
+                       <number>6</number>
+                      </property>
+                      <item>
+                       <widget class="QSlider" name="slider_pelo_h">
+                        <property name="maximum">
+                         <number>100</number>
+                        </property>
+                        <property name="orientation">
+                         <enum>Qt::Orientation::Horizontal</enum>
+                        </property>
+                        <property name="class" stdset="0">
+                         <string>slider_h</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QLabel" name="label_pelo_h_valor">
+                        <property name="text">
+                         <string>193</string>
+                        </property>
+                        <property name="alignment">
+                         <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignVCenter</set>
+                        </property>
+                        <property name="class" stdset="0">
+                         <string>label_slider_valor</string>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                    <item>
+                     <layout class="QHBoxLayout" name="layout_pelo_s">
+                      <property name="spacing">
+                       <number>6</number>
+                      </property>
+                      <item>
+                       <widget class="QSlider" name="slider_pelo_s">
+                        <property name="maximum">
+                         <number>100</number>
+                        </property>
+                        <property name="orientation">
+                         <enum>Qt::Orientation::Horizontal</enum>
+                        </property>
+                        <property name="class" stdset="0">
+                         <string>slider_s</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QLabel" name="label_pelo_s_valor">
+                        <property name="text">
+                         <string>90</string>
+                        </property>
+                        <property name="alignment">
+                         <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignVCenter</set>
+                        </property>
+                        <property name="class" stdset="0">
+                         <string>label_slider_valor</string>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                    <item>
+                     <layout class="QHBoxLayout" name="layout_pelo_v">
+                      <property name="spacing">
+                       <number>6</number>
+                      </property>
+                      <item>
+                       <widget class="QSlider" name="slider_pelo_v">
+                        <property name="maximum">
+                         <number>100</number>
+                        </property>
+                        <property name="orientation">
+                         <enum>Qt::Orientation::Horizontal</enum>
+                        </property>
+                        <property name="class" stdset="0">
+                         <string>slider_v</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QLabel" name="label_pelo_v_valor">
+                        <property name="text">
+                         <string>33</string>
+                        </property>
+                        <property name="alignment">
+                         <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignVCenter</set>
+                        </property>
+                        <property name="class" stdset="0">
+                         <string>label_slider_valor</string>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                   </layout>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="layout_seccion_pantalon">
+                  <property name="spacing">
+                   <number>10</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="label_titulo_color_pantalon">
+                    <property name="text">
+                     <string>Color de pantalon:</string>
+                    </property>
+                    <property name="class" stdset="0">
+                     <string>label_seccion_color</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <layout class="QVBoxLayout" name="layout_sliders_pantalon">
+                    <property name="spacing">
+                     <number>4</number>
+                    </property>
+                    <item>
+                     <layout class="QHBoxLayout" name="layout_pantalon_h">
+                      <property name="spacing">
+                       <number>6</number>
+                      </property>
+                      <item>
+                       <widget class="QSlider" name="slider_pantalon_h">
+                        <property name="maximum">
+                         <number>100</number>
+                        </property>
+                        <property name="orientation">
+                         <enum>Qt::Orientation::Horizontal</enum>
+                        </property>
+                        <property name="class" stdset="0">
+                         <string>slider_h</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QLabel" name="label_pantalon_h_valor">
+                        <property name="text">
+                         <string>45</string>
+                        </property>
+                        <property name="alignment">
+                         <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignVCenter</set>
+                        </property>
+                        <property name="class" stdset="0">
+                         <string>label_slider_valor</string>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                    <item>
+                     <layout class="QHBoxLayout" name="layout_pantalon_s">
+                      <property name="spacing">
+                       <number>6</number>
+                      </property>
+                      <item>
+                       <widget class="QSlider" name="slider_pantalon_s">
+                        <property name="maximum">
+                         <number>100</number>
+                        </property>
+                        <property name="orientation">
+                         <enum>Qt::Orientation::Horizontal</enum>
+                        </property>
+                        <property name="class" stdset="0">
+                         <string>slider_s</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QLabel" name="label_pantalon_s_valor">
+                        <property name="text">
+                         <string>60</string>
+                        </property>
+                        <property name="alignment">
+                         <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignVCenter</set>
+                        </property>
+                        <property name="class" stdset="0">
+                         <string>label_slider_valor</string>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                    <item>
+                     <layout class="QHBoxLayout" name="layout_pantalon_v">
+                      <property name="spacing">
+                       <number>6</number>
+                      </property>
+                      <item>
+                       <widget class="QSlider" name="slider_pantalon_v">
+                        <property name="maximum">
+                         <number>100</number>
+                        </property>
+                        <property name="orientation">
+                         <enum>Qt::Orientation::Horizontal</enum>
+                        </property>
+                        <property name="class" stdset="0">
+                         <string>slider_v</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QLabel" name="label_pantalon_v_valor">
+                        <property name="text">
+                         <string>140</string>
+                        </property>
+                        <property name="alignment">
+                         <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignVCenter</set>
+                        </property>
+                        <property name="class" stdset="0">
+                         <string>label_slider_valor</string>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                   </layout>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="layout_fila_ok">
+                  <item>
+                   <spacer name="horizontalSpacer_3">
+                    <property name="orientation">
+                     <enum>Qt::Orientation::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="btn_confirmar_personaje">
+                    <property name="text">
+                     <string>OK</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </item>
           </layout>
          </widget>
+          </item>
+          <item alignment="Qt::AlignVCenter">
+           <widget class="QFrame" name="contenedor_lateral_granjas">
+            <property name="frameShape">
+             <enum>QFrame::Shape::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Shadow::Raised</enum>
+            </property>
+            <layout class="QGridLayout" name="layout_granjas_grid">
+             <property name="spacing">
+              <number>8</number>
+             </property>
+             <property name="leftMargin">
+              <number>10</number>
+             </property>
+             <property name="topMargin">
+              <number>10</number>
+             </property>
+             <property name="rightMargin">
+              <number>10</number>
+             </property>
+             <property name="bottomMargin">
+              <number>10</number>
+             </property>
+             <item row="0" column="0">
+              <widget class="QPushButton" name="btn_granja_0">
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+               <property name="class" stdset="0">
+                <string>btn_granja</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QPushButton" name="btn_granja_6">
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="class" stdset="0">
+                <string>btn_granja</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QPushButton" name="btn_granja_1">
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="class" stdset="0">
+                <string>btn_granja</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QPushButton" name="btn_granja_7">
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="class" stdset="0">
+                <string>btn_granja</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QPushButton" name="btn_granja_2">
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="class" stdset="0">
+                <string>btn_granja</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QPushButton" name="btn_granja_3">
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="class" stdset="0">
+                <string>btn_granja</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0">
+              <widget class="QPushButton" name="btn_granja_4">
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="class" stdset="0">
+                <string>btn_granja</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="0">
+              <widget class="QPushButton" name="btn_granja_5">
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="class" stdset="0">
+                <string>btn_granja</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item row="1" column="2">
          <spacer name="horizontalSpacer_right">
@@ -967,10 +1851,13 @@ QPushButton#btn_confirmar_personaje:pressed {
           <property name="orientation">
            <enum>Qt::Orientation::Vertical</enum>
           </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Policy::Expanding</enum>
+          </property>
           <property name="sizeHint" stdset="0">
            <size>
             <width>20</width>
-            <height>40</height>
+            <height>10</height>
            </size>
           </property>
          </spacer>
@@ -1006,7 +1893,30 @@ QPushButton#btn_confirmar_personaje:pressed {
          </spacer>
         </item>
         <item row="1" column="1" alignment="Qt::AlignCenter">
-         <widget class="QFrame" name="marco_madera_retomar">
+         <layout class="QHBoxLayout" name="layout_retomar_con_scroll">
+          <property name="spacing">
+           <number>16</number>
+          </property>
+          <item>
+           <widget class="QFrame" name="marco_madera_retomar">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>880</width>
+            <height>452</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>880</width>
+            <height>452</height>
+           </size>
+          </property>
           <property name="frameShape">
            <enum>QFrame::Shape::StyledPanel</enum>
           </property>
@@ -1014,10 +1924,25 @@ QPushButton#btn_confirmar_personaje:pressed {
            <enum>QFrame::Shadow::Raised</enum>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_retomar">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
            <item>
-            <widget class="QLabel" name="label_titulo_retomar">
+            <widget class="QLabel" name="label_sin_partidas">
              <property name="text">
-              <string>Partidas Disponibles</string>
+              <string>No hay partidas guardadas</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignmentFlag::AlignCenter</set>
@@ -1025,93 +1950,76 @@ QPushButton#btn_confirmar_personaje:pressed {
             </widget>
            </item>
            <item>
-            <widget class="QTableWidget" name="tabla_partidas">
-             <property name="minimumSize">
-              <size>
-               <width>450</width>
-               <height>250</height>
-              </size>
+            <widget class="QScrollArea" name="scroll_area_partidas">
+             <property name="frameShape">
+              <enum>QFrame::Shape::NoFrame</enum>
              </property>
-             <property name="editTriggers">
-              <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+             <property name="widgetResizable">
+              <bool>true</bool>
              </property>
-             <property name="selectionMode">
-              <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
+             <property name="horizontalScrollBarPolicy">
+              <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
              </property>
-             <property name="selectionBehavior">
-              <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
-             </property>
-             <attribute name="verticalHeaderVisible">
-              <bool>false</bool>
-             </attribute>
-             <column>
-              <property name="text">
-               <string>Nombre</string>
+             <widget class="QWidget" name="contenido_scroll_partidas">
+              <property name="geometry">
+               <rect>
+                <x>0</x>
+                <y>0</y>
+                <width>880</width>
+                <height>428</height>
+               </rect>
               </property>
-             </column>
-             <column>
-              <property name="text">
-               <string>Código</string>
-              </property>
-             </column>
-             <column>
-              <property name="text">
-               <string>Jugadores</string>
-              </property>
-             </column>
+              <layout class="QVBoxLayout" name="layout_tarjetas_partidas">
+               <property name="spacing">
+                <number>4</number>
+               </property>
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+              </layout>
+             </widget>
             </widget>
-           </item>
-           <item>
-            <spacer name="verticalSpacer_retomar_btn">
-             <property name="orientation">
-              <enum>Qt::Orientation::Vertical</enum>
-             </property>
-             <property name="sizeType">
-              <enum>QSizePolicy::Policy::Fixed</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>15</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_retomar">
-             <item>
-              <widget class="QPushButton" name="btn_volver_retomar">
-               <property name="text">
-                <string>Volver</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_retomar">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QPushButton" name="btn_jugar_retomar">
-               <property name="text">
-                <string>Jugar</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
            </item>
           </layout>
          </widget>
         </item>
-        <item row="1" column="2">
+        <item>
+         <widget class="QScrollBar" name="scrollbar_partidas">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="orientation">
+           <enum>Qt::Orientation::Vertical</enum>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>24</width>
+            <height>452</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>24</width>
+            <height>452</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="1" column="2">
          <spacer name="horizontalSpacer_right_retomar">
           <property name="orientation">
            <enum>Qt::Orientation::Horizontal</enum>

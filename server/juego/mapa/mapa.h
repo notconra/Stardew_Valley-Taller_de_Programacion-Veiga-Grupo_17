@@ -50,9 +50,17 @@ private:
         const std::vector<int>& capa, const std::vector<int>& ids, uint8_t propiedad,
         const std::string& nombre_capa);
 
+    // Ajusta la colisión de las casillas de cada transición. Las de los destinos indicados
+    // conservan la colisión que trae el TMX; las demás se liberan para poder pisarlas.
+    void ajustar_colisiones_de_transiciones(
+        const std::vector<std::string>& destinos_que_conservan_colision);
+
 public:
     // Lanza std::runtime_error si no puede leer el TMX o la capa de colisiones.
-    explicit Mapa(const ConfiguracionMapaServidor& configuracion);
+    // "destinos_que_conservan_colision" son los mapa_destino cuyas casillas no se liberan.
+    explicit Mapa(
+        const ConfiguracionMapaServidor& configuracion,
+        const std::vector<std::string>& destinos_que_conservan_colision = {});
 
     int cantidad_de_columnas() const;
     int cantidad_de_filas() const;

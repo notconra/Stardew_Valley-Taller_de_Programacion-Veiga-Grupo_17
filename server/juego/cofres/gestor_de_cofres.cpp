@@ -12,7 +12,8 @@ std::vector<DefinicionDeObjeto> GestorDeCofres::definiciones() {
     cofre.herramienta = TipoItem::PICO;
     cofre.probabilidad_de_no_dejar = 0.0;
     cofre.producto = TipoItem::COFRE;
-    cofre.cantidad = 1;
+    cofre.cantidad_minima = 1;
+    cofre.cantidad_maxima = 1;
     cofre.item_colocable = TipoItem::COFRE;
     return {cofre};
 }

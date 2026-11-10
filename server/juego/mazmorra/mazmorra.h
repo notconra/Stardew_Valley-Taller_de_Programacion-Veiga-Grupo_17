@@ -26,6 +26,7 @@ private:
     std::mt19937 generador;
     int enemigos_por_nivel;
     int objetos_por_nivel;
+    double probabilidad_de_cofre;
 
     size_t indice_de(IdJugador jugador) const;
     size_t indice_de_nivel(size_t numero) const;
@@ -33,7 +34,7 @@ private:
 public:
     Mazmorra(
         std::vector<GeografiaNivel> geografias, int enemigos_por_nivel, int objetos_por_nivel,
-        std::mt19937 generador);
+        double probabilidad_de_cofre, std::mt19937 generador);
 
     Mazmorra(const Mazmorra&) = delete;
     Mazmorra& operator=(const Mazmorra&) = delete;

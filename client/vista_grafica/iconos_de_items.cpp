@@ -101,11 +101,19 @@ Icono IconosDeItems::obtener_icono(TipoItem tipo, Calidad calidad) const {
 }
 
 void IconosDeItems::dibujar(
-    SDL_Renderer* renderer, TipoItem tipo, Calidad calidad, const SDL_Rect& destino) const {
+    SDL_Renderer* renderer, TipoItem tipo, Calidad calidad, const SDL_Rect& destino,
+    SDL_RendererFlip espejo, double angulo) const {
     const Icono icono = obtener_icono(tipo, calidad);
     if (icono.textura == nullptr) {
         return;
     }
     const bool recortado = icono.origen.w > 0 && icono.origen.h > 0;
-    SDL_RenderCopy(renderer, icono.textura, recortado ? &icono.origen : nullptr, &destino);
+    SDL_RenderCopyEx(
+        renderer,
+        icono.textura,
+        recortado ? &icono.origen : nullptr,
+        &destino,
+        angulo,
+        nullptr,
+        espejo);
 }

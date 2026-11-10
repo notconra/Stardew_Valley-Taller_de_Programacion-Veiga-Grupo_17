@@ -11,11 +11,15 @@
 // enemigo, le gasta energía al jugador por el esfuerzo del golpe y, si lo mata, suelta su oro.
 class AccionAtacar : public Accion {
 private:
-    static constexpr uint16_t DURACION_EN_TICKS = 6;
-    static constexpr int DANIO_BASE = 10;
-    static constexpr int COSTO_DE_ENERGIA = 3;
+    static constexpr uint16_t DURACION_POR_DEFECTO = 18;
+    // Ticks que el jugador queda ocupado después de un golpe: es el tiempo mínimo entre golpes.
+    const uint16_t duracion;
 
 public:
+    explicit AccionAtacar(uint16_t duracion_en_ticks = DURACION_POR_DEFECTO)
+        : duracion(duracion_en_ticks) {
+    }
+
     TipoAccion tipo() const override {
         return TipoAccion::ATACAR;
     }
@@ -27,7 +31,7 @@ public:
     bool ejecutar(ContextoDeAccion& c) override;
 
     uint16_t duracion_en_ticks() const override {
-        return DURACION_EN_TICKS;
+        return duracion;
     }
 };
 

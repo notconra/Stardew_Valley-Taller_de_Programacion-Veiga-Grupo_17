@@ -12,6 +12,9 @@ Textura::Textura(const std::string& ruta, SDL_Renderer* renderer) {
     textura = cargarTextura(ruta, renderer);
 }
 
+Textura::Textura(SDL_Texture* textura_existente) : textura(textura_existente) {
+}
+
 Textura::~Textura() {
     if (textura)
         SDL_DestroyTexture(textura);

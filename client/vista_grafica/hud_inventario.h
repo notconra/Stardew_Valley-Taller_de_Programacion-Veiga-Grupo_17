@@ -15,6 +15,7 @@ enum class ZonaDelHud : uint8_t {
     BARRA,
     COFRE,
     TACHO,
+    CERRAR_COFRE,
 };
 
 struct RanuraApuntada {
@@ -38,11 +39,19 @@ struct RanuraApuntada {
 //  - Clic en otra ranura (o el tacho): suelta ahí lo que tiene en la mano. Con el derecho suelta
 //    solo uno.
 //  - Clic fuera del HUD: tira al piso lo que tiene en la mano (solo si vino de la barra).
+//  - Shift + clic con un cofre abierto: mueve directo al otro contenedor, sin levantar el ítem.
+//    El izquierdo manda el stack completo y el derecho de a uno.
 class HudInventario {
 public:
     static constexpr const char* RUTA_ASSET_TACHO = "Assets/hud/tacho.png";
     static constexpr const char* RUTA_ASSET_VIDA = "Assets/hud/vida.png";
     static constexpr const char* RUTA_ASSET_ENERGIA = "Assets/hud/energia.png";
+    static constexpr const char* RUTA_ASSET_FONDO_BARRA = "Assets/hud/fondo_barra.png";
+    static constexpr const char* RUTA_ASSET_CASILLA = "Assets/hud/casilla.png";
+    static constexpr const char* RUTA_ASSET_CASILLA_SELECCIONADA =
+        "Assets/hud/casilla_seleccionada.png";
+    static constexpr const char* RUTA_ASSET_BOTON_CERRAR_COFRE =
+        "Assets/hud/boton_cerrar_cofre.png";
 
     HudInventario(SDL_Renderer* renderer, const IconosDeItems& iconos);
 
@@ -59,10 +68,11 @@ public:
     bool captura_el_clic(
         const InventarioJugador& inventario, const CofreJugador& cofre, int x, int y) const;
 
-    // Devuelve el comando a mandar al servidor, si el clic produjo uno.
+    // Devuelve el comando a mandar al servidor, si el clic produjo uno. Con "con_shift" y un cofre
+    // abierto, el clic mueve el ítem directamente al otro contenedor sin levantarlo.
     std::optional<ComandoCliente> procesar_clic(
         const InventarioJugador& inventario, const CofreJugador& cofre, int x, int y,
-        bool clic_derecho);
+        bool clic_derecho, bool con_shift);
 
     void dibujar(
         SDL_Renderer* renderer, const InventarioJugador& inventario, const CofreJugador& cofre,
@@ -77,6 +87,7 @@ public:
 
 private:
     static constexpr int MARGEN = 8;
+    static constexpr int MARGEN_INFERIOR_BARRA = 14;  // deja lugar al fondo de madera de la barra
     static constexpr int SEPARACION_RANURAS = 4;
     static constexpr int TAMANO_MINIMO_DE_RANURA = 16;
     static constexpr int TAMANO_MAXIMO_DE_RANURA = 40;
@@ -93,7 +104,9 @@ private:
         int cantidad_del_cofre = 0;              // 0 si no hay cofre abierto
         int columnas_del_cofre = 1;
         SDL_Rect cofre{0, 0, 0, 0};
+        SDL_Rect boton_de_cierre{0, 0, 0, 0};
         SDL_Rect fondo_del_cofre{0, 0, 0, 0};
+        SDL_Rect cabecera_del_cofre{0, 0, 0, 0};
 
         SDL_Rect ranura_de_la_barra(int indice) const {
             return SDL_Rect{
@@ -119,6 +132,10 @@ private:
     std::optional<Textura> tacho;
     std::optional<Textura> marco_de_vida;
     std::optional<Textura> marco_de_energia;
+    std::optional<Textura> fondo_barra;
+    std::optional<Textura> casilla;
+    std::optional<Textura> casilla_seleccionada;
+    std::optional<Textura> boton_cerrar_cofre;
 
     // Stack que el mouse tiene en la mano: de qué ranura salió y cuántos ítems agarró.
     RanuraApuntada levantada;
@@ -133,6 +150,13 @@ private:
         const RanuraApuntada& ranura, uint16_t cantidad);
     void cancelar_levantamiento();
 
+    // Permite que hacer shift + cllic mande el ítem al otro contenedor, apilándolo si hay un stack
+    // compatible o usando una ranura libre. Con el clic izquierdo va el stack completo y con el
+    // derecho de a uno.
+    std::optional<ComandoCliente> transferir_rapido(
+        const InventarioJugador& inventario, const CofreJugador& cofre,
+        const RanuraApuntada& origen, bool clic_derecho);
+
     // La ranura tal como se ve: la de origen del stack en la mano aparece con lo que quedó.
     RanuraInventario mostrada(const RanuraApuntada& ubicacion, RanuraInventario ranura) const;
 
@@ -144,6 +168,7 @@ private:
         SDL_Renderer* renderer, const SDL_Rect& rectangulo, uint16_t cantidad) const;
     void dibujar_panel_del_cofre(
         SDL_Renderer* renderer, const Disposicion& disposicion, const CofreJugador& cofre) const;
+    void dibujar_boton_de_cierre(SDL_Renderer* renderer, const SDL_Rect& rectangulo) const;
     void dibujar_item_levantado(
         SDL_Renderer* renderer, const Disposicion& disposicion, const InventarioJugador& inventario,
         const CofreJugador& cofre, int raton_x, int raton_y) const;

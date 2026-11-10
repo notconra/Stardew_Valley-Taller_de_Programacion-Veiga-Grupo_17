@@ -37,7 +37,8 @@ ControladorDeAcciones::ControladorDeAcciones(
         static_cast<uint16_t>(duraciones.duracion_tratar_tierra_en_ticks)));
     acciones.push_back(std::make_unique<AccionInteractuarCofre>());
     acciones.push_back(std::make_unique<AccionColocar>());
-    acciones.push_back(std::make_unique<AccionAtacar>());
+    acciones.push_back(
+        std::make_unique<AccionAtacar>(static_cast<uint16_t>(duraciones.duracion_atacar_en_ticks)));
 }
 
 bool ControladorDeAcciones::al_alcance(
@@ -133,6 +134,12 @@ bool ControladorDeAcciones::atender(Personaje& personaje, const ComandoCliente& 
     const UsarItem* pedido = std::get_if<UsarItem>(&comando);
     if (pedido == nullptr) {
         return false;
+    }
+
+    // Mientras un cofre está abierto el jugador queda en la pantalla del cofre. no puede usar
+    // herramientas ni interactuar con el mapa.
+    if (personaje.id_cofre_abierto != 0) {
+        return true;
     }
 
     if (personaje.esta_ocupado()) {

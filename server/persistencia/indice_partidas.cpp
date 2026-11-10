@@ -30,6 +30,16 @@ std::vector<EntradaIndicePartida> IndicePartidas::listar_todas() const {
     return resultado;
 }
 
+bool IndicePartidas::eliminar(const std::string& codigo) {
+    auto partida_encontrada = partidas.find(codigo);
+    if (partida_encontrada != partidas.end()) {
+        partidas.erase(partida_encontrada);
+        guardar();
+        return true;
+    }
+    return false;
+}
+
 void IndicePartidas::guardar() const {
     std::filesystem::path ruta_fs(ruta_archivo);
     if (ruta_fs.has_parent_path()) {

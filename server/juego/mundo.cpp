@@ -21,6 +21,7 @@ Mundo::Mundo(
           sectores, personajes, notificador_de_juego, recursos_de_juego.juego.drops),
       controlador_de_mazmorra(recursos_de_juego, sectores, datos_guardados.niveles_mazmorra),
       controlador_de_enemigos(sectores, personajes, notificador_de_juego),
+      controlador_de_trampas(sectores, personajes, notificador_de_juego),
       controlador_del_dia(
           recursos_de_juego.juego.dia, ticks_por_segundo, sectores, personajes, recursos_de_juego,
           notificador_de_juego,
@@ -54,6 +55,7 @@ void Mundo::completar_datos_guardados(
     datos.apariencia = personaje.apariencia;
     datos.vida = static_cast<uint16_t>(std::max(personaje.vida, 0));
     datos.energia = static_cast<uint16_t>(std::max(personaje.energia, 0));
+    datos.monedas = personaje.monedas;
     datos.tiene_cama = personaje.ultima_cama.has_value();
     datos.mapa_cama = datos.tiene_cama ? personaje.ultima_cama->mapa : "";
     datos.columna_cama =
@@ -69,6 +71,7 @@ void Mundo::restaurar(Personaje& personaje, const DatosJugadorGuardado& guardado
     }
     personaje.vida = std::min<int>(guardado.vida, Personaje::VIDA_MAXIMA);
     personaje.energia = std::min<int>(guardado.energia, Personaje::ENERGIA_MAXIMA);
+    personaje.monedas = guardado.monedas;
     if (guardado.tiene_cama) {
         personaje.ultima_cama = UbicacionDeCama{
             guardado.mapa_cama,
@@ -112,6 +115,9 @@ void Mundo::conectar(uint32_t id_jugador, const AparienciaPersonaje& apariencia)
         encontrado->second.apariencia = apariencia;
     }
     Personaje& personaje = encontrado->second;
+    if (personaje.esta_inconsciente()) {
+        return;
+    }
 
     if (personaje.conectado) {
         dar_de_baja(personaje);
@@ -201,11 +207,22 @@ void Mundo::resolver_transiciones_automaticas() {
     }
 }
 
+void Mundo::ajustar_velocidad_por_energia() {
+    for (auto& [id_jugador, personaje] : personajes) {
+        if (personaje.conectado && sectores.existe(personaje.mapa_actual)) {
+            sectores.en(personaje.mapa_actual)
+                .jugadores.fijar_velocidad(id_jugador, personaje.multiplicador_de_velocidad());
+        }
+    }
+}
+
 void Mundo::actualizar() {
     controlador_del_dia.actualizar();
+    ajustar_velocidad_por_energia();
     sectores.actualizar(controlador_del_dia.hora());
     resolver_transiciones_automaticas();
     controlador_de_enemigos.actualizar();
+    controlador_de_trampas.actualizar();
     sectores.difundir_jugadores();
     controlador_de_acciones.actualizar();
     controlador_de_cofres.actualizar();
@@ -367,4 +384,29 @@ std::string Mundo::estado_animales_granja() const {
 
 void Mundo::avanzar_dia_cheat() {
     controlador_del_dia.avanzar_dia_inmediato();
+}
+
+bool Mundo::sumar_monedas(uint32_t id_jugador, uint32_t cantidad) {
+    auto encontrado = personajes.find(id_jugador);
+    if (encontrado == personajes.end() || !encontrado->second.conectado) {
+        return false;
+    }
+    encontrado->second.recibir_monedas(cantidad);
+    return true;
+}
+
+bool Mundo::gastar_monedas(uint32_t id_jugador, uint32_t cantidad) {
+    auto encontrado = personajes.find(id_jugador);
+    if (encontrado == personajes.end() || !encontrado->second.conectado) {
+        return false;
+    }
+    return encontrado->second.gastar_monedas(cantidad);
+}
+
+uint32_t Mundo::obtener_monedas(uint32_t id_jugador) const {
+    auto encontrado = personajes.find(id_jugador);
+    if (encontrado == personajes.end() || !encontrado->second.conectado) {
+        return 0;
+    }
+    return encontrado->second.monedas;
 }

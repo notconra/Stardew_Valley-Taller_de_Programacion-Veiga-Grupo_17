@@ -10,6 +10,11 @@
 // ranura real del arreglo: el servidor lo traduce al índice activo del personaje.
 constexpr uint8_t INDICE_RANURA_ACTIVA = 0xFF;
 
+// Índice con el que el cliente pide "la ranura que mejor convenga". El servidor busca primero un
+// stack compatible con espacio y, si no hay, una ranura vacía. Se usa para las transferencias
+// rápidas con Shift.
+constexpr uint8_t INDICE_RANURA_AUTOMATICA = 0xFE;
+
 // Una ranura del inventario. La calidad solo tiene sentido para los cultivos, el resto de los
 // ítems usa siempre Calidad::BASE.
 struct RanuraInventario {

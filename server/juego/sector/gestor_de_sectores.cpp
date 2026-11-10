@@ -236,6 +236,7 @@ std::vector<EstadoJugador> GestorDeSectores::armar_jugadores(const std::string& 
             estado.accion_actual = personaje->second.accion_actual;
             estado.vida = static_cast<uint8_t>(personaje->second.vida);
             estado.energia = static_cast<uint8_t>(personaje->second.energia);
+            estado.monedas = personaje->second.monedas;
             estado.apariencia = personaje->second.apariencia;
         }
 
@@ -253,6 +254,7 @@ EstadoJuego GestorDeSectores::armar_instantanea(const std::string& id_mapa) cons
     sector.objetos.agregar_a(estado);
     sector.drops.agregar_a(estado);
     sector.enemigos.agregar_a(estado);
+    sector.trampas.agregar_a(estado);
     sector.tierra.agregar_a(estado.tierra);
     sector.animales.agregar_a(estado);
     return estado;

@@ -24,6 +24,7 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
     escritor.escribir_u8(datos.jugadores_maximos);
     escritor.escribir_bool(datos.multijugador);
     escritor.escribir_u32(datos.mundo.dia);
+    escritor.escribir_u32(datos.mundo.segundos_jugados);
 
     escritor.escribir_u8(static_cast<uint8_t>(datos.mundo.jugadores.size()));
     for (const auto& jugador : datos.mundo.jugadores) {
@@ -44,6 +45,10 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
         }
 
         escritor.escribir_bool(jugador.apariencia.es_femenino);
+        escritor.escribir_u8(jugador.apariencia.indice_piel);
+        escritor.escribir_u8(jugador.apariencia.color_ojos.rojo);
+        escritor.escribir_u8(jugador.apariencia.color_ojos.verde);
+        escritor.escribir_u8(jugador.apariencia.color_ojos.azul);
         escritor.escribir_u8(jugador.apariencia.indice_pelo);
         escritor.escribir_u8(jugador.apariencia.color_pelo.rojo);
         escritor.escribir_u8(jugador.apariencia.color_pelo.verde);
@@ -57,6 +62,7 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
 
         escritor.escribir_u16(jugador.vida);
         escritor.escribir_u16(jugador.energia);
+        escritor.escribir_u32(jugador.monedas);
         escritor.escribir_bool(jugador.tiene_cama);
         escritor.escribir_texto(jugador.mapa_cama);
         escritor.escribir_u32(jugador.columna_cama);
@@ -133,6 +139,7 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
     datos.jugadores_maximos = lector.leer_u8();
     datos.multijugador = lector.leer_bool();
     datos.mundo.dia = lector.leer_u32();
+    datos.mundo.segundos_jugados = lector.leer_u32();
 
     uint8_t cant_jugadores = lector.leer_u8();
     for (uint8_t indice_jugador = 0; indice_jugador < cant_jugadores; ++indice_jugador) {
@@ -156,6 +163,10 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
         }
 
         jugador.apariencia.es_femenino = lector.leer_bool();
+        jugador.apariencia.indice_piel = lector.leer_u8();
+        jugador.apariencia.color_ojos.rojo = lector.leer_u8();
+        jugador.apariencia.color_ojos.verde = lector.leer_u8();
+        jugador.apariencia.color_ojos.azul = lector.leer_u8();
         jugador.apariencia.indice_pelo = lector.leer_u8();
         jugador.apariencia.color_pelo.rojo = lector.leer_u8();
         jugador.apariencia.color_pelo.verde = lector.leer_u8();
@@ -169,6 +180,7 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
 
         jugador.vida = lector.leer_u16();
         jugador.energia = lector.leer_u16();
+        jugador.monedas = lector.leer_u32();
         jugador.tiene_cama = lector.leer_bool();
         jugador.mapa_cama = lector.leer_texto();
         jugador.columna_cama = lector.leer_u32();

@@ -6,10 +6,11 @@
 
 Mazmorra::Mazmorra(
     std::vector<GeografiaNivel> geografias, int enemigos_por_nivel, int objetos_por_nivel,
-    std::mt19937 generador)
+    double probabilidad_de_cofre_inicial, std::mt19937 generador)
     : generador(std::move(generador)),
       enemigos_por_nivel(enemigos_por_nivel),
-      objetos_por_nivel(objetos_por_nivel) {
+      objetos_por_nivel(objetos_por_nivel),
+      probabilidad_de_cofre(probabilidad_de_cofre_inicial) {
     if (geografias.size() != static_cast<size_t>(CANTIDAD_NIVELES)) {
         throw std::invalid_argument(
             "la mazmorra necesita " + std::to_string(CANTIDAD_NIVELES) +
@@ -43,8 +44,13 @@ void Mazmorra::entrar(IdJugador jugador) {
             "el jugador " + std::to_string(jugador) + " ya esta adentro de la mazmorra");
     }
     if (esta_vacia()) {
+        std::bernoulli_distribution sorteo_de_cofre(probabilidad_de_cofre);
         for (std::optional<Nivel>& nivel : niveles) {
-            nivel->sortear(generador, enemigos_por_nivel, objetos_por_nivel);
+            nivel->sortear(
+                generador,
+                enemigos_por_nivel,
+                objetos_por_nivel,
+                sorteo_de_cofre(generador));
         }
     }
     nivel_de_jugador[jugador] = 0;

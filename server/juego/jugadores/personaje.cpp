@@ -1,6 +1,13 @@
 #include "personaje.h"
 
+#include <random>
 #include <string>
+
+uint32_t Personaje::sortear_monedas_iniciales() {
+    static std::mt19937 generador{std::random_device{}()};
+    std::uniform_int_distribution<uint32_t> dist(MONEDAS_INICIALES_MIN, MONEDAS_INICIALES_MAX);
+    return dist(generador);
+}
 
 Personaje::Personaje(
     uint32_t id, const std::string& mapa_inicial, const CatalogoDeItems& catalogo,
@@ -8,7 +15,8 @@ Personaje::Personaje(
     : id_jugador(id),
       mapa_actual(mapa_inicial),
       inventario(catalogo, cantidad_ranuras_barra),
-      ranura_activa(0) {
+      ranura_activa(0),
+      monedas(sortear_monedas_iniciales()) {
     // Al crearse (solo la primera vez que el jugador entra) recibe las herramientas que el
     // catálogo marque con cantidad inicial y su cama, que pone él donde quiera de la casa. Nada
     // más: lo demás se consigue jugando.
@@ -18,6 +26,22 @@ Personaje::Personaje(
             inventario.agregar_item(tipo, definicion.cantidad_inicial);
         }
     }
+}
+
+void Personaje::recibir_monedas(uint32_t cantidad) {
+    if (MONEDAS_MAXIMAS - monedas < cantidad) {
+        monedas = MONEDAS_MAXIMAS;
+    } else {
+        monedas += cantidad;
+    }
+}
+
+bool Personaje::gastar_monedas(uint32_t cantidad) {
+    if (monedas < cantidad) {
+        return false;
+    }
+    monedas -= cantidad;
+    return true;
 }
 
 uint8_t Personaje::resolver_ranura(uint8_t indice_ranura) const {
@@ -52,8 +76,17 @@ bool Personaje::esta_ocupado() const {
 }
 
 double Personaje::multiplicador_de_ataque() const {
-    constexpr int UMBRAL_VIDA_BAJA = VIDA_MAXIMA / 5;  // 20%
+    constexpr int UMBRAL_VIDA_BAJA = VIDA_MAXIMA / 5;
     return vida <= UMBRAL_VIDA_BAJA ? 0.5 : 1.0;
+}
+
+double Personaje::multiplicador_de_velocidad() const {
+    constexpr int UMBRAL_ENERGIA_BAJA = ENERGIA_MAXIMA / 10;
+    return energia <= UMBRAL_ENERGIA_BAJA ? 0.5 : 1.0;
+}
+
+bool Personaje::puede_ser_lastimado() const {
+    return !esta_inconsciente() && descanso == EstadoDeDescanso::DESPIERTO;
 }
 
 bool Personaje::esta_inconsciente() const {

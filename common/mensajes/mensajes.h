@@ -15,13 +15,13 @@
 
 using ComandoCliente = std::variant<
     // Lobby
-    Identificarse, ListarPartidas, CrearPartida, UnirsePartida, RetomarPartida,
+    Identificarse, ListarPartidas, CrearPartida, UnirsePartida, RetomarPartida, EliminarPartida,
 
     // Partida
     ActivarMultijugador, SalirDePartida, Moverse, GuardarPartida,
 
     // Inventario y acciones
-    SeleccionarRanuraDeLaBarra, UsarItem, MoverItemEntreRanuras, MoverItemConCofre,
+    SeleccionarRanuraDeLaBarra, UsarItem, MoverItemEntreRanuras, MoverItemConCofre, CerrarCofre,
     SolicitarInventario, SoltarItem, ConsultarCasilla,
 
     // Fin del día
@@ -42,7 +42,7 @@ using EventoServidor = std::variant<
 
     // - Sector
     EstadoJuego, JugadoresEnSector, ObjetoColocado, ObjetoRetirado, DropAparecido, DropRetirado,
-    EnemigoActualizado, TierraCambiada, AnimalActualizado, VacaOrdeniable,
+    EnemigoActualizado, TrampaActualizada, TierraCambiada, AnimalActualizado, VacaOrdeniable,
 
     // - Tiempo
     HoraDelJuego,

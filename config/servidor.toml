@@ -138,7 +138,7 @@ destinos_con_clic = ["FarmHouse", "siguiente"]
 [juego.dia]
 # Un día de juego va de las 6 am a las 2 am (20 horas de juego). velocidad elige cuánto dura en
 # tiempo real: "lento" = 20 minutos, "medio" = 14 minutos (lo que pide el enunciado), "rapido" = 7.
-velocidad = "rapido"
+velocidad = "medio"
 # Si está, pisa a la velocidad (en minutos reales, acepta decimales). Útil para probar: con 1.0
 # cada día dura un minuto.
 # duracion_en_minutos = 1.0
@@ -166,6 +166,11 @@ dias_por_estacion = 28
 # alcance_en_casillas = 1
 duracion_picar_en_ticks = 16
 duracion_tratar_tierra_en_ticks = 16
+duracion_atacar_en_ticks = 18
+danio_espada = 25
+energia_por_golpe = 3
+energia_por_picar = 3
+energia_por_tratar_tierra = 3
 
 [juego.drops]
 # radio_de_recogida_en_casillas = 1
@@ -175,36 +180,112 @@ duracion_tratar_tierra_en_ticks = 16
 destino = "mazmorra"
 mapas = ["mina_1", "mina_2", "mina_3", "mina_4", "mina_5", "mina_6", "mina_7", "mina_8", "mina_9", "mina_11", "mina_12", "mina_13", "mina_14", "mina_15", "mina_16", "mina_17", "mina_18", "mina_19", "mina_21", "mina_24"]
 enemigos_por_nivel = 4
-minerales_por_nivel = 30
+minerales_por_nivel = 50
+# Probabilidad de que cada nivel tenga un cofre abandonado (entre 0.0 y 1.0).
+probabilidad_de_cofre = 0.90
+
+[mazmorra.enemigos.esqueleto]
+vida = 30
+danio = 5
+ticks_entre_ataques = 70
+ticks_para_revivir = 600
+ticks_por_casilla = 20
+radio_de_vision = 5
+radio_de_deambulo = 3
+oro_minimo = 0
+oro_maximo = 10
+
+[mazmorra.enemigos.orco]
+vida = 60
+danio = 8
+ticks_entre_ataques = 60
+ticks_para_revivir = 0
+ticks_por_casilla = 16
+radio_de_vision = 6
+radio_de_deambulo = 3
+oro_minimo = 0
+oro_maximo = 10
+probabilidad_de_plata_al_morir = 0.20
+grupos_por_nivel = 1
+tamano_grupo_minimo = 3
+tamano_grupo_maximo = 6
+probabilidad_de_manada_por_plata = 0.10
+distancia_de_aparicion_de_manada = 8
+
+[mazmorra.enemigos.vampiros]
+parejas_por_nivel = 1
+multiplicador_de_frenesi = 2.0
+radio_de_sangre = 3
+
+[mazmorra.enemigos.vampiros.vampira]
+vida = 80
+danio = 8
+ticks_entre_ataques = 50
+ticks_para_revivir = 200
+ticks_por_casilla = 10
+radio_de_vision = 7
+radio_de_deambulo = 3
+oro_minimo = 5
+oro_maximo = 15
+
+[mazmorra.enemigos.vampiros.vampiro]
+vida = 100
+danio = 14
+ticks_entre_ataques = 60
+ticks_para_revivir = 200
+ticks_por_casilla = 18
+radio_de_vision = 7
+radio_de_deambulo = 3
+oro_minimo = 5
+oro_maximo = 15
+
+# Pinches en el suelo (enunciado: se activan por tiempo). Pasan ticks_inactiva guardados y
+# ticks_activa afuera; a cada jugador parado encima le sacan "danio" una vez por activación.
+[mazmorra.trampas]
+por_nivel = 24
+danio = 10
+ticks_inactiva = 90
+ticks_activa = 30
 
 # Minerales (opcional). Si hay al menos un [[mazmorra.minerales]], reemplazan a los por defecto:
 # los que no listemos acá no aparecen en los niveles. "peso" es la frecuencia relativa y
 # "desde_nivel" el primer nivel donde puede aparecer (el enunciado pide el oro desde el 5).
+# "cantidad_minima" y "cantidad_maxima" son el rango de unidades que deja al picarse (inclusive).
 # Claves válidas: PIEDRA, CARBON, LAPISLAZULI, PLATA, ORO.
 
 [[mazmorra.minerales]]
 clave = "PIEDRA"
 golpes_para_picar = 1
-peso = 50
+peso = 100
+cantidad_minima = 1
+cantidad_maxima = 3
 
 [[mazmorra.minerales]]
 clave = "CARBON"
 golpes_para_picar = 1
-peso = 50
+peso = 25
+cantidad_minima = 1
+cantidad_maxima = 2
 
 [[mazmorra.minerales]]
 clave = "PLATA"
-golpes_para_picar = 2
-peso = 50
+golpes_para_picar = 3
+peso = 6
+cantidad_minima = 1
+cantidad_maxima = 2
 
 [[mazmorra.minerales]]
 clave = "LAPISLAZULI"
-golpes_para_picar = 3
-peso = 12
+golpes_para_picar = 2
+peso = 10
 probabilidad_de_no_dejar = 0.15
+cantidad_minima = 1
+cantidad_maxima = 2
 
 [[mazmorra.minerales]]
 clave = "ORO"
 golpes_para_picar = 4
-peso = 2
+peso = 1
+cantidad_minima = 1
+cantidad_maxima = 2
 desde_nivel = 5
