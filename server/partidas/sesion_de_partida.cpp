@@ -3,11 +3,14 @@
 #include <exception>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <thread>
 #include <utility>
 #include <vector>
+
+#include "../juego/chat/comando_dinero.h"
 
 SesionDePartida::SesionDePartida(
     const std::string& codigo_de_partida, const ConfiguracionPartidaServidor& configuracion_partida,
@@ -23,6 +26,7 @@ SesionDePartida::SesionDePartida(
       guardar_al_terminar_el_dia(std::move(guardar)),
       segundos_jugados_iniciales(datos_guardados.segundos_jugados),
       tiempo_inicio_sesion(std::chrono::steady_clock::now()) {
+    chat.agregar_comando(std::make_unique<ComandoDinero>(mundo));
     try {
         start();
     } catch (...) {

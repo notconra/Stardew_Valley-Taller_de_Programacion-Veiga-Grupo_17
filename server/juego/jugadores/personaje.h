@@ -48,8 +48,9 @@ struct Personaje {
     AparienciaPersonaje apariencia;
 
     // Vida del jugador en combate (ver "Un día en el juego" del enunciado). Arranca a tope, baja
-    // con los golpes de los enemigos y se repone al dormir (ver ControladorDelDia). VIDA_MAXIMA toma el valor de VIDA_MAXIMA_JUGADOR (común con el
-    // cliente) para que el servidor y la barra de vida del HUD nunca se desincronicen.
+    // con los golpes de los enemigos y se repone al dormir (ver ControladorDelDia). VIDA_MAXIMA
+    // toma el valor de VIDA_MAXIMA_JUGADOR (común con el cliente) para que el servidor y la barra
+    // de vida del HUD nunca se desincronicen.
     static constexpr int VIDA_MAXIMA = VIDA_MAXIMA_JUGADOR;
     int vida = VIDA_MAXIMA;
 
@@ -61,6 +62,13 @@ struct Personaje {
     static constexpr int ENERGIA_MAXIMA = ENERGIA_MAXIMA_JUGADOR;
     int energia = ENERGIA_MAXIMA;
 
+    // Monedas de oro del jugador (el enunciado pide una cantidad inicial de monedas de oro entre 0
+    // y 100, elegida de manera aleatoria al crearse por primera vez).
+    static constexpr uint32_t MONEDAS_INICIALES_MIN = 0;
+    static constexpr uint32_t MONEDAS_INICIALES_MAX = 100;
+    static constexpr uint32_t MONEDAS_MAXIMAS = 99'999'999;
+    uint32_t monedas = 0;
+
     // El fin del día (ver ControladorDelDia). Acostado en una cama o desmayado, el jugador espera
     // el día siguiente y tiene que dar el OK. "ultima_cama" es donde se despierta si se desmaya.
     EstadoDeDescanso descanso = EstadoDeDescanso::DESPIERTO;
@@ -70,6 +78,12 @@ struct Personaje {
     Personaje(
         uint32_t id, const std::string& mapa_inicial, const CatalogoDeItems& catalogo,
         uint8_t cantidad_ranuras_barra);
+
+    // Acredita monedas de oro a la billetera del jugador.
+    void recibir_monedas(uint32_t cantidad);
+
+    // Descuenta monedas de oro si hay saldo suficiente. Devuelve false si no alcanza la plata.
+    bool gastar_monedas(uint32_t cantidad);
 
     // Traduce el índice que mandó el cliente (INDICE_RANURA_ACTIVA o una ranura real).
     uint8_t resolver_ranura(uint8_t indice_ranura) const;
@@ -90,8 +104,8 @@ struct Personaje {
     // que esto es lo que hay que multiplicar al daño que reparte con la espada.
     double multiplicador_de_ataque() const;
 
-    // Con el 10% de energía o menos el jugador camina a la mitad de velocidad (regla del enunciado).
-    // Es lo que hay que multiplicar a su velocidad de movimiento.
+    // Con el 10% de energía o menos el jugador camina a la mitad de velocidad (regla del
+    // enunciado). Es lo que hay que multiplicar a su velocidad de movimiento.
     double multiplicador_de_velocidad() const;
 
     // Si está a tope de vida (no puede subir más) o a cero (no baja de ahí).
@@ -114,6 +128,9 @@ struct Personaje {
     Personaje& operator=(const Personaje&) = delete;
     Personaje(Personaje&&) = default;
     Personaje& operator=(Personaje&&) = default;
+
+private:
+    static uint32_t sortear_monedas_iniciales();
 };
 
 #endif

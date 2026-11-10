@@ -262,6 +262,7 @@ EstadoJugador ProtocoloCliente::recibir_estado_jugador() {
     estado.accion_actual = static_cast<TipoAccion>(recibir_u8());
     estado.vida = recibir_u8();
     estado.energia = recibir_u8();
+    estado.monedas = recibir_u32();
     estado.apariencia = recibir_apariencia();
     return estado;
 }

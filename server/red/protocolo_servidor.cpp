@@ -255,6 +255,7 @@ void ProtocoloServidor::enviar_estado_jugador(const EstadoJugador& estado) {
     enviar_u8(static_cast<uint8_t>(estado.accion_actual));
     enviar_u8(estado.vida);
     enviar_u8(estado.energia);
+    enviar_u32(estado.monedas);
     enviar_apariencia(estado.apariencia);
 }
 

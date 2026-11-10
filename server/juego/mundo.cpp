@@ -54,6 +54,7 @@ void Mundo::completar_datos_guardados(
     datos.apariencia = personaje.apariencia;
     datos.vida = static_cast<uint16_t>(std::max(personaje.vida, 0));
     datos.energia = static_cast<uint16_t>(std::max(personaje.energia, 0));
+    datos.monedas = personaje.monedas;
     datos.tiene_cama = personaje.ultima_cama.has_value();
     datos.mapa_cama = datos.tiene_cama ? personaje.ultima_cama->mapa : "";
     datos.columna_cama =
@@ -69,6 +70,7 @@ void Mundo::restaurar(Personaje& personaje, const DatosJugadorGuardado& guardado
     }
     personaje.vida = std::min<int>(guardado.vida, Personaje::VIDA_MAXIMA);
     personaje.energia = std::min<int>(guardado.energia, Personaje::ENERGIA_MAXIMA);
+    personaje.monedas = guardado.monedas;
     if (guardado.tiene_cama) {
         personaje.ultima_cama = UbicacionDeCama{
             guardado.mapa_cama,
@@ -278,4 +280,29 @@ uint32_t Mundo::obtener_dia() const {
 
 bool Mundo::tomar_dia_terminado() {
     return controlador_del_dia.tomar_dia_terminado();
+}
+
+bool Mundo::sumar_monedas(uint32_t id_jugador, uint32_t cantidad) {
+    auto encontrado = personajes.find(id_jugador);
+    if (encontrado == personajes.end() || !encontrado->second.conectado) {
+        return false;
+    }
+    encontrado->second.recibir_monedas(cantidad);
+    return true;
+}
+
+bool Mundo::gastar_monedas(uint32_t id_jugador, uint32_t cantidad) {
+    auto encontrado = personajes.find(id_jugador);
+    if (encontrado == personajes.end() || !encontrado->second.conectado) {
+        return false;
+    }
+    return encontrado->second.gastar_monedas(cantidad);
+}
+
+uint32_t Mundo::obtener_monedas(uint32_t id_jugador) const {
+    auto encontrado = personajes.find(id_jugador);
+    if (encontrado == personajes.end() || !encontrado->second.conectado) {
+        return 0;
+    }
+    return encontrado->second.monedas;
 }
