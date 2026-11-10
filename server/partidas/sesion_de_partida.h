@@ -62,6 +62,8 @@ private:
     std::map<uint32_t, ColaDeEventosDelJugador> clientes;
     std::vector<CambioDeConexion> cambios_de_conexion;
     GuardarAlTerminarElDia guardar_al_terminar_el_dia;
+    uint32_t segundos_jugados_iniciales = 0;
+    std::chrono::steady_clock::time_point tiempo_inicio_sesion;
 
     // Le pasa a Mundo las altas y bajas anotadas desde el tick anterior.
     void aplicar_cambios_de_conexion();
@@ -85,6 +87,8 @@ public:
 
     bool esta_viva() const;
     std::vector<std::string> obtener_niveles_mazmorra() const;
+    uint32_t obtener_dia() const;
+    uint32_t obtener_segundos_jugados() const;
 
     void entrar(
         uint32_t id_jugador, const std::string& nombre_jugador, ColorDeJugador color_jugador,

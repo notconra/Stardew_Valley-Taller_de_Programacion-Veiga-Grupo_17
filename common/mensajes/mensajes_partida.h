@@ -147,6 +147,7 @@ struct EstadoJugador {
     TipoAccion accion_actual = TipoAccion::NINGUNA;
     uint8_t vida = VIDA_MAXIMA_JUGADOR;
     uint8_t energia = ENERGIA_MAXIMA_JUGADOR;
+    uint32_t monedas = 0;
     AparienciaPersonaje apariencia;
 
     // Esto sirve pq el servidor compara con lo último que mandó para no repetir un

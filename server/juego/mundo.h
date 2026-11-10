@@ -87,6 +87,11 @@ public:
     int dar_items(uint32_t id_jugador, TipoItem tipo, uint16_t cantidad);
     void actualizar();
 
+    // Operaciones sobre la billetera de monedas del jugador.
+    bool sumar_monedas(uint32_t id_jugador, uint32_t cantidad);
+    bool gastar_monedas(uint32_t id_jugador, uint32_t cantidad);
+    uint32_t obtener_monedas(uint32_t id_jugador) const;
+
     // Devuelve los datos guardados o en vivo de un jugador (posición, inventario, etc.).
     std::optional<DatosJugadorGuardado> obtener_datos_jugador(uint32_t id_jugador) const;
     std::vector<std::string> obtener_niveles_mazmorra() const;

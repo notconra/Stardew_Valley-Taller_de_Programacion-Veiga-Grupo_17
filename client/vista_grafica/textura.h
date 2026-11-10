@@ -9,6 +9,7 @@ class Textura {
 public:
     Textura();
     Textura(const std::string& ruta, SDL_Renderer* renderer);
+    explicit Textura(SDL_Texture* textura_existente);
     ~Textura();
 
     Textura(const Textura&) = delete;

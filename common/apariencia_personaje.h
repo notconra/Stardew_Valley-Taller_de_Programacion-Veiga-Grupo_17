@@ -13,6 +13,8 @@ struct ColorRGB {
 
 struct AparienciaPersonaje {
     bool es_femenino = false;
+    uint8_t indice_piel = 0;
+    ColorRGB color_ojos{104, 43, 15};
     uint8_t indice_pelo = 0;
     ColorRGB color_pelo{115, 65, 35};
     uint8_t indice_remera = 0;

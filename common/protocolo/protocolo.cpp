@@ -115,6 +115,10 @@ std::string Protocolo::recibir_texto() {
 
 void Protocolo::enviar_apariencia(const AparienciaPersonaje& apariencia) {
     enviar_booleano(apariencia.es_femenino);
+    enviar_u8(apariencia.indice_piel);
+    enviar_u8(apariencia.color_ojos.rojo);
+    enviar_u8(apariencia.color_ojos.verde);
+    enviar_u8(apariencia.color_ojos.azul);
     enviar_u8(apariencia.indice_pelo);
     enviar_u8(apariencia.color_pelo.rojo);
     enviar_u8(apariencia.color_pelo.verde);
@@ -130,6 +134,10 @@ void Protocolo::enviar_apariencia(const AparienciaPersonaje& apariencia) {
 AparienciaPersonaje Protocolo::recibir_apariencia() {
     AparienciaPersonaje apariencia;
     apariencia.es_femenino = recibir_booleano();
+    apariencia.indice_piel = recibir_u8();
+    apariencia.color_ojos.rojo = recibir_u8();
+    apariencia.color_ojos.verde = recibir_u8();
+    apariencia.color_ojos.azul = recibir_u8();
     apariencia.indice_pelo = recibir_u8();
     apariencia.color_pelo.rojo = recibir_u8();
     apariencia.color_pelo.verde = recibir_u8();

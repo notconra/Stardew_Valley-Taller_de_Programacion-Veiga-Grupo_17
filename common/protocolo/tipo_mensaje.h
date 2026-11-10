@@ -28,6 +28,7 @@ enum class TipoMensaje : uint8_t {
     CERRAR_COFRE = 0x12,
     CONSULTAR_CASILLA = 0x13,
     DAR_EL_OK = 0x14,
+    ELIMINAR_PARTIDA = 0x15,
 
     // Servidor a cliente
     ERROR_SERVIDOR = 0x81,

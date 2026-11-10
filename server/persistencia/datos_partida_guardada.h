@@ -25,6 +25,7 @@ struct DatosJugadorGuardado {
     AparienciaPersonaje apariencia;
     uint16_t vida = VIDA_MAXIMA_JUGADOR;
     uint16_t energia = ENERGIA_MAXIMA_JUGADOR;
+    uint32_t monedas = 0;
     bool tiene_cama = false;
     std::string mapa_cama;
     uint32_t columna_cama = 0;
@@ -88,6 +89,7 @@ struct DatosCultivoGuardado {
 
 struct DatosMundoGuardado {
     uint32_t dia = 1;
+    uint32_t segundos_jugados = 0;
     std::vector<DatosJugadorGuardado> jugadores;
     std::vector<DatosMapaGuardado> mapas;
     std::vector<std::string> niveles_mazmorra;

@@ -1,5 +1,7 @@
 #include "pantallaprincipal.h"
 
+#include <QDialog>
+#include <QFontDatabase>
 #include <QHeaderView>
 #include <QIcon>
 #include <QInputDialog>
@@ -10,57 +12,33 @@
 #include <cmath>
 #include <iostream>
 #include <limits>
+#include <memory>
+#include <random>
 #include <string>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
+#include "recursos_ui.h"
 #include "ui_pantallaprincipal.h"
 
 constexpr const char* RUTA_CUERPO_MASCULINO = "Assets/Characters/Farmer/farmer_base.png";
 constexpr const char* RUTA_CUERPO_FEMENINO = "Assets/Characters/Farmer/farmer_girl_base.png";
+constexpr const char* RUTA_FUENTE_STARDEW = "Assets/Fonts/stardew-valley.ttf/stardew-valley.ttf";
+constexpr const char* RUTA_FUENTE_DIALOGO = "Assets/fuentes/Stardew_Valley_Dialogue.ttf";
 
-constexpr OpcionColor COLORES_PELO[] = {
-    {"Castaño", {115, 65, 35}},
-    {"Rubio", {220, 185, 85}},
-    {"Negro", {40, 35, 35}},
-    {"Pelirrojo", {180, 65, 30}},
-    {"Azul", {55, 95, 195}},
-    {"Rosa", {215, 95, 155}},
-    {"Verde", {55, 160, 85}},
-    {"Blanco", {230, 230, 230}},
-};
-constexpr int CANTIDAD_COLORES_PELO = sizeof(COLORES_PELO) / sizeof(COLORES_PELO[0]);
-
-constexpr OpcionColor COLORES_PANTALON[] = {
-    {"Azul clásico", {45, 65, 120}},
-    {"Negro", {40, 40, 45}},
-    {"Marrón", {95, 65, 40}},
-    {"Gris", {115, 115, 125}},
-    {"Verde oliva", {65, 95, 55}},
-    {"Bordó", {125, 45, 45}},
-};
-constexpr int CANTIDAD_COLORES_PANTALON = sizeof(COLORES_PANTALON) / sizeof(COLORES_PANTALON[0]);
-
-constexpr int CANTIDAD_PEINADOS = 16;
-constexpr int CANTIDAD_REMERAS = 16;
+constexpr int CANTIDAD_PIELES = 24;
+constexpr int CANTIDAD_PEINADOS = 56;
+constexpr int CANTIDAD_REMERAS = 112;
 constexpr int CANTIDAD_SOMBREROS = 122;
-constexpr int CANTIDAD_TIPOS_PANTALON = 6;
+constexpr int CANTIDAD_TIPOS_PANTALON = 16;
 
-int PantallaPrincipal::encontrar_indice_color_cercano(
-    const ColorRGB& color, const OpcionColor* opciones, int cantidad) const {
-    int mejor_indice = 0;
-    int menor_diferencia = std::numeric_limits<int>::max();
-    for (int i = 0; i < cantidad; ++i) {
-        int dr = static_cast<int>(color.rojo) - static_cast<int>(opciones[i].rgb.rojo);
-        int dg = static_cast<int>(color.verde) - static_cast<int>(opciones[i].rgb.verde);
-        int db = static_cast<int>(color.azul) - static_cast<int>(opciones[i].rgb.azul);
-        int diferencia = dr * dr + dg * dg + db * db;
-        if (diferencia < menor_diferencia) {
-            menor_diferencia = diferencia;
-            mejor_indice = i;
-        }
-    }
-    return mejor_indice;
-}
+constexpr int MAX_MATIZ_HSV = 359;
+constexpr int MAX_CANAL_COLOR = 255;
+constexpr int MAX_VALOR_SLIDER_HSV = 100;
+
+constexpr size_t MAX_PARTIDAS_VISIBLES_SIN_SCROLL = 4;
+constexpr int PASO_SCROLL_POR_TARJETA = 108;
 
 PantallaPrincipal::PantallaPrincipal(
     ConexionConServidor& conexion, EntradaExitosaAPartida& partida_actual,
@@ -70,9 +48,12 @@ PantallaPrincipal::PantallaPrincipal(
       conexion(conexion),
       partida_actual(partida_actual),
       configuracion_jugador(configuracion_jugador) {
+    QFontDatabase::addApplicationFont(RUTA_FUENTE_STARDEW);
+    QFontDatabase::addApplicationFont(RUTA_FUENTE_DIALOGO);
     ui->setupUi(this);
     configurar_ventana();
     inicializar_selectores_personaje();
+    inicializar_selector_granjas();
     connect(ui->btn_salir, &QPushButton::clicked, this, &PantallaPrincipal::close);
     connect(
         ui->btn_nueva_partida,
@@ -89,32 +70,11 @@ PantallaPrincipal::PantallaPrincipal(
         &QPushButton::clicked,
         this,
         &PantallaPrincipal::preparar_unirse_partida);
-    connect(ui->btn_volver_menu, &QPushButton::clicked, this, &PantallaPrincipal::volver_al_menu);
     connect(
         ui->btn_confirmar_personaje,
         &QPushButton::clicked,
         this,
         &PantallaPrincipal::confirmar_personaje);
-    connect(
-        ui->btn_volver_retomar,
-        &QPushButton::clicked,
-        this,
-        &PantallaPrincipal::volver_al_menu);
-    connect(
-        ui->btn_jugar_retomar,
-        &QPushButton::clicked,
-        this,
-        &PantallaPrincipal::confirmar_retomar_partida);
-    connect(
-        ui->tabla_partidas,
-        &QTableWidget::itemSelectionChanged,
-        this,
-        &PantallaPrincipal::actualizar_seleccion_partida);
-    connect(
-        ui->tabla_partidas,
-        &QTableWidget::cellDoubleClicked,
-        this,
-        &PantallaPrincipal::confirmar_retomar_partida);
 }
 
 PantallaPrincipal::~PantallaPrincipal() {
@@ -122,6 +82,7 @@ PantallaPrincipal::~PantallaPrincipal() {
 }
 
 void PantallaPrincipal::configurar_ventana() {
+    qApp->setStyleSheet(this->styleSheet());
     this->setMinimumSize(800, 600);
     this->resize(1024, 768);
     this->setMaximumSize(16777215, 16777215);
@@ -146,7 +107,35 @@ void PantallaPrincipal::configurar_ventana() {
         ui->btn_unirse_codigo,
         ui->btn_salir);
 
-    configurar_tabla_partidas();
+    ui->marco_madera_retomar->setFixedSize(880, 452);
+    ui->layout_tarjetas_partidas->setAlignment(Qt::AlignTop);
+    ui->label_sin_partidas->setVisible(false);
+    ui->scrollbar_partidas->setFixedSize(24, 452);
+    ui->scrollbar_partidas->setVisible(false);
+    ui->scrollbar_partidas->setSingleStep(PASO_SCROLL_POR_TARJETA);
+
+    connect(
+        ui->scrollbar_partidas,
+        &QScrollBar::valueChanged,
+        ui->scroll_area_partidas->verticalScrollBar(),
+        &QScrollBar::setValue);
+    connect(
+        ui->scroll_area_partidas->verticalScrollBar(),
+        &QScrollBar::valueChanged,
+        ui->scrollbar_partidas,
+        &QScrollBar::setValue);
+    connect(
+        ui->scroll_area_partidas->verticalScrollBar(),
+        &QScrollBar::rangeChanged,
+        this,
+        [this](int min, int max) {
+            ui->scrollbar_partidas->setRange(min, max);
+            ui->scrollbar_partidas->setPageStep(
+                ui->scroll_area_partidas->verticalScrollBar()->pageStep());
+            ui->scrollbar_partidas->setVisible(
+                tarjetas_partidas.size() > MAX_PARTIDAS_VISIBLES_SIN_SCROLL && max > min);
+        });
+
     ui->stackedWidget->setCurrentIndex(0);
 
     temporizador_animacion = new QTimer(this);
@@ -176,14 +165,22 @@ void PantallaPrincipal::paintEvent(QPaintEvent* evento) {
     QMainWindow::paintEvent(evento);
 }
 
-void PantallaPrincipal::configurar_tabla_partidas() {
-    ui->tabla_partidas->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
-    ui->tabla_partidas->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
-    ui->tabla_partidas->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+void PantallaPrincipal::volver_al_menu() {
+    if (ui->stackedWidget->currentIndex() == 0) {
+        return;
+    }
+    es_modo_unirse = false;
+    codigo_partida_a_unirse.clear();
+    ui->stackedWidget->setCurrentIndex(0);
 }
 
-void PantallaPrincipal::volver_al_menu() {
-    ui->stackedWidget->setCurrentIndex(0);
+void PantallaPrincipal::keyPressEvent(QKeyEvent* evento) {
+    if (evento->key() == Qt::Key_Escape && ui->stackedWidget->currentIndex() != 0) {
+        volver_al_menu();
+        evento->accept();
+        return;
+    }
+    QMainWindow::keyPressEvent(evento);
 }
 
 void PantallaPrincipal::confirmar_personaje() {
@@ -205,11 +202,13 @@ void PantallaPrincipal::confirmar_personaje() {
 
     AparienciaPersonaje apariencia;
     apariencia.es_femenino = es_personaje_femenino;
+    apariencia.indice_piel = static_cast<uint8_t>(indice_piel_seleccionada);
+    apariencia.color_ojos = color_ojos_actual;
     apariencia.indice_pelo = static_cast<uint8_t>(indice_pelo_seleccionado);
-    apariencia.color_pelo = COLORES_PELO[indice_color_pelo_seleccionado].rgb;
+    apariencia.color_pelo = color_pelo_actual;
     apariencia.indice_remera = static_cast<uint8_t>(indice_remera_seleccionado);
     apariencia.indice_pantalon = static_cast<uint8_t>(indice_tipo_pantalon_seleccionado);
-    apariencia.color_pantalon = COLORES_PANTALON[indice_pantalon_color_seleccionado].rgb;
+    apariencia.color_pantalon = color_pantalon_actual;
     apariencia.indice_sombrero = static_cast<int16_t>(indice_sombrero_seleccionado);
 
     if (es_modo_unirse) {
@@ -219,7 +218,8 @@ void PantallaPrincipal::confirmar_personaje() {
             UnirsePartida{codigo_partida_a_unirse, nombre.toStdString(), apariencia});
     } else {
         std::cout << "Creando personaje: " << nombre.toStdString()
-                  << " | Granja: " << granja.toStdString() << "\n";
+                  << " | Granja: " << granja.toStdString()
+                  << " | Tipo de mapa: " << mapa_granja_seleccionado << "\n";
         conexion.enviar_comando(
             CrearPartida{granja.toStdString(), nombre.toStdString(), apariencia});
     }
@@ -274,7 +274,6 @@ bool PantallaPrincipal::procesar_evento_ingreso(const EventoServidor& evento) {
         std::cerr << "Error del servidor: " << error.detalle << "\n";
         QMessageBox::warning(this, "Error", describir_error(error));
         ui->btn_confirmar_personaje->setEnabled(true);
-        ui->btn_jugar_retomar->setEnabled(true);
         return true;
     }
 
@@ -284,26 +283,104 @@ bool PantallaPrincipal::procesar_evento_ingreso(const EventoServidor& evento) {
 void PantallaPrincipal::configurar_formulario_granja(bool visible) {
     ui->label_3->setVisible(visible);
     ui->input_nombre_granja->setVisible(visible);
-    ui->label_mundo->setVisible(visible);
-    ui->combo_mundo->setVisible(visible);
+    ui->label_mundo->setVisible(false);
+    ui->combo_mundo->setVisible(false);
+    ui->contenedor_lateral_granjas->setVisible(visible);
+}
+
+void PantallaPrincipal::inicializar_selector_granjas() {
+    auto& recursos = RecursosUI::instancia();
+    botones_tipo_granja = {
+        ui->btn_granja_0,
+        ui->btn_granja_1,
+        ui->btn_granja_2,
+        ui->btn_granja_3,
+        ui->btn_granja_4,
+        ui->btn_granja_5,
+        ui->btn_granja_6,
+        ui->btn_granja_7};
+
+    grupo_botones_granja.setExclusive(true);
+    for (int i = 0; i < static_cast<int>(botones_tipo_granja.size()); ++i) {
+        QPushButton* boton = botones_tipo_granja[i];
+        recursos.configurar_boton_granja(boton, i);
+        grupo_botones_granja.addButton(boton, i);
+    }
+
+    connect(
+        &grupo_botones_granja,
+        &QButtonGroup::idClicked,
+        this,
+        &PantallaPrincipal::al_seleccionar_tipo_granja);
+
+    seleccionar_tipo_granja(0);
+}
+
+void PantallaPrincipal::al_seleccionar_tipo_granja(int indice) {
+    seleccionar_tipo_granja(indice);
+}
+
+void PantallaPrincipal::seleccionar_tipo_granja(int indice) {
+    const auto& tipos = RecursosUI::obtener_tipos_granja();
+    if (indice < 0 || indice >= static_cast<int>(tipos.size())) {
+        return;
+    }
+    indice_granja_seleccionada = indice;
+    mapa_granja_seleccionado = tipos[indice].mapa_id.toStdString();
+
+    if (auto* boton = grupo_botones_granja.button(indice)) {
+        boton->setChecked(true);
+    }
 }
 
 void PantallaPrincipal::inicializar_selectores_personaje() {
+    RecursosUI& recursos = RecursosUI::instancia();
+    recursos.configurar_boton_dado(ui->btn_randomizar);
+    recursos.configurar_boton_ok(ui->btn_confirmar_personaje);
+    recursos.configurar_boton_masculino(ui->btn_genero_masculino);
+    recursos.configurar_boton_femenino(ui->btn_genero_femenino);
+
+    const std::vector<QPushButton*> flechas_anteriores = {
+        ui->btn_piel_anterior,
+        ui->btn_sombrero_anterior,
+        ui->btn_pelo_anterior,
+        ui->btn_remera_anterior,
+        ui->btn_pantalon_anterior,
+    };
+    for (QPushButton* boton : flechas_anteriores) {
+        recursos.configurar_boton_flecha_izquierda(boton);
+    }
+
+    const std::vector<QPushButton*> flechas_siguientes = {
+        ui->btn_piel_siguiente,
+        ui->btn_sombrero_siguiente,
+        ui->btn_pelo_siguiente,
+        ui->btn_remera_siguiente,
+        ui->btn_pantalon_siguiente,
+    };
+    for (QPushButton* boton : flechas_siguientes) {
+        recursos.configurar_boton_flecha_derecha(boton);
+    }
+
+    connect(
+        ui->btn_randomizar,
+        &QPushButton::clicked,
+        this,
+        &PantallaPrincipal::randomizar_personaje);
+
     es_personaje_femenino = (configuracion_jugador.ruta_cuerpo == RUTA_CUERPO_FEMENINO);
     configuracion_jugador.offset_y_remera =
         es_personaje_femenino ? OFFSET_Y_REMERA_FEMENINO : OFFSET_Y_REMERA_MASCULINO;
     configuracion_jugador.offset_y_pelo =
         es_personaje_femenino ? OFFSET_Y_PELO_FEMENINO : OFFSET_Y_PELO_MASCULINO;
+    configuracion_jugador.offset_y_sombrero =
+        es_personaje_femenino ? OFFSET_Y_SOMBRERO_FEMENINO : OFFSET_Y_SOMBRERO_MASCULINO;
+    indice_piel_seleccionada = (configuracion_jugador.indice_piel >= 0 &&
+                                configuracion_jugador.indice_piel < CANTIDAD_PIELES)
+                                   ? configuracion_jugador.indice_piel
+                                   : 0;
     indice_pelo_seleccionado = configuracion_jugador.indice_pelo;
-    indice_color_pelo_seleccionado = encontrar_indice_color_cercano(
-        configuracion_jugador.color_pelo,
-        COLORES_PELO,
-        CANTIDAD_COLORES_PELO);
     indice_remera_seleccionado = configuracion_jugador.indice_remera;
-    indice_pantalon_color_seleccionado = encontrar_indice_color_cercano(
-        configuracion_jugador.color_pantalon,
-        COLORES_PANTALON,
-        CANTIDAD_COLORES_PANTALON);
     indice_tipo_pantalon_seleccionado =
         (configuracion_jugador.indice_pantalon >= 0)
             ? (configuracion_jugador.indice_pantalon % CANTIDAD_TIPOS_PANTALON)
@@ -313,12 +390,76 @@ void PantallaPrincipal::inicializar_selectores_personaje() {
         indice_sombrero_seleccionado = -1;
     }
 
+    color_ojos_actual = configuracion_jugador.color_ojos;
+    color_pelo_actual = configuracion_jugador.color_pelo;
+    color_pantalon_actual = configuracion_jugador.color_pantalon;
+
+    connect(
+        ui->slider_ojos_h,
+        &QSlider::valueChanged,
+        this,
+        &PantallaPrincipal::actualizar_color_ojos);
+    connect(
+        ui->slider_ojos_s,
+        &QSlider::valueChanged,
+        this,
+        &PantallaPrincipal::actualizar_color_ojos);
+    connect(
+        ui->slider_ojos_v,
+        &QSlider::valueChanged,
+        this,
+        &PantallaPrincipal::actualizar_color_ojos);
+
+    connect(
+        ui->slider_pelo_h,
+        &QSlider::valueChanged,
+        this,
+        &PantallaPrincipal::actualizar_color_pelo);
+    connect(
+        ui->slider_pelo_s,
+        &QSlider::valueChanged,
+        this,
+        &PantallaPrincipal::actualizar_color_pelo);
+    connect(
+        ui->slider_pelo_v,
+        &QSlider::valueChanged,
+        this,
+        &PantallaPrincipal::actualizar_color_pelo);
+
+    connect(
+        ui->slider_pantalon_h,
+        &QSlider::valueChanged,
+        this,
+        &PantallaPrincipal::actualizar_color_pantalon);
+    connect(
+        ui->slider_pantalon_s,
+        &QSlider::valueChanged,
+        this,
+        &PantallaPrincipal::actualizar_color_pantalon);
+    connect(
+        ui->slider_pantalon_v,
+        &QSlider::valueChanged,
+        this,
+        &PantallaPrincipal::actualizar_color_pantalon);
+
+    sincronizar_sliders_desde_colores();
+
     connect(ui->btn_genero_masculino, &QPushButton::clicked, this, [this]() {
         es_personaje_femenino = false;
         actualizar_previsualizacion_personaje();
     });
     connect(ui->btn_genero_femenino, &QPushButton::clicked, this, [this]() {
         es_personaje_femenino = true;
+        actualizar_previsualizacion_personaje();
+    });
+
+    connect(ui->btn_piel_anterior, &QPushButton::clicked, this, [this]() {
+        indice_piel_seleccionada =
+            (indice_piel_seleccionada - 1 + CANTIDAD_PIELES) % CANTIDAD_PIELES;
+        actualizar_previsualizacion_personaje();
+    });
+    connect(ui->btn_piel_siguiente, &QPushButton::clicked, this, [this]() {
+        indice_piel_seleccionada = (indice_piel_seleccionada + 1) % CANTIDAD_PIELES;
         actualizar_previsualizacion_personaje();
     });
 
@@ -349,17 +490,6 @@ void PantallaPrincipal::inicializar_selectores_personaje() {
         actualizar_previsualizacion_personaje();
     });
 
-    connect(ui->btn_color_pelo_anterior, &QPushButton::clicked, this, [this]() {
-        indice_color_pelo_seleccionado =
-            (indice_color_pelo_seleccionado - 1 + CANTIDAD_COLORES_PELO) % CANTIDAD_COLORES_PELO;
-        actualizar_previsualizacion_personaje();
-    });
-    connect(ui->btn_color_pelo_siguiente, &QPushButton::clicked, this, [this]() {
-        indice_color_pelo_seleccionado =
-            (indice_color_pelo_seleccionado + 1) % CANTIDAD_COLORES_PELO;
-        actualizar_previsualizacion_personaje();
-    });
-
     connect(ui->btn_remera_anterior, &QPushButton::clicked, this, [this]() {
         indice_remera_seleccionado =
             (indice_remera_seleccionado - 1 + CANTIDAD_REMERAS) % CANTIDAD_REMERAS;
@@ -382,19 +512,134 @@ void PantallaPrincipal::inicializar_selectores_personaje() {
         actualizar_previsualizacion_personaje();
     });
 
-    connect(ui->btn_color_pantalon_anterior, &QPushButton::clicked, this, [this]() {
-        indice_pantalon_color_seleccionado =
-            (indice_pantalon_color_seleccionado - 1 + CANTIDAD_COLORES_PANTALON) %
-            CANTIDAD_COLORES_PANTALON;
-        actualizar_previsualizacion_personaje();
-    });
-    connect(ui->btn_color_pantalon_siguiente, &QPushButton::clicked, this, [this]() {
-        indice_pantalon_color_seleccionado =
-            (indice_pantalon_color_seleccionado + 1) % CANTIDAD_COLORES_PANTALON;
-        actualizar_previsualizacion_personaje();
-    });
-
     actualizar_previsualizacion_personaje();
+}
+
+ColorRGB PantallaPrincipal::convertir_hsv_a_rgb(
+    int matiz_porcentaje, int saturacion_porcentaje, int luminosidad_porcentaje) const {
+    int matiz_grados = matiz_porcentaje * MAX_MATIZ_HSV / MAX_VALOR_SLIDER_HSV;
+    int saturacion_hsv = saturacion_porcentaje * MAX_CANAL_COLOR / MAX_VALOR_SLIDER_HSV;
+    int luminosidad_hsv = luminosidad_porcentaje * MAX_CANAL_COLOR / MAX_VALOR_SLIDER_HSV;
+    QColor color = QColor::fromHsv(matiz_grados, saturacion_hsv, luminosidad_hsv);
+    return {
+        static_cast<uint8_t>(color.red()),
+        static_cast<uint8_t>(color.green()),
+        static_cast<uint8_t>(color.blue())};
+}
+
+ColorRGB PantallaPrincipal::leer_color_desde_sliders(
+    const QSlider* slider_matiz, const QSlider* slider_saturacion,
+    const QSlider* slider_luminosidad, QLabel* etiqueta_matiz, QLabel* etiqueta_saturacion,
+    QLabel* etiqueta_luminosidad) {
+    int matiz = slider_matiz->value();
+    int saturacion = slider_saturacion->value();
+    int luminosidad = slider_luminosidad->value();
+
+    etiqueta_matiz->setText(QString::number(matiz));
+    etiqueta_saturacion->setText(QString::number(saturacion));
+    etiqueta_luminosidad->setText(QString::number(luminosidad));
+
+    return convertir_hsv_a_rgb(matiz, saturacion, luminosidad);
+}
+
+void PantallaPrincipal::actualizar_color_ojos() {
+    color_ojos_actual = leer_color_desde_sliders(
+        ui->slider_ojos_h,
+        ui->slider_ojos_s,
+        ui->slider_ojos_v,
+        ui->label_ojos_h_valor,
+        ui->label_ojos_s_valor,
+        ui->label_ojos_v_valor);
+    actualizar_previsualizacion_personaje();
+}
+
+void PantallaPrincipal::actualizar_color_pelo() {
+    color_pelo_actual = leer_color_desde_sliders(
+        ui->slider_pelo_h,
+        ui->slider_pelo_s,
+        ui->slider_pelo_v,
+        ui->label_pelo_h_valor,
+        ui->label_pelo_s_valor,
+        ui->label_pelo_v_valor);
+    actualizar_previsualizacion_personaje();
+}
+
+void PantallaPrincipal::actualizar_color_pantalon() {
+    color_pantalon_actual = leer_color_desde_sliders(
+        ui->slider_pantalon_h,
+        ui->slider_pantalon_s,
+        ui->slider_pantalon_v,
+        ui->label_pantalon_h_valor,
+        ui->label_pantalon_s_valor,
+        ui->label_pantalon_v_valor);
+    actualizar_previsualizacion_personaje();
+}
+
+void PantallaPrincipal::sincronizar_canal_slider(
+    QSlider* slider, QLabel* etiqueta_valor, int valor) {
+    slider->blockSignals(true);
+    slider->setValue(valor);
+    slider->blockSignals(false);
+    etiqueta_valor->setText(QString::number(valor));
+}
+
+void PantallaPrincipal::sincronizar_sliders_desde_colores() {
+    auto sincronizar_grupo = [this](
+                                 const ColorRGB& color_rgb,
+                                 QSlider* slider_matiz,
+                                 QLabel* etiqueta_matiz,
+                                 QSlider* slider_saturacion,
+                                 QLabel* etiqueta_saturacion,
+                                 QSlider* slider_luminosidad,
+                                 QLabel* etiqueta_luminosidad) {
+        QColor color(color_rgb.rojo, color_rgb.verde, color_rgb.azul);
+        int matiz_grados = color.hsvHue();
+        int porcentaje_matiz = (matiz_grados < 0)
+                                   ? 0
+                                   : std::clamp(
+                                         matiz_grados * MAX_VALOR_SLIDER_HSV / MAX_MATIZ_HSV,
+                                         0,
+                                         MAX_VALOR_SLIDER_HSV);
+        int porcentaje_saturacion = std::clamp(
+            color.hsvSaturation() * MAX_VALOR_SLIDER_HSV / MAX_CANAL_COLOR,
+            0,
+            MAX_VALOR_SLIDER_HSV);
+        int porcentaje_luminosidad = std::clamp(
+            color.value() * MAX_VALOR_SLIDER_HSV / MAX_CANAL_COLOR,
+            0,
+            MAX_VALOR_SLIDER_HSV);
+
+        sincronizar_canal_slider(slider_matiz, etiqueta_matiz, porcentaje_matiz);
+        sincronizar_canal_slider(slider_saturacion, etiqueta_saturacion, porcentaje_saturacion);
+        sincronizar_canal_slider(slider_luminosidad, etiqueta_luminosidad, porcentaje_luminosidad);
+    };
+
+    sincronizar_grupo(
+        color_ojos_actual,
+        ui->slider_ojos_h,
+        ui->label_ojos_h_valor,
+        ui->slider_ojos_s,
+        ui->label_ojos_s_valor,
+        ui->slider_ojos_v,
+        ui->label_ojos_v_valor);
+
+    sincronizar_grupo(
+        color_pelo_actual,
+        ui->slider_pelo_h,
+        ui->label_pelo_h_valor,
+        ui->slider_pelo_s,
+        ui->label_pelo_s_valor,
+        ui->slider_pelo_v,
+        ui->label_pelo_v_valor);
+
+    sincronizar_grupo(
+        color_pantalon_actual,
+        ui->slider_pantalon_h,
+        ui->label_pantalon_h_valor,
+        ui->slider_pantalon_s,
+        ui->label_pantalon_s_valor,
+        ui->slider_pantalon_v,
+        ui->label_pantalon_v_valor);
 }
 
 ConfiguracionJugador PantallaPrincipal::obtener_configuracion_actual() const {
@@ -416,31 +661,33 @@ ConfiguracionJugador PantallaPrincipal::obtener_configuracion_actual() const {
         es_personaje_femenino ? OFFSET_Y_REMERA_FEMENINO : OFFSET_Y_REMERA_MASCULINO;
     jugador.offset_y_pelo =
         es_personaje_femenino ? OFFSET_Y_PELO_FEMENINO : OFFSET_Y_PELO_MASCULINO;
+    jugador.offset_y_sombrero =
+        es_personaje_femenino ? OFFSET_Y_SOMBRERO_FEMENINO : OFFSET_Y_SOMBRERO_MASCULINO;
     jugador.indice_pelo = indice_pelo_seleccionado;
-    jugador.color_pelo = COLORES_PELO[indice_color_pelo_seleccionado].rgb;
+    jugador.color_ojos = color_ojos_actual;
+    jugador.color_pelo = color_pelo_actual;
     jugador.indice_remera = indice_remera_seleccionado;
-    jugador.color_pantalon = COLORES_PANTALON[indice_pantalon_color_seleccionado].rgb;
+    jugador.color_pantalon = color_pantalon_actual;
     jugador.indice_pantalon = indice_tipo_pantalon_seleccionado;
     jugador.indice_sombrero = indice_sombrero_seleccionado;
+    jugador.indice_piel = indice_piel_seleccionada;
     return jugador;
 }
 
 void PantallaPrincipal::actualizar_previsualizacion_personaje() {
+    ui->label_piel_valor->setText(QString::number(indice_piel_seleccionada + 1));
     ui->label_sombrero_valor->setText(
         indice_sombrero_seleccionado < 0 ? "Ninguno"
                                          : QString::number(indice_sombrero_seleccionado + 1));
     ui->label_pelo_valor->setText(QString::number(indice_pelo_seleccionado + 1));
-    ui->label_color_pelo_valor->setText(COLORES_PELO[indice_color_pelo_seleccionado].nombre);
     ui->label_remera_valor->setText(QString::number(indice_remera_seleccionado + 1));
     ui->label_pantalon_valor->setText(QString::number(indice_tipo_pantalon_seleccionado + 1));
-    ui->label_color_pantalon_valor->setText(
-        COLORES_PANTALON[indice_pantalon_color_seleccionado].nombre);
 
     ui->btn_genero_masculino->setChecked(!es_personaje_femenino);
     ui->btn_genero_femenino->setChecked(es_personaje_femenino);
 
     ConfiguracionJugador temp = obtener_configuracion_actual();
-    QPixmap sprite = compositor_personaje.componer(temp, 4);
+    QPixmap sprite = compositor_personaje.componer(temp, 4, true);
     ui->label_previsualizacion_personaje->setPixmap(sprite);
 }
 
@@ -454,8 +701,7 @@ void PantallaPrincipal::preparar_nueva_partida() {
 
 void PantallaPrincipal::preparar_retomar_partida() {
     conexion.enviar_comando(ListarPartidas{});
-    ui->tabla_partidas->setRowCount(0);
-    ui->btn_jugar_retomar->setEnabled(false);
+    vaciar_tarjetas_partidas();
 
     try {
         bool lista_recibida = false;
@@ -480,51 +726,77 @@ void PantallaPrincipal::preparar_retomar_partida() {
     ui->stackedWidget->setCurrentIndex(2);
 }
 
+void PantallaPrincipal::vaciar_tarjetas_partidas() {
+    codigo_partida_seleccionada.clear();
+    tarjetas_partidas.clear();
+    ui->scrollbar_partidas->setVisible(false);
+}
+
 void PantallaPrincipal::llenar_lista_partidas(const ListaPartidas& lista) {
-    ui->tabla_partidas->setRowCount(0);
-    ui->tabla_partidas->setRowCount(static_cast<int>(lista.partidas.size()));
+    vaciar_tarjetas_partidas();
+
+    if (lista.partidas.empty()) {
+        ui->label_sin_partidas->setVisible(true);
+        ui->scroll_area_partidas->setVisible(false);
+        ui->scrollbar_partidas->setVisible(false);
+        return;
+    }
+
+    ui->label_sin_partidas->setVisible(false);
+    ui->scroll_area_partidas->setVisible(true);
 
     for (int i = 0; i < static_cast<int>(lista.partidas.size()); ++i) {
         const auto& partida = lista.partidas[i];
+        int numero_slot = i + 1;
 
-        auto* item_nombre = new QTableWidgetItem(QString::fromStdString(partida.nombre_partida));
-        auto* item_codigo = new QTableWidgetItem(QString::fromStdString(partida.codigo_partida));
-        item_codigo->setTextAlignment(Qt::AlignCenter);
+        auto tarjeta = std::make_unique<TarjetaPartida>(
+            partida,
+            numero_slot,
+            compositor_personaje,
+            ui->contenido_scroll_partidas);
 
-        QString jugadores_str =
-            QString("%1/%2").arg(partida.jugadores_totales).arg(partida.jugadores_maximos);
-        auto* item_jugadores = new QTableWidgetItem(jugadores_str);
-        item_jugadores->setTextAlignment(Qt::AlignCenter);
+        connect(
+            tarjeta.get(),
+            &TarjetaPartida::partidaSeleccionada,
+            this,
+            &PantallaPrincipal::seleccionar_partida);
+        connect(
+            tarjeta.get(),
+            &TarjetaPartida::partidaDobleClic,
+            this,
+            &PantallaPrincipal::ejecutar_partida);
+        connect(
+            tarjeta.get(),
+            &TarjetaPartida::partidaEliminarSolicitada,
+            this,
+            &PantallaPrincipal::eliminar_partida);
 
-        ui->tabla_partidas->setItem(i, 0, item_nombre);
-        ui->tabla_partidas->setItem(i, 1, item_codigo);
-        ui->tabla_partidas->setItem(i, 2, item_jugadores);
+        ui->layout_tarjetas_partidas->addWidget(tarjeta.get());
+        tarjetas_partidas.push_back(std::move(tarjeta));
+    }
+
+    ui->scrollbar_partidas->setVisible(tarjetas_partidas.size() > MAX_PARTIDAS_VISIBLES_SIN_SCROLL);
+}
+
+void PantallaPrincipal::seleccionar_partida(const QString& codigo_partida) {
+    codigo_partida_seleccionada = codigo_partida.toStdString();
+    actualizar_seleccion_tarjetas();
+}
+
+void PantallaPrincipal::actualizar_seleccion_tarjetas() {
+    for (const auto& tarjeta : tarjetas_partidas) {
+        tarjeta->establecer_seleccionada(
+            tarjeta->obtener_codigo_partida() == codigo_partida_seleccionada);
     }
 }
 
-void PantallaPrincipal::actualizar_seleccion_partida() {
-    bool hay_seleccion = !ui->tabla_partidas->selectedItems().isEmpty();
-    ui->btn_jugar_retomar->setEnabled(hay_seleccion);
-}
-
-void PantallaPrincipal::confirmar_retomar_partida() {
-    int fila = ui->tabla_partidas->currentRow();
-    if (fila < 0) {
-        return;
-    }
-
-    QTableWidgetItem* item_codigo = ui->tabla_partidas->item(fila, 1);
-    if (!item_codigo) {
-        return;
-    }
-
-    std::string codigo = item_codigo->text().trimmed().toStdString();
+void PantallaPrincipal::ejecutar_partida(const QString& codigo_partida) {
+    std::string codigo = codigo_partida.trimmed().toStdString();
     if (codigo.empty()) {
         return;
     }
 
     es_modo_unirse = true;
-    ui->btn_jugar_retomar->setEnabled(false);
 
     try {
         conexion.enviar_comando(RetomarPartida{codigo});
@@ -537,27 +809,142 @@ void PantallaPrincipal::confirmar_retomar_partida() {
     } catch (const std::exception& e) {
         std::cerr << "Error al retomar la partida: " << e.what() << "\n";
         QMessageBox::critical(this, "Error de conexión", "Se perdió la conexión con el servidor.");
-        ui->btn_jugar_retomar->setEnabled(true);
+    }
+}
+
+void PantallaPrincipal::eliminar_partida(const QString& codigo_partida) {
+    std::string codigo = codigo_partida.trimmed().toStdString();
+    if (codigo.empty()) {
+        return;
+    }
+
+    try {
+        conexion.enviar_comando(EliminarPartida{codigo});
+
+        bool procesado = false;
+        while (!procesado) {
+            EventoServidor evento = conexion.esperar_evento();
+            if (std::holds_alternative<ListaPartidas>(evento)) {
+                llenar_lista_partidas(std::get<ListaPartidas>(evento));
+                procesado = true;
+            } else if (std::holds_alternative<ErrorServidor>(evento)) {
+                const auto& error = std::get<ErrorServidor>(evento);
+                std::cerr << "Error del servidor al eliminar partida: " << error.detalle << "\n";
+                QMessageBox::warning(this, "Error", describir_error(error));
+                procesado = true;
+            }
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error de conexión al eliminar la partida: " << e.what() << "\n";
+        QMessageBox::critical(this, "Error de conexión", "Se perdió la conexión con el servidor.");
     }
 }
 
 void PantallaPrincipal::preparar_unirse_partida() {
-    bool acepto = false;
-    QString codigo = QInputDialog::getText(
-        this,
-        "Unirse a partida",
-        "Ingresá el código de invitación de la partida (ej: P0):",
-        QLineEdit::Normal,
-        "",
-        &acepto);
+    QDialog dialogo(this);
+    dialogo.setObjectName("dialogo_modal_stardew");
+    dialogo.setWindowFlags(Qt::FramelessWindowHint | Qt::Dialog);
+    dialogo.setAttribute(Qt::WA_TranslucentBackground, true);
+    dialogo.setStyleSheet(styleSheet());
 
-    if (!acepto || codigo.trimmed().isEmpty()) {
+    QVBoxLayout layout_dialogo(&dialogo);
+    layout_dialogo.setContentsMargins(0, 0, 0, 0);
+
+    QFrame marco(&dialogo);
+    marco.setObjectName("marco_dialogo_stardew");
+
+    QVBoxLayout layout_interior(&marco);
+    layout_interior.setContentsMargins(28, 28, 28, 24);
+    layout_interior.setSpacing(18);
+
+    QLabel label_titulo(&marco);
+    label_titulo.setObjectName("label_texto_dialogo");
+    label_titulo.setAlignment(Qt::AlignCenter);
+    label_titulo.setText("Ingresa el codigo de invitacion:");
+    layout_interior.addWidget(&label_titulo);
+
+    QLineEdit input_codigo(&marco);
+    input_codigo.setObjectName("input_codigo_invitacion");
+    input_codigo.setAlignment(Qt::AlignCenter);
+    input_codigo.setMaxLength(16);
+    input_codigo.setPlaceholderText("ej: P0");
+    connect(&input_codigo, &QLineEdit::returnPressed, &dialogo, &QDialog::accept);
+    layout_interior.addWidget(&input_codigo, 0, Qt::AlignCenter);
+
+    QHBoxLayout layout_botones;
+    layout_botones.setSpacing(32);
+    layout_botones.setAlignment(Qt::AlignCenter);
+
+    QPushButton btn_cancelar(&marco);
+    btn_cancelar.setObjectName("btn_dialogo_cancelar");
+    btn_cancelar.setProperty("class", "btn_dialogo_accion");
+    RecursosUI::instancia().configurar_boton_cancelar(&btn_cancelar);
+    btn_cancelar.setFixedSize(52, 52);
+    btn_cancelar.setToolTip("Cancelar");
+    connect(&btn_cancelar, &QPushButton::clicked, &dialogo, &QDialog::reject);
+    layout_botones.addWidget(&btn_cancelar);
+
+    QPushButton btn_ok(&marco);
+    btn_ok.setObjectName("btn_dialogo_ok");
+    btn_ok.setProperty("class", "btn_dialogo_accion");
+    RecursosUI::instancia().configurar_boton_ok(&btn_ok);
+    btn_ok.setFixedSize(52, 52);
+    btn_ok.setToolTip("Unirse");
+    connect(&btn_ok, &QPushButton::clicked, &dialogo, &QDialog::accept);
+    layout_botones.addWidget(&btn_ok);
+
+    layout_interior.addLayout(&layout_botones);
+    layout_dialogo.addWidget(&marco);
+
+    dialogo.adjustSize();
+    if (dialogo.exec() != QDialog::Accepted) {
+        return;
+    }
+
+    QString codigo = input_codigo.text().trimmed();
+    if (codigo.isEmpty()) {
         return;
     }
 
     es_modo_unirse = true;
-    codigo_partida_a_unirse = codigo.trimmed().toStdString();
+    codigo_partida_a_unirse = codigo.toStdString();
     configurar_formulario_granja(false);
     ui->btn_confirmar_personaje->setEnabled(true);
     ui->stackedWidget->setCurrentIndex(1);
+}
+
+void PantallaPrincipal::randomizar_personaje() {
+    std::uniform_int_distribution<int> dist_genero(0, 1);
+    std::uniform_int_distribution<int> dist_piel(0, CANTIDAD_PIELES - 1);
+    std::uniform_int_distribution<int> dist_pelo(0, CANTIDAD_PEINADOS - 1);
+    std::uniform_int_distribution<int> dist_remera(0, CANTIDAD_REMERAS - 1);
+    std::uniform_int_distribution<int> dist_pantalon(0, CANTIDAD_TIPOS_PANTALON - 1);
+    std::uniform_int_distribution<int> dist_sombrero(-1, CANTIDAD_SOMBREROS - 1);
+    std::uniform_int_distribution<int> dist_matiz(0, MAX_VALOR_SLIDER_HSV);
+    std::uniform_int_distribution<int> dist_saturacion(20, MAX_VALOR_SLIDER_HSV);
+    std::uniform_int_distribution<int> dist_luminosidad(20, MAX_VALOR_SLIDER_HSV);
+
+    es_personaje_femenino = (dist_genero(generador_azar) == 1);
+    ui->btn_genero_masculino->setChecked(!es_personaje_femenino);
+    ui->btn_genero_femenino->setChecked(es_personaje_femenino);
+
+    indice_piel_seleccionada = dist_piel(generador_azar);
+    indice_pelo_seleccionado = dist_pelo(generador_azar);
+    indice_remera_seleccionado = dist_remera(generador_azar);
+    indice_tipo_pantalon_seleccionado = dist_pantalon(generador_azar);
+    indice_sombrero_seleccionado = dist_sombrero(generador_azar);
+
+    auto color_aleatorio_hsv = [&]() -> ColorRGB {
+        int matiz = dist_matiz(generador_azar);
+        int saturacion = dist_saturacion(generador_azar);
+        int luminosidad = dist_luminosidad(generador_azar);
+        return convertir_hsv_a_rgb(matiz, saturacion, luminosidad);
+    };
+
+    color_ojos_actual = color_aleatorio_hsv();
+    color_pelo_actual = color_aleatorio_hsv();
+    color_pantalon_actual = color_aleatorio_hsv();
+
+    sincronizar_sliders_desde_colores();
+    actualizar_previsualizacion_personaje();
 }
