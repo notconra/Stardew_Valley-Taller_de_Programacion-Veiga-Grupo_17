@@ -63,6 +63,7 @@ void ControladorDeMazmorra::poblar_niveles() {
             Minerales::pesos(numero_de_nivel, recursos.mazmorra.minerales));
 
         poblar_enemigos(sector, mazmorra->nivel(numero_de_nivel));
+        poblar_trampas(sector, mazmorra->nivel(numero_de_nivel));
     }
 }
 
@@ -101,6 +102,42 @@ void ControladorDeMazmorra::poblar_enemigos(Sector& sector, const Nivel& nivel) 
     const std::vector<Casilla> solos(
         puntos.begin() + static_cast<std::ptrdiff_t>(usados), puntos.end());
     sector.enemigos.poblar_en(solos, TipoEnemigo::ESQUELETO);
+}
+
+namespace {
+
+bool contiene(const std::vector<Casilla>& casillas, const Casilla& casilla) {
+    return std::find(casillas.begin(), casillas.end(), casilla) != casillas.end();
+}
+
+}  // namespace
+
+void ControladorDeMazmorra::poblar_trampas(Sector& sector, const Nivel& nivel) {
+    // Para no caer sobre unos pinches al bajar la escalera.
+    constexpr int DISTANCIA_MINIMA_A_LA_ENTRADA = 3;
+
+    const ConfiguracionTrampasServidor& config = recursos.mazmorra.trampas;
+    sector.trampas.limpiar();
+    sector.trampas.configurar(config);
+
+    const GeografiaNivel& geografia = nivel.obtener_geografia();
+    std::vector<Casilla> pisos;
+    for (const Casilla& casilla : Nivel::alcanzables(geografia, geografia.entrada)) {
+        if (distancia_en_casillas(casilla, geografia.entrada) >= DISTANCIA_MINIMA_A_LA_ENTRADA &&
+            !geografia.escalera.contiene(casilla) && !geografia.salida.contiene(casilla) &&
+            !contiene(nivel.obtener_enemigos(), casilla) &&
+            !contiene(nivel.obtener_celdas_de_objetos(), casilla)) {
+            pisos.push_back(casilla);
+        }
+    }
+
+    std::shuffle(pisos.begin(), pisos.end(), Azar::motor());
+    const size_t cantidad =
+        std::min(pisos.size(), static_cast<size_t>(std::max(0, config.por_nivel)));
+    const int ciclo = sector.trampas.duracion_del_ciclo();
+    for (size_t i = 0; i < cantidad; ++i) {
+        sector.trampas.agregar(pisos[i], Azar::entero(0, ciclo - 1));
+    }
 }
 
 std::vector<Casilla> ControladorDeMazmorra::casillas_para_grupo(

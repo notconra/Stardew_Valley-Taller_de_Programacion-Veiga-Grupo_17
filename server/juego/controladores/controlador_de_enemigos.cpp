@@ -40,8 +40,7 @@ void ControladorDeEnemigos::atacar_en_sector(Sector& sector) {
     std::vector<std::pair<uint32_t, Casilla>> posiciones;
     for (uint32_t id_jugador : sector.jugadores.ids()) {
         const auto personaje = personajes.find(id_jugador);
-        if (personaje == personajes.end() || personaje->second.esta_inconsciente() ||
-            personaje->second.descanso != EstadoDeDescanso::DESPIERTO) {
+        if (personaje == personajes.end() || !personaje->second.puede_ser_lastimado()) {
             continue;  // a un jugador caído o que espera el día siguiente no se le pega
         }
         const std::optional<Casilla> casilla = sector.jugadores.casilla_del_jugador(id_jugador);

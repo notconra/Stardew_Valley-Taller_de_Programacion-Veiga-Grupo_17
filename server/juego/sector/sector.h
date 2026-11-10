@@ -22,6 +22,7 @@
 #include "../objetos_del_mundo/objetos_del_mundo.h"
 #include "../recursos/recursos_de_juego.h"
 #include "../tierra/tierra_tratada.h"
+#include "../trampas/gestor_de_trampas.h"
 
 // Un mapa de la partida con todo lo que vive en él. El terreno (Mapa) es de solo lectura y se
 // comparte entre todas las partidas: vive en RecursosDeJuego y acá solo se lo referencia. Los
@@ -41,6 +42,7 @@ public:
     Jugadores jugadores;
     Drops drops;
     GestorDeEnemigos enemigos;
+    GestorDeTrampas trampas;
     int nivel_de_mazmorra = 0;
 
     // "recursos" tiene que vivir más que el Sector y tener el mapa "id_mapa" cargado.

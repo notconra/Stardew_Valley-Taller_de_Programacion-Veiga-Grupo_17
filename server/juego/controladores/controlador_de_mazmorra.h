@@ -25,6 +25,9 @@ private:
     // Reparte los puntos de aparición sorteados del nivel: los primeros son grupos de orcos y el
     // resto esqueletos solos.
     void poblar_enemigos(Sector& sector, const Nivel& nivel);
+    // Pone los pinches en casillas del piso lejos de la entrada, fuera de la escalera y la salida y
+    // donde no haya un enemigo ni un mineral.
+    void poblar_trampas(Sector& sector, const Nivel& nivel);
     // Las casillas libres más cercanas a "centro" (incluida), hasta "cantidad".
     std::vector<Casilla> casillas_para_grupo(
         const Sector& sector, const Nivel& nivel, const Casilla& centro, int cantidad,
