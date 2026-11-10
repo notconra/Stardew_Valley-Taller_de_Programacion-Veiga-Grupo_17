@@ -195,6 +195,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     TierraGrafica tierra(configuracion.tierra, graficos, renderizador.ptr());
     ObjetosGraficos objetos(renderizador.ptr(), graficos, iconos);
     EnemigosGraficos enemigos(renderizador.ptr(), graficos);
+    AnimalesGraficos animales(renderizador.ptr(), graficos);
     VisionMazmorra vision_mazmorra(
         configuracion.graficos.radio_vision_mazmorra,
         configuracion.graficos.tamano_pixel_vision_mazmorra,
@@ -294,6 +295,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             mapa_de(mapa_actual),
             objetos,
             enemigos,
+            animales,
             personaje,
             tierra,
             camara,
@@ -620,10 +622,11 @@ bool VistaPartida::salir_de_partida_y_confirmar() {
 
 void VistaPartida::dibujar(
     Renderizador& renderizador, SDL_Texture* mundo, const MapaGrafico& mapa,
-    const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos, const Personaje& personaje,
-    const TierraGrafica& tierra, const Camara& camara, const HudInventario& hud,
-    const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada, const VistaChat& chat,
-    const RelojGrafico& reloj_grafico, const PantallaDeDescanso& pantalla_de_descanso) const {
+    const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos,
+    const AnimalesGraficos& animales, const Personaje& personaje, const TierraGrafica& tierra,
+    const Camara& camara, const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
+    const EntradaDelUsuario& entrada, const VistaChat& chat, const RelojGrafico& reloj_grafico,
+    const PantallaDeDescanso& pantalla_de_descanso) const {
     SDL_Renderer* renderer = renderizador.ptr();
 
     if (mundo != nullptr) {
@@ -656,6 +659,7 @@ void VistaPartida::dibujar(
             camara.y());
     }
     enemigos.dibujar(renderer, ultimo_estado_juego, camara.x(), camara.y());
+    animales.dibujar(renderer, ultimo_estado_juego, mapa_actual, camara.x(), camara.y());
     for (const EstadoJugador& jugador : ultimo_estado_juego.jugadores) {
         if (jugador.mapa == mapa_actual) {
             const bool es_el_propio = jugador.id_jugador == id_jugador;

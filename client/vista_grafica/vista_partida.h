@@ -11,6 +11,7 @@
 #include "../../common/modo_uso.h"
 #include "../configuracion/configuracion_cliente_datos.h"
 #include "../red/conexion_con_servidor.h"
+#include "animales_graficos.h"
 #include "camara.h"
 #include "chat/vista_chat.h"
 #include "efectos_de_sonido.h"
@@ -140,8 +141,8 @@ private:
     void dibujar(
         Renderizador& renderizador, SDL_Texture* mundo, const MapaGrafico& mapa,
         const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos,
-        const Personaje& personaje, const TierraGrafica& tierra, const Camara& camara,
-        const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
+        const AnimalesGraficos& animales, const Personaje& personaje, const TierraGrafica& tierra,
+        const Camara& camara, const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
         const EntradaDelUsuario& entrada, const VistaChat& chat, const RelojGrafico& reloj_grafico,
         const PantallaDeDescanso& pantalla_de_descanso) const;
 
