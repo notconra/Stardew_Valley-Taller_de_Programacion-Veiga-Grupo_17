@@ -7,6 +7,14 @@
 #include <vector>
 
 #include "../../../common/tipo_enemigo.h"
+#include "../../configuracion/configuracion_servidor_datos.h"
+
+// Qué se potencia cuando un vampiro entra en frenesí (al morir su pareja).
+enum class HabilidadDeFrenesi : uint8_t {
+    NINGUNA,
+    VELOCIDAD,  // la vampira: tarda menos en cruzar cada casilla
+    DANIO,      // el vampiro: pega más fuerte
+};
 
 // Cómo es un tipo de enemigo: cuánta vida tiene, cuánto daño hace y, si puede morir, cuánto tarda
 // en revivir. El combate en sí (cuerpo a cuerpo o a distancia, perseguir, huir) no está acá: esto
@@ -48,7 +56,22 @@ struct DefinicionDeEnemigo {
     // plata, como el Orco).
     uint16_t oro_minimo = 0;
     uint16_t oro_maximo = 0;
+
+    // Vampiros: muertos no reviven solos (ticks_para_revivir se cuenta recién desde que cae
+    // sangre), y la sangre cae cuando un jugador queda gravemente herido o inconsciente a
+    // radio_de_sangre casillas o menos de su cadáver.
+    bool revive_con_sangre = false;
+    int radio_de_sangre = 0;
+
+    // Vampiros: qué se multiplica, y por cuánto, mientras su pareja está muerta.
+    HabilidadDeFrenesi habilidad_de_frenesi = HabilidadDeFrenesi::NINGUNA;
+    double multiplicador_de_frenesi = 1.0;
 };
+
+// Arma la definición con los números de combate comunes a todos los tipos (vida, daño, ticks,
+// radios y oro) sacados de su sección del servidor.toml. Cada tipo parte de acá y agrega lo suyo.
+DefinicionDeEnemigo definicion_de_combate(
+    TipoEnemigo tipo, const std::string& clave, const ConfiguracionEnemigoServidor& configuracion);
 
 // Todos los tipos de enemigo que existen. Se arma una sola vez al arrancar (RecursosDeJuego) y
 // después solo se consulta, igual que CatalogoDeObjetos.
