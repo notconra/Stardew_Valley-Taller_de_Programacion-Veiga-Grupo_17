@@ -24,6 +24,10 @@ CatalogoDeItems::CatalogoDeItems() {
     // Colocables
     registrar(TipoItem::COFRE, "Cofre", CategoriaItem::COLOCABLE, 50, true, 0, 0);
     registrar(TipoItem::CAMA, "Cama", CategoriaItem::COLOCABLE, 1, false, 1, 0);
+
+    // Productos animales
+    registrar(TipoItem::LECHE, "Leche", CategoriaItem::RECURSO, 50, true, 0, 30);
+    registrar(TipoItem::HUEVO, "Huevo", CategoriaItem::RECURSO, 50, true, 0, 3);
 }
 
 void CatalogoDeItems::registrar(

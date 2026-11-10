@@ -173,6 +173,12 @@ void GestorDeSectores::actualizar() {
     }
 }
 
+void GestorDeSectores::avanzar_dia() {
+    for (auto& entrada : sectores) {
+        entrada.second.avanzar_dia();
+    }
+}
+
 std::vector<JugadorEnTransicion> GestorDeSectores::jugadores_en_transicion() const {
     std::vector<JugadorEnTransicion> resultado;
     for (const auto& entrada : sectores) {

@@ -81,6 +81,9 @@ public:
     // Un tick de física en todos los sectores.
     void actualizar();
 
+    // Notifica el avance de un día a todos los sectores.
+    void avanzar_dia();
+
     // Quién está pisando una transición, en cualquier sector. Se llama después de actualizar().
     std::vector<JugadorEnTransicion> jugadores_en_transicion() const;
 

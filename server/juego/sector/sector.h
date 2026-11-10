@@ -12,6 +12,7 @@
 #include "../../../common/tipo_item.h"
 #include "../../../common/tipo_objeto.h"
 #include "../../persistencia/datos_partida_guardada.h"
+#include "../animales/gestor_de_animales.h"
 #include "../cofres/gestor_de_cofres.h"
 #include "../colisiones/colisiones.h"
 #include "../drops/drops.h"
@@ -41,6 +42,7 @@ public:
     Jugadores jugadores;
     Drops drops;
     GestorDeEnemigos enemigos;
+    GestorDeAnimales animales;
 
     // "recursos" tiene que vivir más que el Sector y tener el mapa "id_mapa" cargado.
     Sector(const std::string& id_mapa, const RecursosDeJuego& recursos, uint8_t ticks_por_segundo)
@@ -55,6 +57,12 @@ public:
               recursos.juego.aparicion),
           enemigos(recursos.catalogo_de_enemigos) {
         registrar_manejadores_de_modificaciones();
+        if (id == "granja") {
+            // NOTA PROVISORIA: Inicializa 1 vaca y 1 gallina para pruebas en tiempo de ejecución
+            // mientras no existan los comerciantes. Eliminar cuando se agregue la compra en el
+            // mercado.
+            animales.inicializar_granja_provisoria();
+        }
     }
 
     Sector(const Sector&) = delete;
@@ -110,6 +118,10 @@ public:
     int soltar(
         Notificador& notificador, TipoItem tipo, uint16_t cantidad, Calidad calidad, int columna,
         int fila);
+
+    // Notificación de nuevo día en el sector:
+    // Actualiza la producción de animales y genera drops de huevos.
+    void avanzar_dia();
 
 private:
     std::unordered_map<TipoModificacionCasilla, std::function<void(uint32_t, uint32_t)>>

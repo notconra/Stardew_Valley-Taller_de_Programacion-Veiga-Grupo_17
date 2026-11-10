@@ -189,3 +189,7 @@ int Sector::soltar(
     avisar(notificador, evento);
     return id;
 }
+
+void Sector::avanzar_dia() {
+    animales.avanzar_dia(drops);
+}

@@ -194,6 +194,7 @@ void ControladorDelDia::terminar_el_dia() {
             despertar(personaje);
         }
     }
+    sectores.avanzar_dia();
     notificador.a_todos(reloj.hora());
 }
 
