@@ -1,8 +1,10 @@
 #include "mapa_grafico.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "../../common/lector_de_mapas_tmx/lector_de_mapas.h"
@@ -56,12 +58,18 @@ std::vector<std::vector<int>> MapaGrafico::cargar_capas(
     std::vector<std::vector<int>> capas;
     capas.reserve(nombres.size());
     for (const std::string& nombre : nombres) {
-        std::vector<int> capa = lector.cargar_capa(nombre);
-        if (capa.empty()) {
+        const std::vector<std::uint32_t> cruda = lector.cargar_capa_con_flags(nombre);
+        if (cruda.empty()) {
             throw std::runtime_error(
                 std::string("no se pudo cargar la capa ") + nombre + " de " + ruta_mapa);
         }
-        capas.push_back(capa);
+        // Se conservan los bits de espejado, dibujado los interpreta.
+        std::vector<int> capa;
+        capa.reserve(cruda.size());
+        for (std::uint32_t valor : cruda) {
+            capa.push_back(static_cast<int>(valor));
+        }
+        capas.push_back(std::move(capa));
     }
     return capas;
 }

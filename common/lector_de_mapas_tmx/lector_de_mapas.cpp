@@ -1,10 +1,19 @@
 #include "lector_de_mapas.h"
 
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
+
+namespace {
+constexpr std::uint32_t FLAG_ESPEJO_H = 0x80000000u;
+constexpr std::uint32_t FLAG_ESPEJO_V = 0x40000000u;
+constexpr std::uint32_t FLAG_ESPEJO_D = 0x20000000u;
+constexpr std::uint32_t MASCARA_GID = 0x1FFFFFFFu;
+}  // namespace
 
 LectorDeMapasTMX::LectorDeMapasTMX(const std::string& ruta) : ruta_archivo(ruta) {
 }
@@ -42,6 +51,15 @@ TamanioMapa LectorDeMapasTMX::leer_tamanio() const {
 
 std::vector<int> LectorDeMapasTMX::cargar_capa(const std::string& nombre_capa) const {
     std::vector<int> casillas;
+    for (std::uint32_t valor : cargar_capa_con_flags(nombre_capa)) {
+        casillas.push_back(static_cast<int>(valor & MASCARA_GID));
+    }
+    return casillas;
+}
+
+std::vector<std::uint32_t> LectorDeMapasTMX::cargar_capa_con_flags(
+    const std::string& nombre_capa) const {
+    std::vector<std::uint32_t> casillas;
     tinyxml2::XMLDocument documento;
     tinyxml2::XMLElement* nodo_mapa = abrir_mapa(documento);
     if (!nodo_mapa) {
@@ -52,30 +70,26 @@ std::vector<int> LectorDeMapasTMX::cargar_capa(const std::string& nombre_capa) c
          nodo_capa != nullptr;
          nodo_capa = nodo_capa->NextSiblingElement("layer")) {
         const char* nombre = nodo_capa->Attribute("name");
-
         if (!nombre || nombre_capa != nombre) {
             continue;
         }
 
         tinyxml2::XMLElement* nodo_datos = nodo_capa->FirstChildElement("data");
-
         if (nodo_datos && nodo_datos->GetText()) {
             std::stringstream flujo(nodo_datos->GetText());
-            int identificador_baldosa;
-            char separador;
-
-            while (flujo >> identificador_baldosa) {
-                casillas.push_back(identificador_baldosa);
-
-                if (!(flujo >> separador)) {
-                    break;
+            std::string token;
+            while (std::getline(flujo, token, ',')) {
+                const char* inicio = token.c_str();
+                char* fin = nullptr;
+                unsigned long long valor = std::strtoull(inicio, &fin, 10);
+                if (fin == inicio) {
+                    continue;  // token vacío (salto de línea final)
                 }
+                casillas.push_back(static_cast<std::uint32_t>(valor));
             }
         }
-
         break;
     }
-
     return casillas;
 }
 
