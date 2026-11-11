@@ -386,6 +386,14 @@ void Mundo::avanzar_dia() {
     controlador_del_dia.avanzar_dia();
 }
 
+void Mundo::avanzar_minutos(uint32_t minutos) {
+    controlador_del_dia.avanzar_minutos(minutos);
+}
+
+HoraDelJuego Mundo::hora_actual() const {
+    return controlador_del_dia.hora();
+}
+
 bool Mundo::sumar_monedas(uint32_t id_jugador, uint32_t cantidad) {
     auto encontrado = personajes.find(id_jugador);
     if (encontrado == personajes.end() || !encontrado->second.conectado) {

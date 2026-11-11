@@ -288,6 +288,11 @@ void ControladorDelDia::avanzar_dia() {
     notificador.a_todos(reloj.hora());
 }
 
+void ControladorDelDia::avanzar_minutos(uint32_t minutos) {
+    reloj.avanzar_minutos(minutos);
+    notificador.a_todos(reloj.hora());
+}
+
 bool ControladorDelDia::tomar_dia_terminado() {
     const bool terminado = dia_terminado;
     dia_terminado = false;

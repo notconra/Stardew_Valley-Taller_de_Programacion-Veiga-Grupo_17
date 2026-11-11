@@ -104,6 +104,8 @@ public:
     bool agregar_gallina_en_granja_cerca(uint32_t id_jugador);
     std::string estado_animales_granja() const;
     void avanzar_dia();
+    void avanzar_minutos(uint32_t minutos);
+    HoraDelJuego hora_actual() const;
 
     Mundo(const Mundo&) = delete;
     Mundo& operator=(const Mundo&) = delete;
