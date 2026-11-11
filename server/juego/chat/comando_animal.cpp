@@ -8,27 +8,14 @@ ComandoAnimal::ComandoAnimal(Mundo& mundo_de_juego) : mundo(mundo_de_juego) {
 }
 
 bool ComandoAnimal::reconoce(const std::string& palabra_clave) const {
-    return palabra_clave == "animal" || palabra_clave == "avanzar_dia";
+    return palabra_clave == "animal";
 }
 
 void ComandoAnimal::ejecutar(const ContextoDeComandoDeChat& contexto) {
-    if (contexto.palabra_clave == "avanzar_dia") {
-        ejecutar_avanzar_dia(contexto);
-    } else {
-        ejecutar_animal(contexto);
-    }
-}
-
-void ComandoAnimal::ejecutar_avanzar_dia(const ContextoDeComandoDeChat& contexto) {
-    mundo.avanzar_dia_cheat();
-    contexto.respuestas.responder_a_jugador(contexto.id_jugador, "Dia avanzado con exito.");
-}
-
-void ComandoAnimal::ejecutar_animal(const ContextoDeComandoDeChat& contexto) {
     if (contexto.argumentos.empty()) {
         contexto.respuestas.responder_a_jugador(
             contexto.id_jugador,
-            "Uso: /animal vaca | /animal gallina | /animal estado | /avanzar_dia");
+            "Uso: /animal vaca | /animal gallina | /animal estado");
         return;
     }
     const std::string& subcomando = contexto.argumentos[0];

@@ -382,8 +382,8 @@ std::string Mundo::estado_animales_granja() const {
            " listas para ordeniar), " + std::to_string(total_gallinas) + " gallinas.";
 }
 
-void Mundo::avanzar_dia_cheat() {
-    controlador_del_dia.avanzar_dia_inmediato();
+void Mundo::avanzar_dia() {
+    controlador_del_dia.avanzar_dia();
 }
 
 bool Mundo::sumar_monedas(uint32_t id_jugador, uint32_t cantidad) {

@@ -11,9 +11,6 @@ class ComandoAnimal : public ComandoDeChat {
 private:
     Mundo& mundo;
 
-    void ejecutar_animal(const ContextoDeComandoDeChat& contexto);
-    void ejecutar_avanzar_dia(const ContextoDeComandoDeChat& contexto);
-
 public:
     explicit ComandoAnimal(Mundo& mundo_de_juego);
 

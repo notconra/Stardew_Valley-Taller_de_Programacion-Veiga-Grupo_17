@@ -103,7 +103,7 @@ public:
     bool agregar_vaca_en_granja_cerca(uint32_t id_jugador);
     bool agregar_gallina_en_granja_cerca(uint32_t id_jugador);
     std::string estado_animales_granja() const;
-    void avanzar_dia_cheat();
+    void avanzar_dia();
 
     Mundo(const Mundo&) = delete;
     Mundo& operator=(const Mundo&) = delete;

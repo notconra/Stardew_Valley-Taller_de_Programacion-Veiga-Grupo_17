@@ -274,11 +274,18 @@ void ControladorDelDia::continuar_en_el_dia(uint32_t dia) {
     reloj.continuar_en_el_dia(dia);
 }
 
-void ControladorDelDia::avanzar_dia_inmediato() {
+void ControladorDelDia::avanzar_dia() {
     reloj.empezar_dia_siguiente();
-    terminar_el_dia();
-    dia_terminado = true;
-    avisar_descansos();
+    for (auto& [id_jugador, personaje] : personajes) {
+        if (personaje.conectado) {
+            personaje.vida = Personaje::VIDA_MAXIMA;
+            personaje.energia = Personaje::ENERGIA_MAXIMA;
+            personaje.descanso = EstadoDeDescanso::DESPIERTO;
+            personaje.dio_el_ok = false;
+        }
+    }
+    sectores.avanzar_dia();
+    notificador.a_todos(reloj.hora());
 }
 
 bool ControladorDelDia::tomar_dia_terminado() {

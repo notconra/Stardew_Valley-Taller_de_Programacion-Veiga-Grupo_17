@@ -103,8 +103,9 @@ public:
     // Al retomar una partida guardada: arranca a las 6 am de ese día.
     void continuar_en_el_dia(uint32_t dia);
 
-    // Fuerza el avance inmediato al día siguiente (utilizado para comandos cheat / pruebas).
-    void avanzar_dia_inmediato();
+    // Avanza al día siguiente (a las 6:00 am) actualizando animales y producción sin mover a los
+    // jugadores.
+    void avanzar_dia();
 
     // Si desde la última vez que se preguntó terminó un día (todos dieron el OK). Devuelve true
     // una sola vez por día terminado: es el aviso para guardar la partida.

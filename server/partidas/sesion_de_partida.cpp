@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "../juego/chat/comando_animal.h"
+#include "../juego/chat/comando_avanzar_dia.h"
 #include "../juego/chat/comando_dinero.h"
 
 SesionDePartida::SesionDePartida(
@@ -28,6 +29,7 @@ SesionDePartida::SesionDePartida(
       segundos_jugados_iniciales(datos_guardados.segundos_jugados),
       tiempo_inicio_sesion(std::chrono::steady_clock::now()) {
     chat.agregar_comando(std::make_unique<ComandoAnimal>(mundo));
+    chat.agregar_comando(std::make_unique<ComandoAvanzarDia>(mundo));
     chat.agregar_comando(std::make_unique<ComandoDinero>(mundo));
     try {
         start();
