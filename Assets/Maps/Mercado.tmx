@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.2" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="19" height="17" tilewidth="16" tileheight="16" infinite="0" nextlayerid="11" nextobjectid="1608">
+<map version="1.10" tiledversion="1.12.2" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="19" height="17" tilewidth="16" tileheight="16" infinite="0" nextlayerid="12" nextobjectid="1614">
  <properties>
   <property name="AmbientLight" value="255 255 255"/>
   <property name="AmbientNightLight" value="180 180 0"/>
@@ -163,6 +163,40 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
+ <objectgroup id="11" name="Interacciones">
+  <object id="1608" x="48" y="144" width="16" height="32">
+   <properties>
+    <property name="columna_atencion" type="int" value="4"/>
+    <property name="fila_atencion" type="int" value="10"/>
+    <property name="id_puesto" value="0"/>
+    <property name="tipo" value="puesto"/>
+   </properties>
+  </object>
+  <object id="1609" x="240" y="144" width="16" height="32">
+   <properties>
+    <property name="columna_atencion" type="int" value="14"/>
+    <property name="fila_atencion" type="int" value="10"/>
+    <property name="id_puesto" value="3"/>
+    <property name="tipo" value="puesto"/>
+   </properties>
+  </object>
+  <object id="1611" x="224" y="96" width="48" height="32">
+   <properties>
+    <property name="columna_atencion" type="int" value="15"/>
+    <property name="fila_atencion" type="int" value="8"/>
+    <property name="id_puesto" value="2"/>
+    <property name="tipo" value="puesto"/>
+   </properties>
+  </object>
+  <object id="1613" x="32" y="96" width="48" height="32">
+   <properties>
+    <property name="columna_atencion" type="int" value="3"/>
+    <property name="fila_atencion" type="int" value="8"/>
+    <property name="id_puesto" value="1"/>
+    <property name="tipo" value="puesto"/>
+   </properties>
+  </object>
+ </objectgroup>
  <layer id="8" name="Front" width="19" height="17">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -208,9 +242,9 @@
  <objectgroup id="7" name="Transiciones">
   <object id="101" x="144" y="256" width="16" height="9.97986">
    <properties>
-    <property name="columna_destino" type="int" value="43" />
-    <property name="fila_destino" type="int" value="56" />
-    <property name="mapa_destino" value="Town" />
+    <property name="columna_destino" type="int" value="43"/>
+    <property name="fila_destino" type="int" value="56"/>
+    <property name="mapa_destino" value="Town"/>
    </properties>
   </object>
  </objectgroup>

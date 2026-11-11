@@ -5,12 +5,10 @@
 #include <cstdint>
 #include <vector>
 
-namespace {
 // Tiled guarda el espejado en los bits altos del id de la casilla.
-constexpr std::uint32_t FLAG_ESPEJO_H = 0x80000000u;
-constexpr std::uint32_t FLAG_ESPEJO_V = 0x40000000u;
-constexpr std::uint32_t MASCARA_ID = 0x1FFFFFFFu;
-}  // namespace
+#define FLAG_ESPEJO_H 0x80000000u
+#define FLAG_ESPEJO_V 0x40000000u
+#define MASCARA_ID 0x1FFFFFFFu
 
 void Dibujado::configurar(
     const std::vector<Tileset>& tilesets_configurados, const ConfiguracionGraficos& graficos) {
