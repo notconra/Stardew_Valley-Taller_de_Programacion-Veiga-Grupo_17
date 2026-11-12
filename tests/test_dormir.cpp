@@ -27,10 +27,13 @@ namespace {
 const double UN_MINUTO = 1.0;
 const int TICKS_POR_SEGUNDO = 20;
 const int TICKS_POR_DIA = 1200;
-const Casilla CAMA{2, 4};  // contra la pared de arriba, ocupa (2..3, 4..6)
-const Casilla AL_PIE_DE_LA_CAMA{2, 7};
-const Casilla OTRA_CAMA{6, 4};
-const Casilla AL_PIE_DE_LA_OTRA_CAMA{6, 7};
+// Casillas de la casa (FarmHouse2), en la pieza de la derecha.
+const Casilla CAMA{38, 23};  // contra la pared de arriba, ocupa (38..39, 23..25)
+const Casilla AL_PIE_DE_LA_CAMA{38, 26};
+const Casilla OTRA_CAMA{42, 23};
+const Casilla AL_PIE_DE_LA_OTRA_CAMA{42, 26};
+// Donde deja la puerta de la granja al entrar a la casa.
+const Casilla ENTRADA_DE_LA_CASA{27, 28};
 const uint32_t PRIMERO = 1;
 const uint32_t SEGUNDO = 2;
 
@@ -105,7 +108,11 @@ protected:
                                    .first->second;
         personaje.conectado = true;
         sectores.colocar_en_aparicion(personaje, "granja");
-        sectores.trasladar_a_casilla(personaje, MAPA_DE_LA_CASA, 5, 8);
+        sectores.trasladar_a_casilla(
+            personaje,
+            MAPA_DE_LA_CASA,
+            ENTRADA_DE_LA_CASA.columna,
+            ENTRADA_DE_LA_CASA.fila);
         dia.al_conectarse(personaje);
         return personaje;
     }
@@ -169,7 +176,7 @@ protected:
 TEST_F(Dormir, ConClicDerechoEnCualquierCasillaDeLaCamaSeAcuesta) {
     Personaje& personaje = entrar(PRIMERO);
 
-    ASSERT_TRUE(acostar(personaje, Casilla{3, 6}));
+    ASSERT_TRUE(acostar(personaje, Casilla{39, 25}));
     EXPECT_EQ(personaje.descanso, EstadoDeDescanso::ACOSTADO);
     EXPECT_FALSE(personaje.dio_el_ok);
     ASSERT_TRUE(personaje.ultima_cama.has_value());
@@ -183,7 +190,7 @@ TEST_F(Dormir, DosJugadoresNoSePuedenAcostarEnLaMismaCama) {
     Personaje& segundo = entrar(SEGUNDO);
 
     ASSERT_TRUE(acostar(primero));
-    EXPECT_FALSE(acostar(segundo, Casilla{3, 5}));
+    EXPECT_FALSE(acostar(segundo, Casilla{39, 24}));
     EXPECT_EQ(segundo.descanso, EstadoDeDescanso::DESPIERTO);
     EXPECT_FALSE(segundo.ultima_cama.has_value());
 }
@@ -252,7 +259,7 @@ TEST_F(Dormir, ConLaCamaLibreSePuedeLevantar) {
 
 TEST_F(Dormir, FueraDeLaCamaNoSeAcuesta) {
     Personaje& personaje = entrar(PRIMERO);
-    EXPECT_FALSE(acostar(personaje, Casilla{5, 5}));
+    EXPECT_FALSE(acostar(personaje, Casilla{42, 27}));
     EXPECT_EQ(personaje.descanso, EstadoDeDescanso::DESPIERTO);
 }
 
@@ -394,8 +401,8 @@ TEST_F(Dormir, ElQueNuncaDurmioSeDespiertaEnLaEntradaDeLaCasa) {
 
     EXPECT_EQ(personaje.mapa_actual, MAPA_DE_LA_CASA);
     ASSERT_TRUE(casilla_de(personaje).has_value());
-    EXPECT_EQ(casilla_de(personaje)->columna, 3);
-    EXPECT_EQ(casilla_de(personaje)->fila, 9);
+    EXPECT_EQ(casilla_de(personaje)->columna, ENTRADA_DE_LA_CASA.columna);
+    EXPECT_EQ(casilla_de(personaje)->fila, ENTRADA_DE_LA_CASA.fila);
 }
 
 TEST_F(Dormir, ElDesmayadoSeDespiertaEnSuUltimaCama) {
@@ -427,8 +434,8 @@ TEST_F(Dormir, SiLevantaronLaCamaSeDespiertaEnLaEntrada) {
     avanzar(1);
 
     EXPECT_FALSE(personaje.ultima_cama.has_value());
-    EXPECT_EQ(casilla_de(personaje)->columna, 3);
-    EXPECT_EQ(casilla_de(personaje)->fila, 9);
+    EXPECT_EQ(casilla_de(personaje)->columna, ENTRADA_DE_LA_CASA.columna);
+    EXPECT_EQ(casilla_de(personaje)->fila, ENTRADA_DE_LA_CASA.fila);
 }
 
 TEST_F(Dormir, ALasDosLosDespiertosSeDesmayanYTodosTienenQueDarElOk) {

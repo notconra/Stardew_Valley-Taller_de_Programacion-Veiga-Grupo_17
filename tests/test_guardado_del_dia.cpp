@@ -54,22 +54,22 @@ DatosMundoGuardado un_mundo_guardado() {
     DatosJugadorGuardado jugador;
     jugador.id_jugador = ID_JUGADOR;
     jugador.mapa_actual = MAPA_DE_LA_CASA;
-    jugador.x = 40.0;
-    jugador.y = 120.0;
+    jugador.x = 640.0;
+    jugador.y = 400.0;
     jugador.vida = 50;
     jugador.energia = 35;
     jugador.monedas = 75;
     jugador.tiene_cama = true;
     jugador.mapa_cama = MAPA_DE_LA_CASA;
-    jugador.columna_cama = 2;
-    jugador.fila_cama = 4;
+    jugador.columna_cama = 38;
+    jugador.fila_cama = 23;
     mundo.jugadores.push_back(jugador);
 
     DatosMuebleGuardado cama;
     cama.id_mapa = MAPA_DE_LA_CASA;
     cama.tipo = TipoObjeto::CAMA;
-    cama.columna = 2;
-    cama.fila = 4;
+    cama.columna = 38;
+    cama.fila = 23;
     mundo.muebles.push_back(cama);
     return mundo;
 }
@@ -126,8 +126,8 @@ TEST(GuardadoDelDia, AlRetomarElJugadorConservaVidaEnergiaYUltimaCama) {
     EXPECT_EQ(datos->monedas, 75u);
     EXPECT_TRUE(datos->tiene_cama);
     EXPECT_EQ(datos->mapa_cama, MAPA_DE_LA_CASA);
-    EXPECT_EQ(datos->columna_cama, 2u);
-    EXPECT_EQ(datos->fila_cama, 4u);
+    EXPECT_EQ(datos->columna_cama, 38u);
+    EXPECT_EQ(datos->fila_cama, 23u);
     EXPECT_EQ(datos->mapa_actual, MAPA_DE_LA_CASA);
 }
 
