@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.2-2-geb83ddb9" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="80" height="65" tilewidth="16" tileheight="16" infinite="0" nextlayerid="15" nextobjectid="98">
+<map version="1.10" tiledversion="1.12.2" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="80" height="65" tilewidth="16" tileheight="16" infinite="0" nextlayerid="15" nextobjectid="98">
  <properties>
   <property name="AllowGrassSurviveInWinter" value="T"/>
   <property name="Outdoors" value="T"/>
@@ -2047,14 +2047,14 @@
 </data>
  </layer>
  <objectgroup id="14" name="Transiciones">
-  <object id="90" x="1040" y="199.667" width="16" height="31">
+  <object id="90" x="1040" y="192.576" width="16" height="38.0909">
    <properties>
-    <property name="columna_destino" type="int" value="3"/>
-    <property name="fila_destino" type="int" value="9"/>
-    <property name="mapa_destino" value="FarmHouse"/>
+    <property name="columna_destino" type="int" value="27"/>
+    <property name="fila_destino" type="int" value="28"/>
+    <property name="mapa_destino" value="FarmHouse2"/>
    </properties>
   </object>
-  <object id="91" x="1264.33" y="256" width="15.6667" height="32">
+  <object id="91" x="1277.58" y="255.75" width="15.6667" height="47">
    <properties>
     <property name="columna_destino" type="int" value="10"/>
     <property name="fila_destino" type="int" value="23"/>

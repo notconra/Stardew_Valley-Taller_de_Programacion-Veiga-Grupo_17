@@ -2,7 +2,13 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <vector>
+
+// Tiled guarda el espejado en los bits altos del id de la casilla.
+#define FLAG_ESPEJO_H 0x80000000u
+#define FLAG_ESPEJO_V 0x40000000u
+#define MASCARA_ID 0x1FFFFFFFu
 
 void Dibujado::configurar(
     const std::vector<Tileset>& tilesets_configurados, const ConfiguracionGraficos& graficos) {
@@ -60,7 +66,11 @@ void Dibujado::dibujar_capa(
 
     for (int y = primera_fila; y <= ultima_fila; ++y) {
         for (int x = primera_columna; x <= ultima_columna; ++x) {
-            const int id_de_tile = capa[static_cast<std::size_t>(y) * ancho_en_casillas + x];
+            const std::uint32_t valor = static_cast<std::uint32_t>(
+                capa[static_cast<std::size_t>(y) * ancho_en_casillas + x]);
+            const int id_de_tile = static_cast<int>(valor & MASCARA_ID);
+            const bool espejo_h = (valor & FLAG_ESPEJO_H) != 0;
+            const bool espejo_v = (valor & FLAG_ESPEJO_V) != 0;
             if (id_de_tile <= 0) {
                 continue;
             }
@@ -93,8 +103,10 @@ void Dibujado::dibujar_capa(
                 const int origen_arr = recorte_arr / escala_de_tiles;
                 const int origen_aba = recorte_aba / escala_de_tiles;
 
-                origen.x += origen_izq;
-                origen.y += origen_arr;
+                // Si el tile está espejado, lo que se recorta de la pantalla por la izquierda
+                // es lo que está a la derecha en la imagen (y lo mismo en vertical).
+                origen.x += espejo_h ? origen_der : origen_izq;
+                origen.y += espejo_v ? origen_aba : origen_arr;
                 origen.w -= origen_izq + origen_der;
                 origen.h -= origen_arr + origen_aba;
 
@@ -108,7 +120,21 @@ void Dibujado::dibujar_capa(
                 }
             }
 
-            SDL_RenderCopy(renderer, tileset->textura, &origen, &destino);
+            int espejado = SDL_FLIP_NONE;
+            if (espejo_h) {
+                espejado |= SDL_FLIP_HORIZONTAL;
+            }
+            if (espejo_v) {
+                espejado |= SDL_FLIP_VERTICAL;
+            }
+            SDL_RenderCopyEx(
+                renderer,
+                tileset->textura,
+                &origen,
+                &destino,
+                0.0,
+                nullptr,
+                static_cast<SDL_RendererFlip>(espejado));
         }
     }
 }

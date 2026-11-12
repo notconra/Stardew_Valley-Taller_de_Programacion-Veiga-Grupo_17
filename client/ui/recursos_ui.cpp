@@ -1,5 +1,7 @@
 #include "recursos_ui.h"
 
+#include <QString>
+#include <QVariant>
 #include <vector>
 
 namespace {
@@ -239,7 +241,7 @@ void RecursosUI::configurar_boton_eliminar(QPushButton* boton) {
     }
     configurar_boton_icono(boton, sprite_eliminar);
     boton->setFixedSize(TAMANIO_BOTON_ELIMINAR, TAMANIO_BOTON_ELIMINAR);
-    boton->setProperty("class", "btn_eliminar_partida");
+    boton->setProperty("class", QStringLiteral("btn_eliminar_partida"));
 }
 
 void RecursosUI::configurar_boton_masculino(QPushButton* boton) {
