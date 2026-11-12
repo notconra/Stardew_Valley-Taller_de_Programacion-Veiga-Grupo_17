@@ -237,10 +237,21 @@ TEST_F(Cultivos, LaFrutillaVuelveADarCadaDosDias) {
     EXPECT_TRUE(huerta.hay_cultivo(AQUI));
     EXPECT_FALSE(huerta.esta_madura(AQUI));
     EXPECT_TRUE(huerta.pide_agua(AQUI));
+    CasillaTratada casilla{static_cast<uint32_t>(AQUI.columna), static_cast<uint32_t>(AQUI.fila)};
+    huerta.completar(casilla);
+    EXPECT_TRUE(casilla.ya_dio_fruto);
     un_dia_bien_regado(2);
     EXPECT_FALSE(huerta.esta_madura(AQUI));
     un_dia_bien_regado(2);
     EXPECT_TRUE(huerta.esta_madura(AQUI));
+}
+
+TEST_F(Cultivos, RecienPlantadaTodaviaNoDioFruto) {
+    huerta.avanzar_hasta(0);
+    ASSERT_TRUE(huerta.plantar(AQUI, TipoCultivo::FRUTILLA));
+    CasillaTratada casilla{static_cast<uint32_t>(AQUI.columna), static_cast<uint32_t>(AQUI.fila)};
+    huerta.completar(casilla);
+    EXPECT_FALSE(casilla.ya_dio_fruto);
 }
 
 TEST_F(Cultivos, LaCasillaParaElClienteLlevaElCultivoYSuEstado) {
@@ -296,6 +307,7 @@ TEST(GuardadoDeCultivos, ElArchivoConservaLosCultivos) {
     cultivo.dias_de_crecimiento = 2;
     cultivo.madura = true;
     cultivo.faltas = 3;
+    cultivo.ya_dio_fruto = true;
     partida.mundo.cultivos.push_back(cultivo);
 
     std::stringstream archivo;
