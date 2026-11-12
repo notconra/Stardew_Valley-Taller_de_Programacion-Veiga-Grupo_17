@@ -5,7 +5,7 @@
 
 #include "../objetos_del_mundo/objetos_del_mundo.h"
 
-#define MAPA_DE_LA_CASA "FarmHouse"
+#define MAPA_DE_LA_CASA "FarmHouse2"
 
 #define ANCHO_DE_LA_CAMA 2
 #define ALTO_DE_LA_CAMA 3

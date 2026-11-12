@@ -10,8 +10,14 @@
 #include "../geometria.h"
 #include "propiedad_de_casilla.h"
 
+class LectorDeMapasTMX;
+struct PuestoTMX;
+
 // La capa del TMX que dibuja el piso. De ahí salen las casillas cultivables.
 #define CAPA_DE_PISO "Back"
+
+// La capa de objetos del TMX con las interacciones del mapa (por ahora, los puestos de venta).
+#define CAPA_DE_INTERACCIONES "Interacciones"
 
 // Valor que usa Tiled en las propiedades booleanas de los tiles.
 #define VALOR_VERDADERO_TMX "T"
@@ -24,6 +30,16 @@ struct Transicion {
     std::string mapa_destino;
     int columna_destino = 0;
     int fila_destino = 0;
+};
+
+// Un puesto de venta, con su zona (en píxeles) donde se hace clic para comprar, su identificador
+// (el de la propiedad id_puesto del TMX, con el que la configuración le asigna catálogo y horario)
+// y la casilla desde donde se atiende al jugador.
+struct Puesto {
+    std::string id;
+    Rectangulo zona;
+    int columna_atencion = 0;
+    int fila_atencion = 0;
 };
 
 // El terreno tal como lo necesita el servidor, qué propiedades tiene cada casilla.
@@ -39,6 +55,26 @@ private:
 
     // Zonas (en píxeles) que llevan a otro mapa. Pocas por mapa, alcanza con recorrerlas.
     std::vector<std::pair<Rectangulo, Transicion>> transiciones;
+
+    // Puestos de venta del mapa (los mostradores).
+    std::vector<Puesto> puestos;
+
+    // Pasos del constructor, en el orden en que se llaman. Todos lanzan std::runtime_error si el
+    // TMX no tiene lo que necesitan.
+    void leer_tamanio(const LectorDeMapasTMX& lector, const std::string& ruta_tmx);
+    void cargar_colisiones(
+        const LectorDeMapasTMX& lector, const ConfiguracionMapaServidor& configuracion);
+    void cargar_capas_opcionales(
+        const LectorDeMapasTMX& lector, const ConfiguracionMapaServidor& configuracion);
+    void cargar_tierra_cultivable(
+        const LectorDeMapasTMX& lector, const ConfiguracionMapaServidor& configuracion);
+    void cargar_transiciones(
+        const LectorDeMapasTMX& lector, const ConfiguracionMapaServidor& configuracion);
+    void cargar_puestos(const LectorDeMapasTMX& lector, const std::string& ruta_tmx);
+
+    // Valida un puesto leído del TMX y lo agrega. Tiene que llamarse con las colisiones ya
+    // cargadas, porque comprueba que la casilla de atención no esté bloqueada.
+    void agregar_puesto(const PuestoTMX& puesto_tmx, const std::string& ruta_tmx);
 
     // Suma "propiedad" a toda casilla no vacía de la capa. Lanza std::runtime_error si la capa
     // no coincide con el tamaño del mapa.
@@ -56,7 +92,8 @@ private:
         const std::vector<std::string>& destinos_que_conservan_colision);
 
 public:
-    // Lanza std::runtime_error si no puede leer el TMX o la capa de colisiones.
+    // Lanza std::runtime_error si no puede leer el TMX o la capa de colisiones, o si un puesto
+    // no tiene id, repite el id de otro o tiene una casilla de atención fuera del mapa o bloqueada.
     // "destinos_que_conservan_colision" son los mapa_destino cuyas casillas no se liberan. Con
     // "todas_conservan_colision" no se libera ninguna (los niveles de la mazmorra, donde las dos
     // escaleras se usan con clic).
@@ -94,6 +131,16 @@ public:
 
     // Todas las zonas de transición del mapa, para validarlas al cargar los recursos.
     const std::vector<std::pair<Rectangulo, Transicion>>& obtener_transiciones() const;
+
+    // El puesto cuya zona ocupa esa casilla (cualquier superposición cuenta), o nullptr si no hay
+    // ninguno o la casilla está fuera del mapa. Es lo que usa el clic derecho sobre un mostrador.
+    const Puesto* puesto_en_casilla(int columna, int fila) const;
+
+    // El puesto con ese id, o nullptr si el mapa no lo tiene.
+    const Puesto* buscar_puesto(const std::string& id) const;
+
+    // Todos los puestos del mapa, para validarlos contra la configuración al cargar los recursos.
+    const std::vector<Puesto>& obtener_puestos() const;
 };
 
 #endif

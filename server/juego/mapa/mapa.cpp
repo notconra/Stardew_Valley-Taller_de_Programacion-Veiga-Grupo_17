@@ -33,16 +33,28 @@ Mapa::Mapa(
     const std::vector<std::string>& destinos_que_conservan_colision,
     bool todas_conservan_colision) {
     const LectorDeMapasTMX lector(configuracion.ruta_tmx);
+
+    leer_tamanio(lector, configuracion.ruta_tmx);
+    cargar_colisiones(lector, configuracion);
+    cargar_capas_opcionales(lector, configuracion);
+    cargar_tierra_cultivable(lector, configuracion);
+    cargar_transiciones(lector, configuracion);
+    if (!todas_conservan_colision) {
+        ajustar_colisiones_de_transiciones(destinos_que_conservan_colision);
+    }
+    cargar_puestos(lector, configuracion.ruta_tmx);
+}
+
+void Mapa::leer_tamanio(const LectorDeMapasTMX& lector, const std::string& ruta_tmx) {
     const TamanioMapa tamanio = lector.leer_tamanio();
 
     const std::size_t cantidad_de_casillas =
         static_cast<std::size_t>(tamanio.ancho_en_casillas) * tamanio.alto_en_casillas;
     if (cantidad_de_casillas == 0) {
-        throw std::runtime_error("no se pudo leer el tamaño del mapa " + configuracion.ruta_tmx);
+        throw std::runtime_error("no se pudo leer el tamaño del mapa " + ruta_tmx);
     }
     if (tamanio.ancho_de_casilla <= 0 || tamanio.alto_de_casilla <= 0) {
-        throw std::runtime_error(
-            "no se pudo leer el tamaño de las casillas del mapa " + configuracion.ruta_tmx);
+        throw std::runtime_error("no se pudo leer el tamaño de las casillas del mapa " + ruta_tmx);
     }
 
     ancho_en_casillas = tamanio.ancho_en_casillas;
@@ -50,7 +62,10 @@ Mapa::Mapa(
     ancho_de_casilla = tamanio.ancho_de_casilla;
     alto_de_casilla = tamanio.alto_de_casilla;
     propiedades.assign(cantidad_de_casillas, PropiedadDeCasilla::NINGUNA);
+}
 
+void Mapa::cargar_colisiones(
+    const LectorDeMapasTMX& lector, const ConfiguracionMapaServidor& configuracion) {
     std::string nombre_capa_colisiones = configuracion.capa_colisiones;
     std::vector<int> colisiones = lector.cargar_capa(nombre_capa_colisiones);
     if (colisiones.empty()) {
@@ -63,7 +78,10 @@ Mapa::Mapa(
             configuracion.capa_respaldo + ") en " + configuracion.ruta_tmx);
     }
     marcar(colisiones, PropiedadDeCasilla::BLOQUEA, nombre_capa_colisiones);
+}
 
+void Mapa::cargar_capas_opcionales(
+    const LectorDeMapasTMX& lector, const ConfiguracionMapaServidor& configuracion) {
     const std::map<std::string, uint8_t>& disponibles = propiedades_disponibles();
     for (const CapaOpcionalMapaServidor& capa_opcional : configuracion.capas_opcionales) {
         const std::map<std::string, uint8_t>::const_iterator encontrado =
@@ -79,20 +97,28 @@ Mapa::Mapa(
             marcar(capa, encontrado->second, capa_opcional.nombre);
         }
     }
+}
 
-    if (!configuracion.propiedad_cultivable.empty()) {
-        const std::vector<int> piso = lector.cargar_capa(CAPA_DE_PISO);
-        if (piso.empty()) {
-            throw std::runtime_error(
-                std::string("falta la capa ") + CAPA_DE_PISO + " para la tierra cultivable de " +
-                configuracion.ruta_tmx);
-        }
-        marcar_si_es_alguno(
-            piso,
-            lector.ids_con_propiedad(configuracion.propiedad_cultivable, VALOR_VERDADERO_TMX),
-            PropiedadDeCasilla::CULTIVABLE,
-            CAPA_DE_PISO);
+void Mapa::cargar_tierra_cultivable(
+    const LectorDeMapasTMX& lector, const ConfiguracionMapaServidor& configuracion) {
+    if (configuracion.propiedad_cultivable.empty()) {
+        return;
     }
+    const std::vector<int> piso = lector.cargar_capa(CAPA_DE_PISO);
+    if (piso.empty()) {
+        throw std::runtime_error(
+            std::string("falta la capa ") + CAPA_DE_PISO + " para la tierra cultivable de " +
+            configuracion.ruta_tmx);
+    }
+    marcar_si_es_alguno(
+        piso,
+        lector.ids_con_propiedad(configuracion.propiedad_cultivable, VALOR_VERDADERO_TMX),
+        PropiedadDeCasilla::CULTIVABLE,
+        CAPA_DE_PISO);
+}
+
+void Mapa::cargar_transiciones(
+    const LectorDeMapasTMX& lector, const ConfiguracionMapaServidor& configuracion) {
     for (const TransicionTMX& transicion_tmx :
          lector.cargar_transiciones(configuracion.capa_transiciones)) {
         const Rectangulo zona{
@@ -106,9 +132,37 @@ Mapa::Mapa(
             transicion_tmx.fila_destino};
         transiciones.emplace_back(zona, transicion);
     }
-    if (!todas_conservan_colision) {
-        ajustar_colisiones_de_transiciones(destinos_que_conservan_colision);
+}
+
+void Mapa::cargar_puestos(const LectorDeMapasTMX& lector, const std::string& ruta_tmx) {
+    for (const PuestoTMX& puesto_tmx : lector.cargar_puestos(CAPA_DE_INTERACCIONES)) {
+        agregar_puesto(puesto_tmx, ruta_tmx);
     }
+}
+
+void Mapa::agregar_puesto(const PuestoTMX& puesto_tmx, const std::string& ruta_tmx) {
+    const std::string donde = " (puesto de " + ruta_tmx + ")";
+    if (puesto_tmx.id.empty()) {
+        throw std::runtime_error("falta la propiedad id_puesto en un puesto" + donde);
+    }
+    if (buscar_puesto(puesto_tmx.id) != nullptr) {
+        throw std::runtime_error("id_puesto repetido: " + puesto_tmx.id + donde);
+    }
+    if (!puesto_tmx.tiene_atencion) {
+        throw std::runtime_error(
+            "al puesto " + puesto_tmx.id + " le falta columna_atencion o fila_atencion" + donde);
+    }
+    if (!esta_dentro(puesto_tmx.columna_atencion, puesto_tmx.fila_atencion) ||
+        tiene(puesto_tmx.columna_atencion, puesto_tmx.fila_atencion, PropiedadDeCasilla::BLOQUEA)) {
+        throw std::runtime_error(
+            "la casilla de atención del puesto " + puesto_tmx.id +
+            " está fuera del mapa o bloqueada" + donde);
+    }
+    puestos.push_back(Puesto{
+        puesto_tmx.id,
+        Rectangulo{puesto_tmx.x, puesto_tmx.y, puesto_tmx.ancho, puesto_tmx.alto},
+        puesto_tmx.columna_atencion,
+        puesto_tmx.fila_atencion});
 }
 
 void Mapa::marcar(const std::vector<int>& capa, uint8_t propiedad, const std::string& nombre_capa) {
@@ -234,4 +288,34 @@ bool Mapa::cerca_de_una_transicion(int columna, int fila) const {
 
 const std::vector<std::pair<Rectangulo, Transicion>>& Mapa::obtener_transiciones() const {
     return transiciones;
+}
+
+const Puesto* Mapa::puesto_en_casilla(int columna, int fila) const {
+    if (!esta_dentro(columna, fila)) {
+        return nullptr;
+    }
+    const Rectangulo casilla{
+        columna * ancho_de_casilla,
+        fila * alto_de_casilla,
+        ancho_de_casilla,
+        alto_de_casilla};
+    for (const Puesto& puesto : puestos) {
+        if (se_superponen(casilla, puesto.zona)) {
+            return &puesto;
+        }
+    }
+    return nullptr;
+}
+
+const Puesto* Mapa::buscar_puesto(const std::string& id) const {
+    for (const Puesto& puesto : puestos) {
+        if (puesto.id == id) {
+            return &puesto;
+        }
+    }
+    return nullptr;
+}
+
+const std::vector<Puesto>& Mapa::obtener_puestos() const {
+    return puestos;
 }
