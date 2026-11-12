@@ -1,6 +1,5 @@
 #include "recursos_de_juego.h"
 
-#include <algorithm>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -27,19 +26,10 @@ RecursosDeJuego::RecursosDeJuego(
     for (const ConfiguracionMapaServidor& configuracion_mapa : configuracion_mapas) {
         // Las transiciones que se usan con clic (la puerta de la casa, la escalera) tienen que
         // conservar la colisión del TMX para que no se puedan atravesar caminando. Las que se
-        // activan al pisarlas se liberan para poder entrar en ellas. En un nivel de la mazmorra
-        // todas se usan con clic, también la escalera de subida que lleva a la granja.
-        const bool es_nivel_de_la_mazmorra =
-            std::find(
-                configuracion_mazmorra.mapas.begin(),
-                configuracion_mazmorra.mapas.end(),
-                configuracion_mapa.id) != configuracion_mazmorra.mapas.end();
+        // activan al pisarlas se liberan para poder entrar en ellas.
         mapas.emplace(
             configuracion_mapa.id,
-            Mapa(
-                configuracion_mapa,
-                juego.transiciones.destinos_con_clic,
-                es_nivel_de_la_mazmorra));
+            Mapa(configuracion_mapa, juego.transiciones.destinos_con_clic));
         this->configuraciones_mapas.emplace(configuracion_mapa.id, configuracion_mapa);
     }
     validar_catalogo_de_objetos();

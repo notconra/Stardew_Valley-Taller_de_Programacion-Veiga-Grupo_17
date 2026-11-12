@@ -188,11 +188,7 @@ void Mundo::resolver_transicion(Personaje& personaje, const Transicion& transici
         transicion.fila_destino);
 }
 
-bool Mundo::requiere_clic(const Personaje& personaje, const Transicion& transicion) const {
-    const std::vector<std::string>& niveles = recursos.mazmorra.mapas;
-    if (std::find(niveles.begin(), niveles.end(), personaje.mapa_actual) != niveles.end()) {
-        return true;
-    }
+bool Mundo::requiere_clic(const Transicion& transicion) const {
     const std::vector<std::string>& destinos = recursos.juego.transiciones.destinos_con_clic;
     return std::find(destinos.begin(), destinos.end(), transicion.mapa_destino) != destinos.end();
 }
@@ -200,8 +196,7 @@ bool Mundo::requiere_clic(const Personaje& personaje, const Transicion& transici
 void Mundo::resolver_transiciones_automaticas() {
     for (const JugadorEnTransicion& en_transicion : sectores.jugadores_en_transicion()) {
         auto encontrado = personajes.find(en_transicion.id_jugador);
-        if (encontrado == personajes.end() ||
-            requiere_clic(encontrado->second, en_transicion.transicion)) {
+        if (encontrado == personajes.end() || requiere_clic(en_transicion.transicion)) {
             continue;
         }
         resolver_transicion(encontrado->second, en_transicion.transicion);

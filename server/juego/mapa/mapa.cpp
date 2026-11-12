@@ -30,8 +30,7 @@ const std::map<std::string, uint8_t>& propiedades_disponibles() {
 
 Mapa::Mapa(
     const ConfiguracionMapaServidor& configuracion,
-    const std::vector<std::string>& destinos_que_conservan_colision,
-    bool todas_conservan_colision) {
+    const std::vector<std::string>& destinos_que_conservan_colision) {
     const LectorDeMapasTMX lector(configuracion.ruta_tmx);
 
     leer_tamanio(lector, configuracion.ruta_tmx);
@@ -39,9 +38,7 @@ Mapa::Mapa(
     cargar_capas_opcionales(lector, configuracion);
     cargar_tierra_cultivable(lector, configuracion);
     cargar_transiciones(lector, configuracion);
-    if (!todas_conservan_colision) {
-        ajustar_colisiones_de_transiciones(destinos_que_conservan_colision);
-    }
+    ajustar_colisiones_de_transiciones(destinos_que_conservan_colision);
     cargar_puestos(lector, configuracion.ruta_tmx);
 }
 

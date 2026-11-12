@@ -5,21 +5,20 @@
 
 #define RUTA_DE_LAS_PLANTAS "Assets/Farm/Crops/cultivos.png"
 #define RUTA_DE_LOS_GLOBOS "Assets/TileSheets/emotes.png"
-// Cada planta mide una casilla de ancho y dos de alto (la de arriba es para lo que sobresale).
+#define RUTA_DEL_GLOBO_DE_COSECHA "Assets/Farm/Crops/lista_para_cosechar.png"
+
 #define FILAS_POR_CULTIVO 2
-// Después de las etapas de crecimiento vienen la planta madura y la que está volviendo a dar.
 #define COLUMNA_DE_LA_MADURA (ETAPA_DE_CULTIVO_MAXIMA + 1)
 #define COLUMNA_DE_LA_QUE_VUELVE_A_DAR (ETAPA_DE_CULTIVO_MAXIMA + 2)
-// El globo con la gota: fila 7 de emotes.png, segundo dibujo de la animación.
 #define FILA_DEL_GLOBO_CON_GOTA 7
 #define COLUMNA_DEL_GLOBO_CON_GOTA 1
-// Lado del globo, en octavos de casilla.
 #define TAMANO_DEL_GLOBO 5
 
 CultivosGraficos::CultivosGraficos(
     const ConfiguracionGraficos& configuracion_graficos, SDL_Renderer* renderer)
     : plantas(RUTA_DE_LAS_PLANTAS, renderer),
       globos(RUTA_DE_LOS_GLOBOS, renderer),
+      globo_de_cosecha(RUTA_DEL_GLOBO_DE_COSECHA, renderer),
       tamano_de_tile(configuracion_graficos.tamano_de_tile),
       escala_de_tiles(configuracion_graficos.escala_de_tiles) {
 }
@@ -77,21 +76,25 @@ void CultivosGraficos::dibujar(
         const SDL_Rect destino{x, y_de_arriba, lado, FILAS_POR_CULTIVO * lado};
         SDL_RenderCopy(renderer, plantas.ptr(), &origen, &destino);
 
+        // Una planta madura ya no pide agua, así que nunca van los dos globos juntos.
         if (casilla.pide_agua) {
-            const SDL_Rect globo{
+            const SDL_Rect gota{
                 COLUMNA_DEL_GLOBO_CON_GOTA * tamano_de_tile,
                 FILA_DEL_GLOBO_CON_GOTA * tamano_de_tile,
                 tamano_de_tile,
                 tamano_de_tile};
-            // Chico y en la esquina de arriba a la derecha de su propia casilla, para no tapar a
-            // las plantas de al lado.
-            const int lado_del_globo = lado * TAMANO_DEL_GLOBO / 8;
-            const SDL_Rect en_la_esquina{
-                x + lado - lado_del_globo,
-                y_de_arriba + lado,
-                lado_del_globo,
-                lado_del_globo};
-            SDL_RenderCopy(renderer, globos.ptr(), &globo, &en_la_esquina);
+            dibujar_globo(renderer, globos, gota, x, y_de_arriba + lado, lado);
+        } else if (casilla.madura) {
+            const SDL_Rect tic{0, 0, tamano_de_tile, tamano_de_tile};
+            dibujar_globo(renderer, globo_de_cosecha, tic, x, y_de_arriba + lado, lado);
         }
     }
+}
+
+void CultivosGraficos::dibujar_globo(
+    SDL_Renderer* renderer, const Textura& textura, const SDL_Rect& origen, int x, int y,
+    int lado) const {
+    const int lado_del_globo = lado * TAMANO_DEL_GLOBO / 8;
+    const SDL_Rect en_la_esquina{x + lado - lado_del_globo, y, lado_del_globo, lado_del_globo};
+    SDL_RenderCopy(renderer, textura.ptr(), &origen, &en_la_esquina);
 }
