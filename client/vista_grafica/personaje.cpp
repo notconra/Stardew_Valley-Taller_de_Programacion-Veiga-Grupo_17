@@ -60,6 +60,8 @@ constexpr PoseDeMano MANO_ACCION[3][4] = {
 #define COLUMNA_PRIMER_BRAZO 6
 const int FILA_DE_RIEGO[3] = {9, 9, 10};
 const int COLUMNA_DE_RIEGO[3] = {0, 4, 2};
+const int DESVIO_DE_RIEGO[3][2] = {{4, 3}, {2, 1}, {3, 1}};
+#define DESVIO_LATERAL_AL_ECHAR_AGUA -1
 const PoseDeMano POSE_DE_RIEGO[3][2] = {
     {{8, 21, 0}, {8, 22, 20}},
     {{14, 18, 0}, {15, 19, 35}},
@@ -153,6 +155,7 @@ void Personaje::dibujar(
     int fila_cuerpo = fila_direccion;
     int fila_brazos = fila_direccion;
     int desvio_y_accesorios = 0;
+    int desvio_x_accesorios = 0;
     const int cuadro_accion = cuadro_de_accion(ms_de_accion) % 4;
 
     const bool tiene_item = en_mano.tipo != TipoItem::NINGUNO;
@@ -167,6 +170,11 @@ void Personaje::dibujar(
         fila_brazos = fila_cuerpo;
         columna_cuerpo = COLUMNA_DE_RIEGO[fila_direccion] + cuadro_de_riego;
         columna_brazos = COLUMNA_PRIMER_BRAZO + columna_cuerpo;
+        desvio_y_accesorios = DESVIO_DE_RIEGO[fila_direccion][cuadro_de_riego];
+        if (fila_direccion == FILA_LATERAL && cuadro_de_riego == 1) {
+            desvio_x_accesorios = flip == SDL_FLIP_HORIZONTAL ? -DESVIO_LATERAL_AL_ECHAR_AGUA
+                                                              : DESVIO_LATERAL_AL_ECHAR_AGUA;
+        }
     } else if (haciendo_accion) {
         fila_cuerpo = FILA_ACCION_POR_DIRECCION[fila_direccion];
         fila_brazos = fila_cuerpo;
@@ -261,7 +269,7 @@ void Personaje::dibujar(
         ANCHO_CELDA_PELO,
         alto};
     const SDL_Rect destino_pelo{
-        x_pantalla,
+        x_pantalla + desvio_x_accesorios * escala_de_tiles,
         y_pantalla + (offset_y_pelo + desvio_y_accesorios) * escala_de_tiles,
         ancho * escala_de_tiles,
         alto * escala_de_tiles};
@@ -277,7 +285,7 @@ void Personaje::dibujar(
             ANCHO_CELDA_SOMBRERO};
         const int margen_sombrero = (ANCHO_CELDA_SOMBRERO - ancho) / 2;
         const SDL_Rect destino_sombrero{
-            x_pantalla - margen_sombrero * escala_de_tiles,
+            x_pantalla + (desvio_x_accesorios - margen_sombrero) * escala_de_tiles,
             y_pantalla + (desvio_y_accesorios - margen_sombrero) * escala_de_tiles,
             ANCHO_CELDA_SOMBRERO * escala_de_tiles,
             ANCHO_CELDA_SOMBRERO * escala_de_tiles};
@@ -304,7 +312,7 @@ void Personaje::dibujar(
         ANCHO_CELDA_REMERA};
     const int margen_remera = (ancho - ANCHO_CELDA_REMERA) / 2;
     const SDL_Rect destino_remera{
-        x_pantalla + margen_remera * escala_de_tiles,
+        x_pantalla + (desvio_x_accesorios + margen_remera) * escala_de_tiles,
         y_pantalla + (offset_y_remera + desvio_y_accesorios) * escala_de_tiles,
         ANCHO_CELDA_REMERA * escala_de_tiles,
         ANCHO_CELDA_REMERA * escala_de_tiles};
