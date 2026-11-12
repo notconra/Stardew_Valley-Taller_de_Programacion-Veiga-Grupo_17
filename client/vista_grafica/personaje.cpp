@@ -56,8 +56,19 @@ constexpr PoseDeMano MANO_ACCION[3][4] = {
     {{9, 16, -45}, {9, 18, -15}, {9, 20, 25}, {9, 22, 50}},
 };
 
+#define MS_PRIMER_CUADRO_DE_RIEGO 150
+#define COLUMNA_PRIMER_BRAZO 6
+const int FILA_DE_RIEGO[3] = {9, 9, 10};
+const int COLUMNA_DE_RIEGO[3] = {0, 4, 2};
+const PoseDeMano POSE_DE_RIEGO[3][2] = {
+    {{8, 21, 0}, {8, 22, 20}},
+    {{14, 18, 0}, {15, 19, 35}},
+    {{8, 17, 0}, {8, 16, -20}},
+};
+
 bool es_herramienta_de_mano(TipoItem tipo) {
-    return tipo == TipoItem::PICO || tipo == TipoItem::PALA || tipo == TipoItem::ESPADA;
+    return tipo == TipoItem::PICO || tipo == TipoItem::PALA || tipo == TipoItem::ESPADA ||
+           tipo == TipoItem::REGADERA;
 }
 
 int cuadro_de_accion(Uint32 ms_de_accion) {
@@ -145,11 +156,18 @@ void Personaje::dibujar(
     const int cuadro_accion = cuadro_de_accion(ms_de_accion) % 4;
 
     const bool tiene_item = en_mano.tipo != TipoItem::NINGUNO;
+    const bool regando = haciendo_accion && en_mano.tipo == TipoItem::REGADERA;
+    const int cuadro_de_riego = ms_de_accion < MS_PRIMER_CUADRO_DE_RIEGO ? 0 : 1;
     const bool item_en_la_mano = tiene_item && haciendo_accion;
     const bool item_en_alto =
         tiene_item && !haciendo_accion && !es_herramienta_de_mano(en_mano.tipo);
 
-    if (haciendo_accion) {
+    if (regando) {
+        fila_cuerpo = FILA_DE_RIEGO[fila_direccion];
+        fila_brazos = fila_cuerpo;
+        columna_cuerpo = COLUMNA_DE_RIEGO[fila_direccion] + cuadro_de_riego;
+        columna_brazos = COLUMNA_PRIMER_BRAZO + columna_cuerpo;
+    } else if (haciendo_accion) {
         fila_cuerpo = FILA_ACCION_POR_DIRECCION[fila_direccion];
         fila_brazos = fila_cuerpo;
         columna_cuerpo = cuadro_accion;
@@ -178,7 +196,8 @@ void Personaje::dibujar(
                                                         : COLUMNA_BRAZOS_EN_ALTO_FRENTE;
     }
     const auto dibujar_item_en_la_mano = [&]() {
-        const PoseDeMano& pose = MANO_ACCION[fila_direccion][cuadro_accion];
+        const PoseDeMano& pose = regando ? POSE_DE_RIEGO[fila_direccion][cuadro_de_riego]
+                                         : MANO_ACCION[fila_direccion][cuadro_accion];
         const bool espejado = flip == SDL_FLIP_HORIZONTAL;
         const int x_mano = espejado ? ancho - pose.x : pose.x;
         const SDL_Rect destino{
