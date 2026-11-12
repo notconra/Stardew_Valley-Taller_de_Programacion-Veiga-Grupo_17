@@ -217,6 +217,8 @@ struct EstadoTrampa {
 // Una casilla de tierra tratada y lo que tiene plantado. "etapa" va de 0 (recién plantada) a
 // ETAPA_DE_CULTIVO_MAXIMA mientras crece; cuando "madura" es true está lista para cosechar.
 // "regada" es si ya se regó en el turno de riego de ahora y "pide_agua" si todavía hay que regarla.
+// "ya_dio_fruto" es si se cosechó y está volviendo a dar (la frutilla): se dibuja la planta entera
+// sin frutos en vez de la etapa.
 struct CasillaTratada {
     uint32_t columna = 0;
     uint32_t fila = 0;
@@ -225,6 +227,7 @@ struct CasillaTratada {
     bool madura = false;
     bool regada = false;
     bool pide_agua = false;
+    bool ya_dio_fruto = false;
 
     bool operator==(const CasillaTratada&) const = default;
 };

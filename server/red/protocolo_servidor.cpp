@@ -307,6 +307,7 @@ void ProtocoloServidor::enviar_casilla_tratada(const CasillaTratada& casilla) {
     enviar_booleano(casilla.madura);
     enviar_booleano(casilla.regada);
     enviar_booleano(casilla.pide_agua);
+    enviar_booleano(casilla.ya_dio_fruto);
 }
 
 void ProtocoloServidor::enviar_ranura_inventario(const RanuraInventario& ranura) {

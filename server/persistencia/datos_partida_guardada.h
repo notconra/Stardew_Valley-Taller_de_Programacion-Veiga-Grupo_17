@@ -83,6 +83,7 @@ struct DatosCultivoGuardado {
     uint16_t dias_de_crecimiento = 0;
     bool madura = false;
     uint16_t faltas = 0;
+    bool ya_dio_fruto = false;
 
     bool operator==(const DatosCultivoGuardado&) const = default;
 };

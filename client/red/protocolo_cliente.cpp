@@ -381,6 +381,7 @@ CasillaTratada ProtocoloCliente::recibir_casilla_tratada() {
     casilla.madura = recibir_booleano();
     casilla.regada = recibir_booleano();
     casilla.pide_agua = recibir_booleano();
+    casilla.ya_dio_fruto = recibir_booleano();
     return casilla;
 }
 

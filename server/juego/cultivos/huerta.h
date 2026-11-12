@@ -24,6 +24,7 @@ struct Cultivo {
     int fin_del_turno = 0;
     int riegos_perdidos_hoy = 0;
     int faltas = 0;
+    bool ya_dio_fruto = false;
 };
 
 struct Cosecha {

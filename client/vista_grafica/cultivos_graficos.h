@@ -10,9 +10,10 @@
 #include "../configuracion/configuracion_cliente_datos.h"
 #include "textura.h"
 
-// Dibuja lo que está plantado en la tierra tratada con la hoja de la cátedra
-// (Farm/Crops/Spring Crops.png): cada cultivo ocupa dos filas de la hoja, con la semilla y sus
-// etapas de crecimiento de izquierda a derecha. Arriba de las plantas que piden agua dibuja un
+// Dibuja lo que está plantado en la tierra tratada con la hoja Farm/Crops/cultivos.png: cada
+// cultivo ocupa dos filas de la hoja y cada columna es un dibujo de 16x32 con la planta apoyada
+// abajo. Columnas: las etapas 0 a ETAPA_DE_CULTIVO_MAXIMA, la planta madura y la planta entera sin
+// frutos (la que ya dio y está volviendo a dar). Arriba de las plantas que piden agua dibuja un
 // globito con una gota (TileSheets/emotes.png). No decide nada: dibuja lo que mandó el servidor.
 // Lanza std::runtime_error si no encuentra las imágenes.
 class CultivosGraficos {
@@ -22,7 +23,8 @@ private:
     int tamano_de_tile;
     int escala_de_tiles;
 
-    // La columna de la hoja que corresponde a la etapa (o a la planta madura) de ese cultivo.
+    // La columna de la hoja que corresponde a la etapa (o a la planta madura, o a la que está
+    // volviendo a dar) de ese cultivo.
     int columna_de(const CasillaTratada& casilla) const;
 
     // La primera fila (de dos) del cultivo en la hoja.

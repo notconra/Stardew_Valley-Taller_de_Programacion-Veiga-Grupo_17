@@ -127,6 +127,7 @@ std::optional<Cosecha> Huerta::cosechar(const Casilla& casilla) {
     cultivo->dias_de_crecimiento =
         std::max(0, definicion.dias_para_madurar - definicion.dias_para_volver_a_dar);
     cultivo->faltas = 0;
+    cultivo->ya_dio_fruto = true;
     empezar_turno(*cultivo, minuto_del_dia);
     return cosecha;
 }
@@ -187,6 +188,7 @@ void Huerta::completar(CasillaTratada& casilla) const {
         casilla.madura = false;
         casilla.regada = false;
         casilla.pide_agua = false;
+        casilla.ya_dio_fruto = false;
         return;
     }
     const DefinicionDeCultivo& definicion = definicion_de(*cultivo);
@@ -199,6 +201,7 @@ void Huerta::completar(CasillaTratada& casilla) const {
                               cultivo->dias_de_crecimiento * (ETAPA_DE_CULTIVO_MAXIMA + 1) /
                                   definicion.dias_para_madurar));
     casilla.pide_agua = cultivo->pide_agua;
+    casilla.ya_dio_fruto = cultivo->ya_dio_fruto;
     casilla.regada = !cultivo->madura && cultivo->turno >= 0 && !cultivo->pide_agua;
 }
 
@@ -219,6 +222,7 @@ void Huerta::agregar_guardados_a(
         guardado.dias_de_crecimiento = static_cast<uint16_t>(cultivo.dias_de_crecimiento);
         guardado.madura = cultivo.madura;
         guardado.faltas = static_cast<uint16_t>(cultivo.faltas);
+        guardado.ya_dio_fruto = cultivo.ya_dio_fruto;
         lista.push_back(guardado);
     }
 }
@@ -232,5 +236,6 @@ void Huerta::cargar(const DatosCultivoGuardado& guardado) {
     cultivo.dias_de_crecimiento = guardado.dias_de_crecimiento;
     cultivo.madura = guardado.madura;
     cultivo.faltas = guardado.faltas;
+    cultivo.ya_dio_fruto = guardado.ya_dio_fruto;
     cultivos[{static_cast<int>(guardado.columna), static_cast<int>(guardado.fila)}] = cultivo;
 }

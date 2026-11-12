@@ -1,33 +1,20 @@
 #include "cultivos_graficos.h"
 
-#include <array>
 #include <map>
 #include <utility>
 
-#define RUTA_DE_LAS_PLANTAS "Assets/Farm/Crops/Spring Crops.png"
+#define RUTA_DE_LAS_PLANTAS "Assets/Farm/Crops/cultivos.png"
 #define RUTA_DE_LOS_GLOBOS "Assets/TileSheets/emotes.png"
 // Cada planta mide una casilla de ancho y dos de alto (la de arriba es para lo que sobresale).
 #define FILAS_POR_CULTIVO 2
+// Después de las etapas de crecimiento vienen la planta madura y la que está volviendo a dar.
+#define COLUMNA_DE_LA_MADURA (ETAPA_DE_CULTIVO_MAXIMA + 1)
+#define COLUMNA_DE_LA_QUE_VUELVE_A_DAR (ETAPA_DE_CULTIVO_MAXIMA + 2)
 // El globo con la gota: fila 7 de emotes.png, segundo dibujo de la animación.
 #define FILA_DEL_GLOBO_CON_GOTA 7
 #define COLUMNA_DEL_GLOBO_CON_GOTA 1
 // Lado del globo, en octavos de casilla.
 #define TAMANO_DEL_GLOBO 5
-
-namespace {
-
-// Columna de la hoja para cada etapa de crecimiento (0 a ETAPA_DE_CULTIVO_MAXIMA) y, al final,
-// la de la planta madura. La papa tiene un dibujo más que las demás.
-using ColumnasDeCultivo = std::array<int, ETAPA_DE_CULTIVO_MAXIMA + 2>;
-
-const std::map<TipoCultivo, ColumnasDeCultivo> COLUMNAS{
-    {TipoCultivo::FRUTILLA, {0, 1, 2, 4, 5}},
-    {TipoCultivo::CEBOLLA_DE_VERDEO, {0, 2, 3, 4, 5}},
-    {TipoCultivo::PAPA, {0, 2, 3, 5, 6}},
-    {TipoCultivo::CALABAZA, {0, 2, 3, 4, 5}},
-};
-
-}  // namespace
 
 CultivosGraficos::CultivosGraficos(
     const ConfiguracionGraficos& configuracion_graficos, SDL_Renderer* renderer)
@@ -52,12 +39,13 @@ int CultivosGraficos::fila_de(TipoCultivo cultivo) const {
 }
 
 int CultivosGraficos::columna_de(const CasillaTratada& casilla) const {
-    const auto encontradas = COLUMNAS.find(casilla.cultivo);
-    if (encontradas == COLUMNAS.end()) {
-        return 0;
+    if (casilla.madura) {
+        return COLUMNA_DE_LA_MADURA;
     }
-    const ColumnasDeCultivo& columnas = encontradas->second;
-    return casilla.madura ? columnas.back() : columnas[casilla.etapa];
+    if (casilla.ya_dio_fruto) {
+        return COLUMNA_DE_LA_QUE_VUELVE_A_DAR;
+    }
+    return casilla.etapa;
 }
 
 void CultivosGraficos::dibujar(

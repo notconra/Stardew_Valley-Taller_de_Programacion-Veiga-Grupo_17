@@ -11,7 +11,7 @@
 #include "lector_binario.h"
 
 constexpr std::array<uint8_t, 4> FIRMA_ARCHIVO = {'S', 'V', 'P', 'T'};
-constexpr uint16_t VERSION_ACTUAL = 6;
+constexpr uint16_t VERSION_ACTUAL = 7;
 
 void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGuardada& datos) {
     EscritorBinario escritor(stream);
@@ -115,6 +115,7 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
         escritor.escribir_u16(cultivo.dias_de_crecimiento);
         escritor.escribir_bool(cultivo.madura);
         escritor.escribir_u16(cultivo.faltas);
+        escritor.escribir_bool(cultivo.ya_dio_fruto);
     }
 }
 
@@ -247,6 +248,7 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
         cultivo.dias_de_crecimiento = lector.leer_u16();
         cultivo.madura = lector.leer_bool();
         cultivo.faltas = lector.leer_u16();
+        cultivo.ya_dio_fruto = lector.leer_bool();
         datos.mundo.cultivos.push_back(cultivo);
     }
 
