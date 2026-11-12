@@ -36,6 +36,13 @@ private:
     ConsultarCasilla recibir_comando_consultar_casilla();
     DarElOk recibir_comando_dar_el_ok();
     EnviarMensajeDeChat recibir_comando_enviar_mensaje_de_chat();
+    SolicitarMercado recibir_comando_solicitar_mercado();
+    ComprarEnMercado recibir_comando_comprar_en_mercado();
+    VenderEnMercado recibir_comando_vender_en_mercado();
+    ComprarAnimalMercado recibir_comando_comprar_animal_mercado();
+    VenderAnimalMercado recibir_comando_vender_animal_mercado();
+    CerrarMercado recibir_comando_cerrar_mercado();
+    InteractuarNPC recibir_comando_interactuar_npc();
 
     // Valida que el eje venga en el rango -1..1. Lanza ErrorProtocolo si no.
     int8_t eje_de_movimiento(int8_t valor) const;
@@ -77,6 +84,9 @@ private:
     void enviar_evento_casilla_consultada(const CasillaConsultada& consultada);
     void enviar_evento_estado_del_descanso(const EstadoDelDescanso& descanso);
     void enviar_evento_mensaje_de_chat(const MensajeDeChat& mensaje);
+    void enviar_item_catalogo_info(const ItemCatalogoInfo& item);
+    void enviar_evento_actualizacion_mercado(const ActualizacionMercado& m);
+    void enviar_evento_cerrar_ventana_mercado(const CerrarVentanaMercado& m);
 
 public:
     explicit ProtocoloServidor(ISocket& socket_conectado);

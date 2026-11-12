@@ -29,6 +29,13 @@ enum class TipoMensaje : uint8_t {
     CONSULTAR_CASILLA = 0x13,
     DAR_EL_OK = 0x14,
     ELIMINAR_PARTIDA = 0x15,
+    SOLICITAR_MERCADO = 0x16,
+    COMPRAR_EN_MERCADO = 0x17,
+    VENDER_EN_MERCADO = 0x18,
+    COMPRAR_ANIMAL_MERCADO = 0x19,
+    VENDER_ANIMAL_MERCADO = 0x1A,
+    CERRAR_MERCADO = 0x1B,
+    INTERACTUAR_NPC = 0x1C,
 
     // Servidor a cliente
     ERROR_SERVIDOR = 0x81,
@@ -66,6 +73,9 @@ enum class TipoMensaje : uint8_t {
 
     // Una trampa de la mazmorra que se activó o se desactivó
     TRAMPA_ACTUALIZADA = 0x95,
+
+    ACTUALIZACION_MERCADO = 0x96,
+    CERRAR_VENTANA_MERCADO = 0x97,
 };
 
 #endif

@@ -14,6 +14,7 @@
 #include "../modo_uso.h"
 #include "../ranura_inventario.h"
 #include "../tipo_accion.h"
+#include "../tipo_animal.h"
 #include "../tipo_enemigo.h"
 #include "../tipo_item.h"
 #include "../tipo_objeto.h"
@@ -112,6 +113,47 @@ struct SoltarItem {
 // espacios y el significado (global, privado o comando).
 struct EnviarMensajeDeChat {
     std::string texto;
+};
+
+// Solicita abrir el catálogo del puesto de mercado al interactuar con el mostrador.
+struct SolicitarMercado {
+    uint8_t id_puesto = 0;
+};
+
+// Comprar un ítem de un puesto.
+struct ComprarEnMercado {
+    uint8_t id_puesto = 0;
+    uint16_t indice_item = 0;  // Índice dentro del catálogo del puesto
+    uint16_t cantidad = 1;
+};
+
+// Vender un ítem del inventario al puesto.
+struct VenderEnMercado {
+    uint8_t id_puesto = 0;
+    uint8_t ranura_inventario = 0;
+    uint16_t cantidad = 0;  // 0 o cantidad completa según click izquierdo/derecho
+};
+
+// Comprar un animal (específico para Marnie, que no va al inventario).
+struct ComprarAnimalMercado {
+    uint8_t id_puesto = 0;
+    TipoAnimal tipo_animal = TipoAnimal::NINGUNO;
+    uint16_t cantidad = 1;
+};
+
+// Vender un animal (específico para Marnie, desde el panel de animales de la granja).
+struct VenderAnimalMercado {
+    uint8_t id_puesto = 0;
+    TipoAnimal tipo_animal = TipoAnimal::NINGUNO;
+    uint16_t cantidad = 1;
+};
+
+// Cierra la ventana del mercado activa.
+struct CerrarMercado {};
+
+// Interactuar haciendo clic izquierdo al NPC.
+struct InteractuarNPC {
+    uint32_t id_npc = 0;
 };
 
 // Servidor a cliente
@@ -379,5 +421,30 @@ struct MensajeDeChat {
     std::string texto;
     ColorDeJugador color_del_remitente = ColorDeJugador::AZUL;
 };
+
+// Información detallada de cada ítem/animal en el catálogo del puesto de mercado.
+struct ItemCatalogoInfo {
+    TipoItem tipo_item = TipoItem::NINGUNO;        // Si es un ítem normal
+    TipoAnimal tipo_animal = TipoAnimal::NINGUNO;  // Si es un animal (Marnie)
+    uint32_t precio = 0;
+    bool es_animal = false;
+    bool se_puede_comprar = true;         // False si no alcanza el dinero
+    bool es_vendible_por_jugador = true;  // False si el NPC no lo compra o si es herramienta/cama
+    uint16_t stock_o_cantidad_poseida =
+        0;  // Cuántos animales tiene el jugador (Marnie) o stock diario (Robin)
+    std::string tooltip_descripcion;  // Info de cuidados o descripción para el hover
+};
+
+// Envía la ventana de mercado completa con el catálogo configurado del NPC correspondiente.
+struct ActualizacionMercado {
+    uint8_t id_puesto = 0;
+    std::string nombre_npc;
+    std::string ruta_foto_npc;  // Identificador o ruta de la foto del NPC para la UI
+    std::vector<ItemCatalogoInfo> catalogo;
+};
+
+// Ordena al cliente cerrar la ventana de mercado (ej. si el NPC se va a dormir o termina su
+// horario).
+struct CerrarVentanaMercado {};
 
 #endif
