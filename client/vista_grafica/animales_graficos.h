@@ -65,6 +65,10 @@ public:
         SDL_Renderer* renderer, const EstadoJuego& estado, const std::string& mapa_actual,
         int cam_x, int cam_y) const;
 
+    void dibujar_un_animal(
+        SDL_Renderer* renderer, const EstadoJuego& estado, const EstadoAnimal& animal, int cam_x,
+        int cam_y) const;
+
 private:
     enum class PosicionNotificacion {
         CENTRO,

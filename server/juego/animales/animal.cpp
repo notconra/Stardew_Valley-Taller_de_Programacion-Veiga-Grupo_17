@@ -18,14 +18,3 @@ bool Animal::ocupa_casilla(uint32_t col, uint32_t fil) const {
     return col >= columna && col < columna + static_cast<uint32_t>(ancho_en_casillas) &&
            fil >= fila && fil < fila + static_cast<uint32_t>(alto_en_casillas);
 }
-
-std::vector<Casilla> Animal::casillas_ocupadas() const {
-    std::vector<Casilla> casillas;
-    for (int dy = 0; dy < alto_en_casillas; ++dy) {
-        for (int dx = 0; dx < ancho_en_casillas; ++dx) {
-            casillas.push_back(
-                Casilla{static_cast<int>(columna) + dx, static_cast<int>(fila) + dy});
-        }
-    }
-    return casillas;
-}

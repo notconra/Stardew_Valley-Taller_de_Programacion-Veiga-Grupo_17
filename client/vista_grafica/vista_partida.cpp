@@ -783,12 +783,12 @@ void VistaPartida::dibujar(
     }
     trampas.dibujar(renderer, ultimo_estado_juego, camara.x(), camara.y());
     enemigos.dibujar(renderer, ultimo_estado_juego, camara.x(), camara.y());
-    animales.dibujar(renderer, ultimo_estado_juego, mapa_actual, camara.x(), camara.y());
 
     struct Dibujable {
         int pie = 0;
         const EstadoJugador* jugador = nullptr;
         const EstadoObjetoDelMundo* objeto = nullptr;
+        const EstadoAnimal* animal = nullptr;
     };
     std::vector<Dibujable> dibujables;
     const int tamano_de_tile = configuracion.graficos.tamano_de_tile;
@@ -797,6 +797,7 @@ void VistaPartida::dibujar(
             dibujables.push_back(Dibujable{
                 static_cast<int>(jugador.y) + personaje.alto_del_sprite(),
                 &jugador,
+                nullptr,
                 nullptr});
         }
     }
@@ -808,8 +809,18 @@ void VistaPartida::dibujar(
         if (!capa.has_value() || *capa != CapaDeObjeto::CON_LOS_JUGADORES) {
             continue;
         }
-        dibujables.push_back(
-            Dibujable{(static_cast<int>(objeto.fila) + 1) * tamano_de_tile, nullptr, &objeto});
+        dibujables.push_back(Dibujable{
+            (static_cast<int>(objeto.fila) + 1) * tamano_de_tile,
+            nullptr,
+            &objeto,
+            nullptr});
+    }
+    if (mapa_actual == "granja") {
+        for (const EstadoAnimal& animal : ultimo_estado_juego.animales) {
+            int alto_casillas = (animal.tipo == TipoAnimal::VACA) ? 2 : 1;
+            int pie = (static_cast<int>(animal.fila) + alto_casillas) * tamano_de_tile;
+            dibujables.push_back(Dibujable{pie, nullptr, nullptr, &animal});
+        }
     }
     std::sort(
         dibujables.begin(),
@@ -840,6 +851,13 @@ void VistaPartida::dibujar(
                 iconos);
         } else if (dibujable.objeto != nullptr) {
             objetos.dibujar_objeto(renderer, *dibujable.objeto, camara.x(), camara.y());
+        } else if (dibujable.animal != nullptr) {
+            animales.dibujar_un_animal(
+                renderer,
+                ultimo_estado_juego,
+                *dibujable.animal,
+                camara.x(),
+                camara.y());
         }
     }
     mapa.dibujar_sobre_los_jugadores(renderer, camara.x(), camara.y());

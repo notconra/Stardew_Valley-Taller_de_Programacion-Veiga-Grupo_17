@@ -277,8 +277,11 @@ bool Sector::agregar_gallina(Notificador& notificador, uint32_t columna, uint32_
 
 void Sector::actualizar(const HoraDelJuego& hora, Notificador& notificador) {
     if (id == "granja") {
-        std::vector<EstadoAnimal> actualizados =
-            animales.actualizar(hora, mapa.cantidad_de_columnas(), mapa.cantidad_de_filas());
+        std::vector<EstadoAnimal> actualizados = animales.actualizar(
+            hora,
+            mapa.cantidad_de_columnas(),
+            mapa.cantidad_de_filas(),
+            jugadores);
         for (const auto& animal : actualizados) {
             AnimalActualizado evento;
             evento.animal = animal;

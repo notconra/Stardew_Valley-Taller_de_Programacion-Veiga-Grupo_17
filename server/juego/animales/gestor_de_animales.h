@@ -8,6 +8,7 @@
 #include "../../persistencia/datos_partida_guardada.h"
 #include "../colisiones/colisiones.h"
 #include "../drops/drops.h"
+#include "../jugadores/jugadores.h"
 #include "gallina.h"
 #include "vaca.h"
 
@@ -23,13 +24,15 @@ private:
 
     void ocupar_colisiones(const Animal& animal);
     void liberar_colisiones(const Animal& animal);
-    bool casilla_libre(uint32_t col, uint32_t fila, int ancho, int alto) const;
+    bool casillas_libres(const std::vector<Casilla>& casillas) const;
 
     void actualizar_rutina(
         Animal& animal, const HoraDelJuego& hora, std::vector<EstadoAnimal>& actualizados);
     void decidir_movimiento(
-        Animal& animal, int ancho_mapa, int alto_mapa, std::vector<EstadoAnimal>& actualizados);
-    bool intentar_mover(Animal& animal, Direccion dir, int ancho_mapa, int alto_mapa);
+        Animal& animal, int ancho_mapa, int alto_mapa, const Jugadores& jugadores,
+        std::vector<EstadoAnimal>& actualizados);
+    bool intentar_mover(
+        Animal& animal, Direccion dir, int ancho_mapa, int alto_mapa, const Jugadores& jugadores);
 
 public:
     explicit GestorDeAnimales(Colisiones& colisiones_mapa);
@@ -69,7 +72,8 @@ public:
 
     // Actualiza movimiento aleatorio y rutina según la hora del día. Devuelve los animales que
     // cambiaron de estado o posición.
-    std::vector<EstadoAnimal> actualizar(const HoraDelJuego& hora, int ancho_mapa, int alto_mapa);
+    std::vector<EstadoAnimal> actualizar(
+        const HoraDelJuego& hora, int ancho_mapa, int alto_mapa, const Jugadores& jugadores);
 
     static EstadoAnimal estado_de(const Animal& animal);
 

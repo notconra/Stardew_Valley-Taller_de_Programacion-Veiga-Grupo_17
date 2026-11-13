@@ -92,6 +92,32 @@ void AnimalesGraficos::dibujar(
     }
 }
 
+void AnimalesGraficos::dibujar_un_animal(
+    SDL_Renderer* renderer, const EstadoJuego& estado, const EstadoAnimal& animal, int cam_x,
+    int cam_y) const {
+    int ancho_pantalla = 0;
+    int alto_pantalla = 0;
+    SDL_GetRendererOutputSize(renderer, &ancho_pantalla, &alto_pantalla);
+    uint32_t ahora = SDL_GetTicks();
+
+    bool tiene_leche = false;
+    if (animal.tipo == TipoAnimal::VACA) {
+        tiene_leche = std::find(
+                          estado.vacas_para_ordeniar.begin(),
+                          estado.vacas_para_ordeniar.end(),
+                          animal.id) != estado.vacas_para_ordeniar.end();
+    }
+    dibujar_animal(
+        renderer,
+        animal,
+        tiene_leche,
+        cam_x,
+        cam_y,
+        ancho_pantalla,
+        alto_pantalla,
+        ahora);
+}
+
 void AnimalesGraficos::dibujar_animal(
     SDL_Renderer* renderer, const EstadoAnimal& animal, bool tiene_leche, int cam_x, int cam_y,
     int ancho_pantalla, int alto_pantalla, uint32_t ahora) const {

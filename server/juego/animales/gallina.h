@@ -1,6 +1,8 @@
 #ifndef GALLINA_H
 #define GALLINA_H
 
+#include <vector>
+
 #include "animal.h"
 
 class Gallina : public Animal {
@@ -15,6 +17,9 @@ public:
 
     // Avanza un día en el ciclo del animal.
     void avanzar_dia();
+
+    std::vector<Casilla> casillas_de_colision() const override;
+    Rectangulo rectangulo_de_colision() const override;
 };
 
 #endif

@@ -54,6 +54,12 @@ bool Colisiones::bloquea(const Rectangulo& zona) const {
         return true;
     }
 
+    for (const auto& [id, obstaculo] : obstaculos) {
+        if (se_superponen(obstaculo, zona)) {
+            return true;
+        }
+    }
+
     const int primera_columna = zona.x / mapa.ancho_de_casilla_en_pixeles();
     const int ultima_columna = (zona.x + zona.ancho - 1) / mapa.ancho_de_casilla_en_pixeles();
     const int primera_fila = zona.y / mapa.alto_de_casilla_en_pixeles();
@@ -75,4 +81,12 @@ void Colisiones::colocar(int columna, int fila) {
 
 void Colisiones::eliminar(int columna, int fila) {
     ocupadas[indice(columna, fila)] = false;
+}
+
+void Colisiones::colocar_obstaculo(uint32_t id, const Rectangulo& rectangulo) {
+    obstaculos[id] = rectangulo;
+}
+
+void Colisiones::eliminar_obstaculo(uint32_t id) {
+    obstaculos.erase(id);
 }

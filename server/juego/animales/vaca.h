@@ -1,6 +1,8 @@
 #ifndef VACA_H
 #define VACA_H
 
+#include <vector>
+
 #include "animal.h"
 
 class Vaca : public Animal {
@@ -24,6 +26,9 @@ public:
 
     bool esta_lista_para_ordeniar() const;
     void marcar_lista_para_ordeniar(bool lista);
+
+    std::vector<Casilla> casillas_de_colision() const override;
+    Rectangulo rectangulo_de_colision() const override;
 };
 
 #endif

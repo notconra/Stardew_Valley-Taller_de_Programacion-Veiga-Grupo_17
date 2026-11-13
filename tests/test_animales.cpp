@@ -34,6 +34,16 @@ const RecursosDeJuego& recursos_test() {
 Colisiones crear_colisiones_test() {
     return Colisiones(recursos_test().mapas.at("granja"));
 }
+
+Jugadores crear_jugadores_test(const Colisiones& colisiones) {
+    const RecursosDeJuego& recursos = recursos_test();
+    return Jugadores(
+        recursos.mapas.at("granja"),
+        colisiones,
+        10,
+        recursos.juego.movimiento,
+        recursos.juego.aparicion);
+}
 }  // namespace
 
 TEST(Animales, VacaCicloDeProduccionDeLecheCadaDosDias) {
@@ -205,31 +215,31 @@ TEST(Animales, ColisionesVacaOcupaDosPorDosYGallinaUnoPorUno) {
 
     // (15, 15) y alrededores son pasto abierto en la granja
     EXPECT_TRUE(gestor.agregar_vaca(15, 15));
-    EXPECT_FALSE(colisiones.esta_libre(15, 15));
-    EXPECT_FALSE(colisiones.esta_libre(16, 15));
-    EXPECT_FALSE(colisiones.esta_libre(15, 16));
-    EXPECT_FALSE(colisiones.esta_libre(16, 16));
-    EXPECT_TRUE(colisiones.esta_libre(17, 15));
+    const Vaca* vaca = gestor.buscar_vaca(1);
+    ASSERT_NE(vaca, nullptr);
+    EXPECT_TRUE(colisiones.bloquea(vaca->rectangulo_de_colision()));
 
     EXPECT_TRUE(gestor.agregar_gallina(20, 20));
-    EXPECT_FALSE(colisiones.esta_libre(20, 20));
-    EXPECT_TRUE(colisiones.esta_libre(20, 21));
+    const Gallina* gallina = gestor.buscar_gallina(2);
+    ASSERT_NE(gallina, nullptr);
+    EXPECT_TRUE(colisiones.bloquea(gallina->rectangulo_de_colision()));
 
-    // No se puede agregar otro animal encima
-    EXPECT_FALSE(gestor.agregar_gallina(15, 15));
+    // No se puede agregar otro animal encima de las casillas de colision
+    EXPECT_FALSE(gestor.agregar_gallina(15, 16));
     EXPECT_FALSE(gestor.agregar_vaca(19, 19));
 }
 
 TEST(Animales, RutinaHorariaALasCincoPMQuietosYALasSietePMDuermen) {
     Colisiones colisiones = crear_colisiones_test();
     GestorDeAnimales gestor(colisiones);
+    Jugadores jugadores = crear_jugadores_test(colisiones);
     EXPECT_TRUE(gestor.agregar_vaca(10, 10));
     EXPECT_TRUE(gestor.agregar_gallina(15, 15));
 
     HoraDelJuego hora_tarde;
     hora_tarde.hora = 17;
     hora_tarde.minuto = 0;
-    gestor.actualizar(hora_tarde, 50, 50);
+    gestor.actualizar(hora_tarde, 50, 50, jugadores);
 
     const Vaca* vaca = gestor.buscar_vaca(1);
     const Gallina* gallina = gestor.buscar_gallina(2);
@@ -243,7 +253,7 @@ TEST(Animales, RutinaHorariaALasCincoPMQuietosYALasSietePMDuermen) {
     HoraDelJuego hora_noche;
     hora_noche.hora = 19;
     hora_noche.minuto = 0;
-    gestor.actualizar(hora_noche, 50, 50);
+    gestor.actualizar(hora_noche, 50, 50, jugadores);
     EXPECT_TRUE(vaca->durmiendo);
     EXPECT_FALSE(vaca->caminando);
     EXPECT_TRUE(gallina->durmiendo);

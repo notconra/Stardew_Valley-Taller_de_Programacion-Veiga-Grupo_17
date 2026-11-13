@@ -33,7 +33,8 @@ struct Animal {
     virtual ~Animal() = default;
 
     bool ocupa_casilla(uint32_t col, uint32_t fil) const;
-    std::vector<Casilla> casillas_ocupadas() const;
+    virtual std::vector<Casilla> casillas_de_colision() const = 0;
+    virtual Rectangulo rectangulo_de_colision() const = 0;
 };
 
 #endif
