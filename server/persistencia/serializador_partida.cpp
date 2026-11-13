@@ -115,7 +115,11 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
         escritor.escribir_u32(animal.fila);
         escritor.escribir_u8(static_cast<uint8_t>(animal.mirando));
         escritor.escribir_u32(animal.dias_acumulados);
-        escritor.escribir_bool(animal.lista_para_ordeniar);
+    }
+
+    escritor.escribir_u16(static_cast<uint16_t>(datos.mundo.vacas_para_ordeniar.size()));
+    for (uint32_t id_vaca : datos.mundo.vacas_para_ordeniar) {
+        escritor.escribir_u32(id_vaca);
     }
 }
 
@@ -248,8 +252,12 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
         animal.fila = lector.leer_u32();
         animal.mirando = static_cast<Direccion>(lector.leer_u8());
         animal.dias_acumulados = lector.leer_u32();
-        animal.lista_para_ordeniar = lector.leer_bool();
         datos.mundo.animales.push_back(animal);
+    }
+
+    uint16_t cant_vacas_ordeniar = lector.leer_u16();
+    for (uint16_t i = 0; i < cant_vacas_ordeniar; ++i) {
+        datos.mundo.vacas_para_ordeniar.push_back(lector.leer_u32());
     }
 
     return datos;

@@ -125,9 +125,11 @@ void Sector::agregar_animales_guardados_a(std::vector<DatosAnimalGuardado>& list
     }
 }
 
-void Sector::cargar_animales_guardados(const std::vector<DatosAnimalGuardado>& lista) {
+void Sector::cargar_animales_guardados(
+    const std::vector<DatosAnimalGuardado>& lista,
+    const std::vector<uint32_t>& vacas_para_ordeniar) {
     if (id == "granja") {
-        animales.cargar_animales_guardados(lista);
+        animales.cargar_animales_guardados(lista, vacas_para_ordeniar);
     }
 }
 
@@ -215,13 +217,12 @@ int Sector::soltar(
 
 void Sector::avanzar_dia(Notificador& notificador) {
     animales.avanzar_dia(drops);
-    for (const auto& [id, vaca] : animales.obtener_vacas()) {
-        if (vaca.esta_lista_para_ordeniar()) {
-            VacaOrdeniable evento;
-            evento.id_vaca = vaca.id;
-            evento.lista = true;
-            avisar(notificador, evento);
-        }
+    std::vector<uint32_t> ids_vacas = animales.obtener_ids_vacas_listas_para_ordeniar();
+    for (uint32_t id_vaca : ids_vacas) {
+        VacaOrdeniable evento;
+        evento.id_vaca = id_vaca;
+        evento.lista = true;
+        avisar(notificador, evento);
     }
 }
 
@@ -230,20 +231,16 @@ void Sector::avanzar_dia() {
 }
 
 bool Sector::vaca_lista_en(uint32_t columna, uint32_t fila) const {
-    const Vaca* vaca = animales.vaca_en(columna, fila);
-    return vaca != nullptr && vaca->esta_lista_para_ordeniar();
+    return animales.vaca_lista_en(columna, fila);
 }
 
 bool Sector::ordeniar_vaca(Notificador& notificador, uint32_t columna, uint32_t fila) {
-    Vaca* vaca = animales.buscar_vaca_en(columna, fila);
-    if (!vaca || !vaca->esta_lista_para_ordeniar()) {
-        return false;
-    }
-    if (!animales.ordeniar_vaca(vaca->id)) {
+    uint32_t id_vaca = 0;
+    if (!animales.ordeniar_vaca_en(columna, fila, id_vaca)) {
         return false;
     }
     VacaOrdeniable evento;
-    evento.id_vaca = vaca->id;
+    evento.id_vaca = id_vaca;
     evento.lista = false;
     avisar(notificador, evento);
     return true;

@@ -103,7 +103,9 @@ public:
 
     // Animales de la granja (solo aplica al sector "granja").
     void agregar_animales_guardados_a(std::vector<DatosAnimalGuardado>& lista) const;
-    void cargar_animales_guardados(const std::vector<DatosAnimalGuardado>& lista);
+    void cargar_animales_guardados(
+        const std::vector<DatosAnimalGuardado>& lista,
+        const std::vector<uint32_t>& vacas_para_ordeniar);
 
     // Coloca un objeto y avisa a los jugadores del sector. Devuelve el id del objeto, o 0 si la
     // casilla ya tiene un objeto o está bloqueada.

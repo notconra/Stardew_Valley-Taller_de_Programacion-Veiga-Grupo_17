@@ -1,26 +1,31 @@
 #include "gestor_de_animales.h"
 
 #include <map>
-#include <random>
 #include <utility>
 #include <vector>
 
-namespace {
-constexpr uint8_t HORA_QUIETOS = 17;
-constexpr uint8_t HORA_DORMIR = 19;
-constexpr int TICKS_DECISION_MIN = 40;
-constexpr int TICKS_DECISION_MAX = 100;
-constexpr int PROBABILIDAD_QUIETO = 4;
-
-const std::map<Direccion, std::pair<int, int>> DESPLAZAMIENTO_POR_DIRECCION{
-    {Direccion::ARRIBA, {0, -1}},
-    {Direccion::ABAJO, {0, 1}},
-    {Direccion::IZQUIERDA, {-1, 0}},
-    {Direccion::DERECHA, {1, 0}},
-};
-}  // namespace
+#include "../azar.h"
 
 GestorDeAnimales::GestorDeAnimales(Colisiones& colisiones_mapa) : colisiones(colisiones_mapa) {
+}
+
+std::pair<int, int> GestorDeAnimales::desplazamiento_segun(Direccion direccion) {
+    static const std::map<Direccion, std::pair<int, int>> desplazamientos{
+        {Direccion::ARRIBA, {0, -1}},
+        {Direccion::ABAJO, {0, 1}},
+        {Direccion::IZQUIERDA, {-1, 0}},
+        {Direccion::DERECHA, {1, 0}},
+    };
+    auto iterador = desplazamientos.find(direccion);
+    if (iterador != desplazamientos.end()) {
+        return iterador->second;
+    }
+    return {0, 0};
+}
+
+bool GestorDeAnimales::puede_ubicarse(const Animal& animal) const {
+    return casillas_libres(animal.casillas_de_colision()) &&
+           !colisiones.bloquea(animal.rectangulo_de_colision());
 }
 
 void GestorDeAnimales::ocupar_colisiones(const Animal& animal) {
@@ -42,17 +47,11 @@ bool GestorDeAnimales::casillas_libres(const std::vector<Casilla>& casillas) con
 }
 
 uint8_t GestorDeAnimales::sortear_variante_vaca() {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<uint8_t> dist(0, Vaca::CANTIDAD_VARIANTES - 1);
-    return dist(gen);
+    return static_cast<uint8_t>(Azar::entero(0, Vaca::CANTIDAD_VARIANTES - 1));
 }
 
 uint8_t GestorDeAnimales::sortear_variante_gallina() {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<uint8_t> dist(0, Gallina::CANTIDAD_VARIANTES - 1);
-    return dist(gen);
+    return static_cast<uint8_t>(Azar::entero(0, Gallina::CANTIDAD_VARIANTES - 1));
 }
 
 bool GestorDeAnimales::agregar_vaca(uint32_t columna, uint32_t fila) {
@@ -65,8 +64,7 @@ bool GestorDeAnimales::agregar_vaca(uint32_t columna, uint32_t fila, uint8_t var
     }
     uint32_t id = siguiente_id++;
     Vaca vaca(id, columna, fila, variante);
-    if (!casillas_libres(vaca.casillas_de_colision()) ||
-        colisiones.bloquea(vaca.rectangulo_de_colision())) {
+    if (!puede_ubicarse(vaca)) {
         return false;
     }
     ocupar_colisiones(vaca);
@@ -84,8 +82,7 @@ bool GestorDeAnimales::agregar_gallina(uint32_t columna, uint32_t fila, uint8_t 
     }
     uint32_t id = siguiente_id++;
     Gallina gallina(id, columna, fila, variante);
-    if (!casillas_libres(gallina.casillas_de_colision()) ||
-        colisiones.bloquea(gallina.rectangulo_de_colision())) {
+    if (!puede_ubicarse(gallina)) {
         return false;
     }
     ocupar_colisiones(gallina);
@@ -116,6 +113,21 @@ bool GestorDeAnimales::ordeniar_vaca(uint32_t id_vaca) {
         return false;
     }
     return encontrado->second.ordeniar();
+}
+
+bool GestorDeAnimales::ordeniar_vaca_en(
+    uint32_t columna, uint32_t fila, uint32_t& id_vaca_ordenada) {
+    Vaca* vaca = buscar_vaca_en(columna, fila);
+    if (!vaca || !vaca->esta_lista_para_ordeniar()) {
+        return false;
+    }
+    id_vaca_ordenada = vaca->id;
+    return vaca->ordeniar();
+}
+
+bool GestorDeAnimales::vaca_lista_en(uint32_t columna, uint32_t fila) const {
+    auto vaca = vaca_en(columna, fila);
+    return vaca != nullptr && vaca->esta_lista_para_ordeniar();
 }
 
 const Vaca* GestorDeAnimales::vaca_en(uint32_t columna, uint32_t fila) const {
@@ -191,12 +203,9 @@ void GestorDeAnimales::actualizar_rutina(
 
 bool GestorDeAnimales::intentar_mover(
     Animal& animal, Direccion dir, int ancho_mapa, int alto_mapa, const Jugadores& jugadores) {
-    auto encontrado = DESPLAZAMIENTO_POR_DIRECCION.find(dir);
-    if (encontrado == DESPLAZAMIENTO_POR_DIRECCION.end()) {
-        return false;
-    }
-    int paso_columna = encontrado->second.first;
-    int paso_fila = encontrado->second.second;
+    std::pair<int, int> desplazamiento = desplazamiento_segun(dir);
+    int paso_columna = desplazamiento.first;
+    int paso_fila = desplazamiento.second;
 
     int nueva_columna = static_cast<int>(animal.columna) + paso_columna;
     int nueva_fila = static_cast<int>(animal.fila) + paso_fila;
@@ -235,18 +244,15 @@ bool GestorDeAnimales::intentar_mover(
 void GestorDeAnimales::decidir_movimiento(
     Animal& animal, int ancho_mapa, int alto_mapa, const Jugadores& jugadores,
     std::vector<EstadoAnimal>& actualizados) {
-    static std::mt19937 generador(std::random_device{}());
-
     if (animal.ticks_para_decision > 0) {
         --animal.ticks_para_decision;
         return;
     }
 
-    std::uniform_int_distribution<int> dist_ticks(TICKS_DECISION_MIN, TICKS_DECISION_MAX);
-    animal.ticks_para_decision = dist_ticks(generador);
+    animal.ticks_para_decision =
+        static_cast<uint32_t>(Azar::entero(TICKS_DECISION_MIN, TICKS_DECISION_MAX));
 
-    std::uniform_int_distribution<int> dist_accion(0, 10);
-    if (dist_accion(generador) < PROBABILIDAD_QUIETO) {
+    if (Azar::entero(0, PROBABILIDAD_ACCION_MAX) < PROBABILIDAD_QUIETO) {
         if (animal.caminando) {
             animal.caminando = false;
             actualizados.push_back(estado_de(animal));
@@ -254,21 +260,29 @@ void GestorDeAnimales::decidir_movimiento(
         return;
     }
 
-    static const Direccion DIRECCIONES[] = {
+    static constexpr Direccion DIRECCIONES[CANTIDAD_DIRECCIONES] = {
         Direccion::ABAJO,
         Direccion::DERECHA,
         Direccion::IZQUIERDA,
         Direccion::ARRIBA};
-    std::uniform_int_distribution<int> dist_dir(0, 3);
-    Direccion dir = DIRECCIONES[dist_dir(generador)];
+    Direccion direccion_elegida = DIRECCIONES[Azar::entero(0, CANTIDAD_DIRECCIONES - 1)];
 
-    if (intentar_mover(animal, dir, ancho_mapa, alto_mapa, jugadores)) {
+    if (intentar_mover(animal, direccion_elegida, ancho_mapa, alto_mapa, jugadores)) {
         actualizados.push_back(estado_de(animal));
-    } else if (animal.mirando != dir || animal.caminando) {
-        animal.mirando = dir;
+    } else if (animal.mirando != direccion_elegida || animal.caminando) {
+        animal.mirando = direccion_elegida;
         animal.caminando = false;
         ocupar_colisiones(animal);
         actualizados.push_back(estado_de(animal));
+    }
+}
+
+void GestorDeAnimales::actualizar_animal(
+    Animal& animal, const HoraDelJuego& hora, int ancho_mapa, int alto_mapa,
+    const Jugadores& jugadores, std::vector<EstadoAnimal>& actualizados) {
+    actualizar_rutina(animal, hora, actualizados);
+    if (!animal.durmiendo && hora.hora < HORA_QUIETOS) {
+        decidir_movimiento(animal, ancho_mapa, alto_mapa, jugadores, actualizados);
     }
 }
 
@@ -277,17 +291,10 @@ std::vector<EstadoAnimal> GestorDeAnimales::actualizar(
     std::vector<EstadoAnimal> actualizados;
 
     for (auto& [id, vaca] : vacas) {
-        actualizar_rutina(vaca, hora, actualizados);
-        if (!vaca.durmiendo && hora.hora < HORA_QUIETOS) {
-            decidir_movimiento(vaca, ancho_mapa, alto_mapa, jugadores, actualizados);
-        }
+        actualizar_animal(vaca, hora, ancho_mapa, alto_mapa, jugadores, actualizados);
     }
-
     for (auto& [id, gallina] : gallinas) {
-        actualizar_rutina(gallina, hora, actualizados);
-        if (!gallina.durmiendo && hora.hora < HORA_QUIETOS) {
-            decidir_movimiento(gallina, ancho_mapa, alto_mapa, jugadores, actualizados);
-        }
+        actualizar_animal(gallina, hora, ancho_mapa, alto_mapa, jugadores, actualizados);
     }
 
     return actualizados;
@@ -315,6 +322,26 @@ int GestorDeAnimales::cantidad_gallinas() const {
 
 int GestorDeAnimales::cantidad_total() const {
     return static_cast<int>(vacas.size() + gallinas.size());
+}
+
+int GestorDeAnimales::cantidad_vacas_listas_para_ordeniar() const {
+    int cantidad = 0;
+    for (const auto& [id, vaca] : vacas) {
+        if (vaca.esta_lista_para_ordeniar()) {
+            cantidad++;
+        }
+    }
+    return cantidad;
+}
+
+std::vector<uint32_t> GestorDeAnimales::obtener_ids_vacas_listas_para_ordeniar() const {
+    std::vector<uint32_t> ids;
+    for (const auto& [id, vaca] : vacas) {
+        if (vaca.esta_lista_para_ordeniar()) {
+            ids.push_back(vaca.id);
+        }
+    }
+    return ids;
 }
 
 const Vaca* GestorDeAnimales::buscar_vaca(uint32_t id) const {
@@ -345,42 +372,30 @@ const Animal* GestorDeAnimales::buscar(uint32_t id) const {
     return nullptr;
 }
 
-const std::map<uint32_t, Vaca>& GestorDeAnimales::obtener_vacas() const {
-    return vacas;
-}
-
-const std::map<uint32_t, Gallina>& GestorDeAnimales::obtener_gallinas() const {
-    return gallinas;
+DatosAnimalGuardado GestorDeAnimales::datos_guardados_de(const Animal& animal) {
+    DatosAnimalGuardado datos;
+    datos.id = animal.id;
+    datos.tipo = animal.tipo;
+    datos.variante = animal.variante;
+    datos.columna = animal.columna;
+    datos.fila = animal.fila;
+    datos.mirando = animal.mirando;
+    datos.dias_acumulados = animal.dias_acumulados;
+    return datos;
 }
 
 void GestorDeAnimales::agregar_animales_guardados_a(std::vector<DatosAnimalGuardado>& lista) const {
     for (const auto& [id, vaca] : vacas) {
-        DatosAnimalGuardado datos;
-        datos.id = vaca.id;
-        datos.tipo = TipoAnimal::VACA;
-        datos.variante = vaca.variante;
-        datos.columna = vaca.columna;
-        datos.fila = vaca.fila;
-        datos.mirando = vaca.mirando;
-        datos.dias_acumulados = vaca.dias_acumulados;
-        datos.lista_para_ordeniar = vaca.esta_lista_para_ordeniar();
-        lista.push_back(datos);
+        lista.push_back(datos_guardados_de(vaca));
     }
     for (const auto& [id, gallina] : gallinas) {
-        DatosAnimalGuardado datos;
-        datos.id = gallina.id;
-        datos.tipo = TipoAnimal::GALLINA;
-        datos.variante = gallina.variante;
-        datos.columna = gallina.columna;
-        datos.fila = gallina.fila;
-        datos.mirando = gallina.mirando;
-        datos.dias_acumulados = gallina.dias_acumulados;
-        datos.lista_para_ordeniar = false;
-        lista.push_back(datos);
+        lista.push_back(datos_guardados_de(gallina));
     }
 }
 
-void GestorDeAnimales::cargar_animales_guardados(const std::vector<DatosAnimalGuardado>& lista) {
+void GestorDeAnimales::cargar_animales_guardados(
+    const std::vector<DatosAnimalGuardado>& lista,
+    const std::vector<uint32_t>& vacas_para_ordeniar) {
     if (lista.empty()) {
         return;
     }
@@ -397,7 +412,6 @@ void GestorDeAnimales::cargar_animales_guardados(const std::vector<DatosAnimalGu
             Vaca vaca(datos.id, datos.columna, datos.fila, datos.variante);
             vaca.mirando = datos.mirando;
             vaca.dias_acumulados = datos.dias_acumulados;
-            vaca.marcar_lista_para_ordeniar(datos.lista_para_ordeniar);
             ocupar_colisiones(vaca);
             vacas.emplace(datos.id, vaca);
         } else if (datos.tipo == TipoAnimal::GALLINA) {
@@ -409,6 +423,12 @@ void GestorDeAnimales::cargar_animales_guardados(const std::vector<DatosAnimalGu
         }
         if (datos.id >= siguiente_id) {
             siguiente_id = datos.id + 1;
+        }
+    }
+    for (uint32_t id_vaca : vacas_para_ordeniar) {
+        auto it = vacas.find(id_vaca);
+        if (it != vacas.end()) {
+            it->second.marcar_lista_para_ordeniar(true);
         }
     }
 }

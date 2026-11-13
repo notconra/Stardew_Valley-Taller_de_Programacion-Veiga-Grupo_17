@@ -93,6 +93,7 @@ public:
     std::vector<DatosCofreGuardado> obtener_cofres_guardados() const;
     std::vector<DatosMuebleGuardado> obtener_muebles_guardados() const;
     std::vector<DatosAnimalGuardado> obtener_animales_guardados() const;
+    std::vector<uint32_t> obtener_ids_vacas_listas_para_ordeniar() const;
     uint32_t obtener_dia() const;
 
     // Si terminó un día desde la última vez que se preguntó (todos dieron el OK). Es cuando hay

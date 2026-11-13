@@ -29,7 +29,9 @@ Mundo::Mundo(
     sectores.cargar_mapas_guardados(datos_guardados.mapas);
     sectores.cargar_cofres_guardados(datos_guardados.cofres);
     sectores.cargar_muebles_guardados(datos_guardados.muebles);
-    sectores.cargar_animales_guardados(datos_guardados.animales);
+    sectores.cargar_animales_guardados(
+        datos_guardados.animales,
+        datos_guardados.vacas_para_ordeniar);
     if (datos_guardados.dia > 0) {
         controlador_del_dia.continuar_en_el_dia(datos_guardados.dia);
     }
@@ -279,6 +281,13 @@ std::vector<DatosAnimalGuardado> Mundo::obtener_animales_guardados() const {
     return sectores.obtener_animales_guardados();
 }
 
+std::vector<uint32_t> Mundo::obtener_ids_vacas_listas_para_ordeniar() const {
+    if (!sectores.existe("granja")) {
+        return {};
+    }
+    return sectores.en("granja").animales.obtener_ids_vacas_listas_para_ordeniar();
+}
+
 uint32_t Mundo::obtener_dia() const {
     return controlador_del_dia.hora().dia;
 }
@@ -371,12 +380,7 @@ std::string Mundo::estado_animales_granja() const {
     }
     const Sector& granja = sectores.en("granja");
     int total_vacas = granja.animales.cantidad_vacas();
-    int vacas_listas = 0;
-    for (const auto& [id, vaca] : granja.animales.obtener_vacas()) {
-        if (vaca.esta_lista_para_ordeniar()) {
-            ++vacas_listas;
-        }
-    }
+    int vacas_listas = granja.animales.cantidad_vacas_listas_para_ordeniar();
     int total_gallinas = granja.animales.cantidad_gallinas();
     return "Granja: " + std::to_string(total_vacas) + " vacas (" + std::to_string(vacas_listas) +
            " listas para ordeniar), " + std::to_string(total_gallinas) + " gallinas.";

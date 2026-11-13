@@ -10,6 +10,8 @@
 
 // Estado base de un animal en la granja
 struct Animal {
+    static constexpr int PIXELES_POR_CASILLA = 16;
+
     uint32_t id = 0;
     TipoAnimal tipo = TipoAnimal::VACA;
     uint8_t variante = 0;  // Raza o color aleatorio
@@ -33,6 +35,7 @@ struct Animal {
     virtual ~Animal() = default;
 
     bool ocupa_casilla(uint32_t col, uint32_t fil) const;
+    virtual void avanzar_dia();
     virtual std::vector<Casilla> casillas_de_colision() const = 0;
     virtual Rectangulo rectangulo_de_colision() const = 0;
 };

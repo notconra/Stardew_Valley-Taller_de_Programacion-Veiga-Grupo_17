@@ -18,3 +18,7 @@ bool Animal::ocupa_casilla(uint32_t col, uint32_t fil) const {
     return col >= columna && col < columna + static_cast<uint32_t>(ancho_en_casillas) &&
            fil >= fila && fil < fila + static_cast<uint32_t>(alto_en_casillas);
 }
+
+void Animal::avanzar_dia() {
+    dias_acumulados++;
+}

@@ -2,6 +2,7 @@
 #define GESTOR_DE_ANIMALES_H
 
 #include <map>
+#include <utility>
 #include <vector>
 
 #include "../../../common/mensajes/mensajes_partida.h"
@@ -14,6 +15,14 @@
 
 class GestorDeAnimales {
 private:
+    static constexpr uint8_t HORA_QUIETOS = 17;
+    static constexpr uint8_t HORA_DORMIR = 19;
+    static constexpr int TICKS_DECISION_MIN = 40;
+    static constexpr int TICKS_DECISION_MAX = 100;
+    static constexpr int PROBABILIDAD_QUIETO = 4;
+    static constexpr int PROBABILIDAD_ACCION_MAX = 10;
+    static constexpr int CANTIDAD_DIRECCIONES = 4;
+
     uint32_t siguiente_id = 1;
     Colisiones& colisiones;
     std::map<uint32_t, Vaca> vacas;
@@ -22,6 +31,10 @@ private:
     uint8_t sortear_variante_vaca();
     uint8_t sortear_variante_gallina();
 
+    static std::pair<int, int> desplazamiento_segun(Direccion direccion);
+    static DatosAnimalGuardado datos_guardados_de(const Animal& animal);
+
+    bool puede_ubicarse(const Animal& animal) const;
     void ocupar_colisiones(const Animal& animal);
     void liberar_colisiones(const Animal& animal);
     bool casillas_libres(const std::vector<Casilla>& casillas) const;
@@ -33,6 +46,13 @@ private:
         std::vector<EstadoAnimal>& actualizados);
     bool intentar_mover(
         Animal& animal, Direccion dir, int ancho_mapa, int alto_mapa, const Jugadores& jugadores);
+
+    void actualizar_animal(
+        Animal& animal, const HoraDelJuego& hora, int ancho_mapa, int alto_mapa,
+        const Jugadores& jugadores, std::vector<EstadoAnimal>& actualizados);
+
+    Vaca* buscar_vaca_en(uint32_t columna, uint32_t fila);
+    Gallina* buscar_gallina_en(uint32_t columna, uint32_t fila);
 
 public:
     explicit GestorDeAnimales(Colisiones& colisiones_mapa);
@@ -62,13 +82,18 @@ public:
     // Intenta ordeñar una vaca por su id. Devuelve true si tenía leche y se completó la extracción.
     bool ordeniar_vaca(uint32_t id_vaca);
 
+    // Intenta ordeñar la vaca ubicada en la casilla (columna, fila).
+    // Devuelve true si había una vaca lista para ordeñar y asigna su id a id_vaca_ordenada.
+    bool ordeniar_vaca_en(uint32_t columna, uint32_t fila, uint32_t& id_vaca_ordenada);
+
+    // Consulta si hay una vaca lista para ordeñar en dicha casilla
+    bool vaca_lista_en(uint32_t columna, uint32_t fila) const;
+
     // Consulta de vaca por casilla (cualquiera de sus casillas 2x2)
     const Vaca* vaca_en(uint32_t columna, uint32_t fila) const;
-    Vaca* buscar_vaca_en(uint32_t columna, uint32_t fila);
 
     // Consulta de gallina por casilla (1x1)
     const Gallina* gallina_en(uint32_t columna, uint32_t fila) const;
-    Gallina* buscar_gallina_en(uint32_t columna, uint32_t fila);
 
     // Actualiza movimiento aleatorio y rutina según la hora del día. Devuelve los animales que
     // cambiaron de estado o posición.
@@ -82,18 +107,19 @@ public:
 
     // Guarda y restaura el estado de los animales en el archivo de partida
     void agregar_animales_guardados_a(std::vector<DatosAnimalGuardado>& lista) const;
-    void cargar_animales_guardados(const std::vector<DatosAnimalGuardado>& lista);
+    void cargar_animales_guardados(
+        const std::vector<DatosAnimalGuardado>& lista,
+        const std::vector<uint32_t>& vacas_para_ordeniar);
 
     int cantidad_vacas() const;
     int cantidad_gallinas() const;
     int cantidad_total() const;
+    int cantidad_vacas_listas_para_ordeniar() const;
+    std::vector<uint32_t> obtener_ids_vacas_listas_para_ordeniar() const;
 
     const Vaca* buscar_vaca(uint32_t id) const;
     const Gallina* buscar_gallina(uint32_t id) const;
     const Animal* buscar(uint32_t id) const;
-
-    const std::map<uint32_t, Vaca>& obtener_vacas() const;
-    const std::map<uint32_t, Gallina>& obtener_gallinas() const;
 };
 
 #endif

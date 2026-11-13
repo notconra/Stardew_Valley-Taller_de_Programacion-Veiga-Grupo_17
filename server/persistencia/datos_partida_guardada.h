@@ -81,7 +81,6 @@ struct DatosAnimalGuardado {
     uint32_t fila = 0;
     Direccion mirando = Direccion::ABAJO;
     uint32_t dias_acumulados = 0;
-    bool lista_para_ordeniar = false;
 
     bool operator==(const DatosAnimalGuardado&) const = default;
 };
@@ -95,6 +94,7 @@ struct DatosMundoGuardado {
     std::vector<DatosCofreGuardado> cofres;
     std::vector<DatosMuebleGuardado> muebles;
     std::vector<DatosAnimalGuardado> animales;
+    std::vector<uint32_t> vacas_para_ordeniar;
 
     bool operator==(const DatosMundoGuardado&) const = default;
 };

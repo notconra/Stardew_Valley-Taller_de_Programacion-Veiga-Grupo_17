@@ -2,17 +2,14 @@
 
 #include <vector>
 
-constexpr int PIXELES_POR_CASILLA = 16;
-constexpr int HITBOX_OFFSET_X = 4;
-constexpr int HITBOX_ANCHO = 24;
-constexpr int HITBOX_ALTO = 16;
-
 Vaca::Vaca(uint32_t id_vaca, uint32_t col, uint32_t fil, uint8_t variante_inicial)
-    : Animal(id_vaca, TipoAnimal::VACA, col, fil, variante_inicial, 2, 2) {
+    : Animal(
+          id_vaca, TipoAnimal::VACA, col, fil, variante_inicial, ANCHO_EN_CASILLAS,
+          ALTO_EN_CASILLAS) {
 }
 
 void Vaca::avanzar_dia() {
-    dias_acumulados++;
+    Animal::avanzar_dia();
     if (dias_acumulados >= DIAS_ENTRE_PRODUCCIONES) {
         lista_para_ordeniar = true;
     }
@@ -44,14 +41,14 @@ std::vector<Casilla> Vaca::casillas_de_colision() const {
 Rectangulo Vaca::rectangulo_de_colision() const {
     if (mirando == Direccion::ABAJO || mirando == Direccion::ARRIBA) {
         return Rectangulo{
-            static_cast<int>(columna) * PIXELES_POR_CASILLA + 8,
+            static_cast<int>(columna) * PIXELES_POR_CASILLA + HITBOX_OFFSET_X_VERTICAL,
             static_cast<int>(fila + 1) * PIXELES_POR_CASILLA,
-            16,
-            16};
+            HITBOX_ANCHO_VERTICAL,
+            HITBOX_ALTO_VERTICAL};
     }
     return Rectangulo{
-        static_cast<int>(columna) * PIXELES_POR_CASILLA + HITBOX_OFFSET_X,
+        static_cast<int>(columna) * PIXELES_POR_CASILLA + HITBOX_OFFSET_X_HORIZONTAL,
         static_cast<int>(fila + 1) * PIXELES_POR_CASILLA,
-        HITBOX_ANCHO,
-        HITBOX_ALTO};
+        HITBOX_ANCHO_HORIZONTAL,
+        HITBOX_ALTO_HORIZONTAL};
 }

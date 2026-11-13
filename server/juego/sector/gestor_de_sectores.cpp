@@ -81,10 +81,11 @@ std::vector<DatosMuebleGuardado> GestorDeSectores::obtener_muebles_guardados() c
 }
 
 void GestorDeSectores::cargar_animales_guardados(
-    const std::vector<DatosAnimalGuardado>& animales_guardados) {
+    const std::vector<DatosAnimalGuardado>& animales_guardados,
+    const std::vector<uint32_t>& vacas_para_ordeniar) {
     auto sector_granja = sectores.find("granja");
     if (sector_granja != sectores.end()) {
-        sector_granja->second.cargar_animales_guardados(animales_guardados);
+        sector_granja->second.cargar_animales_guardados(animales_guardados, vacas_para_ordeniar);
     }
 }
 

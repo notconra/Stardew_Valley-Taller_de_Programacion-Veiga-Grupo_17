@@ -50,7 +50,9 @@ public:
     void cargar_muebles_guardados(const std::vector<DatosMuebleGuardado>& muebles_guardados);
     std::vector<DatosMuebleGuardado> obtener_muebles_guardados() const;
 
-    void cargar_animales_guardados(const std::vector<DatosAnimalGuardado>& animales_guardados);
+    void cargar_animales_guardados(
+        const std::vector<DatosAnimalGuardado>& animales_guardados,
+        const std::vector<uint32_t>& vacas_para_ordeniar);
     std::vector<DatosAnimalGuardado> obtener_animales_guardados() const;
 
     bool existe(const std::string& id_mapa) const;

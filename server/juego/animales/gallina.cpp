@@ -2,18 +2,14 @@
 
 #include <vector>
 
-constexpr int PIXELES_POR_CASILLA = 16;
-constexpr int HITBOX_OFFSET_X = 3;
-constexpr int HITBOX_OFFSET_Y = 6;
-constexpr int HITBOX_ANCHO = 10;
-constexpr int HITBOX_ALTO = 10;
-
 Gallina::Gallina(uint32_t id_gallina, uint32_t col, uint32_t fil, uint8_t variante_inicial)
-    : Animal(id_gallina, TipoAnimal::GALLINA, col, fil, variante_inicial, 1, 1) {
+    : Animal(
+          id_gallina, TipoAnimal::GALLINA, col, fil, variante_inicial, ANCHO_EN_CASILLAS,
+          ALTO_EN_CASILLAS) {
 }
 
 void Gallina::avanzar_dia() {
-    dias_acumulados++;
+    Animal::avanzar_dia();
 }
 
 std::vector<Casilla> Gallina::casillas_de_colision() const {
