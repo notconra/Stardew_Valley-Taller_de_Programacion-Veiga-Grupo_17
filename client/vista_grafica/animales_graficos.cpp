@@ -5,31 +5,29 @@
 #include <map>
 #include <string>
 #include <vector>
-namespace {
-struct FrameDormido {
-    int columna;
-    SDL_RendererFlip flip;
-};
-
-const std::map<Direccion, FrameDormido> DISPOSICION_DORMIDO = {
-    {Direccion::ABAJO, {0, SDL_FLIP_NONE}},
-    {Direccion::DERECHA, {1, SDL_FLIP_NONE}},
-    {Direccion::IZQUIERDA, {1, SDL_FLIP_HORIZONTAL}},
-    {Direccion::ARRIBA, {2, SDL_FLIP_NONE}},
-};
-}  // namespace
 
 AnimalesGraficos::AnimalesGraficos(SDL_Renderer* renderer, const ConfiguracionGraficos& graficos)
     : tamano_de_tile(graficos.tamano_de_tile),
       escala_de_tiles(graficos.escala_de_tiles),
       icono_leche(RUTA_ICONO_LECHE, renderer),
       textura_burbuja(RUTA_BURBUJA_EMOTE, renderer),
-      textura_sueno(RUTA_EMOTE_SUENO, renderer),
       disposicion_por_direccion{
-          {Direccion::ABAJO, {FILA_ABAJO, SDL_FLIP_NONE}},
-          {Direccion::DERECHA, {FILA_LATERAL, SDL_FLIP_NONE}},
-          {Direccion::IZQUIERDA, {FILA_LATERAL, SDL_FLIP_HORIZONTAL}},
-          {Direccion::ARRIBA, {FILA_ARRIBA, SDL_FLIP_NONE}},
+          {Direccion::ABAJO, {FILA_ABAJO, 0, SDL_FLIP_NONE}},
+          {Direccion::DERECHA, {FILA_LATERAL, 0, SDL_FLIP_NONE}},
+          {Direccion::IZQUIERDA, {FILA_LATERAL, 0, SDL_FLIP_HORIZONTAL}},
+          {Direccion::ARRIBA, {FILA_ARRIBA, 0, SDL_FLIP_NONE}},
+      },
+      disposicion_dormida_vaca{
+          {Direccion::ABAJO, {FILA_DORMIDA_VACA, 0, SDL_FLIP_NONE}},
+          {Direccion::DERECHA, {FILA_DORMIDA_VACA, 2, SDL_FLIP_NONE}},
+          {Direccion::IZQUIERDA, {FILA_DORMIDA_VACA, 2, SDL_FLIP_HORIZONTAL}},
+          {Direccion::ARRIBA, {FILA_DORMIDA_VACA, 3, SDL_FLIP_NONE}},
+      },
+      disposicion_dormida_gallina{
+          {Direccion::ABAJO, {FILA_DORMIDA_GALLINA_ABAJO, 1, SDL_FLIP_NONE}},
+          {Direccion::DERECHA, {FILA_DORMIDA_GALLINA_LATERAL, 3, SDL_FLIP_NONE}},
+          {Direccion::IZQUIERDA, {FILA_DORMIDA_GALLINA_LATERAL, 3, SDL_FLIP_HORIZONTAL}},
+          {Direccion::ARRIBA, {FILA_DORMIDA_GALLINA_ARRIBA, 1, SDL_FLIP_NONE}},
       } {
     texturas_vacas.emplace_back(RUTA_VACA_BLANCA, renderer);
     texturas_vacas.emplace_back(RUTA_VACA_MARRON, renderer);
@@ -50,6 +48,31 @@ SDL_Texture* AnimalesGraficos::obtener_textura(TipoAnimal tipo, uint8_t variante
     }
     const size_t indice = std::min(static_cast<size_t>(variante), coleccion.size() - 1);
     return coleccion[indice].ptr();
+}
+
+AnimalesGraficos::DisposicionFrame AnimalesGraficos::obtener_disposicion(
+    TipoAnimal tipo, Direccion direccion, bool durmiendo) const {
+    if (!durmiendo) {
+        auto encontrado = disposicion_por_direccion.find(direccion);
+        if (encontrado != disposicion_por_direccion.end()) {
+            return encontrado->second;
+        }
+        return disposicion_por_direccion.at(Direccion::ABAJO);
+    }
+
+    if (tipo == TipoAnimal::VACA) {
+        auto encontrado = disposicion_dormida_vaca.find(direccion);
+        if (encontrado != disposicion_dormida_vaca.end()) {
+            return encontrado->second;
+        }
+        return disposicion_dormida_vaca.at(Direccion::ABAJO);
+    }
+
+    auto encontrado = disposicion_dormida_gallina.find(direccion);
+    if (encontrado != disposicion_dormida_gallina.end()) {
+        return encontrado->second;
+    }
+    return disposicion_dormida_gallina.at(Direccion::ABAJO);
 }
 
 bool AnimalesGraficos::esta_en_pantalla(
@@ -118,6 +141,43 @@ void AnimalesGraficos::dibujar_un_animal(
         ahora);
 }
 
+AnimalesGraficos::Posicion AnimalesGraficos::avanzar(
+    Recorrido& recorrido, const EstadoAnimal& animal, uint32_t ahora) const {
+    float progreso = std::min(1.0f, static_cast<float>(ahora - recorrido.desde_ms) / MS_POR_PASO);
+
+    int salto =
+        std::abs(static_cast<int>(animal.columna) - static_cast<int>(recorrido.columna_destino)) +
+        std::abs(static_cast<int>(animal.fila) - static_cast<int>(recorrido.fila_destino));
+
+    if (recorrido.desde_ms == 0 || salto > 1) {
+        recorrido.columna_origen = static_cast<float>(animal.columna);
+        recorrido.fila_origen = static_cast<float>(animal.fila);
+        recorrido.columna_destino = animal.columna;
+        recorrido.fila_destino = animal.fila;
+        recorrido.desde_ms = ahora - MS_POR_PASO;
+        progreso = 1.0f;
+    }
+
+    if (recorrido.columna_destino != animal.columna || recorrido.fila_destino != animal.fila) {
+        recorrido.columna_origen =
+            recorrido.columna_origen +
+            (recorrido.columna_destino - recorrido.columna_origen) * progreso;
+        recorrido.fila_origen =
+            recorrido.fila_origen + (recorrido.fila_destino - recorrido.fila_origen) * progreso;
+        recorrido.columna_destino = animal.columna;
+        recorrido.fila_destino = animal.fila;
+        recorrido.desde_ms = ahora;
+        progreso = 0.0f;
+    }
+
+    float columna_actual = recorrido.columna_origen +
+                           (recorrido.columna_destino - recorrido.columna_origen) * progreso;
+    float fila_actual =
+        recorrido.fila_origen + (recorrido.fila_destino - recorrido.fila_origen) * progreso;
+
+    return Posicion{columna_actual, fila_actual, progreso < 1.0f};
+}
+
 void AnimalesGraficos::dibujar_animal(
     SDL_Renderer* renderer, const EstadoAnimal& animal, bool tiene_leche, int cam_x, int cam_y,
     int ancho_pantalla, int alto_pantalla, uint32_t ahora) const {
@@ -126,32 +186,22 @@ void AnimalesGraficos::dibujar_animal(
         return;
     }
 
+    Recorrido& recorrido = recorridos[animal.id];
+    Posicion posicion = avanzar(recorrido, animal, ahora);
+
     bool es_vaca = (animal.tipo == TipoAnimal::VACA);
     int ancho_sprite = es_vaca ? VACA_ANCHO : GALLINA_ANCHO;
     int alto_sprite = es_vaca ? VACA_ALTO : GALLINA_ALTO;
 
-    auto disposicion_encontrada = disposicion_por_direccion.find(animal.mirando);
-    const DisposicionFrame& disposicion =
-        (disposicion_encontrada != disposicion_por_direccion.end())
-            ? disposicion_encontrada->second
-            : disposicion_por_direccion.at(Direccion::ABAJO);
+    DisposicionFrame disposicion =
+        obtener_disposicion(animal.tipo, animal.mirando, animal.durmiendo);
 
     int fila = disposicion.fila;
-    int columna_sprite = 0;
+    int columna_sprite = disposicion.columna;
     SDL_RendererFlip flip = disposicion.flip;
 
-    if (animal.durmiendo) {
-        fila = es_vaca ? FILA_DORMIDA_VACA : FILA_DORMIDA_GALLINA;
-        auto dormido_it = DISPOSICION_DORMIDO.find(animal.mirando);
-        if (dormido_it != DISPOSICION_DORMIDO.end()) {
-            columna_sprite = dormido_it->second.columna;
-            flip = dormido_it->second.flip;
-        }
-    } else {
-        columna_sprite =
-            animal.caminando
-                ? static_cast<int>((ahora / MS_POR_CUADRO_CAMINANDO) % CUADROS_CAMINANDO)
-                : 0;
+    if (!animal.durmiendo && posicion.caminando) {
+        columna_sprite = static_cast<int>((ahora / MS_POR_CUADRO_CAMINANDO) % CUADROS_CAMINANDO);
     }
 
     SDL_Rect origen{columna_sprite * ancho_sprite, fila * alto_sprite, ancho_sprite, alto_sprite};
@@ -161,41 +211,22 @@ void AnimalesGraficos::dibujar_animal(
     int alto_px = alto_sprite * escala_de_tiles;
 
     SDL_Rect destino{
-        static_cast<int>(animal.columna) * casilla - cam_x,
-        static_cast<int>(animal.fila) * casilla - cam_y,
+        static_cast<int>(std::round(posicion.columna * casilla)) - cam_x,
+        static_cast<int>(std::round(posicion.fila * casilla)) - cam_y,
         ancho_px,
         alto_px};
 
     if (esta_en_pantalla(destino, ancho_pantalla, alto_pantalla)) {
         SDL_RenderCopyEx(renderer, textura, &origen, &destino, 0.0, nullptr, flip);
 
-        bool muestra_leche = (es_vaca && tiene_leche);
-        bool muestra_sueno = animal.durmiendo;
-
-        if (muestra_leche && muestra_sueno) {
-            dibujar_notificacion_ordenie(renderer, destino, ahora, PosicionNotificacion::IZQUIERDA);
-            dibujar_notificacion_sueno(
-                renderer,
-                destino,
-                es_vaca,
-                ahora,
-                PosicionNotificacion::DERECHA);
-        } else if (muestra_leche) {
-            dibujar_notificacion_ordenie(renderer, destino, ahora, PosicionNotificacion::CENTRO);
-        } else if (muestra_sueno) {
-            dibujar_notificacion_sueno(
-                renderer,
-                destino,
-                es_vaca,
-                ahora,
-                PosicionNotificacion::CENTRO);
+        if (es_vaca && tiene_leche) {
+            dibujar_notificacion_ordenie(renderer, destino, ahora);
         }
     }
 }
 
 void AnimalesGraficos::dibujar_notificacion_ordenie(
-    SDL_Renderer* renderer, const SDL_Rect& destino_vaca, uint32_t ahora,
-    PosicionNotificacion posicion) const {
+    SDL_Renderer* renderer, const SDL_Rect& destino_vaca, uint32_t ahora) const {
     if (!icono_leche.ptr() || !textura_burbuja.ptr()) {
         return;
     }
@@ -210,18 +241,11 @@ void AnimalesGraficos::dibujar_notificacion_ordenie(
     int offset_y = static_cast<int>(std::round(oscilacion));
 
     int centro_x = destino_vaca.x + destino_vaca.w / 2;
-    if (posicion == PosicionNotificacion::IZQUIERDA) {
-        centro_x = destino_vaca.x + destino_vaca.w / 4;
-    } else if (posicion == PosicionNotificacion::DERECHA) {
-        centro_x = destino_vaca.x + (3 * destino_vaca.w) / 4;
-    }
 
     SDL_Rect origen_burbuja{BURBUJA_ORIGEN_X, BURBUJA_ORIGEN_Y, BURBUJA_ANCHO, BURBUJA_ALTO};
-    SDL_Rect destino_burbuja{
-        centro_x - ancho_burbuja / 2,
-        destino_vaca.y - alto_burbuja - (ESPACIADO_NOTIFICACION * escala_de_tiles) + offset_y,
-        ancho_burbuja,
-        alto_burbuja};
+    int destino_y =
+        destino_vaca.y - alto_burbuja + (AJUSTE_ALTURA_BURBUJA_VACA * escala_de_tiles) + offset_y;
+    SDL_Rect destino_burbuja{centro_x - ancho_burbuja / 2, destino_y, ancho_burbuja, alto_burbuja};
 
     SDL_RenderCopy(renderer, textura_burbuja.ptr(), &origen_burbuja, &destino_burbuja);
 
@@ -235,34 +259,4 @@ void AnimalesGraficos::dibujar_notificacion_ordenie(
         alto_leche};
 
     SDL_RenderCopy(renderer, icono_leche.ptr(), nullptr, &destino_leche);
-}
-
-void AnimalesGraficos::dibujar_notificacion_sueno(
-    SDL_Renderer* renderer, const SDL_Rect& destino_animal, bool es_vaca, uint32_t ahora,
-    PosicionNotificacion posicion) const {
-    if (!textura_sueno.ptr()) {
-        return;
-    }
-
-    int tamano_base = es_vaca ? TAMANO_SUENO_VACA : TAMANO_SUENO_GALLINA;
-    int tamano_sueno = tamano_base * escala_de_tiles;
-
-    double oscilacion = std::sin((static_cast<double>(ahora) / PERIODO_FLOTACION_MS) + 1.0) *
-                        (AMPLITUD_FLOTACION * escala_de_tiles);
-    int offset_y = static_cast<int>(std::round(oscilacion));
-
-    int centro_x = destino_animal.x + destino_animal.w / 2;
-    if (posicion == PosicionNotificacion::IZQUIERDA) {
-        centro_x = destino_animal.x + destino_animal.w / 4;
-    } else if (posicion == PosicionNotificacion::DERECHA) {
-        centro_x = destino_animal.x + (3 * destino_animal.w) / 4;
-    }
-
-    SDL_Rect destino_sueno{
-        centro_x - tamano_sueno / 2,
-        destino_animal.y - tamano_sueno - (ESPACIADO_NOTIFICACION * escala_de_tiles) + offset_y,
-        tamano_sueno,
-        tamano_sueno};
-
-    SDL_RenderCopy(renderer, textura_sueno.ptr(), nullptr, &destino_sueno);
 }
