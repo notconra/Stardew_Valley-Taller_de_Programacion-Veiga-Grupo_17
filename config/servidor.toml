@@ -4,9 +4,9 @@
 # así que al momento de ejecutar el servidor sería algo como:
 #
 #   ./build/server config/servidor.toml
-mapa_inicial = "FarmHouse"
+mapa_inicial = "FarmHouse2"
 [red]
-puerto = "8080"
+puerto = "8081"
 
 [partida]
 jugadores_maximos_por_partida = 4
@@ -33,8 +33,12 @@ ruta_tmx = "Assets/Maps/Town.tmx"
 #capa_respaldo = "Buildings"
 
 [[mapas]]
-id = "FarmHouse"
-ruta_tmx = "Assets/Maps/FarmHouse.tmx"
+id = "FarmHouse2"
+ruta_tmx = "Assets/Maps/FarmHouse2.tmx"
+
+[[mapas]]
+id = "mercado"
+ruta_tmx = "Assets/Maps/Mercado.tmx"
 
 # Niveles de la mazmorra: se registran como mapas comunes y [mazmorra] dice cuáles son.
 # Cada partida elige 10 al azar entre ellos.
@@ -133,7 +137,7 @@ ruta_tmx = "Assets/Maps/Mines/24.tmx"
 [juego.transiciones]
 # Destinos que se usan con clic derecho. Todo lo demás (salir de la casa, entrar a la mina,
 # cambiar de mapa) se activa al pisarlo.
-destinos_con_clic = ["FarmHouse", "siguiente"]
+destinos_con_clic = ["FarmHouse2", "siguiente", "mercado"]
 
 [juego.dia]
 # Un día de juego va de las 6 am a las 2 am (20 horas de juego). velocidad elige cuánto dura en
@@ -154,8 +158,8 @@ dias_por_estacion = 28
 # hitbox_alto = 8
 
 [juego.aparicion]
-# x = 200
-# y = 150
+x = 432
+y = 416
 # paso_de_busqueda = 8
 
 [juego.inventario]

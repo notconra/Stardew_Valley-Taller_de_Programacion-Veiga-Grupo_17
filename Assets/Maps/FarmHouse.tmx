@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.2-2-geb83ddb9" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="12" height="12" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="103">
+<map version="1.10" tiledversion="1.12.2" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="12" height="12" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="103">
  <properties>
   <property name="FloorIDs" value="Bedroom"/>
   <property name="WallIDs" value="Bedroom"/>
@@ -66,12 +66,12 @@
   <object id="101" x="42.1818" y="176.909" width="37.8182" height="14.7273">
    <properties>
     <property name="columna_destino" type="int" value="65"/>
-    <property name="fila_destino" type="int" value="15"/>
+    <property name="fila_destino" type="int" value="13"/>
     <property name="mapa_destino" value="granja"/>
    </properties>
   </object>
  </objectgroup>
- <objectgroup id="4" name="Back">
+ <objectgroup id="4" name="Back" visible="0">
   <object id="1" name="TileData" x="16" y="16" width="16" height="16">
    <properties>
     <property name="WallID" value="Bedroom"/>
