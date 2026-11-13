@@ -18,7 +18,10 @@
 // repositorio (el target test del Makefile ejecuta ./build/tests desde ahí).
 
 namespace {
-const Casilla CONTRA_LA_PARED{2, 4};
+// Casillas de la casa (FarmHouse2). La pieza de la derecha va de la columna 38 a la 48 y de la fila
+// 23 a la 32. Tiene pared arriba (fila 22), a la derecha (columna 49), abajo (fila 33) y a la
+// izquierda (columna 37, filas 23 a 27).
+const Casilla CONTRA_LA_PARED{38, 23};
 const uint32_t ID_JUGADOR = 1;
 
 const RecursosDeJuego& recursos() {
@@ -113,24 +116,24 @@ TEST_F(ColocarCama, SePoneContraLaParedYBloqueaDosPorTres) {
         casa.objetos.objeto_en(CONTRA_LA_PARED.columna, CONTRA_LA_PARED.fila);
     ASSERT_NE(cama, nullptr);
     EXPECT_EQ(cama->tipo, TipoObjeto::CAMA);
-    for (int columna = 2; columna <= 3; ++columna) {
-        for (int fila = 4; fila <= 6; ++fila) {
+    for (int columna = 38; columna <= 39; ++columna) {
+        for (int fila = 23; fila <= 25; ++fila) {
             EXPECT_EQ(casa.objetos.objeto_en(columna, fila), cama) << columna << ", " << fila;
             EXPECT_FALSE(casa.colisiones.esta_libre(columna, fila)) << columna << ", " << fila;
         }
     }
-    EXPECT_TRUE(casa.colisiones.esta_libre(4, 4));
-    EXPECT_TRUE(casa.colisiones.esta_libre(2, 7));
+    EXPECT_TRUE(casa.colisiones.esta_libre(40, 23));
+    EXPECT_TRUE(casa.colisiones.esta_libre(38, 26));
 }
 
 TEST_F(ColocarCama, EnElMedioSePuedePasarPorDetrasDeLaCabecera) {
     Sector casa(MAPA_DE_LA_CASA, recursos(), 40);
 
-    ASSERT_TRUE(colocar(casa, Casilla{5, 6}));
-    EXPECT_TRUE(casa.colisiones.esta_libre(5, 5));
-    EXPECT_TRUE(casa.colisiones.esta_libre(6, 5));
-    EXPECT_FALSE(casa.colisiones.esta_libre(5, 6));
-    EXPECT_FALSE(casa.colisiones.esta_libre(6, 8));
+    ASSERT_TRUE(colocar(casa, Casilla{42, 27}));
+    EXPECT_TRUE(casa.colisiones.esta_libre(42, 26));
+    EXPECT_TRUE(casa.colisiones.esta_libre(43, 26));
+    EXPECT_FALSE(casa.colisiones.esta_libre(42, 27));
+    EXPECT_FALSE(casa.colisiones.esta_libre(43, 29));
 }
 
 TEST_F(ColocarCama, NoSePuedePonerFueraDeLaCasa) {
@@ -144,9 +147,9 @@ TEST_F(ColocarCama, NoSePuedePonerFueraDeLaCasa) {
 TEST_F(ColocarCama, NoSePuedePonerSobreLaParedNiFueraDelPiso) {
     Sector casa(MAPA_DE_LA_CASA, recursos(), 40);
 
-    EXPECT_FALSE(colocar(casa, Casilla{2, 3}));
-    EXPECT_FALSE(colocar(casa, Casilla{10, 4}));
-    EXPECT_FALSE(colocar(casa, Casilla{2, 9}));
+    EXPECT_FALSE(colocar(casa, Casilla{38, 22}));  // la cabecera sobre la pared de arriba
+    EXPECT_FALSE(colocar(casa, Casilla{48, 23}));  // media cama sobre la pared de la derecha
+    EXPECT_FALSE(colocar(casa, Casilla{38, 31}));  // se sale del piso por abajo
     EXPECT_TRUE(ranura_de_la_cama(personaje).has_value());
     EXPECT_EQ(casa.objetos.cantidad_de_objetos(), 0);
 }
@@ -156,8 +159,8 @@ TEST_F(ColocarCama, NoSePuedePonerEncimaDeOtraCama) {
     ASSERT_TRUE(colocar(casa, CONTRA_LA_PARED));
 
     personaje.inventario.agregar_item(TipoItem::CAMA, 1);
-    EXPECT_FALSE(colocar(casa, Casilla{3, 5}));
-    EXPECT_TRUE(colocar(casa, Casilla{4, 4}));
+    EXPECT_FALSE(colocar(casa, Casilla{39, 24}));
+    EXPECT_TRUE(colocar(casa, Casilla{40, 23}));
     EXPECT_EQ(casa.objetos.cantidad_de_objetos(), 2);
 }
 
@@ -170,8 +173,8 @@ TEST_F(ColocarCama, AlLevantarlaVuelveElItemYSeLiberanLasCasillas) {
     EXPECT_TRUE(rotura.se_rompio);
     EXPECT_EQ(rotura.producto, TipoItem::CAMA);
     EXPECT_EQ(rotura.cantidad, 1);
-    for (int columna = 2; columna <= 3; ++columna) {
-        for (int fila = 4; fila <= 6; ++fila) {
+    for (int columna = 38; columna <= 39; ++columna) {
+        for (int fila = 23; fila <= 25; ++fila) {
             EXPECT_TRUE(casa.colisiones.esta_libre(columna, fila)) << columna << ", " << fila;
         }
     }
@@ -187,15 +190,19 @@ TEST_F(ColocarCama, NoSePuedePonerEncimaDeUnJugador) {
 
 TEST_F(ColocarCama, NoSePuedePonerSiElJugadorQuedaConMedioCuerpoAdentro) {
     Sector casa(MAPA_DE_LA_CASA, recursos(), 40);
-    casa.jugadores.agregar_en(2, 19.0, CONTRA_LA_PARED.fila * 16 + 8);
-    ASSERT_EQ(casa.jugadores.casilla_del_jugador(2)->columna, 1);
+    casa.jugadores.agregar_en(
+        2,
+        CONTRA_LA_PARED.columna * 16 - 13.0,
+        CONTRA_LA_PARED.fila * 16 + 8);
+    ASSERT_EQ(casa.jugadores.casilla_del_jugador(2)->columna, CONTRA_LA_PARED.columna - 1);
 
     EXPECT_FALSE(colocar(casa, CONTRA_LA_PARED));
 }
 
 TEST_F(ColocarCama, NoSePuedePonerPegadaALaPuerta) {
     Sector casa(MAPA_DE_LA_CASA, recursos(), 40);
-    EXPECT_FALSE(colocar(casa, Casilla{3, 8}));
-    EXPECT_FALSE(colocar(casa, Casilla{5, 8}));
-    EXPECT_TRUE(colocar(casa, Casilla{7, 8}));
+    // La puerta de salida está en (27, 30): no se puede ocupar ninguna casilla pegada a ella.
+    EXPECT_FALSE(colocar(casa, Casilla{25, 27}));
+    EXPECT_FALSE(colocar(casa, Casilla{27, 27}));
+    EXPECT_TRUE(colocar(casa, Casilla{29, 27}));
 }

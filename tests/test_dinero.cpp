@@ -6,9 +6,9 @@
 #include <vector>
 
 #include "../server/configuracion/configuracion_servidor.h"
-#include "../server/juego/chat/comando_dinero.h"
 #include "../server/juego/chat/contexto_de_comando_de_chat.h"
 #include "../server/juego/chat/respuestas_de_chat.h"
+#include "../server/juego/cheats/comando_dinero.h"
 #include "../server/juego/jugadores/personaje.h"
 #include "../server/juego/mundo.h"
 #include "../server/juego/notificador.h"

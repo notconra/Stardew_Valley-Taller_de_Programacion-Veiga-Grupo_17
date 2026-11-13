@@ -175,6 +175,20 @@ danio_espada = 25
 energia_por_golpe = 3
 energia_por_picar = 3
 energia_por_tratar_tierra = 3
+energia_por_plantar = 1
+energia_por_regar = 2
+energia_por_cosechar = 1
+
+[juego.cultivos]
+# La calidad de lo cosechado arranca en perfecta y baja un nivel por cada falta (sin pasar de
+# base). Un riego es tardío si se hace en la segunda mitad de su turno, y perdido si no se hace en
+# todo el turno. Cada día que una planta madura espera sin cosechar también suma.
+faltas_por_riego_tardio = 1
+faltas_por_riego_perdido = 2
+faltas_por_dia_sin_cosechar = 1
+# Después la suerte puede subir o bajar la calidad un nivel.
+probabilidad_de_subir_calidad = 0.2
+probabilidad_de_bajar_calidad = 0.1
 
 [juego.drops]
 # radio_de_recogida_en_casillas = 1

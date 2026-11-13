@@ -50,6 +50,10 @@ public:
     void cargar_muebles_guardados(const std::vector<DatosMuebleGuardado>& muebles_guardados);
     std::vector<DatosMuebleGuardado> obtener_muebles_guardados() const;
 
+    // Las plantas. Se cargan después de la tierra tratada.
+    void cargar_cultivos_guardados(const std::vector<DatosCultivoGuardado>& cultivos_guardados);
+    std::vector<DatosCultivoGuardado> obtener_cultivos_guardados() const;
+
     bool existe(const std::string& id_mapa) const;
 
     // Los ids de todos los mapas con sector, para quien necesite recorrerlos todos (por ejemplo,

@@ -29,7 +29,7 @@ namespace {
 const Casilla CULTIVABLE{13, 12};
 // Casilla de la granja ocupada por la casa (Buildings): bloqueada.
 const Casilla DE_LA_CASA{60, 12};
-// Columna y filas de la puerta de la casa en la granja (transición a FarmHouse).
+// Columna y filas de la puerta de la casa en la granja (transición a FarmHouse2).
 const int COLUMNA_DE_LA_PUERTA = 65;
 const int PRIMERA_FILA_DE_LA_PUERTA = 12;
 const int ULTIMA_FILA_DE_LA_PUERTA = 14;
@@ -43,10 +43,14 @@ const RecursosDeJuego& recursos() {
                 mapas.push_back(mapa);
             }
         }
+        // La aparición del TOML es para la casa. Acá el jugador arranca en la granja, así que se
+        // usa la de por defecto, que cae al lado de la tierra cultivable.
+        ConfiguracionJuegoServidor juego = configuracion.juego();
+        juego.aparicion = ConfiguracionAparicionJugador{};
         return RecursosDeJuego(
             mapas,
             "granja",
-            configuracion.juego(),
+            juego,
             ConfiguracionMazmorraServidor{});  // sin mazmorra: estas pruebas son de la granja
     }();
     return recursos_de_juego;

@@ -103,25 +103,25 @@ protected:
 }  // namespace
 
 TEST_F(ConsultarCasillaTest, ConLaCamaSeMarcaVerdeDondeEntra) {
-    parar_en(MAPA_DE_LA_CASA, 5, 5);
+    parar_en(MAPA_DE_LA_CASA, 41, 26);
     elegir(TipoItem::CAMA);
 
-    const CasillaConsultada respuesta = consultar(6, 5);
-    EXPECT_EQ(respuesta.columna, 6u);
-    EXPECT_EQ(respuesta.fila, 5u);
+    const CasillaConsultada respuesta = consultar(42, 26);
+    EXPECT_EQ(respuesta.columna, 42u);
+    EXPECT_EQ(respuesta.fila, 26u);
     EXPECT_EQ(respuesta.ancho, ANCHO_DE_LA_CAMA);
     EXPECT_EQ(respuesta.alto, ALTO_DE_LA_CAMA);
     EXPECT_EQ(respuesta.marca, MarcaDeCasilla::VALIDA);
 }
 
 TEST_F(ConsultarCasillaTest, ConLaCamaSeMarcaRojoDondeNoEntra) {
-    parar_en(MAPA_DE_LA_CASA, 5, 5);
+    parar_en(MAPA_DE_LA_CASA, 41, 26);
     elegir(TipoItem::CAMA);
 
-    EXPECT_EQ(consultar(5, 5).marca, MarcaDeCasilla::INVALIDA);
-    EXPECT_EQ(consultar(5, 4).marca, MarcaDeCasilla::INVALIDA);
-    EXPECT_EQ(consultar(9, 9).marca, MarcaDeCasilla::INVALIDA);
-    EXPECT_EQ(consultar(9, 9).alto, ALTO_DE_LA_CAMA);
+    EXPECT_EQ(consultar(41, 26).marca, MarcaDeCasilla::INVALIDA);
+    EXPECT_EQ(consultar(41, 25).marca, MarcaDeCasilla::INVALIDA);
+    EXPECT_EQ(consultar(47, 31).marca, MarcaDeCasilla::INVALIDA);
+    EXPECT_EQ(consultar(47, 31).alto, ALTO_DE_LA_CAMA);
 }
 
 TEST_F(ConsultarCasillaTest, ConLaCamaFueraDeLaCasaSeMarcaRojo) {

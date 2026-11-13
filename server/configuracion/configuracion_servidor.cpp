@@ -133,6 +133,9 @@ void ConfiguracionServidor::cargar_juego(const toml::table& archivo_toml) {
     if (const toml::table* tabla = (*juego)["acciones"].as_table()) {
         cargar_acciones(*tabla);
     }
+    if (const toml::table* tabla = (*juego)["cultivos"].as_table()) {
+        cargar_cultivos(*tabla);
+    }
     if (const toml::table* tabla = (*juego)["drops"].as_table()) {
         cargar_drops(*tabla);
     }
@@ -245,14 +248,95 @@ void ConfiguracionServidor::cargar_acciones(const toml::table& tabla) {
         1,
         UINT16_MAX);
     acciones.danio_espada = lector_toml::leer_entero_opcional(
-        tabla, "danio_espada", seccion, acciones.danio_espada, 0, INT_MAX);
-    acciones.energia_por_golpe = lector_toml::leer_entero_opcional(
-        tabla, "energia_por_golpe", seccion, acciones.energia_por_golpe, 0, INT_MAX);
-    acciones.energia_por_picar = lector_toml::leer_entero_opcional(
-        tabla, "energia_por_picar", seccion, acciones.energia_por_picar, 0, INT_MAX);
-    acciones.energia_por_tratar_tierra = lector_toml::leer_entero_opcional(
-        tabla, "energia_por_tratar_tierra", seccion, acciones.energia_por_tratar_tierra, 0,
+        tabla,
+        "danio_espada",
+        seccion,
+        acciones.danio_espada,
+        0,
         INT_MAX);
+    acciones.energia_por_golpe = lector_toml::leer_entero_opcional(
+        tabla,
+        "energia_por_golpe",
+        seccion,
+        acciones.energia_por_golpe,
+        0,
+        INT_MAX);
+    acciones.energia_por_picar = lector_toml::leer_entero_opcional(
+        tabla,
+        "energia_por_picar",
+        seccion,
+        acciones.energia_por_picar,
+        0,
+        INT_MAX);
+    acciones.energia_por_tratar_tierra = lector_toml::leer_entero_opcional(
+        tabla,
+        "energia_por_tratar_tierra",
+        seccion,
+        acciones.energia_por_tratar_tierra,
+        0,
+        INT_MAX);
+    acciones.energia_por_plantar = lector_toml::leer_entero_opcional(
+        tabla,
+        "energia_por_plantar",
+        seccion,
+        acciones.energia_por_plantar,
+        0,
+        INT_MAX);
+    acciones.energia_por_regar = lector_toml::leer_entero_opcional(
+        tabla,
+        "energia_por_regar",
+        seccion,
+        acciones.energia_por_regar,
+        0,
+        INT_MAX);
+    acciones.energia_por_cosechar = lector_toml::leer_entero_opcional(
+        tabla,
+        "energia_por_cosechar",
+        seccion,
+        acciones.energia_por_cosechar,
+        0,
+        INT_MAX);
+}
+
+void ConfiguracionServidor::cargar_cultivos(const toml::table& tabla) {
+    const std::string seccion = "juego.cultivos";
+    ConfiguracionCultivosServidor& cultivos = datos_configuracion.juego.cultivos;
+
+    cultivos.faltas_por_riego_tardio = lector_toml::leer_entero_opcional(
+        tabla,
+        "faltas_por_riego_tardio",
+        seccion,
+        cultivos.faltas_por_riego_tardio,
+        0,
+        4);
+    cultivos.faltas_por_riego_perdido = lector_toml::leer_entero_opcional(
+        tabla,
+        "faltas_por_riego_perdido",
+        seccion,
+        cultivos.faltas_por_riego_perdido,
+        0,
+        4);
+    cultivos.faltas_por_dia_sin_cosechar = lector_toml::leer_entero_opcional(
+        tabla,
+        "faltas_por_dia_sin_cosechar",
+        seccion,
+        cultivos.faltas_por_dia_sin_cosechar,
+        0,
+        4);
+    cultivos.probabilidad_de_subir_calidad = lector_toml::leer_decimal_opcional(
+        tabla,
+        "probabilidad_de_subir_calidad",
+        seccion,
+        cultivos.probabilidad_de_subir_calidad,
+        0.0,
+        1.0);
+    cultivos.probabilidad_de_bajar_calidad = lector_toml::leer_decimal_opcional(
+        tabla,
+        "probabilidad_de_bajar_calidad",
+        seccion,
+        cultivos.probabilidad_de_bajar_calidad,
+        0.0,
+        1.0);
 }
 
 void ConfiguracionServidor::cargar_drops(const toml::table& tabla) {
@@ -385,23 +469,47 @@ void ConfiguracionServidor::cargar_mazmorra(const toml::table& archivo_toml) {
             const std::string seccion_orco = "mazmorra.enemigos.orco";
             cargar_enemigo(*orco, seccion_orco, mazmorra.orco.combate);
             mazmorra.orco.grupos_por_nivel = lector_toml::leer_entero_opcional(
-                *orco, "grupos_por_nivel", seccion_orco, mazmorra.orco.grupos_por_nivel, 0,
+                *orco,
+                "grupos_por_nivel",
+                seccion_orco,
+                mazmorra.orco.grupos_por_nivel,
+                0,
                 INT_MAX);
             mazmorra.orco.tamano_grupo_minimo = lector_toml::leer_entero_opcional(
-                *orco, "tamano_grupo_minimo", seccion_orco, mazmorra.orco.tamano_grupo_minimo, 1,
+                *orco,
+                "tamano_grupo_minimo",
+                seccion_orco,
+                mazmorra.orco.tamano_grupo_minimo,
+                1,
                 INT_MAX);
             mazmorra.orco.tamano_grupo_maximo = lector_toml::leer_entero_opcional(
-                *orco, "tamano_grupo_maximo", seccion_orco, mazmorra.orco.tamano_grupo_maximo, 1,
+                *orco,
+                "tamano_grupo_maximo",
+                seccion_orco,
+                mazmorra.orco.tamano_grupo_maximo,
+                1,
                 INT_MAX);
             mazmorra.orco.probabilidad_de_plata_al_morir = lector_toml::leer_decimal_opcional(
-                *orco, "probabilidad_de_plata_al_morir", seccion_orco,
-                mazmorra.orco.probabilidad_de_plata_al_morir, 0.0, 1.0);
+                *orco,
+                "probabilidad_de_plata_al_morir",
+                seccion_orco,
+                mazmorra.orco.probabilidad_de_plata_al_morir,
+                0.0,
+                1.0);
             mazmorra.orco.probabilidad_de_manada_por_plata = lector_toml::leer_decimal_opcional(
-                *orco, "probabilidad_de_manada_por_plata", seccion_orco,
-                mazmorra.orco.probabilidad_de_manada_por_plata, 0.0, 1.0);
+                *orco,
+                "probabilidad_de_manada_por_plata",
+                seccion_orco,
+                mazmorra.orco.probabilidad_de_manada_por_plata,
+                0.0,
+                1.0);
             mazmorra.orco.distancia_de_aparicion_de_manada = lector_toml::leer_entero_opcional(
-                *orco, "distancia_de_aparicion_de_manada", seccion_orco,
-                mazmorra.orco.distancia_de_aparicion_de_manada, 1, 100);
+                *orco,
+                "distancia_de_aparicion_de_manada",
+                seccion_orco,
+                mazmorra.orco.distancia_de_aparicion_de_manada,
+                1,
+                100);
             if (mazmorra.orco.tamano_grupo_minimo > mazmorra.orco.tamano_grupo_maximo) {
                 throw std::runtime_error(
                     "configuración: [" + seccion_orco +
@@ -412,13 +520,26 @@ void ConfiguracionServidor::cargar_mazmorra(const toml::table& archivo_toml) {
             const std::string seccion_vampiros = "mazmorra.enemigos.vampiros";
             ConfiguracionVampirosServidor& config = mazmorra.vampiros;
             config.parejas_por_nivel = lector_toml::leer_entero_opcional(
-                *vampiros, "parejas_por_nivel", seccion_vampiros, config.parejas_por_nivel, 0,
+                *vampiros,
+                "parejas_por_nivel",
+                seccion_vampiros,
+                config.parejas_por_nivel,
+                0,
                 INT_MAX);
             config.multiplicador_de_frenesi = lector_toml::leer_decimal_opcional(
-                *vampiros, "multiplicador_de_frenesi", seccion_vampiros,
-                config.multiplicador_de_frenesi, 1.0, 10.0);
+                *vampiros,
+                "multiplicador_de_frenesi",
+                seccion_vampiros,
+                config.multiplicador_de_frenesi,
+                1.0,
+                10.0);
             config.radio_de_sangre = lector_toml::leer_entero_opcional(
-                *vampiros, "radio_de_sangre", seccion_vampiros, config.radio_de_sangre, 0, 100);
+                *vampiros,
+                "radio_de_sangre",
+                seccion_vampiros,
+                config.radio_de_sangre,
+                0,
+                100);
             if (const toml::table* vampira = (*vampiros)["vampira"].as_table()) {
                 cargar_enemigo(*vampira, seccion_vampiros + ".vampira", config.vampira);
             }
@@ -432,13 +553,33 @@ void ConfiguracionServidor::cargar_mazmorra(const toml::table& archivo_toml) {
         const std::string seccion_trampas = "mazmorra.trampas";
         ConfiguracionTrampasServidor& config = mazmorra.trampas;
         config.por_nivel = lector_toml::leer_entero_opcional(
-            *trampas, "por_nivel", seccion_trampas, config.por_nivel, 0, INT_MAX);
+            *trampas,
+            "por_nivel",
+            seccion_trampas,
+            config.por_nivel,
+            0,
+            INT_MAX);
         config.danio = lector_toml::leer_entero_opcional(
-            *trampas, "danio", seccion_trampas, config.danio, 0, INT_MAX);
+            *trampas,
+            "danio",
+            seccion_trampas,
+            config.danio,
+            0,
+            INT_MAX);
         config.ticks_inactiva = lector_toml::leer_entero_opcional(
-            *trampas, "ticks_inactiva", seccion_trampas, config.ticks_inactiva, 1, INT_MAX);
+            *trampas,
+            "ticks_inactiva",
+            seccion_trampas,
+            config.ticks_inactiva,
+            1,
+            INT_MAX);
         config.ticks_activa = lector_toml::leer_entero_opcional(
-            *trampas, "ticks_activa", seccion_trampas, config.ticks_activa, 1, INT_MAX);
+            *trampas,
+            "ticks_activa",
+            seccion_trampas,
+            config.ticks_activa,
+            1,
+            INT_MAX);
     }
 
     const toml::array* minerales = (*tabla)["minerales"].as_array();
