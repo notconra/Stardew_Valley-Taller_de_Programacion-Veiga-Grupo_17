@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -9,10 +10,25 @@
 
 #include "../../common/lector_de_mapas_tmx/lector_de_mapas.h"
 
+namespace {
+std::string ruta_para_estacion(const std::string& ruta, Estacion estacion) {
+    static const char* const PREFIJO_PRIMAVERA = "spring_";
+    static const char* const PREFIJOS[] = {"spring_", "summer_", "fall_", "winter_"};
+    const std::size_t posicion = ruta.rfind(PREFIJO_PRIMAVERA);
+    if (posicion == std::string::npos || estacion == Estacion::PRIMAVERA) {
+        return ruta;
+    }
+    std::string nueva = ruta;
+    nueva.replace(
+        posicion, std::string(PREFIJO_PRIMAVERA).size(), PREFIJOS[static_cast<int>(estacion)]);
+    return std::filesystem::exists(nueva) ? nueva : ruta;
+}
+}  // namespace
+
 MapaGrafico::MapaGrafico(
     SDL_Renderer* renderer, const ConfiguracionMapa& configuracion_mapa,
-    const ConfiguracionGraficos& configuracion_graficos) {
-    texturas = cargar_texturas(configuracion_mapa.tilesets, renderer);
+    const ConfiguracionGraficos& configuracion_graficos, Estacion estacion) {
+    texturas = cargar_texturas(configuracion_mapa.tilesets, renderer, estacion);
     tilesets = crear_tilesets(configuracion_mapa.tilesets);
     dibujado.configurar(tilesets, configuracion_graficos);
 
@@ -24,11 +40,12 @@ MapaGrafico::MapaGrafico(
 }
 
 std::vector<Textura> MapaGrafico::cargar_texturas(
-    const std::vector<ConfiguracionTileset>& configuraciones, SDL_Renderer* renderer) {
+    const std::vector<ConfiguracionTileset>& configuraciones, SDL_Renderer* renderer,
+    Estacion estacion) {
     std::vector<Textura> cargadas;
     cargadas.reserve(configuraciones.size());
     for (const ConfiguracionTileset& configuracion : configuraciones) {
-        cargadas.push_back(Textura(configuracion.ruta, renderer));
+        cargadas.push_back(Textura(ruta_para_estacion(configuracion.ruta, estacion), renderer));
     }
     return cargadas;
 }

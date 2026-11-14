@@ -39,12 +39,7 @@ bool Sector::tratar_tierra(Notificador& notificador, const Casilla& casilla) {
     if (!tierra.tratar(casilla)) {
         return false;
     }
-
-    TierraCambiada evento;
-    evento.casilla =
-        CasillaTratada{static_cast<uint32_t>(casilla.columna), static_cast<uint32_t>(casilla.fila)};
-    evento.tratada = true;
-    avisar(notificador, evento);
+    avisar_casilla(notificador, casilla);
     return true;
 }
 
@@ -52,13 +47,66 @@ bool Sector::volver_tierra_a_comun(Notificador& notificador, const Casilla& casi
     if (!tierra.volver_a_comun(casilla)) {
         return false;
     }
+    huerta.quitar(casilla);  // lo que estaba plantado se pierde
+    avisar_casilla(notificador, casilla);
+    return true;
+}
 
+bool Sector::se_puede_plantar(const Casilla& casilla) const {
+    return tierra.esta_tratada(casilla) && !huerta.hay_cultivo(casilla);
+}
+
+bool Sector::plantar(Notificador& notificador, const Casilla& casilla, TipoCultivo tipo) {
+    if (!se_puede_plantar(casilla) || !huerta.plantar(casilla, tipo)) {
+        return false;
+    }
+    avisar_casilla(notificador, casilla);
+    return true;
+}
+
+bool Sector::regar(Notificador& notificador, const Casilla& casilla) {
+    if (!huerta.regar(casilla)) {
+        return false;
+    }
+    avisar_casilla(notificador, casilla);
+    return true;
+}
+
+std::optional<Cosecha> Sector::cosechar(Notificador& notificador, const Casilla& casilla) {
+    std::optional<Cosecha> cosecha = huerta.cosechar(casilla);
+    if (cosecha.has_value()) {
+        avisar_casilla(notificador, casilla);
+    }
+    return cosecha;
+}
+
+void Sector::avanzar_cultivos(Notificador& notificador, int minuto_del_dia) {
+    for (const Casilla& casilla : huerta.avanzar_hasta(minuto_del_dia)) {
+        avisar_casilla(notificador, casilla);
+    }
+}
+
+void Sector::terminar_el_dia_de_los_cultivos(Notificador& notificador) {
+    for (const Casilla& casilla : huerta.terminar_el_dia()) {
+        avisar_casilla(notificador, casilla);
+    }
+}
+
+void Sector::avisar_casilla(Notificador& notificador, const Casilla& casilla) const {
     TierraCambiada evento;
     evento.casilla =
         CasillaTratada{static_cast<uint32_t>(casilla.columna), static_cast<uint32_t>(casilla.fila)};
-    evento.tratada = false;
+    evento.tratada = tierra.esta_tratada(casilla);
+    huerta.completar(evento.casilla);
     avisar(notificador, evento);
-    return true;
+}
+
+void Sector::cargar_cultivo(const DatosCultivoGuardado& guardado) {
+    huerta.cargar(guardado);
+}
+
+void Sector::agregar_cultivos_guardados_a(std::vector<DatosCultivoGuardado>& lista) const {
+    huerta.agregar_guardados_a(id, lista);
 }
 
 void Sector::registrar_manejadores_de_modificaciones() {

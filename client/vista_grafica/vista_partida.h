@@ -2,8 +2,8 @@
 #define VISTA_PARTIDA_H
 
 #include <cstdint>
+#include <map>
 #include <optional>
-#include <set>
 #include <string>
 #include <utility>
 
@@ -14,7 +14,9 @@
 #include "animales_graficos.h"
 #include "camara.h"
 #include "chat/vista_chat.h"
+#include "cultivos_graficos.h"
 #include "cursor_del_juego.h"
+#include "efecto_de_riego.h"
 #include "efectos_de_sonido.h"
 #include "enemigos_graficos.h"
 #include "entrada_del_usuario.h"
@@ -23,6 +25,7 @@
 #include "mapa_grafico.h"
 #include "marcador_de_casillas.h"
 #include "objetos_graficos.h"
+#include "panel_de_regalos.h"
 #include "pantalla_de_descanso.h"
 #include "personaje.h"
 #include "reloj_grafico.h"
@@ -41,6 +44,13 @@ private:
         uint32_t fila;
     };
 
+    // La última casilla que se regó y cuándo (SDL_GetTicks), para dibujar la salpicadura.
+    struct Riego {
+        Casilla casilla;
+        uint32_t inicio_ms;
+    };
+    std::optional<Riego> ultimo_riego;
+
     ConexionConServidor& conexion;
     const ConfiguracionVista& configuracion;
 
@@ -50,9 +60,13 @@ private:
     InventarioJugador ultimo_inventario{};
     CofreJugador ultimo_cofre{};
     std::string mapa_actual;
-    std::set<std::pair<int, int>> tierra_tratada;
+    std::map<std::pair<int, int>, CasillaTratada> tierra_tratada;
     std::optional<HoraDelJuego> hora_del_juego;
     EstadoDelDescanso descanso{};
+    JugadoresDeLaPartida jugadores_de_la_partida{};
+    RegalosPendientes regalos_pendientes{};
+
+    PanelDeRegalos::Datos datos_de_regalos() const;
 
     // Lo último que se le preguntó al servidor (ConsultarCasilla) sobre la casilla del mouse, y su
     // respuesta. El cliente no decide si se puede: solo pinta lo que contestó el servidor. Se
@@ -134,12 +148,12 @@ private:
     void usar_item(uint8_t ranura, ModoUso modo, const std::optional<Casilla>& casilla);
 
     void procesar_entrada(
-        const EntradaDelUsuario& entrada, HudInventario& hud, const Camara& camara,
-        const VistaChat::ConsumoDeEntrada& consumo_del_chat);
+        const EntradaDelUsuario& entrada, HudInventario& hud, PanelDeRegalos& regalos,
+        const Camara& camara, const VistaChat::ConsumoDeEntrada& consumo_del_chat);
     void elegir_ranura_de_la_barra(const EntradaDelUsuario::Pedidos& pedidos);
     void procesar_clic(
-        const EntradaDelUsuario& entrada, HudInventario& hud, const Camara& camara,
-        bool clic_derecho, bool con_shift);
+        const EntradaDelUsuario& entrada, HudInventario& hud, PanelDeRegalos& regalos,
+        const Camara& camara, bool clic_derecho, bool con_shift);
 
     bool recibir_eventos(VistaChat& chat);
     void aplicar(const EventoServidor& evento, VistaChat& chat);
@@ -152,9 +166,10 @@ private:
         const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos,
         const TrampasGraficas& trampas, const AnimalesGraficos& animales,
         const Personaje& personaje, const IconosDeItems& iconos, const TierraGrafica& tierra,
+        const CultivosGraficos& cultivos, const EfectoDeRiego& efecto_de_riego,
         const Camara& camara, const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
         const EntradaDelUsuario& entrada, const VistaChat& chat, RelojGrafico& reloj_grafico,
-        const PantallaDeDescanso& pantalla_de_descanso) const;
+        const PantallaDeDescanso& pantalla_de_descanso, const PanelDeRegalos& regalos) const;
 
 public:
     VistaPartida(ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion);

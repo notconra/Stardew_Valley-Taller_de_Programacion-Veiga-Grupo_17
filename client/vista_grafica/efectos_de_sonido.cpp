@@ -51,6 +51,14 @@ EfectosDeSonido::EfectosDeSonido(const ConfiguracionSonido& configuracion)
                         ? nullptr
                         : cargar(configuracion.ruta_ordeniar_vaca);
     dinero = configuracion.ruta_dinero.empty() ? nullptr : cargar(configuracion.ruta_dinero);
+    regalo_recibido = configuracion.ruta_regalo_recibido.empty() ||
+                              !std::filesystem::exists(configuracion.ruta_regalo_recibido)
+                          ? nullptr
+                          : cargar(configuracion.ruta_regalo_recibido);
+    anochecer = configuracion.ruta_anochecer.empty() ||
+                        !std::filesystem::exists(configuracion.ruta_anochecer)
+                    ? nullptr
+                    : cargar(configuracion.ruta_anochecer);
     cambiar_paso("");
 }
 
@@ -75,7 +83,20 @@ EfectosDeSonido::~EfectosDeSonido() {
 }
 
 void EfectosDeSonido::cambiar_ambiente(const std::string& ruta) {
-    Mix_Chunk* nuevo = cargar(ruta.empty() ? ruta_ambiente_general : ruta);
+    ruta_ambiente_del_mapa = ruta.empty() ? ruta_ambiente_general : ruta;
+    actualizar_ambiente();
+}
+
+void EfectosDeSonido::cambiar_noche(bool de_noche) {
+    es_de_noche = de_noche;
+    actualizar_ambiente();
+}
+
+void EfectosDeSonido::actualizar_ambiente() {
+    // Solo los mapas con el ambiente general (granja, pueblo...) cambian de noche; las cuevas no.
+    const bool usa_la_noche =
+        es_de_noche && anochecer != nullptr && ruta_ambiente_del_mapa == ruta_ambiente_general;
+    Mix_Chunk* nuevo = usa_la_noche ? anochecer : cargar(ruta_ambiente_del_mapa);
     if (nuevo == ambiente_sonando) {
         return;
     }
@@ -152,6 +173,10 @@ void EfectosDeSonido::actualizar_ambiente_animales(
     } else if (tipo_elegido == TipoAnimal::GALLINA) {
         reproducir(gallina);
     }
+}
+
+void EfectosDeSonido::reproducir_regalo_recibido() const {
+    reproducir(regalo_recibido);
 }
 
 void EfectosDeSonido::reproducir_paso() const {

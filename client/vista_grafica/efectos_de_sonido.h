@@ -57,6 +57,12 @@ private:
     Mix_Chunk* gallina = nullptr;
     Mix_Chunk* ordeniar_vaca = nullptr;
     Mix_Chunk* dinero = nullptr;
+    Mix_Chunk* regalo_recibido = nullptr;
+    Mix_Chunk* anochecer = nullptr;
+    std::string ruta_ambiente_del_mapa;
+    bool es_de_noche = false;
+
+    void actualizar_ambiente();
 
     Mix_Chunk* cargar(const std::string& ruta);
     static void reproducir(Mix_Chunk* sonido);
@@ -101,6 +107,13 @@ public:
     void reproducir_interaccion_animal(TipoAnimal tipo);
     void actualizar_ambiente_animales(
         uint32_t ahora, const std::vector<TipoAnimal>& animales_cercanos);
+
+    // Le llegó un regalo nuevo al jugador propio.
+    void reproducir_regalo_recibido() const;
+
+    // De noche, en los mapas con el ambiente general (no en las cuevas), el ambiente pasa a ser
+    // la música de noche. Si no cambia nada, no reinicia lo que está sonando.
+    void cambiar_noche(bool de_noche);
 };
 
 #endif

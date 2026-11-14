@@ -10,11 +10,13 @@
 #include "../persistencia/datos_partida_guardada.h"
 #include "controladores/controlador_de_acciones.h"
 #include "controladores/controlador_de_cofres.h"
+#include "controladores/controlador_de_cultivos.h"
 #include "controladores/controlador_de_dia.h"
 #include "controladores/controlador_de_drops.h"
 #include "controladores/controlador_de_enemigos.h"
 #include "controladores/controlador_de_jugador.h"
 #include "controladores/controlador_de_mazmorra.h"
+#include "controladores/controlador_de_regalos.h"
 #include "controladores/controlador_de_trampas.h"
 #include "jugadores/personaje.h"
 #include "mapa/mapa.h"
@@ -42,12 +44,15 @@ private:
     ControladorDeEnemigos controlador_de_enemigos;
     ControladorDeTrampas controlador_de_trampas;
     ControladorDelDia controlador_del_dia;
+    ControladorDeCultivos controlador_de_cultivos;
+    ControladorDeRegalos controlador_de_regalos;
 
     void resolver_transicion(Personaje& personaje, const Transicion& transicion);
 
     // Si la transición se usa con clic derecho en vez de activarse al pisarla: las que tienen un
-    // destino de destinos_con_clic y todas las de los niveles de la mazmorra.
-    bool requiere_clic(const Personaje& personaje, const Transicion& transicion) const;
+    // destino de destinos_con_clic (la puerta de la casa, la escalera para bajar de nivel). El
+    // resto se activa al pisarla.
+    bool requiere_clic(const Transicion& transicion) const;
 
     // Mueve a quienes pisan una transición que no pide clic.
     void resolver_transiciones_automaticas();
@@ -72,13 +77,18 @@ public:
 
     // El jugador entra a la partida. Si es la primera vez se crea su Personaje con los ítems
     // iniciales, si ya existía (volvió después de desconectarse o restaurado de partida) conserva
-    // todo.
-    void conectar(uint32_t id_jugador, const AparienciaPersonaje& apariencia);
+    // todo. "nombre" vacío deja el que tenía.
+    void conectar(
+        uint32_t id_jugador, const AparienciaPersonaje& apariencia, const std::string& nombre = "");
 
     // El jugador se fue. Su Personaje queda guardado.
     void desconectar(uint32_t id_jugador);
 
     void atender(uint32_t id_jugador, const ComandoCliente& comando);
+
+    // Le da ítems a un jugador conectado (para los cheats) y le avisa cómo quedó su inventario.
+    // Devuelve cuántos entraron.
+    int dar_items(uint32_t id_jugador, TipoItem tipo, uint16_t cantidad);
     void actualizar();
 
     // Operaciones sobre la billetera de monedas del jugador.
@@ -94,7 +104,10 @@ public:
     std::vector<DatosMuebleGuardado> obtener_muebles_guardados() const;
     std::vector<DatosAnimalGuardado> obtener_animales_guardados() const;
     std::vector<uint32_t> obtener_ids_vacas_listas_para_ordeniar() const;
+    std::vector<DatosCultivoGuardado> obtener_cultivos_guardados() const;
     uint32_t obtener_dia() const;
+
+    void cambiar_estacion(Estacion estacion);
 
     // Si terminó un día desde la última vez que se preguntó (todos dieron el OK). Es cuando hay
     // que guardar la partida; devuelve true una sola vez por día.

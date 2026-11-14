@@ -36,6 +36,9 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
            [this] { return recibir_actualizacion_inventario(); }},
           {TipoMensaje::ACTUALIZACION_COFRE, [this] { return recibir_actualizacion_cofre(); }},
           {TipoMensaje::MENSAJE_DE_CHAT, [this] { return recibir_mensaje_de_chat(); }},
+          {TipoMensaje::JUGADORES_DE_LA_PARTIDA,
+           [this] { return recibir_jugadores_de_la_partida(); }},
+          {TipoMensaje::REGALOS_PENDIENTES, [this] { return recibir_regalos_pendientes(); }},
       } {
 }
 
@@ -66,6 +69,8 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const ConsultarCasilla& m) { enviar_comando_consultar_casilla(m); },
             [this](const DarElOk& m) { enviar_comando_dar_el_ok(m); },
             [this](const EnviarMensajeDeChat& m) { enviar_comando_enviar_mensaje_de_chat(m); },
+            [this](const EnviarRegalo& m) { enviar_comando_enviar_regalo(m); },
+            [this](const AbrirRegalos& m) { enviar_comando_abrir_regalos(m); },
         },
         comando);
 }
@@ -168,6 +173,17 @@ void ProtocoloCliente::enviar_comando_soltar_item(const SoltarItem& soltar) {
 void ProtocoloCliente::enviar_comando_enviar_mensaje_de_chat(const EnviarMensajeDeChat& mensaje) {
     enviar_tipo(TipoMensaje::ENVIAR_MENSAJE_DE_CHAT);
     enviar_texto(mensaje.texto);
+}
+
+void ProtocoloCliente::enviar_comando_enviar_regalo(const EnviarRegalo& regalo) {
+    enviar_tipo(TipoMensaje::ENVIAR_REGALO);
+    enviar_u32(regalo.id_destinatario);
+    enviar_u8(regalo.ranura);
+    enviar_u16(regalo.cantidad);
+}
+
+void ProtocoloCliente::enviar_comando_abrir_regalos(const AbrirRegalos&) {
+    enviar_tipo(TipoMensaje::ABRIR_REGALOS);
 }
 
 // Recepción de eventos
@@ -389,10 +405,24 @@ VacaOrdeniable ProtocoloCliente::recibir_vaca_ordeniable() {
     bool lista = recibir_booleano();
     return VacaOrdeniable{id_vaca, lista};
 }
+
 CasillaTratada ProtocoloCliente::recibir_casilla_tratada() {
     CasillaTratada casilla;
     casilla.columna = recibir_u32();
     casilla.fila = recibir_u32();
+    const uint8_t cultivo = recibir_u8();
+    if (cultivo > static_cast<uint8_t>(TipoCultivo::CALABAZA)) {
+        throw ErrorProtocolo("cultivo desconocido");
+    }
+    casilla.cultivo = static_cast<TipoCultivo>(cultivo);
+    casilla.etapa = recibir_u8();
+    if (casilla.etapa > ETAPA_DE_CULTIVO_MAXIMA) {
+        throw ErrorProtocolo("etapa de cultivo inválida");
+    }
+    casilla.madura = recibir_booleano();
+    casilla.regada = recibir_booleano();
+    casilla.pide_agua = recibir_booleano();
+    casilla.ya_dio_fruto = recibir_booleano();
     return casilla;
 }
 
@@ -598,4 +628,31 @@ ColorDeJugador ProtocoloCliente::color_de_jugador_desde(uint8_t valor) const {
         throw ErrorProtocolo("color de jugador desconocido en el protocolo");
     }
     return static_cast<ColorDeJugador>(valor);
+}
+
+JugadoresDeLaPartida ProtocoloCliente::recibir_jugadores_de_la_partida() {
+    JugadoresDeLaPartida jugadores;
+    const uint16_t cantidad = recibir_u16();
+    jugadores.jugadores.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        JugadorDeLaPartida jugador;
+        jugador.id_jugador = recibir_u32();
+        jugador.nombre = recibir_texto();
+        jugador.conectado = recibir_booleano();
+        jugadores.jugadores.push_back(jugador);
+    }
+    return jugadores;
+}
+
+RegalosPendientes ProtocoloCliente::recibir_regalos_pendientes() {
+    RegalosPendientes pendientes;
+    const uint16_t cantidad = recibir_u16();
+    pendientes.regalos.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        RegaloRecibido regalo;
+        regalo.remitente = recibir_texto();
+        regalo.item = recibir_ranura_inventario();
+        pendientes.regalos.push_back(regalo);
+    }
+    return pendientes;
 }

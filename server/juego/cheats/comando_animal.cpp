@@ -18,7 +18,7 @@ void ComandoAnimal::ejecutar(const ContextoDeComandoDeChat& contexto) {
             "Uso: /animal vaca | /animal gallina | /animal estado");
         return;
     }
-    const std::string& subcomando = contexto.argumentos[0];
+    std::string subcomando = contexto.argumentos[0];
     if (subcomando == "vaca") {
         if (mundo.agregar_vaca_en_granja_cerca(contexto.id_jugador)) {
             contexto.respuestas.responder_a_jugador(

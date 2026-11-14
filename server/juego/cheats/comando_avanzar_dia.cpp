@@ -23,9 +23,9 @@ void ComandoAvanzarDia::ejecutar(const ContextoDeComandoDeChat& contexto) {
     }
 
     try {
-        size_t pos = 0;
-        double horas = std::stod(contexto.argumentos[0], &pos);
-        if (pos != contexto.argumentos[0].size() || horas <= 0.0) {
+        size_t posicion = 0;
+        double horas = std::stod(contexto.argumentos[0], &posicion);
+        if (posicion != contexto.argumentos[0].size() || horas <= 0.0) {
             contexto.respuestas.responder_a_jugador(
                 contexto.id_jugador,
                 "Uso: /avanzar_dia [horas (ej: 1, 1.5)]");
@@ -47,10 +47,10 @@ void ComandoAvanzarDia::ejecutar(const ContextoDeComandoDeChat& contexto) {
     }
 
     HoraDelJuego hora = mundo.hora_actual();
-    std::string hora_str = (hora.hora < 10 ? "0" : "") + std::to_string(hora.hora);
-    std::string minuto_str = (hora.minuto < 10 ? "0" : "") + std::to_string(hora.minuto);
+    std::string hora_texto = (hora.hora < 10 ? "0" : "") + std::to_string(hora.hora);
+    std::string minuto_texto = (hora.minuto < 10 ? "0" : "") + std::to_string(hora.minuto);
     contexto.respuestas.responder_a_jugador(
         contexto.id_jugador,
-        "Hora avanzada. Ahora son las " + hora_str + ":" + minuto_str + " (Dia " +
+        "Hora avanzada. Ahora son las " + hora_texto + ":" + minuto_texto + " (Dia " +
             std::to_string(hora.dia) + ").");
 }

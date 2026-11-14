@@ -25,8 +25,12 @@ Mundo::Mundo(
       controlador_del_dia(
           recursos_de_juego.juego.dia, ticks_por_segundo, sectores, personajes, recursos_de_juego,
           notificador_de_juego,
-          [this](Personaje& personaje) { controlador_de_mazmorra.al_desconectarse(personaje); }) {
+          [this](Personaje& personaje) { controlador_de_mazmorra.al_desconectarse(personaje); }),
+      controlador_de_cultivos(sectores, notificador_de_juego),
+      controlador_de_regalos(
+          personajes, recursos_de_juego.catalogo_de_items, notificador_de_juego) {
     sectores.cargar_mapas_guardados(datos_guardados.mapas);
+    sectores.cargar_cultivos_guardados(datos_guardados.cultivos);
     sectores.cargar_cofres_guardados(datos_guardados.cofres);
     sectores.cargar_muebles_guardados(datos_guardados.muebles);
     sectores.cargar_animales_guardados(
@@ -58,6 +62,7 @@ void Mundo::completar_datos_guardados(
     datos.vida = static_cast<uint16_t>(std::max(personaje.vida, 0));
     datos.energia = static_cast<uint16_t>(std::max(personaje.energia, 0));
     datos.monedas = personaje.monedas;
+    datos.regalos_pendientes = personaje.buzon.pendientes();
     datos.tiene_cama = personaje.ultima_cama.has_value();
     datos.mapa_cama = datos.tiene_cama ? personaje.ultima_cama->mapa : "";
     datos.columna_cama =
@@ -74,6 +79,8 @@ void Mundo::restaurar(Personaje& personaje, const DatosJugadorGuardado& guardado
     personaje.vida = std::min<int>(guardado.vida, Personaje::VIDA_MAXIMA);
     personaje.energia = std::min<int>(guardado.energia, Personaje::ENERGIA_MAXIMA);
     personaje.monedas = guardado.monedas;
+    personaje.nombre = guardado.nombre_jugador;
+    personaje.buzon = Buzon(guardado.regalos_pendientes);
     if (guardado.tiene_cama) {
         personaje.ultima_cama = UbicacionDeCama{
             guardado.mapa_cama,
@@ -103,7 +110,8 @@ void Mundo::dar_de_baja(Personaje& personaje) {
     personaje.conectado = false;
 }
 
-void Mundo::conectar(uint32_t id_jugador, const AparienciaPersonaje& apariencia) {
+void Mundo::conectar(
+    uint32_t id_jugador, const AparienciaPersonaje& apariencia, const std::string& nombre) {
     auto encontrado = personajes.find(id_jugador);
     if (encontrado == personajes.end()) {
         encontrado = personajes
@@ -117,6 +125,9 @@ void Mundo::conectar(uint32_t id_jugador, const AparienciaPersonaje& apariencia)
         encontrado->second.apariencia = apariencia;
     }
     Personaje& personaje = encontrado->second;
+    if (!nombre.empty()) {
+        personaje.nombre = nombre;
+    }
     if (personaje.esta_inconsciente()) {
         return;
     }
@@ -128,6 +139,7 @@ void Mundo::conectar(uint32_t id_jugador, const AparienciaPersonaje& apariencia)
     personaje.conectado = true;
     notificador.a_jugador(id_jugador, personaje.actualizacion_de_inventario());
     controlador_del_dia.al_conectarse(personaje);
+    controlador_de_regalos.al_conectarse(personaje);
 
     auto guardado = datos_jugadores.find(id_jugador);
     if (guardado != datos_jugadores.end() && !guardado->second.mapa_actual.empty() &&
@@ -149,6 +161,7 @@ void Mundo::desconectar(uint32_t id_jugador) {
         return;
     }
     dar_de_baja(encontrado->second);
+    controlador_de_regalos.al_desconectarse();
 }
 
 void Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
@@ -173,6 +186,9 @@ void Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
     if (controlador_de_drops.atender(personaje, comando)) {
         return;
     }
+    if (controlador_de_regalos.atender(personaje, comando)) {
+        return;
+    }
 }
 
 void Mundo::resolver_transicion(Personaje& personaje, const Transicion& transicion) {
@@ -189,11 +205,7 @@ void Mundo::resolver_transicion(Personaje& personaje, const Transicion& transici
         transicion.fila_destino);
 }
 
-bool Mundo::requiere_clic(const Personaje& personaje, const Transicion& transicion) const {
-    const std::vector<std::string>& niveles = recursos.mazmorra.mapas;
-    if (std::find(niveles.begin(), niveles.end(), personaje.mapa_actual) != niveles.end()) {
-        return true;
-    }
+bool Mundo::requiere_clic(const Transicion& transicion) const {
     const std::vector<std::string>& destinos = recursos.juego.transiciones.destinos_con_clic;
     return std::find(destinos.begin(), destinos.end(), transicion.mapa_destino) != destinos.end();
 }
@@ -201,8 +213,7 @@ bool Mundo::requiere_clic(const Personaje& personaje, const Transicion& transici
 void Mundo::resolver_transiciones_automaticas() {
     for (const JugadorEnTransicion& en_transicion : sectores.jugadores_en_transicion()) {
         auto encontrado = personajes.find(en_transicion.id_jugador);
-        if (encontrado == personajes.end() ||
-            requiere_clic(encontrado->second, en_transicion.transicion)) {
+        if (encontrado == personajes.end() || requiere_clic(en_transicion.transicion)) {
             continue;
         }
         resolver_transicion(encontrado->second, en_transicion.transicion);
@@ -218,8 +229,20 @@ void Mundo::ajustar_velocidad_por_energia() {
     }
 }
 
+int Mundo::dar_items(uint32_t id_jugador, TipoItem tipo, uint16_t cantidad) {
+    auto encontrado = personajes.find(id_jugador);
+    if (encontrado == personajes.end() || !encontrado->second.conectado) {
+        return 0;
+    }
+    Personaje& personaje = encontrado->second;
+    const uint16_t sin_lugar = personaje.inventario.agregar_item(tipo, cantidad);
+    notificador.a_jugador(id_jugador, personaje.actualizacion_de_inventario());
+    return cantidad - sin_lugar;
+}
+
 void Mundo::actualizar() {
     controlador_del_dia.actualizar();
+    controlador_de_cultivos.actualizar(controlador_del_dia.hora());
     ajustar_velocidad_por_energia();
     sectores.actualizar(controlador_del_dia.hora());
     resolver_transiciones_automaticas();
@@ -286,6 +309,14 @@ std::vector<uint32_t> Mundo::obtener_ids_vacas_listas_para_ordeniar() const {
         return {};
     }
     return sectores.en("granja").animales.obtener_ids_vacas_listas_para_ordeniar();
+}
+
+std::vector<DatosCultivoGuardado> Mundo::obtener_cultivos_guardados() const {
+    return sectores.obtener_cultivos_guardados();
+}
+
+void Mundo::cambiar_estacion(Estacion estacion) {
+    controlador_del_dia.cambiar_estacion(estacion);
 }
 
 uint32_t Mundo::obtener_dia() const {
