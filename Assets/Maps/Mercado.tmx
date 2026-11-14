@@ -168,7 +168,7 @@
    <properties>
     <property name="columna_atencion" type="int" value="4"/>
     <property name="fila_atencion" type="int" value="10"/>
-    <property name="id_puesto" value="0"/>
+    <property name="id_puesto" value="pierre"/>
     <property name="tipo" value="puesto"/>
    </properties>
   </object>
@@ -176,7 +176,7 @@
    <properties>
     <property name="columna_atencion" type="int" value="14"/>
     <property name="fila_atencion" type="int" value="10"/>
-    <property name="id_puesto" value="3"/>
+    <property name="id_puesto" value="clint"/>
     <property name="tipo" value="puesto"/>
    </properties>
   </object>
@@ -184,7 +184,7 @@
    <properties>
     <property name="columna_atencion" type="int" value="15"/>
     <property name="fila_atencion" type="int" value="8"/>
-    <property name="id_puesto" value="2"/>
+    <property name="id_puesto" value="marnie"/>
     <property name="tipo" value="puesto"/>
    </properties>
   </object>
@@ -192,7 +192,7 @@
    <properties>
     <property name="columna_atencion" type="int" value="3"/>
     <property name="fila_atencion" type="int" value="8"/>
-    <property name="id_puesto" value="1"/>
+    <property name="id_puesto" value="robin"/>
     <property name="tipo" value="puesto"/>
    </properties>
   </object>
