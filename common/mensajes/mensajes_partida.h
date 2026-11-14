@@ -114,6 +114,18 @@ struct EnviarMensajeDeChat {
     std::string texto;
 };
 
+// Le regala a otro jugador de la partida (conectado o no) parte de una ranura de la barra.
+// cantidad == 0 regala el stack completo. Las herramientas no se pueden regalar. El regalo queda
+// pendiente hasta que el destinatario lo abre (AbrirRegalos).
+struct EnviarRegalo {
+    uint32_t id_destinatario = 0;
+    uint8_t ranura = 0;
+    uint16_t cantidad = 0;
+};
+
+// Pasa al inventario todos los regalos pendientes que entren. Los que no entran siguen pendientes.
+struct AbrirRegalos {};
+
 // Servidor a cliente
 
 struct MultijugadorActivado {
@@ -356,6 +368,33 @@ struct ActualizacionInventario {
 // Actualización del cofre abierto por un jugador. Si el cofre se cerró, abierto == false.
 struct ActualizacionCofre {
     CofreJugador cofre;
+};
+
+// Un jugador de la partida, esté conectado o no, para elegir a quién regalarle.
+struct JugadorDeLaPartida {
+    uint32_t id_jugador = 0;
+    std::string nombre;
+    bool conectado = false;
+
+    bool operator==(const JugadorDeLaPartida&) const = default;
+};
+
+// Todos los jugadores de la partida. Se manda a todos cuando alguien entra o se va.
+struct JugadoresDeLaPartida {
+    std::vector<JugadorDeLaPartida> jugadores;
+};
+
+// Un regalo que todavía no se abrió: quién lo mandó y qué es.
+struct RegaloRecibido {
+    std::string remitente;
+    RanuraInventario item;
+
+    bool operator==(const RegaloRecibido&) const = default;
+};
+
+// Los regalos pendientes del jugador que lo recibe. Se manda al entrar y cada vez que cambian.
+struct RegalosPendientes {
+    std::vector<RegaloRecibido> regalos;
 };
 
 // Canal de un mensaje que el servidor manda al cliente. "PRIVADO" avisa que el mensaje era para un
