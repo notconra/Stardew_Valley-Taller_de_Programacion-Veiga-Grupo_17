@@ -265,6 +265,11 @@ void ControladorDelDia::al_desconectarse(Personaje& personaje) {
     descansos_enviados.erase(personaje.id_jugador);
 }
 
+void ControladorDelDia::cambiar_estacion(Estacion estacion) {
+    reloj.cambiar_estacion(estacion);
+    notificador.a_todos(reloj.hora());
+}
+
 HoraDelJuego ControladorDelDia::hora() const {
     return reloj.hora();
 }

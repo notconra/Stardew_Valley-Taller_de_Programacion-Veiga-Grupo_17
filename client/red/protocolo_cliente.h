@@ -37,6 +37,8 @@ private:
     void enviar_comando_consultar_casilla(const ConsultarCasilla& consultar);
     void enviar_comando_dar_el_ok(const DarElOk& ok);
     void enviar_comando_enviar_mensaje_de_chat(const EnviarMensajeDeChat& mensaje);
+    void enviar_comando_enviar_regalo(const EnviarRegalo& regalo);
+    void enviar_comando_abrir_regalos(const AbrirRegalos& abrir);
 
     // Recepción de eventos
     ErrorServidor recibir_error_servidor();
@@ -71,6 +73,8 @@ private:
     ActualizacionInventario recibir_actualizacion_inventario();
     ActualizacionCofre recibir_actualizacion_cofre();
     MensajeDeChat recibir_mensaje_de_chat();
+    JugadoresDeLaPartida recibir_jugadores_de_la_partida();
+    RegalosPendientes recibir_regalos_pendientes();
 
     // Auxiliares
     CodigoError codigo_error_desde(uint8_t valor) const;

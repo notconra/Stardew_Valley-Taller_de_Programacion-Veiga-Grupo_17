@@ -148,7 +148,7 @@ velocidad = "medio"
 # duracion_en_minutos = 1.0
 # Días de cada estación. Hay 4 estaciones por año (primavera, verano, otoño, invierno): con 28,
 # Para probar el cambio de estación se puede bajar a 1.
-dias_por_estacion = 28
+dias_por_estacion = 1
 
 [juego.movimiento]
 # velocidad = 200.0

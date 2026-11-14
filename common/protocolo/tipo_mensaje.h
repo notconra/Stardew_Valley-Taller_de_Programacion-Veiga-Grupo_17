@@ -29,6 +29,8 @@ enum class TipoMensaje : uint8_t {
     CONSULTAR_CASILLA = 0x13,
     DAR_EL_OK = 0x14,
     ELIMINAR_PARTIDA = 0x15,
+    ENVIAR_REGALO = 0x16,
+    ABRIR_REGALOS = 0x17,
 
     // Servidor a cliente
     ERROR_SERVIDOR = 0x81,
@@ -66,6 +68,10 @@ enum class TipoMensaje : uint8_t {
 
     // Una trampa de la mazmorra que se activó o se desactivó
     TRAMPA_ACTUALIZADA = 0x95,
+
+    // Regalos: quiénes son los jugadores de la partida y qué regalos tiene sin abrir el receptor
+    JUGADORES_DE_LA_PARTIDA = 0x96,
+    REGALOS_PENDIENTES = 0x97,
 };
 
 #endif

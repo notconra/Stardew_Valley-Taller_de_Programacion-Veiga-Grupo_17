@@ -277,6 +277,14 @@ void ConfiguracionCliente::cargar_sonido(const toml::table& archivo_toml) {
         configuracion_vista.sonido.ruta_jugador_danio =
             lector_toml::leer_texto_opcional(*jugador, "danio", "sonido.jugador", "");
     }
+    if (const toml::table* regalos = sonido["regalos"].as_table()) {
+        configuracion_vista.sonido.ruta_regalo_recibido =
+            lector_toml::leer_texto_opcional(*regalos, "recibir", "sonido.regalos", "");
+    }
+    if (const toml::table* tiempo = sonido["tiempo"].as_table()) {
+        configuracion_vista.sonido.ruta_anochecer =
+            lector_toml::leer_texto_opcional(*tiempo, "anochecer", "sonido.tiempo", "");
+    }
     if (const toml::table* enemigos = sonido["enemigos"].as_table()) {
         for (const auto& [clave, tipo] : ENEMIGOS_CON_SONIDO) {
             const toml::table* enemigo = (*enemigos)[clave].as_table();

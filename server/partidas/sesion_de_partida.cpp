@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "../juego/cheats/comando_dinero.h"
+#include "../juego/cheats/comando_estacion.h"
 #include "../juego/cheats/comando_semillas.h"
 
 SesionDePartida::SesionDePartida(
@@ -29,6 +30,7 @@ SesionDePartida::SesionDePartida(
       tiempo_inicio_sesion(std::chrono::steady_clock::now()) {
     chat.agregar_comando(std::make_unique<ComandoSemillas>(mundo, recursos.catalogo_de_cultivos));
     chat.agregar_comando(std::make_unique<ComandoDinero>(mundo));
+    chat.agregar_comando(std::make_unique<ComandoEstacion>(mundo));
     try {
         start();
     } catch (...) {
@@ -69,7 +71,7 @@ void SesionDePartida::aplicar_cambios_de_conexion() {
 
     for (const CambioDeConexion& cambio : cambios) {
         if (cambio.entra) {
-            mundo.conectar(cambio.id_jugador, cambio.apariencia);
+            mundo.conectar(cambio.id_jugador, cambio.apariencia, cambio.nombre_jugador);
             chat.conectar(cambio.id_jugador, cambio.nombre_jugador, cambio.color_jugador);
         } else {
             mundo.desconectar(cambio.id_jugador);

@@ -68,6 +68,12 @@ void Reloj::empezar_dia_siguiente() {
     ++dia;
 }
 
+void Reloj::cambiar_estacion(Estacion estacion) {
+    const uint32_t dias_por_anio = dias_por_estacion * ESTACIONES_POR_ANIO;
+    const uint32_t inicio_del_anio = (dia - 1) / dias_por_anio * dias_por_anio;
+    dia = inicio_del_anio + static_cast<uint32_t>(estacion) * dias_por_estacion + 1;
+}
+
 void Reloj::continuar_en_el_dia(uint32_t dia_guardado) {
     if (dia_guardado == 0) {
         throw std::invalid_argument("los días se cuentan desde 1");
