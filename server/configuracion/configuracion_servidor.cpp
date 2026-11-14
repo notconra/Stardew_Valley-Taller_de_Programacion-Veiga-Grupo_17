@@ -4,6 +4,7 @@
 #include <climits>
 #include <cstddef>
 #include <cstdint>
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -24,6 +25,7 @@ ConfiguracionServidor::ConfiguracionServidor(const std::string& ruta) {
     cargar_mapas(archivo_toml);
     cargar_juego(archivo_toml);
     cargar_mazmorra(archivo_toml);
+    cargar_mercado(archivo_toml);
 }
 
 bool ConfiguracionServidor::existe_mapa(const std::string& id) const {
@@ -245,13 +247,32 @@ void ConfiguracionServidor::cargar_acciones(const toml::table& tabla) {
         1,
         UINT16_MAX);
     acciones.danio_espada = lector_toml::leer_entero_opcional(
-        tabla, "danio_espada", seccion, acciones.danio_espada, 0, INT_MAX);
+        tabla,
+        "danio_espada",
+        seccion,
+        acciones.danio_espada,
+        0,
+        INT_MAX);
     acciones.energia_por_golpe = lector_toml::leer_entero_opcional(
-        tabla, "energia_por_golpe", seccion, acciones.energia_por_golpe, 0, INT_MAX);
+        tabla,
+        "energia_por_golpe",
+        seccion,
+        acciones.energia_por_golpe,
+        0,
+        INT_MAX);
     acciones.energia_por_picar = lector_toml::leer_entero_opcional(
-        tabla, "energia_por_picar", seccion, acciones.energia_por_picar, 0, INT_MAX);
+        tabla,
+        "energia_por_picar",
+        seccion,
+        acciones.energia_por_picar,
+        0,
+        INT_MAX);
     acciones.energia_por_tratar_tierra = lector_toml::leer_entero_opcional(
-        tabla, "energia_por_tratar_tierra", seccion, acciones.energia_por_tratar_tierra, 0,
+        tabla,
+        "energia_por_tratar_tierra",
+        seccion,
+        acciones.energia_por_tratar_tierra,
+        0,
         INT_MAX);
 }
 
@@ -385,23 +406,47 @@ void ConfiguracionServidor::cargar_mazmorra(const toml::table& archivo_toml) {
             const std::string seccion_orco = "mazmorra.enemigos.orco";
             cargar_enemigo(*orco, seccion_orco, mazmorra.orco.combate);
             mazmorra.orco.grupos_por_nivel = lector_toml::leer_entero_opcional(
-                *orco, "grupos_por_nivel", seccion_orco, mazmorra.orco.grupos_por_nivel, 0,
+                *orco,
+                "grupos_por_nivel",
+                seccion_orco,
+                mazmorra.orco.grupos_por_nivel,
+                0,
                 INT_MAX);
             mazmorra.orco.tamano_grupo_minimo = lector_toml::leer_entero_opcional(
-                *orco, "tamano_grupo_minimo", seccion_orco, mazmorra.orco.tamano_grupo_minimo, 1,
+                *orco,
+                "tamano_grupo_minimo",
+                seccion_orco,
+                mazmorra.orco.tamano_grupo_minimo,
+                1,
                 INT_MAX);
             mazmorra.orco.tamano_grupo_maximo = lector_toml::leer_entero_opcional(
-                *orco, "tamano_grupo_maximo", seccion_orco, mazmorra.orco.tamano_grupo_maximo, 1,
+                *orco,
+                "tamano_grupo_maximo",
+                seccion_orco,
+                mazmorra.orco.tamano_grupo_maximo,
+                1,
                 INT_MAX);
             mazmorra.orco.probabilidad_de_plata_al_morir = lector_toml::leer_decimal_opcional(
-                *orco, "probabilidad_de_plata_al_morir", seccion_orco,
-                mazmorra.orco.probabilidad_de_plata_al_morir, 0.0, 1.0);
+                *orco,
+                "probabilidad_de_plata_al_morir",
+                seccion_orco,
+                mazmorra.orco.probabilidad_de_plata_al_morir,
+                0.0,
+                1.0);
             mazmorra.orco.probabilidad_de_manada_por_plata = lector_toml::leer_decimal_opcional(
-                *orco, "probabilidad_de_manada_por_plata", seccion_orco,
-                mazmorra.orco.probabilidad_de_manada_por_plata, 0.0, 1.0);
+                *orco,
+                "probabilidad_de_manada_por_plata",
+                seccion_orco,
+                mazmorra.orco.probabilidad_de_manada_por_plata,
+                0.0,
+                1.0);
             mazmorra.orco.distancia_de_aparicion_de_manada = lector_toml::leer_entero_opcional(
-                *orco, "distancia_de_aparicion_de_manada", seccion_orco,
-                mazmorra.orco.distancia_de_aparicion_de_manada, 1, 100);
+                *orco,
+                "distancia_de_aparicion_de_manada",
+                seccion_orco,
+                mazmorra.orco.distancia_de_aparicion_de_manada,
+                1,
+                100);
             if (mazmorra.orco.tamano_grupo_minimo > mazmorra.orco.tamano_grupo_maximo) {
                 throw std::runtime_error(
                     "configuración: [" + seccion_orco +
@@ -412,13 +457,26 @@ void ConfiguracionServidor::cargar_mazmorra(const toml::table& archivo_toml) {
             const std::string seccion_vampiros = "mazmorra.enemigos.vampiros";
             ConfiguracionVampirosServidor& config = mazmorra.vampiros;
             config.parejas_por_nivel = lector_toml::leer_entero_opcional(
-                *vampiros, "parejas_por_nivel", seccion_vampiros, config.parejas_por_nivel, 0,
+                *vampiros,
+                "parejas_por_nivel",
+                seccion_vampiros,
+                config.parejas_por_nivel,
+                0,
                 INT_MAX);
             config.multiplicador_de_frenesi = lector_toml::leer_decimal_opcional(
-                *vampiros, "multiplicador_de_frenesi", seccion_vampiros,
-                config.multiplicador_de_frenesi, 1.0, 10.0);
+                *vampiros,
+                "multiplicador_de_frenesi",
+                seccion_vampiros,
+                config.multiplicador_de_frenesi,
+                1.0,
+                10.0);
             config.radio_de_sangre = lector_toml::leer_entero_opcional(
-                *vampiros, "radio_de_sangre", seccion_vampiros, config.radio_de_sangre, 0, 100);
+                *vampiros,
+                "radio_de_sangre",
+                seccion_vampiros,
+                config.radio_de_sangre,
+                0,
+                100);
             if (const toml::table* vampira = (*vampiros)["vampira"].as_table()) {
                 cargar_enemigo(*vampira, seccion_vampiros + ".vampira", config.vampira);
             }
@@ -432,13 +490,33 @@ void ConfiguracionServidor::cargar_mazmorra(const toml::table& archivo_toml) {
         const std::string seccion_trampas = "mazmorra.trampas";
         ConfiguracionTrampasServidor& config = mazmorra.trampas;
         config.por_nivel = lector_toml::leer_entero_opcional(
-            *trampas, "por_nivel", seccion_trampas, config.por_nivel, 0, INT_MAX);
+            *trampas,
+            "por_nivel",
+            seccion_trampas,
+            config.por_nivel,
+            0,
+            INT_MAX);
         config.danio = lector_toml::leer_entero_opcional(
-            *trampas, "danio", seccion_trampas, config.danio, 0, INT_MAX);
+            *trampas,
+            "danio",
+            seccion_trampas,
+            config.danio,
+            0,
+            INT_MAX);
         config.ticks_inactiva = lector_toml::leer_entero_opcional(
-            *trampas, "ticks_inactiva", seccion_trampas, config.ticks_inactiva, 1, INT_MAX);
+            *trampas,
+            "ticks_inactiva",
+            seccion_trampas,
+            config.ticks_inactiva,
+            1,
+            INT_MAX);
         config.ticks_activa = lector_toml::leer_entero_opcional(
-            *trampas, "ticks_activa", seccion_trampas, config.ticks_activa, 1, INT_MAX);
+            *trampas,
+            "ticks_activa",
+            seccion_trampas,
+            config.ticks_activa,
+            1,
+            INT_MAX);
     }
 
     const toml::array* minerales = (*tabla)["minerales"].as_array();
@@ -519,6 +597,80 @@ void ConfiguracionServidor::cargar_minerales(const toml::array& lista) {
     }
 }
 
+void ConfiguracionServidor::cargar_mercado(const toml::table& archivo_toml) {
+    const toml::table& tabla = lector_toml::exigir_tabla(archivo_toml, "mercado");
+
+    datos_configuracion.mercado.mapa = lector_toml::leer_texto(tabla, "mapa", "mercado");
+    if (!existe_mapa(datos_configuracion.mercado.mapa)) {
+        throw std::runtime_error(
+            "configuración: el mapa '" + datos_configuracion.mercado.mapa +
+            "' de [mercado] no está definido en [[mapas]]");
+    }
+
+    cargar_precios_de_compra(tabla);
+    cargar_precios_de_venta(tabla);
+
+    const toml::table& animales = lector_toml::exigir_tabla(tabla, "animales");
+    cargar_animal_de_mercado(animales, "vaca", datos_configuracion.mercado.vaca);
+    cargar_animal_de_mercado(animales, "gallina", datos_configuracion.mercado.gallina);
+}
+
+// Si se suma un ítem a un puesto del mercado, hay que sumarlo también acá y en el .toml.
+void ConfiguracionServidor::cargar_precios_de_compra(const toml::table& tabla_mercado) {
+    const std::string seccion = "mercado.precios_de_compra";
+    const toml::table& tabla = lector_toml::exigir_tabla(tabla_mercado, "precios_de_compra");
+    std::map<TipoItem, uint32_t>& precios = datos_configuracion.mercado.precios_de_compra;
+
+    const auto leer = [&](const char* clave, TipoItem tipo) {
+        precios[tipo] = lector_toml::leer_entero_en_rango(tabla, clave, seccion, 1, INT_MAX);
+    };
+    // Semillas (Pierre).
+    leer("SEMILLA_PAPA", TipoItem::SEMILLA_PAPA);
+    leer("SEMILLA_FRUTILLA", TipoItem::SEMILLA_FRUTILLA);
+    leer("SEMILLA_CEBOLLA_DE_VERDEO", TipoItem::SEMILLA_CEBOLLA_DE_VERDEO);
+    leer("SEMILLA_CALABAZA", TipoItem::SEMILLA_CALABAZA);
+
+    // Muebles (Robin).
+    leer("COFRE", TipoItem::COFRE);
+}
+
+void ConfiguracionServidor::cargar_precios_de_venta(const toml::table& tabla_mercado) {
+    const std::string seccion = "mercado.precios_de_venta";
+    const toml::table& tabla = lector_toml::exigir_tabla(tabla_mercado, "precios_de_venta");
+    std::map<TipoItem, uint32_t>& precios = datos_configuracion.mercado.precios_de_venta;
+
+    const auto leer = [&](const char* clave, TipoItem tipo) {
+        precios[tipo] = lector_toml::leer_entero_en_rango(tabla, clave, seccion, 1, INT_MAX);
+    };
+
+    // Minerales (Clint).
+    leer("CARBON", TipoItem::CARBON);
+    leer("LAPISLAZULI", TipoItem::LAPISLAZULI);
+    leer("PLATA", TipoItem::PLATA);
+    leer("ORO", TipoItem::ORO);
+
+    // Cultivos y productos animales (Pierre).
+    leer("PAPA", TipoItem::PAPA);
+    leer("FRUTILLA", TipoItem::FRUTILLA);
+    leer("CEBOLLA_DE_VERDEO", TipoItem::CEBOLLA_DE_VERDEO);
+    leer("CALABAZA", TipoItem::CALABAZA);
+    leer("LECHE", TipoItem::LECHE);
+    leer("HUEVO", TipoItem::HUEVO);
+}
+
+void ConfiguracionServidor::cargar_animal_de_mercado(
+    const toml::table& animales, const std::string& clave, ConfiguracionAnimalServidor& animal) {
+    const std::string seccion = "mercado.animales." + clave;
+    const toml::table& tabla = lector_toml::exigir_tabla(animales, clave);
+
+    animal.precio_de_compra =
+        lector_toml::leer_entero_en_rango(tabla, "precio_de_compra", seccion, 1, INT_MAX);
+    animal.precio_de_venta =
+        lector_toml::leer_entero_en_rango(tabla, "precio_de_venta", seccion, 1, INT_MAX);
+    animal.tope_por_granja = static_cast<uint16_t>(
+        lector_toml::leer_entero_en_rango(tabla, "tope_por_granja", seccion, 1, UINT16_MAX));
+}
+
 const ConfiguracionRedServidor& ConfiguracionServidor::red() const {
     return datos_configuracion.red;
 }
@@ -541,6 +693,10 @@ const ConfiguracionJuegoServidor& ConfiguracionServidor::juego() const {
 
 const ConfiguracionMazmorraServidor& ConfiguracionServidor::mazmorra() const {
     return datos_configuracion.mazmorra;
+}
+
+const ConfiguracionMercadoServidor& ConfiguracionServidor::mercado() const {
+    return datos_configuracion.mercado;
 }
 
 void ConfiguracionServidor::cargar_enemigo(

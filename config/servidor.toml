@@ -142,7 +142,7 @@ destinos_con_clic = ["FarmHouse2", "siguiente", "mercado"]
 [juego.dia]
 # Un día de juego va de las 6 am a las 2 am (20 horas de juego). velocidad elige cuánto dura en
 # tiempo real: "lento" = 20 minutos, "medio" = 14 minutos (lo que pide el enunciado), "rapido" = 7.
-velocidad = "medio"
+velocidad = "rapido"
 # Si está, pisa a la velocidad (en minutos reales, acepta decimales). Útil para probar: con 1.0
 # cada día dura un minuto.
 # duracion_en_minutos = 1.0
@@ -151,7 +151,7 @@ velocidad = "medio"
 dias_por_estacion = 28
 
 [juego.movimiento]
-# velocidad = 200.0
+velocidad = 200.0
 # hitbox_x = 2
 # hitbox_y = 24
 # hitbox_ancho = 12
@@ -293,3 +293,37 @@ peso = 1
 cantidad_minima = 1
 cantidad_maxima = 2
 desde_nivel = 5
+
+[mercado]
+mapa = "mercado"
+
+[mercado.precios_de_compra]
+SEMILLA_PAPA = 10
+SEMILLA_FRUTILLA = 15
+SEMILLA_CEBOLLA_DE_VERDEO = 8
+SEMILLA_CALABAZA = 30
+
+COFRE = 100
+
+[mercado.precios_de_venta]
+CARBON = 10
+LAPISLAZULI = 40
+PLATA = 50
+ORO = 80
+
+PAPA = 18
+FRUTILLA = 25
+CEBOLLA_DE_VERDEO = 12
+CALABAZA = 50
+LECHE = 30
+HUEVO = 3
+
+[mercado.animales.vaca]
+precio_de_compra = 80
+precio_de_venta = 40
+tope_por_granja = 5
+
+[mercado.animales.gallina]
+precio_de_compra = 20
+precio_de_venta = 10
+tope_por_granja = 10
