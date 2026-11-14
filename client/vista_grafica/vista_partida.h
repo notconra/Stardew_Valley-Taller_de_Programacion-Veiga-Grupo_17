@@ -2,8 +2,8 @@
 #define VISTA_PARTIDA_H
 
 #include <cstdint>
+#include <map>
 #include <optional>
-#include <set>
 #include <string>
 #include <utility>
 
@@ -13,7 +13,9 @@
 #include "../red/conexion_con_servidor.h"
 #include "camara.h"
 #include "chat/vista_chat.h"
+#include "cultivos_graficos.h"
 #include "cursor_del_juego.h"
+#include "efecto_de_riego.h"
 #include "efectos_de_sonido.h"
 #include "enemigos_graficos.h"
 #include "entrada_del_usuario.h"
@@ -40,6 +42,13 @@ private:
         uint32_t fila;
     };
 
+    // La última casilla que se regó y cuándo (SDL_GetTicks), para dibujar la salpicadura.
+    struct Riego {
+        Casilla casilla;
+        uint32_t inicio_ms;
+    };
+    std::optional<Riego> ultimo_riego;
+
     ConexionConServidor& conexion;
     const ConfiguracionVista& configuracion;
 
@@ -49,7 +58,7 @@ private:
     InventarioJugador ultimo_inventario{};
     CofreJugador ultimo_cofre{};
     std::string mapa_actual;
-    std::set<std::pair<int, int>> tierra_tratada;
+    std::map<std::pair<int, int>, CasillaTratada> tierra_tratada;
     std::optional<HoraDelJuego> hora_del_juego;
     EstadoDelDescanso descanso{};
 
@@ -149,7 +158,8 @@ private:
         Renderizador& renderizador, SDL_Texture* mundo, const MapaGrafico& mapa,
         const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos,
         const TrampasGraficas& trampas, const Personaje& personaje, const IconosDeItems& iconos,
-        const TierraGrafica& tierra, const Camara& camara, const HudInventario& hud,
+        const TierraGrafica& tierra, const CultivosGraficos& cultivos,
+        const EfectoDeRiego& efecto_de_riego, const Camara& camara, const HudInventario& hud,
         const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada,
         const VistaChat& chat, RelojGrafico& reloj_grafico,
         const PantallaDeDescanso& pantalla_de_descanso) const;

@@ -9,6 +9,7 @@
 #include "../../common/direccion.h"
 #include "../../common/mensajes/mensajes_partida.h"
 #include "../../common/ranura_inventario.h"
+#include "../../common/tipo_cultivo.h"
 #include "../../common/tipo_objeto.h"
 
 struct DatosJugadorGuardado {
@@ -72,6 +73,21 @@ struct DatosMuebleGuardado {
     bool operator==(const DatosMuebleGuardado&) const = default;
 };
 
+// Una planta en una casilla de tierra tratada. Se guarda al empezar el día, así que no hace falta
+// guardar los riegos del día.
+struct DatosCultivoGuardado {
+    std::string id_mapa;
+    uint32_t columna = 0;
+    uint32_t fila = 0;
+    TipoCultivo tipo = TipoCultivo::NINGUNO;
+    uint16_t dias_de_crecimiento = 0;
+    bool madura = false;
+    uint16_t faltas = 0;
+    bool ya_dio_fruto = false;
+
+    bool operator==(const DatosCultivoGuardado&) const = default;
+};
+
 struct DatosMundoGuardado {
     uint32_t dia = 1;
     uint32_t segundos_jugados = 0;
@@ -80,6 +96,7 @@ struct DatosMundoGuardado {
     std::vector<std::string> niveles_mazmorra;
     std::vector<DatosCofreGuardado> cofres;
     std::vector<DatosMuebleGuardado> muebles;
+    std::vector<DatosCultivoGuardado> cultivos;
 
     bool operator==(const DatosMundoGuardado&) const = default;
 };

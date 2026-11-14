@@ -11,7 +11,7 @@
 #include "lector_binario.h"
 
 constexpr std::array<uint8_t, 4> FIRMA_ARCHIVO = {'S', 'V', 'P', 'T'};
-constexpr uint16_t VERSION_ACTUAL = 6;
+constexpr uint16_t VERSION_ACTUAL = 7;
 
 void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGuardada& datos) {
     EscritorBinario escritor(stream);
@@ -104,6 +104,18 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
         escritor.escribir_u8(static_cast<uint8_t>(mueble.tipo));
         escritor.escribir_u32(mueble.columna);
         escritor.escribir_u32(mueble.fila);
+    }
+
+    escritor.escribir_u16(static_cast<uint16_t>(datos.mundo.cultivos.size()));
+    for (const auto& cultivo : datos.mundo.cultivos) {
+        escritor.escribir_texto(cultivo.id_mapa);
+        escritor.escribir_u32(cultivo.columna);
+        escritor.escribir_u32(cultivo.fila);
+        escritor.escribir_u8(static_cast<uint8_t>(cultivo.tipo));
+        escritor.escribir_u16(cultivo.dias_de_crecimiento);
+        escritor.escribir_bool(cultivo.madura);
+        escritor.escribir_u16(cultivo.faltas);
+        escritor.escribir_bool(cultivo.ya_dio_fruto);
     }
 }
 
@@ -224,6 +236,20 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
         mueble.columna = lector.leer_u32();
         mueble.fila = lector.leer_u32();
         datos.mundo.muebles.push_back(mueble);
+    }
+
+    uint16_t cant_cultivos = lector.leer_u16();
+    for (uint16_t i = 0; i < cant_cultivos; ++i) {
+        DatosCultivoGuardado cultivo;
+        cultivo.id_mapa = lector.leer_texto();
+        cultivo.columna = lector.leer_u32();
+        cultivo.fila = lector.leer_u32();
+        cultivo.tipo = static_cast<TipoCultivo>(lector.leer_u8());
+        cultivo.dias_de_crecimiento = lector.leer_u16();
+        cultivo.madura = lector.leer_bool();
+        cultivo.faltas = lector.leer_u16();
+        cultivo.ya_dio_fruto = lector.leer_bool();
+        datos.mundo.cultivos.push_back(cultivo);
     }
 
     return datos;

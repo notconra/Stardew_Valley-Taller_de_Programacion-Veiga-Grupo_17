@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <string>
 
-#include "comando_de_chat.h"
+#include "../chat/comando_de_chat.h"
 
 class Mundo;
 

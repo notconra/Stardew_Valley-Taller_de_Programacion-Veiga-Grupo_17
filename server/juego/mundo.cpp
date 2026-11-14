@@ -25,8 +25,10 @@ Mundo::Mundo(
       controlador_del_dia(
           recursos_de_juego.juego.dia, ticks_por_segundo, sectores, personajes, recursos_de_juego,
           notificador_de_juego,
-          [this](Personaje& personaje) { controlador_de_mazmorra.al_desconectarse(personaje); }) {
+          [this](Personaje& personaje) { controlador_de_mazmorra.al_desconectarse(personaje); }),
+      controlador_de_cultivos(sectores, notificador_de_juego) {
     sectores.cargar_mapas_guardados(datos_guardados.mapas);
+    sectores.cargar_cultivos_guardados(datos_guardados.cultivos);
     sectores.cargar_cofres_guardados(datos_guardados.cofres);
     sectores.cargar_muebles_guardados(datos_guardados.muebles);
     if (datos_guardados.dia > 0) {
@@ -186,11 +188,7 @@ void Mundo::resolver_transicion(Personaje& personaje, const Transicion& transici
         transicion.fila_destino);
 }
 
-bool Mundo::requiere_clic(const Personaje& personaje, const Transicion& transicion) const {
-    const std::vector<std::string>& niveles = recursos.mazmorra.mapas;
-    if (std::find(niveles.begin(), niveles.end(), personaje.mapa_actual) != niveles.end()) {
-        return true;
-    }
+bool Mundo::requiere_clic(const Transicion& transicion) const {
     const std::vector<std::string>& destinos = recursos.juego.transiciones.destinos_con_clic;
     return std::find(destinos.begin(), destinos.end(), transicion.mapa_destino) != destinos.end();
 }
@@ -198,8 +196,7 @@ bool Mundo::requiere_clic(const Personaje& personaje, const Transicion& transici
 void Mundo::resolver_transiciones_automaticas() {
     for (const JugadorEnTransicion& en_transicion : sectores.jugadores_en_transicion()) {
         auto encontrado = personajes.find(en_transicion.id_jugador);
-        if (encontrado == personajes.end() ||
-            requiere_clic(encontrado->second, en_transicion.transicion)) {
+        if (encontrado == personajes.end() || requiere_clic(en_transicion.transicion)) {
             continue;
         }
         resolver_transicion(encontrado->second, en_transicion.transicion);
@@ -215,8 +212,20 @@ void Mundo::ajustar_velocidad_por_energia() {
     }
 }
 
+int Mundo::dar_items(uint32_t id_jugador, TipoItem tipo, uint16_t cantidad) {
+    auto encontrado = personajes.find(id_jugador);
+    if (encontrado == personajes.end() || !encontrado->second.conectado) {
+        return 0;
+    }
+    Personaje& personaje = encontrado->second;
+    const uint16_t sin_lugar = personaje.inventario.agregar_item(tipo, cantidad);
+    notificador.a_jugador(id_jugador, personaje.actualizacion_de_inventario());
+    return cantidad - sin_lugar;
+}
+
 void Mundo::actualizar() {
     controlador_del_dia.actualizar();
+    controlador_de_cultivos.actualizar(controlador_del_dia.hora());
     ajustar_velocidad_por_energia();
     sectores.actualizar();
     resolver_transiciones_automaticas();
@@ -272,6 +281,10 @@ std::vector<DatosCofreGuardado> Mundo::obtener_cofres_guardados() const {
 
 std::vector<DatosMuebleGuardado> Mundo::obtener_muebles_guardados() const {
     return sectores.obtener_muebles_guardados();
+}
+
+std::vector<DatosCultivoGuardado> Mundo::obtener_cultivos_guardados() const {
+    return sectores.obtener_cultivos_guardados();
 }
 
 uint32_t Mundo::obtener_dia() const {
