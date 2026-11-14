@@ -72,6 +72,12 @@ enum class TipoMensaje : uint8_t {
     // Regalos: quiénes son los jugadores de la partida y qué regalos tiene sin abrir el receptor
     JUGADORES_DE_LA_PARTIDA = 0x96,
     REGALOS_PENDIENTES = 0x97,
+
+    // Actualización de estado o posición de un animal
+    ANIMAL_ACTUALIZADO = 0x98,
+
+    // Cambio en la disponibilidad de leche de una vaca
+    VACA_ORDENIABLE = 0x99,
 };
 
 #endif

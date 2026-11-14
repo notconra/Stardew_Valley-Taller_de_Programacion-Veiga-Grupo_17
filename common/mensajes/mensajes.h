@@ -45,7 +45,7 @@ using EventoServidor = std::variant<
 
     // - Sector
     EstadoJuego, JugadoresEnSector, ObjetoColocado, ObjetoRetirado, DropAparecido, DropRetirado,
-    EnemigoActualizado, TrampaActualizada, TierraCambiada,
+    EnemigoActualizado, TrampaActualizada, TierraCambiada, AnimalActualizado, VacaOrdeniable,
 
     // - Tiempo
     HoraDelJuego,
