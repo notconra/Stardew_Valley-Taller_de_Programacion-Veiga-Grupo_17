@@ -103,6 +103,9 @@ public:
     // Al retomar una partida guardada: arranca a las 6 am de ese día.
     void continuar_en_el_dia(uint32_t dia);
 
+    // Cheat: pasa a esa estación y se lo avisa a todos.
+    void cambiar_estacion(Estacion estacion);
+
     // Si desde la última vez que se preguntó terminó un día (todos dieron el OK). Devuelve true
     // una sola vez por día terminado: es el aviso para guardar la partida.
     bool tomar_dia_terminado();
