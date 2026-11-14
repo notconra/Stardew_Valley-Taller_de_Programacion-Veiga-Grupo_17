@@ -11,9 +11,39 @@
 #include "lector_binario.h"
 
 constexpr std::array<uint8_t, 4> FIRMA_ARCHIVO = {'S', 'V', 'P', 'T'};
-constexpr uint16_t VERSION_ACTUAL = 7;
-// Las partidas de la versión 6 se siguen pudiendo leer: solo les faltan los regalos pendientes.
-constexpr uint16_t VERSION_SIN_REGALOS = 6;
+constexpr uint16_t VERSION_ACTUAL = 8;
+
+namespace {
+void escribir_ranura(EscritorBinario& escritor, const RanuraInventario& ranura) {
+    escritor.escribir_u8(static_cast<uint8_t>(ranura.tipo));
+    escritor.escribir_u16(ranura.cantidad);
+    escritor.escribir_u8(static_cast<uint8_t>(ranura.calidad));
+}
+
+RanuraInventario leer_ranura(LectorBinario& lector) {
+    RanuraInventario ranura;
+    ranura.tipo = static_cast<TipoItem>(lector.leer_u8());
+    ranura.cantidad = lector.leer_u16();
+    ranura.calidad = static_cast<Calidad>(lector.leer_u8());
+    return ranura;
+}
+
+void escribir_ranuras(EscritorBinario& escritor, const std::vector<RanuraInventario>& ranuras) {
+    escritor.escribir_u8(static_cast<uint8_t>(ranuras.size()));
+    for (const auto& ranura : ranuras) {
+        escribir_ranura(escritor, ranura);
+    }
+}
+
+std::vector<RanuraInventario> leer_ranuras(LectorBinario& lector) {
+    std::vector<RanuraInventario> ranuras;
+    const uint8_t cantidad = lector.leer_u8();
+    for (uint8_t i = 0; i < cantidad; ++i) {
+        ranuras.push_back(leer_ranura(lector));
+    }
+    return ranuras;
+}
+}  // namespace
 
 void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGuardada& datos) {
     EscritorBinario escritor(stream);
@@ -127,7 +157,7 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
     }
 
     uint16_t version = lector.leer_u16();
-    if (version != VERSION_ACTUAL && version != VERSION_SIN_REGALOS) {
+    if (version != VERSION_ACTUAL) {
         throw std::runtime_error("Versión de partida no soportada: " + std::to_string(version));
     }
 
@@ -177,14 +207,12 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
         jugador.columna_cama = lector.leer_u32();
         jugador.fila_cama = lector.leer_u32();
 
-        if (version >= VERSION_ACTUAL) {
-            uint16_t cant_regalos = lector.leer_u16();
-            for (uint16_t indice_regalo = 0; indice_regalo < cant_regalos; ++indice_regalo) {
-                RegaloRecibido regalo;
-                regalo.remitente = lector.leer_texto();
-                regalo.item = leer_ranura(lector);
-                jugador.regalos_pendientes.push_back(regalo);
-            }
+        uint16_t cant_regalos = lector.leer_u16();
+        for (uint16_t indice_regalo = 0; indice_regalo < cant_regalos; ++indice_regalo) {
+            RegaloRecibido regalo;
+            regalo.remitente = lector.leer_texto();
+            regalo.item = leer_ranura(lector);
+            jugador.regalos_pendientes.push_back(regalo);
         }
 
         datos.mundo.jugadores.push_back(jugador);
