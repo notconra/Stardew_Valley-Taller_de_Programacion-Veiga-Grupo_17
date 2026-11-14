@@ -37,6 +37,7 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::ACTUALIZACION_MERCADO, [this] { return recibir_actualizacion_mercado(); }},
           {TipoMensaje::CERRAR_VENTANA_MERCADO,
            [this] { return recibir_cerrar_ventana_mercado(); }},
+          {TipoMensaje::AVISO_EN_PANTALLA, [this] { return recibir_aviso_en_pantalla(); }},
       } {
 }
 
@@ -67,13 +68,11 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const ConsultarCasilla& m) { enviar_comando_consultar_casilla(m); },
             [this](const DarElOk& m) { enviar_comando_dar_el_ok(m); },
             [this](const EnviarMensajeDeChat& m) { enviar_comando_enviar_mensaje_de_chat(m); },
-            [this](const SolicitarMercado& m) { enviar_comando_solicitar_mercado(m); },
             [this](const ComprarEnMercado& m) { enviar_comando_comprar_en_mercado(m); },
             [this](const VenderEnMercado& m) { enviar_comando_vender_en_mercado(m); },
             [this](const ComprarAnimalMercado& m) { enviar_comando_comprar_animal_mercado(m); },
             [this](const VenderAnimalMercado& m) { enviar_comando_vender_animal_mercado(m); },
             [this](const CerrarMercado& m) { enviar_comando_cerrar_mercado(m); },
-            [this](const InteractuarNPC& m) { enviar_comando_interactuar_npc(m); },
         },
         comando);
 }
@@ -178,46 +177,32 @@ void ProtocoloCliente::enviar_comando_enviar_mensaje_de_chat(const EnviarMensaje
     enviar_texto(mensaje.texto);
 }
 
-void ProtocoloCliente::enviar_comando_solicitar_mercado(const SolicitarMercado& m) {
-    enviar_tipo(TipoMensaje::SOLICITAR_MERCADO);
-    enviar_u8(m.id_puesto);
-}
-
 void ProtocoloCliente::enviar_comando_comprar_en_mercado(const ComprarEnMercado& m) {
     enviar_tipo(TipoMensaje::COMPRAR_EN_MERCADO);
-    enviar_u8(m.id_puesto);
     enviar_u16(m.indice_item);
     enviar_u16(m.cantidad);
 }
 
 void ProtocoloCliente::enviar_comando_vender_en_mercado(const VenderEnMercado& m) {
     enviar_tipo(TipoMensaje::VENDER_EN_MERCADO);
-    enviar_u8(m.id_puesto);
     enviar_u8(m.ranura_inventario);
     enviar_u16(m.cantidad);
 }
 
 void ProtocoloCliente::enviar_comando_comprar_animal_mercado(const ComprarAnimalMercado& m) {
     enviar_tipo(TipoMensaje::COMPRAR_ANIMAL_MERCADO);
-    enviar_u8(m.id_puesto);
     enviar_u8(static_cast<uint8_t>(m.tipo_animal));
     enviar_u16(m.cantidad);
 }
 
 void ProtocoloCliente::enviar_comando_vender_animal_mercado(const VenderAnimalMercado& m) {
     enviar_tipo(TipoMensaje::VENDER_ANIMAL_MERCADO);
-    enviar_u8(m.id_puesto);
     enviar_u8(static_cast<uint8_t>(m.tipo_animal));
     enviar_u16(m.cantidad);
 }
 
 void ProtocoloCliente::enviar_comando_cerrar_mercado(const CerrarMercado&) {
     enviar_tipo(TipoMensaje::CERRAR_MERCADO);
-}
-
-void ProtocoloCliente::enviar_comando_interactuar_npc(const InteractuarNPC& m) {
-    enviar_tipo(TipoMensaje::INTERACTUAR_NPC);
-    enviar_u32(m.id_npc);
 }
 
 // Recepción de eventos
@@ -603,7 +588,7 @@ Direccion ProtocoloCliente::direccion_desde(uint8_t valor) const {
 }
 
 CanalDeChat ProtocoloCliente::canal_de_chat_desde(uint8_t valor) const {
-    if (valor > static_cast<uint8_t>(CanalDeChat::COMERCIANTE)) {
+    if (valor > static_cast<uint8_t>(CanalDeChat::SISTEMA)) {
         throw ErrorProtocolo("canal de chat desconocido en el protocolo");
     }
     return static_cast<CanalDeChat>(valor);
@@ -620,20 +605,17 @@ ItemCatalogoInfo ProtocoloCliente::recibir_item_catalogo_info() {
     ItemCatalogoInfo info;
     info.tipo_item = static_cast<TipoItem>(recibir_u8());
     info.tipo_animal = static_cast<TipoAnimal>(recibir_u8());
+    info.nombre = recibir_texto();
     info.precio = recibir_u32();
-    info.es_animal = recibir_booleano();
     info.se_puede_comprar = recibir_booleano();
-    info.es_vendible_por_jugador = recibir_booleano();
-    info.stock_o_cantidad_poseida = recibir_u16();
-    info.tooltip_descripcion = recibir_texto();
+    info.cantidad_poseida = recibir_u16();
+    info.descripcion = recibir_texto();
     return info;
 }
 
 ActualizacionMercado ProtocoloCliente::recibir_actualizacion_mercado() {
     ActualizacionMercado actualizacion;
-    actualizacion.id_puesto = recibir_u8();
-    actualizacion.nombre_npc = recibir_texto();
-    actualizacion.foto_npc_path = recibir_texto();
+    actualizacion.id_npc = recibir_texto();
 
     uint16_t cantidad = recibir_u16();
     actualizacion.catalogo.reserve(cantidad);
@@ -645,4 +627,8 @@ ActualizacionMercado ProtocoloCliente::recibir_actualizacion_mercado() {
 
 CerrarVentanaMercado ProtocoloCliente::recibir_cerrar_ventana_mercado() {
     return CerrarVentanaMercado{};
+}
+
+AvisoEnPantalla ProtocoloCliente::recibir_aviso_en_pantalla() {
+    return AvisoEnPantalla{recibir_texto()};
 }

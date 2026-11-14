@@ -35,7 +35,6 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::DAR_EL_OK, [this] { return recibir_comando_dar_el_ok(); }},
           {TipoMensaje::ENVIAR_MENSAJE_DE_CHAT,
            [this] { return recibir_comando_enviar_mensaje_de_chat(); }},
-          {TipoMensaje::SOLICITAR_MERCADO, [this] { return recibir_comando_solicitar_mercado(); }},
           {TipoMensaje::COMPRAR_EN_MERCADO,
            [this] { return recibir_comando_comprar_en_mercado(); }},
           {TipoMensaje::VENDER_EN_MERCADO, [this] { return recibir_comando_vender_en_mercado(); }},
@@ -44,7 +43,6 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::VENDER_ANIMAL_MERCADO,
            [this] { return recibir_comando_vender_animal_mercado(); }},
           {TipoMensaje::CERRAR_MERCADO, [this] { return recibir_comando_cerrar_mercado(); }},
-          {TipoMensaje::INTERACTUAR_NPC, [this] { return recibir_comando_interactuar_npc(); }},
       } {
 }
 
@@ -177,46 +175,32 @@ EnviarMensajeDeChat ProtocoloServidor::recibir_comando_enviar_mensaje_de_chat() 
     return EnviarMensajeDeChat{recibir_texto()};
 }
 
-SolicitarMercado ProtocoloServidor::recibir_comando_solicitar_mercado() {
-    uint8_t id_puesto = recibir_u8();
-    return SolicitarMercado{id_puesto};
-}
-
 ComprarEnMercado ProtocoloServidor::recibir_comando_comprar_en_mercado() {
-    uint8_t id_puesto = recibir_u8();
     uint16_t indice_item = recibir_u16();
     uint16_t cantidad = recibir_u16();
-    return ComprarEnMercado{id_puesto, indice_item, cantidad};
+    return ComprarEnMercado{indice_item, cantidad};
 }
 
 VenderEnMercado ProtocoloServidor::recibir_comando_vender_en_mercado() {
-    uint8_t id_puesto = recibir_u8();
     uint8_t ranura_inventario = recibir_u8();
     uint16_t cantidad = recibir_u16();
-    return VenderEnMercado{id_puesto, ranura_inventario, cantidad};
+    return VenderEnMercado{ranura_inventario, cantidad};
 }
 
 ComprarAnimalMercado ProtocoloServidor::recibir_comando_comprar_animal_mercado() {
-    uint8_t id_puesto = recibir_u8();
     TipoAnimal tipo_animal = static_cast<TipoAnimal>(recibir_u8());
     uint16_t cantidad = recibir_u16();
-    return ComprarAnimalMercado{id_puesto, tipo_animal, cantidad};
+    return ComprarAnimalMercado{tipo_animal, cantidad};
 }
 
 VenderAnimalMercado ProtocoloServidor::recibir_comando_vender_animal_mercado() {
-    uint8_t id_puesto = recibir_u8();
     TipoAnimal tipo_animal = static_cast<TipoAnimal>(recibir_u8());
     uint16_t cantidad = recibir_u16();
-    return VenderAnimalMercado{id_puesto, tipo_animal, cantidad};
+    return VenderAnimalMercado{tipo_animal, cantidad};
 }
 
 CerrarMercado ProtocoloServidor::recibir_comando_cerrar_mercado() {
     return CerrarMercado{};
-}
-
-InteractuarNPC ProtocoloServidor::recibir_comando_interactuar_npc() {
-    uint32_t id_npc = recibir_u32();
-    return InteractuarNPC{id_npc};
 }
 
 // Envío de eventos
@@ -247,6 +231,7 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const MensajeDeChat& e) { enviar_evento_mensaje_de_chat(e); },
             [this](const ActualizacionMercado& e) { enviar_evento_actualizacion_mercado(e); },
             [this](const CerrarVentanaMercado& e) { enviar_evento_cerrar_ventana_mercado(e); },
+            [this](const AvisoEnPantalla& e) { enviar_evento_aviso_en_pantalla(e); },
         },
         evento);
 }
@@ -523,19 +508,16 @@ void ProtocoloServidor::enviar_evento_mensaje_de_chat(const MensajeDeChat& mensa
 void ProtocoloServidor::enviar_item_catalogo_info(const ItemCatalogoInfo& item) {
     enviar_u8(static_cast<uint8_t>(item.tipo_item));
     enviar_u8(static_cast<uint8_t>(item.tipo_animal));
+    enviar_texto(item.nombre);
     enviar_u32(item.precio);
-    enviar_booleano(item.es_animal);
     enviar_booleano(item.se_puede_comprar);
-    enviar_booleano(item.es_vendible_por_jugador);
-    enviar_u16(item.stock_o_cantidad_poseida);
-    enviar_texto(item.tooltip_descripcion);
+    enviar_u16(item.cantidad_poseida);
+    enviar_texto(item.descripcion);
 }
 
 void ProtocoloServidor::enviar_evento_actualizacion_mercado(const ActualizacionMercado& m) {
     enviar_tipo(TipoMensaje::ACTUALIZACION_MERCADO);
-    enviar_u8(m.id_puesto);
-    enviar_texto(m.nombre_npc);
-    enviar_texto(m.foto_npc_path);
+    enviar_texto(m.id_npc);
     enviar_largo(m.catalogo.size());
     for (const auto& item : m.catalogo) {
         enviar_item_catalogo_info(item);
@@ -544,4 +526,9 @@ void ProtocoloServidor::enviar_evento_actualizacion_mercado(const ActualizacionM
 
 void ProtocoloServidor::enviar_evento_cerrar_ventana_mercado(const CerrarVentanaMercado&) {
     enviar_tipo(TipoMensaje::CERRAR_VENTANA_MERCADO);
+}
+
+void ProtocoloServidor::enviar_evento_aviso_en_pantalla(const AvisoEnPantalla& aviso) {
+    enviar_tipo(TipoMensaje::AVISO_EN_PANTALLA);
+    enviar_texto(aviso.mensaje);
 }

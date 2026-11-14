@@ -30,9 +30,8 @@ using ComandoCliente = std::variant<
     // Chat
     EnviarMensajeDeChat,
 
-    // Mercado y NPCs
-    SolicitarMercado, ComprarEnMercado, VenderEnMercado, ComprarAnimalMercado, VenderAnimalMercado,
-    CerrarMercado, InteractuarNPC>;
+    // Mercado
+    ComprarEnMercado, VenderEnMercado, ComprarAnimalMercado, VenderAnimalMercado, CerrarMercado>;
 
 using EventoServidor = std::variant<
     // Error
@@ -64,6 +63,9 @@ using EventoServidor = std::variant<
     MensajeDeChat,
 
     // - Mercado
-    ActualizacionMercado, CerrarVentanaMercado>;
+    ActualizacionMercado, CerrarVentanaMercado,
+
+    // - Avisos
+    AvisoEnPantalla>;
 
 #endif

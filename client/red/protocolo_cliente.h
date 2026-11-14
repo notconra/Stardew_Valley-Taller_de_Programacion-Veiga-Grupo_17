@@ -37,13 +37,11 @@ private:
     void enviar_comando_consultar_casilla(const ConsultarCasilla& consultar);
     void enviar_comando_dar_el_ok(const DarElOk& ok);
     void enviar_comando_enviar_mensaje_de_chat(const EnviarMensajeDeChat& mensaje);
-    void enviar_comando_solicitar_mercado(const SolicitarMercado& m);
     void enviar_comando_comprar_en_mercado(const ComprarEnMercado& m);
     void enviar_comando_vender_en_mercado(const VenderEnMercado& m);
     void enviar_comando_comprar_animal_mercado(const ComprarAnimalMercado& m);
     void enviar_comando_vender_animal_mercado(const VenderAnimalMercado& m);
     void enviar_comando_cerrar_mercado(const CerrarMercado& m);
-    void enviar_comando_interactuar_npc(const InteractuarNPC& m);
 
     // Recepción de eventos
     ErrorServidor recibir_error_servidor();
@@ -81,6 +79,7 @@ private:
     ItemCatalogoInfo recibir_item_catalogo_info();
     ActualizacionMercado recibir_actualizacion_mercado();
     CerrarVentanaMercado recibir_cerrar_ventana_mercado();
+    AvisoEnPantalla recibir_aviso_en_pantalla();
 
     // Auxiliares
     CodigoError codigo_error_desde(uint8_t valor) const;

@@ -115,46 +115,33 @@ struct EnviarMensajeDeChat {
     std::string texto;
 };
 
-// Solicita abrir el catálogo del puesto de mercado al interactuar con el mostrador.
-struct SolicitarMercado {
-    uint8_t id_puesto = 0;
-};
-
-// Comprar un ítem de un puesto.
+// El servidor recuerda qué puesto tiene abierto cada jugador, así que los comandos de compra y
+// venta no necesitan mandar el id del puesto sino que siempre operan sobre el que está abierto.
 struct ComprarEnMercado {
-    uint8_t id_puesto = 0;
     uint16_t indice_item = 0;  // Índice dentro del catálogo del puesto
     uint16_t cantidad = 1;
 };
 
 // Vender un ítem del inventario al puesto.
 struct VenderEnMercado {
-    uint8_t id_puesto = 0;
     uint8_t ranura_inventario = 0;
     uint16_t cantidad = 0;  // 0 o cantidad completa según click izquierdo/derecho
 };
 
 // Comprar un animal (específico para Marnie, que no va al inventario).
 struct ComprarAnimalMercado {
-    uint8_t id_puesto = 0;
     TipoAnimal tipo_animal = TipoAnimal::NINGUNO;
     uint16_t cantidad = 1;
 };
 
 // Vender un animal (específico para Marnie, desde el panel de animales de la granja).
 struct VenderAnimalMercado {
-    uint8_t id_puesto = 0;
     TipoAnimal tipo_animal = TipoAnimal::NINGUNO;
     uint16_t cantidad = 1;
 };
 
 // Cierra la ventana del mercado activa.
 struct CerrarMercado {};
-
-// Interactuar haciendo clic izquierdo al NPC.
-struct InteractuarNPC {
-    uint32_t id_npc = 0;
-};
 
 // Servidor a cliente
 
@@ -401,17 +388,16 @@ struct ActualizacionCofre {
 };
 
 // Canal de un mensaje que el servidor manda al cliente. "PRIVADO" avisa que el mensaje era para un
-// único destinatario, "SISTEMA" son respuestas del propio servidor (errores de envío, comandos
-// desconocidos) y "COMERCIANTE" queda reservado para las respuestas de los NPCs del mercado.
+// único destinatario y "SISTEMA" son respuestas del propio servidor (errores de envío, comandos
+// desconocidos y cheats). El mercado no usa el chat.
 enum class CanalDeChat : uint8_t {
     GLOBAL = 0,
     PRIVADO = 1,
     SISTEMA = 2,
-    COMERCIANTE = 3,
 };
 
-// Un mensaje ya interpretado por el servidor. "remitente" es el nombre del
-// jugador o del NPC que habla, "destinatario" solo tiene valor en los privados. "texto" es el
+// Un mensaje ya interpretado por el servidor. "remitente" es el nombre del jugador que lo envió
+// (o "(Sistema)" en los avisos), "destinatario" solo tiene valor en los privados. "texto" es el
 // contenido sin el prefijo "@nombre". "color_del_remitente" lo elige el servidor al entrar a la
 // partida y se conserva durante toda la partida.
 struct MensajeDeChat {
@@ -426,25 +412,32 @@ struct MensajeDeChat {
 struct ItemCatalogoInfo {
     TipoItem tipo_item = TipoItem::NINGUNO;        // Si es un ítem normal
     TipoAnimal tipo_animal = TipoAnimal::NINGUNO;  // Si es un animal (Marnie)
+    std::string nombre;
     uint32_t precio = 0;
-    bool es_animal = false;
-    bool se_puede_comprar = true;         // False si no alcanza el dinero
-    bool es_vendible_por_jugador = true;  // False si el NPC no lo compra o si es herramienta/cama
-    uint16_t stock_o_cantidad_poseida =
-        0;  // Cuántos animales tiene el jugador (Marnie) o stock diario (Robin)
-    std::string tooltip_descripcion;  // Info de cuidados o descripción para el hover
+    bool se_puede_comprar = true;   // False si no alcanza el dinero o no hay lugar en el inventario
+    uint16_t cantidad_poseida = 0;  // Solo para animales, cuántos tiene el jugador
+    std::string descripcion;        // Información de cuidados o descripción para el hover
+
+    bool es_animal() const {
+        return tipo_animal != TipoAnimal::NINGUNO;
+    }
 };
 
 // Envía la ventana de mercado completa con el catálogo configurado del NPC correspondiente.
+// "id_npc" es lógico, el cliente decide con qué asset mostrarlo.
 struct ActualizacionMercado {
-    uint8_t id_puesto = 0;
-    std::string nombre_npc;
-    std::string ruta_foto_npc;  // Identificador o ruta de la foto del NPC para la UI
+    std::string id_npc;
     std::vector<ItemCatalogoInfo> catalogo;
 };
 
-// Ordena al cliente cerrar la ventana de mercado (ej. si el NPC se va a dormir o termina su
-// horario).
+// Ordena al cliente cerrar la ventana de mercado.
 struct CerrarVentanaMercado {};
+
+// Cartel genérico para avisar algo al jugador (por ejemplo, que el mercado está cerrado). El
+// cliente lo muestra como un cuadro modal que se cierra con un clic y bloquea el juego mientras
+// esté visible.
+struct AvisoEnPantalla {
+    std::string mensaje;
+};
 
 #endif
