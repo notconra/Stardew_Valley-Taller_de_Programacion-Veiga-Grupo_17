@@ -1,8 +1,11 @@
 #include "tierra_grafica.h"
 
 #include <array>
-#include <set>
+#include <map>
 #include <utility>
+
+// El segundo bloque de 4x4 de hoeDirt.png es la tierra mojada, con los mismos dibujos.
+#define COLUMNAS_HASTA_LA_TIERRA_MOJADA 4
 
 namespace {
 
@@ -39,16 +42,16 @@ TierraGrafica::TierraGrafica(
 }
 
 std::pair<int, int> TierraGrafica::dibujo_segun_vecinas(
-    const std::set<std::pair<int, int>>& tratadas, int columna, int fila) {
-    const int indice = (tratadas.contains({columna, fila - 1}) ? 1 : 0) +
-                       (tratadas.contains({columna, fila + 1}) ? 2 : 0) +
-                       (tratadas.contains({columna - 1, fila}) ? 4 : 0) +
-                       (tratadas.contains({columna + 1, fila}) ? 8 : 0);
+    const std::map<std::pair<int, int>, CasillaTratada>& tierra, int columna, int fila) {
+    const int indice = (tierra.contains({columna, fila - 1}) ? 1 : 0) +
+                       (tierra.contains({columna, fila + 1}) ? 2 : 0) +
+                       (tierra.contains({columna - 1, fila}) ? 4 : 0) +
+                       (tierra.contains({columna + 1, fila}) ? 8 : 0);
     return DIBUJO_POR_VECINAS[indice];
 }
 
 void TierraGrafica::dibujar(
-    SDL_Renderer* renderer, const std::set<std::pair<int, int>>& tratadas, int cam_x,
+    SDL_Renderer* renderer, const std::map<std::pair<int, int>, CasillaTratada>& tierra, int cam_x,
     int cam_y) const {
     int ancho_de_pantalla = 0;
     int alto_de_pantalla = 0;
@@ -57,7 +60,8 @@ void TierraGrafica::dibujar(
     }
 
     const int tamano_en_pantalla = tamano_de_tile * escala_de_tiles;
-    for (const auto& [columna, fila] : tratadas) {
+    for (const auto& [posicion, casilla] : tierra) {
+        const auto [columna, fila] = posicion;
         const int x = columna * tamano_en_pantalla - cam_x;
         const int y = fila * tamano_en_pantalla - cam_y;
         if (x >= ancho_de_pantalla || y >= alto_de_pantalla || x + tamano_en_pantalla <= 0 ||
@@ -65,7 +69,7 @@ void TierraGrafica::dibujar(
             continue;
         }
 
-        const auto [columna_dibujo, fila_dibujo] = dibujo_segun_vecinas(tratadas, columna, fila);
+        const auto [columna_dibujo, fila_dibujo] = dibujo_segun_vecinas(tierra, columna, fila);
         const SDL_Rect origen{
             columna_dibujo * tamano_de_tile,
             fila_dibujo * tamano_de_tile,
@@ -73,5 +77,13 @@ void TierraGrafica::dibujar(
             tamano_de_tile};
         const SDL_Rect destino{x, y, tamano_en_pantalla, tamano_en_pantalla};
         SDL_RenderCopy(renderer, textura.ptr(), &origen, &destino);
+        if (casilla.regada) {
+            const SDL_Rect mojada{
+                origen.x + COLUMNAS_HASTA_LA_TIERRA_MOJADA * tamano_de_tile,
+                origen.y,
+                tamano_de_tile,
+                tamano_de_tile};
+            SDL_RenderCopy(renderer, textura.ptr(), &mojada, &destino);
+        }
     }
 }

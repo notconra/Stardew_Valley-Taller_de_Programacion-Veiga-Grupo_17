@@ -10,8 +10,9 @@
 #include <utility>
 #include <vector>
 
-#include "../juego/chat/comando_dinero.h"
-#include "../juego/chat/comando_estacion.h"
+#include "../juego/cheats/comando_dinero.h"
+#include "../juego/cheats/comando_estacion.h"
+#include "../juego/cheats/comando_semillas.h"
 
 SesionDePartida::SesionDePartida(
     const std::string& codigo_de_partida, const ConfiguracionPartidaServidor& configuracion_partida,
@@ -27,6 +28,7 @@ SesionDePartida::SesionDePartida(
       guardar_al_terminar_el_dia(std::move(guardar)),
       segundos_jugados_iniciales(datos_guardados.segundos_jugados),
       tiempo_inicio_sesion(std::chrono::steady_clock::now()) {
+    chat.agregar_comando(std::make_unique<ComandoSemillas>(mundo, recursos.catalogo_de_cultivos));
     chat.agregar_comando(std::make_unique<ComandoDinero>(mundo));
     chat.agregar_comando(std::make_unique<ComandoEstacion>(mundo));
     try {
@@ -257,5 +259,6 @@ DatosMundoGuardado SesionDePartida::obtener_datos_guardado(
     datos_mundo.mapas = mundo.obtener_mapas_guardados();
     datos_mundo.cofres = mundo.obtener_cofres_guardados();
     datos_mundo.muebles = mundo.obtener_muebles_guardados();
+    datos_mundo.cultivos = mundo.obtener_cultivos_guardados();
     return datos_mundo;
 }

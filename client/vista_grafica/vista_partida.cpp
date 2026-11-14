@@ -158,6 +158,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     hora_del_juego.reset();
     jugadores_de_la_partida = JugadoresDeLaPartida{};
     regalos_pendientes = RegalosPendientes{};
+    ultimo_riego.reset();
     olvidar_el_piso();
     partida_terminada = false;
 
@@ -208,6 +209,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     efectos.cambiar_ambiente(configuracion_de(mapa_actual).ruta_ambiente);
     efectos.cambiar_paso(configuracion_de(mapa_actual).ruta_caminar);
     TierraGrafica tierra(configuracion.tierra, graficos, renderizador.ptr());
+    CultivosGraficos cultivos(graficos, renderizador.ptr());
+    EfectoDeRiego efecto_de_riego(graficos, renderizador.ptr());
     ObjetosGraficos objetos(renderizador.ptr(), graficos, iconos);
     EnemigosGraficos enemigos(renderizador.ptr(), graficos);
     TrampasGraficas trampas(renderizador.ptr(), graficos);
@@ -311,6 +314,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             efectos.cambiar_ambiente(configuracion_de(mapa_actual).ruta_ambiente);
             efectos.cambiar_paso(configuracion_de(mapa_actual).ruta_caminar);
             ultimo_cofre = CofreJugador{};
+            ultimo_riego.reset();
             camara = camara_para(mapa_de(mapa_actual));
         }
         if (propio != nullptr) {
@@ -340,6 +344,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             personaje,
             iconos,
             tierra,
+            cultivos,
+            efecto_de_riego,
             camara,
             hud,
             vision_mazmorra,
@@ -367,11 +373,19 @@ void VistaPartida::usar_item(uint8_t ranura, ModoUso modo, const std::optional<C
         const TipoItem en_mano = indice < ultimo_inventario.ranuras.size()
                                      ? ultimo_inventario.ranuras[indice].tipo
                                      : TipoItem::NINGUNO;
-        const bool es_herramienta_de_golpe =
-            en_mano == TipoItem::PICO || en_mano == TipoItem::PALA || en_mano == TipoItem::ESPADA;
-        if (es_herramienta_de_golpe) {
+        const bool se_anima = en_mano == TipoItem::PICO || en_mano == TipoItem::PALA ||
+                              en_mano == TipoItem::ESPADA || en_mano == TipoItem::REGADERA;
+        if (se_anima) {
             haciendo_accion = true;
             inicio_accion_ms = SDL_GetTicks();
+        }
+        const bool riega_algo = en_mano == TipoItem::REGADERA && modo == ModoUso::PRINCIPAL &&
+                                casilla.has_value() && respuesta_del_piso.has_value() &&
+                                respuesta_del_piso->marca == MarcaDeCasilla::VALIDA &&
+                                respuesta_del_piso->columna == casilla->columna &&
+                                respuesta_del_piso->fila == casilla->fila;
+        if (riega_algo) {
+            ultimo_riego = Riego{*casilla, SDL_GetTicks()};
         }
         if (en_mano == TipoItem::PICO && modo == ModoUso::PRINCIPAL) {
             pico_pendiente_desde_ms = SDL_GetTicks() | 1;
@@ -408,7 +422,8 @@ std::optional<VistaPartida::Casilla> VistaPartida::casilla_apuntada(
 void VistaPartida::guardar_tierra(const EstadoJuego& estado) {
     tierra_tratada.clear();
     for (const CasillaTratada& casilla : estado.tierra) {
-        tierra_tratada.insert({static_cast<int>(casilla.columna), static_cast<int>(casilla.fila)});
+        tierra_tratada[{static_cast<int>(casilla.columna), static_cast<int>(casilla.fila)}] =
+            casilla;
     }
 }
 
@@ -715,7 +730,7 @@ void VistaPartida::aplicar(const EventoServidor& evento, VistaChat& chat) {
                     static_cast<int>(e.casilla.columna),
                     static_cast<int>(e.casilla.fila)};
                 if (e.tratada) {
-                    tierra_tratada.insert(casilla);
+                    tierra_tratada[casilla] = e.casilla;
                 } else {
                     tierra_tratada.erase(casilla);
                 }
@@ -782,7 +797,8 @@ void VistaPartida::dibujar(
     Renderizador& renderizador, SDL_Texture* mundo, const MapaGrafico& mapa,
     const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos,
     const TrampasGraficas& trampas, const Personaje& personaje, const IconosDeItems& iconos,
-    const TierraGrafica& tierra, const Camara& camara, const HudInventario& hud,
+    const TierraGrafica& tierra, const CultivosGraficos& cultivos,
+    const EfectoDeRiego& efecto_de_riego, const Camara& camara, const HudInventario& hud,
     const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada, const VistaChat& chat,
     RelojGrafico& reloj_grafico, const PantallaDeDescanso& pantalla_de_descanso,
     const PanelDeRegalos& regalos) const {
@@ -797,6 +813,16 @@ void VistaPartida::dibujar(
 
     mapa.dibujar_bajo_los_jugadores(renderer, camara.x(), camara.y());
     tierra.dibujar(renderer, tierra_tratada, camara.x(), camara.y());
+    cultivos.dibujar(renderer, tierra_tratada, camara.x(), camara.y());
+    if (ultimo_riego.has_value()) {
+        efecto_de_riego.dibujar(
+            renderer,
+            static_cast<int>(ultimo_riego->casilla.columna),
+            static_cast<int>(ultimo_riego->casilla.fila),
+            SDL_GetTicks() - ultimo_riego->inicio_ms,
+            camara.x(),
+            camara.y());
+    }
     objetos.dibujar_debajo_de_los_jugadores(
         renderer,
         ultimo_estado_juego,
