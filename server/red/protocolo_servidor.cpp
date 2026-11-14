@@ -35,6 +35,8 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::DAR_EL_OK, [this] { return recibir_comando_dar_el_ok(); }},
           {TipoMensaje::ENVIAR_MENSAJE_DE_CHAT,
            [this] { return recibir_comando_enviar_mensaje_de_chat(); }},
+          {TipoMensaje::ENVIAR_REGALO, [this] { return recibir_comando_enviar_regalo(); }},
+          {TipoMensaje::ABRIR_REGALOS, [this] { return recibir_comando_abrir_regalos(); }},
       } {
 }
 
@@ -167,6 +169,17 @@ EnviarMensajeDeChat ProtocoloServidor::recibir_comando_enviar_mensaje_de_chat() 
     return EnviarMensajeDeChat{recibir_texto()};
 }
 
+EnviarRegalo ProtocoloServidor::recibir_comando_enviar_regalo() {
+    uint32_t id_destinatario = recibir_u32();
+    uint8_t ranura = recibir_u8();
+    uint16_t cantidad = recibir_u16();
+    return EnviarRegalo{id_destinatario, ranura, cantidad};
+}
+
+AbrirRegalos ProtocoloServidor::recibir_comando_abrir_regalos() {
+    return AbrirRegalos{};
+}
+
 // Envío de eventos
 
 void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
@@ -193,6 +206,8 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const CasillaConsultada& e) { enviar_evento_casilla_consultada(e); },
             [this](const EstadoDelDescanso& e) { enviar_evento_estado_del_descanso(e); },
             [this](const MensajeDeChat& e) { enviar_evento_mensaje_de_chat(e); },
+            [this](const JugadoresDeLaPartida& e) { enviar_evento_jugadores_de_la_partida(e); },
+            [this](const RegalosPendientes& e) { enviar_evento_regalos_pendientes(e); },
         },
         evento);
 }
@@ -464,4 +479,24 @@ void ProtocoloServidor::enviar_evento_mensaje_de_chat(const MensajeDeChat& mensa
     enviar_texto(mensaje.destinatario);
     enviar_texto(mensaje.texto);
     enviar_u8(static_cast<uint8_t>(mensaje.color_del_remitente));
+}
+
+void ProtocoloServidor::enviar_evento_jugadores_de_la_partida(
+    const JugadoresDeLaPartida& jugadores) {
+    enviar_tipo(TipoMensaje::JUGADORES_DE_LA_PARTIDA);
+    enviar_largo(jugadores.jugadores.size());
+    for (const JugadorDeLaPartida& jugador : jugadores.jugadores) {
+        enviar_u32(jugador.id_jugador);
+        enviar_texto(jugador.nombre);
+        enviar_booleano(jugador.conectado);
+    }
+}
+
+void ProtocoloServidor::enviar_evento_regalos_pendientes(const RegalosPendientes& pendientes) {
+    enviar_tipo(TipoMensaje::REGALOS_PENDIENTES);
+    enviar_largo(pendientes.regalos.size());
+    for (const RegaloRecibido& regalo : pendientes.regalos) {
+        enviar_texto(regalo.remitente);
+        enviar_ranura_inventario(regalo.item);
+    }
 }

@@ -29,6 +29,7 @@ struct DatosJugadorGuardado {
     std::string mapa_cama;
     uint32_t columna_cama = 0;
     uint32_t fila_cama = 0;
+    std::vector<RegaloRecibido> regalos_pendientes;
 
     bool operator==(const DatosJugadorGuardado&) const = default;
 };

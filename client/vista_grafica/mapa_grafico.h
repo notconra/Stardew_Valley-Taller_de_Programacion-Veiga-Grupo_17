@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "../../common/estacion.h"
 #include "../configuracion/configuracion_cliente_datos.h"
 #include "dibujado.h"
 #include "textura.h"
@@ -25,7 +26,8 @@ private:
     int alto_del_mapa = 0;
 
     std::vector<Textura> cargar_texturas(
-        const std::vector<ConfiguracionTileset>& configuraciones, SDL_Renderer* renderer);
+        const std::vector<ConfiguracionTileset>& configuraciones, SDL_Renderer* renderer,
+        Estacion estacion);
 
     std::vector<Tileset> crear_tilesets(const std::vector<ConfiguracionTileset>& configuraciones);
 
@@ -44,7 +46,7 @@ public:
     // Lanza std::runtime_error si falta una imagen, una capa del mapa o el tamaño del mapa.
     MapaGrafico(
         SDL_Renderer* renderer, const ConfiguracionMapa& configuracion_mapa,
-        const ConfiguracionGraficos& configuracion_graficos);
+        const ConfiguracionGraficos& configuracion_graficos, Estacion estacion);
 
     int ancho_en_casillas() const;
     int alto_en_casillas() const;

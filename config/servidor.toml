@@ -142,13 +142,13 @@ destinos_con_clic = ["FarmHouse2", "siguiente", "mercado"]
 [juego.dia]
 # Un día de juego va de las 6 am a las 2 am (20 horas de juego). velocidad elige cuánto dura en
 # tiempo real: "lento" = 20 minutos, "medio" = 14 minutos (lo que pide el enunciado), "rapido" = 7.
-velocidad = "medio"
+velocidad = "rapido"
 # Si está, pisa a la velocidad (en minutos reales, acepta decimales). Útil para probar: con 1.0
 # cada día dura un minuto.
-# duracion_en_minutos = 1.0
+ duracion_en_minutos = 1.0
 # Días de cada estación. Hay 4 estaciones por año (primavera, verano, otoño, invierno): con 28,
 # Para probar el cambio de estación se puede bajar a 1.
-dias_por_estacion = 28
+dias_por_estacion = 1
 
 [juego.movimiento]
 # velocidad = 200.0

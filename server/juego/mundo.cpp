@@ -25,7 +25,8 @@ Mundo::Mundo(
       controlador_del_dia(
           recursos_de_juego.juego.dia, ticks_por_segundo, sectores, personajes, recursos_de_juego,
           notificador_de_juego,
-          [this](Personaje& personaje) { controlador_de_mazmorra.al_desconectarse(personaje); }) {
+          [this](Personaje& personaje) { controlador_de_mazmorra.al_desconectarse(personaje); }),
+      controlador_de_regalos(personajes, recursos_de_juego.catalogo_de_items, notificador_de_juego) {
     sectores.cargar_mapas_guardados(datos_guardados.mapas);
     sectores.cargar_cofres_guardados(datos_guardados.cofres);
     sectores.cargar_muebles_guardados(datos_guardados.muebles);
@@ -55,6 +56,7 @@ void Mundo::completar_datos_guardados(
     datos.vida = static_cast<uint16_t>(std::max(personaje.vida, 0));
     datos.energia = static_cast<uint16_t>(std::max(personaje.energia, 0));
     datos.monedas = personaje.monedas;
+    datos.regalos_pendientes = personaje.buzon.pendientes();
     datos.tiene_cama = personaje.ultima_cama.has_value();
     datos.mapa_cama = datos.tiene_cama ? personaje.ultima_cama->mapa : "";
     datos.columna_cama =
@@ -71,6 +73,8 @@ void Mundo::restaurar(Personaje& personaje, const DatosJugadorGuardado& guardado
     personaje.vida = std::min<int>(guardado.vida, Personaje::VIDA_MAXIMA);
     personaje.energia = std::min<int>(guardado.energia, Personaje::ENERGIA_MAXIMA);
     personaje.monedas = guardado.monedas;
+    personaje.nombre = guardado.nombre_jugador;
+    personaje.buzon = Buzon(guardado.regalos_pendientes);
     if (guardado.tiene_cama) {
         personaje.ultima_cama = UbicacionDeCama{
             guardado.mapa_cama,
@@ -100,7 +104,8 @@ void Mundo::dar_de_baja(Personaje& personaje) {
     personaje.conectado = false;
 }
 
-void Mundo::conectar(uint32_t id_jugador, const AparienciaPersonaje& apariencia) {
+void Mundo::conectar(
+    uint32_t id_jugador, const AparienciaPersonaje& apariencia, const std::string& nombre) {
     auto encontrado = personajes.find(id_jugador);
     if (encontrado == personajes.end()) {
         encontrado = personajes
@@ -114,6 +119,9 @@ void Mundo::conectar(uint32_t id_jugador, const AparienciaPersonaje& apariencia)
         encontrado->second.apariencia = apariencia;
     }
     Personaje& personaje = encontrado->second;
+    if (!nombre.empty()) {
+        personaje.nombre = nombre;
+    }
     if (personaje.esta_inconsciente()) {
         return;
     }
@@ -125,6 +133,7 @@ void Mundo::conectar(uint32_t id_jugador, const AparienciaPersonaje& apariencia)
     personaje.conectado = true;
     notificador.a_jugador(id_jugador, personaje.actualizacion_de_inventario());
     controlador_del_dia.al_conectarse(personaje);
+    controlador_de_regalos.al_conectarse(personaje);
 
     auto guardado = datos_jugadores.find(id_jugador);
     if (guardado != datos_jugadores.end() && !guardado->second.mapa_actual.empty() &&
@@ -146,6 +155,7 @@ void Mundo::desconectar(uint32_t id_jugador) {
         return;
     }
     dar_de_baja(encontrado->second);
+    controlador_de_regalos.al_desconectarse();
 }
 
 void Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
@@ -168,6 +178,9 @@ void Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
         return;
     }
     if (controlador_de_drops.atender(personaje, comando)) {
+        return;
+    }
+    if (controlador_de_regalos.atender(personaje, comando)) {
         return;
     }
 }
@@ -272,6 +285,10 @@ std::vector<DatosCofreGuardado> Mundo::obtener_cofres_guardados() const {
 
 std::vector<DatosMuebleGuardado> Mundo::obtener_muebles_guardados() const {
     return sectores.obtener_muebles_guardados();
+}
+
+void Mundo::cambiar_estacion(Estacion estacion) {
+    controlador_del_dia.cambiar_estacion(estacion);
 }
 
 uint32_t Mundo::obtener_dia() const {

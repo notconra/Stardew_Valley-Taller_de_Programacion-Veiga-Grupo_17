@@ -24,6 +24,9 @@
 #include "inicio_de_sdl.h"
 #include "ventana.h"
 
+#define HORA_DEL_ANOCHECER 20
+#define HORA_FIN_DE_LA_NOCHE 2
+
 namespace {
 
 constexpr char AYUDA_DE_TECLAS[] =
@@ -48,7 +51,6 @@ constexpr char AYUDA_DE_TECLAS[] =
 
 using TexturaDelMundo = std::unique_ptr<SDL_Texture, void (*)(SDL_Texture*)>;
 
-// Textura donde se dibuja el mundo cuando hay zoom extra. Después se estira a toda la ventana.
 TexturaDelMundo crear_textura_del_mundo(SDL_Renderer* renderer, int ancho, int alto) {
     SDL_Texture* textura = SDL_CreateTexture(
         renderer,
@@ -154,6 +156,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     mapa_actual = configuracion.mapa_inicial;
     tierra_tratada.clear();
     hora_del_juego.reset();
+    jugadores_de_la_partida = JugadoresDeLaPartida{};
+    regalos_pendientes = RegalosPendientes{};
     olvidar_el_piso();
     partida_terminada = false;
 
@@ -184,9 +188,16 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     marcador_de_casillas = MarcadorDeCasillas(graficos);
 
     std::map<std::string, MapaGrafico> mapas_cargados;
+    Estacion estacion_cargada = Estacion::PRIMAVERA;
     const auto mapa_de = [&](const std::string& id_mapa) -> const MapaGrafico& {
+        const Estacion estacion =
+            hora_del_juego.has_value() ? hora_del_juego->estacion : Estacion::PRIMAVERA;
+        if (estacion != estacion_cargada) {
+            mapas_cargados.clear();
+            estacion_cargada = estacion;
+        }
         return mapas_cargados
-            .try_emplace(id_mapa, renderizador.ptr(), configuracion_de(id_mapa), graficos)
+            .try_emplace(id_mapa, renderizador.ptr(), configuracion_de(id_mapa), graficos, estacion)
             .first->second;
     };
 
@@ -205,16 +216,23 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         configuracion.graficos.tamano_pixel_vision_mazmorra,
         configuracion.graficos.ancho_difuminado_vision_mazmorra);
     HudInventario hud(renderizador.ptr(), iconos);
-    // El reloj y la caja de descanso toman su tamaño del alto de la ventana: se vuelven a crear
-    // si la ventana cambia de tamaño.
+    // El reloj, la caja de descanso y el panel de regalos toman su tamaño del de la ventana: se
+    // vuelven a crear si la ventana cambia de tamaño.
     std::optional<RelojGrafico> reloj_grafico;
     std::optional<PantallaDeDescanso> pantalla_de_descanso;
+    std::optional<PanelDeRegalos> regalos;
     reloj_grafico.emplace(renderizador.ptr(), configuracion.chat.ruta_fuente, alto_de_pantalla);
     pantalla_de_descanso.emplace(
         renderizador.ptr(),
         configuracion.chat.ruta_fuente,
         alto_de_pantalla);
     hud.configurar(ancho_de_pantalla, alto_de_pantalla);
+    regalos.emplace(
+        renderizador.ptr(),
+        configuracion.chat.ruta_fuente,
+        iconos,
+        ancho_de_pantalla,
+        alto_de_pantalla);
     EntradaDelUsuario entrada;
     Camara camara = camara_para(mapa_de(mapa_actual));
 
@@ -234,7 +252,9 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             return false;
         }
         if (entrada.pedidos().salir) {
-            if (ultimo_cofre.abierto) {
+            if (regalos->esta_abierto()) {
+                regalos->cerrar();
+            } else if (ultimo_cofre.abierto) {
                 conexion.enviar_comando(CerrarCofre{});
             } else {
                 efectos_actuales = nullptr;
@@ -271,6 +291,12 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
                     crear_textura_del_mundo(renderizador.ptr(), ancho_del_mundo, alto_del_mundo);
             }
             camara = camara_para(mapa_de(mapa_actual));
+            regalos.emplace(
+                renderizador.ptr(),
+                configuracion.chat.ruta_fuente,
+                iconos,
+                ancho_de_pantalla,
+                alto_de_pantalla);
             reloj_grafico.emplace(
                 renderizador.ptr(),
                 configuracion.chat.ruta_fuente,
@@ -296,9 +322,9 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
 
         hud.actualizar(ultimo_inventario, ultimo_cofre);
-        procesar_entrada(entrada, hud, camara, consumo_del_chat);
+        procesar_entrada(entrada, hud, *regalos, camara, consumo_del_chat);
         consultar_el_piso_si_cambio(entrada, hud, camara);
-        if (chat.esta_escribiendo() || ultimo_cofre.abierto) {
+        if (chat.esta_escribiendo() || ultimo_cofre.abierto || regalos->esta_abierto()) {
             enviar_intencion_si_cambio(Moverse{});
         } else {
             enviar_intencion_si_cambio(entrada.intencion());
@@ -320,7 +346,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             entrada,
             chat,
             *reloj_grafico,
-            *pantalla_de_descanso);
+            *pantalla_de_descanso,
+            *regalos);
         limitar_cuadro(inicio_del_cuadro);
     }
 }
@@ -385,9 +412,17 @@ void VistaPartida::guardar_tierra(const EstadoJuego& estado) {
     }
 }
 
+PanelDeRegalos::Datos VistaPartida::datos_de_regalos() const {
+    return PanelDeRegalos::Datos{
+        id_jugador,
+        jugadores_de_la_partida,
+        regalos_pendientes,
+        ultimo_inventario};
+}
+
 void VistaPartida::procesar_entrada(
-    const EntradaDelUsuario& entrada, HudInventario& hud, const Camara& camara,
-    const VistaChat::ConsumoDeEntrada& consumo_del_chat) {
+    const EntradaDelUsuario& entrada, HudInventario& hud, PanelDeRegalos& regalos,
+    const Camara& camara, const VistaChat::ConsumoDeEntrada& consumo_del_chat) {
     const EntradaDelUsuario::Pedidos& pedidos = entrada.pedidos();
 
     if (pedidos.multijugador) {
@@ -409,10 +444,10 @@ void VistaPartida::procesar_entrada(
 
     if (!consumo_del_chat.clic) {
         if (pedidos.clic_izquierdo) {
-            procesar_clic(entrada, hud, camara, false, pedidos.con_shift);
+            procesar_clic(entrada, hud, regalos, camara, false, pedidos.con_shift);
         }
         if (pedidos.clic_derecho) {
-            procesar_clic(entrada, hud, camara, true, pedidos.con_shift);
+            procesar_clic(entrada, hud, regalos, camara, true, pedidos.con_shift);
         }
     }
 }
@@ -437,8 +472,19 @@ void VistaPartida::elegir_ranura_de_la_barra(const EntradaDelUsuario::Pedidos& p
 }
 
 void VistaPartida::procesar_clic(
-    const EntradaDelUsuario& entrada, HudInventario& hud, const Camara& camara, bool clic_derecho,
-    bool con_shift) {
+    const EntradaDelUsuario& entrada, HudInventario& hud, PanelDeRegalos& regalos,
+    const Camara& camara, bool clic_derecho, bool con_shift) {
+    if (regalos.captura_el_clic(entrada.raton_x(), entrada.raton_y())) {
+        const std::optional<ComandoCliente> comando = regalos.procesar_clic(
+            datos_de_regalos(),
+            entrada.raton_x(),
+            entrada.raton_y(),
+            clic_derecho);
+        if (comando.has_value()) {
+            conexion.enviar_comando(*comando);
+        }
+        return;
+    }
     if (hud.captura_el_clic(
             ultimo_inventario,
             ultimo_cofre,
@@ -674,13 +720,27 @@ void VistaPartida::aplicar(const EventoServidor& evento, VistaChat& chat) {
                     tierra_tratada.erase(casilla);
                 }
             },
-            [&](const HoraDelJuego& e) { hora_del_juego = e; },
+            [&](const HoraDelJuego& e) {
+                if (efectos_actuales != nullptr) {
+                    efectos_actuales->cambiar_noche(
+                        e.hora >= HORA_DEL_ANOCHECER || e.hora < HORA_FIN_DE_LA_NOCHE);
+                }
+                hora_del_juego = e;
+            },
             [&](const EstadoDelDescanso& e) { descanso = e; },
             [&](const MultijugadorActivado& e) {
                 std::cout << "[partida] multijugador activado, código para invitar: "
                           << e.codigo_partida << std::endl;
             },
             [&](const MensajeDeChat& e) { chat.recibir(e); },
+            [&](const JugadoresDeLaPartida& e) { jugadores_de_la_partida = e; },
+            [&](const RegalosPendientes& e) {
+                if (e.regalos.size() > regalos_pendientes.regalos.size() &&
+                    efectos_actuales != nullptr) {
+                    efectos_actuales->reproducir_regalo_recibido();
+                }
+                regalos_pendientes = e;
+            },
             [&](const ErrorServidor& e) { std::cerr << "[error] " << e.detalle << std::endl; },
             [&](const PartidaCerradaPorError&) {
                 salir_de_partida_y_confirmar();
@@ -724,7 +784,8 @@ void VistaPartida::dibujar(
     const TrampasGraficas& trampas, const Personaje& personaje, const IconosDeItems& iconos,
     const TierraGrafica& tierra, const Camara& camara, const HudInventario& hud,
     const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada, const VistaChat& chat,
-    RelojGrafico& reloj_grafico, const PantallaDeDescanso& pantalla_de_descanso) const {
+    RelojGrafico& reloj_grafico, const PantallaDeDescanso& pantalla_de_descanso,
+    const PanelDeRegalos& regalos) const {
     SDL_Renderer* renderer = renderizador.ptr();
     if (mundo != nullptr) {
         SDL_SetRenderTarget(renderer, mundo);
@@ -854,6 +915,7 @@ void VistaPartida::dibujar(
     if (hora_del_juego.has_value()) {
         reloj_grafico.dibujar(renderer, *hora_del_juego, ancho_de_pantalla);
     }
+    regalos.dibujar(renderer, datos_de_regalos());
     pantalla_de_descanso.dibujar(renderer, descanso, ancho_de_pantalla, alto_de_pantalla);
     chat.dibujar(renderer, ancho_de_pantalla, alto_de_pantalla);
 
