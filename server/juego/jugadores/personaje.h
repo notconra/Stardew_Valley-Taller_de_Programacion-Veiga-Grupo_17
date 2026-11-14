@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <vector>
 
 #include "../../../common/estado_de_descanso.h"
 #include "../../../common/mensajes/mensajes.h"
@@ -12,6 +13,7 @@
 #include "../inventario/inventario.h"
 #include "../notificador.h"
 #include "../objetos/catalogo_de_items.h"
+#include "buzon.h"
 
 // Dónde está la cama en la que durmió por última vez: el mapa y la casilla de arriba a la
 // izquierda.
@@ -46,6 +48,8 @@ struct Personaje {
     TipoAccion accion_actual = TipoAccion::NINGUNA;
     uint16_t ticks_restantes_accion = 0;
     AparienciaPersonaje apariencia;
+    std::string nombre;
+    Buzon buzon;  // los regalos que recibió y todavía no abrió
 
     // Vida del jugador en combate (ver "Un día en el juego" del enunciado). Arranca a tope, baja
     // con los golpes de los enemigos y se repone al dormir (ver ControladorDelDia). VIDA_MAXIMA
