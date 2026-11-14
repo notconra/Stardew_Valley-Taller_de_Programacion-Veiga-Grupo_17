@@ -17,8 +17,6 @@
 // Lanza std::runtime_error si no puede cargar alguno.
 class EfectosDeSonido {
 private:
-    static constexpr int CANAL_AMBIENTE = 0;  // reservado, así los demás efectos no lo pisan
-
     struct SonidosCargadosDeEnemigo {
         Mix_Chunk* golpe = nullptr;
         Mix_Chunk* danio = nullptr;
@@ -27,7 +25,6 @@ private:
     };
 
     // Para que una manada entera suene como un solo grito y no uno por cada enemigo.
-    static constexpr uint32_t MS_ENTRE_GRITOS_DE_APARICION = 1500;
     mutable uint32_t ultimo_grito_de_aparicion = 0;
 
     std::string ruta_ambiente_general;
@@ -42,6 +39,8 @@ private:
     std::map<TipoEnemigo, SonidosCargadosDeEnemigo> sonidos_de_enemigos;
     Mix_Chunk* trampa_activada = nullptr;
     Mix_Chunk* jugador_danio = nullptr;
+    Mix_Chunk* compra = nullptr;
+    Mix_Chunk* venta = nullptr;
 
     Mix_Chunk* cargar(const std::string& ruta);
     static void reproducir(Mix_Chunk* sonido);
@@ -80,6 +79,10 @@ public:
 
     // El jugador propio perdió vida (lo golpeó un enemigo o lo quemó una trampa).
     void reproducir_jugador_danio() const;
+
+    // El jugador compró algo en el mercado / vendió algo en el mercado.
+    void reproducir_compra() const;
+    void reproducir_venta() const;
 };
 
 #endif

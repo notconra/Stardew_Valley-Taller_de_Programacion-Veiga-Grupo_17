@@ -2,23 +2,29 @@
 
 #include <SDL2/SDL_timer.h>
 
+#include <cstdint>
 #include <filesystem>
 #include <stdexcept>
 #include <string>
 
 namespace {
+constexpr int CANAL_AMBIENTE = 0;  // reservado, así los demás efectos no lo pisan
 constexpr int VOLUMEN_PASOS = 50;
+constexpr uint32_t MS_ENTRE_GRITOS_DE_APARICION = 1500;
+constexpr const char* RUTA_SONIDO_COMPRAR = "Assets/sfx/comprar.wav";
+constexpr const char* RUTA_SONIDO_VENDER = "Assets/sfx/vender.wav";
 }  // namespace
 
-EfectosDeSonido::EfectosDeSonido(const ConfiguracionSonido& configuracion):
-    ruta_ambiente_general(configuracion.ruta_ambiente),
-    ruta_paso_general(configuracion.ruta_caminar) {
+EfectosDeSonido::EfectosDeSonido(const ConfiguracionSonido& configuracion)
+    : ruta_ambiente_general(configuracion.ruta_ambiente),
+      ruta_paso_general(configuracion.ruta_caminar) {
     Mix_ReserveChannels(1);
     accion = cargar(configuracion.ruta_accion);
     for (const auto& [item, ruta] : configuracion.rutas_de_uso) {
         sonido_de_uso[item] = cargar(ruta);
     }
-    pico_golpe = configuracion.ruta_pico_golpe.empty() ? nullptr : cargar(configuracion.ruta_pico_golpe);
+    pico_golpe =
+        configuracion.ruta_pico_golpe.empty() ? nullptr : cargar(configuracion.ruta_pico_golpe);
     pico_rotura =
         configuracion.ruta_pico_rotura.empty() ? nullptr : cargar(configuracion.ruta_pico_rotura);
     for (const auto& [tipo, rutas] : configuracion.sonidos_de_enemigos) {
@@ -26,9 +32,10 @@ EfectosDeSonido::EfectosDeSonido(const ConfiguracionSonido& configuracion):
         sonidos.golpe = rutas.ruta_golpe.empty() ? nullptr : cargar(rutas.ruta_golpe);
         sonidos.muerte = rutas.ruta_muerte.empty() ? nullptr : cargar(rutas.ruta_muerte);
         sonidos.danio = rutas.ruta_danio.empty() ? nullptr : cargar(rutas.ruta_danio);
-        sonidos.aparicion = rutas.ruta_aparicion.empty() || !std::filesystem::exists(rutas.ruta_aparicion)
-                                ? nullptr
-                                : cargar(rutas.ruta_aparicion);
+        sonidos.aparicion =
+            rutas.ruta_aparicion.empty() || !std::filesystem::exists(rutas.ruta_aparicion)
+                ? nullptr
+                : cargar(rutas.ruta_aparicion);
     }
     trampa_activada = configuracion.ruta_trampa_activada.empty()
                           ? nullptr
@@ -36,6 +43,8 @@ EfectosDeSonido::EfectosDeSonido(const ConfiguracionSonido& configuracion):
     jugador_danio = configuracion.ruta_jugador_danio.empty()
                         ? nullptr
                         : cargar(configuracion.ruta_jugador_danio);
+    compra = cargar(RUTA_SONIDO_COMPRAR);
+    venta = cargar(RUTA_SONIDO_VENDER);
     cambiar_paso("");
 }
 
@@ -85,6 +94,14 @@ void EfectosDeSonido::reproducir_trampa_activada() const {
 
 void EfectosDeSonido::reproducir_jugador_danio() const {
     reproducir(jugador_danio);
+}
+
+void EfectosDeSonido::reproducir_compra() const {
+    reproducir(compra);
+}
+
+void EfectosDeSonido::reproducir_venta() const {
+    reproducir(venta);
 }
 
 void EfectosDeSonido::reproducir_paso() const {
