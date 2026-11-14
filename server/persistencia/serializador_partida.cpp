@@ -11,7 +11,42 @@
 #include "lector_binario.h"
 
 constexpr std::array<uint8_t, 4> FIRMA_ARCHIVO = {'S', 'V', 'P', 'T'};
-constexpr uint16_t VERSION_ACTUAL = 6;
+constexpr uint16_t VERSION_ACTUAL = 7;
+// Las partidas de la versión 6 se siguen pudiendo leer: solo les faltan los regalos pendientes.
+constexpr uint16_t VERSION_SIN_REGALOS = 6;
+
+namespace {
+void escribir_ranura(EscritorBinario& escritor, const RanuraInventario& ranura) {
+    escritor.escribir_u8(static_cast<uint8_t>(ranura.tipo));
+    escritor.escribir_u16(ranura.cantidad);
+    escritor.escribir_u8(static_cast<uint8_t>(ranura.calidad));
+}
+
+RanuraInventario leer_ranura(LectorBinario& lector) {
+    RanuraInventario ranura;
+    ranura.tipo = static_cast<TipoItem>(lector.leer_u8());
+    ranura.cantidad = lector.leer_u16();
+    ranura.calidad = static_cast<Calidad>(lector.leer_u8());
+    return ranura;
+}
+
+// Las barras y los cofres guardan sus ranuras con la cantidad en un byte.
+void escribir_ranuras(EscritorBinario& escritor, const std::vector<RanuraInventario>& ranuras) {
+    escritor.escribir_u8(static_cast<uint8_t>(ranuras.size()));
+    for (const auto& ranura : ranuras) {
+        escribir_ranura(escritor, ranura);
+    }
+}
+
+std::vector<RanuraInventario> leer_ranuras(LectorBinario& lector) {
+    std::vector<RanuraInventario> ranuras;
+    const uint8_t cantidad = lector.leer_u8();
+    for (uint8_t i = 0; i < cantidad; ++i) {
+        ranuras.push_back(leer_ranura(lector));
+    }
+    return ranuras;
+}
+}  // namespace
 
 void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGuardada& datos) {
     EscritorBinario escritor(stream);
@@ -37,12 +72,7 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
         escritor.escribir_u8(static_cast<uint8_t>(jugador.mirando));
         escritor.escribir_u8(jugador.ranura_activa);
 
-        escritor.escribir_u8(static_cast<uint8_t>(jugador.inventario.size()));
-        for (const auto& ranura : jugador.inventario) {
-            escritor.escribir_u8(static_cast<uint8_t>(ranura.tipo));
-            escritor.escribir_u16(ranura.cantidad);
-            escritor.escribir_u8(static_cast<uint8_t>(ranura.calidad));
-        }
+        escribir_ranuras(escritor, jugador.inventario);
 
         escritor.escribir_bool(jugador.apariencia.es_femenino);
         escritor.escribir_u8(jugador.apariencia.indice_piel);
@@ -67,6 +97,12 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
         escritor.escribir_texto(jugador.mapa_cama);
         escritor.escribir_u32(jugador.columna_cama);
         escritor.escribir_u32(jugador.fila_cama);
+
+        escritor.escribir_u16(static_cast<uint16_t>(jugador.regalos_pendientes.size()));
+        for (const auto& regalo : jugador.regalos_pendientes) {
+            escritor.escribir_texto(regalo.remitente);
+            escribir_ranura(escritor, regalo.item);
+        }
     }
 
     escritor.escribir_u16(static_cast<uint16_t>(datos.mundo.mapas.size()));
@@ -90,12 +126,7 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
         escritor.escribir_texto(cofre.id_mapa);
         escritor.escribir_u32(cofre.columna);
         escritor.escribir_u32(cofre.fila);
-        escritor.escribir_u8(static_cast<uint8_t>(cofre.inventario.size()));
-        for (const auto& ranura : cofre.inventario) {
-            escritor.escribir_u8(static_cast<uint8_t>(ranura.tipo));
-            escritor.escribir_u16(ranura.cantidad);
-            escritor.escribir_u8(static_cast<uint8_t>(ranura.calidad));
-        }
+        escribir_ranuras(escritor, cofre.inventario);
     }
 
     escritor.escribir_u16(static_cast<uint16_t>(datos.mundo.muebles.size()));
@@ -117,7 +148,7 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
     }
 
     uint16_t version = lector.leer_u16();
-    if (version != VERSION_ACTUAL) {
+    if (version != VERSION_ACTUAL && version != VERSION_SIN_REGALOS) {
         throw std::runtime_error("Versión de partida no soportada: " + std::to_string(version));
     }
 
@@ -141,14 +172,7 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
         jugador.mirando = static_cast<Direccion>(lector.leer_u8());
         jugador.ranura_activa = lector.leer_u8();
 
-        uint8_t cant_ranuras = lector.leer_u8();
-        for (uint8_t indice_ranura = 0; indice_ranura < cant_ranuras; ++indice_ranura) {
-            RanuraInventario ranura;
-            ranura.tipo = static_cast<TipoItem>(lector.leer_u8());
-            ranura.cantidad = lector.leer_u16();
-            ranura.calidad = static_cast<Calidad>(lector.leer_u8());
-            jugador.inventario.push_back(ranura);
-        }
+        jugador.inventario = leer_ranuras(lector);
 
         jugador.apariencia.es_femenino = lector.leer_bool();
         jugador.apariencia.indice_piel = lector.leer_u8();
@@ -173,6 +197,16 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
         jugador.mapa_cama = lector.leer_texto();
         jugador.columna_cama = lector.leer_u32();
         jugador.fila_cama = lector.leer_u32();
+
+        if (version >= VERSION_ACTUAL) {
+            uint16_t cant_regalos = lector.leer_u16();
+            for (uint16_t indice_regalo = 0; indice_regalo < cant_regalos; ++indice_regalo) {
+                RegaloRecibido regalo;
+                regalo.remitente = lector.leer_texto();
+                regalo.item = leer_ranura(lector);
+                jugador.regalos_pendientes.push_back(regalo);
+            }
+        }
 
         datos.mundo.jugadores.push_back(jugador);
     }
@@ -205,14 +239,7 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
         cofre.id_mapa = lector.leer_texto();
         cofre.columna = lector.leer_u32();
         cofre.fila = lector.leer_u32();
-        uint8_t cant_ranuras = lector.leer_u8();
-        for (uint8_t j = 0; j < cant_ranuras; ++j) {
-            RanuraInventario ranura;
-            ranura.tipo = static_cast<TipoItem>(lector.leer_u8());
-            ranura.cantidad = lector.leer_u16();
-            ranura.calidad = static_cast<Calidad>(lector.leer_u8());
-            cofre.inventario.push_back(ranura);
-        }
+        cofre.inventario = leer_ranuras(lector);
         datos.mundo.cofres.push_back(cofre);
     }
 
