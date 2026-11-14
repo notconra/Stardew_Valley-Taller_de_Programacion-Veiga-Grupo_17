@@ -6,18 +6,19 @@
 
 #include "../azar.h"
 
+const std::map<Direccion, std::pair<int, int>> DESPLAZAMIENTOS_POR_DIRECCION{
+    {Direccion::ARRIBA, {0, -1}},
+    {Direccion::ABAJO, {0, 1}},
+    {Direccion::IZQUIERDA, {-1, 0}},
+    {Direccion::DERECHA, {1, 0}},
+};
+
 GestorDeAnimales::GestorDeAnimales(Colisiones& colisiones_mapa) : colisiones(colisiones_mapa) {
 }
 
 std::pair<int, int> GestorDeAnimales::desplazamiento_segun(Direccion direccion) {
-    static const std::map<Direccion, std::pair<int, int>> desplazamientos{
-        {Direccion::ARRIBA, {0, -1}},
-        {Direccion::ABAJO, {0, 1}},
-        {Direccion::IZQUIERDA, {-1, 0}},
-        {Direccion::DERECHA, {1, 0}},
-    };
-    auto iterador = desplazamientos.find(direccion);
-    if (iterador != desplazamientos.end()) {
+    auto iterador = DESPLAZAMIENTOS_POR_DIRECCION.find(direccion);
+    if (iterador != DESPLAZAMIENTOS_POR_DIRECCION.end()) {
         return iterador->second;
     }
     return {0, 0};
@@ -88,13 +89,6 @@ bool GestorDeAnimales::agregar_gallina(uint32_t columna, uint32_t fila, uint8_t 
     ocupar_colisiones(gallina);
     gallinas.emplace(id, gallina);
     return true;
-}
-
-void GestorDeAnimales::inicializar_granja_provisoria() {
-    // NOTA PROVISORIA: Spawnea 1 vaca y 1 gallina para pruebas en tiempo de ejecución mientras
-    // no existan los comerciantes. Eliminar cuando se agregue la compra en el mercado.
-    agregar_vaca(20, 15);
-    agregar_gallina(22, 15);
 }
 
 void GestorDeAnimales::avanzar_dia(Drops& drops) {
@@ -260,12 +254,7 @@ void GestorDeAnimales::decidir_movimiento(
         return;
     }
 
-    static constexpr Direccion DIRECCIONES[CANTIDAD_DIRECCIONES] = {
-        Direccion::ABAJO,
-        Direccion::DERECHA,
-        Direccion::IZQUIERDA,
-        Direccion::ARRIBA};
-    Direccion direccion_elegida = DIRECCIONES[Azar::entero(0, CANTIDAD_DIRECCIONES - 1)];
+    Direccion direccion_elegida = static_cast<Direccion>(Azar::entero(0, CANTIDAD_DIRECCIONES - 1));
 
     if (intentar_mover(animal, direccion_elegida, ancho_mapa, alto_mapa, jugadores)) {
         actualizados.push_back(estado_de(animal));

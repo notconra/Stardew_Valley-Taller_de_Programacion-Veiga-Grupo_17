@@ -164,14 +164,13 @@ TEST(Animales, VariantesAleatoriasDeRazasEnRangoValido) {
     }
 }
 
-TEST(Animales, GranjaProvisoriaArrancaConUnaVacaYUnaGallina) {
+TEST(Animales, GranjaNuevaArrancaSinAnimales) {
     Colisiones colisiones = crear_colisiones_test();
     GestorDeAnimales gestor(colisiones);
-    gestor.inicializar_granja_provisoria();
 
-    EXPECT_EQ(gestor.cantidad_vacas(), 1);
-    EXPECT_EQ(gestor.cantidad_gallinas(), 1);
-    EXPECT_EQ(gestor.cantidad_total(), 2);
+    EXPECT_EQ(gestor.cantidad_vacas(), 0);
+    EXPECT_EQ(gestor.cantidad_gallinas(), 0);
+    EXPECT_EQ(gestor.cantidad_total(), 0);
 }
 
 TEST(Animales, GestorAvanzarDiaDepositaHuevoComoDropEnElPiso) {

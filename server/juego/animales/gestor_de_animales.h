@@ -69,11 +69,6 @@ public:
     // Agrega una gallina asignando una variante específica (para persistencia o tests).
     bool agregar_gallina(uint32_t columna, uint32_t fila, uint8_t variante);
 
-    // NOTA PROVISORIA: Inicializa 1 vaca y 1 gallina para permitir pruebas y visualización
-    // en tiempo de ejecución mientras no existan los comerciantes.
-    // Eliminar una vez que se implemente la compra de animales en el mercado con Marnie.
-    void inicializar_granja_provisoria();
-
     // Avanza un día para todos los animales de la granja:
     // - Las vacas acumulan días hacia el ciclo de 2 días de leche.
     // - Las gallinas ponen un huevo en el suelo como Drop de forma automática.

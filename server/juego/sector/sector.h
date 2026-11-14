@@ -61,12 +61,6 @@ public:
           enemigos(recursos.catalogo_de_enemigos, ticks_por_segundo),
           animales(colisiones) {
         registrar_manejadores_de_modificaciones();
-        if (id == "granja") {
-            // NOTA PROVISORIA: Inicializa 1 vaca y 1 gallina para pruebas en tiempo de ejecución
-            // mientras no existan los comerciantes. Eliminar cuando se agregue la compra en el
-            // mercado.
-            animales.inicializar_granja_provisoria();
-        }
     }
 
     Sector(const Sector&) = delete;
