@@ -23,6 +23,7 @@
 #include "marcador_de_casillas.h"
 #include "objetos_graficos.h"
 #include "pantalla_de_descanso.h"
+#include "panel_de_regalos.h"
 #include "personaje.h"
 #include "reloj_grafico.h"
 #include "renderizador.h"
@@ -52,6 +53,10 @@ private:
     std::set<std::pair<int, int>> tierra_tratada;
     std::optional<HoraDelJuego> hora_del_juego;
     EstadoDelDescanso descanso{};
+    JugadoresDeLaPartida jugadores_de_la_partida{};
+    RegalosPendientes regalos_pendientes{};
+
+    PanelDeRegalos::Datos datos_de_regalos() const;
 
     // Lo último que se le preguntó al servidor (ConsultarCasilla) sobre la casilla del mouse, y su
     // respuesta. El cliente no decide si se puede: solo pinta lo que contestó el servidor. Se
@@ -132,12 +137,12 @@ private:
     void usar_item(uint8_t ranura, ModoUso modo, const std::optional<Casilla>& casilla);
 
     void procesar_entrada(
-        const EntradaDelUsuario& entrada, HudInventario& hud, const Camara& camara,
-        const VistaChat::ConsumoDeEntrada& consumo_del_chat);
+        const EntradaDelUsuario& entrada, HudInventario& hud, PanelDeRegalos& regalos,
+        const Camara& camara, const VistaChat::ConsumoDeEntrada& consumo_del_chat);
     void elegir_ranura_de_la_barra(const EntradaDelUsuario::Pedidos& pedidos);
     void procesar_clic(
-        const EntradaDelUsuario& entrada, HudInventario& hud, const Camara& camara,
-        bool clic_derecho, bool con_shift);
+        const EntradaDelUsuario& entrada, HudInventario& hud, PanelDeRegalos& regalos,
+        const Camara& camara, bool clic_derecho, bool con_shift);
 
     bool recibir_eventos(VistaChat& chat);
     void aplicar(const EventoServidor& evento, VistaChat& chat);
@@ -152,7 +157,7 @@ private:
         const TierraGrafica& tierra, const Camara& camara, const HudInventario& hud,
         const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada,
         const VistaChat& chat, RelojGrafico& reloj_grafico,
-        const PantallaDeDescanso& pantalla_de_descanso) const;
+        const PantallaDeDescanso& pantalla_de_descanso, const PanelDeRegalos& regalos) const;
 
 public:
     VistaPartida(ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion);
