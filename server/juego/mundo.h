@@ -15,6 +15,7 @@
 #include "controladores/controlador_de_enemigos.h"
 #include "controladores/controlador_de_jugador.h"
 #include "controladores/controlador_de_mazmorra.h"
+#include "controladores/controlador_de_regalos.h"
 #include "controladores/controlador_de_trampas.h"
 #include "jugadores/personaje.h"
 #include "mapa/mapa.h"
@@ -42,6 +43,7 @@ private:
     ControladorDeEnemigos controlador_de_enemigos;
     ControladorDeTrampas controlador_de_trampas;
     ControladorDelDia controlador_del_dia;
+    ControladorDeRegalos controlador_de_regalos;
 
     void resolver_transicion(Personaje& personaje, const Transicion& transicion);
 
@@ -72,8 +74,9 @@ public:
 
     // El jugador entra a la partida. Si es la primera vez se crea su Personaje con los ítems
     // iniciales, si ya existía (volvió después de desconectarse o restaurado de partida) conserva
-    // todo.
-    void conectar(uint32_t id_jugador, const AparienciaPersonaje& apariencia);
+    // todo. "nombre" vacío deja el que tenía.
+    void conectar(
+        uint32_t id_jugador, const AparienciaPersonaje& apariencia, const std::string& nombre = "");
 
     // El jugador se fue. Su Personaje queda guardado.
     void desconectar(uint32_t id_jugador);
@@ -93,6 +96,8 @@ public:
     std::vector<DatosCofreGuardado> obtener_cofres_guardados() const;
     std::vector<DatosMuebleGuardado> obtener_muebles_guardados() const;
     uint32_t obtener_dia() const;
+
+    void cambiar_estacion(Estacion estacion);
 
     // Si terminó un día desde la última vez que se preguntó (todos dieron el OK). Es cuando hay
     // que guardar la partida; devuelve true una sola vez por día.
