@@ -277,6 +277,18 @@ void ConfiguracionCliente::cargar_sonido(const toml::table& archivo_toml) {
         configuracion_vista.sonido.ruta_jugador_danio =
             lector_toml::leer_texto_opcional(*jugador, "danio", "sonido.jugador", "");
     }
+    if (auto* animales = sonido["animales"].as_table()) {
+        configuracion_vista.sonido.ruta_vaca =
+            lector_toml::leer_texto_opcional(*animales, "vaca", "sonido.animales", "");
+        configuracion_vista.sonido.ruta_gallina =
+            lector_toml::leer_texto_opcional(*animales, "gallina", "sonido.animales", "");
+        configuracion_vista.sonido.ruta_ordeniar_vaca =
+            lector_toml::leer_texto_opcional(*animales, "ordeniar", "sonido.animales", "");
+    }
+    if (auto* dinero = sonido["dinero"].as_table()) {
+        configuracion_vista.sonido.ruta_dinero =
+            lector_toml::leer_texto_opcional(*dinero, "contador", "sonido.dinero", "");
+    }
     if (const toml::table* enemigos = sonido["enemigos"].as_table()) {
         for (const auto& [clave, tipo] : ENEMIGOS_CON_SONIDO) {
             const toml::table* enemigo = (*enemigos)[clave].as_table();

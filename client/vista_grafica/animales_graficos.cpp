@@ -80,6 +80,52 @@ bool AnimalesGraficos::esta_en_pantalla(
     return rect.x < ancho_pantalla && rect.y < alto_pantalla && rect.x + rect.w > 0 &&
            rect.y + rect.h > 0;
 }
+bool AnimalesGraficos::ocupa_casilla(const EstadoAnimal& animal, uint32_t columna, uint32_t fila) {
+    if (animal.tipo == TipoAnimal::VACA) {
+        return columna >= animal.columna && columna < animal.columna + CASILLAS_ANCHO_VACA &&
+               fila >= animal.fila && fila < animal.fila + CASILLAS_ALTO_VACA;
+    }
+    return columna == animal.columna && fila == animal.fila;
+}
+
+bool AnimalesGraficos::buscar_animal_despierto(
+    const std::vector<EstadoAnimal>& lista_animales,
+    const std::vector<uint32_t>& vacas_para_ordeniar, uint32_t columna, uint32_t fila,
+    TipoAnimal& tipo_encontrado) {
+    bool encontrado = false;
+    for (const EstadoAnimal& animal : lista_animales) {
+        bool es_vaca_ordeniable = false;
+        if (animal.tipo == TipoAnimal::VACA) {
+            es_vaca_ordeniable =
+                std::find(vacas_para_ordeniar.begin(), vacas_para_ordeniar.end(), animal.id) !=
+                vacas_para_ordeniar.end();
+        }
+        if (!encontrado && !animal.durmiendo && !es_vaca_ordeniable &&
+            ocupa_casilla(animal, columna, fila)) {
+            tipo_encontrado = animal.tipo;
+            encontrado = true;
+        }
+    }
+    return encontrado;
+}
+
+std::vector<TipoAnimal> AnimalesGraficos::obtener_despiertos_cercanos(
+    const std::vector<EstadoAnimal>& lista_animales, uint32_t columna_centro, uint32_t fila_centro,
+    int radio_casillas) {
+    std::vector<TipoAnimal> cercanos;
+    for (const EstadoAnimal& animal : lista_animales) {
+        if (!animal.durmiendo) {
+            int distancia_columna =
+                std::abs(static_cast<int>(columna_centro) - static_cast<int>(animal.columna));
+            int distancia_fila =
+                std::abs(static_cast<int>(fila_centro) - static_cast<int>(animal.fila));
+            if (distancia_columna <= radio_casillas && distancia_fila <= radio_casillas) {
+                cercanos.push_back(animal.tipo);
+            }
+        }
+    }
+    return cercanos;
+}
 
 void AnimalesGraficos::dibujar(
     SDL_Renderer* renderer, const EstadoJuego& estado, const std::string& mapa_actual, int cam_x,

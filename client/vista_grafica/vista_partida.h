@@ -126,6 +126,7 @@ private:
     // en MS_ESPERA_SONIDO_PICO). 0: no hay ninguno pendiente.
     uint32_t pico_pendiente_desde_ms = 0;
     static constexpr uint32_t MS_ESPERA_SONIDO_PICO = 200;
+    static constexpr int CASILLAS_AUDICION_ANIMAL = 10;
     uint32_t ultimo_paso_ms = 0;
     EfectosDeSonido* efectos_actuales = nullptr;
 

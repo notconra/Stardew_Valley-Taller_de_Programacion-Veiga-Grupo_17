@@ -15,8 +15,8 @@
 
 class GestorDeAnimales {
 private:
-    static constexpr uint8_t HORA_QUIETOS = 17;
-    static constexpr uint8_t HORA_DORMIR = 19;
+    static constexpr uint8_t HORA_QUIETOS = 19;
+    static constexpr uint8_t HORA_DORMIR = 20;
     static constexpr int TICKS_DECISION_MIN = 40;
     static constexpr int TICKS_DECISION_MAX = 100;
     static constexpr int PROBABILIDAD_QUIETO = 4;

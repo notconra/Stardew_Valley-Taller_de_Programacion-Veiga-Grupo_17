@@ -33,6 +33,10 @@ public:
     static constexpr int VACA_ALTO = 32;
     static constexpr int GALLINA_ANCHO = 16;
     static constexpr int GALLINA_ALTO = 16;
+    static constexpr uint32_t CASILLAS_ANCHO_VACA = 2;
+    static constexpr uint32_t CASILLAS_ALTO_VACA = 2;
+    static constexpr uint32_t CASILLAS_ANCHO_GALLINA = 1;
+    static constexpr uint32_t CASILLAS_ALTO_GALLINA = 1;
     static constexpr int ICONO_LECHE_ANCHO = 10;
     static constexpr int ICONO_LECHE_ALTO = 12;
 
@@ -46,7 +50,7 @@ public:
     static constexpr int FILA_ABAJO = 0;
     static constexpr int FILA_LATERAL = 1;
     static constexpr int FILA_ARRIBA = 2;
-    static constexpr int FILA_DORMIDA_VACA = 3;
+    static constexpr int FILA_DORMIDA_VACA = 4;
     static constexpr int FILA_DORMIDA_GALLINA_ABAJO = 4;
     static constexpr int FILA_DORMIDA_GALLINA_LATERAL = 4;
     static constexpr int FILA_DORMIDA_GALLINA_ARRIBA = 5;
@@ -68,6 +72,15 @@ public:
     void dibujar_un_animal(
         SDL_Renderer* renderer, const EstadoJuego& estado, const EstadoAnimal& animal, int cam_x,
         int cam_y) const;
+
+    static bool ocupa_casilla(const EstadoAnimal& animal, uint32_t columna, uint32_t fila);
+    static bool buscar_animal_despierto(
+        const std::vector<EstadoAnimal>& lista_animales,
+        const std::vector<uint32_t>& vacas_para_ordeniar, uint32_t columna, uint32_t fila,
+        TipoAnimal& tipo_encontrado);
+    static std::vector<TipoAnimal> obtener_despiertos_cercanos(
+        const std::vector<EstadoAnimal>& lista_animales, uint32_t columna_centro,
+        uint32_t fila_centro, int radio_casillas);
 
 private:
     struct DisposicionFrame {

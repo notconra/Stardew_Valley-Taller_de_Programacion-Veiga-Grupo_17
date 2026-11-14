@@ -131,6 +131,10 @@ struct ConfiguracionSonido {
     // Vacías: no suena nada.
     std::string ruta_trampa_activada;  // [sonido.trampas] activar
     std::string ruta_jugador_danio;    // [sonido.jugador] danio: el jugador propio perdió vida
+    std::string ruta_vaca;             // [sonido.animales] vaca
+    std::string ruta_gallina;          // [sonido.animales] gallina
+    std::string ruta_ordeniar_vaca;    // [sonido.animales] ordeniar
+    std::string ruta_dinero;           // [sonido.dinero] contador
 };
 
 // Cómo se ve la tierra tratada. La textura es la de Stardew (hoeDirt.png); el resto del dibujado

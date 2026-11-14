@@ -299,6 +299,19 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         hud.actualizar(ultimo_inventario, ultimo_cofre);
         procesar_entrada(entrada, hud, camara, consumo_del_chat);
         consultar_el_piso_si_cambio(entrada, hud, camara);
+        if (mapa_actual == "granja" && propio != nullptr && efectos_actuales != nullptr) {
+            int tamano_tile = std::max(1, configuracion.graficos.tamano_de_tile);
+            uint32_t columna_jugador =
+                static_cast<uint32_t>(static_cast<int>(propio->x) / tamano_tile);
+            uint32_t fila_jugador =
+                static_cast<uint32_t>(static_cast<int>(propio->y) / tamano_tile);
+            std::vector<TipoAnimal> cercanos = AnimalesGraficos::obtener_despiertos_cercanos(
+                ultimo_estado_juego.animales,
+                columna_jugador,
+                fila_jugador,
+                CASILLAS_AUDICION_ANIMAL);
+            efectos_actuales->actualizar_ambiente_animales(inicio_del_cuadro, cercanos);
+        }
         if (chat.esta_escribiendo() || ultimo_cofre.abierto) {
             enviar_intencion_si_cambio(Moverse{});
         } else {
@@ -467,6 +480,18 @@ void VistaPartida::procesar_clic(
         return;
     }
 
+    if (clic_derecho && efectos_actuales != nullptr) {
+        TipoAnimal tipo_animal = TipoAnimal::VACA;
+        if (AnimalesGraficos::buscar_animal_despierto(
+                ultimo_estado_juego.animales,
+                ultimo_estado_juego.vacas_para_ordeniar,
+                casilla->columna,
+                casilla->fila,
+                tipo_animal)) {
+            efectos_actuales->reproducir_interaccion_animal(tipo_animal);
+        }
+    }
+
     ModoUso modo = clic_derecho ? ModoUso::SECUNDARIO : ModoUso::PRINCIPAL;
     usar_item(INDICE_RANURA_ACTIVA, modo, casilla);
 }
@@ -556,23 +581,37 @@ void VistaPartida::aplicar(const EventoServidor& evento, VistaChat& chat) {
     std::visit(
         ManejadoresPorTipo{
             [&](const EstadoJuego& e) {
+                const EstadoJugador* antes = jugador_propio();
+                bool tenia_monedas = antes != nullptr && estado.mapa == e.mapa;
+                uint32_t monedas_antes = antes != nullptr ? antes->monedas : 0;
                 olvidar_el_piso();
                 estado = e;
                 guardar_tierra(e);
+                const EstadoJugador* ahora = jugador_propio();
+                if (tenia_monedas && ahora != nullptr && ahora->monedas != monedas_antes &&
+                    efectos_actuales != nullptr) {
+                    efectos_actuales->reproducir_dinero();
+                }
             },
             [&](const JugadoresEnSector& e) {
                 const EstadoJugador* antes = jugador_propio();
-                const bool picaba = antes != nullptr && antes->accion_actual == TipoAccion::PICAR;
+                bool picaba = antes != nullptr && antes->accion_actual == TipoAccion::PICAR;
                 // Se copia antes de reemplazar la lista: "antes" apunta adentro de ella.
-                const bool antes_tenia_vida = antes != nullptr && estado.mapa == e.mapa;
-                const uint8_t vida_antes = antes != nullptr ? antes->vida : 0;
+                bool antes_tenia_vida = antes != nullptr && estado.mapa == e.mapa;
+                uint8_t vida_antes = antes != nullptr ? antes->vida : 0;
+                bool tenia_monedas = antes != nullptr && estado.mapa == e.mapa;
+                uint32_t monedas_antes = antes != nullptr ? antes->monedas : 0;
                 estado.mapa = e.mapa;
                 estado.jugadores = e.jugadores;
                 const EstadoJugador* ahora = jugador_propio();
-                const bool pica = ahora != nullptr && ahora->accion_actual == TipoAccion::PICAR;
+                bool pica = ahora != nullptr && ahora->accion_actual == TipoAccion::PICAR;
                 if (antes_tenia_vida && ahora != nullptr && ahora->vida < vida_antes &&
                     efectos_actuales != nullptr) {
                     efectos_actuales->reproducir_jugador_danio();
+                }
+                if (tenia_monedas && ahora != nullptr && ahora->monedas != monedas_antes &&
+                    efectos_actuales != nullptr) {
+                    efectos_actuales->reproducir_dinero();
                 }
                 if (pico_pendiente_desde_ms != 0 && !picaba && pica) {
                     pico_pendiente_desde_ms = 0;
@@ -674,6 +713,9 @@ void VistaPartida::aplicar(const EventoServidor& evento, VistaChat& chat) {
                     }
                 } else {
                     std::erase(estado.vacas_para_ordeniar, e.id_vaca);
+                    if (efectos_actuales != nullptr) {
+                        efectos_actuales->reproducir_ordenie_vaca();
+                    }
                 }
             },
             [&](const ActualizacionInventario& e) {

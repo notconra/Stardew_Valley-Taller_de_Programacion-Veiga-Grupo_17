@@ -229,7 +229,7 @@ TEST(Animales, ColisionesVacaOcupaDosPorDosYGallinaUnoPorUno) {
     EXPECT_FALSE(gestor.agregar_vaca(19, 19));
 }
 
-TEST(Animales, RutinaHorariaALasCincoPMQuietosYALasSietePMDuermen) {
+TEST(Animales, RutinaHorariaALasSietePMQuietosYALasOchoPMDuermen) {
     Colisiones colisiones = crear_colisiones_test();
     GestorDeAnimales gestor(colisiones);
     Jugadores jugadores = crear_jugadores_test(colisiones);
@@ -237,7 +237,7 @@ TEST(Animales, RutinaHorariaALasCincoPMQuietosYALasSietePMDuermen) {
     EXPECT_TRUE(gestor.agregar_gallina(15, 15));
 
     HoraDelJuego hora_tarde;
-    hora_tarde.hora = 17;
+    hora_tarde.hora = 19;
     hora_tarde.minuto = 0;
     gestor.actualizar(hora_tarde, 50, 50, jugadores);
 
@@ -251,7 +251,7 @@ TEST(Animales, RutinaHorariaALasCincoPMQuietosYALasSietePMDuermen) {
     EXPECT_FALSE(gallina->durmiendo);
 
     HoraDelJuego hora_noche;
-    hora_noche.hora = 19;
+    hora_noche.hora = 20;
     hora_noche.minuto = 0;
     gestor.actualizar(hora_noche, 50, 50, jugadores);
     EXPECT_TRUE(vaca->durmiendo);
