@@ -31,10 +31,12 @@ constexpr int MARGEN_DEL_TEXTO = 3;
 constexpr int SOMBRA_DEL_TEXTO = 1;
 constexpr int MARGEN_IZQUIERDO_DE_LA_FILA = 5;
 constexpr int LADO_DEL_ESTADO = 5;
-constexpr int LADO_DEL_ICONO_DE_REGALO = 14;
-constexpr int MARGEN_SUPERIOR_DEL_ICONO_DE_REGALO = 3;
+constexpr int LADO_DEL_ICONO_DE_REGALO = 11;
 constexpr int SEPARACION_ENTRE_ICONO_Y_TEXTO = 1;
 constexpr int MARGEN_DEL_ITEM_EN_LA_RANURA = 3;
+constexpr int LADO_DE_LA_IMAGEN_DE_RANURA = 64;
+constexpr int CENTRO_X_DE_LA_RANURA = 30;
+constexpr int CENTRO_Y_DE_LA_RANURA = 29;
 
 bool contiene(const SDL_Rect& rectangulo, int x, int y) {
     const SDL_Point punto{x, y};
@@ -318,12 +320,12 @@ void PanelDeRegalos::dibujar_barra(SDL_Renderer* renderer, const Datos& datos) c
         if (ranuras[i].cantidad == 0) {
             continue;
         }
-        const int margen = MARGEN_DEL_ITEM_EN_LA_RANURA * pixel;
-        const SDL_Rect item{
-            ranura.x + margen,
-            ranura.y + margen,
-            ranura.w - 2 * margen,
-            ranura.h - 2 * margen};
+        // El dibujo de la ranura no está centrado en su imagen de 64x64 (sobran
+        // columnas transparentes a la derecha), así que se centra el ítem a mano.
+        const int lado = ranura.w - 2 * MARGEN_DEL_ITEM_EN_LA_RANURA * pixel;
+        const int centro_x = ranura.x + ranura.w * CENTRO_X_DE_LA_RANURA / LADO_DE_LA_IMAGEN_DE_RANURA;
+        const int centro_y = ranura.y + ranura.h * CENTRO_Y_DE_LA_RANURA / LADO_DE_LA_IMAGEN_DE_RANURA;
+        const SDL_Rect item{centro_x - lado / 2, centro_y - lado / 2, lado, lado};
         iconos.dibujar(renderer, ranuras[i].tipo, ranuras[i].calidad, item);
     }
 
@@ -348,7 +350,7 @@ void PanelDeRegalos::dibujar_recibidos(SDL_Renderer* renderer, const Datos& dato
             const int lado = LADO_DEL_ICONO_DE_REGALO * pixel;
             const SDL_Rect icono{
                 fila.x + MARGEN_IZQUIERDO_DE_LA_FILA * pixel,
-                fila.y + MARGEN_SUPERIOR_DEL_ICONO_DE_REGALO * pixel,
+                fila.y + (fila.h - lado) / 2,
                 lado,
                 lado};
             iconos.dibujar(renderer, regalo.item.tipo, regalo.item.calidad, icono);
