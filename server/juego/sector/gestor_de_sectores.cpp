@@ -80,6 +80,24 @@ std::vector<DatosMuebleGuardado> GestorDeSectores::obtener_muebles_guardados() c
     return muebles;
 }
 
+void GestorDeSectores::cargar_animales_guardados(
+    const std::vector<DatosAnimalGuardado>& animales_guardados,
+    const std::vector<uint32_t>& vacas_para_ordeniar) {
+    auto sector_granja = sectores.find("granja");
+    if (sector_granja != sectores.end()) {
+        sector_granja->second.cargar_animales_guardados(animales_guardados, vacas_para_ordeniar);
+    }
+}
+
+std::vector<DatosAnimalGuardado> GestorDeSectores::obtener_animales_guardados() const {
+    std::vector<DatosAnimalGuardado> animales;
+    auto sector_granja = sectores.find("granja");
+    if (sector_granja != sectores.end()) {
+        sector_granja->second.agregar_animales_guardados_a(animales);
+    }
+    return animales;
+}
+
 bool GestorDeSectores::existe(const std::string& id_mapa) const {
     return sectores.contains(id_mapa);
 }
@@ -157,10 +175,11 @@ void GestorDeSectores::quitar(const Personaje& personaje) {
     difundir_jugadores(encontrado->first);
 }
 
-void GestorDeSectores::actualizar() {
+void GestorDeSectores::actualizar(const HoraDelJuego& hora) {
     for (auto& entrada : sectores) {
         Sector& sector = entrada.second;
         sector.jugadores.actualizar();
+        sector.actualizar(hora, notificador);
 
         for (int id_enemigo : sector.enemigos.actualizar()) {
             const Enemigo* enemigo = sector.enemigos.buscar(id_enemigo);
@@ -170,6 +189,12 @@ void GestorDeSectores::actualizar() {
                 sector.avisar(notificador, evento);
             }
         }
+    }
+}
+
+void GestorDeSectores::avanzar_dia() {
+    for (auto& entrada : sectores) {
+        entrada.second.avanzar_dia(notificador);
     }
 }
 
@@ -232,6 +257,7 @@ EstadoJuego GestorDeSectores::armar_instantanea(const std::string& id_mapa) cons
     sector.enemigos.agregar_a(estado);
     sector.trampas.agregar_a(estado);
     sector.tierra.agregar_a(estado.tierra);
+    sector.animales.agregar_a(estado);
     return estado;
 }
 

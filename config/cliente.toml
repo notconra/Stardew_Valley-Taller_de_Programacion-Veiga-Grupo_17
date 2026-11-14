@@ -507,6 +507,14 @@ ruta_ambiente = "Assets/sfx/ambiente.wav"
 ruta_caminar = "Assets/sfx/caminar.wav"
 ruta_accion = "Assets/sfx/pico_aire.wav"
 
+[sonido.animales]
+vaca = "Assets/sfx/vaca.wav"
+gallina = "Assets/sfx/gallina.wav"
+ordeniar = "Assets/sfx/ordeniar_vaca.wav"
+
+[sonido.dinero]
+contador = "Assets/sfx/dinero_contador.wav"
+
 [sonido.herramientas]
 espada = "Assets/sfx/espada.wav"
 pico = "Assets/sfx/pico_aire.wav"

@@ -2,6 +2,7 @@
 #define COLISIONES_H
 
 #include <cstddef>
+#include <map>
 #include <vector>
 
 #include "../geometria.h"
@@ -13,6 +14,7 @@ class Colisiones {
 private:
     const Mapa& mapa;
     std::vector<bool> ocupadas;  // casillas con algo colocado, fila por fila
+    std::map<uint32_t, Rectangulo> obstaculos;
 
     std::size_t indice(int columna, int fila) const;
 
@@ -37,6 +39,9 @@ public:
     // casilla está fuera del mapa.
     void colocar(int columna, int fila);
     void eliminar(int columna, int fila);
+
+    void colocar_obstaculo(uint32_t id, const Rectangulo& rectangulo);
+    void eliminar_obstaculo(uint32_t id);
 
     Colisiones(const Colisiones&) = delete;
     Colisiones& operator=(const Colisiones&) = delete;

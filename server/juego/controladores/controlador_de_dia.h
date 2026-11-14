@@ -103,6 +103,13 @@ public:
     // Al retomar una partida guardada: arranca a las 6 am de ese día.
     void continuar_en_el_dia(uint32_t dia);
 
+    // Avanza al día siguiente (a las 6:00 am) actualizando animales y producción sin mover a los
+    // jugadores.
+    void avanzar_dia();
+
+    // Avanza el reloj la cantidad de minutos indicada y notifica a los jugadores.
+    void avanzar_minutos(uint32_t minutos);
+
     // Si desde la última vez que se preguntó terminó un día (todos dieron el OK). Devuelve true
     // una sola vez por día terminado: es el aviso para guardar la partida.
     bool tomar_dia_terminado();

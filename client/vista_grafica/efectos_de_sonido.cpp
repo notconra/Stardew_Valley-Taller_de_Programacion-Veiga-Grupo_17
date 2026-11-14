@@ -5,20 +5,22 @@
 #include <filesystem>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace {
 constexpr int VOLUMEN_PASOS = 50;
 }  // namespace
 
-EfectosDeSonido::EfectosDeSonido(const ConfiguracionSonido& configuracion):
-    ruta_ambiente_general(configuracion.ruta_ambiente),
-    ruta_paso_general(configuracion.ruta_caminar) {
+EfectosDeSonido::EfectosDeSonido(const ConfiguracionSonido& configuracion)
+    : ruta_ambiente_general(configuracion.ruta_ambiente),
+      ruta_paso_general(configuracion.ruta_caminar) {
     Mix_ReserveChannels(1);
     accion = cargar(configuracion.ruta_accion);
     for (const auto& [item, ruta] : configuracion.rutas_de_uso) {
         sonido_de_uso[item] = cargar(ruta);
     }
-    pico_golpe = configuracion.ruta_pico_golpe.empty() ? nullptr : cargar(configuracion.ruta_pico_golpe);
+    pico_golpe =
+        configuracion.ruta_pico_golpe.empty() ? nullptr : cargar(configuracion.ruta_pico_golpe);
     pico_rotura =
         configuracion.ruta_pico_rotura.empty() ? nullptr : cargar(configuracion.ruta_pico_rotura);
     for (const auto& [tipo, rutas] : configuracion.sonidos_de_enemigos) {
@@ -26,9 +28,10 @@ EfectosDeSonido::EfectosDeSonido(const ConfiguracionSonido& configuracion):
         sonidos.golpe = rutas.ruta_golpe.empty() ? nullptr : cargar(rutas.ruta_golpe);
         sonidos.muerte = rutas.ruta_muerte.empty() ? nullptr : cargar(rutas.ruta_muerte);
         sonidos.danio = rutas.ruta_danio.empty() ? nullptr : cargar(rutas.ruta_danio);
-        sonidos.aparicion = rutas.ruta_aparicion.empty() || !std::filesystem::exists(rutas.ruta_aparicion)
-                                ? nullptr
-                                : cargar(rutas.ruta_aparicion);
+        sonidos.aparicion =
+            rutas.ruta_aparicion.empty() || !std::filesystem::exists(rutas.ruta_aparicion)
+                ? nullptr
+                : cargar(rutas.ruta_aparicion);
     }
     trampa_activada = configuracion.ruta_trampa_activada.empty()
                           ? nullptr
@@ -36,6 +39,18 @@ EfectosDeSonido::EfectosDeSonido(const ConfiguracionSonido& configuracion):
     jugador_danio = configuracion.ruta_jugador_danio.empty()
                         ? nullptr
                         : cargar(configuracion.ruta_jugador_danio);
+    vaca = configuracion.ruta_vaca.empty() ? nullptr : cargar(configuracion.ruta_vaca);
+    if (vaca != nullptr) {
+        Mix_VolumeChunk(vaca, VOLUMEN_ANIMALES);
+    }
+    gallina = configuracion.ruta_gallina.empty() ? nullptr : cargar(configuracion.ruta_gallina);
+    if (gallina != nullptr) {
+        Mix_VolumeChunk(gallina, VOLUMEN_ANIMALES);
+    }
+    ordeniar_vaca = configuracion.ruta_ordeniar_vaca.empty()
+                        ? nullptr
+                        : cargar(configuracion.ruta_ordeniar_vaca);
+    dinero = configuracion.ruta_dinero.empty() ? nullptr : cargar(configuracion.ruta_dinero);
     cambiar_paso("");
 }
 
@@ -85,6 +100,58 @@ void EfectosDeSonido::reproducir_trampa_activada() const {
 
 void EfectosDeSonido::reproducir_jugador_danio() const {
     reproducir(jugador_danio);
+}
+
+void EfectosDeSonido::reproducir_dinero() const {
+    reproducir(dinero);
+}
+
+void EfectosDeSonido::reproducir_ordenie_vaca() const {
+    reproducir(ordeniar_vaca);
+}
+
+void EfectosDeSonido::reproducir_interaccion_animal(TipoAnimal tipo) {
+    uint32_t ahora = SDL_GetTicks();
+    if (ultimo_sonido_interaccion_animal_ms != 0 &&
+        ahora - ultimo_sonido_interaccion_animal_ms < COOLDOWN_INTERACCION_ANIMAL_MS) {
+        return;
+    }
+    ultimo_sonido_interaccion_animal_ms = ahora;
+    if (tipo == TipoAnimal::VACA) {
+        reproducir(vaca);
+    } else if (tipo == TipoAnimal::GALLINA) {
+        reproducir(gallina);
+    }
+}
+
+void EfectosDeSonido::actualizar_ambiente_animales(
+    uint32_t ahora, const std::vector<TipoAnimal>& animales_cercanos) {
+    if (proximo_sonido_animal_ms == 0) {
+        std::uniform_int_distribution<uint32_t> distribucion_intervalo(
+            INTERVALO_MINIMO_SONIDO_ANIMAL_MS,
+            INTERVALO_MINIMO_SONIDO_ANIMAL_MS + VARIACION_INTERVALO_SONIDO_ANIMAL_MS);
+        proximo_sonido_animal_ms = ahora + distribucion_intervalo(generador_azar);
+        return;
+    }
+    if (ahora < proximo_sonido_animal_ms) {
+        return;
+    }
+    std::uniform_int_distribution<uint32_t> distribucion_intervalo(
+        INTERVALO_MINIMO_SONIDO_ANIMAL_MS,
+        INTERVALO_MINIMO_SONIDO_ANIMAL_MS + VARIACION_INTERVALO_SONIDO_ANIMAL_MS);
+    proximo_sonido_animal_ms = ahora + distribucion_intervalo(generador_azar);
+
+    if (animales_cercanos.empty()) {
+        return;
+    }
+    std::uniform_int_distribution<size_t> distribucion_indice(0, animales_cercanos.size() - 1);
+    size_t indice_aleatorio = distribucion_indice(generador_azar);
+    TipoAnimal tipo_elegido = animales_cercanos[indice_aleatorio];
+    if (tipo_elegido == TipoAnimal::VACA) {
+        reproducir(vaca);
+    } else if (tipo_elegido == TipoAnimal::GALLINA) {
+        reproducir(gallina);
+    }
 }
 
 void EfectosDeSonido::reproducir_paso() const {

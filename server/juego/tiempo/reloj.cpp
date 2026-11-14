@@ -1,5 +1,6 @@
 #include "reloj.h"
 
+#include <algorithm>
 #include <cmath>
 #include <stdexcept>
 
@@ -74,4 +75,11 @@ void Reloj::continuar_en_el_dia(uint32_t dia_guardado) {
     }
     ticks_del_dia = 0;
     dia = dia_guardado;
+}
+
+void Reloj::avanzar_minutos(uint32_t minutos_a_avanzar) {
+    uint64_t minutos_del_dia = static_cast<uint64_t>(HORAS_POR_DIA) * MINUTOS_POR_HORA;
+    uint64_t ticks_adicionales =
+        static_cast<uint64_t>(minutos_a_avanzar) * ticks_por_dia / minutos_del_dia;
+    ticks_del_dia = std::min(ticks_del_dia + ticks_adicionales, ticks_por_dia);
 }

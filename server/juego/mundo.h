@@ -92,11 +92,21 @@ public:
     std::vector<DatosMapaGuardado> obtener_mapas_guardados() const;
     std::vector<DatosCofreGuardado> obtener_cofres_guardados() const;
     std::vector<DatosMuebleGuardado> obtener_muebles_guardados() const;
+    std::vector<DatosAnimalGuardado> obtener_animales_guardados() const;
+    std::vector<uint32_t> obtener_ids_vacas_listas_para_ordeniar() const;
     uint32_t obtener_dia() const;
 
     // Si terminó un día desde la última vez que se preguntó (todos dieron el OK). Es cuando hay
     // que guardar la partida; devuelve true una sola vez por día.
     bool tomar_dia_terminado();
+
+    // Comandos de prueba y cheats de animales / tiempo
+    bool agregar_vaca_en_granja_cerca(uint32_t id_jugador);
+    bool agregar_gallina_en_granja_cerca(uint32_t id_jugador);
+    std::string estado_animales_granja() const;
+    void avanzar_dia();
+    void avanzar_minutos(uint32_t minutos);
+    HoraDelJuego hora_actual() const;
 
     Mundo(const Mundo&) = delete;
     Mundo& operator=(const Mundo&) = delete;

@@ -200,6 +200,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     ObjetosGraficos objetos(renderizador.ptr(), graficos, iconos);
     EnemigosGraficos enemigos(renderizador.ptr(), graficos);
     TrampasGraficas trampas(renderizador.ptr(), graficos);
+    AnimalesGraficos animales(renderizador.ptr(), graficos);
     VisionMazmorra vision_mazmorra(
         configuracion.graficos.radio_vision_mazmorra,
         configuracion.graficos.tamano_pixel_vision_mazmorra,
@@ -298,6 +299,19 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         hud.actualizar(ultimo_inventario, ultimo_cofre);
         procesar_entrada(entrada, hud, camara, consumo_del_chat);
         consultar_el_piso_si_cambio(entrada, hud, camara);
+        if (mapa_actual == "granja" && propio != nullptr && efectos_actuales != nullptr) {
+            int tamano_tile = std::max(1, configuracion.graficos.tamano_de_tile);
+            uint32_t columna_jugador =
+                static_cast<uint32_t>(static_cast<int>(propio->x) / tamano_tile);
+            uint32_t fila_jugador =
+                static_cast<uint32_t>(static_cast<int>(propio->y) / tamano_tile);
+            std::vector<TipoAnimal> cercanos = AnimalesGraficos::obtener_despiertos_cercanos(
+                ultimo_estado_juego.animales,
+                columna_jugador,
+                fila_jugador,
+                CASILLAS_AUDICION_ANIMAL);
+            efectos_actuales->actualizar_ambiente_animales(inicio_del_cuadro, cercanos);
+        }
         if (chat.esta_escribiendo() || ultimo_cofre.abierto) {
             enviar_intencion_si_cambio(Moverse{});
         } else {
@@ -311,6 +325,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             objetos,
             enemigos,
             trampas,
+            animales,
             personaje,
             iconos,
             tierra,
@@ -465,6 +480,18 @@ void VistaPartida::procesar_clic(
         return;
     }
 
+    if (clic_derecho && efectos_actuales != nullptr) {
+        TipoAnimal tipo_animal = TipoAnimal::VACA;
+        if (AnimalesGraficos::buscar_animal_despierto(
+                ultimo_estado_juego.animales,
+                ultimo_estado_juego.vacas_para_ordeniar,
+                casilla->columna,
+                casilla->fila,
+                tipo_animal)) {
+            efectos_actuales->reproducir_interaccion_animal(tipo_animal);
+        }
+    }
+
     ModoUso modo = clic_derecho ? ModoUso::SECUNDARIO : ModoUso::PRINCIPAL;
     usar_item(INDICE_RANURA_ACTIVA, modo, casilla);
 }
@@ -554,23 +581,37 @@ void VistaPartida::aplicar(const EventoServidor& evento, VistaChat& chat) {
     std::visit(
         ManejadoresPorTipo{
             [&](const EstadoJuego& e) {
+                const EstadoJugador* antes = jugador_propio();
+                bool tenia_monedas = antes != nullptr && estado.mapa == e.mapa;
+                uint32_t monedas_antes = antes != nullptr ? antes->monedas : 0;
                 olvidar_el_piso();
                 estado = e;
                 guardar_tierra(e);
+                const EstadoJugador* ahora = jugador_propio();
+                if (tenia_monedas && ahora != nullptr && ahora->monedas != monedas_antes &&
+                    efectos_actuales != nullptr) {
+                    efectos_actuales->reproducir_dinero();
+                }
             },
             [&](const JugadoresEnSector& e) {
                 const EstadoJugador* antes = jugador_propio();
-                const bool picaba = antes != nullptr && antes->accion_actual == TipoAccion::PICAR;
+                bool picaba = antes != nullptr && antes->accion_actual == TipoAccion::PICAR;
                 // Se copia antes de reemplazar la lista: "antes" apunta adentro de ella.
-                const bool antes_tenia_vida = antes != nullptr && estado.mapa == e.mapa;
-                const uint8_t vida_antes = antes != nullptr ? antes->vida : 0;
+                bool antes_tenia_vida = antes != nullptr && estado.mapa == e.mapa;
+                uint8_t vida_antes = antes != nullptr ? antes->vida : 0;
+                bool tenia_monedas = antes != nullptr && estado.mapa == e.mapa;
+                uint32_t monedas_antes = antes != nullptr ? antes->monedas : 0;
                 estado.mapa = e.mapa;
                 estado.jugadores = e.jugadores;
                 const EstadoJugador* ahora = jugador_propio();
-                const bool pica = ahora != nullptr && ahora->accion_actual == TipoAccion::PICAR;
+                bool pica = ahora != nullptr && ahora->accion_actual == TipoAccion::PICAR;
                 if (antes_tenia_vida && ahora != nullptr && ahora->vida < vida_antes &&
                     efectos_actuales != nullptr) {
                     efectos_actuales->reproducir_jugador_danio();
+                }
+                if (tenia_monedas && ahora != nullptr && ahora->monedas != monedas_antes &&
+                    efectos_actuales != nullptr) {
+                    efectos_actuales->reproducir_dinero();
                 }
                 if (pico_pendiente_desde_ms != 0 && !picaba && pica) {
                     pico_pendiente_desde_ms = 0;
@@ -651,6 +692,32 @@ void VistaPartida::aplicar(const EventoServidor& evento, VistaChat& chat) {
                     *existente = e.trampa;
                 }
             },
+            [&](const AnimalActualizado& e) {
+                const auto existente = std::find_if(
+                    estado.animales.begin(),
+                    estado.animales.end(),
+                    [&e](const EstadoAnimal& otro) { return otro.id == e.animal.id; });
+                if (existente == estado.animales.end()) {
+                    estado.animales.push_back(e.animal);
+                } else {
+                    *existente = e.animal;
+                }
+            },
+            [&](const VacaOrdeniable& e) {
+                if (e.lista) {
+                    if (std::find(
+                            estado.vacas_para_ordeniar.begin(),
+                            estado.vacas_para_ordeniar.end(),
+                            e.id_vaca) == estado.vacas_para_ordeniar.end()) {
+                        estado.vacas_para_ordeniar.push_back(e.id_vaca);
+                    }
+                } else {
+                    std::erase(estado.vacas_para_ordeniar, e.id_vaca);
+                    if (efectos_actuales != nullptr) {
+                        efectos_actuales->reproducir_ordenie_vaca();
+                    }
+                }
+            },
             [&](const ActualizacionInventario& e) {
                 ultimo_inventario = e.inventario;
                 olvidar_el_piso();
@@ -721,10 +788,11 @@ bool VistaPartida::salir_de_partida_y_confirmar() {
 void VistaPartida::dibujar(
     Renderizador& renderizador, SDL_Texture* mundo, const MapaGrafico& mapa,
     const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos,
-    const TrampasGraficas& trampas, const Personaje& personaje, const IconosDeItems& iconos,
-    const TierraGrafica& tierra, const Camara& camara, const HudInventario& hud,
-    const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada, const VistaChat& chat,
-    RelojGrafico& reloj_grafico, const PantallaDeDescanso& pantalla_de_descanso) const {
+    const TrampasGraficas& trampas, const AnimalesGraficos& animales, const Personaje& personaje,
+    const IconosDeItems& iconos, const TierraGrafica& tierra, const Camara& camara,
+    const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
+    const EntradaDelUsuario& entrada, const VistaChat& chat, RelojGrafico& reloj_grafico,
+    const PantallaDeDescanso& pantalla_de_descanso) const {
     SDL_Renderer* renderer = renderizador.ptr();
     if (mundo != nullptr) {
         SDL_SetRenderTarget(renderer, mundo);
@@ -762,6 +830,7 @@ void VistaPartida::dibujar(
         int pie = 0;
         const EstadoJugador* jugador = nullptr;
         const EstadoObjetoDelMundo* objeto = nullptr;
+        const EstadoAnimal* animal = nullptr;
     };
     std::vector<Dibujable> dibujables;
     const int tamano_de_tile = configuracion.graficos.tamano_de_tile;
@@ -770,6 +839,7 @@ void VistaPartida::dibujar(
             dibujables.push_back(Dibujable{
                 static_cast<int>(jugador.y) + personaje.alto_del_sprite(),
                 &jugador,
+                nullptr,
                 nullptr});
         }
     }
@@ -781,8 +851,18 @@ void VistaPartida::dibujar(
         if (!capa.has_value() || *capa != CapaDeObjeto::CON_LOS_JUGADORES) {
             continue;
         }
-        dibujables.push_back(
-            Dibujable{(static_cast<int>(objeto.fila) + 1) * tamano_de_tile, nullptr, &objeto});
+        dibujables.push_back(Dibujable{
+            (static_cast<int>(objeto.fila) + 1) * tamano_de_tile,
+            nullptr,
+            &objeto,
+            nullptr});
+    }
+    if (mapa_actual == "granja") {
+        for (const EstadoAnimal& animal : ultimo_estado_juego.animales) {
+            int alto_casillas = (animal.tipo == TipoAnimal::VACA) ? 2 : 1;
+            int pie = (static_cast<int>(animal.fila) + alto_casillas) * tamano_de_tile;
+            dibujables.push_back(Dibujable{pie, nullptr, nullptr, &animal});
+        }
     }
     std::sort(
         dibujables.begin(),
@@ -813,6 +893,13 @@ void VistaPartida::dibujar(
                 iconos);
         } else if (dibujable.objeto != nullptr) {
             objetos.dibujar_objeto(renderer, *dibujable.objeto, camara.x(), camara.y());
+        } else if (dibujable.animal != nullptr) {
+            animales.dibujar_un_animal(
+                renderer,
+                ultimo_estado_juego,
+                *dibujable.animal,
+                camara.x(),
+                camara.y());
         }
     }
     mapa.dibujar_sobre_los_jugadores(renderer, camara.x(), camara.y());

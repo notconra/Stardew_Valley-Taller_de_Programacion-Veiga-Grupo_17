@@ -27,6 +27,8 @@ enum class TipoItem : uint8_t {
     ORO = 18,
     COFRE = 19,
     CAMA = 20,
+    LECHE = 21,
+    HUEVO = 22,
 };
 
 #endif

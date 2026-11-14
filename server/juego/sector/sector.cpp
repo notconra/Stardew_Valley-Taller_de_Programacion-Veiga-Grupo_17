@@ -119,6 +119,20 @@ void Sector::agregar_muebles_guardados_a(std::vector<DatosMuebleGuardado>& lista
     }
 }
 
+void Sector::agregar_animales_guardados_a(std::vector<DatosAnimalGuardado>& lista) const {
+    if (id == "granja") {
+        animales.agregar_animales_guardados_a(lista);
+    }
+}
+
+void Sector::cargar_animales_guardados(
+    const std::vector<DatosAnimalGuardado>& lista,
+    const std::vector<uint32_t>& vacas_para_ordeniar) {
+    if (id == "granja") {
+        animales.cargar_animales_guardados(lista, vacas_para_ordeniar);
+    }
+}
+
 int Sector::colocar_objeto(Notificador& notificador, TipoObjeto tipo, int columna, int fila) {
     const int id = objetos.colocar(tipo, columna, fila);
     if (id == 0) {
@@ -201,9 +215,80 @@ int Sector::soltar(
     return id;
 }
 
+void Sector::avanzar_dia(Notificador& notificador) {
+    animales.avanzar_dia(drops);
+    std::vector<uint32_t> ids_vacas = animales.obtener_ids_vacas_listas_para_ordeniar();
+    for (uint32_t id_vaca : ids_vacas) {
+        VacaOrdeniable evento;
+        evento.id_vaca = id_vaca;
+        evento.lista = true;
+        avisar(notificador, evento);
+    }
+}
+
+void Sector::avanzar_dia() {
+    animales.avanzar_dia(drops);
+}
+
+bool Sector::vaca_lista_en(uint32_t columna, uint32_t fila) const {
+    return animales.vaca_lista_en(columna, fila);
+}
+
+bool Sector::ordeniar_vaca(Notificador& notificador, uint32_t columna, uint32_t fila) {
+    uint32_t id_vaca = 0;
+    if (!animales.ordeniar_vaca_en(columna, fila, id_vaca)) {
+        return false;
+    }
+    VacaOrdeniable evento;
+    evento.id_vaca = id_vaca;
+    evento.lista = false;
+    avisar(notificador, evento);
+    return true;
+}
+
+bool Sector::agregar_vaca(Notificador& notificador, uint32_t columna, uint32_t fila) {
+    if (!animales.agregar_vaca(columna, fila)) {
+        return false;
+    }
+    const Vaca* vaca = animales.vaca_en(columna, fila);
+    if (vaca) {
+        AnimalActualizado evento;
+        evento.animal = GestorDeAnimales::estado_de(*vaca);
+        avisar(notificador, evento);
+    }
+    return true;
+}
+
+bool Sector::agregar_gallina(Notificador& notificador, uint32_t columna, uint32_t fila) {
+    if (!animales.agregar_gallina(columna, fila)) {
+        return false;
+    }
+    const Gallina* gallina = animales.gallina_en(columna, fila);
+    if (gallina) {
+        AnimalActualizado evento;
+        evento.animal = GestorDeAnimales::estado_de(*gallina);
+        avisar(notificador, evento);
+    }
+    return true;
+}
+
+void Sector::actualizar(const HoraDelJuego& hora, Notificador& notificador) {
+    if (id == "granja") {
+        std::vector<EstadoAnimal> actualizados = animales.actualizar(
+            hora,
+            mapa.cantidad_de_columnas(),
+            mapa.cantidad_de_filas(),
+            jugadores);
+        for (const auto& animal : actualizados) {
+            AnimalActualizado evento;
+            evento.animal = animal;
+            avisar(notificador, evento);
+        }
+    }
+}
+
 int Sector::aparecer_grupo_persiguiendo(
-    Notificador& notificador, uint32_t id_jugador, int distancia, int cantidad,
-    TipoEnemigo tipo) {
+    Notificador& notificador, uint32_t id_jugador, int distancia, int cantidad, TipoEnemigo tipo) {
     const std::optional<Casilla> origen = jugadores.casilla_del_jugador(id_jugador);
     if (!origen.has_value() || cantidad <= 0) {
         return 0;
@@ -217,7 +302,8 @@ int Sector::aparecer_grupo_persiguiendo(
     }
     const auto lejania = [&origen](const Casilla& casilla) {
         return std::max(
-            std::abs(casilla.columna - origen->columna), std::abs(casilla.fila - origen->fila));
+            std::abs(casilla.columna - origen->columna),
+            std::abs(casilla.fila - origen->fila));
     };
     const auto se_puede_aparecer = [&](const Casilla& casilla) {
         return enemigos.enemigo_vivo_en(casilla.columna, casilla.fila) == nullptr &&
@@ -256,8 +342,8 @@ int Sector::aparecer_grupo_persiguiendo(
     if (candidatas.empty()) {
         return 0;
     }
-    const Casilla ancla = candidatas[static_cast<size_t>(
-        Azar::entero(0, static_cast<int>(candidatas.size()) - 1))];
+    const Casilla ancla =
+        candidatas[static_cast<size_t>(Azar::entero(0, static_cast<int>(candidatas.size()) - 1))];
     std::sort(candidatas.begin(), candidatas.end(), [&ancla](const Casilla& a, const Casilla& b) {
         const auto d = [&ancla](const Casilla& c) {
             return std::abs(c.columna - ancla.columna) + std::abs(c.fila - ancla.fila);

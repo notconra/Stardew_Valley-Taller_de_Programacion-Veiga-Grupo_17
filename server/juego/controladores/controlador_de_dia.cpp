@@ -194,6 +194,7 @@ void ControladorDelDia::terminar_el_dia() {
             despertar(personaje);
         }
     }
+    sectores.avanzar_dia();
     notificador.a_todos(reloj.hora());
 }
 
@@ -271,6 +272,25 @@ HoraDelJuego ControladorDelDia::hora() const {
 
 void ControladorDelDia::continuar_en_el_dia(uint32_t dia) {
     reloj.continuar_en_el_dia(dia);
+}
+
+void ControladorDelDia::avanzar_dia() {
+    reloj.empezar_dia_siguiente();
+    for (auto& [id_jugador, personaje] : personajes) {
+        if (personaje.conectado) {
+            personaje.vida = Personaje::VIDA_MAXIMA;
+            personaje.energia = Personaje::ENERGIA_MAXIMA;
+            personaje.descanso = EstadoDeDescanso::DESPIERTO;
+            personaje.dio_el_ok = false;
+        }
+    }
+    sectores.avanzar_dia();
+    notificador.a_todos(reloj.hora());
+}
+
+void ControladorDelDia::avanzar_minutos(uint32_t minutos) {
+    reloj.avanzar_minutos(minutos);
+    notificador.a_todos(reloj.hora());
 }
 
 bool ControladorDelDia::tomar_dia_terminado() {

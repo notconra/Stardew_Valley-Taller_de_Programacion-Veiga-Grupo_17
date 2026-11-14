@@ -11,6 +11,7 @@
 #include "../../common/modo_uso.h"
 #include "../configuracion/configuracion_cliente_datos.h"
 #include "../red/conexion_con_servidor.h"
+#include "animales_graficos.h"
 #include "camara.h"
 #include "chat/vista_chat.h"
 #include "cursor_del_juego.h"
@@ -125,6 +126,7 @@ private:
     // en MS_ESPERA_SONIDO_PICO). 0: no hay ninguno pendiente.
     uint32_t pico_pendiente_desde_ms = 0;
     static constexpr uint32_t MS_ESPERA_SONIDO_PICO = 200;
+    static constexpr int CASILLAS_AUDICION_ANIMAL = 10;
     uint32_t ultimo_paso_ms = 0;
     EfectosDeSonido* efectos_actuales = nullptr;
 
@@ -148,10 +150,10 @@ private:
     void dibujar(
         Renderizador& renderizador, SDL_Texture* mundo, const MapaGrafico& mapa,
         const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos,
-        const TrampasGraficas& trampas, const Personaje& personaje, const IconosDeItems& iconos,
-        const TierraGrafica& tierra, const Camara& camara, const HudInventario& hud,
-        const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada,
-        const VistaChat& chat, RelojGrafico& reloj_grafico,
+        const TrampasGraficas& trampas, const AnimalesGraficos& animales,
+        const Personaje& personaje, const IconosDeItems& iconos, const TierraGrafica& tierra,
+        const Camara& camara, const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
+        const EntradaDelUsuario& entrada, const VistaChat& chat, RelojGrafico& reloj_grafico,
         const PantallaDeDescanso& pantalla_de_descanso) const;
 
 public:

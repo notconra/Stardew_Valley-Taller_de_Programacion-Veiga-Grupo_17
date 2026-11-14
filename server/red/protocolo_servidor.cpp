@@ -188,6 +188,8 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const DropRetirado& e) { enviar_evento_drop_retirado(e); },
             [this](const EnemigoActualizado& e) { enviar_evento_enemigo_actualizado(e); },
             [this](const TrampaActualizada& e) { enviar_evento_trampa_actualizada(e); },
+            [this](const AnimalActualizado& e) { enviar_evento_animal_actualizado(e); },
+            [this](const VacaOrdeniable& e) { enviar_evento_vaca_ordeniable(e); },
             [this](const TierraCambiada& e) { enviar_evento_tierra_cambiada(e); },
             [this](const HoraDelJuego& e) { enviar_evento_hora_del_juego(e); },
             [this](const CasillaConsultada& e) { enviar_evento_casilla_consultada(e); },
@@ -299,6 +301,17 @@ void ProtocoloServidor::enviar_estado_trampa(const EstadoTrampa& estado) {
     enviar_booleano(estado.activa);
 }
 
+void ProtocoloServidor::enviar_estado_animal(const EstadoAnimal& estado) {
+    enviar_u32(estado.id);
+    enviar_u8(static_cast<uint8_t>(estado.tipo));
+    enviar_u8(estado.variante);
+    enviar_u32(estado.columna);
+    enviar_u32(estado.fila);
+    enviar_u8(static_cast<uint8_t>(estado.mirando));
+    enviar_booleano(estado.caminando);
+    enviar_booleano(estado.durmiendo);
+}
+
 void ProtocoloServidor::enviar_casilla_tratada(const CasillaTratada& casilla) {
     enviar_u32(casilla.columna);
     enviar_u32(casilla.fila);
@@ -367,6 +380,14 @@ void ProtocoloServidor::enviar_estado_juego(const EstadoJuego& estado_juego) {
     for (const EstadoTrampa& trampa : estado_juego.trampas) {
         enviar_estado_trampa(trampa);
     }
+    enviar_largo(estado_juego.animales.size());
+    for (const EstadoAnimal& estado : estado_juego.animales) {
+        enviar_estado_animal(estado);
+    }
+    enviar_largo(estado_juego.vacas_para_ordeniar.size());
+    for (uint32_t id_vaca : estado_juego.vacas_para_ordeniar) {
+        enviar_u32(id_vaca);
+    }
 }
 
 void ProtocoloServidor::enviar_evento_jugadores_en_sector(const JugadoresEnSector& jugadores) {
@@ -410,6 +431,17 @@ void ProtocoloServidor::enviar_evento_enemigo_actualizado(const EnemigoActualiza
 void ProtocoloServidor::enviar_evento_trampa_actualizada(const TrampaActualizada& trampa) {
     enviar_tipo(TipoMensaje::TRAMPA_ACTUALIZADA);
     enviar_estado_trampa(trampa.trampa);
+}
+
+void ProtocoloServidor::enviar_evento_animal_actualizado(const AnimalActualizado& animal) {
+    enviar_tipo(TipoMensaje::ANIMAL_ACTUALIZADO);
+    enviar_estado_animal(animal.animal);
+}
+
+void ProtocoloServidor::enviar_evento_vaca_ordeniable(const VacaOrdeniable& vaca) {
+    enviar_tipo(TipoMensaje::VACA_ORDENIABLE);
+    enviar_u32(vaca.id_vaca);
+    enviar_booleano(vaca.lista);
 }
 
 void ProtocoloServidor::enviar_evento_tierra_cambiada(const TierraCambiada& tierra) {

@@ -50,6 +50,11 @@ public:
     void cargar_muebles_guardados(const std::vector<DatosMuebleGuardado>& muebles_guardados);
     std::vector<DatosMuebleGuardado> obtener_muebles_guardados() const;
 
+    void cargar_animales_guardados(
+        const std::vector<DatosAnimalGuardado>& animales_guardados,
+        const std::vector<uint32_t>& vacas_para_ordeniar);
+    std::vector<DatosAnimalGuardado> obtener_animales_guardados() const;
+
     bool existe(const std::string& id_mapa) const;
 
     // Los ids de todos los mapas con sector, para quien necesite recorrerlos todos (por ejemplo,
@@ -79,7 +84,10 @@ public:
     void quitar(const Personaje& personaje);
 
     // Un tick de física en todos los sectores.
-    void actualizar();
+    void actualizar(const HoraDelJuego& hora);
+
+    // Notifica el avance de un día a todos los sectores.
+    void avanzar_dia();
 
     // Quién está pisando una transición, en cualquier sector. Se llama después de actualizar().
     std::vector<JugadorEnTransicion> jugadores_en_transicion() const;

@@ -14,6 +14,7 @@
 #include "../modo_uso.h"
 #include "../ranura_inventario.h"
 #include "../tipo_accion.h"
+#include "../tipo_animal.h"
 #include "../tipo_enemigo.h"
 #include "../tipo_item.h"
 #include "../tipo_objeto.h"
@@ -218,6 +219,35 @@ struct CasillaTratada {
     bool operator==(const CasillaTratada&) const = default;
 };
 
+// Un animal de granja colocado en el mapa (vaca, gallina).
+struct EstadoAnimal {
+    uint32_t id = 0;
+    TipoAnimal tipo = TipoAnimal::VACA;
+    uint8_t variante = 0;
+    uint32_t columna = 0;
+    uint32_t fila = 0;
+    Direccion mirando = Direccion::ABAJO;
+    bool caminando = false;
+    bool durmiendo = false;
+
+    bool operator==(const EstadoAnimal&) const = default;
+};
+
+// Evento cuando cambia el estado, posición o dirección de un animal en el sector
+struct AnimalActualizado {
+    EstadoAnimal animal;
+
+    bool operator==(const AnimalActualizado&) const = default;
+};
+
+// Notificación cuando una vaca queda lista para ordeñar o cuando se completa su ordeñe
+struct VacaOrdeniable {
+    uint32_t id_vaca = 0;
+    bool lista = false;
+
+    bool operator==(const VacaOrdeniable&) const = default;
+};
+
 // Snapshot completa de UN sector. Se manda una sola vez cuando el jugador entra o cambia de
 // sector. Después, los cambios llegan como eventos.
 struct EstadoJuego {
@@ -228,6 +258,8 @@ struct EstadoJuego {
     std::vector<EstadoEnemigo> enemigos;
     std::vector<CasillaTratada> tierra;
     std::vector<EstadoTrampa> trampas;
+    std::vector<EstadoAnimal> animales;
+    std::vector<uint32_t> vacas_para_ordeniar;
 };
 
 // Posición y estado de todos los jugadores del sector del receptor. Se manda cada tick, pero solo

@@ -10,6 +10,7 @@
 #include "../acciones/accion_colocar.h"
 #include "../acciones/accion_dormir.h"
 #include "../acciones/accion_interactuar_cofre.h"
+#include "../acciones/accion_ordeniar_vaca.h"
 #include "../acciones/accion_picar.h"
 #include "../acciones/accion_tratar_tierra.h"
 #include "../acciones/accion_usar_transicion.h"
@@ -28,6 +29,7 @@ ControladorDeAcciones::ControladorDeAcciones(
 
     acciones.push_back(std::make_unique<AccionUsarTransicion>());
     acciones.push_back(std::make_unique<AccionDormir>(camas_ocupadas));
+    acciones.push_back(std::make_unique<AccionOrdeniarVaca>());
     acciones.push_back(std::make_unique<AccionPicar>(
         camas_ocupadas,
         static_cast<uint16_t>(duraciones.duracion_picar_en_ticks)));
@@ -35,8 +37,8 @@ ControladorDeAcciones::ControladorDeAcciones(
         static_cast<uint16_t>(duraciones.duracion_tratar_tierra_en_ticks)));
     acciones.push_back(std::make_unique<AccionInteractuarCofre>());
     acciones.push_back(std::make_unique<AccionColocar>());
-    acciones.push_back(std::make_unique<AccionAtacar>(
-        static_cast<uint16_t>(duraciones.duracion_atacar_en_ticks)));
+    acciones.push_back(
+        std::make_unique<AccionAtacar>(static_cast<uint16_t>(duraciones.duracion_atacar_en_ticks)));
 }
 
 bool ControladorDeAcciones::al_alcance(

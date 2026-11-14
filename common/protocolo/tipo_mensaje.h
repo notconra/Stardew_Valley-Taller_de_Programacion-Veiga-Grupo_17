@@ -66,6 +66,12 @@ enum class TipoMensaje : uint8_t {
 
     // Una trampa de la mazmorra que se activó o se desactivó
     TRAMPA_ACTUALIZADA = 0x95,
+
+    // Actualización de estado o posición de un animal
+    ANIMAL_ACTUALIZADO = 0x96,
+
+    // Cambio en la disponibilidad de leche de una vaca
+    VACA_ORDENIABLE = 0x97,
 };
 
 #endif
