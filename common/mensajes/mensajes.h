@@ -31,7 +31,10 @@ using ComandoCliente = std::variant<
     EnviarMensajeDeChat,
 
     // Regalos
-    EnviarRegalo, AbrirRegalos>;
+    EnviarRegalo, AbrirRegalos,
+
+    // Centro comunitario
+    DonarAlLote, DonarMonedasAlLote>;
 
 using EventoServidor = std::variant<
     // Error
@@ -63,6 +66,9 @@ using EventoServidor = std::variant<
     MensajeDeChat,
 
     // - Regalos
-    JugadoresDeLaPartida, RegalosPendientes>;
+    JugadoresDeLaPartida, RegalosPendientes,
+
+    // - Centro comunitario
+    LoteDelCentro>;
 
 #endif

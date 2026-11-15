@@ -31,6 +31,8 @@ enum class TipoMensaje : uint8_t {
     ELIMINAR_PARTIDA = 0x15,
     ENVIAR_REGALO = 0x16,
     ABRIR_REGALOS = 0x17,
+    DONAR_AL_LOTE = 0x18,
+    DONAR_MONEDAS_AL_LOTE = 0x19,
 
     // Servidor a cliente
     ERROR_SERVIDOR = 0x81,
@@ -78,6 +80,9 @@ enum class TipoMensaje : uint8_t {
 
     // Cambio en la disponibilidad de leche de una vaca
     VACA_ORDENIABLE = 0x99,
+
+    // Estado de un lote del centro comunitario (al abrirlo o cuando cambia)
+    LOTE_DEL_CENTRO = 0x9A,
 };
 
 #endif

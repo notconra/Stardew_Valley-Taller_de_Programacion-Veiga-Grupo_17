@@ -14,4 +14,12 @@ enum class TipoLote : uint8_t {
 
 #define CANTIDAD_DE_LOTES 5
 
+// Qué hay que hacer para cumplir una parte de un lote: donar un ítem (con una calidad mínima),
+// donar monedas o conseguir un logro de pelea.
+enum class TipoDeRequisito : uint8_t {
+    ITEM = 0,
+    DINERO = 1,
+    LOGRO = 2,
+};
+
 #endif
