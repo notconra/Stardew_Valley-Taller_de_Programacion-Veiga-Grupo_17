@@ -195,6 +195,50 @@ firstgid = 4353
 columnas = 16
 
 [[mapas]]
+id = "centro_comunitario"
+ruta = "Assets/Maps/CommunityCenter_Ruins.tmx"
+capas_bajo_los_jugadores = ["Back", "Buildings"]
+capas_sobre_los_jugadores = ["Front"]
+ruta_caminar = "Assets/sfx/caminar_casa.wav"
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/townInterior.png"
+firstgid = 1
+columnas = 32
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/townInterior_2.png"
+firstgid = 2177
+columnas = 32
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/paths.png"
+firstgid = 3489
+columnas = 4
+
+[[mapas]]
+id = "centro_comunitario_arreglado"
+ruta = "Assets/Maps/CommunityCenter_Refurbished.tmx"
+capas_bajo_los_jugadores = ["Back", "Buildings"]
+capas_sobre_los_jugadores = ["Front"]
+ruta_caminar = "Assets/sfx/caminar_casa.wav"
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/townInterior.png"
+firstgid = 1
+columnas = 32
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/townInterior_2.png"
+firstgid = 2177
+columnas = 32
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/paths.png"
+firstgid = 3489
+columnas = 4
+
+[[mapas]]
 id = "mina_1"
 ruta = "Assets/Maps/Mines/1.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings"]
