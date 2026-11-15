@@ -15,6 +15,7 @@
 #include "camara.h"
 #include "chat/vista_chat.h"
 #include "cuadro_de_aviso.h"
+#include "cuadro_de_dialogo.h"
 #include "cultivos_graficos.h"
 #include "cursor_del_juego.h"
 #include "efecto_de_riego.h"
@@ -26,6 +27,7 @@
 #include "iconos_de_items.h"
 #include "mapa_grafico.h"
 #include "marcador_de_casillas.h"
+#include "npcs_graficos.h"
 #include "objetos_graficos.h"
 #include "panel_de_regalos.h"
 #include "pantalla_de_descanso.h"
@@ -151,16 +153,20 @@ private:
     void usar_item(uint8_t ranura, ModoUso modo, const std::optional<Casilla>& casilla);
     void procesar_entrada(
         const EntradaDelUsuario& entrada, HudInventario& hud, HudMercado& hud_mercado,
-        PanelDeRegalos& regalos, CuadroDeAviso& cuadro_de_aviso, const Camara& camara,
+        PanelDeRegalos& regalos, const NpcsGraficos& npcs, CuadroDeAviso& cuadro_de_aviso,
+        CuadroDeDialogo& cuadro_de_dialogo, const Camara& camara,
         const VistaChat::ConsumoDeEntrada& consumo_del_chat);
     void elegir_ranura_de_la_barra(const EntradaDelUsuario::Pedidos& pedidos);
     void procesar_clic(
         const EntradaDelUsuario& entrada, HudInventario& hud, HudMercado& hud_mercado,
-        PanelDeRegalos& regalos, const Camara& camara, bool clic_derecho, bool con_shift);
-    bool recibir_eventos(VistaChat& chat, HudMercado& hud_mercado, CuadroDeAviso& cuadro_de_aviso);
+        PanelDeRegalos& regalos, const NpcsGraficos& npcs, const Camara& camara, bool clic_derecho,
+        bool con_shift);
+    bool recibir_eventos(
+        VistaChat& chat, HudMercado& hud_mercado, CuadroDeAviso& cuadro_de_aviso,
+        CuadroDeDialogo& cuadro_de_dialogo);
     void aplicar(
         const EventoServidor& evento, VistaChat& chat, HudMercado& hud_mercado,
-        CuadroDeAviso& cuadro_de_aviso);
+        CuadroDeAviso& cuadro_de_aviso, CuadroDeDialogo& cuadro_de_dialogo);
     bool salir_de_partida_y_confirmar();
 
     // "mundo" es la textura donde se dibuja el mundo cuando hay zoom extra, o nullptr si se
@@ -168,14 +174,14 @@ private:
     void dibujar(
         Renderizador& renderizador, SDL_Texture* mundo, const MapaGrafico& mapa,
         const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos,
-        const TrampasGraficas& trampas, const AnimalesGraficos& animales,
+        const TrampasGraficas& trampas, const AnimalesGraficos& animales, const NpcsGraficos& npcs,
         const Personaje& personaje, const IconosDeItems& iconos, const TierraGrafica& tierra,
         const CultivosGraficos& cultivos, const EfectoDeRiego& efecto_de_riego,
         const Camara& camara, const HudInventario& hud, const HudMercado& hud_mercado,
         const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada,
         const VistaChat& chat, RelojGrafico& reloj_grafico,
         const PantallaDeDescanso& pantalla_de_descanso, const PanelDeRegalos& regalos,
-        const CuadroDeAviso& cuadro_de_aviso) const;
+        const CuadroDeAviso& cuadro_de_aviso, const CuadroDeDialogo&) const;
 
 public:
     VistaPartida(ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion);

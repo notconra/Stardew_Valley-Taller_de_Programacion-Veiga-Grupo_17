@@ -13,15 +13,17 @@
 // Cartel modal reutilizable para avisarle algo al jugador. Mientras está visible, el juego queda
 // bloqueado, el que lo use tiene que ignorar la entrada del juego y mandar al jugador quieto.
 // Se cierra con un clic en cualquier parte de la pantalla (ver procesar_entrada).
-// El fondo es una imagen que se estira para que el mensaje entre justo.
+// El panel se estira para que el mensaje entre justo. Para lo que dice un NPC está
+// CuadroDeDialogo.
 class CuadroDeAviso {
 private:
     FuenteDelJuego fuente;
     Textura fondo;
+    SDL_Renderer* renderer;
     bool visible = false;
     std::string mensaje;
 
-    std::vector<std::string> partir_en_lineas(int ancho_maximo) const;
+    std::vector<std::string> partir_en_lineas(const std::string& texto, int ancho_maximo) const;
 
 public:
     // "ruta_fuente" es la .ttf del juego. Lanza std::runtime_error si no se puede abrir la fuente

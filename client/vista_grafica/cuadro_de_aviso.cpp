@@ -15,7 +15,9 @@ static constexpr int ANCHO_MAXIMO_EN_LA_VENTANA = 72;
 static constexpr SDL_Color COLOR_OSCURECIDO{0, 0, 0, 130};
 
 CuadroDeAviso::CuadroDeAviso(SDL_Renderer* renderer, const std::string& ruta_fuente)
-    : fuente(renderer, ruta_fuente, TAMANO_FUENTE), fondo(RUTA_FONDO, renderer) {
+    : fuente(renderer, ruta_fuente, TAMANO_FUENTE),
+      fondo(RUTA_FONDO, renderer),
+      renderer(renderer) {
 }
 
 void CuadroDeAviso::mostrar(const std::string& nuevo_mensaje) {
@@ -43,9 +45,10 @@ bool CuadroDeAviso::procesar_entrada(const EntradaDelUsuario& entrada) {
     return true;
 }
 
-std::vector<std::string> CuadroDeAviso::partir_en_lineas(int ancho_maximo) const {
+std::vector<std::string> CuadroDeAviso::partir_en_lineas(
+    const std::string& texto, int ancho_maximo) const {
     std::vector<std::string> lineas;
-    std::istringstream palabras(mensaje);
+    std::istringstream palabras(texto);
     std::string linea;
     std::string palabra;
     while (palabras >> palabra) {
@@ -69,7 +72,8 @@ void CuadroDeAviso::dibujar(SDL_Renderer* renderer, int ancho_ventana, int alto_
     }
 
     const int ancho_maximo = ancho_ventana * ANCHO_MAXIMO_EN_LA_VENTANA / 100;
-    const std::vector<std::string> lineas = partir_en_lineas(ancho_maximo - 2 * MARGEN_HORIZONTAL);
+    const std::vector<std::string> lineas =
+        partir_en_lineas(mensaje, ancho_maximo - 2 * MARGEN_HORIZONTAL);
     int ancho_texto = 0;
     for (const std::string& linea : lineas) {
         ancho_texto = std::max(ancho_texto, fuente.ancho(linea));
