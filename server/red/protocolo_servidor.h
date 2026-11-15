@@ -41,6 +41,8 @@ private:
     ComprarAnimalMercado recibir_comando_comprar_animal_mercado();
     VenderAnimalMercado recibir_comando_vender_animal_mercado();
     CerrarMercado recibir_comando_cerrar_mercado();
+    EnviarRegalo recibir_comando_enviar_regalo();
+    AbrirRegalos recibir_comando_abrir_regalos();
 
     // Valida que el eje venga en el rango -1..1. Lanza ErrorProtocolo si no.
     int8_t eje_de_movimiento(int8_t valor) const;
@@ -62,6 +64,7 @@ private:
     void enviar_estado_drop(const EstadoDrop& estado);
     void enviar_estado_enemigo(const EstadoEnemigo& estado);
     void enviar_estado_trampa(const EstadoTrampa& estado);
+    void enviar_estado_animal(const EstadoAnimal& estado);
     void enviar_casilla_tratada(const CasillaTratada& casilla);
     void enviar_ranura_inventario(const RanuraInventario& ranura);
     void enviar_ranuras(const std::vector<RanuraInventario>& ranuras);
@@ -77,6 +80,8 @@ private:
     void enviar_evento_drop_retirado(const DropRetirado& drop);
     void enviar_evento_enemigo_actualizado(const EnemigoActualizado& enemigo);
     void enviar_evento_trampa_actualizada(const TrampaActualizada& trampa);
+    void enviar_evento_animal_actualizado(const AnimalActualizado& animal);
+    void enviar_evento_vaca_ordeniable(const VacaOrdeniable& vaca);
     void enviar_evento_tierra_cambiada(const TierraCambiada& tierra);
     void enviar_evento_hora_del_juego(const HoraDelJuego& hora);
     void enviar_evento_casilla_consultada(const CasillaConsultada& consultada);
@@ -86,6 +91,8 @@ private:
     void enviar_evento_actualizacion_mercado(const ActualizacionMercado& m);
     void enviar_evento_cerrar_ventana_mercado(const CerrarVentanaMercado& m);
     void enviar_evento_aviso_en_pantalla(const AvisoEnPantalla& aviso);
+    void enviar_evento_jugadores_de_la_partida(const JugadoresDeLaPartida& jugadores);
+    void enviar_evento_regalos_pendientes(const RegalosPendientes& pendientes);
 
 public:
     explicit ProtocoloServidor(ISocket& socket_conectado);

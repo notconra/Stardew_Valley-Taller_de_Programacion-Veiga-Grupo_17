@@ -30,6 +30,9 @@ using ComandoCliente = std::variant<
     // Chat
     EnviarMensajeDeChat,
 
+    // Regalos
+    EnviarRegalo, AbrirRegalos,
+
     // Mercado
     ComprarEnMercado, VenderEnMercado, ComprarAnimalMercado, VenderAnimalMercado, CerrarMercado>;
 
@@ -45,7 +48,7 @@ using EventoServidor = std::variant<
 
     // - Sector
     EstadoJuego, JugadoresEnSector, ObjetoColocado, ObjetoRetirado, DropAparecido, DropRetirado,
-    EnemigoActualizado, TrampaActualizada, TierraCambiada,
+    EnemigoActualizado, TrampaActualizada, TierraCambiada, AnimalActualizado, VacaOrdeniable,
 
     // - Tiempo
     HoraDelJuego,
@@ -61,6 +64,9 @@ using EventoServidor = std::variant<
 
     // - Chat
     MensajeDeChat,
+
+    // - Regalos
+    JugadoresDeLaPartida, RegalosPendientes,
 
     // - Mercado
     ActualizacionMercado, CerrarVentanaMercado,

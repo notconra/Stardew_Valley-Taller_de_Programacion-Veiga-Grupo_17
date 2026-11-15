@@ -42,6 +42,8 @@ private:
     void enviar_comando_comprar_animal_mercado(const ComprarAnimalMercado& m);
     void enviar_comando_vender_animal_mercado(const VenderAnimalMercado& m);
     void enviar_comando_cerrar_mercado(const CerrarMercado& m);
+    void enviar_comando_enviar_regalo(const EnviarRegalo& regalo);
+    void enviar_comando_abrir_regalos(const AbrirRegalos& abrir);
 
     // Recepción de eventos
     ErrorServidor recibir_error_servidor();
@@ -56,6 +58,7 @@ private:
     EstadoDrop recibir_estado_drop();
     EstadoEnemigo recibir_estado_enemigo();
     EstadoTrampa recibir_estado_trampa();
+    EstadoAnimal recibir_estado_animal();
     CasillaTratada recibir_casilla_tratada();
     EstadoJuego recibir_estado_juego();
     JugadoresEnSector recibir_jugadores_en_sector();
@@ -65,6 +68,8 @@ private:
     DropRetirado recibir_drop_retirado();
     EnemigoActualizado recibir_enemigo_actualizado();
     TrampaActualizada recibir_trampa_actualizada();
+    AnimalActualizado recibir_animal_actualizado();
+    VacaOrdeniable recibir_vaca_ordeniable();
     TierraCambiada recibir_tierra_cambiada();
     HoraDelJuego recibir_hora_del_juego();
     CasillaConsultada recibir_casilla_consultada();
@@ -80,6 +85,8 @@ private:
     ActualizacionMercado recibir_actualizacion_mercado();
     CerrarVentanaMercado recibir_cerrar_ventana_mercado();
     AvisoEnPantalla recibir_aviso_en_pantalla();
+    JugadoresDeLaPartida recibir_jugadores_de_la_partida();
+    RegalosPendientes recibir_regalos_pendientes();
 
     // Auxiliares
     CodigoError codigo_error_desde(uint8_t valor) const;

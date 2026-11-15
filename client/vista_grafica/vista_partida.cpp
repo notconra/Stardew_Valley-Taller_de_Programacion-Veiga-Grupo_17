@@ -24,6 +24,9 @@
 #include "inicio_de_sdl.h"
 #include "ventana.h"
 
+#define HORA_DEL_ANOCHECER 20
+#define HORA_FIN_DE_LA_NOCHE 2
+
 namespace {
 
 constexpr char AYUDA_DE_TECLAS[] =
@@ -156,6 +159,9 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     mapa_actual = configuracion.mapa_inicial;
     tierra_tratada.clear();
     hora_del_juego.reset();
+    jugadores_de_la_partida = JugadoresDeLaPartida{};
+    regalos_pendientes = RegalosPendientes{};
+    ultimo_riego.reset();
     olvidar_el_piso();
     partida_terminada = false;
 
@@ -185,9 +191,16 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     marcador_de_casillas = MarcadorDeCasillas(graficos);
 
     std::map<std::string, MapaGrafico> mapas_cargados;
+    Estacion estacion_cargada = Estacion::PRIMAVERA;
     const auto mapa_de = [&](const std::string& id_mapa) -> const MapaGrafico& {
+        const Estacion estacion =
+            hora_del_juego.has_value() ? hora_del_juego->estacion : Estacion::PRIMAVERA;
+        if (estacion != estacion_cargada) {
+            mapas_cargados.clear();
+            estacion_cargada = estacion;
+        }
         return mapas_cargados
-            .try_emplace(id_mapa, renderizador.ptr(), configuracion_de(id_mapa), graficos)
+            .try_emplace(id_mapa, renderizador.ptr(), configuracion_de(id_mapa), graficos, estacion)
             .first->second;
     };
 
@@ -198,9 +211,12 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     efectos.cambiar_ambiente(configuracion_de(mapa_actual).ruta_ambiente);
     efectos.cambiar_paso(configuracion_de(mapa_actual).ruta_caminar);
     TierraGrafica tierra(configuracion.tierra, graficos, renderizador.ptr());
+    CultivosGraficos cultivos(graficos, renderizador.ptr());
+    EfectoDeRiego efecto_de_riego(graficos, renderizador.ptr());
     ObjetosGraficos objetos(renderizador.ptr(), graficos, iconos);
     EnemigosGraficos enemigos(renderizador.ptr(), graficos);
     TrampasGraficas trampas(renderizador.ptr(), graficos);
+    AnimalesGraficos animales(renderizador.ptr(), graficos);
     VisionMazmorra vision_mazmorra(
         configuracion.graficos.radio_vision_mazmorra,
         configuracion.graficos.tamano_pixel_vision_mazmorra,
@@ -210,6 +226,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     CuadroDeAviso cuadro_de_aviso(renderizador.ptr(), configuracion.chat.ruta_fuente);
     std::optional<RelojGrafico> reloj_grafico;
     std::optional<PantallaDeDescanso> pantalla_de_descanso;
+    std::optional<PanelDeRegalos> regalos;
     reloj_grafico.emplace(renderizador.ptr(), configuracion.chat.ruta_fuente, alto_de_pantalla);
     pantalla_de_descanso.emplace(
         renderizador.ptr(),
@@ -217,6 +234,12 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         alto_de_pantalla);
     hud.configurar(ancho_de_pantalla, alto_de_pantalla);
     hud_mercado.configurar(ancho_de_pantalla, alto_de_pantalla);
+    regalos.emplace(
+        renderizador.ptr(),
+        configuracion.chat.ruta_fuente,
+        iconos,
+        ancho_de_pantalla,
+        alto_de_pantalla);
     EntradaDelUsuario entrada;
     Camara camara = camara_para(mapa_de(mapa_actual));
 
@@ -240,6 +263,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         if (!cuadro_de_aviso.esta_visible() && entrada.pedidos().salir) {
             if (hud_mercado.esta_abierto()) {
                 conexion.enviar_comando(CerrarMercado{});
+            } else if (regalos->esta_abierto()) {
+                regalos->cerrar();
             } else if (ultimo_cofre.abierto) {
                 conexion.enviar_comando(CerrarCofre{});
             } else {
@@ -277,6 +302,12 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
                     crear_textura_del_mundo(renderizador.ptr(), ancho_del_mundo, alto_del_mundo);
             }
             camara = camara_para(mapa_de(mapa_actual));
+            regalos.emplace(
+                renderizador.ptr(),
+                configuracion.chat.ruta_fuente,
+                iconos,
+                ancho_de_pantalla,
+                alto_de_pantalla);
             reloj_grafico.emplace(
                 renderizador.ptr(),
                 configuracion.chat.ruta_fuente,
@@ -292,6 +323,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             efectos.cambiar_paso(configuracion_de(mapa_actual).ruta_caminar);
             ultimo_cofre = CofreJugador{};
             hud_mercado.cerrar();
+            ultimo_riego.reset();
             camara = camara_para(mapa_de(mapa_actual));
         }
         if (propio != nullptr) {
@@ -303,10 +335,30 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
 
         hud.actualizar(ultimo_inventario, ultimo_cofre);
-        procesar_entrada(entrada, hud, hud_mercado, cuadro_de_aviso, camara, consumo_del_chat);
+        procesar_entrada(
+            entrada,
+            hud,
+            hud_mercado,
+            *regalos,
+            cuadro_de_aviso,
+            camara,
+            consumo_del_chat);
         consultar_el_piso_si_cambio(entrada, hud, camara);
+        if (mapa_actual == "granja" && propio != nullptr && efectos_actuales != nullptr) {
+            int tamano_tile = std::max(1, configuracion.graficos.tamano_de_tile);
+            uint32_t columna_jugador =
+                static_cast<uint32_t>(static_cast<int>(propio->x) / tamano_tile);
+            uint32_t fila_jugador =
+                static_cast<uint32_t>(static_cast<int>(propio->y) / tamano_tile);
+            std::vector<TipoAnimal> cercanos = AnimalesGraficos::obtener_despiertos_cercanos(
+                ultimo_estado_juego.animales,
+                columna_jugador,
+                fila_jugador,
+                CASILLAS_AUDICION_ANIMAL);
+            efectos_actuales->actualizar_ambiente_animales(inicio_del_cuadro, cercanos);
+        }
         if (cuadro_de_aviso.esta_visible() || chat.esta_escribiendo() || ultimo_cofre.abierto ||
-            hud_mercado.esta_abierto()) {
+            hud_mercado.esta_abierto() || regalos->esta_abierto()) {
             enviar_intencion_si_cambio(Moverse{});
         } else {
             enviar_intencion_si_cambio(entrada.intencion());
@@ -319,9 +371,12 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             objetos,
             enemigos,
             trampas,
+            animales,
             personaje,
             iconos,
             tierra,
+            cultivos,
+            efecto_de_riego,
             camara,
             hud,
             hud_mercado,
@@ -330,6 +385,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             chat,
             *reloj_grafico,
             *pantalla_de_descanso,
+            *regalos,
             cuadro_de_aviso);
         limitar_cuadro(inicio_del_cuadro);
     }
@@ -350,11 +406,19 @@ void VistaPartida::usar_item(uint8_t ranura, ModoUso modo, const std::optional<C
         const TipoItem en_mano = indice < ultimo_inventario.ranuras.size()
                                      ? ultimo_inventario.ranuras[indice].tipo
                                      : TipoItem::NINGUNO;
-        const bool es_herramienta_de_golpe =
-            en_mano == TipoItem::PICO || en_mano == TipoItem::PALA || en_mano == TipoItem::ESPADA;
-        if (es_herramienta_de_golpe) {
+        const bool se_anima = en_mano == TipoItem::PICO || en_mano == TipoItem::PALA ||
+                              en_mano == TipoItem::ESPADA || en_mano == TipoItem::REGADERA;
+        if (se_anima) {
             haciendo_accion = true;
             inicio_accion_ms = SDL_GetTicks();
+        }
+        const bool riega_algo = en_mano == TipoItem::REGADERA && modo == ModoUso::PRINCIPAL &&
+                                casilla.has_value() && respuesta_del_piso.has_value() &&
+                                respuesta_del_piso->marca == MarcaDeCasilla::VALIDA &&
+                                respuesta_del_piso->columna == casilla->columna &&
+                                respuesta_del_piso->fila == casilla->fila;
+        if (riega_algo) {
+            ultimo_riego = Riego{*casilla, SDL_GetTicks()};
         }
         if (en_mano == TipoItem::PICO && modo == ModoUso::PRINCIPAL) {
             pico_pendiente_desde_ms = SDL_GetTicks() | 1;
@@ -391,13 +455,22 @@ std::optional<VistaPartida::Casilla> VistaPartida::casilla_apuntada(
 void VistaPartida::guardar_tierra(const EstadoJuego& estado) {
     tierra_tratada.clear();
     for (const CasillaTratada& casilla : estado.tierra) {
-        tierra_tratada.insert({static_cast<int>(casilla.columna), static_cast<int>(casilla.fila)});
+        tierra_tratada[{static_cast<int>(casilla.columna), static_cast<int>(casilla.fila)}] =
+            casilla;
     }
+}
+
+PanelDeRegalos::Datos VistaPartida::datos_de_regalos() const {
+    return PanelDeRegalos::Datos{
+        id_jugador,
+        jugadores_de_la_partida,
+        regalos_pendientes,
+        ultimo_inventario};
 }
 
 void VistaPartida::procesar_entrada(
     const EntradaDelUsuario& entrada, HudInventario& hud, HudMercado& hud_mercado,
-    CuadroDeAviso& cuadro_de_aviso, const Camara& camara,
+    PanelDeRegalos& regalos, CuadroDeAviso& cuadro_de_aviso, const Camara& camara,
     const VistaChat::ConsumoDeEntrada& consumo_del_chat) {
     const EntradaDelUsuario::Pedidos& pedidos = entrada.pedidos();
 
@@ -428,10 +501,10 @@ void VistaPartida::procesar_entrada(
 
     if (!consumo_del_chat.clic) {
         if (pedidos.clic_izquierdo) {
-            procesar_clic(entrada, hud, hud_mercado, camara, false, pedidos.con_shift);
+            procesar_clic(entrada, hud, hud_mercado, regalos, camara, false, pedidos.con_shift);
         }
         if (pedidos.clic_derecho) {
-            procesar_clic(entrada, hud, hud_mercado, camara, true, pedidos.con_shift);
+            procesar_clic(entrada, hud, hud_mercado, regalos, camara, true, pedidos.con_shift);
         }
     }
 }
@@ -454,10 +527,9 @@ void VistaPartida::elegir_ranura_de_la_barra(const EntradaDelUsuario::Pedidos& p
         conexion.enviar_comando(SeleccionarRanuraDeLaBarra{static_cast<uint8_t>(nueva)});
     }
 }
-
 void VistaPartida::procesar_clic(
     const EntradaDelUsuario& entrada, HudInventario& hud, HudMercado& hud_mercado,
-    const Camara& camara, bool clic_derecho, bool con_shift) {
+    PanelDeRegalos& regalos, const Camara& camara, bool clic_derecho, bool con_shift) {
     if (hud_mercado.esta_abierto()) {
         for (const ComandoCliente& comando : hud_mercado.procesar_clic(
                  ultimo_inventario,
@@ -467,6 +539,18 @@ void VistaPartida::procesar_clic(
                  entrada.raton_y(),
                  clic_derecho)) {
             conexion.enviar_comando(comando);
+        }
+        return;
+    }
+
+    if (regalos.captura_el_clic(entrada.raton_x(), entrada.raton_y())) {
+        const std::optional<ComandoCliente> comando = regalos.procesar_clic(
+            datos_de_regalos(),
+            entrada.raton_x(),
+            entrada.raton_y(),
+            clic_derecho);
+        if (comando.has_value()) {
+            conexion.enviar_comando(*comando);
         }
         return;
     }
@@ -495,6 +579,18 @@ void VistaPartida::procesar_clic(
     }
     if (ultimo_cofre.abierto) {
         return;
+    }
+
+    if (clic_derecho && efectos_actuales != nullptr) {
+        TipoAnimal tipo_animal = TipoAnimal::VACA;
+        if (AnimalesGraficos::buscar_animal_despierto(
+                ultimo_estado_juego.animales,
+                ultimo_estado_juego.vacas_para_ordeniar,
+                casilla->columna,
+                casilla->fila,
+                tipo_animal)) {
+            efectos_actuales->reproducir_interaccion_animal(tipo_animal);
+        }
     }
 
     ModoUso modo = clic_derecho ? ModoUso::SECUNDARIO : ModoUso::PRINCIPAL;
@@ -589,22 +685,37 @@ void VistaPartida::aplicar(
     std::visit(
         ManejadoresPorTipo{
             [&](const EstadoJuego& e) {
+                const EstadoJugador* antes = jugador_propio();
+                bool tenia_monedas = antes != nullptr && estado.mapa == e.mapa;
+                uint32_t monedas_antes = antes != nullptr ? antes->monedas : 0;
                 olvidar_el_piso();
                 estado = e;
                 guardar_tierra(e);
+                const EstadoJugador* ahora = jugador_propio();
+                if (tenia_monedas && ahora != nullptr && ahora->monedas != monedas_antes &&
+                    efectos_actuales != nullptr) {
+                    efectos_actuales->reproducir_dinero();
+                }
             },
             [&](const JugadoresEnSector& e) {
                 const EstadoJugador* antes = jugador_propio();
                 const bool picaba = antes != nullptr && antes->accion_actual == TipoAccion::PICAR;
+                // Se copia antes de reemplazar la lista: "antes" apunta adentro de ella.
                 const bool antes_tenia_vida = antes != nullptr && estado.mapa == e.mapa;
                 const uint8_t vida_antes = antes != nullptr ? antes->vida : 0;
+                const bool tenia_monedas = antes != nullptr && estado.mapa == e.mapa;
+                const uint32_t monedas_antes = antes != nullptr ? antes->monedas : 0;
                 estado.mapa = e.mapa;
                 estado.jugadores = e.jugadores;
                 const EstadoJugador* ahora = jugador_propio();
-                const bool pica = ahora != nullptr && ahora->accion_actual == TipoAccion::PICAR;
+                bool pica = ahora != nullptr && ahora->accion_actual == TipoAccion::PICAR;
                 if (antes_tenia_vida && ahora != nullptr && ahora->vida < vida_antes &&
                     efectos_actuales != nullptr) {
                     efectos_actuales->reproducir_jugador_danio();
+                }
+                if (tenia_monedas && ahora != nullptr && ahora->monedas != monedas_antes &&
+                    efectos_actuales != nullptr) {
+                    efectos_actuales->reproducir_dinero();
                 }
                 if (pico_pendiente_desde_ms != 0 && !picaba && pica) {
                     pico_pendiente_desde_ms = 0;
@@ -685,6 +796,32 @@ void VistaPartida::aplicar(
                     *existente = e.trampa;
                 }
             },
+            [&](const AnimalActualizado& e) {
+                const auto existente = std::find_if(
+                    estado.animales.begin(),
+                    estado.animales.end(),
+                    [&e](const EstadoAnimal& otro) { return otro.id == e.animal.id; });
+                if (existente == estado.animales.end()) {
+                    estado.animales.push_back(e.animal);
+                } else {
+                    *existente = e.animal;
+                }
+            },
+            [&](const VacaOrdeniable& e) {
+                if (e.lista) {
+                    if (std::find(
+                            estado.vacas_para_ordeniar.begin(),
+                            estado.vacas_para_ordeniar.end(),
+                            e.id_vaca) == estado.vacas_para_ordeniar.end()) {
+                        estado.vacas_para_ordeniar.push_back(e.id_vaca);
+                    }
+                } else {
+                    std::erase(estado.vacas_para_ordeniar, e.id_vaca);
+                    if (efectos_actuales != nullptr) {
+                        efectos_actuales->reproducir_ordenie_vaca();
+                    }
+                }
+            },
             [&](const ActualizacionInventario& e) {
                 ultimo_inventario = e.inventario;
                 olvidar_el_piso();
@@ -703,18 +840,32 @@ void VistaPartida::aplicar(
                     static_cast<int>(e.casilla.columna),
                     static_cast<int>(e.casilla.fila)};
                 if (e.tratada) {
-                    tierra_tratada.insert(casilla);
+                    tierra_tratada[casilla] = e.casilla;
                 } else {
                     tierra_tratada.erase(casilla);
                 }
             },
-            [&](const HoraDelJuego& e) { hora_del_juego = e; },
+            [&](const HoraDelJuego& e) {
+                if (efectos_actuales != nullptr) {
+                    efectos_actuales->cambiar_noche(
+                        e.hora >= HORA_DEL_ANOCHECER || e.hora < HORA_FIN_DE_LA_NOCHE);
+                }
+                hora_del_juego = e;
+            },
             [&](const EstadoDelDescanso& e) { descanso = e; },
             [&](const MultijugadorActivado& e) {
                 std::cout << "[partida] multijugador activado, código para invitar: "
                           << e.codigo_partida << std::endl;
             },
             [&](const MensajeDeChat& e) { chat.recibir(e); },
+            [&](const JugadoresDeLaPartida& e) { jugadores_de_la_partida = e; },
+            [&](const RegalosPendientes& e) {
+                if (e.regalos.size() > regalos_pendientes.regalos.size() &&
+                    efectos_actuales != nullptr) {
+                    efectos_actuales->reproducir_regalo_recibido();
+                }
+                regalos_pendientes = e;
+            },
             [&](const ErrorServidor& e) { std::cerr << "[error] " << e.detalle << std::endl; },
             [&](const PartidaCerradaPorError&) {
                 salir_de_partida_y_confirmar();
@@ -758,11 +909,13 @@ bool VistaPartida::salir_de_partida_y_confirmar() {
 void VistaPartida::dibujar(
     Renderizador& renderizador, SDL_Texture* mundo, const MapaGrafico& mapa,
     const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos,
-    const TrampasGraficas& trampas, const Personaje& personaje, const IconosDeItems& iconos,
-    const TierraGrafica& tierra, const Camara& camara, const HudInventario& hud,
+    const TrampasGraficas& trampas, const AnimalesGraficos& animales, const Personaje& personaje,
+    const IconosDeItems& iconos, const TierraGrafica& tierra, const CultivosGraficos& cultivos,
+    const EfectoDeRiego& efecto_de_riego, const Camara& camara, const HudInventario& hud,
     const HudMercado& hud_mercado, const VisionMazmorra& vision_mazmorra,
     const EntradaDelUsuario& entrada, const VistaChat& chat, RelojGrafico& reloj_grafico,
-    const PantallaDeDescanso& pantalla_de_descanso, const CuadroDeAviso& cuadro_de_aviso) const {
+    const PantallaDeDescanso& pantalla_de_descanso, const PanelDeRegalos& regalos,
+    const CuadroDeAviso& cuadro_de_aviso) const {
     SDL_Renderer* renderer = renderizador.ptr();
     if (mundo != nullptr) {
         SDL_SetRenderTarget(renderer, mundo);
@@ -774,6 +927,16 @@ void VistaPartida::dibujar(
 
     mapa.dibujar_bajo_los_jugadores(renderer, camara.x(), camara.y());
     tierra.dibujar(renderer, tierra_tratada, camara.x(), camara.y());
+    cultivos.dibujar(renderer, tierra_tratada, camara.x(), camara.y());
+    if (ultimo_riego.has_value()) {
+        efecto_de_riego.dibujar(
+            renderer,
+            static_cast<int>(ultimo_riego->casilla.columna),
+            static_cast<int>(ultimo_riego->casilla.fila),
+            SDL_GetTicks() - ultimo_riego->inicio_ms,
+            camara.x(),
+            camara.y());
+    }
     objetos.dibujar_debajo_de_los_jugadores(
         renderer,
         ultimo_estado_juego,
@@ -800,6 +963,7 @@ void VistaPartida::dibujar(
         int pie = 0;
         const EstadoJugador* jugador = nullptr;
         const EstadoObjetoDelMundo* objeto = nullptr;
+        const EstadoAnimal* animal = nullptr;
     };
     std::vector<Dibujable> dibujables;
     const int tamano_de_tile = configuracion.graficos.tamano_de_tile;
@@ -808,6 +972,7 @@ void VistaPartida::dibujar(
             dibujables.push_back(Dibujable{
                 static_cast<int>(jugador.y) + personaje.alto_del_sprite(),
                 &jugador,
+                nullptr,
                 nullptr});
         }
     }
@@ -819,8 +984,18 @@ void VistaPartida::dibujar(
         if (!capa.has_value() || *capa != CapaDeObjeto::CON_LOS_JUGADORES) {
             continue;
         }
-        dibujables.push_back(
-            Dibujable{(static_cast<int>(objeto.fila) + 1) * tamano_de_tile, nullptr, &objeto});
+        dibujables.push_back(Dibujable{
+            (static_cast<int>(objeto.fila) + 1) * tamano_de_tile,
+            nullptr,
+            &objeto,
+            nullptr});
+    }
+    if (mapa_actual == "granja") {
+        for (const EstadoAnimal& animal : ultimo_estado_juego.animales) {
+            int alto_casillas = (animal.tipo == TipoAnimal::VACA) ? 2 : 1;
+            int pie = (static_cast<int>(animal.fila) + alto_casillas) * tamano_de_tile;
+            dibujables.push_back(Dibujable{pie, nullptr, nullptr, &animal});
+        }
     }
     std::sort(
         dibujables.begin(),
@@ -851,6 +1026,13 @@ void VistaPartida::dibujar(
                 iconos);
         } else if (dibujable.objeto != nullptr) {
             objetos.dibujar_objeto(renderer, *dibujable.objeto, camara.x(), camara.y());
+        } else if (dibujable.animal != nullptr) {
+            animales.dibujar_un_animal(
+                renderer,
+                ultimo_estado_juego,
+                *dibujable.animal,
+                camara.x(),
+                camara.y());
         }
     }
     mapa.dibujar_sobre_los_jugadores(renderer, camara.x(), camara.y());
@@ -892,6 +1074,7 @@ void VistaPartida::dibujar(
     if (hora_del_juego.has_value()) {
         reloj_grafico.dibujar(renderer, *hora_del_juego, ancho_de_pantalla);
     }
+    regalos.dibujar(renderer, datos_de_regalos());
     pantalla_de_descanso.dibujar(renderer, descanso, ancho_de_pantalla, alto_de_pantalla);
     chat.dibujar(renderer, ancho_de_pantalla, alto_de_pantalla);
     cuadro_de_aviso.dibujar(renderer, ancho_de_pantalla, alto_de_pantalla);

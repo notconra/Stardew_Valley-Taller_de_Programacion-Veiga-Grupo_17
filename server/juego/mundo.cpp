@@ -27,10 +27,17 @@ Mundo::Mundo(
           sectores, personajes, notificador_de_juego, recursos_de_juego.juego.drops),
       controlador_de_mazmorra(recursos_de_juego, sectores, datos_guardados.niveles_mazmorra),
       controlador_de_enemigos(sectores, personajes, notificador_de_juego),
-      controlador_de_trampas(sectores, personajes, notificador_de_juego) {
+      controlador_de_trampas(sectores, personajes, notificador_de_juego),
+      controlador_de_cultivos(sectores, notificador_de_juego),
+      controlador_de_regalos(
+          personajes, recursos_de_juego.catalogo_de_items, notificador_de_juego) {
     sectores.cargar_mapas_guardados(datos_guardados.mapas);
+    sectores.cargar_cultivos_guardados(datos_guardados.cultivos);
     sectores.cargar_cofres_guardados(datos_guardados.cofres);
     sectores.cargar_muebles_guardados(datos_guardados.muebles);
+    sectores.cargar_animales_guardados(
+        datos_guardados.animales,
+        datos_guardados.vacas_para_ordeniar);
     if (datos_guardados.dia > 0) {
         controlador_del_dia.continuar_en_el_dia(datos_guardados.dia);
     }
@@ -57,6 +64,7 @@ void Mundo::completar_datos_guardados(
     datos.vida = static_cast<uint16_t>(std::max(personaje.vida, 0));
     datos.energia = static_cast<uint16_t>(std::max(personaje.energia, 0));
     datos.monedas = personaje.monedas;
+    datos.regalos_pendientes = personaje.buzon.pendientes();
     datos.tiene_cama = personaje.ultima_cama.has_value();
     datos.mapa_cama = datos.tiene_cama ? personaje.ultima_cama->mapa : "";
     datos.columna_cama =
@@ -73,6 +81,8 @@ void Mundo::restaurar(Personaje& personaje, const DatosJugadorGuardado& guardado
     personaje.vida = std::min<int>(guardado.vida, Personaje::VIDA_MAXIMA);
     personaje.energia = std::min<int>(guardado.energia, Personaje::ENERGIA_MAXIMA);
     personaje.monedas = guardado.monedas;
+    personaje.nombre = guardado.nombre_jugador;
+    personaje.buzon = Buzon(guardado.regalos_pendientes);
     if (guardado.tiene_cama) {
         personaje.ultima_cama = UbicacionDeCama{
             guardado.mapa_cama,
@@ -103,7 +113,8 @@ void Mundo::dar_de_baja(Personaje& personaje) {
     personaje.conectado = false;
 }
 
-void Mundo::conectar(uint32_t id_jugador, const AparienciaPersonaje& apariencia) {
+void Mundo::conectar(
+    uint32_t id_jugador, const AparienciaPersonaje& apariencia, const std::string& nombre) {
     auto encontrado = personajes.find(id_jugador);
     if (encontrado == personajes.end()) {
         encontrado = personajes
@@ -117,6 +128,9 @@ void Mundo::conectar(uint32_t id_jugador, const AparienciaPersonaje& apariencia)
         encontrado->second.apariencia = apariencia;
     }
     Personaje& personaje = encontrado->second;
+    if (!nombre.empty()) {
+        personaje.nombre = nombre;
+    }
     if (personaje.esta_inconsciente()) {
         return;
     }
@@ -128,6 +142,7 @@ void Mundo::conectar(uint32_t id_jugador, const AparienciaPersonaje& apariencia)
     personaje.conectado = true;
     notificador.a_jugador(id_jugador, personaje.actualizacion_de_inventario());
     controlador_del_dia.al_conectarse(personaje);
+    controlador_de_regalos.al_conectarse(personaje);
 
     auto guardado = datos_jugadores.find(id_jugador);
     if (guardado != datos_jugadores.end() && !guardado->second.mapa_actual.empty() &&
@@ -149,6 +164,7 @@ void Mundo::desconectar(uint32_t id_jugador) {
         return;
     }
     dar_de_baja(encontrado->second);
+    controlador_de_regalos.al_desconectarse();
 }
 
 void Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
@@ -176,6 +192,9 @@ void Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
     if (controlador_de_mercado.atender(personaje, comando, controlador_del_dia.hora())) {
         return;
     }
+    if (controlador_de_regalos.atender(personaje, comando)) {
+        return;
+    }
 }
 
 void Mundo::resolver_transicion(Personaje& personaje, const Transicion& transicion) {
@@ -198,11 +217,7 @@ void Mundo::resolver_transicion(Personaje& personaje, const Transicion& transici
     controlador_de_mercado.al_cambiar_de_mapa(personaje);
 }
 
-bool Mundo::requiere_clic(const Personaje& personaje, const Transicion& transicion) const {
-    const std::vector<std::string>& niveles = recursos.mazmorra.mapas;
-    if (std::find(niveles.begin(), niveles.end(), personaje.mapa_actual) != niveles.end()) {
-        return true;
-    }
+bool Mundo::requiere_clic(const Transicion& transicion) const {
     const std::vector<std::string>& destinos = recursos.juego.transiciones.destinos_con_clic;
     return std::find(destinos.begin(), destinos.end(), transicion.mapa_destino) != destinos.end();
 }
@@ -210,8 +225,7 @@ bool Mundo::requiere_clic(const Personaje& personaje, const Transicion& transici
 void Mundo::resolver_transiciones_automaticas() {
     for (const JugadorEnTransicion& en_transicion : sectores.jugadores_en_transicion()) {
         auto encontrado = personajes.find(en_transicion.id_jugador);
-        if (encontrado == personajes.end() ||
-            requiere_clic(encontrado->second, en_transicion.transicion)) {
+        if (encontrado == personajes.end() || requiere_clic(en_transicion.transicion)) {
             continue;
         }
         resolver_transicion(encontrado->second, en_transicion.transicion);
@@ -227,10 +241,22 @@ void Mundo::ajustar_velocidad_por_energia() {
     }
 }
 
+int Mundo::dar_items(uint32_t id_jugador, TipoItem tipo, uint16_t cantidad) {
+    auto encontrado = personajes.find(id_jugador);
+    if (encontrado == personajes.end() || !encontrado->second.conectado) {
+        return 0;
+    }
+    Personaje& personaje = encontrado->second;
+    const uint16_t sin_lugar = personaje.inventario.agregar_item(tipo, cantidad);
+    notificador.a_jugador(id_jugador, personaje.actualizacion_de_inventario());
+    return cantidad - sin_lugar;
+}
+
 void Mundo::actualizar() {
     controlador_del_dia.actualizar();
+    controlador_de_cultivos.actualizar(controlador_del_dia.hora());
     ajustar_velocidad_por_energia();
-    sectores.actualizar();
+    sectores.actualizar(controlador_del_dia.hora());
     resolver_transiciones_automaticas();
     controlador_de_enemigos.actualizar();
     controlador_de_trampas.actualizar();
@@ -286,12 +312,133 @@ std::vector<DatosMuebleGuardado> Mundo::obtener_muebles_guardados() const {
     return sectores.obtener_muebles_guardados();
 }
 
+std::vector<DatosAnimalGuardado> Mundo::obtener_animales_guardados() const {
+    return sectores.obtener_animales_guardados();
+}
+
+std::vector<uint32_t> Mundo::obtener_ids_vacas_listas_para_ordeniar() const {
+    if (!sectores.existe("granja")) {
+        return {};
+    }
+    return sectores.en("granja").animales.obtener_ids_vacas_listas_para_ordeniar();
+}
+
+std::vector<DatosCultivoGuardado> Mundo::obtener_cultivos_guardados() const {
+    return sectores.obtener_cultivos_guardados();
+}
+
+void Mundo::cambiar_estacion(Estacion estacion) {
+    controlador_del_dia.cambiar_estacion(estacion);
+}
+
 uint32_t Mundo::obtener_dia() const {
     return controlador_del_dia.hora().dia;
 }
 
 bool Mundo::tomar_dia_terminado() {
     return controlador_del_dia.tomar_dia_terminado();
+}
+
+bool Mundo::agregar_vaca_en_granja_cerca(uint32_t id_jugador) {
+    if (!sectores.existe("granja")) {
+        return false;
+    }
+    Sector& granja = sectores.en("granja");
+    uint32_t centro_x = 20;
+    uint32_t centro_y = 15;
+    auto it_jugador = personajes.find(id_jugador);
+    if (it_jugador != personajes.end() && it_jugador->second.conectado &&
+        it_jugador->second.mapa_actual == "granja") {
+        const auto casilla = granja.jugadores.casilla_del_jugador(id_jugador);
+        if (casilla.has_value()) {
+            centro_x = static_cast<uint32_t>(std::max(casilla->columna, 0));
+            centro_y = static_cast<uint32_t>(std::max(casilla->fila, 0));
+        }
+    }
+    for (int radio = 1; radio <= 10; ++radio) {
+        for (int dx = -radio; dx <= radio; ++dx) {
+            for (int dy = -radio; dy <= radio; ++dy) {
+                if (std::abs(dx) != radio && std::abs(dy) != radio) {
+                    continue;
+                }
+                int col = static_cast<int>(centro_x) + dx;
+                int fila = static_cast<int>(centro_y) + dy;
+                if (col >= 0 && col + 1 < granja.mapa.cantidad_de_columnas() && fila >= 0 &&
+                    fila + 1 < granja.mapa.cantidad_de_filas()) {
+                    if (granja.agregar_vaca(
+                            notificador,
+                            static_cast<uint32_t>(col),
+                            static_cast<uint32_t>(fila))) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool Mundo::agregar_gallina_en_granja_cerca(uint32_t id_jugador) {
+    if (!sectores.existe("granja")) {
+        return false;
+    }
+    Sector& granja = sectores.en("granja");
+    uint32_t centro_x = 22;
+    uint32_t centro_y = 15;
+    auto it_jugador = personajes.find(id_jugador);
+    if (it_jugador != personajes.end() && it_jugador->second.conectado &&
+        it_jugador->second.mapa_actual == "granja") {
+        const auto casilla = granja.jugadores.casilla_del_jugador(id_jugador);
+        if (casilla.has_value()) {
+            centro_x = static_cast<uint32_t>(std::max(casilla->columna, 0));
+            centro_y = static_cast<uint32_t>(std::max(casilla->fila, 0));
+        }
+    }
+    for (int radio = 1; radio <= 10; ++radio) {
+        for (int dx = -radio; dx <= radio; ++dx) {
+            for (int dy = -radio; dy <= radio; ++dy) {
+                if (std::abs(dx) != radio && std::abs(dy) != radio) {
+                    continue;
+                }
+                int col = static_cast<int>(centro_x) + dx;
+                int fila = static_cast<int>(centro_y) + dy;
+                if (col >= 0 && col < granja.mapa.cantidad_de_columnas() && fila >= 0 &&
+                    fila < granja.mapa.cantidad_de_filas()) {
+                    if (granja.agregar_gallina(
+                            notificador,
+                            static_cast<uint32_t>(col),
+                            static_cast<uint32_t>(fila))) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+std::string Mundo::estado_animales_granja() const {
+    if (!sectores.existe("granja")) {
+        return "No existe el sector granja.";
+    }
+    const Sector& granja = sectores.en("granja");
+    int total_vacas = granja.animales.cantidad_vacas();
+    int vacas_listas = granja.animales.cantidad_vacas_listas_para_ordeniar();
+    int total_gallinas = granja.animales.cantidad_gallinas();
+    return "Granja: " + std::to_string(total_vacas) + " vacas (" + std::to_string(vacas_listas) +
+           " listas para ordeniar), " + std::to_string(total_gallinas) + " gallinas.";
+}
+
+void Mundo::avanzar_dia() {
+    controlador_del_dia.avanzar_dia();
+}
+
+void Mundo::avanzar_minutos(uint32_t minutos) {
+    controlador_del_dia.avanzar_minutos(minutos);
+}
+
+HoraDelJuego Mundo::hora_actual() const {
+    return controlador_del_dia.hora();
 }
 
 bool Mundo::sumar_monedas(uint32_t id_jugador, uint32_t cantidad) {

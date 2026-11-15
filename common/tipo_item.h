@@ -29,12 +29,6 @@ enum class TipoItem : uint8_t {
     CAMA = 20,
     LECHE = 21,
     HUEVO = 22,
-    SILLA = 23,
-    MESA = 24,
-    LAMPARA = 25,
-    MACETA = 26,
-    ALFOMBRA = 27,
-    CUADRO = 28,
 };
 
 #endif

@@ -43,6 +43,8 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::VENDER_ANIMAL_MERCADO,
            [this] { return recibir_comando_vender_animal_mercado(); }},
           {TipoMensaje::CERRAR_MERCADO, [this] { return recibir_comando_cerrar_mercado(); }},
+          {TipoMensaje::ENVIAR_REGALO, [this] { return recibir_comando_enviar_regalo(); }},
+          {TipoMensaje::ABRIR_REGALOS, [this] { return recibir_comando_abrir_regalos(); }},
       } {
 }
 
@@ -203,6 +205,16 @@ CerrarMercado ProtocoloServidor::recibir_comando_cerrar_mercado() {
     return CerrarMercado{};
 }
 
+EnviarRegalo ProtocoloServidor::recibir_comando_enviar_regalo() {
+    uint32_t id_destinatario = recibir_u32();
+    uint8_t ranura = recibir_u8();
+    uint16_t cantidad = recibir_u16();
+    return EnviarRegalo{id_destinatario, ranura, cantidad};
+}
+
+AbrirRegalos ProtocoloServidor::recibir_comando_abrir_regalos() {
+    return AbrirRegalos{};
+}
 // Envío de eventos
 
 void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
@@ -224,6 +236,8 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const DropRetirado& e) { enviar_evento_drop_retirado(e); },
             [this](const EnemigoActualizado& e) { enviar_evento_enemigo_actualizado(e); },
             [this](const TrampaActualizada& e) { enviar_evento_trampa_actualizada(e); },
+            [this](const AnimalActualizado& e) { enviar_evento_animal_actualizado(e); },
+            [this](const VacaOrdeniable& e) { enviar_evento_vaca_ordeniable(e); },
             [this](const TierraCambiada& e) { enviar_evento_tierra_cambiada(e); },
             [this](const HoraDelJuego& e) { enviar_evento_hora_del_juego(e); },
             [this](const CasillaConsultada& e) { enviar_evento_casilla_consultada(e); },
@@ -232,6 +246,8 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const ActualizacionMercado& e) { enviar_evento_actualizacion_mercado(e); },
             [this](const CerrarVentanaMercado& e) { enviar_evento_cerrar_ventana_mercado(e); },
             [this](const AvisoEnPantalla& e) { enviar_evento_aviso_en_pantalla(e); },
+            [this](const JugadoresDeLaPartida& e) { enviar_evento_jugadores_de_la_partida(e); },
+            [this](const RegalosPendientes& e) { enviar_evento_regalos_pendientes(e); },
         },
         evento);
 }
@@ -338,9 +354,26 @@ void ProtocoloServidor::enviar_estado_trampa(const EstadoTrampa& estado) {
     enviar_booleano(estado.activa);
 }
 
+void ProtocoloServidor::enviar_estado_animal(const EstadoAnimal& estado) {
+    enviar_u32(estado.id);
+    enviar_u8(static_cast<uint8_t>(estado.tipo));
+    enviar_u8(estado.variante);
+    enviar_u32(estado.columna);
+    enviar_u32(estado.fila);
+    enviar_u8(static_cast<uint8_t>(estado.mirando));
+    enviar_booleano(estado.caminando);
+    enviar_booleano(estado.durmiendo);
+}
+
 void ProtocoloServidor::enviar_casilla_tratada(const CasillaTratada& casilla) {
     enviar_u32(casilla.columna);
     enviar_u32(casilla.fila);
+    enviar_u8(static_cast<uint8_t>(casilla.cultivo));
+    enviar_u8(casilla.etapa);
+    enviar_booleano(casilla.madura);
+    enviar_booleano(casilla.regada);
+    enviar_booleano(casilla.pide_agua);
+    enviar_booleano(casilla.ya_dio_fruto);
 }
 
 void ProtocoloServidor::enviar_ranura_inventario(const RanuraInventario& ranura) {
@@ -406,6 +439,14 @@ void ProtocoloServidor::enviar_estado_juego(const EstadoJuego& estado_juego) {
     for (const EstadoTrampa& trampa : estado_juego.trampas) {
         enviar_estado_trampa(trampa);
     }
+    enviar_largo(estado_juego.animales.size());
+    for (const EstadoAnimal& estado : estado_juego.animales) {
+        enviar_estado_animal(estado);
+    }
+    enviar_largo(estado_juego.vacas_para_ordeniar.size());
+    for (uint32_t id_vaca : estado_juego.vacas_para_ordeniar) {
+        enviar_u32(id_vaca);
+    }
 }
 
 void ProtocoloServidor::enviar_evento_jugadores_en_sector(const JugadoresEnSector& jugadores) {
@@ -451,6 +492,16 @@ void ProtocoloServidor::enviar_evento_trampa_actualizada(const TrampaActualizada
     enviar_estado_trampa(trampa.trampa);
 }
 
+void ProtocoloServidor::enviar_evento_animal_actualizado(const AnimalActualizado& animal) {
+    enviar_tipo(TipoMensaje::ANIMAL_ACTUALIZADO);
+    enviar_estado_animal(animal.animal);
+}
+
+void ProtocoloServidor::enviar_evento_vaca_ordeniable(const VacaOrdeniable& vaca) {
+    enviar_tipo(TipoMensaje::VACA_ORDENIABLE);
+    enviar_u32(vaca.id_vaca);
+    enviar_booleano(vaca.lista);
+}
 void ProtocoloServidor::enviar_evento_tierra_cambiada(const TierraCambiada& tierra) {
     enviar_tipo(TipoMensaje::TIERRA_CAMBIADA);
     enviar_casilla_tratada(tierra.casilla);
@@ -531,4 +582,24 @@ void ProtocoloServidor::enviar_evento_cerrar_ventana_mercado(const CerrarVentana
 void ProtocoloServidor::enviar_evento_aviso_en_pantalla(const AvisoEnPantalla& aviso) {
     enviar_tipo(TipoMensaje::AVISO_EN_PANTALLA);
     enviar_texto(aviso.mensaje);
+}
+
+void ProtocoloServidor::enviar_evento_jugadores_de_la_partida(
+    const JugadoresDeLaPartida& jugadores) {
+    enviar_tipo(TipoMensaje::JUGADORES_DE_LA_PARTIDA);
+    enviar_largo(jugadores.jugadores.size());
+    for (const JugadorDeLaPartida& jugador : jugadores.jugadores) {
+        enviar_u32(jugador.id_jugador);
+        enviar_texto(jugador.nombre);
+        enviar_booleano(jugador.conectado);
+    }
+}
+
+void ProtocoloServidor::enviar_evento_regalos_pendientes(const RegalosPendientes& pendientes) {
+    enviar_tipo(TipoMensaje::REGALOS_PENDIENTES);
+    enviar_largo(pendientes.regalos.size());
+    for (const RegaloRecibido& regalo : pendientes.regalos) {
+        enviar_texto(regalo.remitente);
+        enviar_ranura_inventario(regalo.item);
+    }
 }

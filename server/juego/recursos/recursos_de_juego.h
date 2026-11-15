@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "../../configuracion/configuracion_servidor_datos.h"
+#include "../cultivos/cultivos.h"
 #include "../enemigos/catalogo_de_enemigos.h"
 #include "../mapa/mapa.h"
 #include "../mazmorra/nivel.h"
@@ -22,6 +23,9 @@ struct RecursosDeJuego {
     ConfiguracionJuegoServidor juego;
     ConfiguracionMercadoServidor mercado;
     CatalogoDeItems catalogo_de_items;
+
+    // Los cultivos: cuántas veces se riegan, cuánto tardan y qué semilla y producto tienen.
+    CatalogoDeCultivos catalogo_de_cultivos;
 
     // Objetos colocables en el mundo (minerales, y a futuro árboles, muebles, drops...).
     // Es distinto de catalogo_de_items: este describe cómo ocupan el mapa y qué dejan al

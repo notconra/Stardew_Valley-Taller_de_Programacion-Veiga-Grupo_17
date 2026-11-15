@@ -29,11 +29,13 @@ enum class TipoMensaje : uint8_t {
     CONSULTAR_CASILLA = 0x13,
     DAR_EL_OK = 0x14,
     ELIMINAR_PARTIDA = 0x15,
-    COMPRAR_EN_MERCADO = 0x17,
-    VENDER_EN_MERCADO = 0x18,
-    COMPRAR_ANIMAL_MERCADO = 0x19,
-    VENDER_ANIMAL_MERCADO = 0x1A,
-    CERRAR_MERCADO = 0x1B,
+    COMPRAR_EN_MERCADO = 0x16,
+    VENDER_EN_MERCADO = 0x17,
+    COMPRAR_ANIMAL_MERCADO = 0x18,
+    VENDER_ANIMAL_MERCADO = 0x19,
+    CERRAR_MERCADO = 0x1A,
+    ENVIAR_REGALO = 0x1B,
+    ABRIR_REGALOS = 0x1C,
 
     // Servidor a cliente
     ERROR_SERVIDOR = 0x81,
@@ -75,6 +77,16 @@ enum class TipoMensaje : uint8_t {
     ACTUALIZACION_MERCADO = 0x96,
     CERRAR_VENTANA_MERCADO = 0x97,
     AVISO_EN_PANTALLA = 0x98,
+
+    // Regalos: quiénes son los jugadores de la partida y qué regalos tiene sin abrir el receptor
+    JUGADORES_DE_LA_PARTIDA = 0x99,
+    REGALOS_PENDIENTES = 0xA0,
+
+    // Actualización de estado o posición de un animal
+    ANIMAL_ACTUALIZADO = 0xA1,
+
+    // Cambio en la disponibilidad de leche de una vaca
+    VACA_ORDENIABLE = 0xA2,
 };
 
 #endif

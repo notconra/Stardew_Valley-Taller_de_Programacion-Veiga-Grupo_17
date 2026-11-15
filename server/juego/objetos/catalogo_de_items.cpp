@@ -36,8 +36,8 @@ CatalogoDeItems::CatalogoDeItems() {
         true,
         0,
         0);
-    registrar(TipoItem::PAPA, "Papa", CategoriaItem::CULTIVO, 50, true, 0, 0);
-    registrar(TipoItem::FRUTILLA, "Frutilla", CategoriaItem::CULTIVO, 50, true, 0, 0);
+    // El precio es el base del enunciado; el mercado lo multiplica según la calidad.
+    registrar(TipoItem::FRUTILLA, "Frutilla", CategoriaItem::CULTIVO, 50, true, 0, 25);
     registrar(
         TipoItem::CEBOLLA_DE_VERDEO,
         "Cebolla de verdeo",
@@ -45,12 +45,9 @@ CatalogoDeItems::CatalogoDeItems() {
         50,
         true,
         0,
-        0);
-    registrar(TipoItem::CALABAZA, "Calabaza", CategoriaItem::CULTIVO, 50, true, 0, 0);
-
-    // Productos de los animales.
-    registrar(TipoItem::LECHE, "Leche", CategoriaItem::RECURSO, 50, true, 0, 0);
-    registrar(TipoItem::HUEVO, "Huevo", CategoriaItem::RECURSO, 50, true, 0, 0);
+        12);
+    registrar(TipoItem::PAPA, "Papa", CategoriaItem::CULTIVO, 50, true, 0, 18);
+    registrar(TipoItem::CALABAZA, "Calabaza", CategoriaItem::CULTIVO, 50, true, 0, 50);
 
     // Recursos y minerales. Los minerales se pueden vender en el mercado.
     registrar(TipoItem::PIEDRA, "Piedra", CategoriaItem::RECURSO, 50, true, 0, 0);
@@ -63,6 +60,10 @@ CatalogoDeItems::CatalogoDeItems() {
     // Colocables
     registrar(TipoItem::COFRE, "Cofre", CategoriaItem::COLOCABLE, 50, true, 0, 0);
     registrar(TipoItem::CAMA, "Cama", CategoriaItem::COLOCABLE, 1, false, 1, 0);
+
+    // Productos animales
+    registrar(TipoItem::LECHE, "Leche", CategoriaItem::RECURSO, 50, true, 0, 30);
+    registrar(TipoItem::HUEVO, "Huevo", CategoriaItem::RECURSO, 50, true, 0, 3);
 }
 
 void CatalogoDeItems::registrar(

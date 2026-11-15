@@ -4,9 +4,12 @@
 #include <SDL2/SDL_mixer.h>
 
 #include <map>
+#include <random>
 #include <string>
+#include <vector>
 
 #include "../../common/mensajes/mensajes_partida.h"
+#include "../../common/tipo_animal.h"
 #include "../../common/tipo_enemigo.h"
 #include "../../common/tipo_item.h"
 #include "../configuracion/configuracion_cliente_datos.h"
@@ -27,6 +30,14 @@ private:
     // Para que una manada entera suene como un solo grito y no uno por cada enemigo.
     mutable uint32_t ultimo_grito_de_aparicion = 0;
 
+    static constexpr uint32_t INTERVALO_MINIMO_SONIDO_ANIMAL_MS = 10000;
+    static constexpr uint32_t VARIACION_INTERVALO_SONIDO_ANIMAL_MS = 10000;
+    static constexpr uint32_t COOLDOWN_INTERACCION_ANIMAL_MS = 1000;
+    static constexpr int VOLUMEN_ANIMALES = 25;
+    uint32_t proximo_sonido_animal_ms = 0;
+    uint32_t ultimo_sonido_interaccion_animal_ms = 0;
+    std::mt19937 generador_azar{std::random_device{}()};
+
     std::string ruta_ambiente_general;
     std::string ruta_paso_general;
     std::map<std::string, Mix_Chunk*> sonidos_por_ruta;
@@ -41,6 +52,16 @@ private:
     Mix_Chunk* jugador_danio = nullptr;
     Mix_Chunk* compra = nullptr;
     Mix_Chunk* venta = nullptr;
+    Mix_Chunk* vaca = nullptr;
+    Mix_Chunk* gallina = nullptr;
+    Mix_Chunk* ordeniar_vaca = nullptr;
+    Mix_Chunk* dinero = nullptr;
+    Mix_Chunk* regalo_recibido = nullptr;
+    Mix_Chunk* anochecer = nullptr;
+    std::string ruta_ambiente_del_mapa;
+    bool es_de_noche = false;
+
+    void actualizar_ambiente();
 
     Mix_Chunk* cargar(const std::string& ruta);
     static void reproducir(Mix_Chunk* sonido);
@@ -83,6 +104,18 @@ public:
     // El jugador compró algo en el mercado / vendió algo en el mercado.
     void reproducir_compra() const;
     void reproducir_venta() const;
+    void reproducir_dinero() const;
+    void reproducir_ordenie_vaca() const;
+    void reproducir_interaccion_animal(TipoAnimal tipo);
+    void actualizar_ambiente_animales(
+        uint32_t ahora, const std::vector<TipoAnimal>& animales_cercanos);
+
+    // Le llegó un regalo nuevo al jugador propio.
+    void reproducir_regalo_recibido() const;
+
+    // De noche, en los mapas con el ambiente general (no en las cuevas), el ambiente pasa a ser
+    // la música de noche. Si no cambia nada, no reinicia lo que está sonando.
+    void cambiar_noche(bool de_noche);
 };
 
 #endif

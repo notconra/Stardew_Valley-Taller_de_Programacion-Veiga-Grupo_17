@@ -19,7 +19,7 @@ ancho = 1000
 alto = 680
 pantalla_completa = false
 # En pantalla completa no tiene efecto: la ventana ocupa todo el monitor.
-redimensionable = false
+redimensionable = true
 
 [sdl]
 # si estan en linux nativo (con GPU) pongan true, si están con WSL o VM (sin GPU) ponganlo en false para usar
@@ -509,6 +509,14 @@ ruta_accion = "Assets/sfx/pico_aire.wav"
 ruta_comprar = "Assets/sfx/comprar.wav"
 ruta_vender = "Assets/sfx/vender.wav"
 
+[sonido.animales]
+vaca = "Assets/sfx/vaca.wav"
+gallina = "Assets/sfx/gallina.wav"
+ordeniar = "Assets/sfx/ordeniar_vaca.wav"
+
+[sonido.dinero]
+contador = "Assets/sfx/dinero_contador.wav"
+
 [sonido.herramientas]
 espada = "Assets/sfx/espada.wav"
 pico = "Assets/sfx/pico_aire.wav"
@@ -524,6 +532,12 @@ activar = "Assets/sfx/activar_trampa_pinches.wav"
 
 [sonido.jugador]
 danio = "Assets/sfx/recibir_dano.wav"
+
+[sonido.regalos]
+recibir = "Assets/sfx/regalo_recibido.wav"
+
+[sonido.tiempo]
+anochecer = "Assets/sfx/anochecer.wav"
 
 [sonido.enemigos.esqueleto]
 golpe = "Assets/sfx/esqueleto_golpe.wav"

@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace {
 constexpr int CANAL_AMBIENTE = 0;  // reservado, así los demás efectos no lo pisan
@@ -43,6 +44,26 @@ EfectosDeSonido::EfectosDeSonido(const ConfiguracionSonido& configuracion)
                         : cargar(configuracion.ruta_jugador_danio);
     compra = cargar(configuracion.ruta_comprar);
     venta = cargar(configuracion.ruta_vender);
+    vaca = configuracion.ruta_vaca.empty() ? nullptr : cargar(configuracion.ruta_vaca);
+    if (vaca != nullptr) {
+        Mix_VolumeChunk(vaca, VOLUMEN_ANIMALES);
+    }
+    gallina = configuracion.ruta_gallina.empty() ? nullptr : cargar(configuracion.ruta_gallina);
+    if (gallina != nullptr) {
+        Mix_VolumeChunk(gallina, VOLUMEN_ANIMALES);
+    }
+    ordeniar_vaca = configuracion.ruta_ordeniar_vaca.empty()
+                        ? nullptr
+                        : cargar(configuracion.ruta_ordeniar_vaca);
+    dinero = configuracion.ruta_dinero.empty() ? nullptr : cargar(configuracion.ruta_dinero);
+    regalo_recibido = configuracion.ruta_regalo_recibido.empty() ||
+                              !std::filesystem::exists(configuracion.ruta_regalo_recibido)
+                          ? nullptr
+                          : cargar(configuracion.ruta_regalo_recibido);
+    anochecer = configuracion.ruta_anochecer.empty() ||
+                        !std::filesystem::exists(configuracion.ruta_anochecer)
+                    ? nullptr
+                    : cargar(configuracion.ruta_anochecer);
     cambiar_paso("");
 }
 
@@ -67,7 +88,20 @@ EfectosDeSonido::~EfectosDeSonido() {
 }
 
 void EfectosDeSonido::cambiar_ambiente(const std::string& ruta) {
-    Mix_Chunk* nuevo = cargar(ruta.empty() ? ruta_ambiente_general : ruta);
+    ruta_ambiente_del_mapa = ruta.empty() ? ruta_ambiente_general : ruta;
+    actualizar_ambiente();
+}
+
+void EfectosDeSonido::cambiar_noche(bool de_noche) {
+    es_de_noche = de_noche;
+    actualizar_ambiente();
+}
+
+void EfectosDeSonido::actualizar_ambiente() {
+    // Solo los mapas con el ambiente general (granja, pueblo...) cambian de noche; las cuevas no.
+    const bool usa_la_noche =
+        es_de_noche && anochecer != nullptr && ruta_ambiente_del_mapa == ruta_ambiente_general;
+    Mix_Chunk* nuevo = usa_la_noche ? anochecer : cargar(ruta_ambiente_del_mapa);
     if (nuevo == ambiente_sonando) {
         return;
     }
@@ -100,6 +134,62 @@ void EfectosDeSonido::reproducir_compra() const {
 
 void EfectosDeSonido::reproducir_venta() const {
     reproducir(venta);
+}
+
+void EfectosDeSonido::reproducir_dinero() const {
+    reproducir(dinero);
+}
+
+void EfectosDeSonido::reproducir_ordenie_vaca() const {
+    reproducir(ordeniar_vaca);
+}
+
+void EfectosDeSonido::reproducir_interaccion_animal(TipoAnimal tipo) {
+    uint32_t ahora = SDL_GetTicks();
+    if (ultimo_sonido_interaccion_animal_ms != 0 &&
+        ahora - ultimo_sonido_interaccion_animal_ms < COOLDOWN_INTERACCION_ANIMAL_MS) {
+        return;
+    }
+    ultimo_sonido_interaccion_animal_ms = ahora;
+    if (tipo == TipoAnimal::VACA) {
+        reproducir(vaca);
+    } else if (tipo == TipoAnimal::GALLINA) {
+        reproducir(gallina);
+    }
+}
+
+void EfectosDeSonido::actualizar_ambiente_animales(
+    uint32_t ahora, const std::vector<TipoAnimal>& animales_cercanos) {
+    if (proximo_sonido_animal_ms == 0) {
+        std::uniform_int_distribution<uint32_t> distribucion_intervalo(
+            INTERVALO_MINIMO_SONIDO_ANIMAL_MS,
+            INTERVALO_MINIMO_SONIDO_ANIMAL_MS + VARIACION_INTERVALO_SONIDO_ANIMAL_MS);
+        proximo_sonido_animal_ms = ahora + distribucion_intervalo(generador_azar);
+        return;
+    }
+    if (ahora < proximo_sonido_animal_ms) {
+        return;
+    }
+    std::uniform_int_distribution<uint32_t> distribucion_intervalo(
+        INTERVALO_MINIMO_SONIDO_ANIMAL_MS,
+        INTERVALO_MINIMO_SONIDO_ANIMAL_MS + VARIACION_INTERVALO_SONIDO_ANIMAL_MS);
+    proximo_sonido_animal_ms = ahora + distribucion_intervalo(generador_azar);
+
+    if (animales_cercanos.empty()) {
+        return;
+    }
+    std::uniform_int_distribution<size_t> distribucion_indice(0, animales_cercanos.size() - 1);
+    size_t indice_aleatorio = distribucion_indice(generador_azar);
+    TipoAnimal tipo_elegido = animales_cercanos[indice_aleatorio];
+    if (tipo_elegido == TipoAnimal::VACA) {
+        reproducir(vaca);
+    } else if (tipo_elegido == TipoAnimal::GALLINA) {
+        reproducir(gallina);
+    }
+}
+
+void EfectosDeSonido::reproducir_regalo_recibido() const {
+    reproducir(regalo_recibido);
 }
 
 void EfectosDeSonido::reproducir_paso() const {

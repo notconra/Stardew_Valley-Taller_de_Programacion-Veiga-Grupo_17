@@ -26,6 +26,8 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::DROP_RETIRADO, [this] { return recibir_drop_retirado(); }},
           {TipoMensaje::ENEMIGO_ACTUALIZADO, [this] { return recibir_enemigo_actualizado(); }},
           {TipoMensaje::TRAMPA_ACTUALIZADA, [this] { return recibir_trampa_actualizada(); }},
+          {TipoMensaje::ANIMAL_ACTUALIZADO, [this] { return recibir_animal_actualizado(); }},
+          {TipoMensaje::VACA_ORDENIABLE, [this] { return recibir_vaca_ordeniable(); }},
           {TipoMensaje::TIERRA_CAMBIADA, [this] { return recibir_tierra_cambiada(); }},
           {TipoMensaje::HORA_DEL_JUEGO, [this] { return recibir_hora_del_juego(); }},
           {TipoMensaje::CASILLA_CONSULTADA, [this] { return recibir_casilla_consultada(); }},
@@ -38,6 +40,9 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::CERRAR_VENTANA_MERCADO,
            [this] { return recibir_cerrar_ventana_mercado(); }},
           {TipoMensaje::AVISO_EN_PANTALLA, [this] { return recibir_aviso_en_pantalla(); }},
+          {TipoMensaje::JUGADORES_DE_LA_PARTIDA,
+           [this] { return recibir_jugadores_de_la_partida(); }},
+          {TipoMensaje::REGALOS_PENDIENTES, [this] { return recibir_regalos_pendientes(); }},
       } {
 }
 
@@ -73,6 +78,8 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const ComprarAnimalMercado& m) { enviar_comando_comprar_animal_mercado(m); },
             [this](const VenderAnimalMercado& m) { enviar_comando_vender_animal_mercado(m); },
             [this](const CerrarMercado& m) { enviar_comando_cerrar_mercado(m); },
+            [this](const EnviarRegalo& m) { enviar_comando_enviar_regalo(m); },
+            [this](const AbrirRegalos& m) { enviar_comando_abrir_regalos(m); },
         },
         comando);
 }
@@ -203,6 +210,17 @@ void ProtocoloCliente::enviar_comando_vender_animal_mercado(const VenderAnimalMe
 
 void ProtocoloCliente::enviar_comando_cerrar_mercado(const CerrarMercado&) {
     enviar_tipo(TipoMensaje::CERRAR_MERCADO);
+}
+
+void ProtocoloCliente::enviar_comando_enviar_regalo(const EnviarRegalo& regalo) {
+    enviar_tipo(TipoMensaje::ENVIAR_REGALO);
+    enviar_u32(regalo.id_destinatario);
+    enviar_u8(regalo.ranura);
+    enviar_u16(regalo.cantidad);
+}
+
+void ProtocoloCliente::enviar_comando_abrir_regalos(const AbrirRegalos&) {
+    enviar_tipo(TipoMensaje::ABRIR_REGALOS);
 }
 
 // Recepción de eventos
@@ -402,10 +420,46 @@ EstadoTrampa ProtocoloCliente::recibir_estado_trampa() {
     return estado;
 }
 
+EstadoAnimal ProtocoloCliente::recibir_estado_animal() {
+    EstadoAnimal estado;
+    estado.id = recibir_u32();
+    estado.tipo = static_cast<TipoAnimal>(recibir_u8());
+    estado.variante = recibir_u8();
+    estado.columna = recibir_u32();
+    estado.fila = recibir_u32();
+    estado.mirando = static_cast<Direccion>(recibir_u8());
+    estado.caminando = recibir_booleano();
+    estado.durmiendo = recibir_booleano();
+    return estado;
+}
+
+AnimalActualizado ProtocoloCliente::recibir_animal_actualizado() {
+    return AnimalActualizado{recibir_estado_animal()};
+}
+
+VacaOrdeniable ProtocoloCliente::recibir_vaca_ordeniable() {
+    uint32_t id_vaca = recibir_u32();
+    bool lista = recibir_booleano();
+    return VacaOrdeniable{id_vaca, lista};
+}
+
 CasillaTratada ProtocoloCliente::recibir_casilla_tratada() {
     CasillaTratada casilla;
     casilla.columna = recibir_u32();
     casilla.fila = recibir_u32();
+    const uint8_t cultivo = recibir_u8();
+    if (cultivo > static_cast<uint8_t>(TipoCultivo::CALABAZA)) {
+        throw ErrorProtocolo("cultivo desconocido");
+    }
+    casilla.cultivo = static_cast<TipoCultivo>(cultivo);
+    casilla.etapa = recibir_u8();
+    if (casilla.etapa > ETAPA_DE_CULTIVO_MAXIMA) {
+        throw ErrorProtocolo("etapa de cultivo inválida");
+    }
+    casilla.madura = recibir_booleano();
+    casilla.regada = recibir_booleano();
+    casilla.pide_agua = recibir_booleano();
+    casilla.ya_dio_fruto = recibir_booleano();
     return casilla;
 }
 
@@ -447,6 +501,18 @@ EstadoJuego ProtocoloCliente::recibir_estado_juego() {
     estado_juego.trampas.reserve(cantidad_de_trampas);
     for (uint16_t i = 0; i < cantidad_de_trampas; ++i) {
         estado_juego.trampas.push_back(recibir_estado_trampa());
+    }
+
+    uint16_t cantidad_de_animales = recibir_u16();
+    estado_juego.animales.reserve(cantidad_de_animales);
+    for (uint16_t i = 0; i < cantidad_de_animales; ++i) {
+        estado_juego.animales.push_back(recibir_estado_animal());
+    }
+
+    uint16_t cantidad_de_vacas = recibir_u16();
+    estado_juego.vacas_para_ordeniar.reserve(cantidad_de_vacas);
+    for (uint16_t i = 0; i < cantidad_de_vacas; ++i) {
+        estado_juego.vacas_para_ordeniar.push_back(recibir_u32());
     }
 
     return estado_juego;
@@ -631,4 +697,31 @@ CerrarVentanaMercado ProtocoloCliente::recibir_cerrar_ventana_mercado() {
 
 AvisoEnPantalla ProtocoloCliente::recibir_aviso_en_pantalla() {
     return AvisoEnPantalla{recibir_texto()};
+}
+
+JugadoresDeLaPartida ProtocoloCliente::recibir_jugadores_de_la_partida() {
+    JugadoresDeLaPartida jugadores;
+    const uint16_t cantidad = recibir_u16();
+    jugadores.jugadores.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        JugadorDeLaPartida jugador;
+        jugador.id_jugador = recibir_u32();
+        jugador.nombre = recibir_texto();
+        jugador.conectado = recibir_booleano();
+        jugadores.jugadores.push_back(jugador);
+    }
+    return jugadores;
+}
+
+RegalosPendientes ProtocoloCliente::recibir_regalos_pendientes() {
+    RegalosPendientes pendientes;
+    const uint16_t cantidad = recibir_u16();
+    pendientes.regalos.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        RegaloRecibido regalo;
+        regalo.remitente = recibir_texto();
+        regalo.item = recibir_ranura_inventario();
+        pendientes.regalos.push_back(regalo);
+    }
+    return pendientes;
 }

@@ -135,6 +135,9 @@ void ConfiguracionServidor::cargar_juego(const toml::table& archivo_toml) {
     if (const toml::table* tabla = (*juego)["acciones"].as_table()) {
         cargar_acciones(*tabla);
     }
+    if (const toml::table* tabla = (*juego)["cultivos"].as_table()) {
+        cargar_cultivos(*tabla);
+    }
     if (const toml::table* tabla = (*juego)["drops"].as_table()) {
         cargar_drops(*tabla);
     }
@@ -274,6 +277,89 @@ void ConfiguracionServidor::cargar_acciones(const toml::table& tabla) {
         acciones.energia_por_tratar_tierra,
         0,
         INT_MAX);
+    acciones.energia_por_golpe = lector_toml::leer_entero_opcional(
+        tabla,
+        "energia_por_golpe",
+        seccion,
+        acciones.energia_por_golpe,
+        0,
+        INT_MAX);
+    acciones.energia_por_picar = lector_toml::leer_entero_opcional(
+        tabla,
+        "energia_por_picar",
+        seccion,
+        acciones.energia_por_picar,
+        0,
+        INT_MAX);
+    acciones.energia_por_tratar_tierra = lector_toml::leer_entero_opcional(
+        tabla,
+        "energia_por_tratar_tierra",
+        seccion,
+        acciones.energia_por_tratar_tierra,
+        0,
+        INT_MAX);
+    acciones.energia_por_plantar = lector_toml::leer_entero_opcional(
+        tabla,
+        "energia_por_plantar",
+        seccion,
+        acciones.energia_por_plantar,
+        0,
+        INT_MAX);
+    acciones.energia_por_regar = lector_toml::leer_entero_opcional(
+        tabla,
+        "energia_por_regar",
+        seccion,
+        acciones.energia_por_regar,
+        0,
+        INT_MAX);
+    acciones.energia_por_cosechar = lector_toml::leer_entero_opcional(
+        tabla,
+        "energia_por_cosechar",
+        seccion,
+        acciones.energia_por_cosechar,
+        0,
+        INT_MAX);
+}
+
+void ConfiguracionServidor::cargar_cultivos(const toml::table& tabla) {
+    const std::string seccion = "juego.cultivos";
+    ConfiguracionCultivosServidor& cultivos = datos_configuracion.juego.cultivos;
+
+    cultivos.faltas_por_riego_tardio = lector_toml::leer_entero_opcional(
+        tabla,
+        "faltas_por_riego_tardio",
+        seccion,
+        cultivos.faltas_por_riego_tardio,
+        0,
+        4);
+    cultivos.faltas_por_riego_perdido = lector_toml::leer_entero_opcional(
+        tabla,
+        "faltas_por_riego_perdido",
+        seccion,
+        cultivos.faltas_por_riego_perdido,
+        0,
+        4);
+    cultivos.faltas_por_dia_sin_cosechar = lector_toml::leer_entero_opcional(
+        tabla,
+        "faltas_por_dia_sin_cosechar",
+        seccion,
+        cultivos.faltas_por_dia_sin_cosechar,
+        0,
+        4);
+    cultivos.probabilidad_de_subir_calidad = lector_toml::leer_decimal_opcional(
+        tabla,
+        "probabilidad_de_subir_calidad",
+        seccion,
+        cultivos.probabilidad_de_subir_calidad,
+        0.0,
+        1.0);
+    cultivos.probabilidad_de_bajar_calidad = lector_toml::leer_decimal_opcional(
+        tabla,
+        "probabilidad_de_bajar_calidad",
+        seccion,
+        cultivos.probabilidad_de_bajar_calidad,
+        0.0,
+        1.0);
 }
 
 void ConfiguracionServidor::cargar_drops(const toml::table& tabla) {

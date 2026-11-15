@@ -15,6 +15,7 @@
 #include "../ranura_inventario.h"
 #include "../tipo_accion.h"
 #include "../tipo_animal.h"
+#include "../tipo_cultivo.h"
 #include "../tipo_enemigo.h"
 #include "../tipo_item.h"
 #include "../tipo_objeto.h"
@@ -143,6 +144,18 @@ struct VenderAnimalMercado {
 // Cierra la ventana del mercado activa.
 struct CerrarMercado {};
 
+// Le regala a otro jugador de la partida (conectado o no) parte de una ranura de la barra.
+// cantidad == 0 regala el stack completo. Las herramientas no se pueden regalar. El regalo queda
+// pendiente hasta que el destinatario lo abre (AbrirRegalos).
+struct EnviarRegalo {
+    uint32_t id_destinatario = 0;
+    uint8_t ranura = 0;
+    uint16_t cantidad = 0;
+};
+
+// Pasa al inventario todos los regalos pendientes que entren. Los que no entran siguen pendientes.
+struct AbrirRegalos {};
+
 // Servidor a cliente
 
 struct MultijugadorActivado {
@@ -240,11 +253,53 @@ struct EstadoTrampa {
 };
 
 // Una casilla de tierra tratada con la pala, por columna y fila del mapa.
+#define ETAPA_DE_CULTIVO_MAXIMA 3
+
+// Una casilla de tierra tratada y lo que tiene plantado. "etapa" va de 0 (recién plantada) a
+// ETAPA_DE_CULTIVO_MAXIMA mientras crece; cuando "madura" es true está lista para cosechar.
+// "regada" es si ya se regó en el turno de riego de ahora y "pide_agua" si todavía hay que regarla.
+// "ya_dio_fruto" es si se cosechó y está volviendo a dar (la frutilla): se dibuja la planta entera
+// sin frutos en vez de la etapa.
 struct CasillaTratada {
     uint32_t columna = 0;
     uint32_t fila = 0;
+    TipoCultivo cultivo = TipoCultivo::NINGUNO;
+    uint8_t etapa = 0;
+    bool madura = false;
+    bool regada = false;
+    bool pide_agua = false;
+    bool ya_dio_fruto = false;
 
     bool operator==(const CasillaTratada&) const = default;
+};
+
+// Un animal de granja colocado en el mapa (vaca, gallina).
+struct EstadoAnimal {
+    uint32_t id = 0;
+    TipoAnimal tipo = TipoAnimal::VACA;
+    uint8_t variante = 0;
+    uint32_t columna = 0;
+    uint32_t fila = 0;
+    Direccion mirando = Direccion::ABAJO;
+    bool caminando = false;
+    bool durmiendo = false;
+
+    bool operator==(const EstadoAnimal&) const = default;
+};
+
+// Evento cuando cambia el estado, posición o dirección de un animal en el sector
+struct AnimalActualizado {
+    EstadoAnimal animal;
+
+    bool operator==(const AnimalActualizado&) const = default;
+};
+
+// Notificación cuando una vaca queda lista para ordeñar o cuando se completa su ordeñe
+struct VacaOrdeniable {
+    uint32_t id_vaca = 0;
+    bool lista = false;
+
+    bool operator==(const VacaOrdeniable&) const = default;
 };
 
 // Snapshot completa de UN sector. Se manda una sola vez cuando el jugador entra o cambia de
@@ -257,6 +312,8 @@ struct EstadoJuego {
     std::vector<EstadoEnemigo> enemigos;
     std::vector<CasillaTratada> tierra;
     std::vector<EstadoTrampa> trampas;
+    std::vector<EstadoAnimal> animales;
+    std::vector<uint32_t> vacas_para_ordeniar;
 };
 
 // Posición y estado de todos los jugadores del sector del receptor. Se manda cada tick, pero solo
@@ -385,6 +442,33 @@ struct ActualizacionInventario {
 // Actualización del cofre abierto por un jugador. Si el cofre se cerró, abierto == false.
 struct ActualizacionCofre {
     CofreJugador cofre;
+};
+
+// Un jugador de la partida, esté conectado o no, para elegir a quién regalarle.
+struct JugadorDeLaPartida {
+    uint32_t id_jugador = 0;
+    std::string nombre;
+    bool conectado = false;
+
+    bool operator==(const JugadorDeLaPartida&) const = default;
+};
+
+// Todos los jugadores de la partida. Se manda a todos cuando alguien entra o se va.
+struct JugadoresDeLaPartida {
+    std::vector<JugadorDeLaPartida> jugadores;
+};
+
+// Un regalo que todavía no se abrió: quién lo mandó y qué es.
+struct RegaloRecibido {
+    std::string remitente;
+    RanuraInventario item;
+
+    bool operator==(const RegaloRecibido&) const = default;
+};
+
+// Los regalos pendientes del jugador que lo recibe. Se manda al entrar y cada vez que cambian.
+struct RegalosPendientes {
+    std::vector<RegaloRecibido> regalos;
 };
 
 // Canal de un mensaje que el servidor manda al cliente. "PRIVADO" avisa que el mensaje era para un

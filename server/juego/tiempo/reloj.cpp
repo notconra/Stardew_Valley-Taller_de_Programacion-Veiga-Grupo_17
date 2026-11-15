@@ -1,5 +1,6 @@
 #include "reloj.h"
 
+#include <algorithm>
 #include <cmath>
 #include <stdexcept>
 
@@ -68,10 +69,23 @@ void Reloj::empezar_dia_siguiente() {
     ++dia;
 }
 
+void Reloj::cambiar_estacion(Estacion estacion) {
+    const uint32_t dias_por_anio = dias_por_estacion * ESTACIONES_POR_ANIO;
+    const uint32_t inicio_del_anio = (dia - 1) / dias_por_anio * dias_por_anio;
+    dia = inicio_del_anio + static_cast<uint32_t>(estacion) * dias_por_estacion + 1;
+}
+
 void Reloj::continuar_en_el_dia(uint32_t dia_guardado) {
     if (dia_guardado == 0) {
         throw std::invalid_argument("los días se cuentan desde 1");
     }
     ticks_del_dia = 0;
     dia = dia_guardado;
+}
+
+void Reloj::avanzar_minutos(uint32_t minutos_a_avanzar) {
+    uint64_t minutos_del_dia = static_cast<uint64_t>(HORAS_POR_DIA) * MINUTOS_POR_HORA;
+    uint64_t ticks_adicionales =
+        static_cast<uint64_t>(minutos_a_avanzar) * ticks_por_dia / minutos_del_dia;
+    ticks_del_dia = std::min(ticks_del_dia + ticks_adicionales, ticks_por_dia);
 }

@@ -53,8 +53,14 @@ public:
     // std::invalid_argument si el día es 0.
     void continuar_en_el_dia(uint32_t dia_guardado);
 
+    // Cheat: salta al día 1 de esa estación en el año actual, sin tocar la hora.
+    void cambiar_estacion(Estacion estacion);
+
     // Pasa a las 6 am del día siguiente (todos dieron el OK), sean las 2 am o antes.
     void empezar_dia_siguiente();
+
+    // Avanza el reloj una cantidad de minutos de juego (sin pasar de las 2 am).
+    void avanzar_minutos(uint32_t minutos_a_avanzar);
 };
 
 #endif
