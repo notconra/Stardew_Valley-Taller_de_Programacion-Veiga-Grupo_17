@@ -1,5 +1,5 @@
-#ifndef CATALOGO_LOTES_H
-#define CATALOGO_LOTES_H
+#ifndef CATALOGO_DE_LOTES_H
+#define CATALOGO_DE_LOTES_H
 
 #include <cstdint>
 #include <map>
@@ -11,24 +11,19 @@
 #include "../../../common/tipo_item.h"
 #include "../../../common/tipo_lote.h"
 
-// Qué hay que hacer para cumplir una parte de un lote: donar un ítem (con una calidad mínima),
-// donar monedas o conseguir un logro de pelea.
-enum class TipoDeRequisito : uint8_t {
-    ITEM = 0,
-    DINERO = 1,
-    LOGRO = 2,
-};
-
 struct Requisito {
     TipoDeRequisito tipo = TipoDeRequisito::ITEM;
     TipoItem item = TipoItem::NINGUNO;
     Calidad calidad_minima = Calidad::BASE;
     LogroDePelea logro = LogroDePelea::ESQUELETOS;
+    // Unidades del ítem, monedas, o 1 para un logro.
     uint32_t cantidad = 1;
 };
 
 struct DefinicionDeLote {
     TipoLote tipo = TipoLote::CULTIVOS;
+    // Con esta clave se marca el lote en el TMX del centro (propiedad "lote").
+    std::string clave;
     std::string nombre;
     std::vector<Requisito> requisitos;
 };
@@ -46,7 +41,11 @@ private:
 public:
     CatalogoDeLotes();
 
+    // nullptr si no existe.
     const DefinicionDeLote* buscar(TipoLote tipo) const;
+
+    // El lote con esa clave (la del TMX), o nullptr si no hay ninguno.
+    const DefinicionDeLote* buscar_por_clave(const std::string& clave) const;
 
     const std::map<TipoLote, DefinicionDeLote>& definiciones() const;
 };
