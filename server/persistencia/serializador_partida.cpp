@@ -11,7 +11,7 @@
 #include "lector_binario.h"
 
 constexpr std::array<uint8_t, 4> FIRMA_ARCHIVO = {'S', 'V', 'P', 'T'};
-constexpr uint16_t VERSION_ACTUAL = 8;
+constexpr uint16_t VERSION_ACTUAL = 9;
 
 namespace {
 void escribir_ranura(EscritorBinario& escritor, const RanuraInventario& ranura) {
@@ -161,6 +161,18 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
         escritor.escribir_u16(cultivo.faltas);
         escritor.escribir_bool(cultivo.ya_dio_fruto);
     }
+
+    escritor.escribir_bool(datos.mundo.centro.terminado);
+    escritor.escribir_u8(static_cast<uint8_t>(datos.mundo.centro.lotes.size()));
+    for (const auto& lote : datos.mundo.centro.lotes) {
+        escritor.escribir_u8(static_cast<uint8_t>(lote.tipo));
+        escritor.escribir_bool(lote.completo);
+        escritor.escribir_u32(lote.dia_completado);
+        escritor.escribir_u8(static_cast<uint8_t>(lote.aportado.size()));
+        for (uint32_t aportado : lote.aportado) {
+            escritor.escribir_u32(aportado);
+        }
+    }
 }
 
 DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
@@ -306,6 +318,20 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
         cultivo.faltas = lector.leer_u16();
         cultivo.ya_dio_fruto = lector.leer_bool();
         datos.mundo.cultivos.push_back(cultivo);
+    }
+
+    datos.mundo.centro.terminado = lector.leer_bool();
+    uint8_t cantidad_de_lotes = lector.leer_u8();
+    for (uint8_t i = 0; i < cantidad_de_lotes; ++i) {
+        DatosLoteGuardado lote;
+        lote.tipo = static_cast<TipoLote>(lector.leer_u8());
+        lote.completo = lector.leer_bool();
+        lote.dia_completado = lector.leer_u32();
+        uint8_t cantidad_de_requisitos = lector.leer_u8();
+        for (uint8_t j = 0; j < cantidad_de_requisitos; ++j) {
+            lote.aportado.push_back(lector.leer_u32());
+        }
+        datos.mundo.centro.lotes.push_back(lote);
     }
 
     return datos;
