@@ -22,6 +22,7 @@
 #include "entrada_del_usuario.h"
 #include "hud_inventario.h"
 #include "iconos_de_items.h"
+#include "lluvia_grafica.h"
 #include "mapa_grafico.h"
 #include "marcador_de_casillas.h"
 #include "objetos_graficos.h"
@@ -169,7 +170,8 @@ private:
         const CultivosGraficos& cultivos, const EfectoDeRiego& efecto_de_riego,
         const Camara& camara, const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
         const EntradaDelUsuario& entrada, const VistaChat& chat, RelojGrafico& reloj_grafico,
-        const PantallaDeDescanso& pantalla_de_descanso, const PanelDeRegalos& regalos) const;
+        const PantallaDeDescanso& pantalla_de_descanso, const PanelDeRegalos& regalos,
+        LluviaGrafica& lluvia) const;
 
 public:
     VistaPartida(ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion);

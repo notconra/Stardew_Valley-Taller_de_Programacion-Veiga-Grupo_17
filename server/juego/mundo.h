@@ -108,6 +108,8 @@ public:
     uint32_t obtener_dia() const;
 
     void cambiar_estacion(Estacion estacion);
+    void cambiar_lluvia(bool llueve);
+    bool esta_lloviendo() const;
 
     // Si terminó un día desde la última vez que se preguntó (todos dieron el OK). Es cuando hay
     // que guardar la partida; devuelve true una sola vez por día.

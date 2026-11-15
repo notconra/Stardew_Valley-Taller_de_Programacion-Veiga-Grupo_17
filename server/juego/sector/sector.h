@@ -99,6 +99,7 @@ public:
     // El tiempo de los cultivos (ver Huerta). Avisan de las casillas que cambiaron.
     void avanzar_cultivos(Notificador& notificador, int minuto_del_dia);
     void terminar_el_dia_de_los_cultivos(Notificador& notificador);
+    void llover_sobre_los_cultivos(Notificador& notificador);
 
     // Cómo está una casilla de tierra (tratada o no, y lo que tiene plantado), para avisarla.
     void avisar_casilla(Notificador& notificador, const Casilla& casilla) const;

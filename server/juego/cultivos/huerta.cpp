@@ -157,6 +157,18 @@ std::vector<Casilla> Huerta::avanzar_hasta(int minuto) {
     return cambiaron;
 }
 
+std::vector<Casilla> Huerta::regar_con_lluvia() {
+    std::vector<Casilla> cambiaron;
+    for (auto& [posicion, cultivo] : cultivos) {
+        if (cultivo.madura || !cultivo.pide_agua) {
+            continue;
+        }
+        cultivo.pide_agua = false;
+        cambiaron.push_back(Casilla{posicion.first, posicion.second});
+    }
+    return cambiaron;
+}
+
 std::vector<Casilla> Huerta::terminar_el_dia() {
     std::vector<Casilla> cambiaron;
     for (auto& [posicion, cultivo] : cultivos) {

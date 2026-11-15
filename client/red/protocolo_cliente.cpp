@@ -593,6 +593,7 @@ HoraDelJuego ProtocoloCliente::recibir_hora_del_juego() {
     if (hora.dia_de_la_semana > DIA_DE_LA_SEMANA_MAXIMO) {
         throw ErrorProtocolo("día de la semana desconocido");
     }
+    hora.lloviendo = recibir_booleano();
     return hora;
 }
 

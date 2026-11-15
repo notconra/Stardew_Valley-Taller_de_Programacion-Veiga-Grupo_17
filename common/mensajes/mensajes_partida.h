@@ -378,6 +378,8 @@ struct HoraDelJuego {
     Estacion estacion = Estacion::PRIMAVERA;
     uint16_t anio = 1;
     uint8_t dia_de_la_semana = 0;
+    // Si hoy llueve: los cultivos se riegan solos y el cliente dibuja la lluvia afuera.
+    bool lloviendo = false;
 
     bool operator==(const HoraDelJuego&) const = default;
 };
