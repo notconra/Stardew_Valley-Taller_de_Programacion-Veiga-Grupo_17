@@ -158,6 +158,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     hora_del_juego.reset();
     jugadores_de_la_partida = JugadoresDeLaPartida{};
     regalos_pendientes = RegalosPendientes{};
+    lotes_recibidos.clear();
     ultimo_riego.reset();
     olvidar_el_piso();
     partida_terminada = false;
@@ -237,6 +238,13 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         iconos,
         ancho_de_pantalla,
         alto_de_pantalla);
+    std::optional<VentanaDeLote> ventana_de_lote;
+    ventana_de_lote.emplace(
+        renderizador.ptr(),
+        configuracion.chat.ruta_fuente,
+        iconos,
+        ancho_de_pantalla,
+        alto_de_pantalla);
     EntradaDelUsuario entrada;
     Camara camara = camara_para(mapa_de(mapa_actual));
 
@@ -256,7 +264,9 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             return false;
         }
         if (entrada.pedidos().salir) {
-            if (regalos->esta_abierto()) {
+            if (ventana_de_lote->esta_abierta()) {
+                ventana_de_lote->cerrar();
+            } else if (regalos->esta_abierto()) {
                 regalos->cerrar();
             } else if (ultimo_cofre.abierto) {
                 conexion.enviar_comando(CerrarCofre{});
@@ -286,6 +296,10 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             efectos_actuales = nullptr;
             return true;
         }
+        for (const LoteDelCentro& lote : lotes_recibidos) {
+            ventana_de_lote->recibir(lote);
+        }
+        lotes_recibidos.clear();
 
         const EstadoJugador* propio = jugador_propio();
         const bool cambio_el_tamano = actualizar_tamano_de_pantalla(ventana, hud);
@@ -295,6 +309,11 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
                     crear_textura_del_mundo(renderizador.ptr(), ancho_del_mundo, alto_del_mundo);
             }
             camara = camara_para(mapa_de(mapa_actual));
+            ventana_de_lote->configurar(
+                renderizador.ptr(),
+                configuracion.chat.ruta_fuente,
+                ancho_de_pantalla,
+                alto_de_pantalla);
             regalos.emplace(
                 renderizador.ptr(),
                 configuracion.chat.ruta_fuente,
@@ -316,6 +335,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             efectos.cambiar_paso(configuracion_de(mapa_actual).ruta_caminar);
             ultimo_cofre = CofreJugador{};
             ultimo_riego.reset();
+            ventana_de_lote->cerrar();
             camara = camara_para(mapa_de(mapa_actual));
         }
         if (propio != nullptr) {
@@ -327,7 +347,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
 
         hud.actualizar(ultimo_inventario, ultimo_cofre);
-        procesar_entrada(entrada, hud, *regalos, camara, consumo_del_chat);
+        procesar_entrada(entrada, hud, *regalos, *ventana_de_lote, camara, consumo_del_chat);
         consultar_el_piso_si_cambio(entrada, hud, camara);
         if (mapa_actual == "granja" && propio != nullptr && efectos_actuales != nullptr) {
             int tamano_tile = std::max(1, configuracion.graficos.tamano_de_tile);
@@ -342,7 +362,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
                 CASILLAS_AUDICION_ANIMAL);
             efectos_actuales->actualizar_ambiente_animales(inicio_del_cuadro, cercanos);
         }
-        if (chat.esta_escribiendo() || ultimo_cofre.abierto || regalos->esta_abierto()) {
+        if (chat.esta_escribiendo() || ultimo_cofre.abierto || regalos->esta_abierto() ||
+            ventana_de_lote->esta_abierta()) {
             enviar_intencion_si_cambio(Moverse{});
         } else {
             enviar_intencion_si_cambio(entrada.intencion());
@@ -368,7 +389,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             chat,
             *reloj_grafico,
             *pantalla_de_descanso,
-            *regalos);
+            *regalos,
+            *ventana_de_lote);
         limitar_cuadro(inicio_del_cuadro);
     }
 }
@@ -452,7 +474,8 @@ PanelDeRegalos::Datos VistaPartida::datos_de_regalos() const {
 
 void VistaPartida::procesar_entrada(
     const EntradaDelUsuario& entrada, HudInventario& hud, PanelDeRegalos& regalos,
-    const Camara& camara, const VistaChat::ConsumoDeEntrada& consumo_del_chat) {
+    VentanaDeLote& ventana_de_lote, const Camara& camara,
+    const VistaChat::ConsumoDeEntrada& consumo_del_chat) {
     const EntradaDelUsuario::Pedidos& pedidos = entrada.pedidos();
 
     if (pedidos.multijugador) {
@@ -474,10 +497,10 @@ void VistaPartida::procesar_entrada(
 
     if (!consumo_del_chat.clic) {
         if (pedidos.clic_izquierdo) {
-            procesar_clic(entrada, hud, regalos, camara, false, pedidos.con_shift);
+            procesar_clic(entrada, hud, regalos, ventana_de_lote, camara, false, pedidos.con_shift);
         }
         if (pedidos.clic_derecho) {
-            procesar_clic(entrada, hud, regalos, camara, true, pedidos.con_shift);
+            procesar_clic(entrada, hud, regalos, ventana_de_lote, camara, true, pedidos.con_shift);
         }
     }
 }
@@ -503,7 +526,20 @@ void VistaPartida::elegir_ranura_de_la_barra(const EntradaDelUsuario::Pedidos& p
 
 void VistaPartida::procesar_clic(
     const EntradaDelUsuario& entrada, HudInventario& hud, PanelDeRegalos& regalos,
-    const Camara& camara, bool clic_derecho, bool con_shift) {
+    VentanaDeLote& ventana_de_lote, const Camara& camara, bool clic_derecho, bool con_shift) {
+    // La ventana de un lote del centro tapa todo lo demás mientras está abierta.
+    if (ventana_de_lote.captura_el_clic()) {
+        const EstadoJugador* propio = jugador_propio();
+        const std::optional<ComandoCliente> comando = ventana_de_lote.procesar_clic(
+            ultimo_inventario,
+            propio != nullptr ? propio->monedas : 0,
+            entrada.raton_x(),
+            entrada.raton_y());
+        if (comando.has_value()) {
+            conexion.enviar_comando(*comando);
+        }
+        return;
+    }
     if (regalos.captura_el_clic(entrada.raton_x(), entrada.raton_y())) {
         const std::optional<ComandoCliente> comando = regalos.procesar_clic(
             datos_de_regalos(),
@@ -816,6 +852,7 @@ void VistaPartida::aplicar(const EventoServidor& evento, VistaChat& chat) {
             },
             [&](const MensajeDeChat& e) { chat.recibir(e); },
             [&](const JugadoresDeLaPartida& e) { jugadores_de_la_partida = e; },
+            [&](const LoteDelCentro& e) { lotes_recibidos.push_back(e); },
             [&](const RegalosPendientes& e) {
                 if (e.regalos.size() > regalos_pendientes.regalos.size() &&
                     efectos_actuales != nullptr) {
@@ -868,7 +905,7 @@ void VistaPartida::dibujar(
     const EfectoDeRiego& efecto_de_riego, const Camara& camara, const HudInventario& hud,
     const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada, const VistaChat& chat,
     RelojGrafico& reloj_grafico, const PantallaDeDescanso& pantalla_de_descanso,
-    const PanelDeRegalos& regalos) const {
+    const PanelDeRegalos& regalos, const VentanaDeLote& ventana_de_lote) const {
     SDL_Renderer* renderer = renderizador.ptr();
     if (mundo != nullptr) {
         SDL_SetRenderTarget(renderer, mundo);
@@ -1028,6 +1065,14 @@ void VistaPartida::dibujar(
         reloj_grafico.dibujar(renderer, *hora_del_juego, ancho_de_pantalla);
     }
     regalos.dibujar(renderer, datos_de_regalos());
+    if (const EstadoJugador* propio = jugador_propio(); propio != nullptr) {
+        ventana_de_lote.dibujar(
+            renderer,
+            ultimo_inventario,
+            propio->monedas,
+            entrada.raton_x(),
+            entrada.raton_y());
+    }
     pantalla_de_descanso.dibujar(renderer, descanso, ancho_de_pantalla, alto_de_pantalla);
     chat.dibujar(renderer, ancho_de_pantalla, alto_de_pantalla);
 

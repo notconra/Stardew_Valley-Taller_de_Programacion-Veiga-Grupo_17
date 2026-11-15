@@ -68,6 +68,10 @@ private:
     // ítem olvidado falle al arrancar y no en plena partida.
     void validar_catalogo_de_objetos() const;
 
+    // Verifica que cada lote marcado en un mapa (capa de interacciones, tipo = "lote") tenga una
+    // clave del catálogo de lotes, para que un nombre mal escrito en el TMX falle al arrancar.
+    void validar_lotes_de_los_mapas() const;
+
     // Arma la geografía de cada mapa que la mazmorra puede usar como nivel.
     void cargar_geografias_de_mazmorra();
 };

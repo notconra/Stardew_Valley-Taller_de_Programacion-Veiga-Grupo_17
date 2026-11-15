@@ -6,6 +6,7 @@
 #include <optional>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "../../common/mensajes/mensajes.h"
 #include "../../common/modo_uso.h"
@@ -33,6 +34,7 @@
 #include "tierra_grafica.h"
 #include "trampas_graficas.h"
 #include "ventana.h"
+#include "ventana_de_lote.h"
 #include "vision_mazmorra.h"
 
 struct SDL_Texture;
@@ -65,6 +67,7 @@ private:
     EstadoDelDescanso descanso{};
     JugadoresDeLaPartida jugadores_de_la_partida{};
     RegalosPendientes regalos_pendientes{};
+    std::vector<LoteDelCentro> lotes_recibidos;
 
     PanelDeRegalos::Datos datos_de_regalos() const;
 
@@ -149,11 +152,12 @@ private:
 
     void procesar_entrada(
         const EntradaDelUsuario& entrada, HudInventario& hud, PanelDeRegalos& regalos,
-        const Camara& camara, const VistaChat::ConsumoDeEntrada& consumo_del_chat);
+        VentanaDeLote& ventana_de_lote, const Camara& camara,
+        const VistaChat::ConsumoDeEntrada& consumo_del_chat);
     void elegir_ranura_de_la_barra(const EntradaDelUsuario::Pedidos& pedidos);
     void procesar_clic(
         const EntradaDelUsuario& entrada, HudInventario& hud, PanelDeRegalos& regalos,
-        const Camara& camara, bool clic_derecho, bool con_shift);
+        VentanaDeLote& ventana_de_lote, const Camara& camara, bool clic_derecho, bool con_shift);
 
     bool recibir_eventos(VistaChat& chat);
     void aplicar(const EventoServidor& evento, VistaChat& chat);
@@ -169,7 +173,8 @@ private:
         const CultivosGraficos& cultivos, const EfectoDeRiego& efecto_de_riego,
         const Camara& camara, const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
         const EntradaDelUsuario& entrada, const VistaChat& chat, RelojGrafico& reloj_grafico,
-        const PantallaDeDescanso& pantalla_de_descanso, const PanelDeRegalos& regalos) const;
+        const PantallaDeDescanso& pantalla_de_descanso, const PanelDeRegalos& regalos,
+        const VentanaDeLote& ventana_de_lote) const;
 
 public:
     VistaPartida(ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion);

@@ -29,7 +29,7 @@ Mundo::Mundo(
       controlador_de_cultivos(sectores, notificador_de_juego),
       controlador_de_regalos(personajes, recursos_de_juego.catalogo_de_items, notificador_de_juego),
       controlador_del_centro(
-          recursos_de_juego.catalogo_de_lotes, notificador_de_juego, datos_guardados.centro) {
+          sectores, recursos_de_juego, notificador_de_juego, datos_guardados.centro) {
     sectores.cargar_mapas_guardados(datos_guardados.mapas);
     sectores.cargar_cultivos_guardados(datos_guardados.cultivos);
     sectores.cargar_cofres_guardados(datos_guardados.cofres);
@@ -176,6 +176,10 @@ void Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
         return;
     }
     if (controlador_de_jugador.atender(personaje, comando)) {
+        return;
+    }
+    // Va antes que las acciones: el clic secundario sobre un lote del centro lo abre.
+    if (controlador_del_centro.atender(personaje, comando, obtener_dia())) {
         return;
     }
     if (controlador_de_acciones.atender(personaje, comando)) {

@@ -38,6 +38,10 @@ private:
     EnviarMensajeDeChat recibir_comando_enviar_mensaje_de_chat();
     EnviarRegalo recibir_comando_enviar_regalo();
     AbrirRegalos recibir_comando_abrir_regalos();
+    DonarAlLote recibir_comando_donar_al_lote();
+    DonarMonedasAlLote recibir_comando_donar_monedas_al_lote();
+    // Lee un lote y lanza ErrorProtocolo si no existe.
+    TipoLote recibir_tipo_lote();
 
     // Valida que el eje venga en el rango -1..1. Lanza ErrorProtocolo si no.
     int8_t eje_de_movimiento(int8_t valor) const;
@@ -84,6 +88,7 @@ private:
     void enviar_evento_mensaje_de_chat(const MensajeDeChat& mensaje);
     void enviar_evento_jugadores_de_la_partida(const JugadoresDeLaPartida& jugadores);
     void enviar_evento_regalos_pendientes(const RegalosPendientes& pendientes);
+    void enviar_evento_lote_del_centro(const LoteDelCentro& lote);
 
 public:
     explicit ProtocoloServidor(ISocket& socket_conectado);

@@ -39,6 +39,7 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::JUGADORES_DE_LA_PARTIDA,
            [this] { return recibir_jugadores_de_la_partida(); }},
           {TipoMensaje::REGALOS_PENDIENTES, [this] { return recibir_regalos_pendientes(); }},
+          {TipoMensaje::LOTE_DEL_CENTRO, [this] { return recibir_lote_del_centro(); }},
       } {
 }
 
@@ -71,6 +72,8 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const EnviarMensajeDeChat& m) { enviar_comando_enviar_mensaje_de_chat(m); },
             [this](const EnviarRegalo& m) { enviar_comando_enviar_regalo(m); },
             [this](const AbrirRegalos& m) { enviar_comando_abrir_regalos(m); },
+            [this](const DonarAlLote& m) { enviar_comando_donar_al_lote(m); },
+            [this](const DonarMonedasAlLote& m) { enviar_comando_donar_monedas_al_lote(m); },
         },
         comando);
 }
@@ -184,6 +187,17 @@ void ProtocoloCliente::enviar_comando_enviar_regalo(const EnviarRegalo& regalo) 
 
 void ProtocoloCliente::enviar_comando_abrir_regalos(const AbrirRegalos&) {
     enviar_tipo(TipoMensaje::ABRIR_REGALOS);
+}
+
+void ProtocoloCliente::enviar_comando_donar_al_lote(const DonarAlLote& donar) {
+    enviar_tipo(TipoMensaje::DONAR_AL_LOTE);
+    enviar_u8(static_cast<uint8_t>(donar.lote));
+    enviar_u8(donar.indice_ranura);
+}
+
+void ProtocoloCliente::enviar_comando_donar_monedas_al_lote(const DonarMonedasAlLote& donar) {
+    enviar_tipo(TipoMensaje::DONAR_MONEDAS_AL_LOTE);
+    enviar_u8(static_cast<uint8_t>(donar.lote));
 }
 
 // Recepción de eventos
@@ -642,6 +656,31 @@ JugadoresDeLaPartida ProtocoloCliente::recibir_jugadores_de_la_partida() {
         jugadores.jugadores.push_back(jugador);
     }
     return jugadores;
+}
+
+LoteDelCentro ProtocoloCliente::recibir_lote_del_centro() {
+    LoteDelCentro lote;
+    const uint8_t tipo = recibir_u8();
+    if (tipo >= CANTIDAD_DE_LOTES) {
+        throw ErrorProtocolo("lote desconocido");
+    }
+    lote.lote = static_cast<TipoLote>(tipo);
+    lote.abrir = recibir_booleano();
+    lote.nombre = recibir_texto();
+    lote.completo = recibir_booleano();
+    const uint16_t cantidad = recibir_u16();
+    lote.requisitos.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        RequisitoDeLote requisito;
+        requisito.tipo = static_cast<TipoDeRequisito>(recibir_u8());
+        requisito.item = static_cast<TipoItem>(recibir_u8());
+        requisito.calidad_minima = static_cast<Calidad>(recibir_u8());
+        requisito.logro = static_cast<LogroDePelea>(recibir_u8());
+        requisito.cantidad = recibir_u32();
+        requisito.aportado = recibir_u32();
+        lote.requisitos.push_back(requisito);
+    }
+    return lote;
 }
 
 RegalosPendientes ProtocoloCliente::recibir_regalos_pendientes() {

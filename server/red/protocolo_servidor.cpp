@@ -37,6 +37,9 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
            [this] { return recibir_comando_enviar_mensaje_de_chat(); }},
           {TipoMensaje::ENVIAR_REGALO, [this] { return recibir_comando_enviar_regalo(); }},
           {TipoMensaje::ABRIR_REGALOS, [this] { return recibir_comando_abrir_regalos(); }},
+          {TipoMensaje::DONAR_AL_LOTE, [this] { return recibir_comando_donar_al_lote(); }},
+          {TipoMensaje::DONAR_MONEDAS_AL_LOTE,
+           [this] { return recibir_comando_donar_monedas_al_lote(); }},
       } {
 }
 
@@ -179,6 +182,24 @@ EnviarRegalo ProtocoloServidor::recibir_comando_enviar_regalo() {
 AbrirRegalos ProtocoloServidor::recibir_comando_abrir_regalos() {
     return AbrirRegalos{};
 }
+
+DonarAlLote ProtocoloServidor::recibir_comando_donar_al_lote() {
+    const TipoLote lote = recibir_tipo_lote();
+    const uint8_t indice_ranura = recibir_u8();
+    return DonarAlLote{lote, indice_ranura};
+}
+
+DonarMonedasAlLote ProtocoloServidor::recibir_comando_donar_monedas_al_lote() {
+    return DonarMonedasAlLote{recibir_tipo_lote()};
+}
+
+TipoLote ProtocoloServidor::recibir_tipo_lote() {
+    const uint8_t lote = recibir_u8();
+    if (lote >= CANTIDAD_DE_LOTES) {
+        throw ErrorProtocolo("lote desconocido");
+    }
+    return static_cast<TipoLote>(lote);
+}
 // Envío de eventos
 
 void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
@@ -209,6 +230,7 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const MensajeDeChat& e) { enviar_evento_mensaje_de_chat(e); },
             [this](const JugadoresDeLaPartida& e) { enviar_evento_jugadores_de_la_partida(e); },
             [this](const RegalosPendientes& e) { enviar_evento_regalos_pendientes(e); },
+            [this](const LoteDelCentro& e) { enviar_evento_lote_del_centro(e); },
         },
         evento);
 }
@@ -525,6 +547,23 @@ void ProtocoloServidor::enviar_evento_jugadores_de_la_partida(
         enviar_u32(jugador.id_jugador);
         enviar_texto(jugador.nombre);
         enviar_booleano(jugador.conectado);
+    }
+}
+
+void ProtocoloServidor::enviar_evento_lote_del_centro(const LoteDelCentro& lote) {
+    enviar_tipo(TipoMensaje::LOTE_DEL_CENTRO);
+    enviar_u8(static_cast<uint8_t>(lote.lote));
+    enviar_booleano(lote.abrir);
+    enviar_texto(lote.nombre);
+    enviar_booleano(lote.completo);
+    enviar_largo(lote.requisitos.size());
+    for (const RequisitoDeLote& requisito : lote.requisitos) {
+        enviar_u8(static_cast<uint8_t>(requisito.tipo));
+        enviar_u8(static_cast<uint8_t>(requisito.item));
+        enviar_u8(static_cast<uint8_t>(requisito.calidad_minima));
+        enviar_u8(static_cast<uint8_t>(requisito.logro));
+        enviar_u32(requisito.cantidad);
+        enviar_u32(requisito.aportado);
     }
 }
 

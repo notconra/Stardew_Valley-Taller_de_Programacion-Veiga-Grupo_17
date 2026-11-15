@@ -39,6 +39,8 @@ private:
     void enviar_comando_enviar_mensaje_de_chat(const EnviarMensajeDeChat& mensaje);
     void enviar_comando_enviar_regalo(const EnviarRegalo& regalo);
     void enviar_comando_abrir_regalos(const AbrirRegalos& abrir);
+    void enviar_comando_donar_al_lote(const DonarAlLote& donar);
+    void enviar_comando_donar_monedas_al_lote(const DonarMonedasAlLote& donar);
 
     // Recepción de eventos
     ErrorServidor recibir_error_servidor();
@@ -78,6 +80,7 @@ private:
     MensajeDeChat recibir_mensaje_de_chat();
     JugadoresDeLaPartida recibir_jugadores_de_la_partida();
     RegalosPendientes recibir_regalos_pendientes();
+    LoteDelCentro recibir_lote_del_centro();
 
     // Auxiliares
     CodigoError codigo_error_desde(uint8_t valor) const;
