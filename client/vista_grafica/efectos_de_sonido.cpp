@@ -11,8 +11,6 @@ namespace {
 constexpr int CANAL_AMBIENTE = 0;  // reservado, así los demás efectos no lo pisan
 constexpr int VOLUMEN_PASOS = 50;
 constexpr uint32_t MS_ENTRE_GRITOS_DE_APARICION = 1500;
-constexpr const char* RUTA_SONIDO_COMPRAR = "Assets/sfx/comprar.wav";
-constexpr const char* RUTA_SONIDO_VENDER = "Assets/sfx/vender.wav";
 }  // namespace
 
 EfectosDeSonido::EfectosDeSonido(const ConfiguracionSonido& configuracion)
@@ -43,8 +41,8 @@ EfectosDeSonido::EfectosDeSonido(const ConfiguracionSonido& configuracion)
     jugador_danio = configuracion.ruta_jugador_danio.empty()
                         ? nullptr
                         : cargar(configuracion.ruta_jugador_danio);
-    compra = cargar(RUTA_SONIDO_COMPRAR);
-    venta = cargar(RUTA_SONIDO_VENDER);
+    compra = cargar(configuracion.ruta_comprar);
+    venta = cargar(configuracion.ruta_vender);
     cambiar_paso("");
 }
 

@@ -83,7 +83,6 @@ constexpr SDL_Color TEXTO{245, 240, 230, 255};
 constexpr SDL_Color TITULO{255, 235, 140, 255};
 constexpr SDL_Color TEXTO_APAGADO{150, 140, 130, 255};
 constexpr SDL_Color SISTEMA{110, 200, 235, 255};
-constexpr SDL_Color COMERCIANTE{250, 205, 90, 255};
 
 constexpr SDL_Color JUGADOR_ROJO{235, 90, 90, 255};
 constexpr SDL_Color JUGADOR_VERDE{110, 210, 120, 255};

@@ -253,6 +253,10 @@ void ConfiguracionCliente::cargar_sonido(const toml::table& archivo_toml) {
         lector_toml::leer_texto(sonido, "ruta_caminar", "sonido");
     configuracion_vista.sonido.ruta_accion =
         lector_toml::leer_texto(sonido, "ruta_accion", "sonido");
+    configuracion_vista.sonido.ruta_comprar =
+        lector_toml::leer_texto(sonido, "ruta_comprar", "sonido");
+    configuracion_vista.sonido.ruta_vender =
+        lector_toml::leer_texto(sonido, "ruta_vender", "sonido");
 
     if (const toml::table* herramientas = sonido["herramientas"].as_table()) {
         for (const auto& [clave, tipo] : HERRAMIENTAS_CON_SONIDO) {
