@@ -23,8 +23,10 @@
 #include "entrada_del_usuario.h"
 #include "hud_inventario.h"
 #include "iconos_de_items.h"
+#include "iconos_de_lote.h"
 #include "mapa_grafico.h"
 #include "marcador_de_casillas.h"
+#include "marcas_de_lotes.h"
 #include "objetos_graficos.h"
 #include "panel_de_regalos.h"
 #include "pantalla_de_descanso.h"
@@ -174,7 +176,7 @@ private:
         const Camara& camara, const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
         const EntradaDelUsuario& entrada, const VistaChat& chat, RelojGrafico& reloj_grafico,
         const PantallaDeDescanso& pantalla_de_descanso, const PanelDeRegalos& regalos,
-        const VentanaDeLote& ventana_de_lote) const;
+        const VentanaDeLote& ventana_de_lote, const MarcasDeLotes& marcas_de_lotes) const;
 
 public:
     VistaPartida(ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion);

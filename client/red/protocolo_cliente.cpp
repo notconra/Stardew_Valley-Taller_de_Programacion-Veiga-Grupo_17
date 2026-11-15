@@ -294,6 +294,8 @@ EstadoJugador ProtocoloCliente::recibir_estado_jugador() {
     estado.accion_actual = static_cast<TipoAccion>(recibir_u8());
     estado.vida = recibir_u8();
     estado.energia = recibir_u8();
+    estado.vida_maxima = recibir_u8();
+    estado.energia_maxima = recibir_u8();
     estado.monedas = recibir_u32();
     estado.apariencia = recibir_apariencia();
     return estado;
@@ -665,6 +667,7 @@ LoteDelCentro ProtocoloCliente::recibir_lote_del_centro() {
         throw ErrorProtocolo("lote desconocido");
     }
     lote.lote = static_cast<TipoLote>(tipo);
+    lote.clave = recibir_texto();
     lote.abrir = recibir_booleano();
     lote.nombre = recibir_texto();
     lote.completo = recibir_booleano();

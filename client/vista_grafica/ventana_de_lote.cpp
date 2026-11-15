@@ -4,7 +4,6 @@
 #include <string>
 
 #define RUTA_DE_LA_HOJA "Assets/LooseSprites/JunimoNote.png"
-#define RUTA_DE_LOS_DIBUJOS "Assets/LooseSprites/BundleSprites.png"
 #define RUTA_DEL_BOTON "Assets/hud/regalos_boton.png"
 #define RUTA_DE_LA_CRUZ "Assets/hud/cerrar_regalos.png"
 
@@ -50,9 +49,6 @@ const int FILAS_EN_LA_HOJA[FILAS_DEL_INVENTARIO] = {35, 53, 72, 91, 110, 128};
 #define BRILLO_DE_LO_QUE_FALTA 170
 #define OPACIDAD_DE_LO_QUE_FALTA 150
 
-#define COLUMNAS_DE_DIBUJOS 8
-const int DIBUJO_DEL_LOTE[CANTIDAD_DE_LOTES] = {3, 11, 6, 14, 10};
-
 const char* const TEXTO_DEL_LOGRO[] = {
     "3 esqueletos en pisos seguidos",
     "La pareja de vampiros",
@@ -62,10 +58,10 @@ const char* const TEXTO_DEL_LOGRO[] = {
 
 VentanaDeLote::VentanaDeLote(
     SDL_Renderer* renderer, const std::string& ruta_fuente, const IconosDeItems& iconos_de_items,
-    int ancho_de_ventana, int alto_de_ventana)
+    const IconosDeLotes& iconos_de_los_lotes, int ancho_de_ventana, int alto_de_ventana)
     : iconos(iconos_de_items),
+      iconos_de_lotes(iconos_de_los_lotes),
       hoja(RUTA_DE_LA_HOJA, renderer),
-      dibujos(RUTA_DE_LOS_DIBUJOS, renderer),
       boton(RUTA_DEL_BOTON, renderer),
       cruz(RUTA_DE_LA_CRUZ, renderer) {
     configurar(renderer, ruta_fuente, ancho_de_ventana, alto_de_ventana);
@@ -116,8 +112,6 @@ void VentanaDeLote::cerrar() {
 bool VentanaDeLote::captura_el_clic() const {
     return esta_abierta();
 }
-
-// Medidas
 
 SDL_Rect VentanaDeLote::en_pantalla(int x, int y, int ancho, int alto) const {
     return SDL_Rect{panel_x + x * escala, panel_y + y * escala, ancho * escala, alto * escala};
@@ -183,8 +177,6 @@ const RequisitoDeLote* VentanaDeLote::requisito_de_monedas() const {
     return nullptr;
 }
 
-// Clics
-
 std::optional<ComandoCliente> VentanaDeLote::procesar_clic(
     const InventarioJugador& inventario, uint32_t monedas, int x, int y) {
     if (!lote.has_value()) {
@@ -248,8 +240,6 @@ std::optional<ComandoCliente> VentanaDeLote::clic_en_lote_de_dinero(
     return std::nullopt;
 }
 
-// Dibujo
-
 void VentanaDeLote::dibujar(
     SDL_Renderer* renderer, const InventarioJugador& inventario, uint32_t monedas, int raton_x,
     int raton_y) const {
@@ -300,15 +290,10 @@ void VentanaDeLote::dibujar_inventario(
 }
 
 void VentanaDeLote::dibujar_encabezado(SDL_Renderer* renderer) const {
-    const int indice = static_cast<int>(lote->lote);
-    const int dibujo = DIBUJO_DEL_LOTE[std::clamp(indice, 0, CANTIDAD_DE_LOTES - 1)];
-    const SDL_Rect origen{
-        (dibujo % COLUMNAS_DE_DIBUJOS) * LADO_DEL_DIBUJO,
-        (dibujo / COLUMNAS_DE_DIBUJOS) * LADO_DEL_DIBUJO,
-        LADO_DEL_DIBUJO,
-        LADO_DEL_DIBUJO};
-    const SDL_Rect destino = en_pantalla(MARCO_X, MARCO_Y, LADO_DEL_DIBUJO, LADO_DEL_DIBUJO);
-    SDL_RenderCopy(renderer, dibujos.ptr(), &origen, &destino);
+    iconos_de_lotes.dibujar(
+        renderer,
+        lote->clave,
+        en_pantalla(MARCO_X, MARCO_Y, LADO_DEL_DIBUJO, LADO_DEL_DIBUJO));
 
     const int centro = panel_x + CENTRO_DEL_LADO_DERECHO * escala;
     escribir_centrado(

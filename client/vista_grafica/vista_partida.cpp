@@ -238,11 +238,15 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         iconos,
         ancho_de_pantalla,
         alto_de_pantalla);
+    IconosDeLotes iconos_de_lotes(renderizador.ptr());
+    MarcasDeLotes marcas_de_lotes(iconos_de_lotes, graficos);
+    marcas_de_lotes.cargar_mapa(configuracion_de(mapa_actual));
     std::optional<VentanaDeLote> ventana_de_lote;
     ventana_de_lote.emplace(
         renderizador.ptr(),
         configuracion.chat.ruta_fuente,
         iconos,
+        iconos_de_lotes,
         ancho_de_pantalla,
         alto_de_pantalla);
     EntradaDelUsuario entrada;
@@ -298,6 +302,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
         for (const LoteDelCentro& lote : lotes_recibidos) {
             ventana_de_lote->recibir(lote);
+            marcas_de_lotes.recibir(lote);
         }
         lotes_recibidos.clear();
 
@@ -336,6 +341,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             ultimo_cofre = CofreJugador{};
             ultimo_riego.reset();
             ventana_de_lote->cerrar();
+            marcas_de_lotes.cargar_mapa(configuracion_de(mapa_actual));
             camara = camara_para(mapa_de(mapa_actual));
         }
         if (propio != nullptr) {
@@ -390,7 +396,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             *reloj_grafico,
             *pantalla_de_descanso,
             *regalos,
-            *ventana_de_lote);
+            *ventana_de_lote,
+            marcas_de_lotes);
         limitar_cuadro(inicio_del_cuadro);
     }
 }
@@ -527,7 +534,6 @@ void VistaPartida::elegir_ranura_de_la_barra(const EntradaDelUsuario::Pedidos& p
 void VistaPartida::procesar_clic(
     const EntradaDelUsuario& entrada, HudInventario& hud, PanelDeRegalos& regalos,
     VentanaDeLote& ventana_de_lote, const Camara& camara, bool clic_derecho, bool con_shift) {
-    // La ventana de un lote del centro tapa todo lo demás mientras está abierta.
     if (ventana_de_lote.captura_el_clic()) {
         const EstadoJugador* propio = jugador_propio();
         const std::optional<ComandoCliente> comando = ventana_de_lote.procesar_clic(
@@ -905,7 +911,8 @@ void VistaPartida::dibujar(
     const EfectoDeRiego& efecto_de_riego, const Camara& camara, const HudInventario& hud,
     const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada, const VistaChat& chat,
     RelojGrafico& reloj_grafico, const PantallaDeDescanso& pantalla_de_descanso,
-    const PanelDeRegalos& regalos, const VentanaDeLote& ventana_de_lote) const {
+    const PanelDeRegalos& regalos, const VentanaDeLote& ventana_de_lote,
+    const MarcasDeLotes& marcas_de_lotes) const {
     SDL_Renderer* renderer = renderizador.ptr();
     if (mundo != nullptr) {
         SDL_SetRenderTarget(renderer, mundo);
@@ -1026,6 +1033,7 @@ void VistaPartida::dibujar(
         }
     }
     mapa.dibujar_sobre_los_jugadores(renderer, camara.x(), camara.y());
+    marcas_de_lotes.dibujar(renderer, camara.x(), camara.y());
     objetos.dibujar_sobre_los_jugadores(
         renderer,
         ultimo_estado_juego,
@@ -1042,7 +1050,6 @@ void VistaPartida::dibujar(
         }
     }
 
-    // La mazmorra ya tiene su propia oscuridad: la noche se nota en la granja, el pueblo y la casa.
     if (hora_del_juego.has_value() && !mapa_actual_es_mazmorra()) {
         reloj_grafico.oscurecer(renderer, *hora_del_juego, ancho_del_mundo, alto_del_mundo);
     }
@@ -1054,9 +1061,9 @@ void VistaPartida::dibujar(
 
     hud.dibujar(renderer, ultimo_inventario, ultimo_cofre, entrada.raton_x(), entrada.raton_y());
     if (const EstadoJugador* propio = jugador_propio(); propio != nullptr) {
-        hud.dibujar_energia(renderer, propio->energia, ENERGIA_MAXIMA_JUGADOR);
-        if (mapa_actual_es_mazmorra() || propio->vida < VIDA_MAXIMA_JUGADOR) {
-            hud.dibujar_vida(renderer, propio->vida, VIDA_MAXIMA_JUGADOR);
+        hud.dibujar_energia(renderer, propio->energia, propio->energia_maxima);
+        if (mapa_actual_es_mazmorra() || propio->vida < propio->vida_maxima) {
+            hud.dibujar_vida(renderer, propio->vida, propio->vida_maxima);
         }
         reloj_grafico.dibujar_dinero(renderer, propio->monedas, ancho_de_pantalla);
     }

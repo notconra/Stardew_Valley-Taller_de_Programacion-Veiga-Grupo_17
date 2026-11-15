@@ -10,6 +10,7 @@
 #include "../../common/mensajes/mensajes.h"
 #include "fuente_del_juego.h"
 #include "iconos_de_items.h"
+#include "iconos_de_lote.h"
 #include "textura.h"
 
 // La ventana de un lote del centro comunitario, como la nota de los Junimos del juego original
@@ -27,8 +28,8 @@
 class VentanaDeLote {
 private:
     const IconosDeItems& iconos;
+    const IconosDeLotes& iconos_de_lotes;
     Textura hoja;
-    Textura dibujos;
     Textura boton;
     Textura cruz;
     std::optional<FuenteDelJuego> fuente_del_titulo;
@@ -41,6 +42,7 @@ private:
     std::optional<uint8_t> ranura_agarrada;
     bool confirmando = false;
 
+    // Un rectángulo dado en píxeles de la hoja (relativos al panel) llevado a la pantalla.
     SDL_Rect en_pantalla(int x, int y, int ancho, int alto) const;
     static bool contiene(const SDL_Rect& rectangulo, int x, int y);
 
@@ -77,7 +79,7 @@ private:
 public:
     VentanaDeLote(
         SDL_Renderer* renderer, const std::string& ruta_fuente, const IconosDeItems& iconos,
-        int ancho_de_ventana, int alto_de_ventana);
+        const IconosDeLotes& iconos_de_lotes, int ancho_de_ventana, int alto_de_ventana);
 
     // Recalcula el tamaño y la posición para una ventana de ese tamaño.
     void configurar(
