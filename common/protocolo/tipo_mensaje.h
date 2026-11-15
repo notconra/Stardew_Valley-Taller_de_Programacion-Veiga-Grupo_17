@@ -36,6 +36,7 @@ enum class TipoMensaje : uint8_t {
     CERRAR_MERCADO = 0x1A,
     ENVIAR_REGALO = 0x1B,
     ABRIR_REGALOS = 0x1C,
+    HABLAR_CON_NPC = 0x1D,
 
     // Servidor a cliente
     ERROR_SERVIDOR = 0x81,
@@ -87,6 +88,12 @@ enum class TipoMensaje : uint8_t {
 
     // Cambio en la disponibilidad de leche de una vaca
     VACA_ORDENIABLE = 0xA2,
+
+    ANIMAL_RETIRADO = 0xA3,
+
+    // NPCs
+    NPCS_EN_SECTOR = 0xA4,
+    DIALOGO_NPC = 0xA5,
 };
 
 #endif

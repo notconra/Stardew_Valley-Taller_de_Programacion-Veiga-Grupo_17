@@ -34,7 +34,10 @@ using ComandoCliente = std::variant<
     EnviarRegalo, AbrirRegalos,
 
     // Mercado
-    ComprarEnMercado, VenderEnMercado, ComprarAnimalMercado, VenderAnimalMercado, CerrarMercado>;
+    ComprarEnMercado, VenderEnMercado, ComprarAnimalMercado, VenderAnimalMercado, CerrarMercado,
+
+    // NPCs
+    HablarConNpc>;
 
 using EventoServidor = std::variant<
     // Error
@@ -48,7 +51,8 @@ using EventoServidor = std::variant<
 
     // - Sector
     EstadoJuego, JugadoresEnSector, ObjetoColocado, ObjetoRetirado, DropAparecido, DropRetirado,
-    EnemigoActualizado, TrampaActualizada, TierraCambiada, AnimalActualizado, VacaOrdeniable,
+    EnemigoActualizado, TrampaActualizada, TierraCambiada, AnimalActualizado, AnimalRetirado,
+    VacaOrdeniable,
 
     // - Tiempo
     HoraDelJuego,
@@ -72,6 +76,9 @@ using EventoServidor = std::variant<
     ActualizacionMercado, CerrarVentanaMercado,
 
     // - Avisos
-    AvisoEnPantalla>;
+    AvisoEnPantalla,
+
+    // - NPCs
+    NpcsEnSector, DialogoNpc>;
 
 #endif

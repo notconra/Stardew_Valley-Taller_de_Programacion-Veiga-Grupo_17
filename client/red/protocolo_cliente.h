@@ -44,6 +44,7 @@ private:
     void enviar_comando_cerrar_mercado(const CerrarMercado& m);
     void enviar_comando_enviar_regalo(const EnviarRegalo& regalo);
     void enviar_comando_abrir_regalos(const AbrirRegalos& abrir);
+    void enviar_comando_hablar_con_npc(const HablarConNpc& hablar);
 
     // Recepción de eventos
     ErrorServidor recibir_error_servidor();
@@ -59,13 +60,16 @@ private:
     EstadoEnemigo recibir_estado_enemigo();
     EstadoTrampa recibir_estado_trampa();
     EstadoAnimal recibir_estado_animal();
+    EstadoNpc recibir_estado_npc();
     CasillaTratada recibir_casilla_tratada();
     EstadoJuego recibir_estado_juego();
     JugadoresEnSector recibir_jugadores_en_sector();
+    NpcsEnSector recibir_npcs_en_sector();
     ObjetoColocado recibir_objeto_colocado();
     ObjetoRetirado recibir_objeto_retirado();
     DropAparecido recibir_drop_aparecido();
     DropRetirado recibir_drop_retirado();
+    AnimalRetirado recibir_animal_retirado();
     EnemigoActualizado recibir_enemigo_actualizado();
     TrampaActualizada recibir_trampa_actualizada();
     AnimalActualizado recibir_animal_actualizado();
@@ -87,6 +91,7 @@ private:
     AvisoEnPantalla recibir_aviso_en_pantalla();
     JugadoresDeLaPartida recibir_jugadores_de_la_partida();
     RegalosPendientes recibir_regalos_pendientes();
+    DialogoNpc recibir_dialogo_npc();
 
     // Auxiliares
     CodigoError codigo_error_desde(uint8_t valor) const;

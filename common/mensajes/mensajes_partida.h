@@ -294,12 +294,34 @@ struct AnimalActualizado {
     bool operator==(const AnimalActualizado&) const = default;
 };
 
+// Un animal que dejó de estar en el sector del receptor (se vendió).
+struct AnimalRetirado {
+    uint32_t id = 0;
+
+    bool operator==(const AnimalRetirado&) const = default;
+};
+
 // Notificación cuando una vaca queda lista para ordeñar o cuando se completa su ordeñe
 struct VacaOrdeniable {
     uint32_t id_vaca = 0;
     bool lista = false;
 
     bool operator==(const VacaOrdeniable&) const = default;
+};
+
+// Posición y estado de un NPC. "x" e "y" son la esquina superior izquierda del sprite en píxeles
+// del mapa, igual que para los jugadores. "ms_por_casilla" es lo que tarda en recorrer una casilla
+// mientras camina.
+struct EstadoNpc {
+    std::string id_npc;
+    std::string mapa;
+    uint32_t x = 0;
+    uint32_t y = 0;
+    Direccion mirando = Direccion::ABAJO;
+    bool camina = false;
+    uint16_t ms_por_casilla = 0;
+
+    bool operator==(const EstadoNpc&) const = default;
 };
 
 // Snapshot completa de UN sector. Se manda una sola vez cuando el jugador entra o cambia de
@@ -314,6 +336,7 @@ struct EstadoJuego {
     std::vector<EstadoTrampa> trampas;
     std::vector<EstadoAnimal> animales;
     std::vector<uint32_t> vacas_para_ordeniar;
+    std::vector<EstadoNpc> npcs;
 };
 
 // Posición y estado de todos los jugadores del sector del receptor. Se manda cada tick, pero solo
@@ -321,6 +344,12 @@ struct EstadoJuego {
 struct JugadoresEnSector {
     std::string mapa;
     std::vector<EstadoJugador> jugadores;
+};
+
+// Posición y estado de todos los NPC del sector del receptor.
+struct NpcsEnSector {
+    std::string mapa;
+    std::vector<EstadoNpc> npcs;
 };
 
 // Un objeto nuevo en el sector del receptor. Si el id ya existía, el cliente lo reemplaza.
@@ -522,6 +551,18 @@ struct CerrarVentanaMercado {};
 // esté visible.
 struct AvisoEnPantalla {
     std::string mensaje;
+};
+
+// El jugador hace clic derecho sobre un NPC para hablarle. El servidor decide el texto
+// y responde con DialogoNpc.
+struct HablarConNpc {
+    std::string id_npc;
+};
+
+// Lo que dice un NPC. El cliente lo muestra en un cuadro modal con el fondo dialogo_<id>.png.
+struct DialogoNpc {
+    std::string id_npc;
+    std::string texto;
 };
 
 #endif

@@ -22,6 +22,7 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::JUGADORES_EN_SECTOR, [this] { return recibir_jugadores_en_sector(); }},
           {TipoMensaje::OBJETO_COLOCADO, [this] { return recibir_objeto_colocado(); }},
           {TipoMensaje::OBJETO_RETIRADO, [this] { return recibir_objeto_retirado(); }},
+          {TipoMensaje::ANIMAL_RETIRADO, [this] { return recibir_animal_retirado(); }},
           {TipoMensaje::DROP_APARECIDO, [this] { return recibir_drop_aparecido(); }},
           {TipoMensaje::DROP_RETIRADO, [this] { return recibir_drop_retirado(); }},
           {TipoMensaje::ENEMIGO_ACTUALIZADO, [this] { return recibir_enemigo_actualizado(); }},
@@ -43,6 +44,8 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::JUGADORES_DE_LA_PARTIDA,
            [this] { return recibir_jugadores_de_la_partida(); }},
           {TipoMensaje::REGALOS_PENDIENTES, [this] { return recibir_regalos_pendientes(); }},
+          {TipoMensaje::NPCS_EN_SECTOR, [this] { return recibir_npcs_en_sector(); }},
+          {TipoMensaje::DIALOGO_NPC, [this] { return recibir_dialogo_npc(); }},
       } {
 }
 
@@ -80,6 +83,7 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const CerrarMercado& m) { enviar_comando_cerrar_mercado(m); },
             [this](const EnviarRegalo& m) { enviar_comando_enviar_regalo(m); },
             [this](const AbrirRegalos& m) { enviar_comando_abrir_regalos(m); },
+            [this](const HablarConNpc& m) { enviar_comando_hablar_con_npc(m); },
         },
         comando);
 }
@@ -221,6 +225,11 @@ void ProtocoloCliente::enviar_comando_enviar_regalo(const EnviarRegalo& regalo) 
 
 void ProtocoloCliente::enviar_comando_abrir_regalos(const AbrirRegalos&) {
     enviar_tipo(TipoMensaje::ABRIR_REGALOS);
+}
+
+void ProtocoloCliente::enviar_comando_hablar_con_npc(const HablarConNpc& hablar) {
+    enviar_tipo(TipoMensaje::HABLAR_CON_NPC);
+    enviar_texto(hablar.id_npc);
 }
 
 // Recepción de eventos
@@ -433,6 +442,18 @@ EstadoAnimal ProtocoloCliente::recibir_estado_animal() {
     return estado;
 }
 
+EstadoNpc ProtocoloCliente::recibir_estado_npc() {
+    EstadoNpc estado;
+    estado.id_npc = recibir_texto();
+    estado.mapa = recibir_texto();
+    estado.x = recibir_u32();
+    estado.y = recibir_u32();
+    estado.mirando = direccion_desde(recibir_u8());
+    estado.camina = recibir_booleano();
+    estado.ms_por_casilla = recibir_u16();
+    return estado;
+}
+
 AnimalActualizado ProtocoloCliente::recibir_animal_actualizado() {
     return AnimalActualizado{recibir_estado_animal()};
 }
@@ -515,6 +536,12 @@ EstadoJuego ProtocoloCliente::recibir_estado_juego() {
         estado_juego.vacas_para_ordeniar.push_back(recibir_u32());
     }
 
+    uint16_t cantidad_de_npcs = recibir_u16();
+    estado_juego.npcs.reserve(cantidad_de_npcs);
+    for (uint16_t i = 0; i < cantidad_de_npcs; ++i) {
+        estado_juego.npcs.push_back(recibir_estado_npc());
+    }
+
     return estado_juego;
 }
 
@@ -527,6 +554,17 @@ JugadoresEnSector ProtocoloCliente::recibir_jugadores_en_sector() {
         jugadores.jugadores.push_back(recibir_estado_jugador());
     }
     return jugadores;
+}
+
+NpcsEnSector ProtocoloCliente::recibir_npcs_en_sector() {
+    NpcsEnSector npcs;
+    npcs.mapa = recibir_texto();
+    uint16_t cantidad = recibir_u16();
+    npcs.npcs.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        npcs.npcs.push_back(recibir_estado_npc());
+    }
+    return npcs;
 }
 
 ObjetoColocado ProtocoloCliente::recibir_objeto_colocado() {
@@ -542,6 +580,12 @@ ObjetoRetirado ProtocoloCliente::recibir_objeto_retirado() {
     ObjetoRetirado objeto;
     objeto.id = recibir_u32();
     return objeto;
+}
+
+AnimalRetirado ProtocoloCliente::recibir_animal_retirado() {
+    AnimalRetirado animal;
+    animal.id = recibir_u32();
+    return animal;
 }
 
 DropAparecido ProtocoloCliente::recibir_drop_aparecido() {
@@ -697,6 +741,13 @@ CerrarVentanaMercado ProtocoloCliente::recibir_cerrar_ventana_mercado() {
 
 AvisoEnPantalla ProtocoloCliente::recibir_aviso_en_pantalla() {
     return AvisoEnPantalla{recibir_texto()};
+}
+
+DialogoNpc ProtocoloCliente::recibir_dialogo_npc() {
+    DialogoNpc dialogo;
+    dialogo.id_npc = recibir_texto();
+    dialogo.texto = recibir_texto();
+    return dialogo;
 }
 
 JugadoresDeLaPartida ProtocoloCliente::recibir_jugadores_de_la_partida() {
