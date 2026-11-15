@@ -60,6 +60,7 @@ struct ListaPartidas {
 struct EntradaExitosaAPartida {
     std::string codigo_partida;
     uint32_t id_jugador = 0;
+    bool multijugador = false;
 };
 
 #endif
