@@ -408,6 +408,9 @@ void ConfiguracionServidor::cargar_dia(const toml::table& tabla) {
         dia.dias_por_estacion,
         1,
         MAXIMO_DIAS_POR_ESTACION);
+
+    dia.probabilidad_de_lluvia = lector_toml::leer_decimal_opcional(
+        tabla, "probabilidad_de_lluvia", seccion, dia.probabilidad_de_lluvia, 0.0, 1.0);
 }
 
 void ConfiguracionServidor::cargar_mazmorra(const toml::table& archivo_toml) {
