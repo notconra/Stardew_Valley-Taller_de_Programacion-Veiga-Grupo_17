@@ -48,7 +48,6 @@ constexpr char AYUDA_DE_TECLAS[] =
 
 using TexturaDelMundo = std::unique_ptr<SDL_Texture, void (*)(SDL_Texture*)>;
 
-// Textura donde se dibuja el mundo cuando hay zoom extra. Después se estira a toda la ventana.
 TexturaDelMundo crear_textura_del_mundo(SDL_Renderer* renderer, int ancho, int alto) {
     SDL_Texture* textura = SDL_CreateTexture(
         renderer,
@@ -118,7 +117,8 @@ void VistaPartida::actualizar_tamano_del_mundo() {
     alto_del_mundo = std::max(1, static_cast<int>(alto_de_pantalla / zoom_extra + 0.5));
 }
 
-bool VistaPartida::actualizar_tamano_de_pantalla(Ventana& ventana, HudInventario& hud) {
+bool VistaPartida::actualizar_tamano_de_pantalla(
+    Ventana& ventana, HudInventario& hud, HudMercado& hud_mercado) {
     const int ancho = std::max(1, ventana.ancho());
     const int alto = std::max(1, ventana.alto());
     if (ancho == ancho_de_pantalla && alto == alto_de_pantalla) {
@@ -129,6 +129,8 @@ bool VistaPartida::actualizar_tamano_de_pantalla(Ventana& ventana, HudInventario
     alto_de_pantalla = alto;
     actualizar_tamano_del_mundo();
     hud.configurar(ancho_de_pantalla, alto_de_pantalla);
+    hud_mercado.configurar(ancho_de_pantalla, alto_de_pantalla);
+
     return true;
 }
 
@@ -180,7 +182,6 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
 
     ConfiguracionGraficos graficos = configuracion.graficos;
     graficos.escala_de_tiles = escala_de_tiles_actual;
-    // El marcador del piso tiene que usar la misma escala que los tiles.
     marcador_de_casillas = MarcadorDeCasillas(graficos);
 
     std::map<std::string, MapaGrafico> mapas_cargados;
@@ -205,8 +206,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         configuracion.graficos.tamano_pixel_vision_mazmorra,
         configuracion.graficos.ancho_difuminado_vision_mazmorra);
     HudInventario hud(renderizador.ptr(), iconos);
-    // El reloj y la caja de descanso toman su tamaño del alto de la ventana: se vuelven a crear
-    // si la ventana cambia de tamaño.
+    HudMercado hud_mercado(renderizador.ptr(), iconos, efectos, configuracion.chat.ruta_fuente);
+    CuadroDeAviso cuadro_de_aviso(renderizador.ptr(), configuracion.chat.ruta_fuente);
     std::optional<RelojGrafico> reloj_grafico;
     std::optional<PantallaDeDescanso> pantalla_de_descanso;
     reloj_grafico.emplace(renderizador.ptr(), configuracion.chat.ruta_fuente, alto_de_pantalla);
@@ -215,6 +216,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         configuracion.chat.ruta_fuente,
         alto_de_pantalla);
     hud.configurar(ancho_de_pantalla, alto_de_pantalla);
+    hud_mercado.configurar(ancho_de_pantalla, alto_de_pantalla);
     EntradaDelUsuario entrada;
     Camara camara = camara_para(mapa_de(mapa_actual));
 
@@ -222,19 +224,23 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         const uint32_t inicio_del_cuadro = SDL_GetTicks();
         entrada.leer(chat.esta_escribiendo());
 
-        const VistaChat::ConsumoDeEntrada consumo_del_chat =
-            chat.procesar_entrada(entrada, ancho_de_pantalla, alto_de_pantalla);
-        if (std::optional<EnviarMensajeDeChat> mensaje = chat.tomar_mensaje_a_enviar();
-            mensaje.has_value()) {
-            conexion.enviar_comando(*mensaje);
+        VistaChat::ConsumoDeEntrada consumo_del_chat{};
+        if (!cuadro_de_aviso.esta_visible()) {
+            consumo_del_chat = chat.procesar_entrada(entrada, ancho_de_pantalla, alto_de_pantalla);
+            if (std::optional<EnviarMensajeDeChat> mensaje = chat.tomar_mensaje_a_enviar();
+                mensaje.has_value()) {
+                conexion.enviar_comando(*mensaje);
+            }
         }
 
         if (entrada.pidio_cerrar()) {
             efectos_actuales = nullptr;
             return false;
         }
-        if (entrada.pedidos().salir) {
-            if (ultimo_cofre.abierto) {
+        if (!cuadro_de_aviso.esta_visible() && entrada.pedidos().salir) {
+            if (hud_mercado.esta_abierto()) {
+                conexion.enviar_comando(CerrarMercado{});
+            } else if (ultimo_cofre.abierto) {
                 conexion.enviar_comando(CerrarCofre{});
             } else {
                 efectos_actuales = nullptr;
@@ -258,13 +264,13 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
                 ultimo_paso_ms = ahora;
             }
         }
-        if (!recibir_eventos(chat)) {
+        if (!recibir_eventos(chat, hud_mercado, cuadro_de_aviso)) {
             efectos_actuales = nullptr;
             return true;
         }
 
         const EstadoJugador* propio = jugador_propio();
-        const bool cambio_el_tamano = actualizar_tamano_de_pantalla(ventana, hud);
+        const bool cambio_el_tamano = actualizar_tamano_de_pantalla(ventana, hud, hud_mercado);
         if (cambio_el_tamano) {
             if (mundo != nullptr) {
                 mundo =
@@ -285,6 +291,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             efectos.cambiar_ambiente(configuracion_de(mapa_actual).ruta_ambiente);
             efectos.cambiar_paso(configuracion_de(mapa_actual).ruta_caminar);
             ultimo_cofre = CofreJugador{};
+            hud_mercado.cerrar();
             camara = camara_para(mapa_de(mapa_actual));
         }
         if (propio != nullptr) {
@@ -296,9 +303,10 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
 
         hud.actualizar(ultimo_inventario, ultimo_cofre);
-        procesar_entrada(entrada, hud, camara, consumo_del_chat);
+        procesar_entrada(entrada, hud, hud_mercado, cuadro_de_aviso, camara, consumo_del_chat);
         consultar_el_piso_si_cambio(entrada, hud, camara);
-        if (chat.esta_escribiendo() || ultimo_cofre.abierto) {
+        if (cuadro_de_aviso.esta_visible() || chat.esta_escribiendo() || ultimo_cofre.abierto ||
+            hud_mercado.esta_abierto()) {
             enviar_intencion_si_cambio(Moverse{});
         } else {
             enviar_intencion_si_cambio(entrada.intencion());
@@ -316,11 +324,13 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             tierra,
             camara,
             hud,
+            hud_mercado,
             vision_mazmorra,
             entrada,
             chat,
             *reloj_grafico,
-            *pantalla_de_descanso);
+            *pantalla_de_descanso,
+            cuadro_de_aviso);
         limitar_cuadro(inicio_del_cuadro);
     }
 }
@@ -386,9 +396,14 @@ void VistaPartida::guardar_tierra(const EstadoJuego& estado) {
 }
 
 void VistaPartida::procesar_entrada(
-    const EntradaDelUsuario& entrada, HudInventario& hud, const Camara& camara,
+    const EntradaDelUsuario& entrada, HudInventario& hud, HudMercado& hud_mercado,
+    CuadroDeAviso& cuadro_de_aviso, const Camara& camara,
     const VistaChat::ConsumoDeEntrada& consumo_del_chat) {
     const EntradaDelUsuario::Pedidos& pedidos = entrada.pedidos();
+
+    if (cuadro_de_aviso.procesar_entrada(entrada)) {
+        return;
+    }
 
     if (pedidos.multijugador) {
         conexion.enviar_comando(ActivarMultijugador{});
@@ -404,15 +419,19 @@ void VistaPartida::procesar_entrada(
     }
 
     if (!consumo_del_chat.rueda) {
-        elegir_ranura_de_la_barra(pedidos);
+        if (hud_mercado.esta_abierto()) {
+            hud_mercado.desplazar(pedidos.rueda, entrada.raton_x(), entrada.raton_y());
+        } else {
+            elegir_ranura_de_la_barra(pedidos);
+        }
     }
 
     if (!consumo_del_chat.clic) {
         if (pedidos.clic_izquierdo) {
-            procesar_clic(entrada, hud, camara, false, pedidos.con_shift);
+            procesar_clic(entrada, hud, hud_mercado, camara, false, pedidos.con_shift);
         }
         if (pedidos.clic_derecho) {
-            procesar_clic(entrada, hud, camara, true, pedidos.con_shift);
+            procesar_clic(entrada, hud, hud_mercado, camara, true, pedidos.con_shift);
         }
     }
 }
@@ -437,8 +456,21 @@ void VistaPartida::elegir_ranura_de_la_barra(const EntradaDelUsuario::Pedidos& p
 }
 
 void VistaPartida::procesar_clic(
-    const EntradaDelUsuario& entrada, HudInventario& hud, const Camara& camara, bool clic_derecho,
-    bool con_shift) {
+    const EntradaDelUsuario& entrada, HudInventario& hud, HudMercado& hud_mercado,
+    const Camara& camara, bool clic_derecho, bool con_shift) {
+    if (hud_mercado.esta_abierto()) {
+        for (const ComandoCliente& comando : hud_mercado.procesar_clic(
+                 ultimo_inventario,
+                 ultimo_cofre,
+                 hud,
+                 entrada.raton_x(),
+                 entrada.raton_y(),
+                 clic_derecho)) {
+            conexion.enviar_comando(comando);
+        }
+        return;
+    }
+
     if (hud.captura_el_clic(
             ultimo_inventario,
             ultimo_cofre,
@@ -524,10 +556,11 @@ std::optional<std::pair<int, int>> VistaPartida::centro_de_pantalla_del_jugador(
     return std::make_pair(x, y);
 }
 
-bool VistaPartida::recibir_eventos(VistaChat& chat) {
+bool VistaPartida::recibir_eventos(
+    VistaChat& chat, HudMercado& hud_mercado, CuadroDeAviso& cuadro_de_aviso) {
     EventoServidor evento;
     while (conexion.intentar_evento(evento)) {
-        aplicar(evento, chat);
+        aplicar(evento, chat, hud_mercado, cuadro_de_aviso);
         if (partida_terminada) {
             return false;
         }
@@ -548,7 +581,9 @@ bool VistaPartida::trampa_se_escucha(const EstadoTrampa& trampa) const {
            std::abs(fila - static_cast<int>(trampa.fila)) <= CASILLAS_PARA_ESCUCHARLO;
 }
 
-void VistaPartida::aplicar(const EventoServidor& evento, VistaChat& chat) {
+void VistaPartida::aplicar(
+    const EventoServidor& evento, VistaChat& chat, HudMercado& hud_mercado,
+    CuadroDeAviso& cuadro_de_aviso) {
     EstadoJuego& estado = ultimo_estado_juego;
 
     std::visit(
@@ -561,7 +596,6 @@ void VistaPartida::aplicar(const EventoServidor& evento, VistaChat& chat) {
             [&](const JugadoresEnSector& e) {
                 const EstadoJugador* antes = jugador_propio();
                 const bool picaba = antes != nullptr && antes->accion_actual == TipoAccion::PICAR;
-                // Se copia antes de reemplazar la lista: "antes" apunta adentro de ella.
                 const bool antes_tenia_vida = antes != nullptr && estado.mapa == e.mapa;
                 const uint8_t vida_antes = antes != nullptr ? antes->vida : 0;
                 estado.mapa = e.mapa;
@@ -687,6 +721,9 @@ void VistaPartida::aplicar(const EventoServidor& evento, VistaChat& chat) {
                 partida_terminada = true;
             },
             [&](const PartidaAbandonada&) { partida_terminada = true; },
+            [&](const ActualizacionMercado& e) { hud_mercado.abrir(e); },
+            [&](const CerrarVentanaMercado&) { hud_mercado.cerrar(); },
+            [&](const AvisoEnPantalla& e) { cuadro_de_aviso.mostrar(e.mensaje); },
             [](const auto&) {},
         },
         evento);
@@ -723,8 +760,9 @@ void VistaPartida::dibujar(
     const ObjetosGraficos& objetos, const EnemigosGraficos& enemigos,
     const TrampasGraficas& trampas, const Personaje& personaje, const IconosDeItems& iconos,
     const TierraGrafica& tierra, const Camara& camara, const HudInventario& hud,
-    const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada, const VistaChat& chat,
-    RelojGrafico& reloj_grafico, const PantallaDeDescanso& pantalla_de_descanso) const {
+    const HudMercado& hud_mercado, const VisionMazmorra& vision_mazmorra,
+    const EntradaDelUsuario& entrada, const VistaChat& chat, RelojGrafico& reloj_grafico,
+    const PantallaDeDescanso& pantalla_de_descanso, const CuadroDeAviso& cuadro_de_aviso) const {
     SDL_Renderer* renderer = renderizador.ptr();
     if (mundo != nullptr) {
         SDL_SetRenderTarget(renderer, mundo);
@@ -832,7 +870,6 @@ void VistaPartida::dibujar(
         }
     }
 
-    // La mazmorra ya tiene su propia oscuridad: la noche se nota en la granja, el pueblo y la casa.
     if (hora_del_juego.has_value() && !mapa_actual_es_mazmorra()) {
         reloj_grafico.oscurecer(renderer, *hora_del_juego, ancho_del_mundo, alto_del_mundo);
     }
@@ -842,6 +879,7 @@ void VistaPartida::dibujar(
         SDL_RenderCopy(renderer, mundo, nullptr, nullptr);
     }
 
+    hud_mercado.dibujar(entrada.raton_x(), entrada.raton_y());
     hud.dibujar(renderer, ultimo_inventario, ultimo_cofre, entrada.raton_x(), entrada.raton_y());
     if (const EstadoJugador* propio = jugador_propio(); propio != nullptr) {
         hud.dibujar_energia(renderer, propio->energia, ENERGIA_MAXIMA_JUGADOR);
@@ -856,6 +894,7 @@ void VistaPartida::dibujar(
     }
     pantalla_de_descanso.dibujar(renderer, descanso, ancho_de_pantalla, alto_de_pantalla);
     chat.dibujar(renderer, ancho_de_pantalla, alto_de_pantalla);
+    cuadro_de_aviso.dibujar(renderer, ancho_de_pantalla, alto_de_pantalla);
 
     SDL_RenderPresent(renderer);
 }
