@@ -8,12 +8,14 @@
 
 namespace {
 constexpr int VOLUMEN_PASOS = 50;
+constexpr int VOLUMEN_LLUVIA_AFUERA = 70;
+constexpr int VOLUMEN_LLUVIA_BAJO_TECHO = 20;
 }  // namespace
 
 EfectosDeSonido::EfectosDeSonido(const ConfiguracionSonido& configuracion):
     ruta_ambiente_general(configuracion.ruta_ambiente),
     ruta_paso_general(configuracion.ruta_caminar) {
-    Mix_ReserveChannels(1);
+    Mix_ReserveChannels(2);
     accion = cargar(configuracion.ruta_accion);
     for (const auto& [item, ruta] : configuracion.rutas_de_uso) {
         sonido_de_uso[item] = cargar(ruta);
@@ -44,6 +46,9 @@ EfectosDeSonido::EfectosDeSonido(const ConfiguracionSonido& configuracion):
                         !std::filesystem::exists(configuracion.ruta_anochecer)
                     ? nullptr
                     : cargar(configuracion.ruta_anochecer);
+    lluvia = configuracion.ruta_lluvia.empty() || !std::filesystem::exists(configuracion.ruta_lluvia)
+                 ? nullptr
+                 : cargar(configuracion.ruta_lluvia);
     cambiar_paso("");
 }
 
@@ -87,6 +92,28 @@ void EfectosDeSonido::actualizar_ambiente() {
     }
     Mix_PlayChannel(CANAL_AMBIENTE, nuevo, -1);
     ambiente_sonando = nuevo;
+}
+
+void EfectosDeSonido::cambiar_lluvia(bool llueve, bool bajo_techo, bool en_la_mazmorra) {
+    if (lluvia == nullptr) {
+        return;
+    }
+    int volumen = 0;
+    if (llueve && !en_la_mazmorra) {
+        volumen = bajo_techo ? VOLUMEN_LLUVIA_BAJO_TECHO : VOLUMEN_LLUVIA_AFUERA;
+    }
+    if (volumen == volumen_de_lluvia) {
+        return;
+    }
+    if (volumen == 0) {
+        Mix_FadeOutChannel(CANAL_LLUVIA, 1000);
+    } else {
+        if (volumen_de_lluvia == 0) {
+            Mix_FadeInChannel(CANAL_LLUVIA, lluvia, -1, 1000);
+        }
+        Mix_Volume(CANAL_LLUVIA, volumen);
+    }
+    volumen_de_lluvia = volumen;
 }
 
 void EfectosDeSonido::cambiar_paso(const std::string& ruta) {
