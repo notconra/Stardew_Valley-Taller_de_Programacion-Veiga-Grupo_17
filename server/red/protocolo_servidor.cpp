@@ -293,6 +293,8 @@ void ProtocoloServidor::enviar_estado_jugador(const EstadoJugador& estado) {
     enviar_u8(static_cast<uint8_t>(estado.accion_actual));
     enviar_u8(estado.vida);
     enviar_u8(estado.energia);
+    enviar_u8(estado.vida_maxima);
+    enviar_u8(estado.energia_maxima);
     enviar_u32(estado.monedas);
     enviar_apariencia(estado.apariencia);
 }
@@ -553,6 +555,7 @@ void ProtocoloServidor::enviar_evento_jugadores_de_la_partida(
 void ProtocoloServidor::enviar_evento_lote_del_centro(const LoteDelCentro& lote) {
     enviar_tipo(TipoMensaje::LOTE_DEL_CENTRO);
     enviar_u8(static_cast<uint8_t>(lote.lote));
+    enviar_texto(lote.clave);
     enviar_booleano(lote.abrir);
     enviar_texto(lote.nombre);
     enviar_booleano(lote.completo);

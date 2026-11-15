@@ -29,7 +29,12 @@ Mundo::Mundo(
       controlador_de_cultivos(sectores, notificador_de_juego),
       controlador_de_regalos(personajes, recursos_de_juego.catalogo_de_items, notificador_de_juego),
       controlador_del_centro(
-          sectores, recursos_de_juego, notificador_de_juego, datos_guardados.centro) {
+          personajes, sectores, recursos_de_juego, notificador_de_juego,
+          [this](TipoAnimal animal) {
+              return animal == TipoAnimal::VACA ? agregar_vaca_en_granja_cerca(0)
+                                                : agregar_gallina_en_granja_cerca(0);
+          },
+          datos_guardados.centro) {
     sectores.cargar_mapas_guardados(datos_guardados.mapas);
     sectores.cargar_cultivos_guardados(datos_guardados.cultivos);
     sectores.cargar_cofres_guardados(datos_guardados.cofres);
@@ -63,6 +68,7 @@ void Mundo::completar_datos_guardados(
     datos.vida = static_cast<uint16_t>(std::max(personaje.vida, 0));
     datos.energia = static_cast<uint16_t>(std::max(personaje.energia, 0));
     datos.monedas = personaje.monedas;
+    datos.tiene_mejora_de_pelea = personaje.tiene_mejora_de_pelea;
     datos.regalos_pendientes = personaje.buzon.pendientes();
     datos.tiene_cama = personaje.ultima_cama.has_value();
     datos.mapa_cama = datos.tiene_cama ? personaje.ultima_cama->mapa : "";
@@ -77,8 +83,9 @@ void Mundo::restaurar(Personaje& personaje, const DatosJugadorGuardado& guardado
     if (!guardado.inventario.empty()) {
         personaje.inventario.cargar_ranuras(guardado.inventario);
     }
-    personaje.vida = std::min<int>(guardado.vida, Personaje::VIDA_MAXIMA);
-    personaje.energia = std::min<int>(guardado.energia, Personaje::ENERGIA_MAXIMA);
+    personaje.tiene_mejora_de_pelea = guardado.tiene_mejora_de_pelea;
+    personaje.vida = std::min<int>(guardado.vida, personaje.vida_maxima());
+    personaje.energia = std::min<int>(guardado.energia, personaje.energia_maxima());
     personaje.monedas = guardado.monedas;
     personaje.nombre = guardado.nombre_jugador;
     personaje.buzon = Buzon(guardado.regalos_pendientes);
@@ -141,6 +148,7 @@ void Mundo::conectar(
     notificador.a_jugador(id_jugador, personaje.actualizacion_de_inventario());
     controlador_del_dia.al_conectarse(personaje);
     controlador_de_regalos.al_conectarse(personaje);
+    controlador_del_centro.al_conectarse(personaje);
 
     auto guardado = datos_jugadores.find(id_jugador);
     if (guardado != datos_jugadores.end() && !guardado->second.mapa_actual.empty() &&
@@ -260,6 +268,7 @@ void Mundo::actualizar() {
     controlador_de_acciones.actualizar();
     controlador_de_cofres.actualizar();
     controlador_de_drops.actualizar();
+    controlador_del_centro.actualizar();
 }
 
 std::optional<DatosJugadorGuardado> Mundo::obtener_datos_jugador(uint32_t id_jugador) const {

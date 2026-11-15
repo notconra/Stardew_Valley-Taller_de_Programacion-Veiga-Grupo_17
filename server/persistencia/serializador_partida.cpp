@@ -11,7 +11,7 @@
 #include "lector_binario.h"
 
 constexpr std::array<uint8_t, 4> FIRMA_ARCHIVO = {'S', 'V', 'P', 'T'};
-constexpr uint16_t VERSION_ACTUAL = 9;
+constexpr uint16_t VERSION_ACTUAL = 10;
 
 namespace {
 void escribir_ranura(EscritorBinario& escritor, const RanuraInventario& ranura) {
@@ -90,6 +90,7 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
         escritor.escribir_u16(jugador.vida);
         escritor.escribir_u16(jugador.energia);
         escritor.escribir_u32(jugador.monedas);
+        escritor.escribir_bool(jugador.tiene_mejora_de_pelea);
         escritor.escribir_bool(jugador.tiene_cama);
         escritor.escribir_texto(jugador.mapa_cama);
         escritor.escribir_u32(jugador.columna_cama);
@@ -230,6 +231,7 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
         jugador.vida = lector.leer_u16();
         jugador.energia = lector.leer_u16();
         jugador.monedas = lector.leer_u32();
+        jugador.tiene_mejora_de_pelea = lector.leer_bool();
         jugador.tiene_cama = lector.leer_bool();
         jugador.mapa_cama = lector.leer_texto();
         jugador.columna_cama = lector.leer_u32();

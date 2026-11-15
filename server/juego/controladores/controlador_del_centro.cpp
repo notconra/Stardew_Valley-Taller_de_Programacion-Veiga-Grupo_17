@@ -1,20 +1,129 @@
 #include "controlador_del_centro.h"
 
+#include <map>
 #include <optional>
 #include <string>
+#include <utility>
 #include <variant>
 
 #include "../../../common/modo_uso.h"
 #include "../geometria.h"
 
+#define REMITENTE_DE_LOS_PREMIOS "Centro comunitario"
+#define SEMILLAS_DEL_PREMIO_DE_CULTIVOS 5
+#define MONEDAS_DEL_PREMIO_DE_METALES 500
+#define VACAS_DEL_PREMIO_DE_ANIMALES 1
+#define GALLINAS_DEL_PREMIO_DE_ANIMALES 2
+
+#define PRECIO_PROVISORIO_DE_LA_VACA 1500
+#define PRECIO_PROVISORIO_DE_LA_GALLINA 800
+
+const TipoItem SEMILLAS_DEL_PREMIO[] = {
+    TipoItem::SEMILLA_FRUTILLA,
+    TipoItem::SEMILLA_CEBOLLA_DE_VERDEO,
+    TipoItem::SEMILLA_PAPA,
+    TipoItem::SEMILLA_CALABAZA,
+};
+
 ControladorDelCentro::ControladorDelCentro(
-    GestorDeSectores& gestor_de_sectores, const RecursosDeJuego& recursos_de_juego,
-    Notificador& notificador_de_juego, const DatosCentroGuardado& guardado)
-    : sectores(gestor_de_sectores),
+    std::map<uint32_t, Personaje>& personajes_de_la_partida, GestorDeSectores& gestor_de_sectores,
+    const RecursosDeJuego& recursos_de_juego, Notificador& notificador_de_juego,
+    AgregarAnimalALaGranja agregar_animal_a_la_granja, const DatosCentroGuardado& guardado)
+    : personajes(personajes_de_la_partida),
+      sectores(gestor_de_sectores),
       recursos(recursos_de_juego),
       notificador(notificador_de_juego),
+      agregar_animal(std::move(agregar_animal_a_la_granja)),
       centro(recursos_de_juego.catalogo_de_lotes) {
     centro.cargar(guardado);
+}
+
+void ControladorDelCentro::actualizar() {
+    for (TipoLote lote : centro.tomar_lotes_completados()) {
+        entregar_premio(lote);
+    }
+}
+
+void ControladorDelCentro::al_conectarse(const Personaje& personaje) {
+    for (const auto& [tipo, definicion] : recursos.catalogo_de_lotes.definiciones()) {
+        notificador.a_jugador(personaje.id_jugador, estado_del_lote(tipo, false));
+    }
+}
+
+void ControladorDelCentro::entregar_premio(TipoLote lote) {
+    const DefinicionDeLote* definicion = recursos.catalogo_de_lotes.buscar(lote);
+    const std::string completo =
+        "Se completo el " + (definicion != nullptr ? definicion->nombre : std::string("lote"));
+    switch (lote) {
+        case TipoLote::CULTIVOS:
+            dar_semillas_a_todos();
+            avisar_en_el_chat(completo + ": 5 semillas de cada cultivo al buzon de regalos.");
+            break;
+        case TipoLote::METALES:
+            dar_monedas_a_todos(MONEDAS_DEL_PREMIO_DE_METALES);
+            avisar_en_el_chat(completo + ": 500 monedas para cada uno.");
+            break;
+        case TipoLote::ANIMALES:
+            dar_animales_a_la_granja();
+            avisar_en_el_chat(completo + ": una vaca y dos gallinas para la granja.");
+            break;
+        case TipoLote::PELEA:
+            dar_mejora_de_pelea_a_todos();
+            avisar_en_el_chat(completo + ": 25% mas de vida y energia para cada uno.");
+            break;
+        case TipoLote::DINERO:
+            avisar_en_el_chat(
+                completo + ": manana el mercado vende a mitad de precio y compra al doble.");
+            break;
+    }
+}
+
+void ControladorDelCentro::dar_semillas_a_todos() {
+    for (auto& [id_jugador, personaje] : personajes) {
+        for (TipoItem semilla : SEMILLAS_DEL_PREMIO) {
+            personaje.buzon.depositar(
+                REMITENTE_DE_LOS_PREMIOS,
+                RanuraInventario{semilla, SEMILLAS_DEL_PREMIO_DE_CULTIVOS, Calidad::BASE});
+        }
+        if (personaje.conectado) {
+            notificador.a_jugador(id_jugador, RegalosPendientes{personaje.buzon.pendientes()});
+        }
+    }
+}
+
+void ControladorDelCentro::dar_monedas_a_todos(uint32_t cantidad) {
+    if (cantidad == 0) {
+        return;
+    }
+    for (auto& [id_jugador, personaje] : personajes) {
+        personaje.recibir_monedas(cantidad);
+    }
+}
+
+void ControladorDelCentro::dar_animales_a_la_granja() {
+    uint32_t a_pagar = 0;
+    for (int i = 0; i < VACAS_DEL_PREMIO_DE_ANIMALES; ++i) {
+        if (!agregar_animal(TipoAnimal::VACA)) {
+            a_pagar += PRECIO_PROVISORIO_DE_LA_VACA;
+        }
+    }
+    for (int i = 0; i < GALLINAS_DEL_PREMIO_DE_ANIMALES; ++i) {
+        if (!agregar_animal(TipoAnimal::GALLINA)) {
+            a_pagar += PRECIO_PROVISORIO_DE_LA_GALLINA;
+        }
+    }
+    dar_monedas_a_todos(a_pagar);
+}
+
+void ControladorDelCentro::dar_mejora_de_pelea_a_todos() {
+    for (auto& [id_jugador, personaje] : personajes) {
+        personaje.tiene_mejora_de_pelea = true;
+    }
+}
+
+void ControladorDelCentro::avisar_en_el_chat(const std::string& texto) {
+    notificador.a_todos(
+        MensajeDeChat{CanalDeChat::SISTEMA, "(Centro comunitario)", std::string(), texto});
 }
 
 const DefinicionDeLote* ControladorDelCentro::lote_clickeado(
@@ -101,6 +210,7 @@ LoteDelCentro ControladorDelCentro::estado_del_lote(TipoLote lote, bool abrir) c
         return estado;
     }
     estado.nombre = definicion->nombre;
+    estado.clave = definicion->clave;
     for (std::size_t i = 0; i < definicion->requisitos.size(); ++i) {
         const Requisito& requisito = definicion->requisitos[i];
         estado.requisitos.push_back(RequisitoDeLote{

@@ -162,9 +162,9 @@ void ControladorDelDia::parar_en(
 
 void ControladorDelDia::despertar(Personaje& personaje) {
     const bool durmio_en_la_cama = personaje.descanso == EstadoDeDescanso::ACOSTADO;
-    personaje.vida = durmio_en_la_cama ? Personaje::VIDA_MAXIMA : Personaje::VIDA_MAXIMA / 2;
+    personaje.vida = durmio_en_la_cama ? personaje.vida_maxima() : personaje.vida_maxima() / 2;
     personaje.energia =
-        durmio_en_la_cama ? Personaje::ENERGIA_MAXIMA : Personaje::ENERGIA_MAXIMA / 2;
+        durmio_en_la_cama ? personaje.energia_maxima() : personaje.energia_maxima() / 2;
     personaje.descanso = EstadoDeDescanso::DESPIERTO;
     personaje.dio_el_ok = false;
 
@@ -283,8 +283,8 @@ void ControladorDelDia::avanzar_dia() {
     reloj.empezar_dia_siguiente();
     for (auto& [id_jugador, personaje] : personajes) {
         if (personaje.conectado) {
-            personaje.vida = Personaje::VIDA_MAXIMA;
-            personaje.energia = Personaje::ENERGIA_MAXIMA;
+            personaje.vida = personaje.vida_maxima();
+            personaje.energia = personaje.energia_maxima();
             personaje.descanso = EstadoDeDescanso::DESPIERTO;
             personaje.dio_el_ok = false;
         }

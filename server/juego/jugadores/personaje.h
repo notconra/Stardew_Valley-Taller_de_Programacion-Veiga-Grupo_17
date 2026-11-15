@@ -66,6 +66,11 @@ struct Personaje {
     static constexpr int ENERGIA_MAXIMA = ENERGIA_MAXIMA_JUGADOR;
     int energia = ENERGIA_MAXIMA;
 
+    // El premio del lote de pelea del centro comunitario: la vida y la energía máximas suben un
+    // 25%. VIDA_MAXIMA y ENERGIA_MAXIMA son las de base; las de este jugador salen de
+    // vida_maxima() y energia_maxima().
+    bool tiene_mejora_de_pelea = false;
+
     // Monedas de oro del jugador (el enunciado pide una cantidad inicial de monedas de oro entre 0
     // y 100, elegida de manera aleatoria al crearse por primera vez).
     static constexpr uint32_t MONEDAS_INICIALES_MIN = 0;
@@ -111,6 +116,10 @@ struct Personaje {
     // Con el 10% de energía o menos el jugador camina a la mitad de velocidad (regla del
     // enunciado). Es lo que hay que multiplicar a su velocidad de movimiento.
     double multiplicador_de_velocidad() const;
+
+    // La vida y la energía máximas de este jugador (con la mejora del lote de pelea, si la tiene).
+    int vida_maxima() const;
+    int energia_maxima() const;
 
     // Si está a tope de vida (no puede subir más) o a cero (no baja de ahí).
     bool esta_inconsciente() const;
