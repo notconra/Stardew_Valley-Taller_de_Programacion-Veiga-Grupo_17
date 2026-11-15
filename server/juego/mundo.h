@@ -15,6 +15,7 @@
 #include "controladores/controlador_de_enemigos.h"
 #include "controladores/controlador_de_jugador.h"
 #include "controladores/controlador_de_mazmorra.h"
+#include "controladores/controlador_de_mercado.h"
 #include "controladores/controlador_de_trampas.h"
 #include "jugadores/personaje.h"
 #include "mapa/mapa.h"
@@ -35,13 +36,14 @@ private:
     GestorDeSectores sectores;
 
     ControladorDeJugador controlador_de_jugador;
+    ControladorDeMercado controlador_de_mercado;
+    ControladorDelDia controlador_del_dia;
     ControladorDeAcciones controlador_de_acciones;
     ControladorDeCofres controlador_de_cofres;
     ControladorDeDrops controlador_de_drops;
     ControladorDeMazmorra controlador_de_mazmorra;
     ControladorDeEnemigos controlador_de_enemigos;
     ControladorDeTrampas controlador_de_trampas;
-    ControladorDelDia controlador_del_dia;
 
     void resolver_transicion(Personaje& personaje, const Transicion& transicion);
 

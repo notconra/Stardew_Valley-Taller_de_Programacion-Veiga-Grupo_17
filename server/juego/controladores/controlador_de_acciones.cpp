@@ -10,14 +10,15 @@
 #include "../acciones/accion_colocar.h"
 #include "../acciones/accion_dormir.h"
 #include "../acciones/accion_interactuar_cofre.h"
+#include "../acciones/accion_interactuar_mercado.h"
 #include "../acciones/accion_picar.h"
 #include "../acciones/accion_tratar_tierra.h"
 #include "../acciones/accion_usar_transicion.h"
 
 ControladorDeAcciones::ControladorDeAcciones(
     GestorDeSectores& sectores, std::map<uint32_t, Personaje>& personajes,
-    const RecursosDeJuego& recursos, Notificador& notificador,
-    ResolverDeTransicion resolver_transicion)
+    const RecursosDeJuego& recursos, Notificador& notificador, ControladorDeMercado& mercado,
+    const ControladorDelDia& dia, ResolverDeTransicion resolver_transicion)
     : sectores(sectores),
       personajes(personajes),
       recursos(recursos),
@@ -35,8 +36,9 @@ ControladorDeAcciones::ControladorDeAcciones(
         static_cast<uint16_t>(duraciones.duracion_tratar_tierra_en_ticks)));
     acciones.push_back(std::make_unique<AccionInteractuarCofre>());
     acciones.push_back(std::make_unique<AccionColocar>());
-    acciones.push_back(std::make_unique<AccionAtacar>(
-        static_cast<uint16_t>(duraciones.duracion_atacar_en_ticks)));
+    acciones.push_back(
+        std::make_unique<AccionAtacar>(static_cast<uint16_t>(duraciones.duracion_atacar_en_ticks)));
+    acciones.push_back(std::make_unique<AccionInteractuarMercado>(mercado, dia));
 }
 
 bool ControladorDeAcciones::al_alcance(

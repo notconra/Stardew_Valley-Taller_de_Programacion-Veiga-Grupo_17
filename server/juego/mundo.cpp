@@ -11,8 +11,14 @@ Mundo::Mundo(
       notificador(notificador_de_juego),
       sectores(recursos_de_juego, ticks_por_segundo, personajes, notificador_de_juego),
       controlador_de_jugador(sectores, notificador_de_juego),
+      controlador_de_mercado(recursos_de_juego.mercado, notificador_de_juego),
+      controlador_del_dia(
+          recursos_de_juego.juego.dia, ticks_por_segundo, sectores, personajes, recursos_de_juego,
+          notificador_de_juego,
+          [this](Personaje& personaje) { controlador_de_mazmorra.al_desconectarse(personaje); }),
       controlador_de_acciones(
-          sectores, personajes, recursos_de_juego, notificador_de_juego,
+          sectores, personajes, recursos_de_juego, notificador_de_juego, controlador_de_mercado,
+          controlador_del_dia,
           [this](Personaje& personaje, const Transicion& transicion) {
               resolver_transicion(personaje, transicion);
           }),
@@ -21,11 +27,7 @@ Mundo::Mundo(
           sectores, personajes, notificador_de_juego, recursos_de_juego.juego.drops),
       controlador_de_mazmorra(recursos_de_juego, sectores, datos_guardados.niveles_mazmorra),
       controlador_de_enemigos(sectores, personajes, notificador_de_juego),
-      controlador_de_trampas(sectores, personajes, notificador_de_juego),
-      controlador_del_dia(
-          recursos_de_juego.juego.dia, ticks_por_segundo, sectores, personajes, recursos_de_juego,
-          notificador_de_juego,
-          [this](Personaje& personaje) { controlador_de_mazmorra.al_desconectarse(personaje); }) {
+      controlador_de_trampas(sectores, personajes, notificador_de_juego) {
     sectores.cargar_mapas_guardados(datos_guardados.mapas);
     sectores.cargar_cofres_guardados(datos_guardados.cofres);
     sectores.cargar_muebles_guardados(datos_guardados.muebles);
@@ -96,6 +98,7 @@ void Mundo::dar_de_baja(Personaje& personaje) {
     controlador_de_cofres.al_desconectarse(personaje);
     controlador_de_acciones.al_desconectarse(personaje);
     controlador_del_dia.al_desconectarse(personaje);
+    controlador_de_mercado.al_desconectarse(personaje);
     sectores.quitar(personaje);
     personaje.conectado = false;
 }
@@ -170,13 +173,21 @@ void Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
     if (controlador_de_drops.atender(personaje, comando)) {
         return;
     }
+    if (controlador_de_mercado.atender(personaje, comando, controlador_del_dia.hora())) {
+        return;
+    }
 }
 
 void Mundo::resolver_transicion(Personaje& personaje, const Transicion& transicion) {
-    if (controlador_de_mazmorra.resolver_transicion(personaje, transicion)) {
+    if (!sectores.existe(transicion.mapa_destino)) {
         return;
     }
-    if (!sectores.existe(transicion.mapa_destino)) {
+    if (!controlador_de_mercado.puede_entrar(transicion.mapa_destino, controlador_del_dia.hora())) {
+        controlador_de_mercado.avisar_mercado_cerrado(personaje);
+        return;
+    }
+    if (controlador_de_mazmorra.resolver_transicion(personaje, transicion)) {
+        controlador_de_mercado.al_cambiar_de_mapa(personaje);
         return;
     }
     sectores.trasladar_a_casilla(
@@ -184,6 +195,7 @@ void Mundo::resolver_transicion(Personaje& personaje, const Transicion& transici
         transicion.mapa_destino,
         transicion.columna_destino,
         transicion.fila_destino);
+    controlador_de_mercado.al_cambiar_de_mapa(personaje);
 }
 
 bool Mundo::requiere_clic(const Personaje& personaje, const Transicion& transicion) const {

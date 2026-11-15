@@ -20,6 +20,7 @@ struct RecursosDeJuego {
     std::map<std::string, ConfiguracionMapaServidor> configuraciones_mapas;
     std::string mapa_inicial;
     ConfiguracionJuegoServidor juego;
+    ConfiguracionMercadoServidor mercado;
     CatalogoDeItems catalogo_de_items;
 
     // Objetos colocables en el mundo (minerales, y a futuro árboles, muebles, drops...).
@@ -42,7 +43,8 @@ struct RecursosDeJuego {
     RecursosDeJuego(
         const std::vector<ConfiguracionMapaServidor>& configuracion_mapas,
         const std::string& id_mapa_inicial, const ConfiguracionJuegoServidor& configuracion_juego,
-        const ConfiguracionMazmorraServidor& configuracion_mazmorra);
+        const ConfiguracionMazmorraServidor& configuracion_mazmorra,
+        const ConfiguracionMercadoServidor& configuracion_mercado = {});
 
 private:
     // Junta las definiciones de todos los módulos que aportan objetos del mundo. Para sumar
