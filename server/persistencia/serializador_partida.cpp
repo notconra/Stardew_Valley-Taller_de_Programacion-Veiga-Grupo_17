@@ -134,6 +134,22 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
         escritor.escribir_u32(mueble.fila);
     }
 
+    escritor.escribir_u16(static_cast<uint16_t>(datos.mundo.animales.size()));
+    for (const auto& animal : datos.mundo.animales) {
+        escritor.escribir_u32(animal.id);
+        escritor.escribir_u8(static_cast<uint8_t>(animal.tipo));
+        escritor.escribir_u8(animal.variante);
+        escritor.escribir_u32(animal.columna);
+        escritor.escribir_u32(animal.fila);
+        escritor.escribir_u8(static_cast<uint8_t>(animal.mirando));
+        escritor.escribir_u32(animal.dias_acumulados);
+    }
+
+    escritor.escribir_u16(static_cast<uint16_t>(datos.mundo.vacas_para_ordeniar.size()));
+    for (uint32_t id_vaca : datos.mundo.vacas_para_ordeniar) {
+        escritor.escribir_u32(id_vaca);
+    }
+
     escritor.escribir_u16(static_cast<uint16_t>(datos.mundo.cultivos.size()));
     for (const auto& cultivo : datos.mundo.cultivos) {
         escritor.escribir_texto(cultivo.id_mapa);
@@ -260,8 +276,26 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
         datos.mundo.muebles.push_back(mueble);
     }
 
-    uint16_t cant_cultivos = lector.leer_u16();
-    for (uint16_t i = 0; i < cant_cultivos; ++i) {
+    uint16_t cantidad_de_animales = lector.leer_u16();
+    for (uint16_t i = 0; i < cantidad_de_animales; ++i) {
+        DatosAnimalGuardado animal;
+        animal.id = lector.leer_u32();
+        animal.tipo = static_cast<TipoAnimal>(lector.leer_u8());
+        animal.variante = lector.leer_u8();
+        animal.columna = lector.leer_u32();
+        animal.fila = lector.leer_u32();
+        animal.mirando = static_cast<Direccion>(lector.leer_u8());
+        animal.dias_acumulados = lector.leer_u32();
+        datos.mundo.animales.push_back(animal);
+    }
+
+    uint16_t cantidad_de_vacas_para_ordeniar = lector.leer_u16();
+    for (uint16_t i = 0; i < cantidad_de_vacas_para_ordeniar; ++i) {
+        datos.mundo.vacas_para_ordeniar.push_back(lector.leer_u32());
+    }
+
+    uint16_t cantidad_de_cultivos = lector.leer_u16();
+    for (uint16_t i = 0; i < cantidad_de_cultivos; ++i) {
         DatosCultivoGuardado cultivo;
         cultivo.id_mapa = lector.leer_texto();
         cultivo.columna = lector.leer_u32();
