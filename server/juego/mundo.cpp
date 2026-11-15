@@ -27,8 +27,9 @@ Mundo::Mundo(
           notificador_de_juego,
           [this](Personaje& personaje) { controlador_de_mazmorra.al_desconectarse(personaje); }),
       controlador_de_cultivos(sectores, notificador_de_juego),
-      controlador_de_regalos(
-          personajes, recursos_de_juego.catalogo_de_items, notificador_de_juego) {
+      controlador_de_regalos(personajes, recursos_de_juego.catalogo_de_items, notificador_de_juego),
+      controlador_del_centro(
+          recursos_de_juego.catalogo_de_lotes, notificador_de_juego, datos_guardados.centro) {
     sectores.cargar_mapas_guardados(datos_guardados.mapas);
     sectores.cargar_cultivos_guardados(datos_guardados.cultivos);
     sectores.cargar_cofres_guardados(datos_guardados.cofres);
@@ -195,12 +196,15 @@ void Mundo::resolver_transicion(Personaje& personaje, const Transicion& transici
     if (controlador_de_mazmorra.resolver_transicion(personaje, transicion)) {
         return;
     }
-    if (!sectores.existe(transicion.mapa_destino)) {
+    // La puerta del pueblo lleva al centro en ruinas, o al arreglado si ya se completaron todos los
+    // lotes. Los dos mapas tienen la entrada en el mismo lugar.
+    const std::string destino = controlador_del_centro.mapa_para(transicion.mapa_destino);
+    if (!sectores.existe(destino)) {
         return;
     }
     sectores.trasladar_a_casilla(
         personaje,
-        transicion.mapa_destino,
+        destino,
         transicion.columna_destino,
         transicion.fila_destino);
 }
@@ -317,6 +321,31 @@ std::vector<DatosCultivoGuardado> Mundo::obtener_cultivos_guardados() const {
 
 void Mundo::cambiar_estacion(Estacion estacion) {
     controlador_del_dia.cambiar_estacion(estacion);
+}
+
+DatosCentroGuardado Mundo::obtener_centro_guardado() const {
+    return controlador_del_centro.obtener_guardado();
+}
+
+uint16_t Mundo::donar_al_centro(uint32_t id_jugador, TipoLote lote, uint8_t indice_ranura) {
+    auto encontrado = personajes.find(id_jugador);
+    if (encontrado == personajes.end() || !encontrado->second.conectado) {
+        return 0;
+    }
+    return controlador_del_centro
+        .donar_item(encontrado->second, lote, indice_ranura, obtener_dia());
+}
+
+bool Mundo::donar_monedas_al_centro(uint32_t id_jugador, TipoLote lote) {
+    auto encontrado = personajes.find(id_jugador);
+    if (encontrado == personajes.end() || !encontrado->second.conectado) {
+        return false;
+    }
+    return controlador_del_centro.donar_monedas(encontrado->second, lote, obtener_dia());
+}
+
+const CentroComunitario& Mundo::centro_comunitario() const {
+    return controlador_del_centro.estado();
 }
 
 uint32_t Mundo::obtener_dia() const {

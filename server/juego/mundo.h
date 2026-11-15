@@ -18,6 +18,7 @@
 #include "controladores/controlador_de_mazmorra.h"
 #include "controladores/controlador_de_regalos.h"
 #include "controladores/controlador_de_trampas.h"
+#include "controladores/controlador_del_centro.h"
 #include "jugadores/personaje.h"
 #include "mapa/mapa.h"
 #include "notificador.h"
@@ -46,6 +47,7 @@ private:
     ControladorDelDia controlador_del_dia;
     ControladorDeCultivos controlador_de_cultivos;
     ControladorDeRegalos controlador_de_regalos;
+    ControladorDelCentro controlador_del_centro;
 
     void resolver_transicion(Personaje& personaje, const Transicion& transicion);
 
@@ -105,6 +107,7 @@ public:
     std::vector<DatosAnimalGuardado> obtener_animales_guardados() const;
     std::vector<uint32_t> obtener_ids_vacas_listas_para_ordeniar() const;
     std::vector<DatosCultivoGuardado> obtener_cultivos_guardados() const;
+    DatosCentroGuardado obtener_centro_guardado() const;
     uint32_t obtener_dia() const;
 
     void cambiar_estacion(Estacion estacion);
@@ -120,6 +123,11 @@ public:
     void avanzar_dia();
     void avanzar_minutos(uint32_t minutos);
     HoraDelJuego hora_actual() const;
+
+    // Centro comunitario. Donan desde el inventario o la billetera de un jugador conectado.
+    uint16_t donar_al_centro(uint32_t id_jugador, TipoLote lote, uint8_t indice_ranura);
+    bool donar_monedas_al_centro(uint32_t id_jugador, TipoLote lote);
+    const CentroComunitario& centro_comunitario() const;
 
     Mundo(const Mundo&) = delete;
     Mundo& operator=(const Mundo&) = delete;

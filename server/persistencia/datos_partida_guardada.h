@@ -11,6 +11,7 @@
 #include "../../common/ranura_inventario.h"
 #include "../../common/tipo_animal.h"
 #include "../../common/tipo_cultivo.h"
+#include "../../common/tipo_lote.h"
 #include "../../common/tipo_objeto.h"
 
 struct DatosJugadorGuardado {
@@ -102,6 +103,25 @@ struct DatosCultivoGuardado {
     bool operator==(const DatosCultivoGuardado&) const = default;
 };
 
+// Un lote del centro comunitario: cuánto se aportó a cada requisito (en el orden del catálogo) y
+// si se completó, y en qué día.
+struct DatosLoteGuardado {
+    TipoLote tipo = TipoLote::CULTIVOS;
+    std::vector<uint32_t> aportado;
+    bool completo = false;
+    uint32_t dia_completado = 0;
+
+    bool operator==(const DatosLoteGuardado&) const = default;
+};
+
+// El centro comunitario es uno solo para toda la partida.
+struct DatosCentroGuardado {
+    std::vector<DatosLoteGuardado> lotes;
+    bool terminado = false;
+
+    bool operator==(const DatosCentroGuardado&) const = default;
+};
+
 struct DatosMundoGuardado {
     uint32_t dia = 1;
     uint32_t segundos_jugados = 0;
@@ -113,6 +133,7 @@ struct DatosMundoGuardado {
     std::vector<DatosAnimalGuardado> animales;
     std::vector<uint32_t> vacas_para_ordeniar;
     std::vector<DatosCultivoGuardado> cultivos;
+    DatosCentroGuardado centro;
 
     bool operator==(const DatosMundoGuardado&) const = default;
 };

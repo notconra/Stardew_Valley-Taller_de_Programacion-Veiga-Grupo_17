@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "../../configuracion/configuracion_servidor_datos.h"
+#include "../centro_comunitario/catalogo_lotes.h"
 #include "../cultivos/cultivos.h"
 #include "../enemigos/catalogo_de_enemigos.h"
 #include "../mapa/mapa.h"
@@ -25,6 +26,9 @@ struct RecursosDeJuego {
 
     // Los cultivos: cuántas veces se riegan, cuánto tardan y qué semilla y producto tienen.
     CatalogoDeCultivos catalogo_de_cultivos;
+
+    // Los lotes del centro comunitario y lo que pide cada uno.
+    CatalogoDeLotes catalogo_de_lotes;
 
     // Objetos colocables en el mundo (minerales, y a futuro árboles, muebles, drops...).
     // Es distinto de catalogo_de_items: este describe cómo ocupan el mapa y qué dejan al

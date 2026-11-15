@@ -266,5 +266,6 @@ DatosMundoGuardado SesionDePartida::obtener_datos_guardado(
     datos_mundo.animales = mundo.obtener_animales_guardados();
     datos_mundo.vacas_para_ordeniar = mundo.obtener_ids_vacas_listas_para_ordeniar();
     datos_mundo.cultivos = mundo.obtener_cultivos_guardados();
+    datos_mundo.centro = mundo.obtener_centro_guardado();
     return datos_mundo;
 }
