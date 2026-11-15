@@ -61,6 +61,8 @@ private:
     Mix_Chunk* anochecer = nullptr;
     std::string ruta_ambiente_del_mapa;
     bool es_de_noche = false;
+    int volumen_musica = 100;
+    int volumen_efectos = 100;
 
     void actualizar_ambiente();
 
@@ -114,6 +116,12 @@ public:
     // De noche, en los mapas con el ambiente general (no en las cuevas), el ambiente pasa a ser
     // la música de noche. Si no cambia nada, no reinicia lo que está sonando.
     void cambiar_noche(bool de_noche);
+
+    void fijar_volumen_musica(int porcentaje);
+    int obtener_volumen_musica() const;
+
+    void fijar_volumen_efectos(int porcentaje);
+    int obtener_volumen_efectos() const;
 };
 
 #endif
