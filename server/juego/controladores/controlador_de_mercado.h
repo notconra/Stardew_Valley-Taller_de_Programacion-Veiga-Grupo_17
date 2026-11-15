@@ -11,22 +11,23 @@
 #include "../jugadores/personaje.h"
 #include "../mercado/puesto_de_mercado.h"
 #include "../notificador.h"
+#include "../sector/gestor_de_sectores.h"
 
 // Atiende los comandos del mercado, qué puesto tiene abierto cada jugador y cada compra o venta.
 class ControladorDeMercado {
 private:
     Notificador& notificador;
+    GestorDeSectores& sectores;
     std::string mapa_del_mercado;
 
     std::map<std::string, std::unique_ptr<PuestoDeMercado>> puestos;
     std::map<uint32_t, std::string> puesto_abierto_por_jugador;
 
-    // wip, mientras la granja no tenga animales reales, el mercado lleva la cuenta de los
-    // que compró cada jugador para respetar los topes y vender solo lo que tiene.
-    std::map<uint32_t, std::map<TipoAnimal, uint16_t>> animales_por_jugador;
-
     void agregar_puesto(std::unique_ptr<PuestoDeMercado> puesto);
     PuestoDeMercado* puesto_actual_de(const Personaje& personaje);
+
+    // Cuántos animales de cada tipo hay hoy en la granja (lo que muestra la ventana).
+    std::map<TipoAnimal, uint16_t> animales_en_la_granja() const;
 
     void refrescar_ventana(
         const Personaje& personaje, PuestoDeMercado& puesto, const HoraDelJuego& hora);
@@ -52,7 +53,9 @@ private:
     PuestoDeMercado* puesto_para_operar(const Personaje& personaje, const HoraDelJuego& hora);
 
 public:
-    ControladorDeMercado(const ConfiguracionMercadoServidor& config, Notificador& notificador);
+    ControladorDeMercado(
+        const ConfiguracionMercadoServidor& config, GestorDeSectores& sectores,
+        Notificador& notificador);
 
     // Si el mapa es el del mercado y está fuera de horario, el jugador no puede entrar.
     bool puede_entrar(const std::string& mapa_destino, const HoraDelJuego& hora) const;

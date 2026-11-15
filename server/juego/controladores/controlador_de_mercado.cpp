@@ -12,11 +12,13 @@
 #include "../mercado/puesto_pierre.h"
 #include "../mercado/puesto_robin.h"
 
-constexpr uint16_t TODO_EL_STACK = 0;  // al vender, 0 significa "todo el stack"
+constexpr uint16_t TODO_EL_STACK = 0;                // al vender, 0 significa "todo el stack"
+constexpr const char* MAPA_DE_LA_GRANJA = "granja";  // el mapa donde viven los animales
 
 ControladorDeMercado::ControladorDeMercado(
-    const ConfiguracionMercadoServidor& config, Notificador& notificador)
-    : notificador(notificador), mapa_del_mercado(config.mapa) {
+    const ConfiguracionMercadoServidor& config, GestorDeSectores& sectores,
+    Notificador& notificador)
+    : notificador(notificador), sectores(sectores), mapa_del_mercado(config.mapa) {
     agregar_puesto(std::make_unique<PuestoPierre>(config));
     agregar_puesto(std::make_unique<PuestoClint>(config));
     agregar_puesto(std::make_unique<PuestoMarnie>(config));
@@ -36,12 +38,21 @@ PuestoDeMercado* ControladorDeMercado::puesto_actual_de(const Personaje& persona
     return puestos.at(abierto->second).get();
 }
 
+std::map<TipoAnimal, uint16_t> ControladorDeMercado::animales_en_la_granja() const {
+    if (!sectores.existe(MAPA_DE_LA_GRANJA)) {
+        return {};
+    }
+    const GestorDeAnimales& animales = sectores.en(MAPA_DE_LA_GRANJA).animales;
+    return {
+        {TipoAnimal::VACA, static_cast<uint16_t>(animales.cantidad_vacas())},
+        {TipoAnimal::GALLINA, static_cast<uint16_t>(animales.cantidad_gallinas())}};
+}
+
 void ControladorDeMercado::refrescar_ventana(
     const Personaje& personaje, PuestoDeMercado& puesto, const HoraDelJuego& hora) {
-    const std::map<TipoAnimal, uint16_t>& animales = animales_por_jugador[personaje.id_jugador];
     notificador.a_jugador(
         personaje.id_jugador,
-        puesto.armar_actualizacion(personaje, hora.dia, animales));
+        puesto.armar_actualizacion(personaje, hora.dia, animales_en_la_granja()));
 }
 
 void ControladorDeMercado::notificar_transaccion(
@@ -137,38 +148,49 @@ void ControladorDeMercado::procesar_compra_animal(
     Personaje& personaje, PuestoDeMercado& puesto, const ComprarAnimalMercado& cmd,
     const HoraDelJuego& hora) {
     const ConfiguracionAnimalServidor* animal = puesto.animal(cmd.tipo_animal);
-    if (animal == nullptr || cmd.cantidad == 0) {
+    if (animal == nullptr || cmd.cantidad == 0 || !sectores.existe(MAPA_DE_LA_GRANJA)) {
         return;
     }
 
-    uint16_t& poseidos = animales_por_jugador[personaje.id_jugador][cmd.tipo_animal];
-    if (poseidos + cmd.cantidad > animal->tope_por_granja) {
-        return;
+    Sector& granja = sectores.en(MAPA_DE_LA_GRANJA);
+    const int tope = static_cast<int>(animal->tope_por_granja);
+    bool compro_alguno = false;
+    for (uint16_t i = 0; i < cmd.cantidad; ++i) {
+        if (granja.animales.cantidad_de(cmd.tipo_animal) >= tope ||
+            !personaje.gastar_monedas(animal->precio_de_compra)) {
+            break;
+        }
+        if (!granja.agregar_animal(notificador, cmd.tipo_animal)) {
+            personaje.recibir_monedas(animal->precio_de_compra);
+            break;
+        }
+        compro_alguno = true;
     }
-    if (!personaje.gastar_monedas(animal->precio_de_compra * cmd.cantidad)) {
-        return;
+    if (compro_alguno) {
+        notificar_transaccion(personaje, puesto, hora);
     }
-
-    poseidos += cmd.cantidad;
-    notificar_transaccion(personaje, puesto, hora);
 }
 
 void ControladorDeMercado::procesar_venta_animal(
     Personaje& personaje, PuestoDeMercado& puesto, const VenderAnimalMercado& cmd,
     const HoraDelJuego& hora) {
     const ConfiguracionAnimalServidor* animal = puesto.animal(cmd.tipo_animal);
-    if (animal == nullptr || cmd.cantidad == 0) {
+    if (animal == nullptr || cmd.cantidad == 0 || !sectores.existe(MAPA_DE_LA_GRANJA)) {
         return;
     }
 
-    uint16_t& poseidos = animales_por_jugador[personaje.id_jugador][cmd.tipo_animal];
-    if (poseidos < cmd.cantidad) {
-        return;
+    Sector& granja = sectores.en(MAPA_DE_LA_GRANJA);
+    bool vendio_alguno = false;
+    for (uint16_t i = 0; i < cmd.cantidad; ++i) {
+        if (!granja.retirar_animal(notificador, cmd.tipo_animal)) {
+            break;
+        }
+        personaje.recibir_monedas(animal->precio_de_venta);
+        vendio_alguno = true;
     }
-
-    poseidos -= cmd.cantidad;
-    personaje.recibir_monedas(animal->precio_de_venta * cmd.cantidad);
-    notificar_transaccion(personaje, puesto, hora);
+    if (vendio_alguno) {
+        notificar_transaccion(personaje, puesto, hora);
+    }
 }
 
 PuestoDeMercado* ControladorDeMercado::puesto_para_operar(
