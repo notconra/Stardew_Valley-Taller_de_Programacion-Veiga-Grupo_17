@@ -188,6 +188,24 @@ TEST_F(Cultivos, UnRiegoTardioBajaUnNivel) {
     EXPECT_EQ(huerta.cosechar(AQUI)->calidad, Calidad::INCREIBLE);
 }
 
+TEST_F(Cultivos, LaLluviaRiegaLoQuePideAguaSinContarComoTardio) {
+    huerta.avanzar_hasta(0);
+    ASSERT_TRUE(huerta.plantar(AQUI, TipoCultivo::CEBOLLA_DE_VERDEO));
+    huerta.avanzar_hasta(MITAD_DEL_PRIMER_TURNO_DE_LA_CEBOLLA + 10);
+    EXPECT_EQ(huerta.regar_con_lluvia().size(), 1u);
+    EXPECT_FALSE(huerta.pide_agua(AQUI));
+    EXPECT_TRUE(huerta.regar_con_lluvia().empty());
+    for (int minuto : {CEBOLLA_TURNO_2, CEBOLLA_TURNO_3}) {
+        huerta.avanzar_hasta(minuto);
+        huerta.regar_con_lluvia();
+    }
+    huerta.terminar_el_dia();
+    huerta.avanzar_hasta(0);
+    un_dia_bien_regado_de_cebolla();
+
+    EXPECT_EQ(huerta.cosechar(AQUI)->calidad, Calidad::PERFECTA);
+}
+
 TEST_F(Cultivos, CadaDiaSinCosecharBajaUnNivel) {
     huerta.avanzar_hasta(0);
     ASSERT_TRUE(huerta.plantar(AQUI, TipoCultivo::CEBOLLA_DE_VERDEO));

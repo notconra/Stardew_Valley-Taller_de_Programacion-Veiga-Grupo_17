@@ -26,11 +26,17 @@ void ControladorDeCultivos::actualizar(const HoraDelJuego& hora) {
     dia_actual = hora.dia;
 
     const int minuto = minutos_desde_el_inicio(hora);
-    if (minuto == minuto_actual) {
+    const bool empezo_a_llover = hora.lloviendo && !llovia;
+    llovia = hora.lloviendo;
+    if (minuto == minuto_actual && !empezo_a_llover) {
         return;
     }
     minuto_actual = minuto;
     for (const std::string& id_mapa : sectores.ids_de_sectores()) {
-        sectores.en(id_mapa).avanzar_cultivos(notificador, minuto);
+        Sector& sector = sectores.en(id_mapa);
+        sector.avanzar_cultivos(notificador, minuto);
+        if (hora.lloviendo) {
+            sector.llover_sobre_los_cultivos(notificador);
+        }
     }
 }

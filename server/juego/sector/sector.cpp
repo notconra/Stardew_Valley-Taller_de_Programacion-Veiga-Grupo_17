@@ -92,6 +92,12 @@ void Sector::terminar_el_dia_de_los_cultivos(Notificador& notificador) {
     }
 }
 
+void Sector::llover_sobre_los_cultivos(Notificador& notificador) {
+    for (const Casilla& casilla : huerta.regar_con_lluvia()) {
+        avisar_casilla(notificador, casilla);
+    }
+}
+
 void Sector::avisar_casilla(Notificador& notificador, const Casilla& casilla) const {
     TierraCambiada evento;
     evento.casilla =
