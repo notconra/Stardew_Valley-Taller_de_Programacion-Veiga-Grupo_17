@@ -277,27 +277,6 @@ void ConfiguracionServidor::cargar_acciones(const toml::table& tabla) {
         acciones.energia_por_tratar_tierra,
         0,
         INT_MAX);
-    acciones.energia_por_golpe = lector_toml::leer_entero_opcional(
-        tabla,
-        "energia_por_golpe",
-        seccion,
-        acciones.energia_por_golpe,
-        0,
-        INT_MAX);
-    acciones.energia_por_picar = lector_toml::leer_entero_opcional(
-        tabla,
-        "energia_por_picar",
-        seccion,
-        acciones.energia_por_picar,
-        0,
-        INT_MAX);
-    acciones.energia_por_tratar_tierra = lector_toml::leer_entero_opcional(
-        tabla,
-        "energia_por_tratar_tierra",
-        seccion,
-        acciones.energia_por_tratar_tierra,
-        0,
-        INT_MAX);
     acciones.energia_por_plantar = lector_toml::leer_entero_opcional(
         tabla,
         "energia_por_plantar",
@@ -757,6 +736,25 @@ void ConfiguracionServidor::cargar_animal_de_mercado(
         lector_toml::leer_entero_en_rango(tabla, "tope_por_granja", seccion, 1, UINT16_MAX));
 }
 
+void ConfiguracionServidor::cargar_enemigo(
+    const toml::table& tabla, const std::string& seccion, ConfiguracionEnemigoServidor& enemigo) {
+    const auto leer = [&](const char* clave, int& valor, int minimo) {
+        valor = lector_toml::leer_entero_opcional(tabla, clave, seccion, valor, minimo, INT_MAX);
+    };
+    leer("vida", enemigo.vida, 1);
+    leer("danio", enemigo.danio, 0);
+    leer("ticks_entre_ataques", enemigo.ticks_entre_ataques, 1);
+    leer("ticks_para_revivir", enemigo.ticks_para_revivir, 0);
+    leer("ticks_por_casilla", enemigo.ticks_por_casilla, 0);
+    leer("radio_de_vision", enemigo.radio_de_vision, 0);
+    leer("radio_de_deambulo", enemigo.radio_de_deambulo, 0);
+    leer("oro_minimo", enemigo.oro_minimo, 0);
+    leer("oro_maximo", enemigo.oro_maximo, 0);
+    if (enemigo.oro_minimo > enemigo.oro_maximo) {
+        throw std::runtime_error("configuración: [" + seccion + "] tiene oro_minimo > oro_maximo");
+    }
+}
+
 const ConfiguracionRedServidor& ConfiguracionServidor::red() const {
     return datos_configuracion.red;
 }
@@ -783,23 +781,4 @@ const ConfiguracionMazmorraServidor& ConfiguracionServidor::mazmorra() const {
 
 const ConfiguracionMercadoServidor& ConfiguracionServidor::mercado() const {
     return datos_configuracion.mercado;
-}
-
-void ConfiguracionServidor::cargar_enemigo(
-    const toml::table& tabla, const std::string& seccion, ConfiguracionEnemigoServidor& enemigo) {
-    const auto leer = [&](const char* clave, int& valor, int minimo) {
-        valor = lector_toml::leer_entero_opcional(tabla, clave, seccion, valor, minimo, INT_MAX);
-    };
-    leer("vida", enemigo.vida, 1);
-    leer("danio", enemigo.danio, 0);
-    leer("ticks_entre_ataques", enemigo.ticks_entre_ataques, 1);
-    leer("ticks_para_revivir", enemigo.ticks_para_revivir, 0);
-    leer("ticks_por_casilla", enemigo.ticks_por_casilla, 0);
-    leer("radio_de_vision", enemigo.radio_de_vision, 0);
-    leer("radio_de_deambulo", enemigo.radio_de_deambulo, 0);
-    leer("oro_minimo", enemigo.oro_minimo, 0);
-    leer("oro_maximo", enemigo.oro_maximo, 0);
-    if (enemigo.oro_minimo > enemigo.oro_maximo) {
-        throw std::runtime_error("configuración: [" + seccion + "] tiene oro_minimo > oro_maximo");
-    }
 }

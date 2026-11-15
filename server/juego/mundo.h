@@ -22,6 +22,7 @@
 #include "jugadores/personaje.h"
 #include "mapa/mapa.h"
 #include "notificador.h"
+#include "npcs/gestor_de_npcs.h"
 #include "recursos/recursos_de_juego.h"
 #include "sector/gestor_de_sectores.h"
 
@@ -36,6 +37,7 @@ private:
     std::map<uint32_t, Personaje> personajes;
     std::map<uint32_t, DatosJugadorGuardado> datos_jugadores;
     GestorDeSectores sectores;
+    GestorDeNpcs gestor_de_npcs;
 
     ControladorDeJugador controlador_de_jugador;
     ControladorDeMercado controlador_de_mercado;
@@ -50,6 +52,10 @@ private:
     ControladorDeRegalos controlador_de_regalos;
 
     void resolver_transicion(Personaje& personaje, const Transicion& transicion);
+
+    // Responde el diálogo del NPC si el jugador está cerca. El texto lo elige el servidor según
+    // el día y la hora.
+    void hablar_con_npc(Personaje& personaje, const HablarConNpc& pedido);
 
     // Si la transición se usa con clic derecho en vez de activarse al pisarla: las que tienen un
     // destino de destinos_con_clic (la puerta de la casa, la escalera para bajar de nivel). El

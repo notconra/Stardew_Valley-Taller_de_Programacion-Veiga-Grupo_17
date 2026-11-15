@@ -48,6 +48,7 @@ public:
     GestorDeEnemigos enemigos;
     GestorDeTrampas trampas;
     GestorDeAnimales animales;
+    std::vector<EstadoNpc> npcs;
     int nivel_de_mazmorra = 0;
 
     // "recursos" tiene que vivir más que el Sector y tener el mapa "id_mapa" cargado.
@@ -163,6 +164,12 @@ public:
     bool ordeniar_vaca(Notificador& notificador, uint32_t columna, uint32_t fila);
     bool agregar_vaca(Notificador& notificador, uint32_t columna, uint32_t fila);
     bool agregar_gallina(Notificador& notificador, uint32_t columna, uint32_t fila);
+
+    // Compra y venta en el mercado. El animal comprado aparece en la casilla libre más cercana al
+    // centro del mapa, el vendido es el último que se agregó. Los dos avisan a los jugadores del
+    // sector. Devuelven false si no había lugar / no había ninguno de ese tipo.
+    bool agregar_animal(Notificador& notificador, TipoAnimal tipo);
+    bool retirar_animal(Notificador& notificador, TipoAnimal tipo);
     void actualizar(const HoraDelJuego& hora, Notificador& notificador);
 
 private:

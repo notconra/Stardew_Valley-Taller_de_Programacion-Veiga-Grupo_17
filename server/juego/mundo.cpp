@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <string>
+#include <variant>
 #include <vector>
 
 Mundo::Mundo(
@@ -10,8 +11,9 @@ Mundo::Mundo(
     : recursos(recursos_de_juego),
       notificador(notificador_de_juego),
       sectores(recursos_de_juego, ticks_por_segundo, personajes, notificador_de_juego),
+      gestor_de_npcs(recursos_de_juego, sectores, ticks_por_segundo),
       controlador_de_jugador(sectores, notificador_de_juego),
-      controlador_de_mercado(recursos_de_juego.mercado, notificador_de_juego),
+      controlador_de_mercado(recursos_de_juego.mercado, sectores, notificador_de_juego),
       controlador_del_dia(
           recursos_de_juego.juego.dia, ticks_por_segundo, sectores, personajes, recursos_de_juego,
           notificador_de_juego,
@@ -174,6 +176,10 @@ void Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
     }
     Personaje& personaje = encontrado->second;
 
+    if (const HablarConNpc* pedido = std::get_if<HablarConNpc>(&comando)) {
+        hablar_con_npc(personaje, *pedido);
+        return;
+    }
     if (controlador_del_dia.atender(personaje, comando)) {
         return;
     }
@@ -195,6 +201,27 @@ void Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
     if (controlador_de_regalos.atender(personaje, comando)) {
         return;
     }
+}
+
+void Mundo::hablar_con_npc(Personaje& personaje, const HablarConNpc& pedido) {
+    if (!sectores.existe(personaje.mapa_actual)) {
+        return;
+    }
+    const std::optional<Casilla> casilla =
+        sectores.en(personaje.mapa_actual).jugadores.casilla_del_jugador(personaje.id_jugador);
+    if (!casilla.has_value()) {
+        return;
+    }
+
+    const std::optional<std::string> texto = gestor_de_npcs.dialogo(
+        pedido.id_npc,
+        *casilla,
+        personaje.mapa_actual,
+        controlador_del_dia.hora());
+    if (!texto.has_value()) {
+        return;
+    }
+    notificador.a_jugador(personaje.id_jugador, DialogoNpc{pedido.id_npc, *texto});
 }
 
 void Mundo::resolver_transicion(Personaje& personaje, const Transicion& transicion) {
@@ -255,12 +282,14 @@ int Mundo::dar_items(uint32_t id_jugador, TipoItem tipo, uint16_t cantidad) {
 void Mundo::actualizar() {
     controlador_del_dia.actualizar();
     controlador_de_cultivos.actualizar(controlador_del_dia.hora());
+    gestor_de_npcs.actualizar(controlador_del_dia.hora());
     ajustar_velocidad_por_energia();
     sectores.actualizar(controlador_del_dia.hora());
     resolver_transiciones_automaticas();
     controlador_de_enemigos.actualizar();
     controlador_de_trampas.actualizar();
     sectores.difundir_jugadores();
+    sectores.difundir_npcs();
     controlador_de_acciones.actualizar();
     controlador_de_cofres.actualizar();
     controlador_de_drops.actualizar();
