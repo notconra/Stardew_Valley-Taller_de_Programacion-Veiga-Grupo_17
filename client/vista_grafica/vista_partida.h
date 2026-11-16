@@ -25,6 +25,7 @@
 #include "hud_inventario.h"
 #include "hud_mercado.h"
 #include "iconos_de_items.h"
+#include "lluvia_grafica.h"
 #include "mapa_grafico.h"
 #include "marcador_de_casillas.h"
 #include "npcs_graficos.h"
@@ -181,7 +182,7 @@ private:
         const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada,
         const VistaChat& chat, RelojGrafico& reloj_grafico,
         const PantallaDeDescanso& pantalla_de_descanso, const PanelDeRegalos& regalos,
-        const CuadroDeAviso& cuadro_de_aviso, const CuadroDeDialogo&) const;
+        const CuadroDeAviso& cuadro_de_aviso, const CuadroDeDialogo&, LluviaGrafica& lluvia) const;
 
 public:
     VistaPartida(ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion);

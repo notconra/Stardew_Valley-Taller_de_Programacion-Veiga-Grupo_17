@@ -356,6 +356,14 @@ std::vector<DatosCultivoGuardado> Mundo::obtener_cultivos_guardados() const {
     return sectores.obtener_cultivos_guardados();
 }
 
+void Mundo::cambiar_lluvia(bool llueve) {
+    controlador_del_dia.cambiar_lluvia(llueve);
+}
+
+bool Mundo::esta_lloviendo() const {
+    return controlador_del_dia.esta_lloviendo();
+}
+
 void Mundo::cambiar_estacion(Estacion estacion) {
     controlador_del_dia.cambiar_estacion(estacion);
 }

@@ -20,6 +20,9 @@
 // Lanza std::runtime_error si no puede cargar alguno.
 class EfectosDeSonido {
 private:
+    static constexpr int CANAL_AMBIENTE = 0;  // reservado, así los demás efectos no lo pisan
+    static constexpr int CANAL_LLUVIA = 1;    // también reservado
+
     struct SonidosCargadosDeEnemigo {
         Mix_Chunk* golpe = nullptr;
         Mix_Chunk* danio = nullptr;
@@ -60,6 +63,8 @@ private:
     Mix_Chunk* anochecer = nullptr;
     std::string ruta_ambiente_del_mapa;
     bool es_de_noche = false;
+    Mix_Chunk* lluvia = nullptr;
+    int volumen_de_lluvia = 0;  // 0 = no suena
 
     void actualizar_ambiente();
 
@@ -116,6 +121,10 @@ public:
     // De noche, en los mapas con el ambiente general (no en las cuevas), el ambiente pasa a ser
     // la música de noche. Si no cambia nada, no reinicia lo que está sonando.
     void cambiar_noche(bool de_noche);
+
+    // Mientras llueve suena la lluvia en loop: fuerte afuera, apagada bajo techo, y nada si no
+    // llueve o si se está en la mazmorra. Si no cambia nada, no la reinicia.
+    void cambiar_lluvia(bool llueve, bool bajo_techo, bool en_la_mazmorra);
 };
 
 #endif

@@ -91,6 +91,10 @@ public:
     // y abre los nuevos. Devuelve las casillas que cambiaron.
     std::vector<Casilla> avanzar_hasta(int minuto);
 
+    // Llueve: todas las plantas que piden agua quedan regadas (a tiempo, sin falta). Devuelve las
+    // casillas que cambiaron.
+    std::vector<Casilla> regar_con_lluvia();
+
     // Terminó el día: las plantas a las que no les faltaron riegos crecen, y las maduras que no se
     // cosecharon suman una falta. Devuelve las casillas que cambiaron.
     std::vector<Casilla> terminar_el_dia();

@@ -213,6 +213,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     TierraGrafica tierra(configuracion.tierra, graficos, renderizador.ptr());
     CultivosGraficos cultivos(graficos, renderizador.ptr());
     EfectoDeRiego efecto_de_riego(graficos, renderizador.ptr());
+    LluviaGrafica lluvia(renderizador.ptr(), graficos.escala_de_tiles);
     ObjetosGraficos objetos(renderizador.ptr(), graficos, iconos);
     EnemigosGraficos enemigos(renderizador.ptr(), graficos);
     TrampasGraficas trampas(renderizador.ptr(), graficos);
@@ -329,6 +330,10 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             ultimo_riego.reset();
             camara = camara_para(mapa_de(mapa_actual));
         }
+        efectos.cambiar_lluvia(
+            hora_del_juego.has_value() && hora_del_juego->lloviendo,
+            configuracion_de(mapa_actual).techado,
+            mapa_actual_es_mazmorra());
         if (propio != nullptr) {
             camara.centrar_en(
                 static_cast<int>(propio->x),
@@ -394,7 +399,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             *pantalla_de_descanso,
             *regalos,
             cuadro_de_aviso,
-            cuadro_de_dialogo);
+            cuadro_de_dialogo,
+            lluvia);
         limitar_cuadro(inicio_del_cuadro);
     }
 }
@@ -965,7 +971,8 @@ void VistaPartida::dibujar(
     const HudInventario& hud, const HudMercado& hud_mercado, const VisionMazmorra& vision_mazmorra,
     const EntradaDelUsuario& entrada, const VistaChat& chat, RelojGrafico& reloj_grafico,
     const PantallaDeDescanso& pantalla_de_descanso, const PanelDeRegalos& regalos,
-    const CuadroDeAviso& cuadro_de_aviso, const CuadroDeDialogo& cuadro_de_dialogo) const {
+    const CuadroDeAviso& cuadro_de_aviso, const CuadroDeDialogo& cuadro_de_dialogo,
+    LluviaGrafica& lluvia) const {
     SDL_Renderer* renderer = renderizador.ptr();
     if (mundo != nullptr) {
         SDL_SetRenderTarget(renderer, mundo);
@@ -1119,6 +1126,12 @@ void VistaPartida::dibujar(
 
     if (hora_del_juego.has_value() && !mapa_actual_es_mazmorra()) {
         reloj_grafico.oscurecer(renderer, *hora_del_juego, ancho_del_mundo, alto_del_mundo);
+    }
+
+    // Llueve afuera: ni en la mazmorra ni bajo techo.
+    if (hora_del_juego.has_value() && hora_del_juego->lloviendo && !mapa_actual_es_mazmorra() &&
+        !configuracion_de(mapa_actual).techado) {
+        lluvia.dibujar(renderer, ancho_del_mundo, alto_del_mundo);
     }
 
     if (mundo != nullptr) {

@@ -109,6 +109,7 @@ struct ConfiguracionDiaServidor {
     std::string velocidad = "medio";
     double duracion_en_minutos = 14.0;
     int dias_por_estacion = 28;
+    double probabilidad_de_lluvia = 0.0;
 };
 
 struct ConfiguracionJuegoServidor {
