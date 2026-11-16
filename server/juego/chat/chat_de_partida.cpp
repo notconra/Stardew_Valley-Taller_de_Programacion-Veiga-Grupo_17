@@ -14,7 +14,7 @@ ChatDePartida::ChatDePartida(Notificador& notificador_de_la_partida)
 void ChatDePartida::conectar(
     uint32_t id_jugador, const std::string& nombre_jugador, ColorDeJugador color) {
     const bool es_nuevo = jugadores.find(id_jugador) == jugadores.end();
-    jugadores[id_jugador] = JugadorEnChat{nombre_jugador, color, std::string()};
+    jugadores[id_jugador] = JugadorEnChat{nombre_jugador, color};
     if (es_nuevo) {
         avisar_a_los_demas(id_jugador, nombre_jugador + " se acaba de conectar.");
     }
@@ -36,26 +36,6 @@ void ChatDePartida::avisar_a_los_demas(uint32_t id_excluido, const std::string& 
             enviar_sistema(id_jugador, texto);
         }
     }
-}
-
-void ChatDePartida::iniciar_conversacion(
-    uint32_t id_jugador, const std::string& nombre_interlocutor) {
-    auto jugador = jugadores.find(id_jugador);
-    if (jugador != jugadores.end()) {
-        jugador->second.interlocutor = nombre_interlocutor;
-    }
-}
-
-void ChatDePartida::terminar_conversacion(uint32_t id_jugador) {
-    auto jugador = jugadores.find(id_jugador);
-    if (jugador != jugadores.end()) {
-        jugador->second.interlocutor.clear();
-    }
-}
-
-std::string ChatDePartida::interlocutor_de(uint32_t id_jugador) const {
-    auto jugador = jugadores.find(id_jugador);
-    return jugador == jugadores.end() ? std::string() : jugador->second.interlocutor;
 }
 
 void ChatDePartida::agregar_comando(std::unique_ptr<ComandoDeChat> comando) {
@@ -146,13 +126,6 @@ void ChatDePartida::responder_a_jugador(uint32_t id_jugador, const std::string& 
     enviar_sistema(id_jugador, texto);
 }
 
-void ChatDePartida::responder_como_comerciante(
-    uint32_t id_jugador, const std::string& nombre_comerciante, const std::string& texto) {
-    notificador.a_jugador(
-        id_jugador,
-        MensajeDeChat{CanalDeChat::COMERCIANTE, nombre_comerciante, std::string(), texto});
-}
-
 void ChatDePartida::ejecutar_comando(
     uint32_t id_jugador, const JugadorEnChat& emisor, const std::string& texto) {
     std::vector<std::string> partes = separar_argumentos(texto.substr(1));
@@ -169,13 +142,8 @@ void ChatDePartida::ejecutar_comando(
             continue;
         }
         try {
-            comando->ejecutar(ContextoDeComandoDeChat{
-                id_jugador,
-                emisor.nombre,
-                palabra_clave,
-                partes,
-                emisor.interlocutor,
-                *this});
+            comando->ejecutar(
+                ContextoDeComandoDeChat{id_jugador, emisor.nombre, palabra_clave, partes, *this});
         } catch (const std::exception&) {
             enviar_sistema(id_jugador, "No se pudo ejecutar /" + palabra_clave + ".");
         }

@@ -22,6 +22,7 @@ public:
     const std::string& mapa_inicial() const;
     const ConfiguracionJuegoServidor& juego() const;
     const ConfiguracionMazmorraServidor& mazmorra() const;
+    const ConfiguracionMercadoServidor& mercado() const;
 
 private:
     ConfiguracionServidorDatos datos_configuracion;
@@ -34,6 +35,7 @@ private:
     void cargar_mapas(const toml::table& archivo_toml);
     void cargar_juego(const toml::table& archivo_toml);
     void cargar_mazmorra(const toml::table& archivo_toml);
+    void cargar_mercado(const toml::table& archivo_toml);
 
     // Subsecciones de [juego] y de [mazmorra].
     void cargar_movimiento(const toml::table& tabla);
@@ -45,6 +47,10 @@ private:
     void cargar_transiciones(const toml::table& tabla);
     void cargar_dia(const toml::table& tabla);
     void cargar_minerales(const toml::array& lista);
+    void cargar_precios_de_compra(const toml::table& tabla_mercado);
+    void cargar_precios_de_venta(const toml::table& tabla_mercado);
+    void cargar_animal_de_mercado(
+        const toml::table& animales, const std::string& clave, ConfiguracionAnimalServidor& animal);
     void cargar_enemigo(
         const toml::table& tabla, const std::string& seccion,
         ConfiguracionEnemigoServidor& enemigo);

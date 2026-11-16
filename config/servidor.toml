@@ -5,6 +5,46 @@
 #
 #   ./build/server config/servidor.toml
 mapa_inicial = "FarmHouse2"
+
+# Un mapa por línea. Claves opcionales de cada mapa: capa_colisiones = "Colisiones",
+# capa_respaldo = "Buildings", capa_transiciones = "Transiciones", propiedad_cultivable y
+# capas_opcionales (por ejemplo capas_opcionales = [{ nombre = "Cultivable", propiedad = "CULTIVABLE" }]).
+# Esta clave tiene que estar antes de la primera [sección] del archivo.
+#
+# Los niveles de la mazmorra se registran como mapas comunes y [mazmorra] dice cuáles son.
+# Cada partida elige 10 al azar entre ellos.
+mapas = [
+    { id = "granja", ruta_tmx = "Assets/Maps/Farm.tmx", propiedad_cultivable = "Diggable" },
+    { id = "BusStop", ruta_tmx = "Assets/Maps/BusStop.tmx" },
+    { id = "Town", ruta_tmx = "Assets/Maps/Town.tmx" },
+    { id = "FarmHouse2", ruta_tmx = "Assets/Maps/FarmHouse2.tmx" },
+    { id = "mercado", ruta_tmx = "Assets/Maps/Mercado.tmx" },
+    # El centro comunitario tiene dos mapas con colisiones distintas: en ruinas mientras falten
+    # lotes y arreglado cuando se completan todos. La puerta del pueblo lleva a "centro_comunitario".
+    { id = "centro_comunitario", ruta_tmx = "Assets/Maps/CommunityCenter_Ruins.tmx" },
+    { id = "centro_comunitario_arreglado", ruta_tmx = "Assets/Maps/CommunityCenter_Refurbished.tmx" },
+    { id = "mina_1", ruta_tmx = "Assets/Maps/Mines/1.tmx" },
+    { id = "mina_2", ruta_tmx = "Assets/Maps/Mines/2.tmx" },
+    { id = "mina_3", ruta_tmx = "Assets/Maps/Mines/3.tmx" },
+    { id = "mina_4", ruta_tmx = "Assets/Maps/Mines/4.tmx" },
+    { id = "mina_5", ruta_tmx = "Assets/Maps/Mines/5.tmx" },
+    { id = "mina_6", ruta_tmx = "Assets/Maps/Mines/6.tmx" },
+    { id = "mina_7", ruta_tmx = "Assets/Maps/Mines/7.tmx" },
+    { id = "mina_8", ruta_tmx = "Assets/Maps/Mines/8.tmx" },
+    { id = "mina_9", ruta_tmx = "Assets/Maps/Mines/9.tmx" },
+    { id = "mina_11", ruta_tmx = "Assets/Maps/Mines/11.tmx" },
+    { id = "mina_12", ruta_tmx = "Assets/Maps/Mines/12.tmx" },
+    { id = "mina_13", ruta_tmx = "Assets/Maps/Mines/13.tmx" },
+    { id = "mina_14", ruta_tmx = "Assets/Maps/Mines/14.tmx" },
+    { id = "mina_15", ruta_tmx = "Assets/Maps/Mines/15.tmx" },
+    { id = "mina_16", ruta_tmx = "Assets/Maps/Mines/16.tmx" },
+    { id = "mina_17", ruta_tmx = "Assets/Maps/Mines/17.tmx" },
+    { id = "mina_18", ruta_tmx = "Assets/Maps/Mines/18.tmx" },
+    { id = "mina_19", ruta_tmx = "Assets/Maps/Mines/19.tmx" },
+    { id = "mina_21", ruta_tmx = "Assets/Maps/Mines/21.tmx" },
+    { id = "mina_24", ruta_tmx = "Assets/Maps/Mines/24.tmx" },
+]
+
 [red]
 puerto = "8081"
 
@@ -12,137 +52,6 @@ puerto = "8081"
 jugadores_maximos_por_partida = 4
 ticks_por_segundo = 40
 #capacidad_de_comandos = 1024
-
-[[mapas]]
-id = "granja"
-ruta_tmx = "Assets/Maps/Farm.tmx"
-propiedad_cultivable = "Diggable"
-#capa_colisiones = "Colisiones"
-#capa_respaldo = "Buildings"
-
-[[mapas]]
-id = "BusStop"
-ruta_tmx = "Assets/Maps/BusStop.tmx"
-#capa_colisiones = "Colisiones"
-#capa_respaldo = "Buildings"
-
-[[mapas]]
-id = "Town"
-ruta_tmx = "Assets/Maps/Town.tmx"
-#capa_colisiones = "Colisiones"
-#capa_respaldo = "Buildings"
-
-[[mapas]]
-id = "FarmHouse2"
-ruta_tmx = "Assets/Maps/FarmHouse2.tmx"
-
-[[mapas]]
-id = "mercado"
-ruta_tmx = "Assets/Maps/Mercado.tmx"
-
-# El centro comunitario tiene dos mapas con colisiones distintas: en ruinas mientras falten lotes y
-# arreglado cuando se completan todos. La puerta del pueblo lleva a "centro_comunitario".
-[[mapas]]
-id = "centro_comunitario"
-ruta_tmx = "Assets/Maps/CommunityCenter_Ruins.tmx"
-
-[[mapas]]
-id = "centro_comunitario_arreglado"
-ruta_tmx = "Assets/Maps/CommunityCenter_Refurbished.tmx"
-
-# Niveles de la mazmorra: se registran como mapas comunes y [mazmorra] dice cuáles son.
-# Cada partida elige 10 al azar entre ellos.
-[[mapas]]
-id = "mina_1"
-ruta_tmx = "Assets/Maps/Mines/1.tmx"
-
-[[mapas]]
-id = "mina_2"
-ruta_tmx = "Assets/Maps/Mines/2.tmx"
-
-[[mapas]]
-id = "mina_3"
-ruta_tmx = "Assets/Maps/Mines/3.tmx"
-
-[[mapas]]
-id = "mina_4"
-ruta_tmx = "Assets/Maps/Mines/4.tmx"
-
-[[mapas]]
-id = "mina_5"
-ruta_tmx = "Assets/Maps/Mines/5.tmx"
-
-[[mapas]]
-id = "mina_6"
-ruta_tmx = "Assets/Maps/Mines/6.tmx"
-
-[[mapas]]
-id = "mina_7"
-ruta_tmx = "Assets/Maps/Mines/7.tmx"
-
-[[mapas]]
-id = "mina_8"
-ruta_tmx = "Assets/Maps/Mines/8.tmx"
-
-[[mapas]]
-id = "mina_9"
-ruta_tmx = "Assets/Maps/Mines/9.tmx"
-
-[[mapas]]
-id = "mina_11"
-ruta_tmx = "Assets/Maps/Mines/11.tmx"
-
-[[mapas]]
-id = "mina_12"
-ruta_tmx = "Assets/Maps/Mines/12.tmx"
-
-[[mapas]]
-id = "mina_13"
-ruta_tmx = "Assets/Maps/Mines/13.tmx"
-
-[[mapas]]
-id = "mina_14"
-ruta_tmx = "Assets/Maps/Mines/14.tmx"
-
-[[mapas]]
-id = "mina_15"
-ruta_tmx = "Assets/Maps/Mines/15.tmx"
-
-[[mapas]]
-id = "mina_16"
-ruta_tmx = "Assets/Maps/Mines/16.tmx"
-
-[[mapas]]
-id = "mina_17"
-ruta_tmx = "Assets/Maps/Mines/17.tmx"
-
-[[mapas]]
-id = "mina_18"
-ruta_tmx = "Assets/Maps/Mines/18.tmx"
-
-[[mapas]]
-id = "mina_19"
-ruta_tmx = "Assets/Maps/Mines/19.tmx"
-
-[[mapas]]
-id = "mina_21"
-ruta_tmx = "Assets/Maps/Mines/21.tmx"
-
-[[mapas]]
-id = "mina_24"
-ruta_tmx = "Assets/Maps/Mines/24.tmx"
-
-#[[mapas.capas_opcionales]]
-#nombre = "Cultivable"
-#propiedad = "CULTIVABLE"
-#
-#[[mapas.capas_opcionales]]
-#nombre = "Decorable"
-#propiedad = "DECORABLE"
-#
-#[[mapas.capas_opcionales]]
-#nombre = "Hierba"
-#propiedad = "ADMITE_HIERBA"
 
 [juego.transiciones]
 # Destinos que se usan con clic derecho. Todo lo demás (salir de la casa, entrar a la mina,
@@ -152,16 +61,17 @@ destinos_con_clic = ["FarmHouse2", "siguiente", "mercado", "centro_comunitario"]
 [juego.dia]
 # Un día de juego va de las 6 am a las 2 am (20 horas de juego). velocidad elige cuánto dura en
 # tiempo real: "lento" = 20 minutos, "medio" = 14 minutos (lo que pide el enunciado), "rapido" = 7.
-velocidad = "medio"
+velocidad = "rapido"
 # Si está, pisa a la velocidad (en minutos reales, acepta decimales). Útil para probar: con 1.0
 # cada día dura un minuto.
 # duracion_en_minutos = 1.0
 # Días de cada estación. Hay 4 estaciones por año (primavera, verano, otoño, invierno): con 28,
 # Para probar el cambio de estación se puede bajar a 1.
 dias_por_estacion = 28
+probabilidad_de_lluvia = 0.2
 
 [juego.movimiento]
-# velocidad = 200.0
+velocidad = 150.0
 # hitbox_x = 2
 # hitbox_y = 24
 # hitbox_ancho = 12
@@ -317,3 +227,37 @@ peso = 1
 cantidad_minima = 1
 cantidad_maxima = 2
 desde_nivel = 5
+
+[mercado]
+mapa = "mercado"
+
+[mercado.precios_de_compra]
+SEMILLA_PAPA = 10
+SEMILLA_FRUTILLA = 15
+SEMILLA_CEBOLLA_DE_VERDEO = 8
+SEMILLA_CALABAZA = 30
+
+COFRE = 100
+
+[mercado.precios_de_venta]
+CARBON = 10
+LAPISLAZULI = 40
+PLATA = 50
+ORO = 80
+
+PAPA = 18
+FRUTILLA = 25
+CEBOLLA_DE_VERDEO = 12
+CALABAZA = 50
+LECHE = 30
+HUEVO = 3
+
+[mercado.animales.vaca]
+precio_de_compra = 80
+precio_de_venta = 40
+tope_por_granja = 5
+
+[mercado.animales.gallina]
+precio_de_compra = 20
+precio_de_venta = 10
+tope_por_granja = 10

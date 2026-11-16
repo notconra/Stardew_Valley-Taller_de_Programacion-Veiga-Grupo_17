@@ -17,9 +17,11 @@
 RecursosDeJuego::RecursosDeJuego(
     const std::vector<ConfiguracionMapaServidor>& configuracion_mapas,
     const std::string& id_mapa_inicial, const ConfiguracionJuegoServidor& configuracion_juego,
-    const ConfiguracionMazmorraServidor& configuracion_mazmorra)
+    const ConfiguracionMazmorraServidor& configuracion_mazmorra,
+    const ConfiguracionMercadoServidor& configuracion_mercado)
     : mapa_inicial(id_mapa_inicial),
       juego(configuracion_juego),
+      mercado(configuracion_mercado),
       catalogo_de_objetos(crear_catalogo_de_objetos(configuracion_mazmorra.minerales)),
       catalogo_de_enemigos(crear_catalogo_de_enemigos(configuracion_mazmorra)),
       mazmorra(configuracion_mazmorra) {

@@ -16,11 +16,6 @@ struct ContextoDeComandoDeChat {
     std::string nombre_jugador;
     std::string palabra_clave;
     std::vector<std::string> argumentos;
-
-    // Nombre del comerciante con el que el jugador tiene una conversación abierta, o una cadena
-    // vacía si no hay ninguna. El mercado lo podría usar para saber sobre qué catálogo operar, los
-    // cheats lo ignoran. wip.
-    std::string interlocutor;
     RespuestasDeChat& respuestas;
 };
 

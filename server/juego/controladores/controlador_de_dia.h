@@ -41,6 +41,10 @@ private:
     SacarDeLaMazmorra sacar_de_la_mazmorra;
     std::map<uint32_t, EstadoDelDescanso> descansos_enviados;
     bool dia_terminado = false;
+    double probabilidad_de_lluvia;
+    bool lloviendo = false;
+    // Al empezar un día se sortea si llueve.
+    void sortear_lluvia();
 
     // Los que se quedaron sin vida o sin energía se desmayan, y a las 2 am todos los que siguen
     // despiertos (también el que entra a esa hora).
@@ -112,6 +116,10 @@ public:
 
     // Cheat: pasa a esa estación y se lo avisa a todos.
     void cambiar_estacion(Estacion estacion);
+
+    // Cheat: hace llover o para la lluvia ya mismo y se lo avisa a todos.
+    void cambiar_lluvia(bool llueve);
+    bool esta_lloviendo() const;
 
     // Si desde la última vez que se preguntó terminó un día (todos dieron el OK). Devuelve true
     // una sola vez por día terminado: es el aviso para guardar la partida.

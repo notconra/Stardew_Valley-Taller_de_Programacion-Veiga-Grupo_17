@@ -37,8 +37,14 @@ private:
     void enviar_comando_consultar_casilla(const ConsultarCasilla& consultar);
     void enviar_comando_dar_el_ok(const DarElOk& ok);
     void enviar_comando_enviar_mensaje_de_chat(const EnviarMensajeDeChat& mensaje);
+    void enviar_comando_comprar_en_mercado(const ComprarEnMercado& m);
+    void enviar_comando_vender_en_mercado(const VenderEnMercado& m);
+    void enviar_comando_comprar_animal_mercado(const ComprarAnimalMercado& m);
+    void enviar_comando_vender_animal_mercado(const VenderAnimalMercado& m);
+    void enviar_comando_cerrar_mercado(const CerrarMercado& m);
     void enviar_comando_enviar_regalo(const EnviarRegalo& regalo);
     void enviar_comando_abrir_regalos(const AbrirRegalos& abrir);
+    void enviar_comando_hablar_con_npc(const HablarConNpc& hablar);
     void enviar_comando_donar_al_lote(const DonarAlLote& donar);
     void enviar_comando_donar_monedas_al_lote(const DonarMonedasAlLote& donar);
 
@@ -56,13 +62,16 @@ private:
     EstadoEnemigo recibir_estado_enemigo();
     EstadoTrampa recibir_estado_trampa();
     EstadoAnimal recibir_estado_animal();
+    EstadoNpc recibir_estado_npc();
     CasillaTratada recibir_casilla_tratada();
     EstadoJuego recibir_estado_juego();
     JugadoresEnSector recibir_jugadores_en_sector();
+    NpcsEnSector recibir_npcs_en_sector();
     ObjetoColocado recibir_objeto_colocado();
     ObjetoRetirado recibir_objeto_retirado();
     DropAparecido recibir_drop_aparecido();
     DropRetirado recibir_drop_retirado();
+    AnimalRetirado recibir_animal_retirado();
     EnemigoActualizado recibir_enemigo_actualizado();
     TrampaActualizada recibir_trampa_actualizada();
     AnimalActualizado recibir_animal_actualizado();
@@ -78,8 +87,13 @@ private:
     ActualizacionInventario recibir_actualizacion_inventario();
     ActualizacionCofre recibir_actualizacion_cofre();
     MensajeDeChat recibir_mensaje_de_chat();
+    ItemCatalogoInfo recibir_item_catalogo_info();
+    ActualizacionMercado recibir_actualizacion_mercado();
+    CerrarVentanaMercado recibir_cerrar_ventana_mercado();
+    AvisoEnPantalla recibir_aviso_en_pantalla();
     JugadoresDeLaPartida recibir_jugadores_de_la_partida();
     RegalosPendientes recibir_regalos_pendientes();
+    DialogoNpc recibir_dialogo_npc();
     LoteDelCentro recibir_lote_del_centro();
 
     // Auxiliares

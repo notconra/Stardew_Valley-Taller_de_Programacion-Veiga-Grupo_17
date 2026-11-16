@@ -272,6 +272,7 @@ EstadoJuego GestorDeSectores::armar_instantanea(const std::string& id_mapa) cons
     EstadoJuego estado;
     estado.mapa = id_mapa;
     estado.jugadores = armar_jugadores(id_mapa);
+    estado.npcs = armar_npcs(id_mapa);
     sector.objetos.agregar_a(estado);
     sector.drops.agregar_a(estado);
     sector.enemigos.agregar_a(estado);
@@ -303,5 +304,29 @@ void GestorDeSectores::difundir_jugadores(const std::string& id_mapa) {
 void GestorDeSectores::difundir_jugadores() {
     for (const auto& entrada : sectores) {
         difundir_jugadores(entrada.first);
+    }
+}
+
+std::vector<EstadoNpc> GestorDeSectores::armar_npcs(const std::string& id_mapa) const {
+    return en(id_mapa).npcs;
+}
+
+void GestorDeSectores::difundir_npcs(const std::string& id_mapa) {
+    const std::vector<EstadoNpc>& actuales = sectores.at(id_mapa).npcs;
+    std::vector<EstadoNpc>& ultimos = npcs_enviados[id_mapa];
+    if (actuales == ultimos) {
+        return;
+    }
+
+    NpcsEnSector evento;
+    evento.mapa = id_mapa;
+    evento.npcs = actuales;
+    ultimos = actuales;
+    sectores.at(id_mapa).avisar(notificador, evento);
+}
+
+void GestorDeSectores::difundir_npcs() {
+    for (const auto& entrada : sectores) {
+        difundir_npcs(entrada.first);
     }
 }

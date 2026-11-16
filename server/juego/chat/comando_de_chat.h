@@ -5,8 +5,8 @@
 
 #include "contexto_de_comando_de_chat.h"
 
-// Un comando con barra del chat ("/comprar", "/oro", etc.). Cada feature (mercado, cheats, ayuda)
-// implementaría esta interfaz y la registraría en el ChatDePartida.
+// Un comando con barra del chat ("/oro", "/ayuda", etc.). Los cheats y la ayuda implementan esta
+// interfaz y la registran en el ChatDePartida.
 // Dos comandos no deberían reconocer la misma palabra, gana el primero que se registró.
 class ComandoDeChat {
 public:

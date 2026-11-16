@@ -8,7 +8,9 @@
 mapa_inicial = "FarmHouse2"
 
 [servidor]
-# para tailscale: host = "100.117.194.20"
+# para tailscale (bren): host = "100.117.194.20"
+# para tailscale (conra): host = "100.126.247.61"
+# local: host = "127.0.0.1"
 host = "127.0.0.1"
 puerto = "8081"
 
@@ -156,6 +158,7 @@ ruta = "Assets/Maps/FarmHouse2.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings", "Buildings2"]
 capas_sobre_los_jugadores = ["Front"]
 ruta_caminar = "Assets/sfx/caminar_casa.wav"
+techado = true
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/townInterior.png"
@@ -178,6 +181,7 @@ ruta = "Assets/Maps/Mercado.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings", "Paredes", "Back2", "Back3", "Buildings2", "Buildings3"]
 capas_sobre_los_jugadores = ["Front"]
 ruta_caminar = "Assets/sfx/caminar_casa.wav"
+techado = true
 
 [[mapas.tilesets]]
 ruta = "Assets/Maps/townInterior.png"
@@ -550,6 +554,8 @@ b = 113
 ruta_ambiente = "Assets/sfx/ambiente.wav"
 ruta_caminar = "Assets/sfx/caminar.wav"
 ruta_accion = "Assets/sfx/pico_aire.wav"
+ruta_comprar = "Assets/sfx/comprar.wav"
+ruta_vender = "Assets/sfx/vender.wav"
 
 [sonido.animales]
 vaca = "Assets/sfx/vaca.wav"
@@ -580,6 +586,7 @@ recibir = "Assets/sfx/regalo_recibido.wav"
 
 [sonido.tiempo]
 anochecer = "Assets/sfx/anochecer.wav"
+lluvia = "Assets/sfx/lluvia.wav"
 
 [sonido.enemigos.esqueleto]
 golpe = "Assets/sfx/esqueleto_golpe.wav"
