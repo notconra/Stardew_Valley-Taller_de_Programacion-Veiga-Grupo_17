@@ -24,6 +24,7 @@
 #include "iconos_de_items.h"
 #include "mapa_grafico.h"
 #include "marcador_de_casillas.h"
+#include "menu_en_juego.h"
 #include "objetos_graficos.h"
 #include "panel_de_regalos.h"
 #include "pantalla_de_descanso.h"
@@ -143,6 +144,7 @@ private:
     static constexpr int CASILLAS_AUDICION_ANIMAL = 10;
     uint32_t ultimo_paso_ms = 0;
     EfectosDeSonido* efectos_actuales = nullptr;
+    MenuEnJuego* menu_actual = nullptr;
 
     void enviar_intencion_si_cambio(const Moverse& intencion);
     void usar_item(uint8_t ranura, ModoUso modo, const std::optional<Casilla>& casilla);
@@ -169,7 +171,8 @@ private:
         const CultivosGraficos& cultivos, const EfectoDeRiego& efecto_de_riego,
         const Camara& camara, const HudInventario& hud, const VisionMazmorra& vision_mazmorra,
         const EntradaDelUsuario& entrada, const VistaChat& chat, RelojGrafico& reloj_grafico,
-        const PantallaDeDescanso& pantalla_de_descanso, const PanelDeRegalos& regalos) const;
+        const PantallaDeDescanso& pantalla_de_descanso, const PanelDeRegalos& regalos,
+        const MenuEnJuego& menu) const;
 
 public:
     VistaPartida(ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion);

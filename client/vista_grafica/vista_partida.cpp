@@ -46,8 +46,7 @@ constexpr char AYUDA_DE_TECLAS[] =
     "  T / botón del chat abrir o cerrar el chat\n"
     "  clic en el chat   casilla de abajo: escribir. Enter envía, ESC o clic afuera sueltan\n"
     "  rueda sobre chat  recorrer los mensajes (el personaje puede seguir caminando)\n"
-    "  M                 permitir que otros jugadores se unan (el código sale acá)\n"
-    "  ESC               salir de la partida y volver al lobby\n";
+    "  ESC               Abrir el menú in-game\n";
 
 using TexturaDelMundo = std::unique_ptr<SDL_Texture, void (*)(SDL_Texture*)>;
 
@@ -237,6 +236,18 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         iconos,
         ancho_de_pantalla,
         alto_de_pantalla);
+    std::optional<MenuEnJuego> menu;
+    menu.emplace(
+        renderizador.ptr(),
+        configuracion.chat.ruta_fuente,
+        efectos,
+        ancho_de_pantalla,
+        alto_de_pantalla);
+    menu_actual = &(*menu);
+    if (partida.multijugador) {
+        menu->marcar_multijugador(partida.codigo_partida);
+    }
+
     EntradaDelUsuario entrada;
     Camara camara = camara_para(mapa_de(mapa_actual));
 
@@ -253,6 +264,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
 
         if (entrada.pidio_cerrar()) {
             efectos_actuales = nullptr;
+            menu_actual = nullptr;
             return false;
         }
         if (entrada.pedidos().salir) {
@@ -260,9 +272,34 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
                 regalos->cerrar();
             } else if (ultimo_cofre.abierto) {
                 conexion.enviar_comando(CerrarCofre{});
+            } else if (menu->esta_abierto()) {
+                menu->cerrar();
             } else {
-                efectos_actuales = nullptr;
-                return salir_de_partida_y_confirmar();
+                menu->abrir();
+            }
+        }
+        bool menu_estaba_abierto = menu->esta_abierto();
+        if (menu->esta_abierto()) {
+            menu->raton_movido(entrada.raton_x(), entrada.raton_y());
+            if (entrada.pedidos().clic_izquierdo) {
+                AccionMenu accion = menu->clic_presionado(entrada.raton_x(), entrada.raton_y());
+                if (accion == AccionMenu::VOLVER_AL_LOBBY) {
+                    efectos_actuales = nullptr;
+                    menu_actual = nullptr;
+                    salir_de_partida_y_confirmar();
+                    return true;
+                }
+                if (accion == AccionMenu::SALIR_DEL_JUEGO) {
+                    efectos_actuales = nullptr;
+                    menu_actual = nullptr;
+                    salir_de_partida_y_confirmar();
+                    return false;
+                }
+                if (accion == AccionMenu::ACTIVAR_MULTIJUGADOR) {
+                    conexion.enviar_comando(ActivarMultijugador{});
+                }
+            } else {
+                menu->clic_liberado();
             }
         }
         if (haciendo_accion && SDL_GetTicks() - inicio_accion_ms >= 475) {
@@ -284,6 +321,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
         if (!recibir_eventos(chat)) {
             efectos_actuales = nullptr;
+            menu_actual = nullptr;
             return true;
         }
 
@@ -309,6 +347,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
                 renderizador.ptr(),
                 configuracion.chat.ruta_fuente,
                 alto_de_pantalla);
+            menu->configurar_dimensiones_pantalla(ancho_de_pantalla, alto_de_pantalla);
         }
         if (propio != nullptr && propio->mapa != mapa_actual) {
             mapa_actual = propio->mapa;
@@ -327,8 +366,12 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
 
         hud.actualizar(ultimo_inventario, ultimo_cofre);
-        procesar_entrada(entrada, hud, *regalos, camara, consumo_del_chat);
-        consultar_el_piso_si_cambio(entrada, hud, camara);
+        if (!menu_estaba_abierto && !menu->esta_abierto()) {
+            procesar_entrada(entrada, hud, *regalos, camara, consumo_del_chat);
+            consultar_el_piso_si_cambio(entrada, hud, camara);
+        } else {
+            olvidar_el_piso();
+        }
         if (mapa_actual == "granja" && propio != nullptr && efectos_actuales != nullptr) {
             int tamano_tile = std::max(1, configuracion.graficos.tamano_de_tile);
             uint32_t columna_jugador =
@@ -342,7 +385,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
                 CASILLAS_AUDICION_ANIMAL);
             efectos_actuales->actualizar_ambiente_animales(inicio_del_cuadro, cercanos);
         }
-        if (chat.esta_escribiendo() || ultimo_cofre.abierto || regalos->esta_abierto()) {
+        if (chat.esta_escribiendo() || ultimo_cofre.abierto || regalos->esta_abierto() ||
+            menu->esta_abierto()) {
             enviar_intencion_si_cambio(Moverse{});
         } else {
             enviar_intencion_si_cambio(entrada.intencion());
@@ -368,7 +412,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             chat,
             *reloj_grafico,
             *pantalla_de_descanso,
-            *regalos);
+            *regalos,
+            *menu);
         limitar_cuadro(inicio_del_cuadro);
     }
 }
@@ -455,9 +500,6 @@ void VistaPartida::procesar_entrada(
     const Camara& camara, const VistaChat::ConsumoDeEntrada& consumo_del_chat) {
     const EntradaDelUsuario::Pedidos& pedidos = entrada.pedidos();
 
-    if (pedidos.multijugador) {
-        conexion.enviar_comando(ActivarMultijugador{});
-    }
     if (pedidos.confirmar && descanso.estado != EstadoDeDescanso::DESPIERTO &&
         !descanso.dio_el_ok) {
         conexion.enviar_comando(DarElOk{});
@@ -811,6 +853,9 @@ void VistaPartida::aplicar(const EventoServidor& evento, VistaChat& chat) {
             },
             [&](const EstadoDelDescanso& e) { descanso = e; },
             [&](const MultijugadorActivado& e) {
+                if (menu_actual != nullptr) {
+                    menu_actual->marcar_multijugador(e.codigo_partida);
+                }
                 std::cout << "[partida] multijugador activado, código para invitar: "
                           << e.codigo_partida << std::endl;
             },
@@ -868,7 +913,7 @@ void VistaPartida::dibujar(
     const EfectoDeRiego& efecto_de_riego, const Camara& camara, const HudInventario& hud,
     const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada, const VistaChat& chat,
     RelojGrafico& reloj_grafico, const PantallaDeDescanso& pantalla_de_descanso,
-    const PanelDeRegalos& regalos) const {
+    const PanelDeRegalos& regalos, const MenuEnJuego& menu) const {
     SDL_Renderer* renderer = renderizador.ptr();
     if (mundo != nullptr) {
         SDL_SetRenderTarget(renderer, mundo);
@@ -1030,6 +1075,7 @@ void VistaPartida::dibujar(
     regalos.dibujar(renderer, datos_de_regalos());
     pantalla_de_descanso.dibujar(renderer, descanso, ancho_de_pantalla, alto_de_pantalla);
     chat.dibujar(renderer, ancho_de_pantalla, alto_de_pantalla);
+    menu.dibujar(renderer);
 
     SDL_RenderPresent(renderer);
 }

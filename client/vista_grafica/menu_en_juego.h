@@ -11,13 +11,7 @@
 
 enum class PestaniaMenu : uint8_t { INVENTARIO, ANIMALES, CONFIGURACION, SALIR };
 
-enum class AccionMenu : uint8_t {
-    NINGUNA,
-    CONTINUAR,
-    VOLVER_AL_LOBBY,
-    SALIR_DEL_JUEGO,
-    ACTIVAR_MULTIJUGADOR
-};
+enum class AccionMenu : uint8_t { NINGUNA, VOLVER_AL_LOBBY, SALIR_DEL_JUEGO, ACTIVAR_MULTIJUGADOR };
 
 class MenuEnJuego {
 public:
@@ -40,7 +34,7 @@ public:
     void clic_liberado();
     void raton_movido(int coordenada_x, int coordenada_y);
 
-    void dibujar(SDL_Renderer* renderizador);
+    void dibujar(SDL_Renderer* renderizador) const;
 
 private:
     enum class DeslizadorArrastrado : uint8_t { NINGUNO, MUSICA, EFECTOS };

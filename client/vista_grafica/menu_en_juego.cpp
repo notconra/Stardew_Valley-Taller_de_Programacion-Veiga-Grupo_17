@@ -201,21 +201,17 @@ bool MenuEnJuego::procesar_clic_en_pestanias(int coordenada_x, int coordenada_y)
 }
 
 AccionMenu MenuEnJuego::procesar_clic_pestania_configuracion(int coordenada_x, int coordenada_y) {
-    if (esta_adentro(rectangulo_barra_musica, coordenada_x, coordenada_y)) {
-        deslizador_activo = DeslizadorArrastrado::MUSICA;
-        actualizar_valor_deslizador(coordenada_x, DeslizadorArrastrado::MUSICA);
-        return AccionMenu::NINGUNA;
-    }
-
-    if (esta_adentro(rectangulo_barra_efectos, coordenada_x, coordenada_y)) {
-        deslizador_activo = DeslizadorArrastrado::EFECTOS;
-        actualizar_valor_deslizador(coordenada_x, DeslizadorArrastrado::EFECTOS);
-        return AccionMenu::NINGUNA;
-    }
-
     if (!es_multijugador &&
         esta_adentro(rectangulo_boton_multijugador, coordenada_x, coordenada_y)) {
         return AccionMenu::ACTIVAR_MULTIJUGADOR;
+    }
+
+    if (esta_adentro(rectangulo_barra_musica, coordenada_x, coordenada_y)) {
+        deslizador_activo = DeslizadorArrastrado::MUSICA;
+        actualizar_valor_deslizador(coordenada_x, DeslizadorArrastrado::MUSICA);
+    } else if (esta_adentro(rectangulo_barra_efectos, coordenada_x, coordenada_y)) {
+        deslizador_activo = DeslizadorArrastrado::EFECTOS;
+        actualizar_valor_deslizador(coordenada_x, DeslizadorArrastrado::EFECTOS);
     }
 
     return AccionMenu::NINGUNA;
@@ -240,7 +236,7 @@ AccionMenu MenuEnJuego::clic_presionado(int coordenada_x, int coordenada_y) {
 
     if (esta_adentro(rectangulo_boton_cerrar, coordenada_x, coordenada_y)) {
         cerrar();
-        return AccionMenu::CONTINUAR;
+        return AccionMenu::NINGUNA;
     }
 
     if (procesar_clic_en_pestanias(coordenada_x, coordenada_y)) {
@@ -536,7 +532,7 @@ void MenuEnJuego::dibujar_contenido_salir(SDL_Renderer* renderizador) const {
     dibujar_boton_con_asset(renderizador, rectangulo_boton_salir_juego, "Salir del Juego");
 }
 
-void MenuEnJuego::dibujar(SDL_Renderer* renderizador) {
+void MenuEnJuego::dibujar(SDL_Renderer* renderizador) const {
     if (!menu_abierto) {
         return;
     }
