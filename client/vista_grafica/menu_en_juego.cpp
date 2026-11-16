@@ -604,7 +604,7 @@ void MenuEnJuego::dibujar_contenido_animales(
     SDL_RenderCopy(renderizador, textura_huevo.ptr(), nullptr, &rectangulo_icono_huevo);
 
     std::string texto_huevos =
-        "Huevos para recolectar: " + std::to_string(datos.huevos_para_recolectar) + " en la granja";
+        "Huevos para recolectar: " + std::to_string(datos.huevos_para_recolectar);
     fuente_botones.dibujar_con_sombra(
         renderizador,
         texto_huevos,

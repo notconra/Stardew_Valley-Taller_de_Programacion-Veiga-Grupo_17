@@ -255,11 +255,13 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         const uint32_t inicio_del_cuadro = SDL_GetTicks();
         entrada.leer(chat.esta_escribiendo());
 
-        const VistaChat::ConsumoDeEntrada consumo_del_chat =
-            chat.procesar_entrada(entrada, ancho_de_pantalla, alto_de_pantalla);
-        if (std::optional<EnviarMensajeDeChat> mensaje = chat.tomar_mensaje_a_enviar();
-            mensaje.has_value()) {
-            conexion.enviar_comando(*mensaje);
+        VistaChat::ConsumoDeEntrada consumo_del_chat{};
+        if (!menu->esta_abierto()) {
+            consumo_del_chat = chat.procesar_entrada(entrada, ancho_de_pantalla, alto_de_pantalla);
+            if (std::optional<EnviarMensajeDeChat> mensaje = chat.tomar_mensaje_a_enviar();
+                mensaje.has_value()) {
+                conexion.enviar_comando(*mensaje);
+            }
         }
 
         if (entrada.pidio_cerrar()) {
@@ -268,13 +270,13 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             return false;
         }
         if (entrada.pedidos().salir) {
-            if (regalos->esta_abierto()) {
+            if (menu->esta_abierto()) {
+                menu->cerrar();
+            } else if (regalos->esta_abierto()) {
                 regalos->cerrar();
             } else if (ultimo_cofre.abierto) {
                 conexion.enviar_comando(CerrarCofre{});
-            } else if (menu->esta_abierto()) {
-                menu->cerrar();
-            } else {
+            } else if (!chat.esta_abierto()) {
                 menu->abrir();
             }
         }

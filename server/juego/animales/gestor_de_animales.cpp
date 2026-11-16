@@ -91,14 +91,26 @@ bool GestorDeAnimales::agregar_gallina(uint32_t columna, uint32_t fila, uint8_t 
     return true;
 }
 
-void GestorDeAnimales::avanzar_dia(Drops& drops) {
+std::vector<EstadoDrop> GestorDeAnimales::avanzar_dia(Drops& drops) {
     for (auto& [id, vaca] : vacas) {
         vaca.avanzar_dia();
     }
+    std::vector<EstadoDrop> nuevos_huevos;
     for (auto& [id, gallina] : gallinas) {
         gallina.avanzar_dia();
-        drops.dejar(TipoItem::HUEVO, 1, Calidad::BASE, gallina.columna, gallina.fila);
+        int id_drop = drops.dejar(TipoItem::HUEVO, 1, Calidad::BASE, gallina.columna, gallina.fila);
+        if (id_drop > 0) {
+            EstadoDrop estado;
+            estado.id = static_cast<uint32_t>(id_drop);
+            estado.columna = gallina.columna;
+            estado.fila = gallina.fila;
+            estado.tipo = TipoItem::HUEVO;
+            estado.cantidad = 1;
+            estado.calidad = Calidad::BASE;
+            nuevos_huevos.push_back(estado);
+        }
     }
+    return nuevos_huevos;
 }
 
 bool GestorDeAnimales::ordeniar_vaca(uint32_t id_vaca) {
