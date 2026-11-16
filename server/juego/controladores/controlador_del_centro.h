@@ -67,8 +67,8 @@ private:
 
     void avisar_a_todos(TipoLote lote);
 
-    // Dónde está el lote en el mapa del centro, para que el cliente lo marque. Si el mapa no lo
-    // tiene, deja el mapa vacío.
+    // Dónde está el lote en el mapa del centro de ahora (las ruinas o el arreglado), para que el
+    // cliente lo marque. Si el mapa no lo tiene, deja el mapa vacío.
     void completar_lugar(LoteDelCentro& estado, const std::string& clave) const;
 
     void entregar_premio(TipoLote lote);
@@ -94,6 +94,10 @@ public:
 
     // Un enemigo lastimó al jugador.
     void al_lastimar_un_enemigo_a(uint32_t id_jugador);
+
+    // Si hoy el mercado vende a mitad de precio y compra al doble: el día siguiente a completarse
+    // el set de dinero.
+    bool hay_oferta_en_el_mercado() const;
 
     // Cheats: da por completo el lote con esa clave (la del TMX) o todos los que falten, con sus
     // premios. El primero devuelve false si no hay un lote con esa clave o ya estaba completo.

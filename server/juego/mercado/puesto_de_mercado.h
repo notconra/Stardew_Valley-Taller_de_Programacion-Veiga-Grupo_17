@@ -11,6 +11,7 @@
 #include "../../../common/tipo_item.h"
 #include "../../configuracion/configuracion_servidor_datos.h"
 #include "../jugadores/personaje.h"
+#include "precios_del_dia.h"
 
 struct ProductoEnVenta {
     TipoItem tipo_item = TipoItem::NINGUNO;
@@ -45,7 +46,7 @@ private:
 
     ItemCatalogoInfo armar_info(
         const Personaje& personaje, const ProductoEnVenta& producto,
-        const std::map<TipoAnimal, uint16_t>& animales_jugador) const;
+        const std::map<TipoAnimal, uint16_t>& animales_jugador, const PreciosDelDia& precios) const;
 
 protected:
     const ConfiguracionMercadoServidor& config;
@@ -72,10 +73,10 @@ public:
 
     uint32_t precio_que_recibe_el_jugador(TipoItem tipo, Calidad calidad) const;
 
-    // Mensaje completo del catálogo, listo para enviar al cliente.
+    // Mensaje completo del catálogo, listo para enviar al cliente, con los precios de hoy.
     ActualizacionMercado armar_actualizacion(
         const Personaje& personaje, uint32_t dia,
-        const std::map<TipoAnimal, uint16_t>& animales_jugador) const;
+        const std::map<TipoAnimal, uint16_t>& animales_jugador, const PreciosDelDia& precios) const;
 
     virtual ~PuestoDeMercado() = default;
 };

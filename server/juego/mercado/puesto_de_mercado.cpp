@@ -81,15 +81,15 @@ uint32_t PuestoDeMercado::precio_que_recibe_el_jugador(TipoItem tipo, Calidad ca
 
 ItemCatalogoInfo PuestoDeMercado::armar_info(
     const Personaje& personaje, const ProductoEnVenta& producto,
-    const std::map<TipoAnimal, uint16_t>& animales_jugador) const {
+    const std::map<TipoAnimal, uint16_t>& animales_jugador, const PreciosDelDia& precios) const {
     ItemCatalogoInfo info;
     info.tipo_item = producto.tipo_item;
     info.tipo_animal = producto.tipo_animal;
     info.nombre = producto.nombre;
-    info.precio = producto.precio_que_paga_el_jugador;
+    info.precio = precios.de_compra(producto.precio_que_paga_el_jugador);
     info.descripcion = producto.descripcion;
 
-    const bool alcanzan_las_monedas = personaje.monedas >= producto.precio_que_paga_el_jugador;
+    const bool alcanzan_las_monedas = personaje.monedas >= info.precio;
     if (producto.es_animal()) {
         info.cantidad_poseida = cantidad_poseida(animales_jugador, producto.tipo_animal);
         info.se_puede_comprar =
@@ -106,12 +106,12 @@ ItemCatalogoInfo PuestoDeMercado::armar_info(
 
 ActualizacionMercado PuestoDeMercado::armar_actualizacion(
     const Personaje& personaje, uint32_t dia,
-    const std::map<TipoAnimal, uint16_t>& animales_jugador) const {
+    const std::map<TipoAnimal, uint16_t>& animales_jugador, const PreciosDelDia& precios) const {
     ActualizacionMercado msg;
     msg.id_npc = id_puesto;
 
     for (const ProductoEnVenta& producto : obtener_productos_en_venta(dia)) {
-        msg.catalogo.push_back(armar_info(personaje, producto, animales_jugador));
+        msg.catalogo.push_back(armar_info(personaje, producto, animales_jugador, precios));
     }
     return msg;
 }

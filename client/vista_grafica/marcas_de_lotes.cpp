@@ -8,9 +8,16 @@
 #define OSCILACION_DE_LA_MARCA 2.0
 #define MS_POR_VUELTA 1200.0
 
+#define RUTA_DE_LA_TILDE "Assets/LooseSprites/lote_completo.png"
+#define ANCHO_DE_LA_TILDE 10
+#define ALTO_DE_LA_TILDE 9
+#define SALIENTE_DE_LA_TILDE 2
+
 MarcasDeLotes::MarcasDeLotes(
-    const IconosDeLotes& iconos_de_lotes, const ConfiguracionGraficos& configuracion_graficos)
+    SDL_Renderer* renderer, const IconosDeLotes& iconos_de_lotes,
+    const ConfiguracionGraficos& configuracion_graficos)
     : iconos(iconos_de_lotes),
+      tilde(RUTA_DE_LA_TILDE, renderer),
       tamano_de_tile(configuracion_graficos.tamano_de_tile),
       escala_de_tiles(configuracion_graficos.escala_de_tiles) {
 }
@@ -26,7 +33,7 @@ void MarcasDeLotes::dibujar(
     const int oscilacion =
         static_cast<int>(std::lround(std::sin(fase) * OSCILACION_DE_LA_MARCA)) * escala_de_tiles;
     for (const auto& [tipo, lote] : lotes) {
-        if (lote.completo || lote.mapa.empty() || lote.mapa != mapa) {
+        if (lote.mapa.empty() || lote.mapa != mapa) {
             continue;
         }
         const SDL_Rect destino{
@@ -36,5 +43,15 @@ void MarcasDeLotes::dibujar(
             lado,
             lado};
         iconos.dibujar(renderer, tipo, destino);
+        if (lote.completo) {
+            // Abajo a la derecha del ícono, asomando un poco.
+            const SDL_Rect sobre_el_icono{
+                destino.x + destino.w -
+                    (ANCHO_DE_LA_TILDE - SALIENTE_DE_LA_TILDE) * escala_de_tiles,
+                destino.y + destino.h - (ALTO_DE_LA_TILDE - SALIENTE_DE_LA_TILDE) * escala_de_tiles,
+                ANCHO_DE_LA_TILDE * escala_de_tiles,
+                ALTO_DE_LA_TILDE * escala_de_tiles};
+            SDL_RenderCopy(renderer, tilde.ptr(), nullptr, &sobre_el_icono);
+        }
     }
 }

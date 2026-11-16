@@ -245,7 +245,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         ancho_de_pantalla,
         alto_de_pantalla);
     IconosDeLotes iconos_de_lotes(renderizador.ptr());
-    MarcasDeLotes marcas_de_lotes(iconos_de_lotes, graficos);
+    MarcasDeLotes marcas_de_lotes(renderizador.ptr(), iconos_de_lotes, graficos);
     std::optional<VentanaDeLote> ventana_de_lote;
     ventana_de_lote.emplace(
         renderizador.ptr(),

@@ -41,9 +41,9 @@ private:
     GestorDeNpcs gestor_de_npcs;
 
     ControladorDeJugador controlador_de_jugador;
-    ControladorDeMercado controlador_de_mercado;
     ControladorDelDia controlador_del_dia;
     ControladorDelCentro controlador_del_centro;
+    ControladorDeMercado controlador_de_mercado;
     ControladorDeAcciones controlador_de_acciones;
     ControladorDeCofres controlador_de_cofres;
     ControladorDeDrops controlador_de_drops;

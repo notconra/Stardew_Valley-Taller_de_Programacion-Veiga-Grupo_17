@@ -13,7 +13,6 @@ Mundo::Mundo(
       sectores(recursos_de_juego, ticks_por_segundo, personajes, notificador_de_juego),
       gestor_de_npcs(recursos_de_juego, sectores, ticks_por_segundo),
       controlador_de_jugador(sectores, notificador_de_juego),
-      controlador_de_mercado(recursos_de_juego.mercado, sectores, notificador_de_juego),
       controlador_del_dia(
           recursos_de_juego.juego.dia, ticks_por_segundo, sectores, personajes, recursos_de_juego,
           notificador_de_juego,
@@ -21,6 +20,8 @@ Mundo::Mundo(
       controlador_del_centro(
           personajes, sectores, recursos_de_juego, notificador_de_juego, controlador_del_dia,
           datos_guardados.centro),
+      controlador_de_mercado(
+          recursos_de_juego.mercado, sectores, notificador_de_juego, controlador_del_centro),
       controlador_de_acciones(
           sectores, personajes, recursos_de_juego, notificador_de_juego, controlador_de_mercado,
           controlador_del_dia, controlador_del_centro,

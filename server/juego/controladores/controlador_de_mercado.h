@@ -12,18 +12,23 @@
 #include "../mercado/puesto_de_mercado.h"
 #include "../notificador.h"
 #include "../sector/gestor_de_sectores.h"
+#include "controlador_del_centro.h"
 
 // Atiende los comandos del mercado, qué puesto tiene abierto cada jugador y cada compra o venta.
 class ControladorDeMercado {
 private:
     Notificador& notificador;
     GestorDeSectores& sectores;
+    // Dice si hoy rige la oferta del set de dinero.
+    const ControladorDelCentro& centro;
     std::string mapa_del_mercado;
 
     std::map<std::string, std::unique_ptr<PuestoDeMercado>> puestos;
     std::map<uint32_t, std::string> puesto_abierto_por_jugador;
 
     void agregar_puesto(std::unique_ptr<PuestoDeMercado> puesto);
+    // Los precios de hoy: los normales o los de la oferta del set de dinero.
+    PreciosDelDia precios_de_hoy() const;
     PuestoDeMercado* puesto_actual_de(const Personaje& personaje);
 
     // Cuántos animales de cada tipo hay hoy en la granja (lo que muestra la ventana).
@@ -55,7 +60,7 @@ private:
 public:
     ControladorDeMercado(
         const ConfiguracionMercadoServidor& config, GestorDeSectores& sectores,
-        Notificador& notificador);
+        Notificador& notificador, const ControladorDelCentro& centro);
 
     // Si el mapa es el del mercado y está fuera de horario, el jugador no puede entrar.
     bool puede_entrar(const std::string& mapa_destino, const HoraDelJuego& hora) const;

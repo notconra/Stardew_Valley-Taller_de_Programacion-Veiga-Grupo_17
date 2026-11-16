@@ -229,6 +229,10 @@ void ControladorDelCentro::cumplir_logro(LogroDePelea logro) {
     }
 }
 
+bool ControladorDelCentro::hay_oferta_en_el_mercado() const {
+    return centro.hay_precios_del_lote_de_dinero(dia_de_hoy());
+}
+
 bool ControladorDelCentro::completar_lote(const std::string& clave) {
     const DefinicionDeLote* lote = recursos.catalogo_de_lotes.buscar_por_clave(clave);
     if (lote == nullptr || !centro.completar(lote->tipo, dia_de_hoy())) {
@@ -247,7 +251,14 @@ void ControladorDelCentro::completar_todos_los_lotes() {
 }
 
 void ControladorDelCentro::avisar_a_todos(TipoLote lote) {
-    notificador.a_todos(estado_del_lote(lote, false));
+    if (!centro.esta_terminado()) {
+        notificador.a_todos(estado_del_lote(lote, false));
+        return;
+    }
+    // Con el último lote el centro pasa a ser el arreglado: los lugares de todos cambian de mapa.
+    for (const auto& [tipo, definicion] : recursos.catalogo_de_lotes.definiciones()) {
+        notificador.a_todos(estado_del_lote(tipo, false));
+    }
 }
 
 LoteDelCentro ControladorDelCentro::estado_del_lote(TipoLote lote, bool abrir) const {
@@ -275,13 +286,14 @@ LoteDelCentro ControladorDelCentro::estado_del_lote(TipoLote lote, bool abrir) c
 }
 
 void ControladorDelCentro::completar_lugar(LoteDelCentro& estado, const std::string& clave) const {
-    auto mapa = recursos.mapas.find(MAPA_DEL_CENTRO);
+    const std::string id_mapa = centro.mapa_para(MAPA_DEL_CENTRO);
+    auto mapa = recursos.mapas.find(id_mapa);
     if (mapa == recursos.mapas.end()) {
         return;
     }
     for (const LoteDelMapa& lote : mapa->second.obtener_lotes()) {
         if (lote.clave == clave) {
-            estado.mapa = MAPA_DEL_CENTRO;
+            estado.mapa = id_mapa;
             estado.columna =
                 static_cast<uint32_t>(lote.zona.x / mapa->second.ancho_de_casilla_en_pixeles());
             estado.fila =
