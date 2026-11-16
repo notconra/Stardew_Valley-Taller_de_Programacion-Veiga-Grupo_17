@@ -37,7 +37,8 @@ const RecursosDeJuego& recursos() {
             mapas,
             "granja",
             configuracion.juego(),
-            ConfiguracionMazmorraServidor{});
+            ConfiguracionMazmorraServidor{},
+            configuracion.mercado());
     }();
     return recursos_de_juego;
 }
@@ -201,7 +202,6 @@ TEST_F(ColocarCama, NoSePuedePonerSiElJugadorQuedaConMedioCuerpoAdentro) {
 
 TEST_F(ColocarCama, NoSePuedePonerPegadaALaPuerta) {
     Sector casa(MAPA_DE_LA_CASA, recursos(), 40);
-    // La puerta de salida está en (27, 30): no se puede ocupar ninguna casilla pegada a ella.
     EXPECT_FALSE(colocar(casa, Casilla{25, 27}));
     EXPECT_FALSE(colocar(casa, Casilla{27, 27}));
     EXPECT_TRUE(colocar(casa, Casilla{29, 27}));
