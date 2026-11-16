@@ -9,7 +9,7 @@
 #include "fuente_del_juego.h"
 #include "textura.h"
 
-enum class PestaniaMenu : uint8_t { ANIMALES, CONFIGURACION, SALIR };
+enum class PestaniaMenu : uint8_t { ANIMALES, CENTRO_COMUNITARIO, CONFIGURACION, SALIR };
 
 enum class AccionMenu : uint8_t { NINGUNA, VOLVER_AL_LOBBY, SALIR_DEL_JUEGO, ACTIVAR_MULTIJUGADOR };
 
@@ -36,6 +36,8 @@ public:
 
     void configurar_dimensiones_pantalla(int ancho_pantalla, int alto_pantalla);
     void marcar_multijugador(const std::string& codigo);
+    void configurar_despierto(bool estado_despierto);
+    bool cancelar_confirmacion_si_esta_activa();
 
     AccionMenu clic_presionado(int coordenada_x, int coordenada_y);
     void clic_liberado();
@@ -76,6 +78,10 @@ private:
     static constexpr int ALTO_BOTON_SALIDA = 56;
     static constexpr int SEPARACION_VERTICAL_BOTONES_SALIDA = 24;
 
+    static constexpr int ANCHO_CARTEL_CONFIRMACION = 460;
+    static constexpr int ALTO_CARTEL_CONFIRMACION = 210;
+    static constexpr int LADO_BOTON_DIALOGO = 56;
+
     // Referencias y recursos gráficos
     EfectosDeSonido& efectos_de_sonido;
     FuenteDelJuego fuente_titulo;
@@ -92,6 +98,9 @@ private:
 
     // Estado del menú
     bool menu_abierto;
+    bool despierto;
+    bool cartel_confirmacion_activo;
+    AccionMenu accion_pendiente_confirmacion;
     PestaniaMenu pestania_activa;
     DeslizadorArrastrado deslizador_activo;
     bool es_multijugador;
@@ -106,8 +115,13 @@ private:
     SDL_Rect rectangulo_boton_cerrar;
 
     SDL_Rect rectangulo_pestania_animales;
+    SDL_Rect rectangulo_pestania_centro_comunitario;
     SDL_Rect rectangulo_pestania_configuracion;
     SDL_Rect rectangulo_pestania_salir;
+
+    SDL_Rect rectangulo_cartel_confirmacion;
+    SDL_Rect rectangulo_boton_ok_salida;
+    SDL_Rect rectangulo_boton_cancelar_salida;
 
     SDL_Rect rectangulo_barra_musica;
     SDL_Rect rectangulo_barra_efectos;
@@ -137,8 +151,10 @@ private:
         const Textura& textura_icono, const SDL_Rect& sprite_origen) const;
     void dibujar_boton_cerrar(SDL_Renderer* renderizador) const;
     void dibujar_contenido_animales(SDL_Renderer* renderizador, const DatosAnimales& datos) const;
+    void dibujar_contenido_centro_comunitario(SDL_Renderer* renderizador) const;
     void dibujar_contenido_configuracion(SDL_Renderer* renderizador) const;
     void dibujar_contenido_salir(SDL_Renderer* renderizador) const;
+    void dibujar_cartel_confirmacion(SDL_Renderer* renderizador) const;
 
     void dibujar_barra_volumen(
         SDL_Renderer* renderizador, const std::string& etiqueta, const SDL_Rect& rectangulo_barra,

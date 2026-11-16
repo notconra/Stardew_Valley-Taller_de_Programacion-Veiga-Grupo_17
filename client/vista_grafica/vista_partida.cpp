@@ -271,7 +271,9 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
         if (entrada.pedidos().salir) {
             if (menu->esta_abierto()) {
-                menu->cerrar();
+                if (!menu->cancelar_confirmacion_si_esta_activa()) {
+                    menu->cerrar();
+                }
             } else if (regalos->esta_abierto()) {
                 regalos->cerrar();
             } else if (ultimo_cofre.abierto) {
@@ -280,9 +282,15 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
                 menu->abrir();
             }
         }
+        bool despierto = hora_del_juego.has_value() && (hora_del_juego->hora == HORA_INICIO_DIA) &&
+                         (hora_del_juego->minuto == 0);
+        menu->configurar_despierto(despierto);
+
         bool menu_estaba_abierto = menu->esta_abierto();
         if (menu->esta_abierto()) {
             menu->raton_movido(entrada.raton_x(), entrada.raton_y());
+            bool boton_izquierdo_presionado =
+                (SDL_GetMouseState(nullptr, nullptr) & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0;
             if (entrada.pedidos().clic_izquierdo) {
                 AccionMenu accion = menu->clic_presionado(entrada.raton_x(), entrada.raton_y());
                 if (accion == AccionMenu::VOLVER_AL_LOBBY) {
@@ -300,7 +308,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
                 if (accion == AccionMenu::ACTIVAR_MULTIJUGADOR) {
                     conexion.enviar_comando(ActivarMultijugador{});
                 }
-            } else {
+            } else if (!boton_izquierdo_presionado) {
                 menu->clic_liberado();
             }
         }

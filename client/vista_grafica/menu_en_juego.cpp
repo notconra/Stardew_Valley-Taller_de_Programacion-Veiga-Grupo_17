@@ -14,8 +14,11 @@ static const char RUTA_ASSET_HUEVO[] = "Assets/items/huevo.png";
 // Recortes exactos de sprites originales en Cursors.png
 static constexpr SDL_Rect ORIGEN_SPRITE_PESTANIA_EN_BLANCO{16, 368, 16, 16};
 static constexpr SDL_Rect ORIGEN_SPRITE_POLLITO{0, 0, 16, 16};
+static constexpr SDL_Rect ORIGEN_SPRITE_BOLSA{80, 368, 16, 16};
 static constexpr SDL_Rect ORIGEN_SPRITE_JOYSTICK{96, 368, 16, 16};
 static constexpr SDL_Rect ORIGEN_SPRITE_PROHIBIDO{112, 368, 16, 16};
+static constexpr SDL_Rect ORIGEN_SPRITE_BOTON_OK{128, 256, 64, 64};
+static constexpr SDL_Rect ORIGEN_SPRITE_BOTON_CANCELAR{192, 256, 64, 64};
 static constexpr SDL_Rect ORIGEN_SPRITE_GALLINAS{3, 448, 26, 16};
 static constexpr SDL_Rect ORIGEN_SPRITE_VACA{40, 449, 17, 14};
 
@@ -35,6 +38,9 @@ MenuEnJuego::MenuEnJuego(
       textura_leche(RUTA_ASSET_LECHE, renderizador),
       textura_huevo(RUTA_ASSET_HUEVO, renderizador),
       menu_abierto(false),
+      despierto(true),
+      cartel_confirmacion_activo(false),
+      accion_pendiente_confirmacion(AccionMenu::NINGUNA),
       pestania_activa(PestaniaMenu::ANIMALES),
       deslizador_activo(DeslizadorArrastrado::NINGUNO),
       es_multijugador(false),
@@ -44,8 +50,12 @@ MenuEnJuego::MenuEnJuego(
       rectangulo_ventana{0, 0, 0, 0},
       rectangulo_boton_cerrar{0, 0, 0, 0},
       rectangulo_pestania_animales{0, 0, 0, 0},
+      rectangulo_pestania_centro_comunitario{0, 0, 0, 0},
       rectangulo_pestania_configuracion{0, 0, 0, 0},
       rectangulo_pestania_salir{0, 0, 0, 0},
+      rectangulo_cartel_confirmacion{0, 0, 0, 0},
+      rectangulo_boton_ok_salida{0, 0, 0, 0},
+      rectangulo_boton_cancelar_salida{0, 0, 0, 0},
       rectangulo_barra_musica{0, 0, 0, 0},
       rectangulo_barra_efectos{0, 0, 0, 0},
       rectangulo_boton_multijugador{0, 0, 0, 0},
@@ -62,11 +72,28 @@ void MenuEnJuego::abrir() {
     menu_abierto = true;
     deslizador_activo = DeslizadorArrastrado::NINGUNO;
     pestania_activa = PestaniaMenu::ANIMALES;
+    cartel_confirmacion_activo = false;
+    accion_pendiente_confirmacion = AccionMenu::NINGUNA;
 }
 
 void MenuEnJuego::cerrar() {
     menu_abierto = false;
     deslizador_activo = DeslizadorArrastrado::NINGUNO;
+    cartel_confirmacion_activo = false;
+    accion_pendiente_confirmacion = AccionMenu::NINGUNA;
+}
+
+void MenuEnJuego::configurar_despierto(bool estado_despierto) {
+    despierto = estado_despierto;
+}
+
+bool MenuEnJuego::cancelar_confirmacion_si_esta_activa() {
+    if (cartel_confirmacion_activo) {
+        cartel_confirmacion_activo = false;
+        accion_pendiente_confirmacion = AccionMenu::NINGUNA;
+        return true;
+    }
+    return false;
 }
 
 void MenuEnJuego::alternar() {
@@ -102,15 +129,41 @@ void MenuEnJuego::recalcular_posiciones(int ancho_pantalla, int alto_pantalla) {
     rectangulo_pestania_animales.x = origen_pestanias_x;
     rectangulo_pestania_animales.y = rectangulo_ventana.y - DESPLAZAMIENTO_PESTANIA_ACTIVA_Y;
 
+    rectangulo_pestania_centro_comunitario.w = TAMANO_PESTANIA;
+    rectangulo_pestania_centro_comunitario.h = TAMANO_PESTANIA + 12;
+    rectangulo_pestania_centro_comunitario.x = origen_pestanias_x + paso_pestania;
+    rectangulo_pestania_centro_comunitario.y =
+        rectangulo_ventana.y - DESPLAZAMIENTO_PESTANIA_ACTIVA_Y;
+
     rectangulo_pestania_configuracion.w = TAMANO_PESTANIA;
     rectangulo_pestania_configuracion.h = TAMANO_PESTANIA + 12;
-    rectangulo_pestania_configuracion.x = origen_pestanias_x + paso_pestania;
+    rectangulo_pestania_configuracion.x = origen_pestanias_x + (paso_pestania * 2);
     rectangulo_pestania_configuracion.y = rectangulo_ventana.y - DESPLAZAMIENTO_PESTANIA_ACTIVA_Y;
 
     rectangulo_pestania_salir.w = TAMANO_PESTANIA;
     rectangulo_pestania_salir.h = TAMANO_PESTANIA + 12;
-    rectangulo_pestania_salir.x = origen_pestanias_x + (paso_pestania * 2);
+    rectangulo_pestania_salir.x = origen_pestanias_x + (paso_pestania * 3);
     rectangulo_pestania_salir.y = rectangulo_ventana.y - DESPLAZAMIENTO_PESTANIA_ACTIVA_Y;
+
+    rectangulo_cartel_confirmacion.w = ANCHO_CARTEL_CONFIRMACION;
+    rectangulo_cartel_confirmacion.h = ALTO_CARTEL_CONFIRMACION;
+    rectangulo_cartel_confirmacion.x =
+        rectangulo_ventana.x + (rectangulo_ventana.w - ANCHO_CARTEL_CONFIRMACION) / 2;
+    rectangulo_cartel_confirmacion.y =
+        rectangulo_ventana.y + (rectangulo_ventana.h - ALTO_CARTEL_CONFIRMACION) / 2;
+
+    int centro_cartel_x = rectangulo_cartel_confirmacion.x + (rectangulo_cartel_confirmacion.w / 2);
+    int botones_posicion_y = rectangulo_cartel_confirmacion.y + 120;
+
+    rectangulo_boton_ok_salida.w = LADO_BOTON_DIALOGO;
+    rectangulo_boton_ok_salida.h = LADO_BOTON_DIALOGO;
+    rectangulo_boton_ok_salida.x = centro_cartel_x - LADO_BOTON_DIALOGO - 30;
+    rectangulo_boton_ok_salida.y = botones_posicion_y;
+
+    rectangulo_boton_cancelar_salida.w = LADO_BOTON_DIALOGO;
+    rectangulo_boton_cancelar_salida.h = LADO_BOTON_DIALOGO;
+    rectangulo_boton_cancelar_salida.x = centro_cartel_x + 30;
+    rectangulo_boton_cancelar_salida.y = botones_posicion_y;
 
     rectangulo_barra_musica.w = ANCHO_BARRA_VOLUMEN;
     rectangulo_barra_musica.h = ALTO_BARRA_VOLUMEN;
@@ -181,6 +234,11 @@ bool MenuEnJuego::procesar_clic_en_pestanias(int coordenada_x, int coordenada_y)
         return true;
     }
 
+    if (esta_adentro(rectangulo_pestania_centro_comunitario, coordenada_x, coordenada_y)) {
+        pestania_activa = PestaniaMenu::CENTRO_COMUNITARIO;
+        return true;
+    }
+
     if (esta_adentro(rectangulo_pestania_configuracion, coordenada_x, coordenada_y)) {
         pestania_activa = PestaniaMenu::CONFIGURACION;
         return true;
@@ -213,11 +271,21 @@ AccionMenu MenuEnJuego::procesar_clic_pestania_configuracion(int coordenada_x, i
 
 AccionMenu MenuEnJuego::procesar_clic_pestania_salir(int coordenada_x, int coordenada_y) {
     if (esta_adentro(rectangulo_boton_volver_lobby, coordenada_x, coordenada_y)) {
-        return AccionMenu::VOLVER_AL_LOBBY;
+        if (despierto) {
+            return AccionMenu::VOLVER_AL_LOBBY;
+        }
+        cartel_confirmacion_activo = true;
+        accion_pendiente_confirmacion = AccionMenu::VOLVER_AL_LOBBY;
+        return AccionMenu::NINGUNA;
     }
 
     if (esta_adentro(rectangulo_boton_salir_juego, coordenada_x, coordenada_y)) {
-        return AccionMenu::SALIR_DEL_JUEGO;
+        if (despierto) {
+            return AccionMenu::SALIR_DEL_JUEGO;
+        }
+        cartel_confirmacion_activo = true;
+        accion_pendiente_confirmacion = AccionMenu::SALIR_DEL_JUEGO;
+        return AccionMenu::NINGUNA;
     }
 
     return AccionMenu::NINGUNA;
@@ -225,6 +293,25 @@ AccionMenu MenuEnJuego::procesar_clic_pestania_salir(int coordenada_x, int coord
 
 AccionMenu MenuEnJuego::clic_presionado(int coordenada_x, int coordenada_y) {
     if (!menu_abierto) {
+        return AccionMenu::NINGUNA;
+    }
+
+    if (cartel_confirmacion_activo) {
+        if (esta_adentro(rectangulo_boton_ok_salida, coordenada_x, coordenada_y)) {
+            cartel_confirmacion_activo = false;
+            AccionMenu accion_a_ejecutar = accion_pendiente_confirmacion;
+            accion_pendiente_confirmacion = AccionMenu::NINGUNA;
+            return accion_a_ejecutar;
+        }
+        if (esta_adentro(rectangulo_boton_cancelar_salida, coordenada_x, coordenada_y)) {
+            cartel_confirmacion_activo = false;
+            accion_pendiente_confirmacion = AccionMenu::NINGUNA;
+            return AccionMenu::NINGUNA;
+        }
+        if (!esta_adentro(rectangulo_cartel_confirmacion, coordenada_x, coordenada_y)) {
+            cartel_confirmacion_activo = false;
+            accion_pendiente_confirmacion = AccionMenu::NINGUNA;
+        }
         return AccionMenu::NINGUNA;
     }
 
@@ -256,7 +343,7 @@ void MenuEnJuego::raton_movido(int coordenada_x, int coordenada_y) {
     cursor_coordenada_x = coordenada_x;
     cursor_coordenada_y = coordenada_y;
 
-    if (deslizador_activo != DeslizadorArrastrado::NINGUNO) {
+    if (!cartel_confirmacion_activo && deslizador_activo != DeslizadorArrastrado::NINGUNO) {
         actualizar_valor_deslizador(coordenada_x, deslizador_activo);
     }
 }
@@ -345,6 +432,13 @@ void MenuEnJuego::dibujar_pestanias(SDL_Renderer* renderizador) const {
         rectangulo_pestania_animales,
         textura_pollito,
         ORIGEN_SPRITE_POLLITO);
+
+    dibujar_pestania(
+        renderizador,
+        PestaniaMenu::CENTRO_COMUNITARIO,
+        rectangulo_pestania_centro_comunitario,
+        textura_cursores,
+        ORIGEN_SPRITE_BOLSA);
 
     dibujar_pestania(
         renderizador,
@@ -613,6 +707,21 @@ void MenuEnJuego::dibujar_contenido_animales(
         1);
 }
 
+void MenuEnJuego::dibujar_contenido_centro_comunitario(SDL_Renderer* renderizador) const {
+    std::string titulo = "Centro Comunitario";
+    int titulo_x = rectangulo_ventana.x + (rectangulo_ventana.w - fuente_titulo.ancho(titulo)) / 2;
+    fuente_titulo.dibujar_con_sombra(renderizador, titulo, titulo_x, rectangulo_ventana.y + 40, 2);
+
+    // Separador decorativo
+    SDL_SetRenderDrawColor(renderizador, 139, 90, 43, 255);
+    SDL_RenderDrawLine(
+        renderizador,
+        rectangulo_ventana.x + 40,
+        rectangulo_ventana.y + 75,
+        rectangulo_ventana.x + rectangulo_ventana.w - 40,
+        rectangulo_ventana.y + 75);
+}
+
 void MenuEnJuego::dibujar_contenido_salir(SDL_Renderer* renderizador) const {
     std::string titulo = "Salir de la Partida";
     int titulo_x = rectangulo_ventana.x + (rectangulo_ventana.w - fuente_titulo.ancho(titulo)) / 2;
@@ -621,6 +730,67 @@ void MenuEnJuego::dibujar_contenido_salir(SDL_Renderer* renderizador) const {
     dibujar_boton_con_asset(renderizador, rectangulo_boton_volver_lobby, "Volver al Lobby");
 
     dibujar_boton_con_asset(renderizador, rectangulo_boton_salir_juego, "Salir del Juego");
+}
+
+void MenuEnJuego::dibujar_cartel_confirmacion(SDL_Renderer* renderizador) const {
+    SDL_SetRenderDrawBlendMode(renderizador, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(renderizador, 0, 0, 0, 110);
+    SDL_RenderFillRect(renderizador, &rectangulo_ventana);
+
+    dibujar_caja_nueve_rebanadas(
+        renderizador,
+        textura_marco,
+        rectangulo_cartel_confirmacion,
+        BORDE_CORTE_ASSET_MARCO,
+        BORDE_EN_PANTALLA_MARCO);
+
+    std::string titulo = "Estas seguro de salir?";
+    int titulo_coordenada_x =
+        rectangulo_cartel_confirmacion.x +
+        (rectangulo_cartel_confirmacion.w - fuente_opciones.ancho(titulo)) / 2;
+    int titulo_coordenada_y = rectangulo_cartel_confirmacion.y + 35;
+    fuente_opciones
+        .dibujar_con_sombra(renderizador, titulo, titulo_coordenada_x, titulo_coordenada_y, 2);
+
+    std::string subtitulo = "El progreso no guardado de hoy se perdera.";
+    int subtitulo_coordenada_x =
+        rectangulo_cartel_confirmacion.x +
+        (rectangulo_cartel_confirmacion.w - fuente_pequena.ancho(subtitulo)) / 2;
+    int subtitulo_coordenada_y = rectangulo_cartel_confirmacion.y + 75;
+    fuente_pequena.dibujar_con_sombra(
+        renderizador,
+        subtitulo,
+        subtitulo_coordenada_x,
+        subtitulo_coordenada_y,
+        1);
+
+    bool sobre_boton_ok =
+        esta_adentro(rectangulo_boton_ok_salida, cursor_coordenada_x, cursor_coordenada_y);
+    if (sobre_boton_ok) {
+        SDL_SetTextureColorMod(textura_cursores.ptr(), 255, 235, 200);
+    } else {
+        SDL_SetTextureColorMod(textura_cursores.ptr(), 255, 255, 255);
+    }
+    SDL_RenderCopy(
+        renderizador,
+        textura_cursores.ptr(),
+        &ORIGEN_SPRITE_BOTON_OK,
+        &rectangulo_boton_ok_salida);
+
+    bool sobre_boton_cancelar =
+        esta_adentro(rectangulo_boton_cancelar_salida, cursor_coordenada_x, cursor_coordenada_y);
+    if (sobre_boton_cancelar) {
+        SDL_SetTextureColorMod(textura_cursores.ptr(), 255, 235, 200);
+    } else {
+        SDL_SetTextureColorMod(textura_cursores.ptr(), 255, 255, 255);
+    }
+    SDL_RenderCopy(
+        renderizador,
+        textura_cursores.ptr(),
+        &ORIGEN_SPRITE_BOTON_CANCELAR,
+        &rectangulo_boton_cancelar_salida);
+
+    SDL_SetTextureColorMod(textura_cursores.ptr(), 255, 255, 255);
 }
 
 void MenuEnJuego::dibujar(SDL_Renderer* renderizador, const DatosAnimales& datos_animales) const {
@@ -640,9 +810,15 @@ void MenuEnJuego::dibujar(SDL_Renderer* renderizador, const DatosAnimales& datos
 
     if (pestania_activa == PestaniaMenu::ANIMALES) {
         dibujar_contenido_animales(renderizador, datos_animales);
+    } else if (pestania_activa == PestaniaMenu::CENTRO_COMUNITARIO) {
+        dibujar_contenido_centro_comunitario(renderizador);
     } else if (pestania_activa == PestaniaMenu::CONFIGURACION) {
         dibujar_contenido_configuracion(renderizador);
     } else if (pestania_activa == PestaniaMenu::SALIR) {
         dibujar_contenido_salir(renderizador);
+    }
+
+    if (cartel_confirmacion_activo) {
+        dibujar_cartel_confirmacion(renderizador);
     }
 }
