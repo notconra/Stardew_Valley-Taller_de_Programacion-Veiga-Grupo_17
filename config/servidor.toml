@@ -67,7 +67,7 @@ dias_por_estacion = 1
 probabilidad_de_lluvia = 0.2
 
 [juego.movimiento]
-velocidad = 200.0
+velocidad = 150.0
 # hitbox_x = 2
 # hitbox_y = 24
 # hitbox_ancho = 12
