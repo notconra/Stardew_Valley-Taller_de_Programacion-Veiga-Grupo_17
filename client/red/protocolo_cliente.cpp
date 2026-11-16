@@ -788,7 +788,6 @@ LoteDelCentro ProtocoloCliente::recibir_lote_del_centro() {
         throw ErrorProtocolo("lote desconocido");
     }
     lote.lote = static_cast<TipoLote>(tipo);
-    lote.clave = recibir_texto();
     lote.abrir = recibir_booleano();
     lote.nombre = recibir_texto();
     lote.completo = recibir_booleano();
@@ -804,6 +803,9 @@ LoteDelCentro ProtocoloCliente::recibir_lote_del_centro() {
         requisito.aportado = recibir_u32();
         lote.requisitos.push_back(requisito);
     }
+    lote.mapa = recibir_texto();
+    lote.columna = recibir_u32();
+    lote.fila = recibir_u32();
     return lote;
 }
 

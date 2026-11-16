@@ -292,7 +292,7 @@ void VentanaDeLote::dibujar_inventario(
 void VentanaDeLote::dibujar_encabezado(SDL_Renderer* renderer) const {
     iconos_de_lotes.dibujar(
         renderer,
-        lote->clave,
+        lote->lote,
         en_pantalla(MARCO_X, MARCO_Y, LADO_DEL_DIBUJO, LADO_DEL_DIBUJO));
 
     const int centro = panel_x + CENTRO_DEL_LADO_DERECHO * escala;

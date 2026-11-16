@@ -246,7 +246,6 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         alto_de_pantalla);
     IconosDeLotes iconos_de_lotes(renderizador.ptr());
     MarcasDeLotes marcas_de_lotes(iconos_de_lotes, graficos);
-    marcas_de_lotes.cargar_mapa(configuracion_de(mapa_actual));
     std::optional<VentanaDeLote> ventana_de_lote;
     ventana_de_lote.emplace(
         renderizador.ptr(),
@@ -353,7 +352,6 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             hud_mercado.cerrar();
             ultimo_riego.reset();
             ventana_de_lote->cerrar();
-            marcas_de_lotes.cargar_mapa(configuracion_de(mapa_actual));
             camara = camara_para(mapa_de(mapa_actual));
         }
         efectos.cambiar_lluvia(
@@ -1153,7 +1151,7 @@ void VistaPartida::dibujar(
         }
     }
     mapa.dibujar_sobre_los_jugadores(renderer, camara.x(), camara.y());
-    marcas_de_lotes.dibujar(renderer, camara.x(), camara.y());
+    marcas_de_lotes.dibujar(renderer, mapa_actual, camara.x(), camara.y());
     objetos.dibujar_sobre_los_jugadores(
         renderer,
         ultimo_estado_juego,
