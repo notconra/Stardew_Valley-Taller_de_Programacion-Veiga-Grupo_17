@@ -10,10 +10,12 @@
 #include "../../persistencia/datos_partida_guardada.h"
 #include "../centro_comunitario/catalogo_lotes.h"
 #include "../centro_comunitario/centro_comunitario.h"
+#include "../centro_comunitario/seguimiento_pelea.h"
 #include "../jugadores/personaje.h"
 #include "../notificador.h"
 #include "../recursos/recursos_de_juego.h"
 #include "../sector/gestor_de_sectores.h"
+#include "controlador_de_dia.h"
 
 // El centro comunitario de la partida y lo que hacen los jugadores con él: abrir un lote (con
 // AccionAbrirLote, clic derecho sobre su lugar en el mapa), donar ítems y donar monedas. Saca del
@@ -32,21 +34,36 @@
 //  - Pelea: la vida y la energía máximas suben un 25%.
 //  - Dinero: el descuento del mercado del día siguiente (lo consulta el mercado, acá no se da
 //  nada).
+//
+// También sigue lo que hace cada jugador en la mazmorra (con SeguimientoDePelea) y cumple los
+// logros del set de pelea: AccionAtacar le avisa cada muerte y ControladorDeEnemigos cada golpe que
+// recibe un jugador; en qué piso está cada uno lo mira solo, en cada tick.
 class ControladorDelCentro {
 private:
     std::map<uint32_t, Personaje>& personajes;
     GestorDeSectores& sectores;
     const RecursosDeJuego& recursos;
     Notificador& notificador;
+    const ControladorDelDia& dia;
     CentroComunitario centro;
+    SeguimientoDePelea seguimiento;
 
     // Dona lo que el lote acepte de esa ranura del inventario (índice absoluto, como en la ventana
     // del cofre) y se lo saca al jugador.
-    void donar_item(Personaje& personaje, TipoLote lote, uint8_t indice_ranura, uint32_t dia);
+    void donar_item(Personaje& personaje, TipoLote lote, uint8_t indice_ranura);
 
     // Cobra al jugador las monedas que pide el lote y lo completa. No cobra nada si el lote no
     // pide monedas, ya está completo o al jugador no le alcanza.
-    void donar_monedas(Personaje& personaje, TipoLote lote, uint32_t dia);
+    void donar_monedas(Personaje& personaje, TipoLote lote);
+
+    // Le avisa al seguimiento en qué piso de la mazmorra está cada jugador y, al que bajó de un
+    // piso con una calavera sin que lo lastimaran, le cumple el logro.
+    void seguir_a_los_jugadores();
+    // El piso de la mazmorra donde está el jugador, o 0 si está afuera, desmayado o desconectado.
+    int piso_de(const Personaje& personaje) const;
+    bool hay_una_calavera_en_el_piso(int piso) const;
+    void cumplir_logro(LogroDePelea logro);
+    uint32_t dia_de_hoy() const;
 
     void avisar_a_todos(TipoLote lote);
 
@@ -58,6 +75,7 @@ private:
     void dar_semillas_a_todos();
     void dar_monedas_a_todos(uint32_t cantidad);
     void dar_animales_a_la_granja();
+    // Agrega el animal a la granja. Devuelve lo que hay que pagarle a cada jugador si no entró.
     uint32_t agregar_animal_o_cotizarlo(TipoAnimal tipo);
     void dar_mejora_de_pelea_a_todos();
     void avisar_en_el_chat(const std::string& texto);
@@ -65,12 +83,22 @@ private:
 public:
     ControladorDelCentro(
         std::map<uint32_t, Personaje>& personajes, GestorDeSectores& sectores,
-        const RecursosDeJuego& recursos, Notificador& notificador,
+        const RecursosDeJuego& recursos, Notificador& notificador, const ControladorDelDia& dia,
         const DatosCentroGuardado& guardado);
 
-    // DonarAlLote y DonarMonedasAlLote. Devuelve true si consumió el comando. "dia" es el día del
-    // juego.
-    bool atender(Personaje& personaje, const ComandoCliente& comando, uint32_t dia);
+    // DonarAlLote y DonarMonedasAlLote. Devuelve true si consumió el comando.
+    bool atender(Personaje& personaje, const ComandoCliente& comando);
+
+    // El jugador le dio el golpe final a ese enemigo de su sector.
+    void al_matar_enemigo(const Personaje& personaje, const Sector& sector, const Enemigo& muerto);
+
+    // Un enemigo lastimó al jugador.
+    void al_lastimar_un_enemigo_a(uint32_t id_jugador);
+
+    // Cheats: da por completo el lote con esa clave (la del TMX) o todos los que falten, con sus
+    // premios. El primero devuelve false si no hay un lote con esa clave o ya estaba completo.
+    bool completar_lote(const std::string& clave);
+    void completar_todos_los_lotes();
 
     // Le manda al jugador el lote con esa clave (la del TMX) para que abra su ventana. Devuelve
     // false si no hay un lote con esa clave.

@@ -19,7 +19,8 @@ Mundo::Mundo(
           notificador_de_juego,
           [this](Personaje& personaje) { controlador_de_mazmorra.al_desconectarse(personaje); }),
       controlador_del_centro(
-          personajes, sectores, recursos_de_juego, notificador_de_juego, datos_guardados.centro),
+          personajes, sectores, recursos_de_juego, notificador_de_juego, controlador_del_dia,
+          datos_guardados.centro),
       controlador_de_acciones(
           sectores, personajes, recursos_de_juego, notificador_de_juego, controlador_de_mercado,
           controlador_del_dia, controlador_del_centro,
@@ -30,7 +31,7 @@ Mundo::Mundo(
       controlador_de_drops(
           sectores, personajes, notificador_de_juego, recursos_de_juego.juego.drops),
       controlador_de_mazmorra(recursos_de_juego, sectores, datos_guardados.niveles_mazmorra),
-      controlador_de_enemigos(sectores, personajes, notificador_de_juego),
+      controlador_de_enemigos(sectores, personajes, notificador_de_juego, controlador_del_centro),
       controlador_de_trampas(sectores, personajes, notificador_de_juego),
       controlador_de_cultivos(sectores, notificador_de_juego),
       controlador_de_regalos(
@@ -191,7 +192,7 @@ void Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
     if (controlador_de_jugador.atender(personaje, comando)) {
         return;
     }
-    if (controlador_del_centro.atender(personaje, comando, obtener_dia())) {
+    if (controlador_del_centro.atender(personaje, comando)) {
         return;
     }
     if (controlador_de_acciones.atender(personaje, comando)) {
@@ -382,6 +383,14 @@ void Mundo::cambiar_estacion(Estacion estacion) {
 
 DatosCentroGuardado Mundo::obtener_centro_guardado() const {
     return controlador_del_centro.obtener_guardado();
+}
+
+bool Mundo::completar_lote_del_centro(const std::string& clave) {
+    return controlador_del_centro.completar_lote(clave);
+}
+
+void Mundo::completar_todos_los_lotes_del_centro() {
+    controlador_del_centro.completar_todos_los_lotes();
 }
 
 const CentroComunitario& Mundo::centro_comunitario() const {

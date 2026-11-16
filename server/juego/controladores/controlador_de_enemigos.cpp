@@ -9,8 +9,9 @@
 #include "../enemigos/gestor_de_enemigos.h"
 
 ControladorDeEnemigos::ControladorDeEnemigos(
-    GestorDeSectores& sectores, std::map<uint32_t, Personaje>& personajes, Notificador& notificador)
-    : sectores(sectores), personajes(personajes), notificador(notificador) {
+    GestorDeSectores& sectores, std::map<uint32_t, Personaje>& personajes, Notificador& notificador,
+    ControladorDelCentro& centro)
+    : sectores(sectores), personajes(personajes), notificador(notificador), centro(centro) {
 }
 
 void ControladorDeEnemigos::derramar_sangre_en_sector(Sector& sector) {
@@ -65,6 +66,9 @@ void ControladorDeEnemigos::atacar_en_sector(Sector& sector) {
         const auto personaje = personajes.find(golpe.id_jugador);
         if (personaje != personajes.end()) {
             personaje->second.recibir_golpe(golpe.danio);
+            if (golpe.danio > 0) {
+                centro.al_lastimar_un_enemigo_a(golpe.id_jugador);
+            }
             if (personaje->second.esta_inconsciente()) {
                 // Cae donde está: se frena. El fin de su día queda para cuando exista el ciclo
                 // de días (ver Mundo::atender, que ya le ignora los comandos).

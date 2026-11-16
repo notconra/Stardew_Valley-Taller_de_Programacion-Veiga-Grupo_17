@@ -24,16 +24,22 @@ const TipoItem SEMILLAS_DEL_PREMIO[] = {
 ControladorDelCentro::ControladorDelCentro(
     std::map<uint32_t, Personaje>& personajes_de_la_partida, GestorDeSectores& gestor_de_sectores,
     const RecursosDeJuego& recursos_de_juego, Notificador& notificador_de_juego,
-    const DatosCentroGuardado& guardado)
+    const ControladorDelDia& controlador_del_dia, const DatosCentroGuardado& guardado)
     : personajes(personajes_de_la_partida),
       sectores(gestor_de_sectores),
       recursos(recursos_de_juego),
       notificador(notificador_de_juego),
+      dia(controlador_del_dia),
       centro(recursos_de_juego.catalogo_de_lotes) {
     centro.cargar(guardado);
 }
 
+uint32_t ControladorDelCentro::dia_de_hoy() const {
+    return dia.hora().dia;
+}
+
 void ControladorDelCentro::actualizar() {
+    seguir_a_los_jugadores();
     for (TipoLote lote : centro.tomar_lotes_completados()) {
         entregar_premio(lote);
     }
@@ -130,14 +136,13 @@ void ControladorDelCentro::avisar_en_el_chat(const std::string& texto) {
     notificador.a_todos(MensajeDeChat::del_sistema(texto));
 }
 
-bool ControladorDelCentro::atender(
-    Personaje& personaje, const ComandoCliente& comando, uint32_t dia) {
+bool ControladorDelCentro::atender(Personaje& personaje, const ComandoCliente& comando) {
     if (const DonarAlLote* pedido = std::get_if<DonarAlLote>(&comando)) {
-        donar_item(personaje, pedido->lote, pedido->indice_ranura, dia);
+        donar_item(personaje, pedido->lote, pedido->indice_ranura);
         return true;
     }
     if (const DonarMonedasAlLote* pedido = std::get_if<DonarMonedasAlLote>(&comando)) {
-        donar_monedas(personaje, pedido->lote, dia);
+        donar_monedas(personaje, pedido->lote);
         return true;
     }
     return false;
@@ -152,8 +157,7 @@ bool ControladorDelCentro::abrir_lote(const Personaje& personaje, const std::str
     return true;
 }
 
-void ControladorDelCentro::donar_item(
-    Personaje& personaje, TipoLote lote, uint8_t indice_ranura, uint32_t dia) {
+void ControladorDelCentro::donar_item(Personaje& personaje, TipoLote lote, uint8_t indice_ranura) {
     if (!personaje.inventario.indice_valido(indice_ranura)) {
         return;
     }
@@ -162,18 +166,84 @@ void ControladorDelCentro::donar_item(
     if (aceptadas == 0 || !personaje.inventario.quitar_item(indice_ranura, aceptadas)) {
         return;
     }
-    centro.donar_item(lote, item, dia);
+    centro.donar_item(lote, item, dia_de_hoy());
     notificador.a_jugador(personaje.id_jugador, personaje.actualizacion_de_inventario());
     avisar_a_todos(lote);
 }
 
-void ControladorDelCentro::donar_monedas(Personaje& personaje, TipoLote lote, uint32_t dia) {
+void ControladorDelCentro::donar_monedas(Personaje& personaje, TipoLote lote) {
     const uint32_t pedidas = centro.monedas_pedidas(lote);
     if (pedidas == 0 || !personaje.gastar_monedas(pedidas)) {
         return;
     }
-    centro.donar_monedas(lote, dia);
+    centro.donar_monedas(lote, dia_de_hoy());
     avisar_a_todos(lote);
+}
+
+void ControladorDelCentro::al_matar_enemigo(
+    const Personaje& personaje, const Sector& sector, const Enemigo& muerto) {
+    const std::optional<LogroDePelea> logro =
+        seguimiento.mato_a(personaje.id_jugador, sector.nivel_de_mazmorra, muerto, sector.enemigos);
+    if (logro.has_value()) {
+        cumplir_logro(*logro);
+    }
+}
+
+void ControladorDelCentro::al_lastimar_un_enemigo_a(uint32_t id_jugador) {
+    seguimiento.recibio_danio_de_un_enemigo(id_jugador);
+}
+
+void ControladorDelCentro::seguir_a_los_jugadores() {
+    for (const auto& [id_jugador, personaje] : personajes) {
+        const std::optional<int> piso_sin_danio =
+            seguimiento.ubicar(id_jugador, piso_de(personaje));
+        if (piso_sin_danio.has_value() && hay_una_calavera_en_el_piso(*piso_sin_danio)) {
+            cumplir_logro(LogroDePelea::CALAVERA);
+        }
+    }
+}
+
+int ControladorDelCentro::piso_de(const Personaje& personaje) const {
+    if (!personaje.conectado || personaje.esta_inconsciente() ||
+        !sectores.existe(personaje.mapa_actual)) {
+        return 0;
+    }
+    return sectores.en(personaje.mapa_actual).nivel_de_mazmorra;
+}
+
+bool ControladorDelCentro::hay_una_calavera_en_el_piso(int piso) const {
+    for (const std::string& id_mapa : sectores.ids_de_sectores()) {
+        const Sector& sector = sectores.en(id_mapa);
+        if (sector.nivel_de_mazmorra == piso &&
+            (sector.enemigos.hay_de_tipo(TipoEnemigo::SKULL_AZUL) ||
+             sector.enemigos.hay_de_tipo(TipoEnemigo::SKULL_VERDE))) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void ControladorDelCentro::cumplir_logro(LogroDePelea logro) {
+    if (centro.cumplir_logro(logro, dia_de_hoy())) {
+        avisar_a_todos(TipoLote::PELEA);
+    }
+}
+
+bool ControladorDelCentro::completar_lote(const std::string& clave) {
+    const DefinicionDeLote* lote = recursos.catalogo_de_lotes.buscar_por_clave(clave);
+    if (lote == nullptr || !centro.completar(lote->tipo, dia_de_hoy())) {
+        return false;
+    }
+    avisar_a_todos(lote->tipo);
+    return true;
+}
+
+void ControladorDelCentro::completar_todos_los_lotes() {
+    for (const auto& [tipo, definicion] : recursos.catalogo_de_lotes.definiciones()) {
+        if (centro.completar(tipo, dia_de_hoy())) {
+            avisar_a_todos(tipo);
+        }
+    }
 }
 
 void ControladorDelCentro::avisar_a_todos(TipoLote lote) {

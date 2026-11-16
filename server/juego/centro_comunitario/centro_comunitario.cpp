@@ -100,6 +100,19 @@ bool CentroComunitario::cumplir_logro(LogroDePelea logro, uint32_t dia) {
     return false;
 }
 
+bool CentroComunitario::completar(TipoLote tipo, uint32_t dia) {
+    const DefinicionDeLote* definicion = catalogo.buscar(tipo);
+    EstadoDeLote* estado = estado_de(tipo);
+    if (definicion == nullptr || estado == nullptr || estado->completo) {
+        return false;
+    }
+    for (std::size_t i = 0; i < definicion->requisitos.size(); ++i) {
+        estado->aportado[i] = definicion->requisitos[i].cantidad;
+    }
+    completar_si_corresponde(tipo, dia);
+    return true;
+}
+
 void CentroComunitario::completar_si_corresponde(TipoLote tipo, uint32_t dia) {
     const DefinicionDeLote* definicion = catalogo.buscar(tipo);
     EstadoDeLote* estado = estado_de(tipo);
@@ -182,8 +195,6 @@ void CentroComunitario::cargar(const DatosCentroGuardado& guardado) {
         if (estado == nullptr) {
             continue;
         }
-        // Si el catálogo cambió y el guardado tiene otra cantidad de requisitos, se toma lo que
-        // coincida.
         for (std::size_t i = 0; i < estado->aportado.size() && i < lote.aportado.size(); ++i) {
             estado->aportado[i] = lote.aportado[i];
         }

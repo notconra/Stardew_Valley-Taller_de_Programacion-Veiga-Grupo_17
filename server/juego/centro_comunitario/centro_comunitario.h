@@ -67,6 +67,10 @@ public:
     // Marca un logro del lote de pelea. Devuelve false si ya estaba cumplido.
     bool cumplir_logro(LogroDePelea logro, uint32_t dia);
 
+    // Da por cumplido todo lo que pide el lote (para los cheats). Devuelve false si el lote no
+    // existe o ya estaba completo.
+    bool completar(TipoLote tipo, uint32_t dia);
+
     bool esta_completo(TipoLote tipo) const;
     bool esta_terminado() const;
 

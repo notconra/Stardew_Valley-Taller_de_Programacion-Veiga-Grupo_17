@@ -5,19 +5,23 @@
 
 #include "../../../common/modo_uso.h"
 #include "../../../common/tipo_item.h"
+#include "../controladores/controlador_del_centro.h"
 #include "accion.h"
 
 // Clic izquierdo con la espada equipada sobre una casilla con un enemigo vivo. Le aplica daño al
-// enemigo, le gasta energía al jugador por el esfuerzo del golpe y, si lo mata, suelta su oro.
+// enemigo, le gasta energía al jugador por el esfuerzo del golpe y, si lo mata, suelta su oro y le
+// avisa al centro comunitario (por los logros del set de pelea).
 class AccionAtacar : public Accion {
 private:
     static constexpr uint16_t DURACION_POR_DEFECTO = 18;
     // Ticks que el jugador queda ocupado después de un golpe: es el tiempo mínimo entre golpes.
     const uint16_t duracion;
+    ControladorDelCentro& centro;
 
 public:
-    explicit AccionAtacar(uint16_t duracion_en_ticks = DURACION_POR_DEFECTO)
-        : duracion(duracion_en_ticks) {
+    explicit AccionAtacar(
+        ControladorDelCentro& centro, uint16_t duracion_en_ticks = DURACION_POR_DEFECTO)
+        : duracion(duracion_en_ticks), centro(centro) {
     }
 
     TipoAccion tipo() const override {

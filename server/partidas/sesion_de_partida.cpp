@@ -15,6 +15,7 @@
 #include "../juego/cheats/comando_dinero.h"
 #include "../juego/cheats/comando_estacion.h"
 #include "../juego/cheats/comando_lluvia.h"
+#include "../juego/cheats/comando_lote.h"
 #include "../juego/cheats/comando_semillas.h"
 
 SesionDePartida::SesionDePartida(
@@ -37,6 +38,7 @@ SesionDePartida::SesionDePartida(
     chat.agregar_comando(std::make_unique<ComandoDinero>(mundo));
     chat.agregar_comando(std::make_unique<ComandoEstacion>(mundo));
     chat.agregar_comando(std::make_unique<ComandoLluvia>(mundo));
+    chat.agregar_comando(std::make_unique<ComandoLote>(mundo));
     try {
         start();
     } catch (...) {

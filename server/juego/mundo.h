@@ -135,6 +135,10 @@ public:
     HoraDelJuego hora_actual() const;
 
     // Centro comunitario. Donan desde el inventario o la billetera de un jugador conectado.
+    // Cheats: completa el lote con esa clave (false si no existe o ya estaba completo) o todos.
+    bool completar_lote_del_centro(const std::string& clave);
+    void completar_todos_los_lotes_del_centro();
+
     const CentroComunitario& centro_comunitario() const;
 
     Mundo(const Mundo&) = delete;

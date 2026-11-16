@@ -46,8 +46,9 @@ ControladorDeAcciones::ControladorDeAcciones(
     acciones.push_back(std::make_unique<AccionPlantar>());
     acciones.push_back(std::make_unique<AccionInteractuarCofre>());
     acciones.push_back(std::make_unique<AccionColocar>());
-    acciones.push_back(
-        std::make_unique<AccionAtacar>(static_cast<uint16_t>(duraciones.duracion_atacar_en_ticks)));
+    acciones.push_back(std::make_unique<AccionAtacar>(
+        centro,
+        static_cast<uint16_t>(duraciones.duracion_atacar_en_ticks)));
     acciones.push_back(std::make_unique<AccionInteractuarMercado>(mercado, dia));
     acciones.push_back(std::make_unique<AccionAbrirLote>(centro));
 }
@@ -113,9 +114,6 @@ CasillaConsultada ControladorDeAcciones::consultar(
         return respuesta;
     }
 
-    // La pala, el pico, la regadera y las semillas: una casilla en verde solo si harían algo. Igual
-    // que al usarlos, el pico primero rompe lo que haya en la casilla y si no hay nada, vuelve la
-    // tierra a común.
     if (!alcanza) {
         return respuesta;
     }
