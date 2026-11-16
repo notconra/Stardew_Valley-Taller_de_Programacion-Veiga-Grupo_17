@@ -269,16 +269,19 @@ const Transicion* Mapa::transicion_en(const Rectangulo& zona) const {
     return nullptr;
 }
 
-const Transicion* Mapa::transicion_en_casilla(int columna, int fila) const {
-    if (!esta_dentro(columna, fila)) {
-        return nullptr;
-    }
-    const Rectangulo casilla{
+Rectangulo Mapa::rectangulo_de_casilla(int columna, int fila) const {
+    return Rectangulo{
         columna * ancho_de_casilla,
         fila * alto_de_casilla,
         ancho_de_casilla,
         alto_de_casilla};
-    return transicion_en(casilla);
+}
+
+const Transicion* Mapa::transicion_en_casilla(int columna, int fila) const {
+    if (!esta_dentro(columna, fila)) {
+        return nullptr;
+    }
+    return transicion_en(rectangulo_de_casilla(columna, fila));
 }
 
 bool Mapa::cerca_de_una_transicion(int columna, int fila) const {
@@ -298,11 +301,7 @@ const Puesto* Mapa::puesto_en_casilla(int columna, int fila) const {
     if (!esta_dentro(columna, fila)) {
         return nullptr;
     }
-    const Rectangulo casilla{
-        columna * ancho_de_casilla,
-        fila * alto_de_casilla,
-        ancho_de_casilla,
-        alto_de_casilla};
+    const Rectangulo casilla = rectangulo_de_casilla(columna, fila);
     for (const Puesto& puesto : puestos) {
         if (se_superponen(casilla, puesto.zona)) {
             return &puesto;
@@ -315,11 +314,7 @@ const LoteDelMapa* Mapa::lote_en_casilla(int columna, int fila) const {
     if (!esta_dentro(columna, fila)) {
         return nullptr;
     }
-    const Rectangulo casilla{
-        columna * ancho_de_casilla,
-        fila * alto_de_casilla,
-        ancho_de_casilla,
-        alto_de_casilla};
+    const Rectangulo casilla = rectangulo_de_casilla(columna, fila);
     for (const LoteDelMapa& lote : lotes) {
         if (se_superponen(casilla, lote.zona)) {
             return &lote;

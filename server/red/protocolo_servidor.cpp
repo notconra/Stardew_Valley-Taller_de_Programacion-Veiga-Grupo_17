@@ -650,7 +650,6 @@ void ProtocoloServidor::enviar_evento_jugadores_de_la_partida(
 void ProtocoloServidor::enviar_evento_lote_del_centro(const LoteDelCentro& lote) {
     enviar_tipo(TipoMensaje::LOTE_DEL_CENTRO);
     enviar_u8(static_cast<uint8_t>(lote.lote));
-    enviar_texto(lote.clave);
     enviar_booleano(lote.abrir);
     enviar_texto(lote.nombre);
     enviar_booleano(lote.completo);
@@ -663,6 +662,9 @@ void ProtocoloServidor::enviar_evento_lote_del_centro(const LoteDelCentro& lote)
         enviar_u32(requisito.cantidad);
         enviar_u32(requisito.aportado);
     }
+    enviar_texto(lote.mapa);
+    enviar_u32(lote.columna);
+    enviar_u32(lote.fila);
 }
 
 void ProtocoloServidor::enviar_evento_regalos_pendientes(const RegalosPendientes& pendientes) {

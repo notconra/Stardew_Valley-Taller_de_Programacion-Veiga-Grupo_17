@@ -6,17 +6,13 @@
 #include <utility>
 #include <variant>
 
-#include "../../../common/modo_uso.h"
-#include "../geometria.h"
-
 #define REMITENTE_DE_LOS_PREMIOS "Centro comunitario"
 #define SEMILLAS_DEL_PREMIO_DE_CULTIVOS 5
 #define MONEDAS_DEL_PREMIO_DE_METALES 500
 #define VACAS_DEL_PREMIO_DE_ANIMALES 1
 #define GALLINAS_DEL_PREMIO_DE_ANIMALES 2
-
-#define PRECIO_PROVISORIO_DE_LA_VACA 1500
-#define PRECIO_PROVISORIO_DE_LA_GALLINA 800
+// El mapa donde viven los animales.
+#define MAPA_DE_LOS_ANIMALES "granja"
 
 const TipoItem SEMILLAS_DEL_PREMIO[] = {
     TipoItem::SEMILLA_FRUTILLA,
@@ -28,12 +24,11 @@ const TipoItem SEMILLAS_DEL_PREMIO[] = {
 ControladorDelCentro::ControladorDelCentro(
     std::map<uint32_t, Personaje>& personajes_de_la_partida, GestorDeSectores& gestor_de_sectores,
     const RecursosDeJuego& recursos_de_juego, Notificador& notificador_de_juego,
-    AgregarAnimalALaGranja agregar_animal_a_la_granja, const DatosCentroGuardado& guardado)
+    const DatosCentroGuardado& guardado)
     : personajes(personajes_de_la_partida),
       sectores(gestor_de_sectores),
       recursos(recursos_de_juego),
       notificador(notificador_de_juego),
-      agregar_animal(std::move(agregar_animal_a_la_granja)),
       centro(recursos_de_juego.catalogo_de_lotes) {
     centro.cargar(guardado);
 }
@@ -103,16 +98,26 @@ void ControladorDelCentro::dar_monedas_a_todos(uint32_t cantidad) {
 void ControladorDelCentro::dar_animales_a_la_granja() {
     uint32_t a_pagar = 0;
     for (int i = 0; i < VACAS_DEL_PREMIO_DE_ANIMALES; ++i) {
-        if (!agregar_animal(TipoAnimal::VACA)) {
-            a_pagar += PRECIO_PROVISORIO_DE_LA_VACA;
-        }
+        a_pagar += agregar_animal_o_cotizarlo(TipoAnimal::VACA);
     }
     for (int i = 0; i < GALLINAS_DEL_PREMIO_DE_ANIMALES; ++i) {
-        if (!agregar_animal(TipoAnimal::GALLINA)) {
-            a_pagar += PRECIO_PROVISORIO_DE_LA_GALLINA;
-        }
+        a_pagar += agregar_animal_o_cotizarlo(TipoAnimal::GALLINA);
     }
     dar_monedas_a_todos(a_pagar);
+}
+
+uint32_t ControladorDelCentro::agregar_animal_o_cotizarlo(TipoAnimal tipo) {
+    const ConfiguracionAnimalServidor& animal =
+        tipo == TipoAnimal::VACA ? recursos.mercado.vaca : recursos.mercado.gallina;
+    if (sectores.existe(MAPA_DE_LOS_ANIMALES)) {
+        Sector& granja = sectores.en(MAPA_DE_LOS_ANIMALES);
+        const bool hay_lugar =
+            granja.animales.cantidad_de(tipo) < static_cast<int>(animal.tope_por_granja);
+        if (hay_lugar && granja.agregar_animal(notificador, tipo)) {
+            return 0;
+        }
+    }
+    return animal.precio_de_compra;
 }
 
 void ControladorDelCentro::dar_mejora_de_pelea_a_todos() {
@@ -122,43 +127,11 @@ void ControladorDelCentro::dar_mejora_de_pelea_a_todos() {
 }
 
 void ControladorDelCentro::avisar_en_el_chat(const std::string& texto) {
-    notificador.a_todos(
-        MensajeDeChat{CanalDeChat::SISTEMA, "(Centro comunitario)", std::string(), texto});
-}
-
-const DefinicionDeLote* ControladorDelCentro::lote_clickeado(
-    const Personaje& personaje, const UsarItem& uso) const {
-    if (uso.modo != ModoUso::SECUNDARIO || !uso.tiene_casilla_objetivo ||
-        !sectores.existe(personaje.mapa_actual)) {
-        return nullptr;
-    }
-    const Sector& sector = sectores.en(personaje.mapa_actual);
-    const Casilla objetivo{
-        static_cast<int>(uso.columna_objetivo),
-        static_cast<int>(uso.fila_objetivo)};
-    const LoteDelMapa* lote = sector.mapa.lote_en_casilla(objetivo.columna, objetivo.fila);
-    if (lote == nullptr) {
-        return nullptr;
-    }
-    const std::optional<Casilla> propia =
-        sector.jugadores.casilla_del_jugador(personaje.id_jugador);
-    if (!propia.has_value() ||
-        distancia_en_casillas(*propia, objetivo) > recursos.juego.acciones.alcance_en_casillas) {
-        return nullptr;
-    }
-    return recursos.catalogo_de_lotes.buscar_por_clave(lote->clave);
+    notificador.a_todos(MensajeDeChat::del_sistema(texto));
 }
 
 bool ControladorDelCentro::atender(
     Personaje& personaje, const ComandoCliente& comando, uint32_t dia) {
-    if (const UsarItem* uso = std::get_if<UsarItem>(&comando)) {
-        const DefinicionDeLote* lote = lote_clickeado(personaje, *uso);
-        if (lote == nullptr) {
-            return false;
-        }
-        notificador.a_jugador(personaje.id_jugador, estado_del_lote(lote->tipo, true));
-        return true;
-    }
     if (const DonarAlLote* pedido = std::get_if<DonarAlLote>(&comando)) {
         donar_item(personaje, pedido->lote, pedido->indice_ranura, dia);
         return true;
@@ -170,30 +143,37 @@ bool ControladorDelCentro::atender(
     return false;
 }
 
-uint16_t ControladorDelCentro::donar_item(
+bool ControladorDelCentro::abrir_lote(const Personaje& personaje, const std::string& clave) {
+    const DefinicionDeLote* lote = recursos.catalogo_de_lotes.buscar_por_clave(clave);
+    if (lote == nullptr) {
+        return false;
+    }
+    notificador.a_jugador(personaje.id_jugador, estado_del_lote(lote->tipo, true));
+    return true;
+}
+
+void ControladorDelCentro::donar_item(
     Personaje& personaje, TipoLote lote, uint8_t indice_ranura, uint32_t dia) {
     if (!personaje.inventario.indice_valido(indice_ranura)) {
-        return 0;
+        return;
     }
     const RanuraInventario item = personaje.inventario.ranura(indice_ranura);
     const uint16_t aceptadas = centro.cuanto_acepta(lote, item);
     if (aceptadas == 0 || !personaje.inventario.quitar_item(indice_ranura, aceptadas)) {
-        return 0;
+        return;
     }
     centro.donar_item(lote, item, dia);
     notificador.a_jugador(personaje.id_jugador, personaje.actualizacion_de_inventario());
     avisar_a_todos(lote);
-    return aceptadas;
 }
 
-bool ControladorDelCentro::donar_monedas(Personaje& personaje, TipoLote lote, uint32_t dia) {
+void ControladorDelCentro::donar_monedas(Personaje& personaje, TipoLote lote, uint32_t dia) {
     const uint32_t pedidas = centro.monedas_pedidas(lote);
     if (pedidas == 0 || !personaje.gastar_monedas(pedidas)) {
-        return false;
+        return;
     }
     centro.donar_monedas(lote, dia);
     avisar_a_todos(lote);
-    return true;
 }
 
 void ControladorDelCentro::avisar_a_todos(TipoLote lote) {
@@ -210,7 +190,7 @@ LoteDelCentro ControladorDelCentro::estado_del_lote(TipoLote lote, bool abrir) c
         return estado;
     }
     estado.nombre = definicion->nombre;
-    estado.clave = definicion->clave;
+    completar_lugar(estado, definicion->clave);
     for (std::size_t i = 0; i < definicion->requisitos.size(); ++i) {
         const Requisito& requisito = definicion->requisitos[i];
         estado.requisitos.push_back(RequisitoDeLote{
@@ -222,6 +202,23 @@ LoteDelCentro ControladorDelCentro::estado_del_lote(TipoLote lote, bool abrir) c
             centro.aportado(lote, i)});
     }
     return estado;
+}
+
+void ControladorDelCentro::completar_lugar(LoteDelCentro& estado, const std::string& clave) const {
+    auto mapa = recursos.mapas.find(MAPA_DEL_CENTRO);
+    if (mapa == recursos.mapas.end()) {
+        return;
+    }
+    for (const LoteDelMapa& lote : mapa->second.obtener_lotes()) {
+        if (lote.clave == clave) {
+            estado.mapa = MAPA_DEL_CENTRO;
+            estado.columna =
+                static_cast<uint32_t>(lote.zona.x / mapa->second.ancho_de_casilla_en_pixeles());
+            estado.fila =
+                static_cast<uint32_t>(lote.zona.y / mapa->second.alto_de_casilla_en_pixeles());
+            return;
+        }
+    }
 }
 
 std::string ControladorDelCentro::mapa_para(const std::string& destino) const {

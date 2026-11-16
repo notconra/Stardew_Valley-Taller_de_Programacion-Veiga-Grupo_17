@@ -14,11 +14,12 @@ ControladorDeEnemigos::ControladorDeEnemigos(
 }
 
 void ControladorDeEnemigos::derramar_sangre_en_sector(Sector& sector) {
-    constexpr int UMBRAL_GRAVEMENTE_HERIDO = Personaje::VIDA_MAXIMA / 5;
     std::vector<Casilla> heridos;
     for (uint32_t id_jugador : sector.jugadores.ids()) {
         const auto personaje = personajes.find(id_jugador);
-        if (personaje == personajes.end() || personaje->second.vida > UMBRAL_GRAVEMENTE_HERIDO) {
+        // Gravemente herido: con la quinta parte de su vida máxima o menos.
+        if (personaje == personajes.end() ||
+            personaje->second.vida > personaje->second.vida_maxima() / 5) {
             continue;
         }
         const std::optional<Casilla> casilla = sector.jugadores.casilla_del_jugador(id_jugador);

@@ -88,6 +88,9 @@ private:
     // cargadas, porque comprueba que la casilla de atención no esté bloqueada.
     void agregar_puesto(const PuestoTMX& puesto_tmx, const std::string& ruta_tmx);
 
+    // El rectángulo (en píxeles) que ocupa esa casilla.
+    Rectangulo rectangulo_de_casilla(int columna, int fila) const;
+
     // Suma "propiedad" a toda casilla no vacía de la capa. Lanza std::runtime_error si la capa
     // no coincide con el tamaño del mapa.
     void marcar(const std::vector<int>& capa, uint8_t propiedad, const std::string& nombre_capa);

@@ -18,9 +18,11 @@ Mundo::Mundo(
           recursos_de_juego.juego.dia, ticks_por_segundo, sectores, personajes, recursos_de_juego,
           notificador_de_juego,
           [this](Personaje& personaje) { controlador_de_mazmorra.al_desconectarse(personaje); }),
+      controlador_del_centro(
+          personajes, sectores, recursos_de_juego, notificador_de_juego, datos_guardados.centro),
       controlador_de_acciones(
           sectores, personajes, recursos_de_juego, notificador_de_juego, controlador_de_mercado,
-          controlador_del_dia,
+          controlador_del_dia, controlador_del_centro,
           [this](Personaje& personaje, const Transicion& transicion) {
               resolver_transicion(personaje, transicion);
           }),
@@ -31,14 +33,8 @@ Mundo::Mundo(
       controlador_de_enemigos(sectores, personajes, notificador_de_juego),
       controlador_de_trampas(sectores, personajes, notificador_de_juego),
       controlador_de_cultivos(sectores, notificador_de_juego),
-      controlador_de_regalos(personajes, recursos_de_juego.catalogo_de_items, notificador_de_juego),
-      controlador_del_centro(
-          personajes, sectores, recursos_de_juego, notificador_de_juego,
-          [this](TipoAnimal animal) {
-              return animal == TipoAnimal::VACA ? agregar_vaca_en_granja_cerca(0)
-                                                : agregar_gallina_en_granja_cerca(0);
-          },
-          datos_guardados.centro) {
+      controlador_de_regalos(
+          personajes, recursos_de_juego.catalogo_de_items, notificador_de_juego) {
     sectores.cargar_mapas_guardados(datos_guardados.mapas);
     sectores.cargar_cultivos_guardados(datos_guardados.cultivos);
     sectores.cargar_cofres_guardados(datos_guardados.cofres);
@@ -195,7 +191,6 @@ void Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
     if (controlador_de_jugador.atender(personaje, comando)) {
         return;
     }
-    // Va antes que las acciones: el clic secundario sobre un lote del centro lo abre.
     if (controlador_del_centro.atender(personaje, comando, obtener_dia())) {
         return;
     }
@@ -387,23 +382,6 @@ void Mundo::cambiar_estacion(Estacion estacion) {
 
 DatosCentroGuardado Mundo::obtener_centro_guardado() const {
     return controlador_del_centro.obtener_guardado();
-}
-
-uint16_t Mundo::donar_al_centro(uint32_t id_jugador, TipoLote lote, uint8_t indice_ranura) {
-    auto encontrado = personajes.find(id_jugador);
-    if (encontrado == personajes.end() || !encontrado->second.conectado) {
-        return 0;
-    }
-    return controlador_del_centro
-        .donar_item(encontrado->second, lote, indice_ranura, obtener_dia());
-}
-
-bool Mundo::donar_monedas_al_centro(uint32_t id_jugador, TipoLote lote) {
-    auto encontrado = personajes.find(id_jugador);
-    if (encontrado == personajes.end() || !encontrado->second.conectado) {
-        return false;
-    }
-    return controlador_del_centro.donar_monedas(encontrado->second, lote, obtener_dia());
 }
 
 const CentroComunitario& Mundo::centro_comunitario() const {

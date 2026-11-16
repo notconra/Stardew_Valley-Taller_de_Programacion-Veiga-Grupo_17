@@ -528,6 +528,8 @@ enum class CanalDeChat : uint8_t {
     SISTEMA = 2,
 };
 
+#define REMITENTE_DEL_SISTEMA "(Sistema)"
+
 // Un mensaje ya interpretado por el servidor. "remitente" es el nombre del jugador que lo envió
 // (o "(Sistema)" en los avisos), "destinatario" solo tiene valor en los privados. "texto" es el
 // contenido sin el prefijo "@nombre". "color_del_remitente" lo elige el servidor al entrar a la
@@ -538,6 +540,10 @@ struct MensajeDeChat {
     std::string destinatario;
     std::string texto;
     ColorDeJugador color_del_remitente = ColorDeJugador::AZUL;
+
+    static MensajeDeChat del_sistema(const std::string& texto) {
+        return MensajeDeChat{CanalDeChat::SISTEMA, REMITENTE_DEL_SISTEMA, std::string(), texto};
+    }
 };
 
 // Información detallada de cada ítem/animal en el catálogo del puesto de mercado.
@@ -603,11 +609,13 @@ struct RequisitoDeLote {
 // false cada vez que el lote cambia (actualiza la ventana de quien lo tenga abierto).
 struct LoteDelCentro {
     TipoLote lote = TipoLote::CULTIVOS;
-    std::string clave;
     bool abrir = false;
     std::string nombre;
     bool completo = false;
     std::vector<RequisitoDeLote> requisitos;
+    std::string mapa;
+    uint32_t columna = 0;
+    uint32_t fila = 0;
 
     bool operator==(const LoteDelCentro&) const = default;
 };

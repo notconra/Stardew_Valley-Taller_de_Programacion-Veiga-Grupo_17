@@ -43,6 +43,7 @@ private:
     ControladorDeJugador controlador_de_jugador;
     ControladorDeMercado controlador_de_mercado;
     ControladorDelDia controlador_del_dia;
+    ControladorDelCentro controlador_del_centro;
     ControladorDeAcciones controlador_de_acciones;
     ControladorDeCofres controlador_de_cofres;
     ControladorDeDrops controlador_de_drops;
@@ -51,7 +52,6 @@ private:
     ControladorDeTrampas controlador_de_trampas;
     ControladorDeCultivos controlador_de_cultivos;
     ControladorDeRegalos controlador_de_regalos;
-    ControladorDelCentro controlador_del_centro;
 
     void resolver_transicion(Personaje& personaje, const Transicion& transicion);
 
@@ -135,8 +135,6 @@ public:
     HoraDelJuego hora_actual() const;
 
     // Centro comunitario. Donan desde el inventario o la billetera de un jugador conectado.
-    uint16_t donar_al_centro(uint32_t id_jugador, TipoLote lote, uint8_t indice_ranura);
-    bool donar_monedas_al_centro(uint32_t id_jugador, TipoLote lote);
     const CentroComunitario& centro_comunitario() const;
 
     Mundo(const Mundo&) = delete;
