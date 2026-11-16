@@ -225,15 +225,15 @@ void Mundo::hablar_con_npc(Personaje& personaje, const HablarConNpc& pedido) {
 }
 
 void Mundo::resolver_transicion(Personaje& personaje, const Transicion& transicion) {
-    if (!sectores.existe(transicion.mapa_destino)) {
-        return;
-    }
     if (!controlador_de_mercado.puede_entrar(transicion.mapa_destino, controlador_del_dia.hora())) {
         controlador_de_mercado.avisar_mercado_cerrado(personaje);
         return;
     }
     if (controlador_de_mazmorra.resolver_transicion(personaje, transicion)) {
         controlador_de_mercado.al_cambiar_de_mapa(personaje);
+        return;
+    }
+    if (!sectores.existe(transicion.mapa_destino)) {
         return;
     }
     sectores.trasladar_a_casilla(

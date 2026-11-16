@@ -20,7 +20,7 @@ DialogosDeNpcs::DialogosDeNpcs() {
     FrasesPosibles pierre;
     pierre.antes_de_trabajar = {
         "Buen dia! A las 8 abro mi puesto en el mercado, pasate a comprar un par de semillas.",
-        "Madrugar rinde: regar temprano evita que se te pase el turno de riego. ¿Ya regaste tus "
+        "Madrugar rinde: regar temprano evita que se te pase el turno de riego. Ya regaste tus "
         "cultivos?",
         "Antes de que abra el puesto, fijate que tus plantas tengan agua. Regar a tiempo es la "
         "clave para obtener mejores resultados. Los cultivos de mejor calidad se venden a otro "
