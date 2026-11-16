@@ -503,9 +503,6 @@ std::vector<PiezaChat> VistaChat::piezas_del_mensaje(const MensajeDeChat& mensaj
             color_del_prefijo = estilo::SISTEMA;
             color_del_cuerpo = estilo::SISTEMA;
             break;
-        case CanalDeChat::COMERCIANTE:
-            color_del_prefijo = estilo::COMERCIANTE;
-            break;
     }
 
     std::vector<PiezaChat> piezas = dividir_en_piezas(prefijo, color_del_prefijo, false);

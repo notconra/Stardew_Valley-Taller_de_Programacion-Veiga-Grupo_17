@@ -2,13 +2,16 @@
 
 #include <SDL2/SDL_timer.h>
 
+#include <cstdint>
 #include <filesystem>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 namespace {
+constexpr int CANAL_AMBIENTE = 0;  // reservado, así los demás efectos no lo pisan
 constexpr int VOLUMEN_PASOS = 50;
+constexpr uint32_t MS_ENTRE_GRITOS_DE_APARICION = 1500;
 constexpr int VOLUMEN_LLUVIA_AFUERA = 70;
 constexpr int VOLUMEN_LLUVIA_BAJO_TECHO = 20;
 }  // namespace
@@ -41,6 +44,8 @@ EfectosDeSonido::EfectosDeSonido(const ConfiguracionSonido& configuracion)
     jugador_danio = configuracion.ruta_jugador_danio.empty()
                         ? nullptr
                         : cargar(configuracion.ruta_jugador_danio);
+    compra = cargar(configuracion.ruta_comprar);
+    venta = cargar(configuracion.ruta_vender);
     vaca = configuracion.ruta_vaca.empty() ? nullptr : cargar(configuracion.ruta_vaca);
     if (vaca != nullptr) {
         Mix_VolumeChunk(vaca, VOLUMEN_ANIMALES);
@@ -61,9 +66,10 @@ EfectosDeSonido::EfectosDeSonido(const ConfiguracionSonido& configuracion)
                         !std::filesystem::exists(configuracion.ruta_anochecer)
                     ? nullptr
                     : cargar(configuracion.ruta_anochecer);
-    lluvia = configuracion.ruta_lluvia.empty() || !std::filesystem::exists(configuracion.ruta_lluvia)
-                 ? nullptr
-                 : cargar(configuracion.ruta_lluvia);
+    lluvia =
+        configuracion.ruta_lluvia.empty() || !std::filesystem::exists(configuracion.ruta_lluvia)
+            ? nullptr
+            : cargar(configuracion.ruta_lluvia);
     cambiar_paso("");
 }
 
@@ -148,6 +154,14 @@ void EfectosDeSonido::reproducir_trampa_activada() const {
 
 void EfectosDeSonido::reproducir_jugador_danio() const {
     reproducir(jugador_danio);
+}
+
+void EfectosDeSonido::reproducir_compra() const {
+    reproducir(compra);
+}
+
+void EfectosDeSonido::reproducir_venta() const {
+    reproducir(venta);
 }
 
 void EfectosDeSonido::reproducir_dinero() const {

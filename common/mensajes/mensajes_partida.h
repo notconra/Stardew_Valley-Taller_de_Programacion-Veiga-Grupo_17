@@ -116,6 +116,34 @@ struct EnviarMensajeDeChat {
     std::string texto;
 };
 
+// El servidor recuerda qué puesto tiene abierto cada jugador, así que los comandos de compra y
+// venta no necesitan mandar el id del puesto sino que siempre operan sobre el que está abierto.
+struct ComprarEnMercado {
+    uint16_t indice_item = 0;  // Índice dentro del catálogo del puesto
+    uint16_t cantidad = 1;
+};
+
+// Vender un ítem del inventario al puesto.
+struct VenderEnMercado {
+    uint8_t ranura_inventario = 0;
+    uint16_t cantidad = 0;  // 0 o cantidad completa según click izquierdo/derecho
+};
+
+// Comprar un animal (específico para Marnie, que no va al inventario).
+struct ComprarAnimalMercado {
+    TipoAnimal tipo_animal = TipoAnimal::NINGUNO;
+    uint16_t cantidad = 1;
+};
+
+// Vender un animal (específico para Marnie, desde el panel de animales de la granja).
+struct VenderAnimalMercado {
+    TipoAnimal tipo_animal = TipoAnimal::NINGUNO;
+    uint16_t cantidad = 1;
+};
+
+// Cierra la ventana del mercado activa.
+struct CerrarMercado {};
+
 // Le regala a otro jugador de la partida (conectado o no) parte de una ranura de la barra.
 // cantidad == 0 regala el stack completo. Las herramientas no se pueden regalar. El regalo queda
 // pendiente hasta que el destinatario lo abre (AbrirRegalos).
@@ -266,12 +294,34 @@ struct AnimalActualizado {
     bool operator==(const AnimalActualizado&) const = default;
 };
 
+// Un animal que dejó de estar en el sector del receptor (se vendió).
+struct AnimalRetirado {
+    uint32_t id = 0;
+
+    bool operator==(const AnimalRetirado&) const = default;
+};
+
 // Notificación cuando una vaca queda lista para ordeñar o cuando se completa su ordeñe
 struct VacaOrdeniable {
     uint32_t id_vaca = 0;
     bool lista = false;
 
     bool operator==(const VacaOrdeniable&) const = default;
+};
+
+// Posición y estado de un NPC. "x" e "y" son la esquina superior izquierda del sprite en píxeles
+// del mapa, igual que para los jugadores. "ms_por_casilla" es lo que tarda en recorrer una casilla
+// mientras camina.
+struct EstadoNpc {
+    std::string id_npc;
+    std::string mapa;
+    uint32_t x = 0;
+    uint32_t y = 0;
+    Direccion mirando = Direccion::ABAJO;
+    bool camina = false;
+    uint16_t ms_por_casilla = 0;
+
+    bool operator==(const EstadoNpc&) const = default;
 };
 
 // Snapshot completa de UN sector. Se manda una sola vez cuando el jugador entra o cambia de
@@ -286,6 +336,7 @@ struct EstadoJuego {
     std::vector<EstadoTrampa> trampas;
     std::vector<EstadoAnimal> animales;
     std::vector<uint32_t> vacas_para_ordeniar;
+    std::vector<EstadoNpc> npcs;
 };
 
 // Posición y estado de todos los jugadores del sector del receptor. Se manda cada tick, pero solo
@@ -293,6 +344,12 @@ struct EstadoJuego {
 struct JugadoresEnSector {
     std::string mapa;
     std::vector<EstadoJugador> jugadores;
+};
+
+// Posición y estado de todos los NPC del sector del receptor.
+struct NpcsEnSector {
+    std::string mapa;
+    std::vector<EstadoNpc> npcs;
 };
 
 // Un objeto nuevo en el sector del receptor. Si el id ya existía, el cliente lo reemplaza.
@@ -446,17 +503,16 @@ struct RegalosPendientes {
 };
 
 // Canal de un mensaje que el servidor manda al cliente. "PRIVADO" avisa que el mensaje era para un
-// único destinatario, "SISTEMA" son respuestas del propio servidor (errores de envío, comandos
-// desconocidos) y "COMERCIANTE" queda reservado para las respuestas de los NPCs del mercado.
+// único destinatario y "SISTEMA" son respuestas del propio servidor (errores de envío, comandos
+// desconocidos y cheats). El mercado no usa el chat.
 enum class CanalDeChat : uint8_t {
     GLOBAL = 0,
     PRIVADO = 1,
     SISTEMA = 2,
-    COMERCIANTE = 3,
 };
 
-// Un mensaje ya interpretado por el servidor. "remitente" es el nombre del
-// jugador o del NPC que habla, "destinatario" solo tiene valor en los privados. "texto" es el
+// Un mensaje ya interpretado por el servidor. "remitente" es el nombre del jugador que lo envió
+// (o "(Sistema)" en los avisos), "destinatario" solo tiene valor en los privados. "texto" es el
 // contenido sin el prefijo "@nombre". "color_del_remitente" lo elige el servidor al entrar a la
 // partida y se conserva durante toda la partida.
 struct MensajeDeChat {
@@ -465,6 +521,50 @@ struct MensajeDeChat {
     std::string destinatario;
     std::string texto;
     ColorDeJugador color_del_remitente = ColorDeJugador::AZUL;
+};
+
+// Información detallada de cada ítem/animal en el catálogo del puesto de mercado.
+struct ItemCatalogoInfo {
+    TipoItem tipo_item = TipoItem::NINGUNO;        // Si es un ítem normal
+    TipoAnimal tipo_animal = TipoAnimal::NINGUNO;  // Si es un animal (Marnie)
+    std::string nombre;
+    uint32_t precio = 0;
+    bool se_puede_comprar = true;   // False si no alcanza el dinero o no hay lugar en el inventario
+    uint16_t cantidad_poseida = 0;  // Solo para animales, cuántos tiene el jugador
+    std::string descripcion;        // Información de cuidados o descripción para el hover
+
+    bool es_animal() const {
+        return tipo_animal != TipoAnimal::NINGUNO;
+    }
+};
+
+// Envía la ventana de mercado completa con el catálogo configurado del NPC correspondiente.
+// "id_npc" es lógico, el cliente decide con qué asset mostrarlo.
+struct ActualizacionMercado {
+    std::string id_npc;
+    std::vector<ItemCatalogoInfo> catalogo;
+};
+
+// Ordena al cliente cerrar la ventana de mercado.
+struct CerrarVentanaMercado {};
+
+// Cartel genérico para avisar algo al jugador (por ejemplo, que el mercado está cerrado). El
+// cliente lo muestra como un cuadro modal que se cierra con un clic y bloquea el juego mientras
+// esté visible.
+struct AvisoEnPantalla {
+    std::string mensaje;
+};
+
+// El jugador hace clic derecho sobre un NPC para hablarle. El servidor decide el texto
+// y responde con DialogoNpc.
+struct HablarConNpc {
+    std::string id_npc;
+};
+
+// Lo que dice un NPC. El cliente lo muestra en un cuadro modal con el fondo dialogo_<id>.png.
+struct DialogoNpc {
+    std::string id_npc;
+    std::string texto;
 };
 
 #endif

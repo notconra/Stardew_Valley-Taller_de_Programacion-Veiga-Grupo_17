@@ -31,7 +31,6 @@ private:
     };
 
     // Para que una manada entera suene como un solo grito y no uno por cada enemigo.
-    static constexpr uint32_t MS_ENTRE_GRITOS_DE_APARICION = 1500;
     mutable uint32_t ultimo_grito_de_aparicion = 0;
 
     static constexpr uint32_t INTERVALO_MINIMO_SONIDO_ANIMAL_MS = 10000;
@@ -54,6 +53,8 @@ private:
     std::map<TipoEnemigo, SonidosCargadosDeEnemigo> sonidos_de_enemigos;
     Mix_Chunk* trampa_activada = nullptr;
     Mix_Chunk* jugador_danio = nullptr;
+    Mix_Chunk* compra = nullptr;
+    Mix_Chunk* venta = nullptr;
     Mix_Chunk* vaca = nullptr;
     Mix_Chunk* gallina = nullptr;
     Mix_Chunk* ordeniar_vaca = nullptr;
@@ -105,6 +106,9 @@ public:
     // El jugador propio perdió vida (lo golpeó un enemigo o lo quemó una trampa).
     void reproducir_jugador_danio() const;
 
+    // El jugador compró algo en el mercado / vendió algo en el mercado.
+    void reproducir_compra() const;
+    void reproducir_venta() const;
     void reproducir_dinero() const;
     void reproducir_ordenie_vaca() const;
     void reproducir_interaccion_animal(TipoAnimal tipo);

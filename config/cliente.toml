@@ -8,7 +8,9 @@
 mapa_inicial = "FarmHouse2"
 
 [servidor]
-# para tailscale: host = "100.117.194.20"
+# para tailscale (bren): host = "100.117.194.20"
+# para tailscale (conra): host = "100.126.247.61"
+# local: host = "127.0.0.1"
 host = "127.0.0.1"
 puerto = "8081"
 
@@ -508,6 +510,8 @@ b = 113
 ruta_ambiente = "Assets/sfx/ambiente.wav"
 ruta_caminar = "Assets/sfx/caminar.wav"
 ruta_accion = "Assets/sfx/pico_aire.wav"
+ruta_comprar = "Assets/sfx/comprar.wav"
+ruta_vender = "Assets/sfx/vender.wav"
 
 [sonido.animales]
 vaca = "Assets/sfx/vaca.wav"

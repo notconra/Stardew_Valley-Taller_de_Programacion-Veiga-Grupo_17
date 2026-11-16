@@ -36,8 +36,14 @@ private:
     ConsultarCasilla recibir_comando_consultar_casilla();
     DarElOk recibir_comando_dar_el_ok();
     EnviarMensajeDeChat recibir_comando_enviar_mensaje_de_chat();
+    ComprarEnMercado recibir_comando_comprar_en_mercado();
+    VenderEnMercado recibir_comando_vender_en_mercado();
+    ComprarAnimalMercado recibir_comando_comprar_animal_mercado();
+    VenderAnimalMercado recibir_comando_vender_animal_mercado();
+    CerrarMercado recibir_comando_cerrar_mercado();
     EnviarRegalo recibir_comando_enviar_regalo();
     AbrirRegalos recibir_comando_abrir_regalos();
+    HablarConNpc recibir_comando_hablar_con_npc();
 
     // Valida que el eje venga en el rango -1..1. Lanza ErrorProtocolo si no.
     int8_t eje_de_movimiento(int8_t valor) const;
@@ -60,6 +66,7 @@ private:
     void enviar_estado_enemigo(const EstadoEnemigo& estado);
     void enviar_estado_trampa(const EstadoTrampa& estado);
     void enviar_estado_animal(const EstadoAnimal& estado);
+    void enviar_estado_npc(const EstadoNpc& estado);
     void enviar_casilla_tratada(const CasillaTratada& casilla);
     void enviar_ranura_inventario(const RanuraInventario& ranura);
     void enviar_ranuras(const std::vector<RanuraInventario>& ranuras);
@@ -71,6 +78,7 @@ private:
     void enviar_evento_jugadores_en_sector(const JugadoresEnSector& jugadores);
     void enviar_evento_objeto_colocado(const ObjetoColocado& objeto);
     void enviar_evento_objeto_retirado(const ObjetoRetirado& objeto);
+    void enviar_evento_animal_retirado(const AnimalRetirado& animal);
     void enviar_evento_drop_aparecido(const DropAparecido& drop);
     void enviar_evento_drop_retirado(const DropRetirado& drop);
     void enviar_evento_enemigo_actualizado(const EnemigoActualizado& enemigo);
@@ -82,8 +90,14 @@ private:
     void enviar_evento_casilla_consultada(const CasillaConsultada& consultada);
     void enviar_evento_estado_del_descanso(const EstadoDelDescanso& descanso);
     void enviar_evento_mensaje_de_chat(const MensajeDeChat& mensaje);
+    void enviar_item_catalogo_info(const ItemCatalogoInfo& item);
+    void enviar_evento_actualizacion_mercado(const ActualizacionMercado& m);
+    void enviar_evento_cerrar_ventana_mercado(const CerrarVentanaMercado& m);
+    void enviar_evento_aviso_en_pantalla(const AvisoEnPantalla& aviso);
     void enviar_evento_jugadores_de_la_partida(const JugadoresDeLaPartida& jugadores);
     void enviar_evento_regalos_pendientes(const RegalosPendientes& pendientes);
+    void enviar_evento_npcs_en_sector(const NpcsEnSector& npcs);
+    void enviar_evento_dialogo_npc(const DialogoNpc& dialogo);
 
 public:
     explicit ProtocoloServidor(ISocket& socket_conectado);
