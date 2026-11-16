@@ -495,6 +495,35 @@ PanelDeRegalos::Datos VistaPartida::datos_de_regalos() const {
         ultimo_inventario};
 }
 
+uint32_t VistaPartida::contar_huevos_en_la_granja() const {
+    if (mapa_actual != "granja") {
+        return 0;
+    }
+
+    uint32_t huevos = 0;
+    for (const EstadoDrop& drop : ultimo_estado_juego.drops) {
+        if (drop.tipo == TipoItem::HUEVO) {
+            huevos += drop.cantidad;
+        }
+    }
+    return huevos;
+}
+
+MenuEnJuego::DatosAnimales VistaPartida::datos_de_animales() const {
+    MenuEnJuego::DatosAnimales datos;
+    for (const EstadoAnimal& animal : ultimo_estado_juego.animales) {
+        if (animal.tipo == TipoAnimal::VACA) {
+            datos.cantidad_de_vacas += 1;
+        } else if (animal.tipo == TipoAnimal::GALLINA) {
+            datos.cantidad_de_gallinas += 1;
+        }
+    }
+
+    datos.vacas_para_ordeniar = ultimo_estado_juego.vacas_para_ordeniar.size();
+    datos.huevos_para_recolectar = contar_huevos_en_la_granja();
+    return datos;
+}
+
 void VistaPartida::procesar_entrada(
     const EntradaDelUsuario& entrada, HudInventario& hud, PanelDeRegalos& regalos,
     const Camara& camara, const VistaChat::ConsumoDeEntrada& consumo_del_chat) {
@@ -1075,7 +1104,7 @@ void VistaPartida::dibujar(
     regalos.dibujar(renderer, datos_de_regalos());
     pantalla_de_descanso.dibujar(renderer, descanso, ancho_de_pantalla, alto_de_pantalla);
     chat.dibujar(renderer, ancho_de_pantalla, alto_de_pantalla);
-    menu.dibujar(renderer);
+    menu.dibujar(renderer, datos_de_animales());
 
     SDL_RenderPresent(renderer);
 }

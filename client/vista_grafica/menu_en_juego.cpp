@@ -8,13 +8,16 @@ static const char RUTA_ASSET_BOTON[] = "Assets/hud/regalos_boton.png";
 static const char RUTA_ASSET_BOTON_CERRAR[] = "Assets/hud/cerrar_regalos.png";
 static const char RUTA_ASSET_CURSORES[] = "Assets/LooseSprites/Cursors.png";
 static const char RUTA_ASSET_POLLITO[] = "Assets/Farm/Animals/Baby Chicken Yellow.png";
+static const char RUTA_ASSET_LECHE[] = "Assets/items/leche.png";
+static const char RUTA_ASSET_HUEVO[] = "Assets/items/huevo.png";
 
 // Recortes exactos de sprites originales en Cursors.png
-static constexpr SDL_Rect ORIGEN_SPRITE_MOCHILA{0, 368, 16, 16};
 static constexpr SDL_Rect ORIGEN_SPRITE_PESTANIA_EN_BLANCO{16, 368, 16, 16};
 static constexpr SDL_Rect ORIGEN_SPRITE_POLLITO{0, 0, 16, 16};
 static constexpr SDL_Rect ORIGEN_SPRITE_JOYSTICK{96, 368, 16, 16};
 static constexpr SDL_Rect ORIGEN_SPRITE_PROHIBIDO{112, 368, 16, 16};
+static constexpr SDL_Rect ORIGEN_SPRITE_GALLINAS{3, 448, 26, 16};
+static constexpr SDL_Rect ORIGEN_SPRITE_VACA{40, 449, 17, 14};
 
 MenuEnJuego::MenuEnJuego(
     SDL_Renderer* renderizador, const std::string& ruta_fuente,
@@ -29,8 +32,10 @@ MenuEnJuego::MenuEnJuego(
       textura_cursores(RUTA_ASSET_CURSORES, renderizador),
       textura_pollito(RUTA_ASSET_POLLITO, renderizador),
       textura_cerrar(RUTA_ASSET_BOTON_CERRAR, renderizador),
+      textura_leche(RUTA_ASSET_LECHE, renderizador),
+      textura_huevo(RUTA_ASSET_HUEVO, renderizador),
       menu_abierto(false),
-      pestania_activa(PestaniaMenu::CONFIGURACION),
+      pestania_activa(PestaniaMenu::ANIMALES),
       deslizador_activo(DeslizadorArrastrado::NINGUNO),
       es_multijugador(false),
       codigo_partida(""),
@@ -38,7 +43,6 @@ MenuEnJuego::MenuEnJuego(
       cursor_coordenada_y(0),
       rectangulo_ventana{0, 0, 0, 0},
       rectangulo_boton_cerrar{0, 0, 0, 0},
-      rectangulo_pestania_inventario{0, 0, 0, 0},
       rectangulo_pestania_animales{0, 0, 0, 0},
       rectangulo_pestania_configuracion{0, 0, 0, 0},
       rectangulo_pestania_salir{0, 0, 0, 0},
@@ -57,7 +61,7 @@ bool MenuEnJuego::esta_abierto() const {
 void MenuEnJuego::abrir() {
     menu_abierto = true;
     deslizador_activo = DeslizadorArrastrado::NINGUNO;
-    pestania_activa = PestaniaMenu::CONFIGURACION;
+    pestania_activa = PestaniaMenu::ANIMALES;
 }
 
 void MenuEnJuego::cerrar() {
@@ -93,25 +97,20 @@ void MenuEnJuego::recalcular_posiciones(int ancho_pantalla, int alto_pantalla) {
     int origen_pestanias_x = rectangulo_ventana.x + MARGEN_IZQUIERDO_PESTANIAS;
     int paso_pestania = TAMANO_PESTANIA + SEPARACION_PESTANIAS;
 
-    rectangulo_pestania_inventario.w = TAMANO_PESTANIA;
-    rectangulo_pestania_inventario.h = TAMANO_PESTANIA;
-    rectangulo_pestania_inventario.x = origen_pestanias_x;
-    rectangulo_pestania_inventario.y = rectangulo_ventana.y - DESPLAZAMIENTO_PESTANIA_INACTIVA_Y;
-
     rectangulo_pestania_animales.w = TAMANO_PESTANIA;
-    rectangulo_pestania_animales.h = TAMANO_PESTANIA;
-    rectangulo_pestania_animales.x = origen_pestanias_x + paso_pestania;
-    rectangulo_pestania_animales.y = rectangulo_ventana.y - DESPLAZAMIENTO_PESTANIA_INACTIVA_Y;
+    rectangulo_pestania_animales.h = TAMANO_PESTANIA + 12;
+    rectangulo_pestania_animales.x = origen_pestanias_x;
+    rectangulo_pestania_animales.y = rectangulo_ventana.y - DESPLAZAMIENTO_PESTANIA_ACTIVA_Y;
 
     rectangulo_pestania_configuracion.w = TAMANO_PESTANIA;
-    rectangulo_pestania_configuracion.h = TAMANO_PESTANIA;
-    rectangulo_pestania_configuracion.x = origen_pestanias_x + (paso_pestania * 2);
+    rectangulo_pestania_configuracion.h = TAMANO_PESTANIA + 12;
+    rectangulo_pestania_configuracion.x = origen_pestanias_x + paso_pestania;
     rectangulo_pestania_configuracion.y = rectangulo_ventana.y - DESPLAZAMIENTO_PESTANIA_ACTIVA_Y;
 
     rectangulo_pestania_salir.w = TAMANO_PESTANIA;
-    rectangulo_pestania_salir.h = TAMANO_PESTANIA;
-    rectangulo_pestania_salir.x = origen_pestanias_x + (paso_pestania * 3);
-    rectangulo_pestania_salir.y = rectangulo_ventana.y - DESPLAZAMIENTO_PESTANIA_INACTIVA_Y;
+    rectangulo_pestania_salir.h = TAMANO_PESTANIA + 12;
+    rectangulo_pestania_salir.x = origen_pestanias_x + (paso_pestania * 2);
+    rectangulo_pestania_salir.y = rectangulo_ventana.y - DESPLAZAMIENTO_PESTANIA_ACTIVA_Y;
 
     rectangulo_barra_musica.w = ANCHO_BARRA_VOLUMEN;
     rectangulo_barra_musica.h = ALTO_BARRA_VOLUMEN;
@@ -177,6 +176,11 @@ void MenuEnJuego::actualizar_valor_deslizador(int coordenada_x, DeslizadorArrast
 }
 
 bool MenuEnJuego::procesar_clic_en_pestanias(int coordenada_x, int coordenada_y) {
+    if (esta_adentro(rectangulo_pestania_animales, coordenada_x, coordenada_y)) {
+        pestania_activa = PestaniaMenu::ANIMALES;
+        return true;
+    }
+
     if (esta_adentro(rectangulo_pestania_configuracion, coordenada_x, coordenada_y)) {
         pestania_activa = PestaniaMenu::CONFIGURACION;
         return true;
@@ -184,16 +188,6 @@ bool MenuEnJuego::procesar_clic_en_pestanias(int coordenada_x, int coordenada_y)
 
     if (esta_adentro(rectangulo_pestania_salir, coordenada_x, coordenada_y)) {
         pestania_activa = PestaniaMenu::SALIR;
-        return true;
-    }
-
-    if (esta_adentro(rectangulo_pestania_inventario, coordenada_x, coordenada_y)) {
-        pestania_activa = PestaniaMenu::INVENTARIO;
-        return true;
-    }
-
-    if (esta_adentro(rectangulo_pestania_animales, coordenada_x, coordenada_y)) {
-        pestania_activa = PestaniaMenu::ANIMALES;
         return true;
     }
 
@@ -319,7 +313,7 @@ void MenuEnJuego::dibujar_pestania(
     const Textura& textura_icono, const SDL_Rect& sprite_origen) const {
     bool es_activa = (pestania_activa == tipo);
 
-    SDL_Rect rectangulo_destino = rectangulo;
+    SDL_Rect rectangulo_destino{rectangulo.x, 0, TAMANO_PESTANIA, TAMANO_PESTANIA};
     if (es_activa) {
         rectangulo_destino.y = rectangulo_ventana.y - DESPLAZAMIENTO_PESTANIA_ACTIVA_Y;
     } else {
@@ -345,13 +339,6 @@ void MenuEnJuego::dibujar_pestania(
 }
 
 void MenuEnJuego::dibujar_pestanias(SDL_Renderer* renderizador) const {
-    dibujar_pestania(
-        renderizador,
-        PestaniaMenu::INVENTARIO,
-        rectangulo_pestania_inventario,
-        textura_cursores,
-        ORIGEN_SPRITE_MOCHILA);
-
     dibujar_pestania(
         renderizador,
         PestaniaMenu::ANIMALES,
@@ -522,6 +509,110 @@ void MenuEnJuego::dibujar_contenido_configuracion(SDL_Renderer* renderizador) co
     }
 }
 
+void MenuEnJuego::dibujar_contenido_animales(
+    SDL_Renderer* renderizador, const DatosAnimales& datos) const {
+    std::string titulo = "Animales de la Granja";
+    int titulo_x = rectangulo_ventana.x + (rectangulo_ventana.w - fuente_titulo.ancho(titulo)) / 2;
+    fuente_titulo.dibujar_con_sombra(renderizador, titulo, titulo_x, rectangulo_ventana.y + 36, 2);
+
+    // Separador decorativo
+    SDL_SetRenderDrawColor(renderizador, 139, 90, 43, 255);
+    SDL_RenderDrawLine(
+        renderizador,
+        rectangulo_ventana.x + 40,
+        rectangulo_ventana.y + 72,
+        rectangulo_ventana.x + rectangulo_ventana.w - 40,
+        rectangulo_ventana.y + 72);
+
+    int ancho_tarjeta = rectangulo_ventana.w - 70;
+    int alto_tarjeta = 135;
+    int tarjeta_x = rectangulo_ventana.x + 35;
+    int tarjeta_vacas_y = rectangulo_ventana.y + 85;
+
+    // Tarjeta Vacas
+    SDL_Rect rectangulo_tarjeta_vacas{tarjeta_x, tarjeta_vacas_y, ancho_tarjeta, alto_tarjeta};
+    SDL_SetRenderDrawBlendMode(renderizador, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(renderizador, 242, 215, 168, 180);
+    SDL_RenderFillRect(renderizador, &rectangulo_tarjeta_vacas);
+    SDL_SetRenderDrawColor(renderizador, 160, 110, 60, 255);
+    SDL_RenderDrawRect(renderizador, &rectangulo_tarjeta_vacas);
+
+    // Sprite Vaca (17x14 escalado a 51x42)
+    SDL_Rect sprite_vaca_destino{tarjeta_x + 22, tarjeta_vacas_y + (alto_tarjeta - 42) / 2, 51, 42};
+    SDL_RenderCopy(renderizador, textura_cursores.ptr(), &ORIGEN_SPRITE_VACA, &sprite_vaca_destino);
+
+    // Información de Vacas
+    fuente_opciones
+        .dibujar_con_sombra(renderizador, "Vacas", tarjeta_x + 95, tarjeta_vacas_y + 16, 2);
+
+    std::string texto_total_vacas =
+        "Total en la granja: " + std::to_string(datos.cantidad_de_vacas) + " (limite: 5)";
+    fuente_botones.dibujar_con_sombra(
+        renderizador,
+        texto_total_vacas,
+        tarjeta_x + 95,
+        tarjeta_vacas_y + 48,
+        1);
+
+    SDL_Rect rectangulo_icono_leche{tarjeta_x + 95, tarjeta_vacas_y + 80, 32, 32};
+    SDL_RenderCopy(renderizador, textura_leche.ptr(), nullptr, &rectangulo_icono_leche);
+
+    std::string texto_ordenie =
+        "Listas para ordeniar: " + std::to_string(datos.vacas_para_ordeniar) + " de " +
+        std::to_string(datos.cantidad_de_vacas);
+    fuente_botones
+        .dibujar_con_sombra(renderizador, texto_ordenie, tarjeta_x + 138, tarjeta_vacas_y + 86, 1);
+
+    // Tarjeta Gallinas
+    int tarjeta_gallinas_y = tarjeta_vacas_y + alto_tarjeta + 15;
+    SDL_Rect rectangulo_tarjeta_gallinas{
+        tarjeta_x,
+        tarjeta_gallinas_y,
+        ancho_tarjeta,
+        alto_tarjeta};
+    SDL_SetRenderDrawColor(renderizador, 242, 215, 168, 180);
+    SDL_RenderFillRect(renderizador, &rectangulo_tarjeta_gallinas);
+    SDL_SetRenderDrawColor(renderizador, 160, 110, 60, 255);
+    SDL_RenderDrawRect(renderizador, &rectangulo_tarjeta_gallinas);
+
+    // Sprite Gallinas (26x16 escalado a 78x48)
+    SDL_Rect sprite_gallinas_destino{
+        tarjeta_x + 10,
+        tarjeta_gallinas_y + (alto_tarjeta - 48) / 2,
+        78,
+        48};
+    SDL_RenderCopy(
+        renderizador,
+        textura_cursores.ptr(),
+        &ORIGEN_SPRITE_GALLINAS,
+        &sprite_gallinas_destino);
+
+    // Información de Gallinas
+    fuente_opciones
+        .dibujar_con_sombra(renderizador, "Gallinas", tarjeta_x + 100, tarjeta_gallinas_y + 16, 2);
+
+    std::string texto_total_gallinas =
+        "Total en la granja: " + std::to_string(datos.cantidad_de_gallinas) + " (limite: 10)";
+    fuente_botones.dibujar_con_sombra(
+        renderizador,
+        texto_total_gallinas,
+        tarjeta_x + 100,
+        tarjeta_gallinas_y + 48,
+        1);
+
+    SDL_Rect rectangulo_icono_huevo{tarjeta_x + 100, tarjeta_gallinas_y + 80, 32, 32};
+    SDL_RenderCopy(renderizador, textura_huevo.ptr(), nullptr, &rectangulo_icono_huevo);
+
+    std::string texto_huevos =
+        "Huevos para recolectar: " + std::to_string(datos.huevos_para_recolectar) + " en la granja";
+    fuente_botones.dibujar_con_sombra(
+        renderizador,
+        texto_huevos,
+        tarjeta_x + 142,
+        tarjeta_gallinas_y + 86,
+        1);
+}
+
 void MenuEnJuego::dibujar_contenido_salir(SDL_Renderer* renderizador) const {
     std::string titulo = "Salir de la Partida";
     int titulo_x = rectangulo_ventana.x + (rectangulo_ventana.w - fuente_titulo.ancho(titulo)) / 2;
@@ -532,7 +623,7 @@ void MenuEnJuego::dibujar_contenido_salir(SDL_Renderer* renderizador) const {
     dibujar_boton_con_asset(renderizador, rectangulo_boton_salir_juego, "Salir del Juego");
 }
 
-void MenuEnJuego::dibujar(SDL_Renderer* renderizador) const {
+void MenuEnJuego::dibujar(SDL_Renderer* renderizador, const DatosAnimales& datos_animales) const {
     if (!menu_abierto) {
         return;
     }
@@ -547,7 +638,9 @@ void MenuEnJuego::dibujar(SDL_Renderer* renderizador) const {
         BORDE_EN_PANTALLA_MARCO);
     dibujar_boton_cerrar(renderizador);
 
-    if (pestania_activa == PestaniaMenu::CONFIGURACION) {
+    if (pestania_activa == PestaniaMenu::ANIMALES) {
+        dibujar_contenido_animales(renderizador, datos_animales);
+    } else if (pestania_activa == PestaniaMenu::CONFIGURACION) {
         dibujar_contenido_configuracion(renderizador);
     } else if (pestania_activa == PestaniaMenu::SALIR) {
         dibujar_contenido_salir(renderizador);

@@ -68,6 +68,8 @@ private:
     RegalosPendientes regalos_pendientes{};
 
     PanelDeRegalos::Datos datos_de_regalos() const;
+    uint32_t contar_huevos_en_la_granja() const;
+    MenuEnJuego::DatosAnimales datos_de_animales() const;
 
     // Lo último que se le preguntó al servidor (ConsultarCasilla) sobre la casilla del mouse, y su
     // respuesta. El cliente no decide si se puede: solo pinta lo que contestó el servidor. Se

@@ -9,12 +9,19 @@
 #include "fuente_del_juego.h"
 #include "textura.h"
 
-enum class PestaniaMenu : uint8_t { INVENTARIO, ANIMALES, CONFIGURACION, SALIR };
+enum class PestaniaMenu : uint8_t { ANIMALES, CONFIGURACION, SALIR };
 
 enum class AccionMenu : uint8_t { NINGUNA, VOLVER_AL_LOBBY, SALIR_DEL_JUEGO, ACTIVAR_MULTIJUGADOR };
 
 class MenuEnJuego {
 public:
+    struct DatosAnimales {
+        uint32_t cantidad_de_vacas = 0;
+        size_t vacas_para_ordeniar = 0;
+        uint32_t cantidad_de_gallinas = 0;
+        uint32_t huevos_para_recolectar = 0;
+    };
+
     static constexpr int ANCHO_VENTANA = 620;
     static constexpr int ALTO_VENTANA = 430;
 
@@ -34,7 +41,7 @@ public:
     void clic_liberado();
     void raton_movido(int coordenada_x, int coordenada_y);
 
-    void dibujar(SDL_Renderer* renderizador) const;
+    void dibujar(SDL_Renderer* renderizador, const DatosAnimales& datos_animales) const;
 
 private:
     enum class DeslizadorArrastrado : uint8_t { NINGUNO, MUSICA, EFECTOS };
@@ -80,6 +87,8 @@ private:
     Textura textura_cursores;
     Textura textura_pollito;
     Textura textura_cerrar;
+    Textura textura_leche;
+    Textura textura_huevo;
 
     // Estado del menú
     bool menu_abierto;
@@ -96,7 +105,6 @@ private:
     SDL_Rect rectangulo_ventana;
     SDL_Rect rectangulo_boton_cerrar;
 
-    SDL_Rect rectangulo_pestania_inventario;
     SDL_Rect rectangulo_pestania_animales;
     SDL_Rect rectangulo_pestania_configuracion;
     SDL_Rect rectangulo_pestania_salir;
@@ -128,6 +136,7 @@ private:
         SDL_Renderer* renderizador, PestaniaMenu tipo, const SDL_Rect& rectangulo,
         const Textura& textura_icono, const SDL_Rect& sprite_origen) const;
     void dibujar_boton_cerrar(SDL_Renderer* renderizador) const;
+    void dibujar_contenido_animales(SDL_Renderer* renderizador, const DatosAnimales& datos) const;
     void dibujar_contenido_configuracion(SDL_Renderer* renderizador) const;
     void dibujar_contenido_salir(SDL_Renderer* renderizador) const;
 
