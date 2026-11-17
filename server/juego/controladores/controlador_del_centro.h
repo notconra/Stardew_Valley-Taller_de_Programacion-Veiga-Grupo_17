@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <map>
+#include <optional>
 #include <set>
 #include <string>
 
@@ -36,13 +37,21 @@
 //  - Dinero: el descuento del mercado del día siguiente (lo consulta el mercado, acá no se da
 //  nada).
 //
-// Cuando se completa el último lote le manda CentroTerminado a cada jugador que estaba en la
-// partida, una sola vez, para que el cliente muestre el cartel de felicitación, y pide guardar la
-// partida (ver tomar_terminado_para_guardar()).
+// Cuando se completa el último lote pasa al centro arreglado a los que están en las ruinas, le
+// manda CentroTerminado a cada jugador que estaba en la partida, una sola vez, para que el cliente
+// muestre el cartel de felicitación, y pide guardar la partida (ver
+// tomar_terminado_para_guardar()).
 //
 // También sigue lo que hace cada jugador en la mazmorra (con SeguimientoDePelea) y cumple los
 // logros del set de pelea: AccionAtacar le avisa cada muerte y ControladorDeEnemigos cada golpe que
 // recibe un jugador; en qué piso está cada uno lo mira solo, en cada tick.
+// Un lugar del mundo: el mapa y la posición del jugador (la esquina de su sprite, en píxeles).
+struct LugarEnElMundo {
+    std::string mapa;
+    double x = 0.0;
+    double y = 0.0;
+};
+
 class ControladorDelCentro {
 private:
     std::map<uint32_t, Personaje>& personajes;
@@ -85,6 +94,14 @@ private:
     // ahora y a los demás cuando vuelvan. El que entra por primera vez después no lo ve.
     void avisar_el_fin();
 
+    // Pasa al centro arreglado a los que están adentro de las ruinas (ver lugar_para()).
+    void mudar_al_arreglado_a_los_de_las_ruinas();
+    // Donde aparece el que entra al centro por la puerta del pueblo, en el centro arreglado. Si
+    // ninguna puerta lleva al centro, nullopt.
+    std::optional<LugarEnElMundo> entrada_del_arreglado() const;
+    // Si el jugador entra parado en ese lugar, sin chocar con nada del mapa.
+    bool hay_lugar_en(const LugarEnElMundo& lugar) const;
+
     void entregar_premio(TipoLote lote);
     void dar_semillas_a_todos();
     void dar_monedas_a_todos(uint32_t cantidad);
@@ -112,6 +129,11 @@ public:
     // Si hoy el mercado vende a mitad de precio y compra al doble: el día siguiente a completarse
     // el set de dinero.
     bool hay_oferta_en_el_mercado() const;
+
+    // A dónde va un jugador que estaba en ese lugar. Si estaba en las ruinas y el centro ya se
+    // terminó, al centro arreglado: al mismo lugar (los dos mapas tienen la misma planta) o, si
+    // ahí ahora hay algo, a la entrada. Si no, se queda donde estaba.
+    LugarEnElMundo lugar_para(const LugarEnElMundo& lugar) const;
 
     // Si se terminó el centro desde la última vez que se preguntó, ya con los premios
     // repartidos. Es cuando hay que guardar la partida; devuelve true una sola vez.

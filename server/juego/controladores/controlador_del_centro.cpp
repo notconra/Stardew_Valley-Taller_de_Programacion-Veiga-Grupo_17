@@ -11,6 +11,7 @@
 #define MONEDAS_DEL_PREMIO_DE_METALES 500
 #define VACAS_DEL_PREMIO_DE_ANIMALES 1
 #define GALLINAS_DEL_PREMIO_DE_ANIMALES 2
+// El mapa donde viven los animales.
 #define MAPA_DE_LOS_ANIMALES "granja"
 
 const TipoItem SEMILLAS_DEL_PREMIO[] = {
@@ -43,9 +44,70 @@ void ControladorDelCentro::actualizar() {
         entregar_premio(lote);
     }
     if (centro.tomar_fin_del_juego()) {
+        mudar_al_arreglado_a_los_de_las_ruinas();
         avisar_el_fin();
         terminado_sin_guardar = true;
     }
+}
+
+void ControladorDelCentro::mudar_al_arreglado_a_los_de_las_ruinas() {
+    if (!sectores.existe(MAPA_DEL_CENTRO)) {
+        return;
+    }
+    for (auto& [id_jugador, personaje] : personajes) {
+        if (!personaje.conectado || personaje.mapa_actual != MAPA_DEL_CENTRO) {
+            continue;
+        }
+        const JugadorEnPartida* en_las_ruinas =
+            sectores.en(MAPA_DEL_CENTRO).jugadores.buscar(id_jugador);
+        if (en_las_ruinas == nullptr) {
+            continue;
+        }
+        const LugarEnElMundo lugar =
+            lugar_para(LugarEnElMundo{MAPA_DEL_CENTRO, en_las_ruinas->x, en_las_ruinas->y});
+        if (lugar.mapa != MAPA_DEL_CENTRO) {
+            sectores.trasladar(personaje, lugar.mapa, lugar.x, lugar.y);
+        }
+    }
+}
+
+LugarEnElMundo ControladorDelCentro::lugar_para(const LugarEnElMundo& lugar) const {
+    if (lugar.mapa != MAPA_DEL_CENTRO || !centro.esta_terminado() ||
+        !sectores.existe(MAPA_DEL_CENTRO_ARREGLADO)) {
+        return lugar;
+    }
+    const LugarEnElMundo mismo_lugar{MAPA_DEL_CENTRO_ARREGLADO, lugar.x, lugar.y};
+    if (hay_lugar_en(mismo_lugar)) {
+        return mismo_lugar;
+    }
+    return entrada_del_arreglado().value_or(mismo_lugar);
+}
+
+std::optional<LugarEnElMundo> ControladorDelCentro::entrada_del_arreglado() const {
+    const Sector& arreglado = sectores.en(MAPA_DEL_CENTRO_ARREGLADO);
+    for (const auto& [id_mapa, mapa] : recursos.mapas) {
+        for (const auto& [zona, transicion] : mapa.obtener_transiciones()) {
+            if (transicion.mapa_destino == MAPA_DEL_CENTRO) {
+                return LugarEnElMundo{
+                    MAPA_DEL_CENTRO_ARREGLADO,
+                    static_cast<double>(
+                        transicion.columna_destino * arreglado.mapa.ancho_de_casilla_en_pixeles()),
+                    static_cast<double>(
+                        transicion.fila_destino * arreglado.mapa.alto_de_casilla_en_pixeles())};
+            }
+        }
+    }
+    return std::nullopt;
+}
+
+bool ControladorDelCentro::hay_lugar_en(const LugarEnElMundo& lugar) const {
+    const ConfiguracionMovimientoJugador& movimiento = recursos.juego.movimiento;
+    const Rectangulo pies{
+        static_cast<int>(lugar.x) + movimiento.hitbox_x,
+        static_cast<int>(lugar.y) + movimiento.hitbox_y,
+        movimiento.hitbox_ancho,
+        movimiento.hitbox_alto};
+    return !sectores.en(lugar.mapa).colisiones.bloquea(pies);
 }
 
 bool ControladorDelCentro::tomar_terminado_para_guardar() {

@@ -156,12 +156,9 @@ void Mundo::conectar(
     auto guardado = datos_jugadores.find(id_jugador);
     if (guardado != datos_jugadores.end() && !guardado->second.mapa_actual.empty() &&
         sectores.existe(guardado->second.mapa_actual)) {
-        sectores.colocar_en(
-            personaje,
-            guardado->second.mapa_actual,
-            guardado->second.x,
-            guardado->second.y,
-            guardado->second.mirando);
+        const LugarEnElMundo lugar = controlador_del_centro.lugar_para(
+            LugarEnElMundo{guardado->second.mapa_actual, guardado->second.x, guardado->second.y});
+        sectores.colocar_en(personaje, lugar.mapa, lugar.x, lugar.y, guardado->second.mirando);
     } else {
         sectores.colocar_en_aparicion(personaje, recursos.mapa_inicial);
     }
