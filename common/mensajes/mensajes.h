@@ -79,6 +79,9 @@ using EventoServidor = std::variant<
     AvisoEnPantalla,
 
     // - NPCs
-    NpcsEnSector, DialogoNpc>;
+    NpcsEnSector, DialogoNpc,
+
+    // - Llamas de las Skulls
+    LlamasEnSector>;
 
 #endif

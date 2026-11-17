@@ -94,6 +94,9 @@ enum class TipoMensaje : uint8_t {
     // NPCs
     NPCS_EN_SECTOR = 0xA4,
     DIALOGO_NPC = 0xA5,
+
+    // Llamas que lanzaron las Skulls, volando por el sector
+    LLAMAS_EN_SECTOR = 0xA6,
 };
 
 #endif
