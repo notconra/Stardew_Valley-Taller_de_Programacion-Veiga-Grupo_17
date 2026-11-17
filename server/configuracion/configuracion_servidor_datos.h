@@ -206,6 +206,32 @@ struct ConfiguracionVampirosServidor {
     int radio_de_sangre = 3;
 };
 
+// Las Skulls, [mazmorra.enemigos.skulls]: no se pueden matar y atacan a distancia lanzando llamas
+// en línea recta hacia donde está el jugador al disparar (no lo persiguen). Aparecen solas y hay a
+// lo sumo una por nivel. Cada una es azul o verde (probabilidad_verde): la verde lanza llamas que
+// hacen el doble de daño ("danio" es el de la azul) pero vuelan a la mitad de velocidad.
+struct ConfiguracionSkullsServidor {
+    ConfiguracionEnemigoServidor combate{
+        .vida = 1,  // no importa: son invulnerables
+        .danio = 6,
+        .ticks_entre_ataques = 80,
+        .ticks_para_revivir = 0,
+        .ticks_por_casilla = 30,
+        .radio_de_vision = 7,
+        .radio_de_deambulo = 3,
+        .oro_minimo = 0,
+        .oro_maximo = 0};
+    int skulls_por_nivel = 1;
+    double probabilidad_verde = 0.4;
+    // Velocidad de la llama azul, en casillas por segundo (la verde va a la mitad). Máximo 20: a 40
+    // ticks por segundo es media casilla por tick, así no "salta" por encima de un jugador o pared.
+    double velocidad_de_llama = 6.0;
+    // Cuántas casillas vuela una llama antes de apagarse (si no choca antes con algo).
+    int alcance_de_llama = 9;
+    // No se acerca más que esto al jugador: se queda a distancia y dispara.
+    int distancia_de_ataque = 4;
+};
+
 // Los pinches de la mazmorra, [mazmorra.trampas]. Están en el suelo y se activan por tiempo:
 // pasan ticks_inactiva guardados y ticks_activa afuera, y vuelven a empezar. Cada uno arranca su
 // ciclo en un momento distinto. Mientras están afuera le sacan "danio" de vida una sola vez por
@@ -233,6 +259,7 @@ struct ConfiguracionMazmorraServidor {
     ConfiguracionEnemigoServidor esqueleto;
     ConfiguracionOrcosServidor orco;
     ConfiguracionVampirosServidor vampiros;
+    ConfiguracionSkullsServidor skulls;
     ConfiguracionTrampasServidor trampas;
 };
 
