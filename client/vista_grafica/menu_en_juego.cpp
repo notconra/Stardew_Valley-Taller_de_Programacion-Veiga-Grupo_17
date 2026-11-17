@@ -1,5 +1,7 @@
 #include "menu_en_juego.h"
 
+#include <algorithm>
+#include <map>
 #include <string>
 
 // Rutas constantes a los assets de interfaz
@@ -22,10 +24,41 @@ static constexpr SDL_Rect ORIGEN_SPRITE_BOTON_CANCELAR{192, 256, 64, 64};
 static constexpr SDL_Rect ORIGEN_SPRITE_GALLINAS{3, 448, 26, 16};
 static constexpr SDL_Rect ORIGEN_SPRITE_VACA{40, 449, 17, 14};
 
+// Pestaña del centro comunitario: una fila por lote.
+#define PRIMERA_FILA_DE_LOTES_Y 88
+#define ALTO_DE_FILA_DE_LOTE 60
+#define ALTO_DE_TARJETA_DE_LOTE 54
+#define MARGEN_DE_TARJETA_DE_LOTE 35
+#define LADO_DEL_ICONO_DE_LOTE 40
+#define NOMBRE_DE_LOTE_X 62
+#define BARRA_DE_AVANCE_X 300
+#define ANCHO_DE_BARRA_DE_AVANCE 130
+#define ALTO_DE_BARRA_DE_AVANCE 14
+#define SEPARACION_TEXTO_DE_AVANCE 10
+#define ESCALA_DE_LA_TILDE 2
+#define TEXTO_DE_LOTE_COMPLETO "Completo"
+#define TEXTO_SIN_DATOS_DEL_CENTRO "Todavia no hay datos del centro."
+
+// Cartel de felicitación por completar el centro (la fuente no tiene acentos).
+#define ANCHO_CARTEL_FELICITACION 560
+#define ALTO_CARTEL_FELICITACION 230
+#define TITULO_FELICITACION_Y 36
+#define TEXTO_FELICITACION_Y 84
+#define BOTONES_FELICITACION_Y 140
+#define ANCHO_BOTON_FELICITACION 230
+#define ALTO_BOTON_FELICITACION 56
+#define SEPARACION_BOTONES_FELICITACION 24
+#define TITULO_FELICITACION "Felicitaciones!"
+#define TEXTO_FELICITACION "Completaron el centro comunitario!"
+#define BOTON_SEGUIR_JUGANDO "Seguir jugando"
+#define BOTON_VOLVER_AL_LOBBY "Volver al lobby"
+
 MenuEnJuego::MenuEnJuego(
     SDL_Renderer* renderizador, const std::string& ruta_fuente,
-    EfectosDeSonido& efectos_de_sonido_referencia, int ancho_pantalla, int alto_pantalla)
+    EfectosDeSonido& efectos_de_sonido_referencia, const IconosDeLotes& iconos_de_lotes_referencia,
+    int ancho_pantalla, int alto_pantalla)
     : efectos_de_sonido(efectos_de_sonido_referencia),
+      iconos_de_lotes(iconos_de_lotes_referencia),
       fuente_titulo(renderizador, ruta_fuente, TAMANO_FUENTE_TITULO),
       fuente_opciones(renderizador, ruta_fuente, TAMANO_FUENTE_OPCIONES),
       fuente_botones(renderizador, ruta_fuente, TAMANO_FUENTE_BOTONES),
@@ -38,6 +71,7 @@ MenuEnJuego::MenuEnJuego(
       textura_leche(RUTA_ASSET_LECHE, renderizador),
       textura_huevo(RUTA_ASSET_HUEVO, renderizador),
       menu_abierto(false),
+      felicitacion_visible(false),
       despierto(true),
       cartel_confirmacion_activo(false),
       accion_pendiente_confirmacion(AccionMenu::NINGUNA),
@@ -60,12 +94,23 @@ MenuEnJuego::MenuEnJuego(
       rectangulo_barra_efectos{0, 0, 0, 0},
       rectangulo_boton_multijugador{0, 0, 0, 0},
       rectangulo_boton_volver_lobby{0, 0, 0, 0},
-      rectangulo_boton_salir_juego{0, 0, 0, 0} {
+      rectangulo_boton_salir_juego{0, 0, 0, 0},
+      rectangulo_cartel_felicitacion{0, 0, 0, 0},
+      rectangulo_boton_seguir_jugando{0, 0, 0, 0},
+      rectangulo_boton_lobby_felicitacion{0, 0, 0, 0} {
     recalcular_posiciones(ancho_pantalla, alto_pantalla);
 }
 
 bool MenuEnJuego::esta_abierto() const {
-    return menu_abierto;
+    return menu_abierto || felicitacion_visible;
+}
+
+void MenuEnJuego::mostrar_felicitacion() {
+    menu_abierto = false;
+    deslizador_activo = DeslizadorArrastrado::NINGUNO;
+    cartel_confirmacion_activo = false;
+    accion_pendiente_confirmacion = AccionMenu::NINGUNA;
+    felicitacion_visible = true;
 }
 
 void MenuEnJuego::abrir() {
@@ -78,6 +123,7 @@ void MenuEnJuego::abrir() {
 
 void MenuEnJuego::cerrar() {
     menu_abierto = false;
+    felicitacion_visible = false;
     deslizador_activo = DeslizadorArrastrado::NINGUNO;
     cartel_confirmacion_activo = false;
     accion_pendiente_confirmacion = AccionMenu::NINGUNA;
@@ -192,6 +238,23 @@ void MenuEnJuego::recalcular_posiciones(int ancho_pantalla, int alto_pantalla) {
     rectangulo_boton_salir_juego.x = rectangulo_boton_volver_lobby.x;
     rectangulo_boton_salir_juego.y =
         rectangulo_boton_volver_lobby.y + ALTO_BOTON_SALIDA + SEPARACION_VERTICAL_BOTONES_SALIDA;
+
+    rectangulo_cartel_felicitacion = SDL_Rect{
+        (ancho_pantalla - ANCHO_CARTEL_FELICITACION) / 2,
+        (alto_pantalla - ALTO_CARTEL_FELICITACION) / 2,
+        ANCHO_CARTEL_FELICITACION,
+        ALTO_CARTEL_FELICITACION};
+    const int ancho_de_los_botones = 2 * ANCHO_BOTON_FELICITACION + SEPARACION_BOTONES_FELICITACION;
+    const int botones_x =
+        rectangulo_cartel_felicitacion.x + (ANCHO_CARTEL_FELICITACION - ancho_de_los_botones) / 2;
+    const int botones_y = rectangulo_cartel_felicitacion.y + BOTONES_FELICITACION_Y;
+    rectangulo_boton_seguir_jugando =
+        SDL_Rect{botones_x, botones_y, ANCHO_BOTON_FELICITACION, ALTO_BOTON_FELICITACION};
+    rectangulo_boton_lobby_felicitacion = SDL_Rect{
+        botones_x + ANCHO_BOTON_FELICITACION + SEPARACION_BOTONES_FELICITACION,
+        botones_y,
+        ANCHO_BOTON_FELICITACION,
+        ALTO_BOTON_FELICITACION};
 }
 
 bool MenuEnJuego::esta_adentro(
@@ -291,7 +354,23 @@ AccionMenu MenuEnJuego::procesar_clic_pestania_salir(int coordenada_x, int coord
     return AccionMenu::NINGUNA;
 }
 
+AccionMenu MenuEnJuego::procesar_clic_felicitacion(int coordenada_x, int coordenada_y) {
+    if (esta_adentro(rectangulo_boton_seguir_jugando, coordenada_x, coordenada_y)) {
+        felicitacion_visible = false;
+        return AccionMenu::NINGUNA;
+    }
+    if (esta_adentro(rectangulo_boton_lobby_felicitacion, coordenada_x, coordenada_y)) {
+        // La partida se guardó al completarse el centro: no hace falta confirmar.
+        felicitacion_visible = false;
+        return AccionMenu::VOLVER_AL_LOBBY;
+    }
+    return AccionMenu::NINGUNA;
+}
+
 AccionMenu MenuEnJuego::clic_presionado(int coordenada_x, int coordenada_y) {
+    if (felicitacion_visible) {
+        return procesar_clic_felicitacion(coordenada_x, coordenada_y);
+    }
     if (!menu_abierto) {
         return AccionMenu::NINGUNA;
     }
@@ -707,7 +786,8 @@ void MenuEnJuego::dibujar_contenido_animales(
         1);
 }
 
-void MenuEnJuego::dibujar_contenido_centro_comunitario(SDL_Renderer* renderizador) const {
+void MenuEnJuego::dibujar_contenido_centro_comunitario(
+    SDL_Renderer* renderizador, const std::map<TipoLote, LoteDelCentro>& lotes) const {
     std::string titulo = "Centro Comunitario";
     int titulo_x = rectangulo_ventana.x + (rectangulo_ventana.w - fuente_titulo.ancho(titulo)) / 2;
     fuente_titulo.dibujar_con_sombra(renderizador, titulo, titulo_x, rectangulo_ventana.y + 40, 2);
@@ -720,6 +800,139 @@ void MenuEnJuego::dibujar_contenido_centro_comunitario(SDL_Renderer* renderizado
         rectangulo_ventana.y + 75,
         rectangulo_ventana.x + rectangulo_ventana.w - 40,
         rectangulo_ventana.y + 75);
+
+    if (lotes.empty()) {
+        const std::string aviso = TEXTO_SIN_DATOS_DEL_CENTRO;
+        fuente_botones.dibujar_con_sombra(
+            renderizador,
+            aviso,
+            rectangulo_ventana.x + (rectangulo_ventana.w - fuente_botones.ancho(aviso)) / 2,
+            rectangulo_ventana.y + PRIMERA_FILA_DE_LOTES_Y,
+            1);
+        return;
+    }
+    int fila_y = rectangulo_ventana.y + PRIMERA_FILA_DE_LOTES_Y;
+    for (const auto& [tipo, lote] : lotes) {
+        dibujar_lote(renderizador, lote, fila_y);
+        fila_y += ALTO_DE_FILA_DE_LOTE;
+    }
+}
+
+void MenuEnJuego::dibujar_lote(
+    SDL_Renderer* renderizador, const LoteDelCentro& lote, int fila_y) const {
+    const SDL_Rect tarjeta{
+        rectangulo_ventana.x + MARGEN_DE_TARJETA_DE_LOTE,
+        fila_y,
+        rectangulo_ventana.w - 2 * MARGEN_DE_TARJETA_DE_LOTE,
+        ALTO_DE_TARJETA_DE_LOTE};
+    SDL_SetRenderDrawBlendMode(renderizador, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(renderizador, 242, 215, 168, 180);
+    SDL_RenderFillRect(renderizador, &tarjeta);
+    SDL_SetRenderDrawColor(renderizador, 160, 110, 60, 255);
+    SDL_RenderDrawRect(renderizador, &tarjeta);
+
+    const int margen_del_icono = (ALTO_DE_TARJETA_DE_LOTE - LADO_DEL_ICONO_DE_LOTE) / 2;
+    const SDL_Rect icono{
+        tarjeta.x + margen_del_icono,
+        tarjeta.y + margen_del_icono,
+        LADO_DEL_ICONO_DE_LOTE,
+        LADO_DEL_ICONO_DE_LOTE};
+    iconos_de_lotes.dibujar(renderizador, lote.lote, icono);
+
+    const int texto_y = tarjeta.y + (tarjeta.h - fuente_botones.alto_de_renglon()) / 2;
+    fuente_botones
+        .dibujar_con_sombra(renderizador, lote.nombre, tarjeta.x + NOMBRE_DE_LOTE_X, texto_y, 1);
+
+    const int estado_x = tarjeta.x + BARRA_DE_AVANCE_X;
+    if (lote.completo) {
+        const SDL_Rect tilde{
+            estado_x,
+            tarjeta.y + (tarjeta.h - ALTO_DE_LA_TILDE * ESCALA_DE_LA_TILDE) / 2,
+            ANCHO_DE_LA_TILDE * ESCALA_DE_LA_TILDE,
+            ALTO_DE_LA_TILDE * ESCALA_DE_LA_TILDE};
+        iconos_de_lotes.dibujar_tilde(renderizador, tilde);
+        fuente_botones.dibujar_con_sombra(
+            renderizador,
+            TEXTO_DE_LOTE_COMPLETO,
+            tilde.x + tilde.w + SEPARACION_TEXTO_DE_AVANCE,
+            texto_y,
+            1);
+        return;
+    }
+
+    uint32_t aportado = 0;
+    uint32_t pedido = 0;
+    for (const RequisitoDeLote& requisito : lote.requisitos) {
+        aportado += std::min(requisito.aportado, requisito.cantidad);
+        pedido += requisito.cantidad;
+    }
+    const SDL_Rect barra{
+        estado_x,
+        tarjeta.y + (tarjeta.h - ALTO_DE_BARRA_DE_AVANCE) / 2,
+        ANCHO_DE_BARRA_DE_AVANCE,
+        ALTO_DE_BARRA_DE_AVANCE};
+    dibujar_barra_de_avance(renderizador, barra, aportado, pedido);
+    fuente_pequena.dibujar_con_sombra(
+        renderizador,
+        std::to_string(aportado) + " de " + std::to_string(pedido),
+        barra.x + barra.w + SEPARACION_TEXTO_DE_AVANCE,
+        tarjeta.y + (tarjeta.h - fuente_pequena.alto_de_renglon()) / 2,
+        1);
+}
+
+void MenuEnJuego::dibujar_barra_de_avance(
+    SDL_Renderer* renderizador, const SDL_Rect& rectangulo_barra, uint32_t aportado,
+    uint32_t pedido) const {
+    // Mismos colores que la barra de volumen.
+    SDL_SetRenderDrawColor(renderizador, 45, 30, 20, 255);
+    SDL_RenderFillRect(renderizador, &rectangulo_barra);
+    SDL_SetRenderDrawColor(renderizador, 139, 90, 43, 255);
+    SDL_RenderDrawRect(renderizador, &rectangulo_barra);
+    if (pedido == 0 || aportado == 0) {
+        return;
+    }
+    const int ancho_relleno =
+        static_cast<int>(static_cast<uint64_t>(rectangulo_barra.w - 4) * aportado / pedido);
+    const SDL_Rect relleno{
+        rectangulo_barra.x + 2,
+        rectangulo_barra.y + 2,
+        ancho_relleno,
+        rectangulo_barra.h - 4};
+    SDL_SetRenderDrawColor(renderizador, 218, 154, 62, 255);
+    SDL_RenderFillRect(renderizador, &relleno);
+}
+
+void MenuEnJuego::dibujar_felicitacion(SDL_Renderer* renderizador) const {
+    dibujar_caja_nueve_rebanadas(
+        renderizador,
+        textura_marco,
+        rectangulo_cartel_felicitacion,
+        BORDE_CORTE_ASSET_MARCO,
+        BORDE_EN_PANTALLA_MARCO);
+
+    const std::string titulo = TITULO_FELICITACION;
+    fuente_titulo.dibujar_con_sombra(
+        renderizador,
+        titulo,
+        rectangulo_cartel_felicitacion.x +
+            (rectangulo_cartel_felicitacion.w - fuente_titulo.ancho(titulo)) / 2,
+        rectangulo_cartel_felicitacion.y + TITULO_FELICITACION_Y,
+        2);
+
+    const std::string texto = TEXTO_FELICITACION;
+    fuente_opciones.dibujar_con_sombra(
+        renderizador,
+        texto,
+        rectangulo_cartel_felicitacion.x +
+            (rectangulo_cartel_felicitacion.w - fuente_opciones.ancho(texto)) / 2,
+        rectangulo_cartel_felicitacion.y + TEXTO_FELICITACION_Y,
+        2);
+
+    dibujar_boton_con_asset(renderizador, rectangulo_boton_seguir_jugando, BOTON_SEGUIR_JUGANDO);
+    dibujar_boton_con_asset(
+        renderizador,
+        rectangulo_boton_lobby_felicitacion,
+        BOTON_VOLVER_AL_LOBBY);
 }
 
 void MenuEnJuego::dibujar_contenido_salir(SDL_Renderer* renderizador) const {
@@ -793,7 +1006,14 @@ void MenuEnJuego::dibujar_cartel_confirmacion(SDL_Renderer* renderizador) const 
     SDL_SetTextureColorMod(textura_cursores.ptr(), 255, 255, 255);
 }
 
-void MenuEnJuego::dibujar(SDL_Renderer* renderizador, const DatosAnimales& datos_animales) const {
+void MenuEnJuego::dibujar(
+    SDL_Renderer* renderizador, const DatosAnimales& datos_animales,
+    const std::map<TipoLote, LoteDelCentro>& lotes) const {
+    if (felicitacion_visible) {
+        dibujar_fondo_oscurecido(renderizador);
+        dibujar_felicitacion(renderizador);
+        return;
+    }
     if (!menu_abierto) {
         return;
     }
@@ -811,7 +1031,7 @@ void MenuEnJuego::dibujar(SDL_Renderer* renderizador, const DatosAnimales& datos
     if (pestania_activa == PestaniaMenu::ANIMALES) {
         dibujar_contenido_animales(renderizador, datos_animales);
     } else if (pestania_activa == PestaniaMenu::CENTRO_COMUNITARIO) {
-        dibujar_contenido_centro_comunitario(renderizador);
+        dibujar_contenido_centro_comunitario(renderizador, lotes);
     } else if (pestania_activa == PestaniaMenu::CONFIGURACION) {
         dibujar_contenido_configuracion(renderizador);
     } else if (pestania_activa == PestaniaMenu::SALIR) {

@@ -39,7 +39,7 @@ class GestorDeEnemigos {
 private:
     const CatalogoDeEnemigos& catalogo;
     std::map<int, Enemigo> enemigos_por_id;
-    int siguiente_id = 1;  // no se reinicia, así un id viejo nunca apunta a otro enemigo
+    int siguiente_id = 1;     // no se reinicia, así un id viejo nunca apunta a otro enemigo
     int siguiente_grupo = 1;  // tampoco se reinicia, por el set de pelea ("del mismo grupo")
     uint32_t ms_por_tick;
 
@@ -82,7 +82,8 @@ public:
 
     // Coloca una pareja (los dos en un mismo grupo nuevo), como los vampiros. Devuelve cuántos
     // colocó (0 si alguno de los tipos no existe en el catálogo).
-    int poblar_pareja(const Casilla& primera, TipoEnemigo tipo_primera, const Casilla& segunda,
+    int poblar_pareja(
+        const Casilla& primera, TipoEnemigo tipo_primera, const Casilla& segunda,
         TipoEnemigo tipo_segunda);
 
     // Los muertos que reviven con sangre (vampiros) y tienen a uno de "heridos" a su radio de
@@ -133,6 +134,13 @@ public:
     // El primer enemigo vivo en esa casilla, o nullptr si no hay ninguno. Lo usa AccionAtacar para
     // resolver a qué le pega el jugador. El puntero deja de ser válido si se llama a limpiar().
     const Enemigo* enemigo_vivo_en(int columna, int fila) const;
+
+    // Los enemigos (vivos o muertos) que aparecieron en ese grupo. Con grupo 0 (sin grupo) no
+    // devuelve ninguno. Los punteros dejan de ser válidos si se llama a limpiar().
+    std::vector<const Enemigo*> del_grupo(int grupo) const;
+
+    // Si en el sector hay algún enemigo de ese tipo, vivo o muerto.
+    bool hay_de_tipo(TipoEnemigo tipo) const;
 
     int cantidad() const;
 

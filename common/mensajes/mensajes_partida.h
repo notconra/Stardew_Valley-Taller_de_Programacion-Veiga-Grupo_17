@@ -11,6 +11,7 @@
 #include "../direccion.h"
 #include "../estacion.h"
 #include "../estado_de_descanso.h"
+#include "../logro_de_pelea.h"
 #include "../modo_uso.h"
 #include "../ranura_inventario.h"
 #include "../tipo_accion.h"
@@ -18,6 +19,7 @@
 #include "../tipo_cultivo.h"
 #include "../tipo_enemigo.h"
 #include "../tipo_item.h"
+#include "../tipo_lote.h"
 #include "../tipo_objeto.h"
 #include "../tipo_trampa.h"
 
@@ -156,6 +158,18 @@ struct EnviarRegalo {
 // Pasa al inventario todos los regalos pendientes que entren. Los que no entran siguen pendientes.
 struct AbrirRegalos {};
 
+// Dona al lote lo que acepte del ítem de esa ranura del inventario (índice absoluto, como en el
+// cofre). Lo que se dona sale del inventario y queda en el centro.
+struct DonarAlLote {
+    TipoLote lote = TipoLote::CULTIVOS;
+    uint8_t indice_ranura = 0;
+};
+
+// Dona las monedas que pide el lote (el de dinero). El cliente pide confirmación antes.
+struct DonarMonedasAlLote {
+    TipoLote lote = TipoLote::DINERO;
+};
+
 // Servidor a cliente
 
 struct MultijugadorActivado {
@@ -188,6 +202,9 @@ struct EstadoJugador {
     TipoAccion accion_actual = TipoAccion::NINGUNA;
     uint8_t vida = VIDA_MAXIMA_JUGADOR;
     uint8_t energia = ENERGIA_MAXIMA_JUGADOR;
+    // Los topes de las barras de este jugador: más altos con la mejora del lote de pelea.
+    uint8_t vida_maxima = VIDA_MAXIMA_JUGADOR;
+    uint8_t energia_maxima = ENERGIA_MAXIMA_JUGADOR;
     uint32_t monedas = 0;
     AparienciaPersonaje apariencia;
 
@@ -511,6 +528,8 @@ enum class CanalDeChat : uint8_t {
     SISTEMA = 2,
 };
 
+#define REMITENTE_DEL_SISTEMA "(Sistema)"
+
 // Un mensaje ya interpretado por el servidor. "remitente" es el nombre del jugador que lo envió
 // (o "(Sistema)" en los avisos), "destinatario" solo tiene valor en los privados. "texto" es el
 // contenido sin el prefijo "@nombre". "color_del_remitente" lo elige el servidor al entrar a la
@@ -521,6 +540,10 @@ struct MensajeDeChat {
     std::string destinatario;
     std::string texto;
     ColorDeJugador color_del_remitente = ColorDeJugador::AZUL;
+
+    static MensajeDeChat del_sistema(const std::string& texto) {
+        return MensajeDeChat{CanalDeChat::SISTEMA, REMITENTE_DEL_SISTEMA, std::string(), texto};
+    }
 };
 
 // Información detallada de cada ítem/animal en el catálogo del puesto de mercado.
@@ -566,5 +589,40 @@ struct DialogoNpc {
     std::string id_npc;
     std::string texto;
 };
+
+// Una parte de un lote del centro comunitario y cuánto se lleva aportado. Según "tipo", lo que
+// importa es "item" y "calidad_minima" (donar un ítem), "logro" (pelea) o solo "cantidad"
+// (monedas).
+struct RequisitoDeLote {
+    TipoDeRequisito tipo = TipoDeRequisito::ITEM;
+    TipoItem item = TipoItem::NINGUNO;
+    Calidad calidad_minima = Calidad::BASE;
+    LogroDePelea logro = LogroDePelea::ESQUELETOS;
+    uint32_t cantidad = 0;
+    uint32_t aportado = 0;
+
+    bool operator==(const RequisitoDeLote&) const = default;
+};
+
+// El estado de un lote del centro comunitario, con todo lo que hace falta para dibujarlo. Se le
+// manda al que hace clic en el lote con "abrir" en true (abre la ventana), y a todos con "abrir" en
+// false cada vez que el lote cambia (actualiza la ventana de quien lo tenga abierto).
+struct LoteDelCentro {
+    TipoLote lote = TipoLote::CULTIVOS;
+    bool abrir = false;
+    std::string nombre;
+    bool completo = false;
+    std::vector<RequisitoDeLote> requisitos;
+    std::string mapa;
+    uint32_t columna = 0;
+    uint32_t fila = 0;
+
+    bool operator==(const LoteDelCentro&) const = default;
+};
+
+// Se completaron los cinco lotes del centro comunitario. El cliente felicita al jugador con un
+// cartel y lo deja seguir jugando o volver al lobby. Cada jugador que estaba en la partida lo
+// recibe una vez.
+struct CentroTerminado {};
 
 #endif

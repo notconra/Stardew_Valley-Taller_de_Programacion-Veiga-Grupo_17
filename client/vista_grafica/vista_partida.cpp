@@ -160,6 +160,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     hora_del_juego.reset();
     jugadores_de_la_partida = JugadoresDeLaPartida{};
     regalos_pendientes = RegalosPendientes{};
+    lotes_recibidos.clear();
+    lotes_del_centro.clear();
     ultimo_riego.reset();
     olvidar_el_piso();
     partida_terminada = false;
@@ -242,11 +244,22 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         iconos,
         ancho_de_pantalla,
         alto_de_pantalla);
+    IconosDeLotes iconos_de_lotes(renderizador.ptr());
+    MarcasDeLotes marcas_de_lotes(iconos_de_lotes, graficos);
+    std::optional<VentanaDeLote> ventana_de_lote;
+    ventana_de_lote.emplace(
+        renderizador.ptr(),
+        configuracion.chat.ruta_fuente,
+        iconos,
+        iconos_de_lotes,
+        ancho_de_pantalla,
+        alto_de_pantalla);
     std::optional<MenuEnJuego> menu;
     menu.emplace(
         renderizador.ptr(),
         configuracion.chat.ruta_fuente,
         efectos,
+        iconos_de_lotes,
         ancho_de_pantalla,
         alto_de_pantalla);
     menu_actual = &(*menu);
@@ -282,6 +295,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
                 if (!menu->cancelar_confirmacion_si_esta_activa()) {
                     menu->cerrar();
                 }
+            } else if (ventana_de_lote->esta_abierta()) {
+                ventana_de_lote->cerrar();
             } else if (hud_mercado.esta_abierto()) {
                 conexion.enviar_comando(CerrarMercado{});
             } else if (regalos->esta_abierto()) {
@@ -344,6 +359,11 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             menu_actual = nullptr;
             return true;
         }
+        for (const LoteDelCentro& lote : lotes_recibidos) {
+            ventana_de_lote->recibir(lote);
+            lotes_del_centro[lote.lote] = lote;
+        }
+        lotes_recibidos.clear();
 
         const EstadoJugador* propio = jugador_propio();
         const bool cambio_el_tamano = actualizar_tamano_de_pantalla(ventana, hud, hud_mercado);
@@ -353,6 +373,11 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
                     crear_textura_del_mundo(renderizador.ptr(), ancho_del_mundo, alto_del_mundo);
             }
             camara = camara_para(mapa_de(mapa_actual));
+            ventana_de_lote->configurar(
+                renderizador.ptr(),
+                configuracion.chat.ruta_fuente,
+                ancho_de_pantalla,
+                alto_de_pantalla);
             regalos.emplace(
                 renderizador.ptr(),
                 configuracion.chat.ruta_fuente,
@@ -376,6 +401,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             ultimo_cofre = CofreJugador{};
             hud_mercado.cerrar();
             ultimo_riego.reset();
+            ventana_de_lote->cerrar();
             camara = camara_para(mapa_de(mapa_actual));
         }
         efectos.cambiar_lluvia(
@@ -397,6 +423,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
                 hud,
                 hud_mercado,
                 *regalos,
+                *ventana_de_lote,
                 npcs,
                 cuadro_de_aviso,
                 cuadro_de_dialogo,
@@ -421,7 +448,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
         if (cuadro_de_aviso.esta_visible() || cuadro_de_dialogo.esta_visible() ||
             chat.esta_escribiendo() || ultimo_cofre.abierto || hud_mercado.esta_abierto() ||
-            regalos->esta_abierto() || menu->esta_abierto()) {
+            regalos->esta_abierto() || ventana_de_lote->esta_abierta() || menu->esta_abierto()) {
             enviar_intencion_si_cambio(Moverse{});
         } else {
             enviar_intencion_si_cambio(entrada.intencion());
@@ -450,6 +477,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             *reloj_grafico,
             *pantalla_de_descanso,
             *regalos,
+            *ventana_de_lote,
+            marcas_de_lotes,
             cuadro_de_aviso,
             cuadro_de_dialogo,
             lluvia,
@@ -566,8 +595,8 @@ MenuEnJuego::DatosAnimales VistaPartida::datos_de_animales() const {
 
 void VistaPartida::procesar_entrada(
     const EntradaDelUsuario& entrada, HudInventario& hud, HudMercado& hud_mercado,
-    PanelDeRegalos& regalos, const NpcsGraficos& npcs, CuadroDeAviso& cuadro_de_aviso,
-    CuadroDeDialogo& cuadro_de_dialogo, const Camara& camara,
+    PanelDeRegalos& regalos, VentanaDeLote& ventana_de_lote, const NpcsGraficos& npcs,
+    CuadroDeAviso& cuadro_de_aviso, CuadroDeDialogo& cuadro_de_dialogo, const Camara& camara,
     const VistaChat::ConsumoDeEntrada& consumo_del_chat) {
     const EntradaDelUsuario::Pedidos& pedidos = entrada.pedidos();
 
@@ -600,6 +629,7 @@ void VistaPartida::procesar_entrada(
                 hud,
                 hud_mercado,
                 regalos,
+                ventana_de_lote,
                 npcs,
                 camara,
                 false,
@@ -611,6 +641,7 @@ void VistaPartida::procesar_entrada(
                 hud,
                 hud_mercado,
                 regalos,
+                ventana_de_lote,
                 npcs,
                 camara,
                 true,
@@ -639,8 +670,20 @@ void VistaPartida::elegir_ranura_de_la_barra(const EntradaDelUsuario::Pedidos& p
 }
 void VistaPartida::procesar_clic(
     const EntradaDelUsuario& entrada, HudInventario& hud, HudMercado& hud_mercado,
-    PanelDeRegalos& regalos, const NpcsGraficos& npcs, const Camara& camara, bool clic_derecho,
-    bool con_shift) {
+    PanelDeRegalos& regalos, VentanaDeLote& ventana_de_lote, const NpcsGraficos& npcs,
+    const Camara& camara, bool clic_derecho, bool con_shift) {
+    if (ventana_de_lote.captura_el_clic()) {
+        const EstadoJugador* propio = jugador_propio();
+        const std::optional<ComandoCliente> comando = ventana_de_lote.procesar_clic(
+            ultimo_inventario,
+            propio != nullptr ? propio->monedas : 0,
+            entrada.raton_x(),
+            entrada.raton_y());
+        if (comando.has_value()) {
+            conexion.enviar_comando(*comando);
+        }
+        return;
+    }
     if (hud_mercado.esta_abierto()) {
         for (const ComandoCliente& comando : hud_mercado.procesar_clic(
                  ultimo_inventario,
@@ -991,6 +1034,12 @@ void VistaPartida::aplicar(
             },
             [&](const MensajeDeChat& e) { chat.recibir(e); },
             [&](const JugadoresDeLaPartida& e) { jugadores_de_la_partida = e; },
+            [&](const LoteDelCentro& e) { lotes_recibidos.push_back(e); },
+            [&](const CentroTerminado&) {
+                if (menu_actual != nullptr) {
+                    menu_actual->mostrar_felicitacion();
+                }
+            },
             [&](const RegalosPendientes& e) {
                 if (e.regalos.size() > regalos_pendientes.regalos.size() &&
                     efectos_actuales != nullptr) {
@@ -1053,6 +1102,7 @@ void VistaPartida::dibujar(
     const HudInventario& hud, const HudMercado& hud_mercado, const VisionMazmorra& vision_mazmorra,
     const EntradaDelUsuario& entrada, const VistaChat& chat, RelojGrafico& reloj_grafico,
     const PantallaDeDescanso& pantalla_de_descanso, const PanelDeRegalos& regalos,
+    const VentanaDeLote& ventana_de_lote, const MarcasDeLotes& marcas_de_lotes,
     const CuadroDeAviso& cuadro_de_aviso, const CuadroDeDialogo& cuadro_de_dialogo,
     LluviaGrafica& lluvia, const MenuEnJuego& menu) const {
     SDL_Renderer* renderer = renderizador.ptr();
@@ -1190,6 +1240,7 @@ void VistaPartida::dibujar(
         }
     }
     mapa.dibujar_sobre_los_jugadores(renderer, camara.x(), camara.y());
+    marcas_de_lotes.dibujar(renderer, lotes_del_centro, mapa_actual, camara.x(), camara.y());
     objetos.dibujar_sobre_los_jugadores(
         renderer,
         ultimo_estado_juego,
@@ -1224,9 +1275,9 @@ void VistaPartida::dibujar(
     hud_mercado.dibujar(entrada.raton_x(), entrada.raton_y());
     hud.dibujar(renderer, ultimo_inventario, ultimo_cofre, entrada.raton_x(), entrada.raton_y());
     if (const EstadoJugador* propio = jugador_propio(); propio != nullptr) {
-        hud.dibujar_energia(renderer, propio->energia, ENERGIA_MAXIMA_JUGADOR);
-        if (mapa_actual_es_mazmorra() || propio->vida < VIDA_MAXIMA_JUGADOR) {
-            hud.dibujar_vida(renderer, propio->vida, VIDA_MAXIMA_JUGADOR);
+        hud.dibujar_energia(renderer, propio->energia, propio->energia_maxima);
+        if (mapa_actual_es_mazmorra() || propio->vida < propio->vida_maxima) {
+            hud.dibujar_vida(renderer, propio->vida, propio->vida_maxima);
         }
         reloj_grafico.dibujar_dinero(renderer, propio->monedas, ancho_de_pantalla);
     }
@@ -1236,11 +1287,19 @@ void VistaPartida::dibujar(
     }
 
     regalos.dibujar(renderer, datos_de_regalos());
+    if (const EstadoJugador* propio = jugador_propio(); propio != nullptr) {
+        ventana_de_lote.dibujar(
+            renderer,
+            ultimo_inventario,
+            propio->monedas,
+            entrada.raton_x(),
+            entrada.raton_y());
+    }
     pantalla_de_descanso.dibujar(renderer, descanso, ancho_de_pantalla, alto_de_pantalla);
     chat.dibujar(renderer, ancho_de_pantalla, alto_de_pantalla);
     cuadro_de_aviso.dibujar(renderer, ancho_de_pantalla, alto_de_pantalla);
     cuadro_de_dialogo.dibujar(renderer, ancho_de_pantalla, alto_de_pantalla);
-    menu.dibujar(renderer, datos_de_animales());
+    menu.dibujar(renderer, datos_de_animales(), lotes_del_centro);
 
     SDL_RenderPresent(renderer);
 }

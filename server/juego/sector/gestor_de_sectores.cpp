@@ -255,6 +255,8 @@ std::vector<EstadoJugador> GestorDeSectores::armar_jugadores(const std::string& 
             estado.accion_actual = personaje->second.accion_actual;
             estado.vida = static_cast<uint8_t>(personaje->second.vida);
             estado.energia = static_cast<uint8_t>(personaje->second.energia);
+            estado.vida_maxima = static_cast<uint8_t>(personaje->second.vida_maxima());
+            estado.energia_maxima = static_cast<uint8_t>(personaje->second.energia_maxima());
             estado.monedas = personaje->second.monedas;
             estado.apariencia = personaje->second.apariencia;
         }

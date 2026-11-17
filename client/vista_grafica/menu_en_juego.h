@@ -3,10 +3,13 @@
 
 #include <SDL2/SDL.h>
 
+#include <map>
 #include <string>
 
+#include "../../common/mensajes/mensajes.h"
 #include "efectos_de_sonido.h"
 #include "fuente_del_juego.h"
+#include "iconos_de_lote.h"
 #include "textura.h"
 
 enum class PestaniaMenu : uint8_t { ANIMALES, CENTRO_COMUNITARIO, CONFIGURACION, SALIR };
@@ -27,8 +30,10 @@ public:
 
     MenuEnJuego(
         SDL_Renderer* renderizador, const std::string& ruta_fuente,
-        EfectosDeSonido& efectos_de_sonido, int ancho_pantalla, int alto_pantalla);
+        EfectosDeSonido& efectos_de_sonido, const IconosDeLotes& iconos_de_lotes,
+        int ancho_pantalla, int alto_pantalla);
 
+    // Si el menú o el cartel de felicitación están en pantalla (los dos frenan el juego).
     bool esta_abierto() const;
     void abrir();
     void cerrar();
@@ -39,11 +44,19 @@ public:
     void configurar_despierto(bool estado_despierto);
     bool cancelar_confirmacion_si_esta_activa();
 
+    // Muestra el cartel de felicitación por completar el centro comunitario, con el marco y los
+    // botones del menú: "Seguir jugando" lo cierra y "Volver al lobby" devuelve VOLVER_AL_LOBBY
+    // desde clic_presionado(). Cerrar el menú (ESC) también lo cierra.
+    void mostrar_felicitacion();
+
     AccionMenu clic_presionado(int coordenada_x, int coordenada_y);
     void clic_liberado();
     void raton_movido(int coordenada_x, int coordenada_y);
 
-    void dibujar(SDL_Renderer* renderizador, const DatosAnimales& datos_animales) const;
+    // "lotes" es el último estado de cada lote del centro comunitario (para su pestaña).
+    void dibujar(
+        SDL_Renderer* renderizador, const DatosAnimales& datos_animales,
+        const std::map<TipoLote, LoteDelCentro>& lotes) const;
 
 private:
     enum class DeslizadorArrastrado : uint8_t { NINGUNO, MUSICA, EFECTOS };
@@ -84,6 +97,7 @@ private:
 
     // Referencias y recursos gráficos
     EfectosDeSonido& efectos_de_sonido;
+    const IconosDeLotes& iconos_de_lotes;
     FuenteDelJuego fuente_titulo;
     FuenteDelJuego fuente_opciones;
     FuenteDelJuego fuente_botones;
@@ -98,6 +112,7 @@ private:
 
     // Estado del menú
     bool menu_abierto;
+    bool felicitacion_visible;
     bool despierto;
     bool cartel_confirmacion_activo;
     AccionMenu accion_pendiente_confirmacion;
@@ -130,6 +145,10 @@ private:
     SDL_Rect rectangulo_boton_volver_lobby;
     SDL_Rect rectangulo_boton_salir_juego;
 
+    SDL_Rect rectangulo_cartel_felicitacion;
+    SDL_Rect rectangulo_boton_seguir_jugando;
+    SDL_Rect rectangulo_boton_lobby_felicitacion;
+
     // Métodos auxiliares
     void recalcular_posiciones(int ancho_pantalla, int alto_pantalla);
     bool esta_adentro(const SDL_Rect& rectangulo, int coordenada_x, int coordenada_y) const;
@@ -139,6 +158,7 @@ private:
     bool procesar_clic_en_pestanias(int coordenada_x, int coordenada_y);
     AccionMenu procesar_clic_pestania_configuracion(int coordenada_x, int coordenada_y);
     AccionMenu procesar_clic_pestania_salir(int coordenada_x, int coordenada_y);
+    AccionMenu procesar_clic_felicitacion(int coordenada_x, int coordenada_y);
 
     // Métodos modulares de dibujado
     void dibujar_fondo_oscurecido(SDL_Renderer* renderizador) const;
@@ -151,7 +171,13 @@ private:
         const Textura& textura_icono, const SDL_Rect& sprite_origen) const;
     void dibujar_boton_cerrar(SDL_Renderer* renderizador) const;
     void dibujar_contenido_animales(SDL_Renderer* renderizador, const DatosAnimales& datos) const;
-    void dibujar_contenido_centro_comunitario(SDL_Renderer* renderizador) const;
+    void dibujar_contenido_centro_comunitario(
+        SDL_Renderer* renderizador, const std::map<TipoLote, LoteDelCentro>& lotes) const;
+    void dibujar_lote(SDL_Renderer* renderizador, const LoteDelCentro& lote, int fila_y) const;
+    void dibujar_barra_de_avance(
+        SDL_Renderer* renderizador, const SDL_Rect& rectangulo_barra, uint32_t aportado,
+        uint32_t pedido) const;
+    void dibujar_felicitacion(SDL_Renderer* renderizador) const;
     void dibujar_contenido_configuracion(SDL_Renderer* renderizador) const;
     void dibujar_contenido_salir(SDL_Renderer* renderizador) const;
     void dibujar_cartel_confirmacion(SDL_Renderer* renderizador) const;

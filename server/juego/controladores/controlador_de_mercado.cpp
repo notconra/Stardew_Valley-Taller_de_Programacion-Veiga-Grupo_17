@@ -17,8 +17,8 @@ constexpr const char* MAPA_DE_LA_GRANJA = "granja";  // el mapa donde viven los 
 
 ControladorDeMercado::ControladorDeMercado(
     const ConfiguracionMercadoServidor& config, GestorDeSectores& sectores,
-    Notificador& notificador)
-    : notificador(notificador), sectores(sectores), mapa_del_mercado(config.mapa) {
+    Notificador& notificador, const ControladorDelCentro& centro)
+    : notificador(notificador), sectores(sectores), centro(centro), mapa_del_mercado(config.mapa) {
     agregar_puesto(std::make_unique<PuestoPierre>(config));
     agregar_puesto(std::make_unique<PuestoClint>(config));
     agregar_puesto(std::make_unique<PuestoMarnie>(config));
@@ -28,6 +28,10 @@ ControladorDeMercado::ControladorDeMercado(
 void ControladorDeMercado::agregar_puesto(std::unique_ptr<PuestoDeMercado> puesto) {
     const std::string id = puesto->id();
     puestos[id] = std::move(puesto);
+}
+
+PreciosDelDia ControladorDeMercado::precios_de_hoy() const {
+    return PreciosDelDia(centro.hay_oferta_en_el_mercado());
 }
 
 PuestoDeMercado* ControladorDeMercado::puesto_actual_de(const Personaje& personaje) {
@@ -52,7 +56,7 @@ void ControladorDeMercado::refrescar_ventana(
     const Personaje& personaje, PuestoDeMercado& puesto, const HoraDelJuego& hora) {
     notificador.a_jugador(
         personaje.id_jugador,
-        puesto.armar_actualizacion(personaje, hora.dia, animales_en_la_granja()));
+        puesto.armar_actualizacion(personaje, hora.dia, animales_en_la_granja(), precios_de_hoy()));
 }
 
 void ControladorDeMercado::notificar_transaccion(
@@ -108,7 +112,9 @@ void ControladorDeMercado::procesar_compra_item(
     if (!personaje.inventario.puede_agregar(producto.tipo_item, cmd.cantidad, Calidad::BASE)) {
         return;
     }
-    if (!personaje.gastar_monedas(producto.precio_que_paga_el_jugador * cmd.cantidad)) {
+    const uint32_t precio_unitario =
+        precios_de_hoy().de_compra(producto.precio_que_paga_el_jugador);
+    if (!personaje.gastar_monedas(precio_unitario * cmd.cantidad)) {
         return;
     }
 
@@ -129,7 +135,7 @@ void ControladorDeMercado::procesar_venta_item(
     }
 
     const uint32_t precio_unitario =
-        puesto.precio_que_recibe_el_jugador(ranura.tipo, ranura.calidad);
+        precios_de_hoy().de_venta(puesto.precio_que_recibe_el_jugador(ranura.tipo, ranura.calidad));
     if (precio_unitario == 0) {
         return;  // El puesto no compra ese ítem.
     }
@@ -154,14 +160,15 @@ void ControladorDeMercado::procesar_compra_animal(
 
     Sector& granja = sectores.en(MAPA_DE_LA_GRANJA);
     const int tope = static_cast<int>(animal->tope_por_granja);
+    const uint32_t precio = precios_de_hoy().de_compra(animal->precio_de_compra);
     bool compro_alguno = false;
     for (uint16_t i = 0; i < cmd.cantidad; ++i) {
         if (granja.animales.cantidad_de(cmd.tipo_animal) >= tope ||
-            !personaje.gastar_monedas(animal->precio_de_compra)) {
+            !personaje.gastar_monedas(precio)) {
             break;
         }
         if (!granja.agregar_animal(notificador, cmd.tipo_animal)) {
-            personaje.recibir_monedas(animal->precio_de_compra);
+            personaje.recibir_monedas(precio);
             break;
         }
         compro_alguno = true;
@@ -180,12 +187,13 @@ void ControladorDeMercado::procesar_venta_animal(
     }
 
     Sector& granja = sectores.en(MAPA_DE_LA_GRANJA);
+    const uint32_t precio = precios_de_hoy().de_venta(animal->precio_de_venta);
     bool vendio_alguno = false;
     for (uint16_t i = 0; i < cmd.cantidad; ++i) {
         if (!granja.retirar_animal(notificador, cmd.tipo_animal)) {
             break;
         }
-        personaje.recibir_monedas(animal->precio_de_venta);
+        personaje.recibir_monedas(precio);
         vendio_alguno = true;
     }
     if (vendio_alguno) {

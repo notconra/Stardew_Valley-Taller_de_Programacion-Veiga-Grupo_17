@@ -117,9 +117,7 @@ void ChatDePartida::enviar_privado(
 }
 
 void ChatDePartida::enviar_sistema(uint32_t id_jugador, const std::string& texto) {
-    notificador.a_jugador(
-        id_jugador,
-        MensajeDeChat{CanalDeChat::SISTEMA, "(Sistema)", std::string(), texto});
+    notificador.a_jugador(id_jugador, MensajeDeChat::del_sistema(texto));
 }
 
 void ChatDePartida::responder_a_jugador(uint32_t id_jugador, const std::string& texto) {

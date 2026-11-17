@@ -7,6 +7,7 @@
 #include "../jugadores/personaje.h"
 #include "../notificador.h"
 #include "../sector/gestor_de_sectores.h"
+#include "controlador_del_centro.h"
 
 // El otro lado del combate: los enemigos persiguen al jugador cercano (ver mover_hacia()) y, si
 // quedan al lado de uno, lo golpean. GestorDeEnemigos sabe "hacia dónde avanza cada uno" y "quién
@@ -18,6 +19,7 @@ private:
     GestorDeSectores& sectores;
     std::map<uint32_t, Personaje>& personajes;
     Notificador& notificador;
+    ControladorDelCentro& centro;
 
     void atacar_en_sector(Sector& sector);
     // Revisa si algún jugador del sector está gravemente herido o caído cerca de un vampiro muerto.
@@ -26,7 +28,7 @@ private:
 public:
     ControladorDeEnemigos(
         GestorDeSectores& sectores, std::map<uint32_t, Personaje>& personajes,
-        Notificador& notificador);
+        Notificador& notificador, ControladorDelCentro& centro);
 
     // Un tick: en cada sector, los enemigos avanzan hacia el jugador más cercano y los que quedan
     // listos para pegar con un jugador al lado le bajan la vida.

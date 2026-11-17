@@ -9,16 +9,18 @@
 #include "../enemigos/gestor_de_enemigos.h"
 
 ControladorDeEnemigos::ControladorDeEnemigos(
-    GestorDeSectores& sectores, std::map<uint32_t, Personaje>& personajes, Notificador& notificador)
-    : sectores(sectores), personajes(personajes), notificador(notificador) {
+    GestorDeSectores& sectores, std::map<uint32_t, Personaje>& personajes, Notificador& notificador,
+    ControladorDelCentro& centro)
+    : sectores(sectores), personajes(personajes), notificador(notificador), centro(centro) {
 }
 
 void ControladorDeEnemigos::derramar_sangre_en_sector(Sector& sector) {
-    constexpr int UMBRAL_GRAVEMENTE_HERIDO = Personaje::VIDA_MAXIMA / 5;
     std::vector<Casilla> heridos;
     for (uint32_t id_jugador : sector.jugadores.ids()) {
         const auto personaje = personajes.find(id_jugador);
-        if (personaje == personajes.end() || personaje->second.vida > UMBRAL_GRAVEMENTE_HERIDO) {
+        // Gravemente herido: con la quinta parte de su vida máxima o menos.
+        if (personaje == personajes.end() ||
+            personaje->second.vida > personaje->second.vida_maxima() / 5) {
             continue;
         }
         const std::optional<Casilla> casilla = sector.jugadores.casilla_del_jugador(id_jugador);
@@ -64,6 +66,9 @@ void ControladorDeEnemigos::atacar_en_sector(Sector& sector) {
         const auto personaje = personajes.find(golpe.id_jugador);
         if (personaje != personajes.end()) {
             personaje->second.recibir_golpe(golpe.danio);
+            if (golpe.danio > 0) {
+                centro.al_lastimar_un_enemigo_a(golpe.id_jugador);
+            }
             if (personaje->second.esta_inconsciente()) {
                 // Cae donde está: se frena. El fin de su día queda para cuando exista el ciclo
                 // de días (ver Mundo::atender, que ya le ignora los comandos).

@@ -3,6 +3,9 @@
 #include <random>
 #include <string>
 
+// La mejora del lote de pelea del centro comunitario: 25% más de vida y de energía.
+#define PORCENTAJE_CON_LA_MEJORA_DE_PELEA 125
+
 uint32_t Personaje::sortear_monedas_iniciales() {
     static std::mt19937 generador{std::random_device{}()};
     std::uniform_int_distribution<uint32_t> dist(MONEDAS_INICIALES_MIN, MONEDAS_INICIALES_MAX);
@@ -76,13 +79,21 @@ bool Personaje::esta_ocupado() const {
 }
 
 double Personaje::multiplicador_de_ataque() const {
-    constexpr int UMBRAL_VIDA_BAJA = VIDA_MAXIMA / 5;
-    return vida <= UMBRAL_VIDA_BAJA ? 0.5 : 1.0;
+    return vida <= vida_maxima() / 5 ? 0.5 : 1.0;
 }
 
 double Personaje::multiplicador_de_velocidad() const {
-    constexpr int UMBRAL_ENERGIA_BAJA = ENERGIA_MAXIMA / 10;
-    return energia <= UMBRAL_ENERGIA_BAJA ? 0.5 : 1.0;
+    return energia <= energia_maxima() / 10 ? 0.5 : 1.0;
+}
+
+int Personaje::vida_maxima() const {
+    return tiene_mejora_de_pelea ? VIDA_MAXIMA * PORCENTAJE_CON_LA_MEJORA_DE_PELEA / 100
+                                 : VIDA_MAXIMA;
+}
+
+int Personaje::energia_maxima() const {
+    return tiene_mejora_de_pelea ? ENERGIA_MAXIMA * PORCENTAJE_CON_LA_MEJORA_DE_PELEA / 100
+                                 : ENERGIA_MAXIMA;
 }
 
 bool Personaje::puede_ser_lastimado() const {

@@ -15,6 +15,7 @@
 #include "../juego/cheats/comando_dinero.h"
 #include "../juego/cheats/comando_estacion.h"
 #include "../juego/cheats/comando_lluvia.h"
+#include "../juego/cheats/comando_lote.h"
 #include "../juego/cheats/comando_semillas.h"
 
 SesionDePartida::SesionDePartida(
@@ -37,6 +38,7 @@ SesionDePartida::SesionDePartida(
     chat.agregar_comando(std::make_unique<ComandoDinero>(mundo));
     chat.agregar_comando(std::make_unique<ComandoEstacion>(mundo));
     chat.agregar_comando(std::make_unique<ComandoLluvia>(mundo));
+    chat.agregar_comando(std::make_unique<ComandoLote>(mundo));
     try {
         start();
     } catch (...) {
@@ -150,15 +152,17 @@ void SesionDePartida::run() {
         auto proximo_tick = Reloj::now();
 
         while (should_keep_running()) {
-            bool termino_el_dia = false;
+            bool hay_que_guardar = false;
             {
                 std::lock_guard<std::mutex> lock(mutex_mundo);
                 aplicar_cambios_de_conexion();
                 procesar_comandos();
                 mundo.actualizar();
-                termino_el_dia = mundo.tomar_dia_terminado();
+                const bool termino_el_dia = mundo.tomar_dia_terminado();
+                const bool termino_el_centro = mundo.tomar_centro_terminado();
+                hay_que_guardar = termino_el_dia || termino_el_centro;
             }
-            guardar_si_termino_el_dia(termino_el_dia);
+            guardar_si_hace_falta(hay_que_guardar);
 
             proximo_tick += periodo_de_tick;
             const auto ahora = Reloj::now();
@@ -172,8 +176,8 @@ void SesionDePartida::run() {
     }
 }
 
-void SesionDePartida::guardar_si_termino_el_dia(bool termino) {
-    if (!termino || !should_keep_running()) {
+void SesionDePartida::guardar_si_hace_falta(bool hay_que_guardar) {
+    if (!hay_que_guardar || !should_keep_running()) {
         return;
     }
     try {
@@ -268,5 +272,6 @@ DatosMundoGuardado SesionDePartida::obtener_datos_guardado(
     datos_mundo.animales = mundo.obtener_animales_guardados();
     datos_mundo.vacas_para_ordeniar = mundo.obtener_ids_vacas_listas_para_ordeniar();
     datos_mundo.cultivos = mundo.obtener_cultivos_guardados();
+    datos_mundo.centro = mundo.obtener_centro_guardado();
     return datos_mundo;
 }

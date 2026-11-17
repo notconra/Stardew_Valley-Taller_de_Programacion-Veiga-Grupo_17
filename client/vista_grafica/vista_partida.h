@@ -6,6 +6,7 @@
 #include <optional>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "../../common/mensajes/mensajes.h"
 #include "../../common/modo_uso.h"
@@ -25,9 +26,11 @@
 #include "hud_inventario.h"
 #include "hud_mercado.h"
 #include "iconos_de_items.h"
+#include "iconos_de_lote.h"
 #include "lluvia_grafica.h"
 #include "mapa_grafico.h"
 #include "marcador_de_casillas.h"
+#include "marcas_de_lotes.h"
 #include "menu_en_juego.h"
 #include "npcs_graficos.h"
 #include "objetos_graficos.h"
@@ -39,6 +42,7 @@
 #include "tierra_grafica.h"
 #include "trampas_graficas.h"
 #include "ventana.h"
+#include "ventana_de_lote.h"
 #include "vision_mazmorra.h"
 
 struct SDL_Texture;
@@ -71,6 +75,10 @@ private:
     EstadoDelDescanso descanso{};
     JugadoresDeLaPartida jugadores_de_la_partida{};
     RegalosPendientes regalos_pendientes{};
+    std::vector<LoteDelCentro> lotes_recibidos;
+    // El último estado de cada lote del centro comunitario. Lo usan las marcas del mapa y la
+    // pestaña del centro del menú.
+    std::map<TipoLote, LoteDelCentro> lotes_del_centro;
 
     PanelDeRegalos::Datos datos_de_regalos() const;
     uint32_t contar_huevos_en_la_granja() const;
@@ -159,14 +167,14 @@ private:
     void usar_item(uint8_t ranura, ModoUso modo, const std::optional<Casilla>& casilla);
     void procesar_entrada(
         const EntradaDelUsuario& entrada, HudInventario& hud, HudMercado& hud_mercado,
-        PanelDeRegalos& regalos, const NpcsGraficos& npcs, CuadroDeAviso& cuadro_de_aviso,
-        CuadroDeDialogo& cuadro_de_dialogo, const Camara& camara,
+        PanelDeRegalos& regalos, VentanaDeLote& ventana_de_lote, const NpcsGraficos& npcs,
+        CuadroDeAviso& cuadro_de_aviso, CuadroDeDialogo& cuadro_de_dialogo, const Camara& camara,
         const VistaChat::ConsumoDeEntrada& consumo_del_chat);
     void elegir_ranura_de_la_barra(const EntradaDelUsuario::Pedidos& pedidos);
     void procesar_clic(
         const EntradaDelUsuario& entrada, HudInventario& hud, HudMercado& hud_mercado,
-        PanelDeRegalos& regalos, const NpcsGraficos& npcs, const Camara& camara, bool clic_derecho,
-        bool con_shift);
+        PanelDeRegalos& regalos, VentanaDeLote& ventana_de_lote, const NpcsGraficos& npcs,
+        const Camara& camara, bool clic_derecho, bool con_shift);
     bool recibir_eventos(
         VistaChat& chat, HudMercado& hud_mercado, CuadroDeAviso& cuadro_de_aviso,
         CuadroDeDialogo& cuadro_de_dialogo);
@@ -187,6 +195,7 @@ private:
         const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada,
         const VistaChat& chat, RelojGrafico& reloj_grafico,
         const PantallaDeDescanso& pantalla_de_descanso, const PanelDeRegalos& regalos,
+        const VentanaDeLote& ventana_de_lote, const MarcasDeLotes& marcas_de_lotes,
         const CuadroDeAviso& cuadro_de_aviso, const CuadroDeDialogo& cuadro_de_dialogo,
         LluviaGrafica& lluvia, const MenuEnJuego& menu) const;
 
