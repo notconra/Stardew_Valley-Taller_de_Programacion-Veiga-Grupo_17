@@ -28,6 +28,7 @@ private:
     const std::map<uint32_t, Personaje>& personajes;
     std::map<std::string, Sector> sectores;
     std::map<std::string, std::vector<EstadoJugador>> jugadores_enviados;
+    std::map<std::string, std::vector<EstadoNpc>> npcs_enviados;
 
     void enviar_instantanea(uint32_t id_jugador, const std::string& id_mapa);
 
@@ -99,6 +100,9 @@ public:
     // Posición y estado de los jugadores de un sector, listos para mandar.
     std::vector<EstadoJugador> armar_jugadores(const std::string& id_mapa) const;
 
+    // Posición y estado de los NPC de un sector, listos para mandar.
+    std::vector<EstadoNpc> armar_npcs(const std::string& id_mapa) const;
+
     // Instantánea completa de un sector: jugadores, objetos y drops.
     EstadoJuego armar_instantanea(const std::string& id_mapa) const;
 
@@ -108,6 +112,14 @@ public:
     // Lo mismo para todos los sectores. Se llama una vez por tick, con los jugadores quietos no
     // viaja nada, salvo el refresco de seguridad de una vez por segundo.
     void difundir_jugadores();
+
+    // Avisa los NPC de ese sector si cambiaron desde el último aviso. También avisa cuando la
+    // lista queda vacía, para que el cliente borre los que se fueron a otro mapa.
+    void difundir_npcs(const std::string& id_mapa);
+
+    // Lo mismo para todos los sectores. Se llama una vez por tick, después de actualizar a los
+    // NPCs.
+    void difundir_npcs();
 };
 
 #endif

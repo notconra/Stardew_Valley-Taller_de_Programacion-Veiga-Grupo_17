@@ -21,6 +21,7 @@ struct RecursosDeJuego {
     std::map<std::string, ConfiguracionMapaServidor> configuraciones_mapas;
     std::string mapa_inicial;
     ConfiguracionJuegoServidor juego;
+    ConfiguracionMercadoServidor mercado;
     CatalogoDeItems catalogo_de_items;
 
     // Los cultivos: cuántas veces se riegan, cuánto tardan y qué semilla y producto tienen.
@@ -46,7 +47,8 @@ struct RecursosDeJuego {
     RecursosDeJuego(
         const std::vector<ConfiguracionMapaServidor>& configuracion_mapas,
         const std::string& id_mapa_inicial, const ConfiguracionJuegoServidor& configuracion_juego,
-        const ConfiguracionMazmorraServidor& configuracion_mazmorra);
+        const ConfiguracionMazmorraServidor& configuracion_mazmorra,
+        const ConfiguracionMercadoServidor& configuracion_mercado = {});
 
 private:
     // Junta las definiciones de todos los módulos que aportan objetos del mundo. Para sumar

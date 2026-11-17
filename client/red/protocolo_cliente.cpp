@@ -22,6 +22,7 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::JUGADORES_EN_SECTOR, [this] { return recibir_jugadores_en_sector(); }},
           {TipoMensaje::OBJETO_COLOCADO, [this] { return recibir_objeto_colocado(); }},
           {TipoMensaje::OBJETO_RETIRADO, [this] { return recibir_objeto_retirado(); }},
+          {TipoMensaje::ANIMAL_RETIRADO, [this] { return recibir_animal_retirado(); }},
           {TipoMensaje::DROP_APARECIDO, [this] { return recibir_drop_aparecido(); }},
           {TipoMensaje::DROP_RETIRADO, [this] { return recibir_drop_retirado(); }},
           {TipoMensaje::ENEMIGO_ACTUALIZADO, [this] { return recibir_enemigo_actualizado(); }},
@@ -36,9 +37,15 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
            [this] { return recibir_actualizacion_inventario(); }},
           {TipoMensaje::ACTUALIZACION_COFRE, [this] { return recibir_actualizacion_cofre(); }},
           {TipoMensaje::MENSAJE_DE_CHAT, [this] { return recibir_mensaje_de_chat(); }},
+          {TipoMensaje::ACTUALIZACION_MERCADO, [this] { return recibir_actualizacion_mercado(); }},
+          {TipoMensaje::CERRAR_VENTANA_MERCADO,
+           [this] { return recibir_cerrar_ventana_mercado(); }},
+          {TipoMensaje::AVISO_EN_PANTALLA, [this] { return recibir_aviso_en_pantalla(); }},
           {TipoMensaje::JUGADORES_DE_LA_PARTIDA,
            [this] { return recibir_jugadores_de_la_partida(); }},
           {TipoMensaje::REGALOS_PENDIENTES, [this] { return recibir_regalos_pendientes(); }},
+          {TipoMensaje::NPCS_EN_SECTOR, [this] { return recibir_npcs_en_sector(); }},
+          {TipoMensaje::DIALOGO_NPC, [this] { return recibir_dialogo_npc(); }},
       } {
 }
 
@@ -69,8 +76,14 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const ConsultarCasilla& m) { enviar_comando_consultar_casilla(m); },
             [this](const DarElOk& m) { enviar_comando_dar_el_ok(m); },
             [this](const EnviarMensajeDeChat& m) { enviar_comando_enviar_mensaje_de_chat(m); },
+            [this](const ComprarEnMercado& m) { enviar_comando_comprar_en_mercado(m); },
+            [this](const VenderEnMercado& m) { enviar_comando_vender_en_mercado(m); },
+            [this](const ComprarAnimalMercado& m) { enviar_comando_comprar_animal_mercado(m); },
+            [this](const VenderAnimalMercado& m) { enviar_comando_vender_animal_mercado(m); },
+            [this](const CerrarMercado& m) { enviar_comando_cerrar_mercado(m); },
             [this](const EnviarRegalo& m) { enviar_comando_enviar_regalo(m); },
             [this](const AbrirRegalos& m) { enviar_comando_abrir_regalos(m); },
+            [this](const HablarConNpc& m) { enviar_comando_hablar_con_npc(m); },
         },
         comando);
 }
@@ -175,6 +188,34 @@ void ProtocoloCliente::enviar_comando_enviar_mensaje_de_chat(const EnviarMensaje
     enviar_texto(mensaje.texto);
 }
 
+void ProtocoloCliente::enviar_comando_comprar_en_mercado(const ComprarEnMercado& m) {
+    enviar_tipo(TipoMensaje::COMPRAR_EN_MERCADO);
+    enviar_u16(m.indice_item);
+    enviar_u16(m.cantidad);
+}
+
+void ProtocoloCliente::enviar_comando_vender_en_mercado(const VenderEnMercado& m) {
+    enviar_tipo(TipoMensaje::VENDER_EN_MERCADO);
+    enviar_u8(m.ranura_inventario);
+    enviar_u16(m.cantidad);
+}
+
+void ProtocoloCliente::enviar_comando_comprar_animal_mercado(const ComprarAnimalMercado& m) {
+    enviar_tipo(TipoMensaje::COMPRAR_ANIMAL_MERCADO);
+    enviar_u8(static_cast<uint8_t>(m.tipo_animal));
+    enviar_u16(m.cantidad);
+}
+
+void ProtocoloCliente::enviar_comando_vender_animal_mercado(const VenderAnimalMercado& m) {
+    enviar_tipo(TipoMensaje::VENDER_ANIMAL_MERCADO);
+    enviar_u8(static_cast<uint8_t>(m.tipo_animal));
+    enviar_u16(m.cantidad);
+}
+
+void ProtocoloCliente::enviar_comando_cerrar_mercado(const CerrarMercado&) {
+    enviar_tipo(TipoMensaje::CERRAR_MERCADO);
+}
+
 void ProtocoloCliente::enviar_comando_enviar_regalo(const EnviarRegalo& regalo) {
     enviar_tipo(TipoMensaje::ENVIAR_REGALO);
     enviar_u32(regalo.id_destinatario);
@@ -184,6 +225,11 @@ void ProtocoloCliente::enviar_comando_enviar_regalo(const EnviarRegalo& regalo) 
 
 void ProtocoloCliente::enviar_comando_abrir_regalos(const AbrirRegalos&) {
     enviar_tipo(TipoMensaje::ABRIR_REGALOS);
+}
+
+void ProtocoloCliente::enviar_comando_hablar_con_npc(const HablarConNpc& hablar) {
+    enviar_tipo(TipoMensaje::HABLAR_CON_NPC);
+    enviar_texto(hablar.id_npc);
 }
 
 // Recepción de eventos
@@ -397,6 +443,18 @@ EstadoAnimal ProtocoloCliente::recibir_estado_animal() {
     return estado;
 }
 
+EstadoNpc ProtocoloCliente::recibir_estado_npc() {
+    EstadoNpc estado;
+    estado.id_npc = recibir_texto();
+    estado.mapa = recibir_texto();
+    estado.x = recibir_u32();
+    estado.y = recibir_u32();
+    estado.mirando = direccion_desde(recibir_u8());
+    estado.camina = recibir_booleano();
+    estado.ms_por_casilla = recibir_u16();
+    return estado;
+}
+
 AnimalActualizado ProtocoloCliente::recibir_animal_actualizado() {
     return AnimalActualizado{recibir_estado_animal()};
 }
@@ -479,6 +537,12 @@ EstadoJuego ProtocoloCliente::recibir_estado_juego() {
         estado_juego.vacas_para_ordeniar.push_back(recibir_u32());
     }
 
+    uint16_t cantidad_de_npcs = recibir_u16();
+    estado_juego.npcs.reserve(cantidad_de_npcs);
+    for (uint16_t i = 0; i < cantidad_de_npcs; ++i) {
+        estado_juego.npcs.push_back(recibir_estado_npc());
+    }
+
     return estado_juego;
 }
 
@@ -491,6 +555,17 @@ JugadoresEnSector ProtocoloCliente::recibir_jugadores_en_sector() {
         jugadores.jugadores.push_back(recibir_estado_jugador());
     }
     return jugadores;
+}
+
+NpcsEnSector ProtocoloCliente::recibir_npcs_en_sector() {
+    NpcsEnSector npcs;
+    npcs.mapa = recibir_texto();
+    uint16_t cantidad = recibir_u16();
+    npcs.npcs.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        npcs.npcs.push_back(recibir_estado_npc());
+    }
+    return npcs;
 }
 
 ObjetoColocado ProtocoloCliente::recibir_objeto_colocado() {
@@ -506,6 +581,12 @@ ObjetoRetirado ProtocoloCliente::recibir_objeto_retirado() {
     ObjetoRetirado objeto;
     objeto.id = recibir_u32();
     return objeto;
+}
+
+AnimalRetirado ProtocoloCliente::recibir_animal_retirado() {
+    AnimalRetirado animal;
+    animal.id = recibir_u32();
+    return animal;
 }
 
 DropAparecido ProtocoloCliente::recibir_drop_aparecido() {
@@ -594,6 +675,7 @@ HoraDelJuego ProtocoloCliente::recibir_hora_del_juego() {
     if (hora.dia_de_la_semana > DIA_DE_LA_SEMANA_MAXIMO) {
         throw ErrorProtocolo("día de la semana desconocido");
     }
+    hora.lloviendo = recibir_booleano();
     return hora;
 }
 
@@ -618,7 +700,7 @@ Direccion ProtocoloCliente::direccion_desde(uint8_t valor) const {
 }
 
 CanalDeChat ProtocoloCliente::canal_de_chat_desde(uint8_t valor) const {
-    if (valor > static_cast<uint8_t>(CanalDeChat::COMERCIANTE)) {
+    if (valor > static_cast<uint8_t>(CanalDeChat::SISTEMA)) {
         throw ErrorProtocolo("canal de chat desconocido en el protocolo");
     }
     return static_cast<CanalDeChat>(valor);
@@ -629,6 +711,45 @@ ColorDeJugador ProtocoloCliente::color_de_jugador_desde(uint8_t valor) const {
         throw ErrorProtocolo("color de jugador desconocido en el protocolo");
     }
     return static_cast<ColorDeJugador>(valor);
+}
+
+ItemCatalogoInfo ProtocoloCliente::recibir_item_catalogo_info() {
+    ItemCatalogoInfo info;
+    info.tipo_item = static_cast<TipoItem>(recibir_u8());
+    info.tipo_animal = static_cast<TipoAnimal>(recibir_u8());
+    info.nombre = recibir_texto();
+    info.precio = recibir_u32();
+    info.se_puede_comprar = recibir_booleano();
+    info.cantidad_poseida = recibir_u16();
+    info.descripcion = recibir_texto();
+    return info;
+}
+
+ActualizacionMercado ProtocoloCliente::recibir_actualizacion_mercado() {
+    ActualizacionMercado actualizacion;
+    actualizacion.id_npc = recibir_texto();
+
+    uint16_t cantidad = recibir_u16();
+    actualizacion.catalogo.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        actualizacion.catalogo.push_back(recibir_item_catalogo_info());
+    }
+    return actualizacion;
+}
+
+CerrarVentanaMercado ProtocoloCliente::recibir_cerrar_ventana_mercado() {
+    return CerrarVentanaMercado{};
+}
+
+AvisoEnPantalla ProtocoloCliente::recibir_aviso_en_pantalla() {
+    return AvisoEnPantalla{recibir_texto()};
+}
+
+DialogoNpc ProtocoloCliente::recibir_dialogo_npc() {
+    DialogoNpc dialogo;
+    dialogo.id_npc = recibir_texto();
+    dialogo.texto = recibir_texto();
+    return dialogo;
 }
 
 JugadoresDeLaPartida ProtocoloCliente::recibir_jugadores_de_la_partida() {

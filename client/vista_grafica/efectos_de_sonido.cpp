@@ -2,20 +2,25 @@
 
 #include <SDL2/SDL_timer.h>
 
+#include <cstdint>
 #include <filesystem>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 namespace {
+constexpr int CANAL_AMBIENTE = 0;  // reservado, así los demás efectos no lo pisan
 constexpr int VOLUMEN_PASOS = 50;
+constexpr uint32_t MS_ENTRE_GRITOS_DE_APARICION = 1500;
+constexpr int VOLUMEN_LLUVIA_AFUERA = 70;
+constexpr int VOLUMEN_LLUVIA_BAJO_TECHO = 20;
 }  // namespace
 
 EfectosDeSonido::EfectosDeSonido(const ConfiguracionSonido& configuracion)
     : ruta_ambiente_general(configuracion.ruta_ambiente),
       ruta_paso_general(configuracion.ruta_caminar) {
     Mix_AllocateChannels(32);
-    Mix_ReserveChannels(1);
+    Mix_ReserveChannels(2);
     fijar_volumen_musica(100);
     fijar_volumen_efectos(100);
     accion = cargar(configuracion.ruta_accion);
@@ -42,6 +47,8 @@ EfectosDeSonido::EfectosDeSonido(const ConfiguracionSonido& configuracion)
     jugador_danio = configuracion.ruta_jugador_danio.empty()
                         ? nullptr
                         : cargar(configuracion.ruta_jugador_danio);
+    compra = cargar(configuracion.ruta_comprar);
+    venta = cargar(configuracion.ruta_vender);
     vaca = configuracion.ruta_vaca.empty() ? nullptr : cargar(configuracion.ruta_vaca);
     if (vaca != nullptr) {
         Mix_VolumeChunk(vaca, VOLUMEN_ANIMALES);
@@ -62,6 +69,10 @@ EfectosDeSonido::EfectosDeSonido(const ConfiguracionSonido& configuracion)
                         !std::filesystem::exists(configuracion.ruta_anochecer)
                     ? nullptr
                     : cargar(configuracion.ruta_anochecer);
+    lluvia =
+        configuracion.ruta_lluvia.empty() || !std::filesystem::exists(configuracion.ruta_lluvia)
+            ? nullptr
+            : cargar(configuracion.ruta_lluvia);
     cambiar_paso("");
 }
 
@@ -109,6 +120,28 @@ void EfectosDeSonido::actualizar_ambiente() {
     ambiente_sonando = nuevo;
 }
 
+void EfectosDeSonido::cambiar_lluvia(bool llueve, bool bajo_techo, bool en_la_mazmorra) {
+    if (lluvia == nullptr) {
+        return;
+    }
+    int volumen = 0;
+    if (llueve && !en_la_mazmorra) {
+        volumen = bajo_techo ? VOLUMEN_LLUVIA_BAJO_TECHO : VOLUMEN_LLUVIA_AFUERA;
+    }
+    if (volumen == volumen_de_lluvia) {
+        return;
+    }
+    if (volumen == 0) {
+        Mix_FadeOutChannel(CANAL_LLUVIA, 1000);
+    } else {
+        if (volumen_de_lluvia == 0) {
+            Mix_FadeInChannel(CANAL_LLUVIA, lluvia, -1, 1000);
+        }
+        Mix_Volume(CANAL_LLUVIA, volumen);
+    }
+    volumen_de_lluvia = volumen;
+}
+
 void EfectosDeSonido::cambiar_paso(const std::string& ruta) {
     paso_actual = cargar(ruta.empty() ? ruta_paso_general : ruta);
     Mix_VolumeChunk(paso_actual, VOLUMEN_PASOS);
@@ -126,6 +159,14 @@ void EfectosDeSonido::reproducir_trampa_activada() const {
 
 void EfectosDeSonido::reproducir_jugador_danio() const {
     reproducir(jugador_danio);
+}
+
+void EfectosDeSonido::reproducir_compra() const {
+    reproducir(compra);
+}
+
+void EfectosDeSonido::reproducir_venta() const {
+    reproducir(venta);
 }
 
 void EfectosDeSonido::reproducir_dinero() const {

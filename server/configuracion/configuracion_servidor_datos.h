@@ -2,8 +2,11 @@
 #define CONFIGURACION_SERVIDOR_DATOS_H
 
 #include <cstdint>
+#include <map>
 #include <string>
 #include <vector>
+
+#include "../../common/tipo_item.h"
 
 // Datos de configuración del servidor.
 struct ConfiguracionRedServidor {
@@ -106,6 +109,7 @@ struct ConfiguracionDiaServidor {
     std::string velocidad = "medio";
     double duracion_en_minutos = 14.0;
     int dias_por_estacion = 28;
+    double probabilidad_de_lluvia = 0.0;
 };
 
 struct ConfiguracionJuegoServidor {
@@ -232,6 +236,23 @@ struct ConfiguracionMazmorraServidor {
     ConfiguracionTrampasServidor trampas;
 };
 
+// Datos de una especie de animal del mercado. Precios desde el punto de vista del jugador.
+struct ConfiguracionAnimalServidor {
+    uint32_t precio_de_compra = 0;  // lo que paga el jugador por comprarlo
+    uint32_t precio_de_venta = 0;   // lo que cobra el jugador por venderlo
+    uint16_t tope_por_granja = 0;
+};
+
+// Precios del mercado, desde el punto de vista del jugador.
+// Las claves son los nombres de TipoItem. Los multiplicadores por calidad son una regla fija.
+struct ConfiguracionMercadoServidor {
+    std::string mapa = "mercado";
+    std::map<TipoItem, uint32_t> precios_de_compra;
+    std::map<TipoItem, uint32_t> precios_de_venta;
+    ConfiguracionAnimalServidor vaca;
+    ConfiguracionAnimalServidor gallina;
+};
+
 struct ConfiguracionServidorDatos {
     ConfiguracionRedServidor red;
     ConfiguracionPartidaServidor partida;
@@ -239,6 +260,7 @@ struct ConfiguracionServidorDatos {
     std::string mapa_inicial;
     ConfiguracionJuegoServidor juego;
     ConfiguracionMazmorraServidor mazmorra;
+    ConfiguracionMercadoServidor mercado;
 };
 
 #endif

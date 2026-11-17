@@ -6,6 +6,7 @@
 #include <variant>
 #include <vector>
 
+#include "../azar.h"
 #include "../muebles/muebles.h"
 
 ControladorDelDia::ControladorDelDia(
@@ -19,7 +20,8 @@ ControladorDelDia::ControladorDelDia(
       personajes(personajes_de_la_partida),
       recursos(recursos_de_juego),
       notificador(notificador_de_juego),
-      sacar_de_la_mazmorra(std::move(sacar)) {
+      sacar_de_la_mazmorra(std::move(sacar)),
+      probabilidad_de_lluvia(configuracion.probabilidad_de_lluvia) {
 }
 
 bool ControladorDelDia::atender(Personaje& personaje, const ComandoCliente& comando) {
@@ -195,7 +197,7 @@ void ControladorDelDia::terminar_el_dia() {
         }
     }
     sectores.avanzar_dia();
-    notificador.a_todos(reloj.hora());
+    notificador.a_todos(hora());
 }
 
 bool ControladorDelDia::puede_levantarse(const Personaje& personaje) const {
@@ -245,16 +247,17 @@ void ControladorDelDia::actualizar() {
 
     if (todos_listos()) {
         reloj.empezar_dia_siguiente();
+        sortear_lluvia();
         terminar_el_dia();
         dia_terminado = true;
     } else if (cambio != CambioDelReloj::NINGUNO) {
-        notificador.a_todos(reloj.hora());
+        notificador.a_todos(hora());
     }
     avisar_descansos();
 }
 
 void ControladorDelDia::al_conectarse(const Personaje& personaje) {
-    notificador.a_jugador(personaje.id_jugador, reloj.hora());
+    notificador.a_jugador(personaje.id_jugador, hora());
     const EstadoDelDescanso estado = descanso_de(personaje);
     descansos_enviados[personaje.id_jugador] = estado;
     notificador.a_jugador(personaje.id_jugador, estado);
@@ -268,11 +271,28 @@ void ControladorDelDia::al_desconectarse(Personaje& personaje) {
 
 void ControladorDelDia::cambiar_estacion(Estacion estacion) {
     reloj.cambiar_estacion(estacion);
-    notificador.a_todos(reloj.hora());
+    notificador.a_todos(hora());
+}
+
+void ControladorDelDia::sortear_lluvia() {
+    const HoraDelJuego hoy = reloj.hora();
+    const bool puede_llover = hoy.dia_de_la_estacion != 1 && hoy.estacion != Estacion::INVIERNO;
+    lloviendo = puede_llover && Azar::con_probabilidad(probabilidad_de_lluvia);
+}
+
+void ControladorDelDia::cambiar_lluvia(bool llueve) {
+    lloviendo = llueve;
+    notificador.a_todos(hora());
+}
+
+bool ControladorDelDia::esta_lloviendo() const {
+    return lloviendo;
 }
 
 HoraDelJuego ControladorDelDia::hora() const {
-    return reloj.hora();
+    HoraDelJuego hora_del_juego = reloj.hora();
+    hora_del_juego.lloviendo = lloviendo;
+    return hora_del_juego;
 }
 
 void ControladorDelDia::continuar_en_el_dia(uint32_t dia) {

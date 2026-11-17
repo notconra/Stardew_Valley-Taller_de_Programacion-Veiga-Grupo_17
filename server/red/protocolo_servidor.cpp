@@ -35,8 +35,17 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::DAR_EL_OK, [this] { return recibir_comando_dar_el_ok(); }},
           {TipoMensaje::ENVIAR_MENSAJE_DE_CHAT,
            [this] { return recibir_comando_enviar_mensaje_de_chat(); }},
+          {TipoMensaje::COMPRAR_EN_MERCADO,
+           [this] { return recibir_comando_comprar_en_mercado(); }},
+          {TipoMensaje::VENDER_EN_MERCADO, [this] { return recibir_comando_vender_en_mercado(); }},
+          {TipoMensaje::COMPRAR_ANIMAL_MERCADO,
+           [this] { return recibir_comando_comprar_animal_mercado(); }},
+          {TipoMensaje::VENDER_ANIMAL_MERCADO,
+           [this] { return recibir_comando_vender_animal_mercado(); }},
+          {TipoMensaje::CERRAR_MERCADO, [this] { return recibir_comando_cerrar_mercado(); }},
           {TipoMensaje::ENVIAR_REGALO, [this] { return recibir_comando_enviar_regalo(); }},
           {TipoMensaje::ABRIR_REGALOS, [this] { return recibir_comando_abrir_regalos(); }},
+          {TipoMensaje::HABLAR_CON_NPC, [this] { return recibir_comando_hablar_con_npc(); }},
       } {
 }
 
@@ -169,6 +178,34 @@ EnviarMensajeDeChat ProtocoloServidor::recibir_comando_enviar_mensaje_de_chat() 
     return EnviarMensajeDeChat{recibir_texto()};
 }
 
+ComprarEnMercado ProtocoloServidor::recibir_comando_comprar_en_mercado() {
+    uint16_t indice_item = recibir_u16();
+    uint16_t cantidad = recibir_u16();
+    return ComprarEnMercado{indice_item, cantidad};
+}
+
+VenderEnMercado ProtocoloServidor::recibir_comando_vender_en_mercado() {
+    uint8_t ranura_inventario = recibir_u8();
+    uint16_t cantidad = recibir_u16();
+    return VenderEnMercado{ranura_inventario, cantidad};
+}
+
+ComprarAnimalMercado ProtocoloServidor::recibir_comando_comprar_animal_mercado() {
+    TipoAnimal tipo_animal = static_cast<TipoAnimal>(recibir_u8());
+    uint16_t cantidad = recibir_u16();
+    return ComprarAnimalMercado{tipo_animal, cantidad};
+}
+
+VenderAnimalMercado ProtocoloServidor::recibir_comando_vender_animal_mercado() {
+    TipoAnimal tipo_animal = static_cast<TipoAnimal>(recibir_u8());
+    uint16_t cantidad = recibir_u16();
+    return VenderAnimalMercado{tipo_animal, cantidad};
+}
+
+CerrarMercado ProtocoloServidor::recibir_comando_cerrar_mercado() {
+    return CerrarMercado{};
+}
+
 EnviarRegalo ProtocoloServidor::recibir_comando_enviar_regalo() {
     uint32_t id_destinatario = recibir_u32();
     uint8_t ranura = recibir_u8();
@@ -179,6 +216,11 @@ EnviarRegalo ProtocoloServidor::recibir_comando_enviar_regalo() {
 AbrirRegalos ProtocoloServidor::recibir_comando_abrir_regalos() {
     return AbrirRegalos{};
 }
+
+HablarConNpc ProtocoloServidor::recibir_comando_hablar_con_npc() {
+    return HablarConNpc{recibir_texto()};
+}
+
 // Envío de eventos
 
 void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
@@ -201,14 +243,20 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const EnemigoActualizado& e) { enviar_evento_enemigo_actualizado(e); },
             [this](const TrampaActualizada& e) { enviar_evento_trampa_actualizada(e); },
             [this](const AnimalActualizado& e) { enviar_evento_animal_actualizado(e); },
+            [this](const AnimalRetirado& e) { enviar_evento_animal_retirado(e); },
             [this](const VacaOrdeniable& e) { enviar_evento_vaca_ordeniable(e); },
             [this](const TierraCambiada& e) { enviar_evento_tierra_cambiada(e); },
             [this](const HoraDelJuego& e) { enviar_evento_hora_del_juego(e); },
             [this](const CasillaConsultada& e) { enviar_evento_casilla_consultada(e); },
             [this](const EstadoDelDescanso& e) { enviar_evento_estado_del_descanso(e); },
             [this](const MensajeDeChat& e) { enviar_evento_mensaje_de_chat(e); },
+            [this](const ActualizacionMercado& e) { enviar_evento_actualizacion_mercado(e); },
+            [this](const CerrarVentanaMercado& e) { enviar_evento_cerrar_ventana_mercado(e); },
+            [this](const AvisoEnPantalla& e) { enviar_evento_aviso_en_pantalla(e); },
             [this](const JugadoresDeLaPartida& e) { enviar_evento_jugadores_de_la_partida(e); },
             [this](const RegalosPendientes& e) { enviar_evento_regalos_pendientes(e); },
+            [this](const NpcsEnSector& e) { enviar_evento_npcs_en_sector(e); },
+            [this](const DialogoNpc& e) { enviar_evento_dialogo_npc(e); },
         },
         evento);
 }
@@ -327,6 +375,16 @@ void ProtocoloServidor::enviar_estado_animal(const EstadoAnimal& estado) {
     enviar_booleano(estado.durmiendo);
 }
 
+void ProtocoloServidor::enviar_estado_npc(const EstadoNpc& estado) {
+    enviar_texto(estado.id_npc);
+    enviar_texto(estado.mapa);
+    enviar_u32(estado.x);
+    enviar_u32(estado.y);
+    enviar_u8(static_cast<uint8_t>(estado.mirando));
+    enviar_booleano(estado.camina);
+    enviar_u16(estado.ms_por_casilla);
+}
+
 void ProtocoloServidor::enviar_casilla_tratada(const CasillaTratada& casilla) {
     enviar_u32(casilla.columna);
     enviar_u32(casilla.fila);
@@ -409,6 +467,10 @@ void ProtocoloServidor::enviar_estado_juego(const EstadoJuego& estado_juego) {
     for (uint32_t id_vaca : estado_juego.vacas_para_ordeniar) {
         enviar_u32(id_vaca);
     }
+    enviar_largo(estado_juego.npcs.size());
+    for (const EstadoNpc& estado : estado_juego.npcs) {
+        enviar_estado_npc(estado);
+    }
 }
 
 void ProtocoloServidor::enviar_evento_jugadores_en_sector(const JugadoresEnSector& jugadores) {
@@ -431,6 +493,11 @@ void ProtocoloServidor::enviar_evento_objeto_colocado(const ObjetoColocado& obje
 void ProtocoloServidor::enviar_evento_objeto_retirado(const ObjetoRetirado& objeto) {
     enviar_tipo(TipoMensaje::OBJETO_RETIRADO);
     enviar_u32(objeto.id);
+}
+
+void ProtocoloServidor::enviar_evento_animal_retirado(const AnimalRetirado& animal) {
+    enviar_tipo(TipoMensaje::ANIMAL_RETIRADO);
+    enviar_u32(animal.id);
 }
 
 void ProtocoloServidor::enviar_evento_drop_aparecido(const DropAparecido& drop) {
@@ -479,6 +546,7 @@ void ProtocoloServidor::enviar_evento_hora_del_juego(const HoraDelJuego& hora) {
     enviar_u8(static_cast<uint8_t>(hora.estacion));
     enviar_u16(hora.anio);
     enviar_u8(hora.dia_de_la_semana);
+    enviar_booleano(hora.lloviendo);
 }
 
 ConsultarCasilla ProtocoloServidor::recibir_comando_consultar_casilla() {
@@ -518,6 +586,34 @@ void ProtocoloServidor::enviar_evento_mensaje_de_chat(const MensajeDeChat& mensa
     enviar_u8(static_cast<uint8_t>(mensaje.color_del_remitente));
 }
 
+void ProtocoloServidor::enviar_item_catalogo_info(const ItemCatalogoInfo& item) {
+    enviar_u8(static_cast<uint8_t>(item.tipo_item));
+    enviar_u8(static_cast<uint8_t>(item.tipo_animal));
+    enviar_texto(item.nombre);
+    enviar_u32(item.precio);
+    enviar_booleano(item.se_puede_comprar);
+    enviar_u16(item.cantidad_poseida);
+    enviar_texto(item.descripcion);
+}
+
+void ProtocoloServidor::enviar_evento_actualizacion_mercado(const ActualizacionMercado& m) {
+    enviar_tipo(TipoMensaje::ACTUALIZACION_MERCADO);
+    enviar_texto(m.id_npc);
+    enviar_largo(m.catalogo.size());
+    for (const auto& item : m.catalogo) {
+        enviar_item_catalogo_info(item);
+    }
+}
+
+void ProtocoloServidor::enviar_evento_cerrar_ventana_mercado(const CerrarVentanaMercado&) {
+    enviar_tipo(TipoMensaje::CERRAR_VENTANA_MERCADO);
+}
+
+void ProtocoloServidor::enviar_evento_aviso_en_pantalla(const AvisoEnPantalla& aviso) {
+    enviar_tipo(TipoMensaje::AVISO_EN_PANTALLA);
+    enviar_texto(aviso.mensaje);
+}
+
 void ProtocoloServidor::enviar_evento_jugadores_de_la_partida(
     const JugadoresDeLaPartida& jugadores) {
     enviar_tipo(TipoMensaje::JUGADORES_DE_LA_PARTIDA);
@@ -536,4 +632,19 @@ void ProtocoloServidor::enviar_evento_regalos_pendientes(const RegalosPendientes
         enviar_texto(regalo.remitente);
         enviar_ranura_inventario(regalo.item);
     }
+}
+
+void ProtocoloServidor::enviar_evento_npcs_en_sector(const NpcsEnSector& npcs) {
+    enviar_tipo(TipoMensaje::NPCS_EN_SECTOR);
+    enviar_texto(npcs.mapa);
+    enviar_largo(npcs.npcs.size());
+    for (const EstadoNpc& estado : npcs.npcs) {
+        enviar_estado_npc(estado);
+    }
+}
+
+void ProtocoloServidor::enviar_evento_dialogo_npc(const DialogoNpc& dialogo) {
+    enviar_tipo(TipoMensaje::DIALOGO_NPC);
+    enviar_texto(dialogo.id_npc);
+    enviar_texto(dialogo.texto);
 }

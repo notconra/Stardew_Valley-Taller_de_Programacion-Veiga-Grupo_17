@@ -92,6 +92,12 @@ void Sector::terminar_el_dia_de_los_cultivos(Notificador& notificador) {
     }
 }
 
+void Sector::llover_sobre_los_cultivos(Notificador& notificador) {
+    for (const Casilla& casilla : huerta.regar_con_lluvia()) {
+        avisar_casilla(notificador, casilla);
+    }
+}
+
 void Sector::avisar_casilla(Notificador& notificador, const Casilla& casilla) const {
     TierraCambiada evento;
     evento.casilla =
@@ -322,6 +328,31 @@ bool Sector::agregar_gallina(Notificador& notificador, uint32_t columna, uint32_
         evento.animal = GestorDeAnimales::estado_de(*gallina);
         avisar(notificador, evento);
     }
+    return true;
+}
+
+bool Sector::agregar_animal(Notificador& notificador, TipoAnimal tipo) {
+    const int columnas = mapa.cantidad_de_columnas();
+    const int filas = mapa.cantidad_de_filas();
+    const std::optional<EstadoAnimal> nuevo =
+        animales.agregar_cerca_de(tipo, columnas / 2, filas / 2, columnas, filas);
+    if (!nuevo.has_value()) {
+        return false;
+    }
+    AnimalActualizado evento;
+    evento.animal = *nuevo;
+    avisar(notificador, evento);
+    return true;
+}
+
+bool Sector::retirar_animal(Notificador& notificador, TipoAnimal tipo) {
+    const std::optional<uint32_t> id = animales.quitar_ultimo(tipo);
+    if (!id.has_value()) {
+        return false;
+    }
+    AnimalRetirado evento;
+    evento.id = *id;
+    avisar(notificador, evento);
     return true;
 }
 

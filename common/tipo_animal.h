@@ -4,8 +4,9 @@
 #include <cstdint>
 
 enum class TipoAnimal : uint8_t {
-    VACA = 0,
-    GALLINA = 1,
+    NINGUNO = 0,
+    VACA = 1,
+    GALLINA = 2,
 };
 
 #endif

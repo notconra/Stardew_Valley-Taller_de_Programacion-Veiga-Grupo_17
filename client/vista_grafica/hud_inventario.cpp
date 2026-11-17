@@ -296,6 +296,16 @@ bool HudInventario::hay_item_levantado() const {
     return levantada.hay_ranura() && cantidad_levantada > 0;
 }
 
+RanuraApuntada HudInventario::ranura_en_pantalla(
+    const InventarioJugador& inventario, const CofreJugador& cofre, int x, int y) const {
+    return ranura_en(disponer(inventario, cofre), x, y);
+}
+
+void HudInventario::agarrar_de_la_barra(
+    const InventarioJugador& inventario, const CofreJugador& cofre, int indice, uint16_t cantidad) {
+    levantar(inventario, cofre, RanuraApuntada{ZonaDelHud::BARRA, indice}, cantidad);
+}
+
 void HudInventario::levantar(
     const InventarioJugador& inventario, const CofreJugador& cofre, const RanuraApuntada& ranura,
     uint16_t cantidad) {

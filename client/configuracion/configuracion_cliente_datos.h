@@ -79,6 +79,8 @@ struct ConfiguracionMapa {
     std::vector<ConfiguracionTileset> tilesets;
 
     bool es_mazmorra = false;
+    // Si tiene techo (la casa, el mercado): adentro no se ve la lluvia.
+    bool techado = false;
     std::string ruta_ambiente;
     std::string ruta_caminar;
 };
@@ -128,7 +130,6 @@ struct ConfiguracionSonido {
     std::string ruta_pico_golpe;
     std::string ruta_pico_rotura;
     std::map<TipoEnemigo, SonidosDeEnemigo> sonidos_de_enemigos;
-    // Vacías: no suena nada.
     std::string ruta_trampa_activada;  // [sonido.trampas] activar
     std::string ruta_jugador_danio;    // [sonido.jugador] danio: el jugador propio perdió vida
     std::string ruta_vaca;             // [sonido.animales] vaca
@@ -137,6 +138,9 @@ struct ConfiguracionSonido {
     std::string ruta_dinero;           // [sonido.dinero] contador
     std::string ruta_regalo_recibido;  // [sonido.regalos] recibir: llegó un regalo nuevo
     std::string ruta_anochecer;        // [sonido.tiempo] anochecer: empezó la noche
+    std::string ruta_comprar;          // [sonido.comprar] comprar: se compró algo del mercado
+    std::string ruta_vender;           // [sonido.vender] vender: se vendió algo en el mercado
+    std::string ruta_lluvia;           // [sonido.tiempo] lluvia: loop mientras llueve
 };
 
 // Cómo se ve la tierra tratada. La textura es la de Stardew (hoeDirt.png); el resto del dibujado

@@ -1,10 +1,21 @@
 #include "gestor_de_animales.h"
 
+#include <algorithm>
+#include <cstdlib>
 #include <map>
+#include <optional>
 #include <utility>
 #include <vector>
 
 #include "../azar.h"
+
+constexpr uint8_t HORA_QUIETOS = 19;
+constexpr uint8_t HORA_DORMIR = 20;
+constexpr int TICKS_DECISION_MIN = 40;
+constexpr int TICKS_DECISION_MAX = 100;
+constexpr int PROBABILIDAD_QUIETO = 4;
+constexpr int PROBABILIDAD_ACCION_MAX = 10;
+constexpr int CANTIDAD_DIRECCIONES = 4;
 
 const std::map<Direccion, std::pair<int, int>> DESPLAZAMIENTOS_POR_DIRECCION{
     {Direccion::ARRIBA, {0, -1}},
@@ -63,11 +74,12 @@ bool GestorDeAnimales::agregar_vaca(uint32_t columna, uint32_t fila, uint8_t var
     if (vacas.size() >= Vaca::LIMITE_POR_GRANJA) {
         return false;
     }
-    uint32_t id = siguiente_id++;
+    const uint32_t id = siguiente_id;
     Vaca vaca(id, columna, fila, variante);
     if (!puede_ubicarse(vaca)) {
         return false;
     }
+    ++siguiente_id;
     ocupar_colisiones(vaca);
     vacas.emplace(id, vaca);
     return true;
@@ -81,11 +93,12 @@ bool GestorDeAnimales::agregar_gallina(uint32_t columna, uint32_t fila, uint8_t 
     if (gallinas.size() >= Gallina::LIMITE_POR_GRANJA) {
         return false;
     }
-    uint32_t id = siguiente_id++;
+    const uint32_t id = siguiente_id;
     Gallina gallina(id, columna, fila, variante);
     if (!puede_ubicarse(gallina)) {
         return false;
     }
+    ++siguiente_id;
     ocupar_colisiones(gallina);
     gallinas.emplace(id, gallina);
     return true;
@@ -323,6 +336,47 @@ int GestorDeAnimales::cantidad_gallinas() const {
 
 int GestorDeAnimales::cantidad_total() const {
     return static_cast<int>(vacas.size() + gallinas.size());
+}
+
+int GestorDeAnimales::cantidad_de(TipoAnimal tipo) const {
+    return tipo == TipoAnimal::VACA ? cantidad_vacas() : cantidad_gallinas();
+}
+
+std::optional<EstadoAnimal> GestorDeAnimales::agregar_cerca_de(
+    TipoAnimal tipo, int columna, int fila, int ancho_mapa, int alto_mapa) {
+    const bool es_vaca = (tipo == TipoAnimal::VACA);
+    const size_t limite = es_vaca ? Vaca::LIMITE_POR_GRANJA : Gallina::LIMITE_POR_GRANJA;
+    if (static_cast<size_t>(cantidad_de(tipo)) >= limite) {
+        return std::nullopt;
+    }
+
+    std::vector<Casilla> casillas;
+    for (int f = 0; f < alto_mapa; ++f) {
+        for (int c = 0; c < ancho_mapa; ++c) {
+            casillas.push_back(Casilla{c, f});
+        }
+    }
+    const auto lejania = [columna, fila](const Casilla& casilla) {
+        return std::max(std::abs(casilla.columna - columna), std::abs(casilla.fila - fila));
+    };
+    std::sort(casillas.begin(), casillas.end(), [&lejania](const Casilla& a, const Casilla& b) {
+        return lejania(a) < lejania(b);
+    });
+
+    const uint8_t variante = es_vaca ? sortear_variante_vaca() : sortear_variante_gallina();
+    for (const Casilla& casilla : casillas) {
+        const std::optional<EstadoAnimal> agregado =
+            es_vaca ? colocar(vacas, casilla, variante, ancho_mapa, alto_mapa)
+                    : colocar(gallinas, casilla, variante, ancho_mapa, alto_mapa);
+        if (agregado.has_value()) {
+            return agregado;
+        }
+    }
+    return std::nullopt;
+}
+
+std::optional<uint32_t> GestorDeAnimales::quitar_ultimo(TipoAnimal tipo) {
+    return tipo == TipoAnimal::VACA ? quitar_el_ultimo_de(vacas) : quitar_el_ultimo_de(gallinas);
 }
 
 int GestorDeAnimales::cantidad_vacas_listas_para_ordeniar() const {

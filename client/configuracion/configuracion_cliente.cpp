@@ -188,6 +188,7 @@ void ConfiguracionCliente::cargar_mapas(const toml::table& archivo_toml) {
         configuracion_mapa.tilesets = leer_tilesets(*mapa, seccion);
         configuracion_mapa.es_mazmorra =
             lector_toml::leer_booleano_opcional(*mapa, "es_mazmorra", false);
+        configuracion_mapa.techado = lector_toml::leer_booleano_opcional(*mapa, "techado", false);
         configuracion_mapa.ruta_ambiente =
             lector_toml::leer_texto_opcional(*mapa, "ruta_ambiente", seccion, "");
         configuracion_mapa.ruta_caminar =
@@ -253,6 +254,10 @@ void ConfiguracionCliente::cargar_sonido(const toml::table& archivo_toml) {
         lector_toml::leer_texto(sonido, "ruta_caminar", "sonido");
     configuracion_vista.sonido.ruta_accion =
         lector_toml::leer_texto(sonido, "ruta_accion", "sonido");
+    configuracion_vista.sonido.ruta_comprar =
+        lector_toml::leer_texto(sonido, "ruta_comprar", "sonido");
+    configuracion_vista.sonido.ruta_vender =
+        lector_toml::leer_texto(sonido, "ruta_vender", "sonido");
 
     if (const toml::table* herramientas = sonido["herramientas"].as_table()) {
         for (const auto& [clave, tipo] : HERRAMIENTAS_CON_SONIDO) {
@@ -296,6 +301,8 @@ void ConfiguracionCliente::cargar_sonido(const toml::table& archivo_toml) {
     if (auto* tiempo = sonido["tiempo"].as_table()) {
         configuracion_vista.sonido.ruta_anochecer =
             lector_toml::leer_texto_opcional(*tiempo, "anochecer", "sonido.tiempo", "");
+        configuracion_vista.sonido.ruta_lluvia =
+            lector_toml::leer_texto_opcional(*tiempo, "lluvia", "sonido.tiempo", "");
     }
     if (const toml::table* enemigos = sonido["enemigos"].as_table()) {
         for (const auto& [clave, tipo] : ENEMIGOS_CON_SONIDO) {

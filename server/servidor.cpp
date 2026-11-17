@@ -6,7 +6,7 @@
 Servidor::Servidor(const ConfiguracionServidor& configuracion)
     : recursos(
           configuracion.mapas(), configuracion.mapa_inicial(), configuracion.juego(),
-          configuracion.mazmorra()),
+          configuracion.mazmorra(), configuracion.mercado()),
       administrador(configuracion.partida(), recursos),
       aceptador(configuracion.red().puerto, administrador) {
 }
