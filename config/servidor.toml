@@ -173,10 +173,23 @@ radio_de_deambulo = 3
 oro_minimo = 5
 oro_maximo = 15
 
+[mazmorra.enemigos.skulls]
+vida = 1
+danio = 6
+ticks_entre_ataques = 80
+ticks_por_casilla = 30
+radio_de_vision = 7
+radio_de_deambulo = 3
+skulls_por_nivel = 1
+probabilidad_verde = 0.4
+velocidad_de_llama = 6.0
+alcance_de_llama = 9
+distancia_de_ataque = 4
+
 # Pinches en el suelo (enunciado: se activan por tiempo). Pasan ticks_inactiva guardados y
 # ticks_activa afuera; a cada jugador parado encima le sacan "danio" una vez por activación.
 [mazmorra.trampas]
-por_nivel = 24
+por_nivel = 10
 danio = 10
 ticks_inactiva = 90
 ticks_activa = 30
