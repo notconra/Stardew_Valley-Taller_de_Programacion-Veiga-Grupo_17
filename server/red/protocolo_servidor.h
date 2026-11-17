@@ -98,6 +98,7 @@ private:
     void enviar_evento_regalos_pendientes(const RegalosPendientes& pendientes);
     void enviar_evento_npcs_en_sector(const NpcsEnSector& npcs);
     void enviar_evento_dialogo_npc(const DialogoNpc& dialogo);
+    void enviar_evento_llamas_en_sector(const LlamasEnSector& llamas);
 
 public:
     explicit ProtocoloServidor(ISocket& socket_conectado);
