@@ -278,6 +278,7 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const NpcsEnSector& e) { enviar_evento_npcs_en_sector(e); },
             [this](const DialogoNpc& e) { enviar_evento_dialogo_npc(e); },
             [this](const LoteDelCentro& e) { enviar_evento_lote_del_centro(e); },
+            [this](const CentroTerminado& e) { enviar_evento_centro_terminado(e); },
         },
         evento);
 }
@@ -646,6 +647,10 @@ void ProtocoloServidor::enviar_evento_jugadores_de_la_partida(
         enviar_texto(jugador.nombre);
         enviar_booleano(jugador.conectado);
     }
+}
+
+void ProtocoloServidor::enviar_evento_centro_terminado(const CentroTerminado&) {
+    enviar_tipo(TipoMensaje::CENTRO_TERMINADO);
 }
 
 void ProtocoloServidor::enviar_evento_lote_del_centro(const LoteDelCentro& lote) {

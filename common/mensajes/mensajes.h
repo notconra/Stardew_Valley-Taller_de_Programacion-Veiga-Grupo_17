@@ -85,6 +85,6 @@ using EventoServidor = std::variant<
     NpcsEnSector, DialogoNpc,
 
     // - Centro comunitario
-    LoteDelCentro>;
+    LoteDelCentro, CentroTerminado>;
 
 #endif

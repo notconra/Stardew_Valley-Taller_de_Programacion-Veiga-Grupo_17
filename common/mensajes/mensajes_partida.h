@@ -620,4 +620,9 @@ struct LoteDelCentro {
     bool operator==(const LoteDelCentro&) const = default;
 };
 
+// Se completaron los cinco lotes del centro comunitario. El cliente felicita al jugador con un
+// cartel y lo deja seguir jugando o volver al lobby. Cada jugador que estaba en la partida lo
+// recibe una vez.
+struct CentroTerminado {};
+
 #endif

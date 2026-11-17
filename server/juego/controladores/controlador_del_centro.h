@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <map>
+#include <set>
 #include <string>
 
 #include "../../../common/mensajes/mensajes.h"
@@ -35,6 +36,10 @@
 //  - Dinero: el descuento del mercado del día siguiente (lo consulta el mercado, acá no se da
 //  nada).
 //
+// Cuando se completa el último lote le manda CentroTerminado a cada jugador que estaba en la
+// partida, una sola vez, para que el cliente muestre el cartel de felicitación, y pide guardar la
+// partida (ver tomar_terminado_para_guardar()).
+//
 // También sigue lo que hace cada jugador en la mazmorra (con SeguimientoDePelea) y cumple los
 // logros del set de pelea: AccionAtacar le avisa cada muerte y ControladorDeEnemigos cada golpe que
 // recibe un jugador; en qué piso está cada uno lo mira solo, en cada tick.
@@ -47,6 +52,11 @@ private:
     const ControladorDelDia& dia;
     CentroComunitario centro;
     SeguimientoDePelea seguimiento;
+    // Los que estaban en la partida cuando se terminó el centro pero desconectados: ven el cartel
+    // al volver. No se guarda con la partida.
+    std::set<uint32_t> les_falta_ver_el_fin;
+    // Si se terminó el centro y todavía nadie lo tomó para guardar la partida.
+    bool terminado_sin_guardar = false;
 
     // Dona lo que el lote acepte de esa ranura del inventario (índice absoluto, como en la ventana
     // del cofre) y se lo saca al jugador.
@@ -70,6 +80,10 @@ private:
     // Dónde está el lote en el mapa del centro de ahora (las ruinas o el arreglado), para que el
     // cliente lo marque. Si el mapa no lo tiene, deja el mapa vacío.
     void completar_lugar(LoteDelCentro& estado, const std::string& clave) const;
+
+    // Les avisa que el centro está terminado a los jugadores de la partida: a los conectados
+    // ahora y a los demás cuando vuelvan. El que entra por primera vez después no lo ve.
+    void avisar_el_fin();
 
     void entregar_premio(TipoLote lote);
     void dar_semillas_a_todos();
@@ -98,6 +112,10 @@ public:
     // Si hoy el mercado vende a mitad de precio y compra al doble: el día siguiente a completarse
     // el set de dinero.
     bool hay_oferta_en_el_mercado() const;
+
+    // Si se terminó el centro desde la última vez que se preguntó, ya con los premios
+    // repartidos. Es cuando hay que guardar la partida; devuelve true una sola vez.
+    bool tomar_terminado_para_guardar();
 
     // Cheats: da por completo el lote con esa clave (la del TMX) o todos los que falten, con sus
     // premios. El primero devuelve false si no hay un lote con esa clave o ya estaba completo.

@@ -402,6 +402,10 @@ uint32_t Mundo::obtener_dia() const {
     return controlador_del_dia.hora().dia;
 }
 
+bool Mundo::tomar_centro_terminado() {
+    return controlador_del_centro.tomar_terminado_para_guardar();
+}
+
 bool Mundo::tomar_dia_terminado() {
     return controlador_del_dia.tomar_dia_terminado();
 }

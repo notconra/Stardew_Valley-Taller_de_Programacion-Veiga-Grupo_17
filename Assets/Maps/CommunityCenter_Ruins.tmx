@@ -186,7 +186,7 @@
         <property name="tipo" type="string" value="lote" />
       </properties>
     </object>
-    <object id="4" x="224" y="32" width="16" height="48">
+    <object id="4" x="224" y="64" width="16" height="16">
       <properties>
         <property name="lote" type="string" value="animales" />
         <property name="tipo" type="string" value="lote" />

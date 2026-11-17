@@ -101,6 +101,9 @@ enum class TipoMensaje : uint8_t {
 
     // Estado de un lote del centro comunitario (al abrirlo o cuando cambia)
     LOTE_DEL_CENTRO = 0xA6,
+
+    // Se completaron todos los lotes del centro comunitario (el cliente muestra el cartel)
+    CENTRO_TERMINADO = 0xA7,
 };
 
 #endif

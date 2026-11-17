@@ -152,15 +152,17 @@ void SesionDePartida::run() {
         auto proximo_tick = Reloj::now();
 
         while (should_keep_running()) {
-            bool termino_el_dia = false;
+            bool hay_que_guardar = false;
             {
                 std::lock_guard<std::mutex> lock(mutex_mundo);
                 aplicar_cambios_de_conexion();
                 procesar_comandos();
                 mundo.actualizar();
-                termino_el_dia = mundo.tomar_dia_terminado();
+                const bool termino_el_dia = mundo.tomar_dia_terminado();
+                const bool termino_el_centro = mundo.tomar_centro_terminado();
+                hay_que_guardar = termino_el_dia || termino_el_centro;
             }
-            guardar_si_termino_el_dia(termino_el_dia);
+            guardar_si_hace_falta(hay_que_guardar);
 
             proximo_tick += periodo_de_tick;
             const auto ahora = Reloj::now();
@@ -174,8 +176,8 @@ void SesionDePartida::run() {
     }
 }
 
-void SesionDePartida::guardar_si_termino_el_dia(bool termino) {
-    if (!termino || !should_keep_running()) {
+void SesionDePartida::guardar_si_hace_falta(bool hay_que_guardar) {
+    if (!hay_que_guardar || !should_keep_running()) {
         return;
     }
     try {

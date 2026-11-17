@@ -11,7 +11,6 @@
 #define MONEDAS_DEL_PREMIO_DE_METALES 500
 #define VACAS_DEL_PREMIO_DE_ANIMALES 1
 #define GALLINAS_DEL_PREMIO_DE_ANIMALES 2
-// El mapa donde viven los animales.
 #define MAPA_DE_LOS_ANIMALES "granja"
 
 const TipoItem SEMILLAS_DEL_PREMIO[] = {
@@ -43,11 +42,34 @@ void ControladorDelCentro::actualizar() {
     for (TipoLote lote : centro.tomar_lotes_completados()) {
         entregar_premio(lote);
     }
+    if (centro.tomar_fin_del_juego()) {
+        avisar_el_fin();
+        terminado_sin_guardar = true;
+    }
+}
+
+bool ControladorDelCentro::tomar_terminado_para_guardar() {
+    const bool hay_que_guardar = terminado_sin_guardar;
+    terminado_sin_guardar = false;
+    return hay_que_guardar;
+}
+
+void ControladorDelCentro::avisar_el_fin() {
+    for (const auto& [id_jugador, personaje] : personajes) {
+        if (personaje.conectado) {
+            notificador.a_jugador(id_jugador, CentroTerminado{});
+        } else {
+            les_falta_ver_el_fin.insert(id_jugador);
+        }
+    }
 }
 
 void ControladorDelCentro::al_conectarse(const Personaje& personaje) {
     for (const auto& [tipo, definicion] : recursos.catalogo_de_lotes.definiciones()) {
         notificador.a_jugador(personaje.id_jugador, estado_del_lote(tipo, false));
+    }
+    if (les_falta_ver_el_fin.erase(personaje.id_jugador) > 0) {
+        notificador.a_jugador(personaje.id_jugador, CentroTerminado{});
     }
 }
 

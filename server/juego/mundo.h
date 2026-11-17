@@ -126,6 +126,10 @@ public:
     // que guardar la partida; devuelve true una sola vez por día.
     bool tomar_dia_terminado();
 
+    // Si se completó el centro comunitario desde la última vez que se preguntó. También hay que
+    // guardar la partida; devuelve true una sola vez.
+    bool tomar_centro_terminado();
+
     // Comandos de prueba y cheats de animales / tiempo
     bool agregar_vaca_en_granja_cerca(uint32_t id_jugador);
     bool agregar_gallina_en_granja_cerca(uint32_t id_jugador);
