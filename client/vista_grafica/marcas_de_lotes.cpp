@@ -1,33 +1,26 @@
 #include "marcas_de_lotes.h"
 
 #include <cmath>
+#include <map>
 #include <string>
 
 // La marca flota unos píxeles (de la hoja) por encima del lote y sube y baja.
 #define ALTURA_DE_LA_MARCA 6
 #define OSCILACION_DE_LA_MARCA 2.0
 #define MS_POR_VUELTA 1200.0
-
-#define RUTA_DE_LA_TILDE "Assets/LooseSprites/lote_completo.png"
-#define ANCHO_DE_LA_TILDE 10
-#define ALTO_DE_LA_TILDE 9
+// Cuánto asoma la tilde de un lote completo por fuera del ícono, en píxeles de la imagen.
 #define SALIENTE_DE_LA_TILDE 2
 
 MarcasDeLotes::MarcasDeLotes(
-    SDL_Renderer* renderer, const IconosDeLotes& iconos_de_lotes,
-    const ConfiguracionGraficos& configuracion_graficos)
+    const IconosDeLotes& iconos_de_lotes, const ConfiguracionGraficos& configuracion_graficos)
     : iconos(iconos_de_lotes),
-      tilde(RUTA_DE_LA_TILDE, renderer),
       tamano_de_tile(configuracion_graficos.tamano_de_tile),
       escala_de_tiles(configuracion_graficos.escala_de_tiles) {
 }
 
-void MarcasDeLotes::recibir(const LoteDelCentro& lote) {
-    lotes[lote.lote] = lote;
-}
-
 void MarcasDeLotes::dibujar(
-    SDL_Renderer* renderer, const std::string& mapa, int cam_x, int cam_y) const {
+    SDL_Renderer* renderer, const std::map<TipoLote, LoteDelCentro>& lotes, const std::string& mapa,
+    int cam_x, int cam_y) const {
     const int lado = tamano_de_tile * escala_de_tiles;
     const double fase = SDL_GetTicks() / MS_POR_VUELTA * 2.0 * M_PI;
     const int oscilacion =
@@ -51,7 +44,7 @@ void MarcasDeLotes::dibujar(
                 destino.y + destino.h - (ALTO_DE_LA_TILDE - SALIENTE_DE_LA_TILDE) * escala_de_tiles,
                 ANCHO_DE_LA_TILDE * escala_de_tiles,
                 ALTO_DE_LA_TILDE * escala_de_tiles};
-            SDL_RenderCopy(renderer, tilde.ptr(), nullptr, &sobre_el_icono);
+            iconos.dibujar_tilde(renderer, sobre_el_icono);
         }
     }
 }

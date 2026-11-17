@@ -76,6 +76,9 @@ private:
     JugadoresDeLaPartida jugadores_de_la_partida{};
     RegalosPendientes regalos_pendientes{};
     std::vector<LoteDelCentro> lotes_recibidos;
+    // El último estado de cada lote del centro comunitario. Lo usan las marcas del mapa y la
+    // pestaña del centro del menú.
+    std::map<TipoLote, LoteDelCentro> lotes_del_centro;
 
     PanelDeRegalos::Datos datos_de_regalos() const;
     uint32_t contar_huevos_en_la_granja() const;

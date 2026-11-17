@@ -47,6 +47,7 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::NPCS_EN_SECTOR, [this] { return recibir_npcs_en_sector(); }},
           {TipoMensaje::DIALOGO_NPC, [this] { return recibir_dialogo_npc(); }},
           {TipoMensaje::LOTE_DEL_CENTRO, [this] { return recibir_lote_del_centro(); }},
+          {TipoMensaje::CENTRO_TERMINADO, [this] { return recibir_centro_terminado(); }},
       } {
 }
 
@@ -780,6 +781,10 @@ JugadoresDeLaPartida ProtocoloCliente::recibir_jugadores_de_la_partida() {
         jugadores.jugadores.push_back(jugador);
     }
     return jugadores;
+}
+
+CentroTerminado ProtocoloCliente::recibir_centro_terminado() {
+    return CentroTerminado{};
 }
 
 LoteDelCentro ProtocoloCliente::recibir_lote_del_centro() {

@@ -2,8 +2,14 @@
 
 #define RUTA_DE_LOS_ICONOS "Assets/LooseSprites/JunimoNote.png"
 #define LADO_DEL_ICONO 32
+#define RUTA_DE_LA_TILDE "Assets/LooseSprites/lote_completo.png"
 
-IconosDeLotes::IconosDeLotes(SDL_Renderer* renderer) : hoja(RUTA_DE_LOS_ICONOS, renderer) {
+IconosDeLotes::IconosDeLotes(SDL_Renderer* renderer)
+    : hoja(RUTA_DE_LOS_ICONOS, renderer), tilde(RUTA_DE_LA_TILDE, renderer) {
+}
+
+void IconosDeLotes::dibujar_tilde(SDL_Renderer* renderer, const SDL_Rect& destino) const {
+    SDL_RenderCopy(renderer, tilde.ptr(), nullptr, &destino);
 }
 
 SDL_Rect IconosDeLotes::origen_de(TipoLote lote) {

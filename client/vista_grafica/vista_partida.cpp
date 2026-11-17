@@ -161,6 +161,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     jugadores_de_la_partida = JugadoresDeLaPartida{};
     regalos_pendientes = RegalosPendientes{};
     lotes_recibidos.clear();
+    lotes_del_centro.clear();
     ultimo_riego.reset();
     olvidar_el_piso();
     partida_terminada = false;
@@ -244,7 +245,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         ancho_de_pantalla,
         alto_de_pantalla);
     IconosDeLotes iconos_de_lotes(renderizador.ptr());
-    MarcasDeLotes marcas_de_lotes(renderizador.ptr(), iconos_de_lotes, graficos);
+    MarcasDeLotes marcas_de_lotes(iconos_de_lotes, graficos);
     std::optional<VentanaDeLote> ventana_de_lote;
     ventana_de_lote.emplace(
         renderizador.ptr(),
@@ -258,6 +259,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         renderizador.ptr(),
         configuracion.chat.ruta_fuente,
         efectos,
+        iconos_de_lotes,
         ancho_de_pantalla,
         alto_de_pantalla);
     menu_actual = &(*menu);
@@ -359,7 +361,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
         for (const LoteDelCentro& lote : lotes_recibidos) {
             ventana_de_lote->recibir(lote);
-            marcas_de_lotes.recibir(lote);
+            lotes_del_centro[lote.lote] = lote;
         }
         lotes_recibidos.clear();
 
@@ -1033,6 +1035,11 @@ void VistaPartida::aplicar(
             [&](const MensajeDeChat& e) { chat.recibir(e); },
             [&](const JugadoresDeLaPartida& e) { jugadores_de_la_partida = e; },
             [&](const LoteDelCentro& e) { lotes_recibidos.push_back(e); },
+            [&](const CentroTerminado&) {
+                if (menu_actual != nullptr) {
+                    menu_actual->mostrar_felicitacion();
+                }
+            },
             [&](const RegalosPendientes& e) {
                 if (e.regalos.size() > regalos_pendientes.regalos.size() &&
                     efectos_actuales != nullptr) {
@@ -1233,7 +1240,7 @@ void VistaPartida::dibujar(
         }
     }
     mapa.dibujar_sobre_los_jugadores(renderer, camara.x(), camara.y());
-    marcas_de_lotes.dibujar(renderer, mapa_actual, camara.x(), camara.y());
+    marcas_de_lotes.dibujar(renderer, lotes_del_centro, mapa_actual, camara.x(), camara.y());
     objetos.dibujar_sobre_los_jugadores(
         renderer,
         ultimo_estado_juego,
@@ -1292,7 +1299,7 @@ void VistaPartida::dibujar(
     chat.dibujar(renderer, ancho_de_pantalla, alto_de_pantalla);
     cuadro_de_aviso.dibujar(renderer, ancho_de_pantalla, alto_de_pantalla);
     cuadro_de_dialogo.dibujar(renderer, ancho_de_pantalla, alto_de_pantalla);
-    menu.dibujar(renderer, datos_de_animales());
+    menu.dibujar(renderer, datos_de_animales(), lotes_del_centro);
 
     SDL_RenderPresent(renderer);
 }

@@ -95,6 +95,7 @@ private:
     RegalosPendientes recibir_regalos_pendientes();
     DialogoNpc recibir_dialogo_npc();
     LoteDelCentro recibir_lote_del_centro();
+    CentroTerminado recibir_centro_terminado();
 
     // Auxiliares
     CodigoError codigo_error_desde(uint8_t valor) const;
