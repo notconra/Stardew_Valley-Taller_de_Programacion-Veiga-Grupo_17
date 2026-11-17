@@ -28,6 +28,7 @@
 #include "lluvia_grafica.h"
 #include "mapa_grafico.h"
 #include "marcador_de_casillas.h"
+#include "menu_en_juego.h"
 #include "npcs_graficos.h"
 #include "objetos_graficos.h"
 #include "panel_de_regalos.h"
@@ -72,6 +73,8 @@ private:
     RegalosPendientes regalos_pendientes{};
 
     PanelDeRegalos::Datos datos_de_regalos() const;
+    uint32_t contar_huevos_en_la_granja() const;
+    MenuEnJuego::DatosAnimales datos_de_animales() const;
 
     // Lo último que se le preguntó al servidor (ConsultarCasilla) sobre la casilla del mouse, y su
     // respuesta. El cliente no decide si se puede: solo pinta lo que contestó el servidor. Se
@@ -147,8 +150,10 @@ private:
     uint32_t pico_pendiente_desde_ms = 0;
     static constexpr uint32_t MS_ESPERA_SONIDO_PICO = 200;
     static constexpr int CASILLAS_AUDICION_ANIMAL = 10;
+    static constexpr uint8_t HORA_INICIO_DIA = 6;
     uint32_t ultimo_paso_ms = 0;
     EfectosDeSonido* efectos_actuales = nullptr;
+    MenuEnJuego* menu_actual = nullptr;
 
     void enviar_intencion_si_cambio(const Moverse& intencion);
     void usar_item(uint8_t ranura, ModoUso modo, const std::optional<Casilla>& casilla);
@@ -182,7 +187,8 @@ private:
         const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada,
         const VistaChat& chat, RelojGrafico& reloj_grafico,
         const PantallaDeDescanso& pantalla_de_descanso, const PanelDeRegalos& regalos,
-        const CuadroDeAviso& cuadro_de_aviso, const CuadroDeDialogo&, LluviaGrafica& lluvia) const;
+        const CuadroDeAviso& cuadro_de_aviso, const CuadroDeDialogo& cuadro_de_dialogo,
+        LluviaGrafica& lluvia, const MenuEnJuego& menu) const;
 
 public:
     VistaPartida(ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion);
