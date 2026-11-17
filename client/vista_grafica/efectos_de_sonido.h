@@ -65,6 +65,8 @@ private:
     bool es_de_noche = false;
     Mix_Chunk* lluvia = nullptr;
     int volumen_de_lluvia = 0;  // 0 = no suena
+    int volumen_musica = 100;
+    int volumen_efectos = 100;
 
     void actualizar_ambiente();
 
@@ -121,6 +123,12 @@ public:
     // De noche, en los mapas con el ambiente general (no en las cuevas), el ambiente pasa a ser
     // la música de noche. Si no cambia nada, no reinicia lo que está sonando.
     void cambiar_noche(bool de_noche);
+
+    void fijar_volumen_musica(int porcentaje);
+    int obtener_volumen_musica() const;
+
+    void fijar_volumen_efectos(int porcentaje);
+    int obtener_volumen_efectos() const;
 
     // Mientras llueve suena la lluvia en loop: fuerte afuera, apagada bajo techo, y nada si no
     // llueve o si se está en la mazmorra. Si no cambia nada, no la reinicia.

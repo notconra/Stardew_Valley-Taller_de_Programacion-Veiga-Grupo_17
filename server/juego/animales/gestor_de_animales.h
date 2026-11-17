@@ -112,7 +112,7 @@ public:
     // Avanza un día para todos los animales de la granja:
     // - Las vacas acumulan días hacia el ciclo de 2 días de leche.
     // - Las gallinas ponen un huevo en el suelo como Drop de forma automática.
-    void avanzar_dia(Drops& drops);
+    std::vector<EstadoDrop> avanzar_dia(Drops& drops);
 
     // Intenta ordeñar una vaca por su id. Devuelve true si tenía leche y se completó la extracción.
     bool ordeniar_vaca(uint32_t id_vaca);
