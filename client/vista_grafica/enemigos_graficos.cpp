@@ -61,6 +61,31 @@ Hoja hoja_de_vampiro(const std::string& carpeta, const std::string& prefijo) {
     return hoja;
 }
 
+// Las Skulls: una calavera flotante de 4 cuadros, sin direcciones. No mueren (son invulnerables).
+Hoja hoja_de_skull(SDL_Color tinte) {
+    const std::string imagen = "Assets/Caverns/Enemies/Skull/skull_hoja.png";
+    Hoja hoja;
+    hoja.frame_ancho = 16;
+    hoja.frame_alto = 16;
+    hoja.pies_y = 16;
+    hoja.cabeza_y = 1;
+    hoja.escala = 1.5f;
+    hoja.quieto = {imagen, {0, 0, 0, 0}, 4, 150};
+    hoja.caminar = {imagen, {0, 0, 0, 0}, 4, 110};
+    hoja.ataque = {imagen, {0, 0, 0, 0}, 4, 60};
+    hoja.tinte = tinte;
+    return hoja;
+}
+
+// Bolas de fuego de 8x8, 4 cuadros por fila (se usa la primera fila). Son redondas: no se rotan.
+constexpr const char* RUTA_LLAMA_AZUL = "Assets/Caverns/Enemies/Skull/fire/llama_azul.png";
+constexpr const char* RUTA_LLAMA_VERDE = "Assets/Caverns/Enemies/Skull/fire/llama_verde.png";
+constexpr int LADO_DEL_CUADRO_DE_LLAMA = 8;
+constexpr int CUADROS_DE_LLAMA = 4;
+constexpr uint32_t MS_POR_CUADRO_DE_LLAMA = 80;
+constexpr float LADO_DE_LLAMA_EN_CASILLAS = 0.6f;
+constexpr SDL_Color TINTE_VERDE{110, 255, 110, 255};
+
 int cuadro_una_vez(const Animacion& animacion, uint32_t desde, uint32_t ahora) {
     return std::min(static_cast<int>((ahora - desde) / animacion.ms_por_cuadro), animacion.cuadros - 1);
 }
@@ -84,11 +109,16 @@ float interpolar(float desde, float hasta, float t) {
 }  // namespace
 
 EnemigosGraficos::EnemigosGraficos(SDL_Renderer* renderer, const ConfiguracionGraficos& graficos)
-    : tamano_de_tile(graficos.tamano_de_tile), escala_de_tiles(graficos.escala_de_tiles) {
+    : llama_azul(RUTA_LLAMA_AZUL, renderer),
+      llama_verde(RUTA_LLAMA_VERDE, renderer),
+      tamano_de_tile(graficos.tamano_de_tile),
+      escala_de_tiles(graficos.escala_de_tiles) {
     hojas.emplace(TipoEnemigo::ESQUELETO, hoja_de_esqueleto());
     hojas.emplace(TipoEnemigo::ORCO, hoja_de_orco());
     hojas.emplace(TipoEnemigo::VAMPIRA, hoja_de_vampiro("vampira", "Vampires3"));
     hojas.emplace(TipoEnemigo::VAMPIRO, hoja_de_vampiro("vampiro", "Vampires2"));
+    hojas.emplace(TipoEnemigo::SKULL_AZUL, hoja_de_skull(SDL_Color{255, 255, 255, 255}));
+    hojas.emplace(TipoEnemigo::SKULL_VERDE, hoja_de_skull(TINTE_VERDE));
 
     for (const auto& [tipo, hoja] : hojas) {
         for (const Animacion* animacion :
@@ -115,6 +145,33 @@ void EnemigosGraficos::dibujar(
         return std::none_of(estado.enemigos.begin(), estado.enemigos.end(),
             [&entrada](const EstadoEnemigo& e) { return e.id == entrada.first; });
     });
+
+    dibujar_llamas(renderer, estado, cam_x, cam_y);
+}
+
+void EnemigosGraficos::dibujar_llamas(
+    SDL_Renderer* renderer, const EstadoJuego& estado, int cam_x, int cam_y) const {
+    if (estado.llamas.empty()) {
+        return;
+    }
+    const float casilla = static_cast<float>(tamano_de_tile * escala_de_tiles);
+    const int lado = static_cast<int>(casilla * LADO_DE_LLAMA_EN_CASILLAS);
+    const uint32_t ahora = SDL_GetTicks();
+    for (const EstadoLlama& actual : estado.llamas) {
+        const float x = static_cast<float>(actual.x_centesimas) / 100.0f * casilla;
+        const float y = static_cast<float>(actual.y_centesimas) / 100.0f * casilla;
+        const SDL_Rect destino{
+            static_cast<int>(x) - cam_x - lado / 2, static_cast<int>(y) - cam_y - lado / 2, lado,
+            lado};
+        // Cada llama arranca en un cuadro distinto para que no titilen todas juntas.
+        const int cuadro =
+            static_cast<int>((ahora / MS_POR_CUADRO_DE_LLAMA + actual.id) % CUADROS_DE_LLAMA);
+        const SDL_Rect origen{
+            cuadro * LADO_DEL_CUADRO_DE_LLAMA, 0, LADO_DEL_CUADRO_DE_LLAMA,
+            LADO_DEL_CUADRO_DE_LLAMA};
+        SDL_Texture* imagen = actual.verde ? llama_verde.ptr() : llama_azul.ptr();
+        SDL_RenderCopy(renderer, imagen, &origen, &destino);
+    }
 }
 
 EnemigosGraficos::Posicion EnemigosGraficos::avanzar(
@@ -212,6 +269,7 @@ void EnemigosGraficos::dibujar_enemigo(SDL_Renderer* renderer, const Hoja& hoja,
         alto_px};
 
     SDL_SetTextureAlphaMod(imagen, cuadro.opacidad);
+    SDL_SetTextureColorMod(imagen, hoja.tinte.r, hoja.tinte.g, hoja.tinte.b);
     if (enemigo.frenesi) {
         SDL_SetTextureColorMod(imagen, 255, 110, 110);
     }
