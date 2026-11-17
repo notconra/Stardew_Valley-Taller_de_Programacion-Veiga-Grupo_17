@@ -921,6 +921,11 @@ void VistaPartida::aplicar(
                     estado.npcs = e.npcs;
                 }
             },
+            [&](const LlamasEnSector& e) {
+                if (estado.mapa == e.mapa) {
+                    estado.llamas = e.llamas;
+                }
+            },
             [&](const DialogoNpc& e) { cuadro_de_dialogo.mostrar(e.id_npc, e.texto); },
             [&](const ErrorServidor& e) { std::cerr << "[error] " << e.detalle << std::endl; },
             [&](const PartidaCerradaPorError&) {
