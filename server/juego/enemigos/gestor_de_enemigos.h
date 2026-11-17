@@ -10,6 +10,7 @@
 #include "../geometria.h"
 #include "catalogo_de_enemigos.h"
 #include "enemigo.h"
+#include "llama.h"
 
 // Resultado de golpear a un enemigo. "golpeo" es false si el id no existe o ya estaba muerto (o es
 // invulnerable); "murio" es true si este golpe en particular lo mató, para que quien ataca sepa
@@ -39,6 +40,8 @@ class GestorDeEnemigos {
 private:
     const CatalogoDeEnemigos& catalogo;
     std::map<int, Enemigo> enemigos_por_id;
+    std::vector<Llama> llamas;
+    uint32_t siguiente_id_de_llama = 1;
     int siguiente_id = 1;  // no se reinicia, así un id viejo nunca apunta a otro enemigo
     int siguiente_grupo = 1;  // tampoco se reinicia, por el set de pelea ("del mismo grupo")
     uint32_t ms_por_tick;
@@ -62,6 +65,10 @@ private:
     const Casilla* elegir_objetivo(
         Enemigo& enemigo, const DefinicionDeEnemigo& definicion,
         const std::vector<std::pair<uint32_t, Casilla>>& jugadores, int& distancia) const;
+    // Crea una llama que sale de "enemigo" hacia "objetivo".
+    void lanzar_llama(
+        const Enemigo& enemigo, const DefinicionDeEnemigo& definicion, const Casilla& objetivo);
+
     // Da un paso hacia el objetivo (por el eje más lejano o, si está bloqueado, por el otro).
     // Devuelve true si se movió.
     bool acercarse(
@@ -121,6 +128,20 @@ public:
     // casilla los resuelve quien llama, acá solo está la regla de "quién ataca a quién".
     std::vector<GolpeDeEnemigo> atacar_adyacentes(
         const std::vector<std::pair<uint32_t, Casilla>>& jugadores);
+
+    // Cada Skull viva, con el cooldown en cero y un jugador a la vista, le lanza una llama.
+    // Devuelve los ids de las que dispararon (para avisarle al cliente que cambió su animación).
+    std::vector<int> disparar(const std::vector<std::pair<uint32_t, Casilla>>& jugadores);
+
+    // Mueve todas las llamas un tick. Una llama se apaga si:
+    //  - entra en la casilla de un jugador: lo quema (se devuelve el golpe),
+    //  - choca con una pared u objeto,
+    //  - o ya voló todo su alcance.
+    std::vector<GolpeDeEnemigo> avanzar_llamas(
+        const std::vector<std::pair<uint32_t, Casilla>>& jugadores, const Colisiones& colisiones);
+
+    // Las llamas que están volando, para el cliente.
+    std::vector<EstadoLlama> estado_de_llamas() const;
 
     // Borra todos los enemigos del sector. La usa la mazmorra cuando se vacía y se vuelve a
     // sortear, igual que Drops::limpiar().

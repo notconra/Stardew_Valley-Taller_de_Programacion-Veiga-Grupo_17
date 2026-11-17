@@ -1,7 +1,9 @@
 #include "gestor_de_enemigos.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
+#include <utility>
 
 #include "../azar.h"
 
@@ -343,6 +345,9 @@ std::vector<int> GestorDeEnemigos::mover_hacia(
         bool se_movio = false;
         if (objetivo == nullptr) {
             se_movio = deambular(enemigo, *definicion, colisiones);
+        } else if (definicion->a_distancia && distancia <= definicion->distancia_de_ataque) {
+            // Ya está a tiro: se queda donde está, mirando al jugador, y dispara (ver disparar()).
+            enemigo.mirando = direccion_hacia(enemigo.posicion, *objetivo);
         } else if (distancia > 1) {  // a distancia 1 ya está al lado: le toca pegar
             se_movio = acercarse(enemigo, *definicion, *objetivo, jugadores, colisiones);
         }
@@ -357,14 +362,15 @@ std::vector<GolpeDeEnemigo> GestorDeEnemigos::atacar_adyacentes(
     const std::vector<std::pair<uint32_t, Casilla>>& jugadores) {
     std::vector<GolpeDeEnemigo> golpes;
     for (auto& [id, enemigo] : enemigos_por_id) {
-        if (!enemigo.esta_vivo() || enemigo.ticks_para_poder_atacar > 0) {
-            continue;
+        const DefinicionDeEnemigo* definicion = catalogo.buscar(enemigo.tipo);
+        if (!enemigo.esta_vivo() || enemigo.ticks_para_poder_atacar > 0 ||
+            (definicion != nullptr && definicion->a_distancia)) {
+            continue;  // los que atacan a distancia no pegan al lado: disparan (ver disparar())
         }
         for (const auto& [id_jugador, casilla] : jugadores) {
             if (!son_adyacentes(enemigo.posicion, casilla)) {
                 continue;
             }
-            const DefinicionDeEnemigo* definicion = catalogo.buscar(enemigo.tipo);
             const int danio = definicion != nullptr ? danio_de(enemigo, *definicion) : 0;
             golpes.push_back(GolpeDeEnemigo{static_cast<uint32_t>(id), id_jugador, danio});
             enemigo.ticks_para_poder_atacar =
@@ -377,8 +383,98 @@ std::vector<GolpeDeEnemigo> GestorDeEnemigos::atacar_adyacentes(
     return golpes;
 }
 
+std::vector<int> GestorDeEnemigos::disparar(
+    const std::vector<std::pair<uint32_t, Casilla>>& jugadores) {
+    std::vector<int> dispararon;
+    for (auto& [id, enemigo] : enemigos_por_id) {
+        const DefinicionDeEnemigo* definicion = catalogo.buscar(enemigo.tipo);
+        const bool es_skull = definicion != nullptr && definicion->a_distancia;
+        if (!es_skull || !enemigo.esta_vivo() || enemigo.ticks_para_poder_atacar > 0) {
+            continue;
+        }
+
+        int distancia = 0;
+        const Casilla* objetivo = elegir_objetivo(enemigo, *definicion, jugadores, distancia);
+        if (objetivo == nullptr) {
+            continue;  // no ve a nadie
+        }
+
+        lanzar_llama(enemigo, *definicion, *objetivo);
+        enemigo.ticks_para_poder_atacar = definicion->ticks_entre_ataques;
+        enemigo.ticks_de_animacion_ataque = DURACION_ANIMACION_ATAQUE_TICKS;
+        enemigo.mirando = direccion_hacia(enemigo.posicion, *objetivo);
+        dispararon.push_back(id);
+    }
+    return dispararon;
+}
+
+void GestorDeEnemigos::lanzar_llama(
+    const Enemigo& enemigo, const DefinicionDeEnemigo& definicion, const Casilla& objetivo) {
+    // Dirección hacia el jugador, de largo 1.
+    const double dx = objetivo.columna - enemigo.posicion.columna;
+    const double dy = objetivo.fila - enemigo.posicion.fila;
+    const double largo = std::hypot(dx, dy);
+
+    // De casillas por segundo a casillas por tick.
+    const double velocidad = definicion.casillas_por_segundo_de_llama * ms_por_tick / 1000.0;
+
+    Llama llama;
+    llama.id = siguiente_id_de_llama++;
+    llama.id_enemigo = static_cast<uint32_t>(enemigo.id);
+    llama.verde = definicion.llama_verde;
+    llama.danio = definicion.danio;
+    llama.x = enemigo.posicion.columna + 0.5;
+    llama.y = enemigo.posicion.fila + 0.5;
+    llama.velocidad_x = dx / largo * velocidad;
+    llama.velocidad_y = dy / largo * velocidad;
+    llama.distancia_restante = definicion.alcance_de_llama;
+    llamas.push_back(llama);
+}
+
+std::vector<GolpeDeEnemigo> GestorDeEnemigos::avanzar_llamas(
+    const std::vector<std::pair<uint32_t, Casilla>>& jugadores, const Colisiones& colisiones) {
+    std::vector<GolpeDeEnemigo> golpes;
+    std::vector<Llama> siguen_volando;
+
+    for (Llama& llama : llamas) {
+        llama.avanzar();
+        const Casilla casilla = llama.casilla();
+
+        bool quemo_a_alguien = false;
+        for (const auto& [id_jugador, casilla_del_jugador] : jugadores) {
+            if (casilla_del_jugador == casilla) {
+                golpes.push_back(GolpeDeEnemigo{llama.id_enemigo, id_jugador, llama.danio});
+                quemo_a_alguien = true;
+                break;
+            }
+        }
+
+        const bool choco = !colisiones.esta_libre(casilla.columna, casilla.fila);
+        if (!quemo_a_alguien && !choco && !llama.se_quedo_sin_alcance()) {
+            siguen_volando.push_back(llama);
+        }
+    }
+
+    llamas = std::move(siguen_volando);
+    return golpes;
+}
+
+std::vector<EstadoLlama> GestorDeEnemigos::estado_de_llamas() const {
+    std::vector<EstadoLlama> estados;
+    for (const Llama& llama : llamas) {
+        EstadoLlama estado;
+        estado.id = llama.id;
+        estado.verde = llama.verde;
+        estado.x_centesimas = static_cast<uint32_t>(llama.x * 100);
+        estado.y_centesimas = static_cast<uint32_t>(llama.y * 100);
+        estados.push_back(estado);
+    }
+    return estados;
+}
+
 void GestorDeEnemigos::limpiar() {
     enemigos_por_id.clear();
+    llamas.clear();
 }
 
 const Enemigo* GestorDeEnemigos::buscar(int id) const {
