@@ -10,6 +10,7 @@
 #include <QTableWidgetItem>
 #include <algorithm>
 #include <cmath>
+#include <filesystem>
 #include <iostream>
 #include <limits>
 #include <memory>
@@ -217,11 +218,19 @@ void PantallaPrincipal::confirmar_personaje() {
         conexion.enviar_comando(
             UnirsePartida{codigo_partida_a_unirse, nombre.toStdString(), apariencia});
     } else {
+        std::string mundo_seleccionado = "Mundo Estandar";
+        if (ui->combo_mundo->currentIndex() >= 0) {
+            mundo_seleccionado = ui->combo_mundo->currentText().toStdString();
+        }
         std::cout << "Creando personaje: " << nombre.toStdString()
                   << " | Granja: " << granja.toStdString()
-                  << " | Tipo de mapa: " << mapa_granja_seleccionado << "\n";
-        conexion.enviar_comando(
-            CrearPartida{granja.toStdString(), nombre.toStdString(), apariencia});
+                  << " | Tipo de mapa: " << mapa_granja_seleccionado
+                  << " | Mundo: " << mundo_seleccionado << "\n";
+        conexion.enviar_comando(CrearPartida{
+            granja.toStdString(),
+            nombre.toStdString(),
+            apariencia,
+            mundo_seleccionado});
     }
 
     try {
@@ -280,12 +289,40 @@ bool PantallaPrincipal::procesar_evento_ingreso(const EventoServidor& evento) {
     return false;
 }
 
+std::string PantallaPrincipal::mapa_seleccionado() const {
+    return mapa_granja_seleccionado;
+}
+
+int PantallaPrincipal::tipo_granja_seleccionado() const {
+    return indice_granja_seleccionada;
+}
+
+std::string PantallaPrincipal::mundo_seleccionado() const {
+    if (ui->combo_mundo->currentIndex() >= 0) {
+        return ui->combo_mundo->currentText().toStdString();
+    }
+    return "Mundo Estandar";
+}
+
 void PantallaPrincipal::configurar_formulario_granja(bool visible) {
     ui->label_3->setVisible(visible);
     ui->input_nombre_granja->setVisible(visible);
-    ui->label_mundo->setVisible(false);
-    ui->combo_mundo->setVisible(false);
+    ui->label_mundo->setVisible(visible);
+    ui->combo_mundo->setVisible(visible);
     ui->contenedor_lateral_granjas->setVisible(visible);
+
+    if (visible) {
+        ui->combo_mundo->clear();
+        ui->combo_mundo->addItem("Mundo Estandar");
+        if (std::filesystem::exists("mundos")) {
+            for (const auto& entrada : std::filesystem::directory_iterator("mundos")) {
+                if (entrada.path().extension() == ".dat") {
+                    ui->combo_mundo->addItem(
+                        QString::fromStdString(entrada.path().stem().string()));
+                }
+            }
+        }
+    }
 }
 
 void PantallaPrincipal::inicializar_selector_granjas() {

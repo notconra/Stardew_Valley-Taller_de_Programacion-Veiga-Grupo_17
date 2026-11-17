@@ -150,6 +150,20 @@ void GestorDeSectores::colocar_en_aparicion(Personaje& personaje, const std::str
     difundir_jugadores(id_mapa);
 }
 
+void GestorDeSectores::establecer_aparicion(const std::string& id_mapa, double x, double y) {
+    auto sector_encontrado = sectores.find(id_mapa);
+    if (sector_encontrado != sectores.end()) {
+        sector_encontrado->second.establecer_aparicion(x, y);
+    }
+}
+
+void GestorDeSectores::bloquear_casilla(const std::string& id_mapa, int columna, int fila) {
+    auto sector_encontrado = sectores.find(id_mapa);
+    if (sector_encontrado != sectores.end()) {
+        sector_encontrado->second.bloquear_casilla(columna, fila);
+    }
+}
+
 void GestorDeSectores::colocar_en(
     Personaje& personaje, const std::string& id_mapa, double x, double y, Direccion mirando) {
     Sector& sector = sectores.at(id_mapa);

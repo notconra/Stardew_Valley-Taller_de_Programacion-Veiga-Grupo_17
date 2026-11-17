@@ -1,6 +1,8 @@
 #ifndef CLIENTE_H
 #define CLIENTE_H
 
+#include <string>
+
 #include "../common/direccion.h"
 #include "../common/mensajes/mensajes.h"
 #include "configuracion/configuracion_cliente.h"
@@ -18,6 +20,7 @@ private:
 
     // Partida en la que está el jugador. Solo es válida durante el EstadoDelJuego PARTIDA.
     EntradaExitosaAPartida partida_actual{};
+    std::string mundo_actual;
 
     // Cada una ejecuta su EstadoDelJuego hasta que termina y devuelve la siguiente.
     EstadoDelJuego ejecutar_lobby();

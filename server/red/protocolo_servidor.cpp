@@ -72,8 +72,9 @@ CrearPartida ProtocoloServidor::recibir_comando_crear_partida() {
     std::string nombre_partida = recibir_texto();
     std::string nombre_jugador = recibir_texto();
     AparienciaPersonaje apariencia = recibir_apariencia();
+    std::string nombre_mundo = recibir_texto();
 
-    return CrearPartida{nombre_partida, nombre_jugador, apariencia};
+    return CrearPartida{nombre_partida, nombre_jugador, apariencia, nombre_mundo};
 }
 
 UnirsePartida ProtocoloServidor::recibir_comando_unirse_partida() {

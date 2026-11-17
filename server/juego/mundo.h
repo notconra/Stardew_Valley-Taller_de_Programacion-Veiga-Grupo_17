@@ -80,6 +80,8 @@ public:
     // todo. "nombre" vacío deja el que tenía.
     void conectar(
         uint32_t id_jugador, const AparienciaPersonaje& apariencia, const std::string& nombre = "");
+    void establecer_aparicion(const std::string& id_mapa, double x, double y);
+    void bloquear_casilla(const std::string& id_mapa, int columna, int fila);
 
     // El jugador se fue. Su Personaje queda guardado.
     void desconectar(uint32_t id_jugador);

@@ -1,10 +1,14 @@
 #include "mapa_editable.h"
 
+#include <vector>
+
 MapaEditable::MapaEditable(
     int columnas_iniciales, int filas_iniciales, uint32_t id_tile_base, uint8_t propiedades_base)
-    : cuadricula(columnas_iniciales, filas_iniciales, CasillaDelMapa(id_tile_base, propiedades_base)),
+    : cuadricula(
+          columnas_iniciales, filas_iniciales, CasillaDelMapa(id_tile_base, propiedades_base)),
       entidades(),
-      proximo_identificador_de_entidad(1) {}
+      proximo_identificador_de_entidad(1) {
+}
 
 int MapaEditable::buscar_indice_de_entidad(uint32_t identificador) const {
     size_t indice = 0;
@@ -45,14 +49,26 @@ bool MapaEditable::casilla_es_cultivable(int columna, int fila) const {
     return cuadricula.obtener_casilla(columna, fila).es_cultivable();
 }
 
-void MapaEditable::pintar_casilla(
-    int columna, int fila, uint32_t id_tile, uint8_t propiedades) {
+CasillaDelMapa MapaEditable::obtener_casilla(int columna, int fila) const {
+    if (!esta_dentro(columna, fila)) {
+        return CasillaDelMapa();
+    }
+    return cuadricula.obtener_casilla(columna, fila);
+}
+
+void MapaEditable::pintar_casilla(int columna, int fila, uint32_t id_tile, uint8_t propiedades) {
     cuadricula.establecer_casilla(columna, fila, CasillaDelMapa(id_tile, propiedades));
 }
 
 void MapaEditable::pintar_zona(
-    int columna_inicio, int fila_inicio, int ancho, int alto, uint32_t id_tile, uint8_t propiedades) {
-    cuadricula.pintar_zona(columna_inicio, fila_inicio, ancho, alto, CasillaDelMapa(id_tile, propiedades));
+    int columna_inicio, int fila_inicio, int ancho, int alto, uint32_t id_tile,
+    uint8_t propiedades) {
+    cuadricula.pintar_zona(
+        columna_inicio,
+        fila_inicio,
+        ancho,
+        alto,
+        CasillaDelMapa(id_tile, propiedades));
 }
 
 void MapaEditable::agregar_propiedad_a_casilla(int columna, int fila, uint8_t propiedad) {
@@ -75,10 +91,19 @@ uint32_t MapaEditable::ubicar_entidad(
     return nuevo_identificador;
 }
 
+void MapaEditable::cargar_entidad(const EntidadDelMapa& entidad) {
+    entidades.push_back(entidad);
+    if (entidad.obtener_identificador() >= proximo_identificador_de_entidad) {
+        proximo_identificador_de_entidad = entidad.obtener_identificador() + 1;
+    }
+}
+
 bool MapaEditable::entidad_puede_ubicarse_en(
-    TipoEntidad tipo, int columna, int fila, int ancho, int alto, uint32_t identificador_a_ignorar) const {
+    TipoEntidad tipo, int columna, int fila, int ancho, int alto,
+    uint32_t identificador_a_ignorar) const {
     (void)tipo;
-    bool dentro_horizontal = (columna >= 0) && (columna + ancho <= cuadricula.obtener_cantidad_de_columnas());
+    bool dentro_horizontal =
+        (columna >= 0) && (columna + ancho <= cuadricula.obtener_cantidad_de_columnas());
     bool dentro_vertical = (fila >= 0) && (fila + alto <= cuadricula.obtener_cantidad_de_filas());
     if (!dentro_horizontal || !dentro_vertical) {
         return false;
@@ -120,8 +145,7 @@ bool MapaEditable::entidad_puede_ubicarse_en(
     return !hay_superposicion;
 }
 
-bool MapaEditable::deslizar_entidad(
-    uint32_t identificador, int nueva_columna, int nueva_fila) {
+bool MapaEditable::deslizar_entidad(uint32_t identificador, int nueva_columna, int nueva_fila) {
     int indice = buscar_indice_de_entidad(identificador);
     if (indice < 0) {
         return false;
@@ -186,7 +210,27 @@ std::vector<EntidadDelMapa> MapaEditable::listar_todas_las_entidades() const {
 
 void MapaEditable::redimensionar(
     int nuevas_columnas, int nuevas_filas, uint32_t id_tile_relleno, uint8_t propiedades_relleno) {
-    cuadricula.redimensionar(nuevas_columnas, nuevas_filas, CasillaDelMapa(id_tile_relleno, propiedades_relleno));
+    cuadricula.redimensionar(
+        nuevas_columnas,
+        nuevas_filas,
+        CasillaDelMapa(id_tile_relleno, propiedades_relleno));
+
+    std::vector<EntidadDelMapa> entidades_conservadas;
+    size_t indice = 0;
+    while (indice < entidades.size()) {
+        int columna_origen = 0;
+        int fila_origen = 0;
+        entidades[indice].consultar_origen(columna_origen, fila_origen);
+        int ancho = 0;
+        int alto = 0;
+        entidades[indice].consultar_dimensiones(ancho, alto);
+
+        if (columna_origen + ancho <= nuevas_columnas && fila_origen + alto <= nuevas_filas) {
+            entidades_conservadas.push_back(entidades[indice]);
+        }
+        indice++;
+    }
+    entidades = entidades_conservadas;
 }
 
 void MapaEditable::vaciar_entidades() {

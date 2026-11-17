@@ -508,6 +508,8 @@ b = 113
 ruta_ambiente = "Assets/sfx/ambiente.wav"
 ruta_caminar = "Assets/sfx/caminar.wav"
 ruta_accion = "Assets/sfx/pico_aire.wav"
+ruta_comprar = "Assets/sfx/dinero_contador.wav"
+ruta_vender = "Assets/sfx/dinero_contador.wav"
 
 [sonido.animales]
 vaca = "Assets/sfx/vaca.wav"

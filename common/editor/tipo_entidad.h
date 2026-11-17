@@ -12,7 +12,9 @@ enum class TipoEntidad : uint8_t {
     PUESTO_ROBIN = 5,
     CENTRO_COMUNITARIO = 6,
     ESCALERA_NIVEL = 7,
-    SALIDA_CAVERNA = 8
+    SALIDA_CAVERNA = 8,
+    TRANSICION_PUEBLO = 9,
+    TRANSICION_GRANJA = 10
 };
 
 #endif  // TIPO_ENTIDAD_H

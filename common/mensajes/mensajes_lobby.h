@@ -21,6 +21,7 @@ struct CrearPartida {
     std::string nombre_partida;
     std::string nombre_jugador;
     AparienciaPersonaje apariencia;
+    std::string nombre_mundo;
 };
 
 struct UnirsePartida {

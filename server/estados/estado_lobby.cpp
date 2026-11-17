@@ -53,7 +53,8 @@ EstadoDeConexion::ProximoEstado EstadoLobby::crear_partida(const CrearPartida& c
             contexto.identidad.id_cliente,
             comando.nombre_jugador,
             comando.nombre_partida,
-            comando.apariencia);
+            comando.apariencia,
+            comando.nombre_mundo);
         entrar_a_partida(ingreso);
         return std::make_unique<EstadoEnPartida>(contexto, ingreso);
     } catch (const ErrorDePartida& error) {

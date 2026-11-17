@@ -74,6 +74,10 @@ VistaPartida::VistaPartida(
       marcador_de_casillas(configuracion_vista.graficos) {
 }
 
+void VistaPartida::establecer_mundo(const std::string& nombre_mundo) {
+    mundo_actual = nombre_mundo;
+}
+
 const ConfiguracionMapa& VistaPartida::configuracion_de(const std::string& id_mapa) const {
     const auto encontrado = std::find_if(
         configuracion.mapas.begin(),
@@ -197,8 +201,15 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             mapas_cargados.clear();
             estacion_cargada = estacion;
         }
+        std::string mundo_para_mapa = (id_mapa == "granja" ? mundo_actual : "");
         return mapas_cargados
-            .try_emplace(id_mapa, renderizador.ptr(), configuracion_de(id_mapa), graficos, estacion)
+            .try_emplace(
+                id_mapa,
+                renderizador.ptr(),
+                configuracion_de(id_mapa),
+                graficos,
+                estacion,
+                mundo_para_mapa)
             .first->second;
     };
 

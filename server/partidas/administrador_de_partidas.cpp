@@ -44,7 +44,7 @@ Partida& AdministradorDePartidas::buscar_partida(const std::string& codigo_parti
 }
 
 std::unique_ptr<SesionDePartida> AdministradorDePartidas::crear_sesion(
-    const std::string& codigo_partida) {
+    const std::string& codigo_partida, const std::string& nombre_mundo) {
     auto datos_guardados = cargar_datos_guardados(codigo_partida);
     DatosMundoGuardado datos_mundo;
     if (datos_guardados.has_value()) {
@@ -55,7 +55,8 @@ std::unique_ptr<SesionDePartida> AdministradorDePartidas::crear_sesion(
         configuracion,
         recursos,
         datos_mundo,
-        [this, codigo_partida] { guardar_partida(codigo_partida); });
+        [this, codigo_partida] { guardar_partida(codigo_partida); },
+        nombre_mundo);
 }
 
 bool AdministradorDePartidas::comparar_por_ultima_modificacion(
@@ -122,7 +123,7 @@ void AdministradorDePartidas::eliminar(const std::string& codigo_partida) {
 
 IngresoAPartida AdministradorDePartidas::crear(
     uint32_t id_cliente, const std::string& nombre_jugador, const std::string& nombre_partida,
-    const AparienciaPersonaje& apariencia) {
+    const AparienciaPersonaje& apariencia, const std::string& nombre_mundo) {
     EntradaExitosaAPartida entrada;
     ColorDeJugador color_jugador = ColorDeJugador::AZUL;
     std::string codigo;
@@ -159,7 +160,7 @@ IngresoAPartida AdministradorDePartidas::crear(
     // La sesión arranca un hilo, por eso se crea sin el mutex tomado.
     std::unique_ptr<SesionDePartida> sesion;
     try {
-        sesion = crear_sesion(codigo);
+        sesion = crear_sesion(codigo, nombre_mundo);
     } catch (...) {
         std::lock_guard<std::mutex> lock(mutex);
         partidas.erase(codigo);

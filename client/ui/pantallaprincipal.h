@@ -39,12 +39,9 @@ public:
         ConfiguracionJugador& configuracion_jugador, QWidget* parent = nullptr);
     ~PantallaPrincipal();
 
-    std::string mapa_seleccionado() const {
-        return mapa_granja_seleccionado;
-    }
-    int tipo_granja_seleccionado() const {
-        return indice_granja_seleccionada;
-    }
+    std::string mapa_seleccionado() const;
+    int tipo_granja_seleccionado() const;
+    std::string mundo_seleccionado() const;
 
 protected:
     void paintEvent(QPaintEvent* evento) override;

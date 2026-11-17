@@ -10,6 +10,8 @@
 #include <utility>
 #include <vector>
 
+#include "../../common/editor/serializador_de_mundo.h"
+#include "../../common/editor/tipo_entidad.h"
 #include "../juego/cheats/comando_animal.h"
 #include "../juego/cheats/comando_avanzar_dia.h"
 #include "../juego/cheats/comando_dinero.h"
@@ -20,7 +22,7 @@
 SesionDePartida::SesionDePartida(
     const std::string& codigo_de_partida, const ConfiguracionPartidaServidor& configuracion_partida,
     const RecursosDeJuego& recursos, const DatosMundoGuardado& datos_guardados,
-    GuardarAlTerminarElDia guardar)
+    GuardarAlTerminarElDia guardar, const std::string& nombre_mundo)
     : codigo_partida(codigo_de_partida),
       periodo_de_tick(1000 / configuracion_partida.ticks_por_segundo),
       mundo(
@@ -31,6 +33,47 @@ SesionDePartida::SesionDePartida(
       guardar_al_terminar_el_dia(std::move(guardar)),
       segundos_jugados_iniciales(datos_guardados.segundos_jugados),
       tiempo_inicio_sesion(std::chrono::steady_clock::now()) {
+    if (!nombre_mundo.empty() && nombre_mundo != "Mundo Estandar") {
+        nombre_mundo_cargado = nombre_mundo;
+        std::string ruta_mundo = SerializadorDeMundo::ruta_por_defecto(nombre_mundo);
+        DefinicionDeMundo definicion;
+        if (SerializadorDeMundo::cargar_desde_archivo(ruta_mundo, definicion)) {
+            std::cout << "[Servidor] Mundo personalizado '" << nombre_mundo
+                      << "' cargado para partida " << codigo_de_partida << "\n";
+            std::vector<EntidadDelMapa> cabanias =
+                definicion.obtener_sector_granja().listar_entidades_por_tipo(TipoEntidad::CABANIA);
+            if (!cabanias.empty()) {
+                int columna_casa = 0;
+                int fila_casa = 0;
+                int ancho_casa = 0;
+                int alto_casa = 0;
+                cabanias[0].consultar_origen(columna_casa, fila_casa);
+                cabanias[0].consultar_dimensiones(ancho_casa, alto_casa);
+                double puerta_x = (columna_casa + static_cast<double>(ancho_casa) / 2.0) * 16.0;
+                double puerta_y = (fila_casa + static_cast<double>(alto_casa)) * 16.0;
+                mundo.establecer_aparicion("granja", puerta_x, puerta_y);
+                std::cout << "[Servidor] Posición de spawn configurada en la cabaña del editor: ("
+                          << puerta_x << ", " << puerta_y << ")\n";
+            }
+
+            MapaEditable granja_editable = definicion.obtener_sector_granja();
+            int columnas_mundo = granja_editable.obtener_cantidad_de_columnas();
+            int filas_mundo = granja_editable.obtener_cantidad_de_filas();
+
+            for (int f = 0; f < 65; ++f) {
+                for (int c = 0; c < 80; ++c) {
+                    if (c >= columnas_mundo || f >= filas_mundo) {
+                        mundo.bloquear_casilla("granja", c, f);
+                    } else {
+                        CasillaDelMapa casilla = granja_editable.obtener_casilla(c, f);
+                        if (casilla.tiene_propiedad(PropiedadDeCasilla::BLOQUEA)) {
+                            mundo.bloquear_casilla("granja", c, f);
+                        }
+                    }
+                }
+            }
+        }
+    }
     chat.agregar_comando(std::make_unique<ComandoAnimal>(mundo));
     chat.agregar_comando(std::make_unique<ComandoAvanzarDia>(mundo));
     chat.agregar_comando(std::make_unique<ComandoSemillas>(mundo, recursos.catalogo_de_cultivos));
@@ -79,6 +122,11 @@ void SesionDePartida::aplicar_cambios_de_conexion() {
         if (cambio.entra) {
             mundo.conectar(cambio.id_jugador, cambio.apariencia, cambio.nombre_jugador);
             chat.conectar(cambio.id_jugador, cambio.nombre_jugador, cambio.color_jugador);
+            if (!nombre_mundo_cargado.empty()) {
+                chat.responder_a_jugador(
+                    cambio.id_jugador,
+                    "Partida iniciada con el mundo: " + nombre_mundo_cargado);
+            }
         } else {
             mundo.desconectar(cambio.id_jugador);
             chat.desconectar(cambio.id_jugador);

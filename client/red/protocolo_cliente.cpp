@@ -89,6 +89,7 @@ void ProtocoloCliente::enviar_comando_crear_partida(const CrearPartida& crear) {
     enviar_texto(crear.nombre_partida);
     enviar_texto(crear.nombre_jugador);
     enviar_apariencia(crear.apariencia);
+    enviar_texto(crear.nombre_mundo);
 }
 
 void ProtocoloCliente::enviar_comando_unirse_partida(const UnirsePartida& unirse) {

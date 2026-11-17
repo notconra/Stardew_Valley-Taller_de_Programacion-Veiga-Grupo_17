@@ -71,6 +71,8 @@ public:
 
     // Un jugador que entra al mundo, aparece en el punto de aparición del mapa indicado.
     void colocar_en_aparicion(Personaje& personaje, const std::string& id_mapa);
+    void establecer_aparicion(const std::string& id_mapa, double x, double y);
+    void bloquear_casilla(const std::string& id_mapa, int columna, int fila);
 
     // Coloca al jugador directamente en el mapa y coordenadas indicadas.
     void colocar_en(

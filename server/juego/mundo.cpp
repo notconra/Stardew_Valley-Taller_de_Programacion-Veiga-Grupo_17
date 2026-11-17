@@ -155,6 +155,14 @@ void Mundo::conectar(
     }
 }
 
+void Mundo::establecer_aparicion(const std::string& id_mapa, double x, double y) {
+    sectores.establecer_aparicion(id_mapa, x, y);
+}
+
+void Mundo::bloquear_casilla(const std::string& id_mapa, int columna, int fila) {
+    sectores.bloquear_casilla(id_mapa, columna, fila);
+}
+
 void Mundo::desconectar(uint32_t id_jugador) {
     auto encontrado = personajes.find(id_jugador);
     if (encontrado == personajes.end() || !encontrado->second.conectado) {

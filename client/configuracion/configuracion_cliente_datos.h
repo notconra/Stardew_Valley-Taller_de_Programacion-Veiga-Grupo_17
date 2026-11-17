@@ -140,6 +140,8 @@ struct ConfiguracionSonido {
     std::string ruta_regalo_recibido;  // [sonido.regalos] recibir: llegó un regalo nuevo
     std::string ruta_anochecer;        // [sonido.tiempo] anochecer: empezó la noche
     std::string ruta_lluvia;           // [sonido.tiempo] lluvia: loop mientras llueve
+    std::string ruta_comprar;
+    std::string ruta_vender;
 };
 
 // Cómo se ve la tierra tratada. La textura es la de Stardew (hoeDirt.png); el resto del dibujado

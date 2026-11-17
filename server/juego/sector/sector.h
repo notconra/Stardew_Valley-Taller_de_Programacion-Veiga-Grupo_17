@@ -109,6 +109,8 @@ public:
 
     void cargar_casillas_modificadas(const std::vector<ModificacionCasilla>& modificaciones);
     void agregar_modificaciones_a(std::vector<ModificacionCasilla>& modificaciones) const;
+    void establecer_aparicion(double x, double y);
+    void bloquear_casilla(int columna, int fila);
 
     void cargar_cofre(
         uint32_t columna, uint32_t fila, const std::vector<RanuraInventario>& ranuras);
