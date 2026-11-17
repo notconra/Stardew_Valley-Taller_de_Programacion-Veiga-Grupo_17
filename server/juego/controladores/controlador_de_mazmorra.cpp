@@ -105,7 +105,6 @@ void ControladorDeMazmorra::poblar_niveles() {
 }
 
 void ControladorDeMazmorra::poblar_enemigos(Sector& sector, const Nivel& nivel) {
-    // TODO(enemigos): las Skulls se reparten acá cuando existan.
     sector.enemigos.limpiar();
     const std::vector<Casilla>& puntos = nivel.obtener_enemigos();
     const ConfiguracionOrcosServidor& orcos = recursos.mazmorra.orco;
@@ -134,6 +133,17 @@ void ControladorDeMazmorra::poblar_enemigos(Sector& sector, const Nivel& nivel) 
         ocupadas.insert(ocupadas.end(), pareja.begin(), pareja.end());
         sector.enemigos.poblar_pareja(
             pareja[0], TipoEnemigo::VAMPIRA, pareja[1], TipoEnemigo::VAMPIRO);
+    }
+
+    // Skulls: solas y a lo sumo una por nivel (cuarto). Cada una sale azul o verde.
+    const ConfiguracionSkullsServidor& skulls = recursos.mazmorra.skulls;
+    const size_t cantidad_de_skulls = std::min(
+        puntos.size() - usados, static_cast<size_t>(std::clamp(skulls.skulls_por_nivel, 0, 1)));
+    for (size_t i = 0; i < cantidad_de_skulls; ++i, ++usados) {
+        const TipoEnemigo tipo = Azar::con_probabilidad(skulls.probabilidad_verde)
+                                     ? TipoEnemigo::SKULL_VERDE
+                                     : TipoEnemigo::SKULL_AZUL;
+        sector.enemigos.poblar_en({puntos[usados]}, tipo);
     }
 
     const std::vector<Casilla> solos(
