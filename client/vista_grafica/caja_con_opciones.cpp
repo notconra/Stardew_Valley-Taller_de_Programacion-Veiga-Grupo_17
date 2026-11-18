@@ -4,9 +4,17 @@
 #include <string>
 #include <vector>
 
-#define RUTA_IMAGEN_DE_LA_CAJA "Assets/LooseSprites/textBox.png"
+// La misma ranura del panel de regalos.
+#define RUTA_IMAGEN_DE_LA_CAJA "Assets/hud/regalos_ranura.png"
 
-#define BORDE_DE_LA_CAJA 6
+// Los bordes de la imagen, en sus píxeles. A la derecha y abajo son más anchos porque ahí la
+// ranura tiene su sombra (y 4 píxeles transparentes).
+#define BORDE_IZQUIERDO_DE_LA_CAJA 12
+#define BORDE_DE_ARRIBA_DE_LA_CAJA 12
+#define BORDE_DERECHO_DE_LA_CAJA 20
+#define BORDE_DE_ABAJO_DE_LA_CAJA 20
+// Cada píxel del dibujo ocupa 2 de la imagen: por eso se agranda la mitad que la letra.
+#define PIXELES_DE_LA_IMAGEN_POR_ESCALA 2
 
 #define ALTO_DE_VENTANA_POR_ESCALA 240
 #define ESCALA_MINIMA 2
@@ -134,20 +142,23 @@ void CajaConOpciones::dibujar_caja(SDL_Renderer* renderer, const SDL_Rect& desti
     int ancho_imagen = 0;
     int alto_imagen = 0;
     SDL_QueryTexture(caja.ptr(), nullptr, nullptr, &ancho_imagen, &alto_imagen);
-    const int borde = BORDE_DE_LA_CAJA;
-    const int borde_en_pantalla = borde * escala;
+    const int izquierdo = BORDE_IZQUIERDO_DE_LA_CAJA;
+    const int arriba = BORDE_DE_ARRIBA_DE_LA_CAJA;
+    const int derecho = BORDE_DERECHO_DE_LA_CAJA;
+    const int abajo = BORDE_DE_ABAJO_DE_LA_CAJA;
+    const int por_escala = PIXELES_DE_LA_IMAGEN_POR_ESCALA;
 
-    const int origen_x[4] = {0, borde, ancho_imagen - borde, ancho_imagen};
-    const int origen_y[4] = {0, borde, alto_imagen - borde, alto_imagen};
+    const int origen_x[4] = {0, izquierdo, ancho_imagen - derecho, ancho_imagen};
+    const int origen_y[4] = {0, arriba, alto_imagen - abajo, alto_imagen};
     const int destino_x[4] = {
         destino.x,
-        destino.x + borde_en_pantalla,
-        destino.x + destino.w - borde_en_pantalla,
+        destino.x + izquierdo * escala / por_escala,
+        destino.x + destino.w - derecho * escala / por_escala,
         destino.x + destino.w};
     const int destino_y[4] = {
         destino.y,
-        destino.y + borde_en_pantalla,
-        destino.y + destino.h - borde_en_pantalla,
+        destino.y + arriba * escala / por_escala,
+        destino.y + destino.h - abajo * escala / por_escala,
         destino.y + destino.h};
 
     for (int fila = 0; fila < 3; ++fila) {
@@ -199,6 +210,7 @@ void CajaConOpciones::dibujar(
                 COLOR_DE_LA_ELEGIDA_G,
                 COLOR_DE_LA_ELEGIDA_B,
                 SDL_ALPHA_OPAQUE);
+            // El recuadro con el grosor de un píxel de la imagen agrandada.
             for (int grosor = 0; grosor < escala / 2 + 1; ++grosor) {
                 const SDL_Rect recuadro{
                     lugar.x + grosor,

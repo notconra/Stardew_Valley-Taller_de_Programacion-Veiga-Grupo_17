@@ -11,10 +11,11 @@
 #include "fuente_del_juego.h"
 #include "textura.h"
 
-// La caja de texto de Stardew: abajo en el centro de la pantalla (LooseSprites/textBox.png), unas
-// líneas de texto y, si hace falta, una lista de opciones para elegir. La opción elegida se
-// marca con un recuadro rojo; se cambia pasando el mouse por encima o con las flechas (si quien la
-// usa lo permite) y se confirma con un clic o con Enter.
+// Una caja abajo en el centro de la pantalla, hecha con la ranura del panel de regalos
+// (hud/regalos_ranura.png) estirada, con unas líneas de texto y, si hace falta, una lista de
+// opciones para elegir. La opción elegida se marca con un recuadro rojo; se cambia pasando el
+// mouse por encima o con las flechas (si quien la usa lo permite) y se confirma con un clic o con
+// Enter.
 //
 // No sabe qué significa cada opción: devuelve cuál se eligió y quien la usa decide qué hacer. El
 // texto se le pasa en cada llamada; lo único que recuerda es qué opción está marcada.
