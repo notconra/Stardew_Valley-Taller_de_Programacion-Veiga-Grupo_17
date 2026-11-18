@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "../../common/lector_de_mapas_tmx/lector_de_mapas.h"
 #include "../../common/mensajes/mensajes.h"
 #include "../../common/modo_uso.h"
 #include "../configuracion/configuracion_cliente_datos.h"
@@ -70,6 +71,8 @@ private:
     InventarioJugador ultimo_inventario{};
     CofreJugador ultimo_cofre{};
     std::string mapa_actual;
+    std::map<std::string, std::vector<CartelTMX>> carteles_por_mapa;
+    std::optional<DialogoNpc> cartel_pendiente;  // lo deja procesar_clic, lo muestra procesar_entrada
     std::map<std::pair<int, int>, CasillaTratada> tierra_tratada;
     std::optional<HoraDelJuego> hora_del_juego;
     EstadoDelDescanso descanso{};
@@ -124,6 +127,7 @@ private:
     const EstadoJugador* jugador_propio() const;
     bool trampa_se_escucha(const EstadoTrampa& trampa) const;
     const ConfiguracionMapa& configuracion_de(const std::string& id_mapa) const;
+    bool mostrar_cartel_en(int columna, int fila);
     Camara camara_para(const MapaGrafico& mapa) const;
 
     // Escala que se usa según la altura de la pantalla, acotada por "escala_de_tiles" y
