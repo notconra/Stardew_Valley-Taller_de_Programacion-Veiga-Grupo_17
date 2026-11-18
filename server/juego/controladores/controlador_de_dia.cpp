@@ -6,8 +6,15 @@
 #include <variant>
 #include <vector>
 
+#include "../../../common/tipo_objeto.h"
 #include "../azar.h"
+#include "../geometria.h"
 #include "../muebles/muebles.h"
+
+// Dónde queda el acostado, en píxeles desde la casilla de arriba a la izquierda de la cama: en el
+// medio de sus dos casillas, con la cabeza sobre la almohada.
+#define ACOSTADO_DESDE_LA_CAMA_X 8
+#define ACOSTADO_DESDE_LA_CAMA_Y -2
 
 ControladorDelDia::ControladorDelDia(
     const ConfiguracionDiaServidor& configuracion, uint8_t ticks_por_segundo,
@@ -21,10 +28,21 @@ ControladorDelDia::ControladorDelDia(
       recursos(recursos_de_juego),
       notificador(notificador_de_juego),
       sacar_de_la_mazmorra(std::move(sacar)),
+      camas_ocupadas(personajes_de_la_partida),
       probabilidad_de_lluvia(configuracion.probabilidad_de_lluvia) {
 }
 
 bool ControladorDelDia::atender(Personaje& personaje, const ComandoCliente& comando) {
+    if (const Dormir* pedido = std::get_if<Dormir>(&comando)) {
+        acostar(personaje, *pedido);
+        return true;
+    }
+    if (std::holds_alternative<Levantarse>(comando)) {
+        if (puede_levantarse(personaje)) {
+            levantar(personaje);
+        }
+        return true;
+    }
     if (std::holds_alternative<DarElOk>(comando)) {
         if (personaje.descanso != EstadoDeDescanso::DESPIERTO) {
             personaje.dio_el_ok = true;
@@ -37,12 +55,63 @@ bool ControladorDelDia::atender(Personaje& personaje, const ComandoCliente& coma
     if (const Moverse* pedido = std::get_if<Moverse>(&comando)) {
         const bool quiere_moverse = pedido->horizontal != 0 || pedido->vertical != 0;
         if (quiere_moverse && puede_levantarse(personaje)) {
-            personaje.descanso = EstadoDeDescanso::DESPIERTO;
+            levantar(personaje);
             return false;
         }
         return true;
     }
     return std::holds_alternative<UsarItem>(comando);
+}
+
+void ControladorDelDia::acostar(Personaje& personaje, const Dormir& pedido) {
+    if (personaje.descanso != EstadoDeDescanso::DESPIERTO ||
+        !sectores.existe(personaje.mapa_actual)) {
+        return;
+    }
+    Sector& sector = sectores.en(personaje.mapa_actual);
+    const Casilla clickeada{static_cast<int>(pedido.columna), static_cast<int>(pedido.fila)};
+    const ObjetoDelMundo* cama = sector.objetos.objeto_en(clickeada.columna, clickeada.fila);
+    if (cama == nullptr || cama->tipo != TipoObjeto::CAMA ||
+        camas_ocupadas.esta_ocupada(sector.id, cama->columna, cama->fila)) {
+        return;
+    }
+    const std::optional<Casilla> propia =
+        sector.jugadores.casilla_del_jugador(personaje.id_jugador);
+    if (!propia.has_value() ||
+        distancia_en_casillas(*propia, clickeada) > recursos.juego.acciones.alcance_en_casillas) {
+        return;
+    }
+    reubicar(
+        personaje,
+        cama->columna * sector.mapa.ancho_de_casilla_en_pixeles() + ACOSTADO_DESDE_LA_CAMA_X,
+        cama->fila * sector.mapa.alto_de_casilla_en_pixeles() + ACOSTADO_DESDE_LA_CAMA_Y);
+    personaje.descanso = EstadoDeDescanso::ACOSTADO;
+    personaje.dio_el_ok = false;
+    personaje.ultima_cama = UbicacionDeCama{sector.id, cama->columna, cama->fila};
+}
+
+void ControladorDelDia::levantar(Personaje& personaje) {
+    personaje.descanso = EstadoDeDescanso::DESPIERTO;
+    if (!personaje.ultima_cama.has_value()) {
+        return;
+    }
+    const std::optional<Casilla> al_lado =
+        casilla_al_lado_de_la_cama(*personaje.ultima_cama, personaje.id_jugador);
+    if (al_lado.has_value()) {
+        parar_en(personaje, personaje.ultima_cama->mapa, *al_lado);
+    }
+}
+
+void ControladorDelDia::reubicar(Personaje& personaje, double x, double y) {
+    Jugadores& jugadores = sectores.en(personaje.mapa_actual).jugadores;
+    jugadores.quitar(personaje.id_jugador);
+    jugadores.agregar_en(personaje.id_jugador, x, y, Direccion::ABAJO);
+}
+
+void ControladorDelDia::avisar_el_desmayo(const Personaje& personaje) {
+    const std::string causa = personaje.vida <= 0 ? "vida" : "energia";
+    notificador.a_todos(
+        MensajeDeChat::del_sistema(personaje.nombre + " se desmayo: se quedo sin " + causa + "."));
 }
 
 void ControladorDelDia::desmayar_persona(Personaje& personaje) {
@@ -55,7 +124,11 @@ void ControladorDelDia::desmayar() {
         if (!personaje.conectado || personaje.descanso != EstadoDeDescanso::DESPIERTO) {
             continue;
         }
-        if (personaje.vida <= 0 || personaje.energia <= 0 || reloj.termino_el_dia()) {
+        // A las 2 am se desmayan todos a la vez y no se avisa; sin vida o sin energía, sí.
+        if (personaje.vida <= 0 || personaje.energia <= 0) {
+            avisar_el_desmayo(personaje);
+            desmayar_persona(personaje);
+        } else if (reloj.termino_el_dia()) {
             desmayar_persona(personaje);
         }
     }

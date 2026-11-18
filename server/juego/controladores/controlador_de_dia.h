@@ -10,6 +10,7 @@
 #include "../../../common/mensajes/mensajes.h"
 #include "../../configuracion/configuracion_servidor_datos.h"
 #include "../jugadores/personaje.h"
+#include "../muebles/camas_ocupadas.h"
 #include "../notificador.h"
 #include "../recursos/recursos_de_juego.h"
 #include "../sector/gestor_de_sectores.h"
@@ -39,6 +40,7 @@ private:
     const RecursosDeJuego& recursos;
     Notificador& notificador;
     SacarDeLaMazmorra sacar_de_la_mazmorra;
+    CamasOcupadas camas_ocupadas;
     std::map<uint32_t, EstadoDelDescanso> descansos_enviados;
     bool dia_terminado = false;
     double probabilidad_de_lluvia;
@@ -51,6 +53,19 @@ private:
     void desmayar();
 
     void desmayar_persona(Personaje& personaje);
+
+    // Les avisa a todos por el chat que se desmayó por quedarse sin vida o sin energía.
+    void avisar_el_desmayo(const Personaje& personaje);
+
+    // La respuesta "Si" a la pregunta de dormir: si la cama sigue libre y al alcance, lo acuesta
+    // en el medio de la cama.
+    void acostar(Personaje& personaje, const Dormir& pedido);
+
+    // Se levanta de la cama antes de que pase el día y queda parado al lado.
+    void levantar(Personaje& personaje);
+
+    // Lo pone en esa posición (la esquina del dibujo, en píxeles) dentro de su mapa.
+    void reubicar(Personaje& personaje, double x, double y);
 
     // Los acostados y desmayados no se mueven.
     void frenar_a_los_que_descansan();
@@ -87,9 +102,10 @@ public:
         const RecursosDeJuego& recursos, Notificador& notificador,
         SacarDeLaMazmorra sacar_de_la_mazmorra);
 
-    // DarElOk, y los comandos que no puede hacer quien está descansando. Devuelve true si lo
-    // consumió. Si un jugador acostado que todavía no dio el OK se mueve antes de las 2 am, se
-    // levanta (y el movimiento sigue su camino, devuelve false).
+    // Dormir, Levantarse, DarElOk, y los comandos que no puede hacer quien está descansando.
+    // Devuelve true si lo consumió. Si un jugador acostado que todavía no dio el OK se mueve antes
+    // de las 2 am, se levanta al lado de la cama (y el movimiento sigue su camino, devuelve
+    // false).
     bool atender(Personaje& personaje, const ComandoCliente& comando);
 
     // Un tick del servidor.
