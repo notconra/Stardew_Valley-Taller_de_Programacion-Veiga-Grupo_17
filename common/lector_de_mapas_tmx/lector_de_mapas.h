@@ -54,6 +54,18 @@ struct LoteTMX {
     std::string clave;
 };
 
+// Un cartel de un personaje pintado en el mapa (objeto con tipo = "cartel" en la capa de
+// interacciones). Al hacerle clic derecho se muestra "texto" con el fondo de diálogo de "npc"
+// (Assets/npcs/dialogo_<npc>.png).
+struct CartelTMX {
+    int x = 0;
+    int y = 0;
+    int ancho = 0;
+    int alto = 0;
+    std::string npc;
+    std::string texto;
+};
+
 // Un objeto de una capa de objetos de Tiled, tal cual está en el TMX, con su zona y sus
 // propiedades (nombre -> valor).
 class ObjetoTMX {
@@ -125,6 +137,10 @@ public:
     // Devuelve los lotes del centro comunitario de la capa indicada (todo objeto con la propiedad
     // tipo = "lote"). Los objetos de otro tipo se ignoran.
     std::vector<LoteTMX> cargar_lotes(const std::string& nombre_capa) const;
+
+    // Devuelve los carteles de la capa indicada (todo objeto con la propiedad tipo = "cartel" y
+    // con las propiedades npc y texto). Los objetos de otro tipo se ignoran.
+    std::vector<CartelTMX> cargar_carteles(const std::string& nombre_capa) const;
 
     // Devuelve los identificadores globales (firstgid + id) de los tiles de todos los tilesets
     // del mapa que tienen la propiedad con ese valor, por ejemplo Diggable = T. Sirve para marcar
