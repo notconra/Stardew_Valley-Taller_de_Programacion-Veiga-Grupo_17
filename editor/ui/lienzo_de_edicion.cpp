@@ -8,6 +8,7 @@
 #include <QPainter>
 #include <QPen>
 #include <QRect>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -25,8 +26,13 @@ LienzoDeEdicion::LienzoDeEdicion(QWidget* padre)
       capa_activa(TipoCapa::SUELO),
       tamano_casilla_px(28),
       modo_actual(ModoEditor::TERRENO),
-      terreno_actual(TipoTerrenoPaleta::PASTO),
+      id_tile_actual(CatalogoDeTerrenos::TILE_PASTO),
+      propiedades_actuales(
+          PropiedadDeCasilla::CULTIVABLE | PropiedadDeCasilla::DECORABLE |
+          PropiedadDeCasilla::ADMITE_HIERBA),
       entidad_a_colocar(TipoEntidad::CABANIA),
+      pixmap_tileset(QString::fromStdString(CatalogoDeTerrenos::RUTA_TILESET_EXTERIORES)),
+      datos_tileset(CatalogoDeTerrenos::obtener_tileset_sector(SectorActual::GRANJA)),
       identificador_entidad_seleccionada(-1),
       arrastrando_entidad(false),
       columna_arrastre_actual(0),
@@ -41,6 +47,8 @@ LienzoDeEdicion::LienzoDeEdicion(QWidget* padre)
 void LienzoDeEdicion::establecer_mapa(MapaEditable* mapa, SectorActual sector) {
     mapa_actual = mapa;
     sector_actual = sector;
+    datos_tileset = CatalogoDeTerrenos::obtener_tileset_sector(sector);
+    pixmap_tileset.load(QString::fromStdString(datos_tileset.ruta_imagen));
     identificador_entidad_seleccionada = -1;
     arrastrando_entidad = false;
     actualizar_tamano_del_lienzo();
@@ -73,8 +81,9 @@ void LienzoDeEdicion::establecer_modo(ModoEditor nuevo_modo) {
     update();
 }
 
-void LienzoDeEdicion::establecer_terreno(TipoTerrenoPaleta nuevo_terreno) {
-    terreno_actual = nuevo_terreno;
+void LienzoDeEdicion::establecer_tile(uint32_t nuevo_id_tile, uint8_t nuevas_propiedades) {
+    id_tile_actual = nuevo_id_tile;
+    propiedades_actuales = nuevas_propiedades;
 }
 
 void LienzoDeEdicion::establecer_entidad_a_colocar(TipoEntidad nueva_entidad) {
@@ -142,104 +151,59 @@ void LienzoDeEdicion::pintar_casilla_en_posicion(int columna, int fila) {
     if (mapa_actual == nullptr || !mapa_actual->esta_dentro(columna, fila)) {
         return;
     }
-    uint32_t id_tile = obtener_id_tile_terreno(terreno_actual, sector_actual);
-    uint8_t propiedades = obtener_propiedades_terreno(terreno_actual, sector_actual);
-    if (capa_activa == TipoCapa::ESTRUCTURAS) {
-        if (terreno_actual == TipoTerrenoPaleta::MURO ||
-            terreno_actual == TipoTerrenoPaleta::AGUA) {
-            propiedades = propiedades | PropiedadDeCasilla::BLOQUEA;
-        }
-    }
-    mapa_actual->pintar_en_capa(capa_activa, columna, fila, id_tile, propiedades);
+    mapa_actual->pintar_en_capa(capa_activa, columna, fila, id_tile_actual, propiedades_actuales);
     emit mapa_modificado();
     update();
 }
 
-static QColor obtener_color_base_terreno(
-    uint32_t id_tile, uint8_t propiedades, SectorActual sector) {
-    if (sector == SectorActual::CAVERNA) {
-        if ((propiedades & PropiedadDeCasilla::BLOQUEA) != 0) {
-            if (id_tile == 3) {
-                return QColor(31, 67, 102);  // Agua subterranea
-            }
-            return QColor(32, 31, 36);  // Muro de roca solida
-        }
-        if (id_tile == 1) {
-            return QColor(89, 70, 56);  // Tierra de cueva / fango
-        }
-        if (id_tile == 2) {
-            return QColor(110, 102, 117);  // Sendero minero
-        }
-        return QColor(61, 59, 64);  // Suelo rocoso de cueva
-    }
+void LienzoDeEdicion::dibujar_capa_de_tiles(
+    QPainter& pintor, TipoCapa tipo_capa, int cantidad_columnas, int cantidad_filas) {
+    int fila = 0;
+    while (fila < cantidad_filas) {
+        int columna = 0;
+        while (columna < cantidad_columnas) {
+            CasillaDelMapa casilla = mapa_actual->obtener_casilla_en_capa(tipo_capa, columna, fila);
+            uint32_t id_tile = casilla.obtener_id_tile();
+            if (id_tile > 0 && !pixmap_tileset.isNull() &&
+                datos_tileset.primer_identificador_global > 0 &&
+                datos_tileset.cantidad_de_columnas > 0) {
+                uint32_t indice_local = id_tile - datos_tileset.primer_identificador_global;
+                int columna_sprite = static_cast<int>(
+                    indice_local % static_cast<uint32_t>(datos_tileset.cantidad_de_columnas));
+                int fila_sprite = static_cast<int>(
+                    indice_local / static_cast<uint32_t>(datos_tileset.cantidad_de_columnas));
 
-    if (sector == SectorActual::PUEBLO) {
-        if ((propiedades & PropiedadDeCasilla::BLOQUEA) != 0) {
-            if (id_tile == 3) {
-                return QColor(42, 96, 160);  // Agua / Rio
-            }
-            return QColor(77, 56, 44);  // Muro de edificio
-        }
-        if (id_tile == 1) {
-            return QColor(186, 140, 83);  // Piso interior
-        }
-        if (id_tile == 2) {
-            return QColor(128, 135, 144);  // Calle / Adoquin
-        }
-        return QColor(78, 125, 43);  // Pasto urbano
-    }
+                QRect rectangulo_destino(
+                    columna * tamano_casilla_px,
+                    fila * tamano_casilla_px,
+                    tamano_casilla_px,
+                    tamano_casilla_px);
+                QRect rectangulo_origen(
+                    columna_sprite * datos_tileset.ancho_tile,
+                    fila_sprite * datos_tileset.alto_tile,
+                    datos_tileset.ancho_tile,
+                    datos_tileset.alto_tile);
 
-    if ((propiedades & PropiedadDeCasilla::BLOQUEA) != 0) {
-        if (id_tile == 3) {
-            return QColor(58, 117, 196);  // Agua
+                pintor.drawPixmap(rectangulo_destino, pixmap_tileset, rectangulo_origen);
+            }
+            columna++;
         }
-        return QColor(74, 74, 74);  // Muro / Roca
+        fila++;
     }
-    if ((propiedades & PropiedadDeCasilla::CULTIVABLE) != 0 && id_tile == 1) {
-        return QColor(139, 90, 43);  // Tierra cultivable arada
-    }
-    if (id_tile == 2) {
-        return QColor(211, 184, 140);  // Camino empedrado
-    }
-    return QColor(92, 142, 50);  // Pasto natural
 }
 
-static QColor obtener_color_entidad(TipoEntidad tipo) {
-    if (tipo == TipoEntidad::CABANIA) {
-        return QColor(165, 42, 42);  // Madera rojiza
-    }
-    if (tipo == TipoEntidad::ENTRADA_CAVERNA) {
-        return QColor(47, 79, 79);  // Gris caverna
-    }
-    if (tipo == TipoEntidad::PUESTO_MARNIE) {
-        return QColor(46, 139, 87);  // Verde campo
-    }
-    if (tipo == TipoEntidad::PUESTO_CLINT) {
-        return QColor(112, 128, 144);  // Acero forja
-    }
-    if (tipo == TipoEntidad::PUESTO_PIERRE) {
-        return QColor(218, 165, 32);  // Mostrador dorado
-    }
-    if (tipo == TipoEntidad::PUESTO_ROBIN) {
-        return QColor(205, 133, 63);  // Madera carpintería
-    }
-    if (tipo == TipoEntidad::CENTRO_COMUNITARIO) {
-        return QColor(106, 90, 205);  // Púrpura majestuoso
-    }
-    if (tipo == TipoEntidad::ESCALERA_NIVEL) {
-        return QColor(139, 69, 19);  // Peldaños madera/piedra
-    }
-    if (tipo == TipoEntidad::SALIDA_CAVERNA) {
-        return QColor(0, 139, 139);  // Entrada cian
-    }
-    if (tipo == TipoEntidad::TRANSICION_PUEBLO) {
-        return QColor(30, 144, 255);  // Portal azul a pueblo
-    }
-    if (tipo == TipoEntidad::TRANSICION_GRANJA) {
-        return QColor(50, 168, 82);  // Portal verde a granja
-    }
-    return QColor(100, 100, 100);
-}
+static const std::map<TipoEntidad, QColor> COLORES_ENTIDADES = {
+    {TipoEntidad::CABANIA, QColor(165, 42, 42)},
+    {TipoEntidad::ENTRADA_CAVERNA, QColor(47, 79, 79)},
+    {TipoEntidad::PUESTO_MARNIE, QColor(46, 139, 87)},
+    {TipoEntidad::PUESTO_CLINT, QColor(112, 128, 144)},
+    {TipoEntidad::PUESTO_PIERRE, QColor(218, 165, 32)},
+    {TipoEntidad::PUESTO_ROBIN, QColor(205, 133, 63)},
+    {TipoEntidad::CENTRO_COMUNITARIO, QColor(106, 90, 205)},
+    {TipoEntidad::ESCALERA_NIVEL, QColor(139, 69, 19)},
+    {TipoEntidad::SALIDA_CAVERNA, QColor(0, 139, 139)},
+    {TipoEntidad::TRANSICION_PUEBLO, QColor(30, 144, 255)},
+    {TipoEntidad::TRANSICION_GRANJA, QColor(50, 168, 82)}};
 
 void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
     (void)evento;
@@ -256,65 +220,16 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
     int cantidad_columnas = mapa_actual->obtener_cantidad_de_columnas();
     int cantidad_filas = mapa_actual->obtener_cantidad_de_filas();
 
-    // 1. Dibujar Capa Suelo (Back)
-    int fila = 0;
-    while (fila < cantidad_filas) {
-        int columna = 0;
-        while (columna < cantidad_columnas) {
-            CasillaDelMapa casilla_suelo =
-                mapa_actual->obtener_casilla_en_capa(TipoCapa::SUELO, columna, fila);
-            QColor color_suelo = obtener_color_base_terreno(
-                casilla_suelo.obtener_id_tile(),
-                casilla_suelo.obtener_propiedades(),
-                sector_actual);
-            QRect rectangulo_casilla(
-                columna * tamano_casilla_px,
-                fila * tamano_casilla_px,
-                tamano_casilla_px,
-                tamano_casilla_px);
-            pintor.fillRect(rectangulo_casilla, color_suelo);
+    // 1. Fondo oscuro
+    pintor.fillRect(rect(), QColor(25, 25, 25));
 
-            // Textura sutil para tierra cultivable en granja
-            if (sector_actual == SectorActual::GRANJA && casilla_suelo.es_cultivable() &&
-                casilla_suelo.obtener_id_tile() == 1) {
-                pintor.setPen(QColor(110, 67, 29));
-                int y_linea = rectangulo_casilla.top() + tamano_casilla_px / 2;
-                pintor.drawLine(
-                    rectangulo_casilla.left(),
-                    y_linea,
-                    rectangulo_casilla.right(),
-                    y_linea);
-            }
-            columna++;
-        }
-        fila++;
-    }
+    // 2. Capa Suelo (Back) con sprites reales
+    dibujar_capa_de_tiles(pintor, TipoCapa::SUELO, cantidad_columnas, cantidad_filas);
 
-    // 2. Dibujar Capa Estructuras (Buildings)
-    fila = 0;
-    while (fila < cantidad_filas) {
-        int columna = 0;
-        while (columna < cantidad_columnas) {
-            CasillaDelMapa casilla_estructura =
-                mapa_actual->obtener_casilla_en_capa(TipoCapa::ESTRUCTURAS, columna, fila);
-            if (casilla_estructura.obtener_id_tile() > 0) {
-                QColor color_estructura = obtener_color_base_terreno(
-                    casilla_estructura.obtener_id_tile(),
-                    casilla_estructura.obtener_propiedades(),
-                    sector_actual);
-                QRect rectangulo_estructura(
-                    columna * tamano_casilla_px,
-                    fila * tamano_casilla_px,
-                    tamano_casilla_px,
-                    tamano_casilla_px);
-                pintor.fillRect(rectangulo_estructura, color_estructura);
-            }
-            columna++;
-        }
-        fila++;
-    }
+    // 3. Capa Estructuras (Buildings) con sprites reales
+    dibujar_capa_de_tiles(pintor, TipoCapa::ESTRUCTURAS, cantidad_columnas, cantidad_filas);
 
-    // 3. Dibujar Entidades Colocadas
+    // 4. Dibujar Entidades Colocadas como zonas translúcidas de objeto TMX
     std::vector<EntidadDelMapa> entidades = mapa_actual->listar_todas_las_entidades();
     size_t indice_entidad = 0;
     while (indice_entidad < entidades.size()) {
@@ -333,8 +248,12 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
             ancho_casillas * tamano_casilla_px,
             alto_casillas * tamano_casilla_px);
 
-        QColor color_entidad = obtener_color_entidad(tipo_entidad);
-        pintor.fillRect(rectangulo_entidad, color_entidad);
+        auto iterador_color = COLORES_ENTIDADES.find(tipo_entidad);
+        QColor color_base = iterador_color != COLORES_ENTIDADES.end() ? iterador_color->second
+                                                                      : QColor(100, 100, 100);
+        QColor color_translúcido = color_base;
+        color_translúcido.setAlpha(85);
+        pintor.fillRect(rectangulo_entidad, color_translúcido);
 
         // Borde de la entidad
         bool es_seleccionada =
@@ -343,7 +262,7 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
         if (es_seleccionada) {
             pintor.setPen(QPen(QColor(255, 215, 0), 3));
         } else {
-            pintor.setPen(QPen(QColor(255, 255, 255, 180), 2));
+            pintor.setPen(QPen(color_base, 2));
         }
         pintor.drawRect(rectangulo_entidad);
 
@@ -362,32 +281,8 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
         indice_entidad++;
     }
 
-    // 4. Dibujar Capa Techos (Front)
-    fila = 0;
-    while (fila < cantidad_filas) {
-        int columna = 0;
-        while (columna < cantidad_columnas) {
-            CasillaDelMapa casilla_frente =
-                mapa_actual->obtener_casilla_en_capa(TipoCapa::FRENTE, columna, fila);
-            if (casilla_frente.obtener_id_tile() > 0) {
-                QColor color_frente = obtener_color_base_terreno(
-                    casilla_frente.obtener_id_tile(),
-                    casilla_frente.obtener_propiedades(),
-                    sector_actual);
-                if (capa_activa != TipoCapa::FRENTE) {
-                    color_frente.setAlpha(180);
-                }
-                QRect rectangulo_frente(
-                    columna * tamano_casilla_px,
-                    fila * tamano_casilla_px,
-                    tamano_casilla_px,
-                    tamano_casilla_px);
-                pintor.fillRect(rectangulo_frente, color_frente);
-            }
-            columna++;
-        }
-        fila++;
-    }
+    // 5. Dibujar Capa Techos/Frente (Front) con sprites reales
+    dibujar_capa_de_tiles(pintor, TipoCapa::FRENTE, cantidad_columnas, cantidad_filas);
 
     // 5. Dibujar Lineas de Grilla
     pintor.setPen(QColor(0, 0, 0, 45));

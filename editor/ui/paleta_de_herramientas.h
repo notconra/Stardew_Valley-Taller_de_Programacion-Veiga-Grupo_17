@@ -5,8 +5,10 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <cstdint>
 #include <vector>
 
+#include "catalogo_de_terrenos.h"
 #include "tipo_entidad.h"
 #include "tipo_herramienta_editor.h"
 
@@ -16,21 +18,22 @@ class PaletaDeHerramientas : public QWidget {
 private:
     QVBoxLayout* layout_principal;
     QButtonGroup* grupo_modos;
-    QButtonGroup* grupo_terrenos;
-    std::vector<QPushButton*> botones_terrenos;
+    QButtonGroup* grupo_tiles;
+    QWidget* contenedor_tiles;
+    QVBoxLayout* layout_tiles;
+    std::vector<QPushButton*> botones_tiles;
+
     QButtonGroup* grupo_entidades;
-    QWidget* contenedor_entidades;
-    QVBoxLayout* layout_entidades;
+    QWidget* contenedor_entidades_granja;
+    QWidget* contenedor_entidades_pueblo;
+    QWidget* contenedor_entidades_caverna;
     QPushButton* boton_eliminar_entidad;
 
     QPushButton* crear_boton_modo(const QString& texto, ModoEditor modo);
-    QPushButton* crear_boton_terreno(
-        const QString& texto, TipoTerrenoPaleta terreno, const QString& color_hex);
-    QPushButton* crear_boton_entidad(const QString& texto, TipoEntidad entidad);
-    void configurar_estilo_boton_terreno(
-        QPushButton* boton, const QString& texto, const QString& color_hex);
-
-    void limpiar_botones_de_entidades();
+    QPushButton* crear_boton_entidad(
+        QWidget* contenedor, const QString& texto, TipoEntidad entidad);
+    void inicializar_botones_de_tiles();
+    void inicializar_botones_de_entidades();
 
 public:
     explicit PaletaDeHerramientas(QWidget* padre = nullptr);
@@ -40,7 +43,7 @@ public:
 
 signals:
     void modo_cambiado(ModoEditor modo);
-    void terreno_cambiado(TipoTerrenoPaleta terreno);
+    void tile_seleccionado(uint32_t id_tile, uint8_t propiedades);
     void entidad_cambiada(TipoEntidad entidad);
     void eliminar_solicitado();
 };

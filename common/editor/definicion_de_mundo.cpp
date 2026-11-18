@@ -4,30 +4,9 @@
 #include <string>
 #include <vector>
 
+#include "catalogo_de_terrenos.h"
 #include "propiedad_de_casilla.h"
 #include "tipo_entidad.h"
-
-DefinicionDeMundo::DefinicionDeMundo()
-    : nombre_del_mundo("Mundo Nuevo"),
-      sector_granja(
-          35, 35, 0,
-          PropiedadDeCasilla::CULTIVABLE | PropiedadDeCasilla::DECORABLE |
-              PropiedadDeCasilla::ADMITE_HIERBA),
-      sector_pueblo(35, 35, 0, PropiedadDeCasilla::DECORABLE),
-      niveles_mazmorra(
-          CANTIDAD_DE_NIVELES_MAZMORRA, MapaEditable(25, 25, 0, PropiedadDeCasilla::DECORABLE)) {
-}
-
-DefinicionDeMundo::DefinicionDeMundo(const std::string& nombre)
-    : nombre_del_mundo(nombre),
-      sector_granja(
-          35, 35, 0,
-          PropiedadDeCasilla::CULTIVABLE | PropiedadDeCasilla::DECORABLE |
-              PropiedadDeCasilla::ADMITE_HIERBA),
-      sector_pueblo(35, 35, 0, PropiedadDeCasilla::DECORABLE),
-      niveles_mazmorra(
-          CANTIDAD_DE_NIVELES_MAZMORRA, MapaEditable(25, 25, 0, PropiedadDeCasilla::DECORABLE)) {
-}
 
 DefinicionDeMundo::DefinicionDeMundo(
     const std::string& nombre, const MapaEditable& granja, const MapaEditable& pueblo,
@@ -93,30 +72,47 @@ void DefinicionDeMundo::establecer_niveles_mazmorra(const std::vector<MapaEditab
 }
 
 DefinicionDeMundo DefinicionDeMundo::crear_mundo_por_defecto(const std::string& nombre) {
-    DefinicionDeMundo nuevo_mundo(nombre);
+    MapaEditable granja(
+        ANCHO_MAPA_EXTERIORES,
+        ANCHO_MAPA_EXTERIORES,
+        CatalogoDeTerrenos::TILE_PASTO,
+        PropiedadDeCasilla::CULTIVABLE | PropiedadDeCasilla::DECORABLE |
+            PropiedadDeCasilla::ADMITE_HIERBA);
+
+    MapaEditable pueblo(
+        ANCHO_MAPA_EXTERIORES,
+        ANCHO_MAPA_EXTERIORES,
+        CatalogoDeTerrenos::TILE_PASTO,
+        PropiedadDeCasilla::DECORABLE);
+
+    std::vector<MapaEditable> niveles(
+        CANTIDAD_DE_NIVELES_MAZMORRA,
+        MapaEditable(
+            ANCHO_MAPA_MAZMORRA,
+            ANCHO_MAPA_MAZMORRA,
+            CatalogoDeTerrenos::TILE_PISO_PIEDRA_CAVERNA,
+            PropiedadDeCasilla::DECORABLE));
 
     // Configuración inicial de la Granja
-    nuevo_mundo.sector_granja.ubicar_entidad(TipoEntidad::CABANIA, 10, 8, 3, 3);
-    nuevo_mundo.sector_granja.ubicar_entidad(TipoEntidad::ENTRADA_CAVERNA, 26, 4, 2, 2);
-    nuevo_mundo.sector_granja.ubicar_entidad(TipoEntidad::TRANSICION_PUEBLO, 33, 16, 2, 2);
+    granja.ubicar_entidad(TipoEntidad::CABANIA, 10, 8, 3, 3);
+    granja.ubicar_entidad(TipoEntidad::ENTRADA_CAVERNA, 26, 4, 2, 2);
+    granja.ubicar_entidad(TipoEntidad::TRANSICION_PUEBLO, 33, 16, 2, 2);
 
     // Configuración inicial del Pueblo
-    nuevo_mundo.sector_pueblo.ubicar_entidad(TipoEntidad::TRANSICION_GRANJA, 0, 16, 2, 2);
-    nuevo_mundo.sector_pueblo.ubicar_entidad(TipoEntidad::PUESTO_MARNIE, 6, 12, 2, 2);
-    nuevo_mundo.sector_pueblo.ubicar_entidad(TipoEntidad::PUESTO_CLINT, 28, 12, 2, 2);
-    nuevo_mundo.sector_pueblo.ubicar_entidad(TipoEntidad::PUESTO_PIERRE, 14, 22, 2, 2);
-    nuevo_mundo.sector_pueblo.ubicar_entidad(TipoEntidad::PUESTO_ROBIN, 28, 22, 2, 2);
-    nuevo_mundo.sector_pueblo.ubicar_entidad(TipoEntidad::CENTRO_COMUNITARIO, 16, 4, 4, 3);
+    pueblo.ubicar_entidad(TipoEntidad::TRANSICION_GRANJA, 0, 16, 2, 2);
+    pueblo.ubicar_entidad(TipoEntidad::PUESTO_MARNIE, 6, 12, 2, 2);
+    pueblo.ubicar_entidad(TipoEntidad::PUESTO_CLINT, 28, 12, 2, 2);
+    pueblo.ubicar_entidad(TipoEntidad::PUESTO_PIERRE, 14, 22, 2, 2);
+    pueblo.ubicar_entidad(TipoEntidad::PUESTO_ROBIN, 28, 22, 2, 2);
+    pueblo.ubicar_entidad(TipoEntidad::CENTRO_COMUNITARIO, 16, 4, 4, 3);
 
     // Configuración inicial de los 10 niveles de Mazmorra
     size_t indice_nivel = 0;
     while (indice_nivel < CANTIDAD_DE_NIVELES_MAZMORRA) {
-        nuevo_mundo.niveles_mazmorra[indice_nivel]
-            .ubicar_entidad(TipoEntidad::ESCALERA_NIVEL, 20, 20, 1, 1);
-        nuevo_mundo.niveles_mazmorra[indice_nivel]
-            .ubicar_entidad(TipoEntidad::SALIDA_CAVERNA, 4, 4, 1, 1);
+        niveles[indice_nivel].ubicar_entidad(TipoEntidad::ESCALERA_NIVEL, 20, 20, 1, 1);
+        niveles[indice_nivel].ubicar_entidad(TipoEntidad::SALIDA_CAVERNA, 4, 4, 1, 1);
         indice_nivel++;
     }
 
-    return nuevo_mundo;
+    return DefinicionDeMundo(nombre, granja, pueblo, niveles);
 }

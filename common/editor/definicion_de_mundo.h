@@ -15,10 +15,12 @@ private:
     std::vector<MapaEditable> niveles_mazmorra;
 
     static constexpr size_t CANTIDAD_DE_NIVELES_MAZMORRA = 10;
+    static constexpr int ANCHO_MAPA_EXTERIORES = 35;
+    static constexpr int ALTO_MAPA_EXTERIORES = 35;
+    static constexpr int ANCHO_MAPA_MAZMORRA = 25;
+    static constexpr int ALTO_MAPA_MAZMORRA = 25;
 
 public:
-    DefinicionDeMundo();
-    explicit DefinicionDeMundo(const std::string& nombre);
     DefinicionDeMundo(
         const std::string& nombre, const MapaEditable& granja, const MapaEditable& pueblo,
         const std::vector<MapaEditable>& niveles);
@@ -40,7 +42,7 @@ public:
     void establecer_sector_pueblo(const MapaEditable& pueblo);
     void establecer_niveles_mazmorra(const std::vector<MapaEditable>& niveles);
 
-    static DefinicionDeMundo crear_mundo_por_defecto(const std::string& nombre);
+    static DefinicionDeMundo crear_mundo_por_defecto(const std::string& nombre = "Mundo Nuevo");
 };
 
 #endif  // DEFINICION_DE_MUNDO_H

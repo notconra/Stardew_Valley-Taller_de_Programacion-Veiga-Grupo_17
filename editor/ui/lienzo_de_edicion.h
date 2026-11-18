@@ -1,9 +1,12 @@
 #ifndef LIENZO_DE_EDICION_H
 #define LIENZO_DE_EDICION_H
 
+#include <QPixmap>
 #include <QWidget>
+#include <cstdint>
 
 #include "capa_del_mapa.h"
+#include "catalogo_de_terrenos.h"
 #include "mapa_editable.h"
 #include "tipo_herramienta_editor.h"
 
@@ -16,8 +19,12 @@ private:
     TipoCapa capa_activa;
     int tamano_casilla_px;
     ModoEditor modo_actual;
-    TipoTerrenoPaleta terreno_actual;
+    uint32_t id_tile_actual;
+    uint8_t propiedades_actuales;
     TipoEntidad entidad_a_colocar;
+
+    QPixmap pixmap_tileset;
+    DefinicionTilesetTMX datos_tileset;
 
     int identificador_entidad_seleccionada;
     bool arrastrando_entidad;
@@ -30,6 +37,8 @@ private:
 
     void obtener_coordenadas_desde_posicion(const QPoint& posicion, int& columna, int& fila) const;
     void pintar_casilla_en_posicion(int columna, int fila);
+    void dibujar_capa_de_tiles(
+        QPainter& pintor, TipoCapa tipo_capa, int cantidad_columnas, int cantidad_filas);
 
 protected:
     void paintEvent(QPaintEvent* evento) override;
@@ -47,7 +56,7 @@ public:
     void actualizar_tamano_del_lienzo();
 
     void establecer_modo(ModoEditor nuevo_modo);
-    void establecer_terreno(TipoTerrenoPaleta nuevo_terreno);
+    void establecer_tile(uint32_t nuevo_id_tile, uint8_t nuevas_propiedades);
     void establecer_entidad_a_colocar(TipoEntidad nueva_entidad);
     void establecer_capa_activa(TipoCapa nueva_capa);
     TipoCapa obtener_capa_activa() const;

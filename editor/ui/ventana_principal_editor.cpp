@@ -253,9 +253,9 @@ void VentanaPrincipalEditor::conectar_senales() {
         &LienzoDeEdicion::establecer_modo);
     connect(
         paleta,
-        &PaletaDeHerramientas::terreno_cambiado,
+        &PaletaDeHerramientas::tile_seleccionado,
         lienzo,
-        &LienzoDeEdicion::establecer_terreno);
+        &LienzoDeEdicion::establecer_tile);
     connect(
         paleta,
         &PaletaDeHerramientas::entidad_cambiada,
@@ -325,7 +325,7 @@ void VentanaPrincipalEditor::abrir_mundo() {
         directorio_mundos,
         "Archivos de Mundo (*.dat);;Todos los archivos (*)");
     if (!ruta.isEmpty()) {
-        DefinicionDeMundo mundo_cargado;
+        DefinicionDeMundo mundo_cargado = DefinicionDeMundo::crear_mundo_por_defecto();
         bool cargado = SerializadorDeMundo::cargar_desde_archivo(ruta.toStdString(), mundo_cargado);
         if (cargado) {
             mundo_actual = mundo_cargado;
