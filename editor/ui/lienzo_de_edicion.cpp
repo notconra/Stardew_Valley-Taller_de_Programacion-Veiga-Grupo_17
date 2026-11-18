@@ -22,6 +22,7 @@ LienzoDeEdicion::LienzoDeEdicion(QWidget* padre)
     : QWidget(padre),
       mapa_actual(nullptr),
       sector_actual(SectorActual::GRANJA),
+      capa_activa(TipoCapa::SUELO),
       tamano_casilla_px(28),
       modo_actual(ModoEditor::TERRENO),
       terreno_actual(TipoTerrenoPaleta::PASTO),
@@ -80,6 +81,15 @@ void LienzoDeEdicion::establecer_entidad_a_colocar(TipoEntidad nueva_entidad) {
     entidad_a_colocar = nueva_entidad;
 }
 
+void LienzoDeEdicion::establecer_capa_activa(TipoCapa nueva_capa) {
+    capa_activa = nueva_capa;
+    update();
+}
+
+TipoCapa LienzoDeEdicion::obtener_capa_activa() const {
+    return capa_activa;
+}
+
 void LienzoDeEdicion::deseleccionar_entidad() {
     identificador_entidad_seleccionada = -1;
     arrastrando_entidad = false;
@@ -134,7 +144,13 @@ void LienzoDeEdicion::pintar_casilla_en_posicion(int columna, int fila) {
     }
     uint32_t id_tile = obtener_id_tile_terreno(terreno_actual, sector_actual);
     uint8_t propiedades = obtener_propiedades_terreno(terreno_actual, sector_actual);
-    mapa_actual->pintar_casilla(columna, fila, id_tile, propiedades);
+    if (capa_activa == TipoCapa::ESTRUCTURAS) {
+        if (terreno_actual == TipoTerrenoPaleta::MURO ||
+            terreno_actual == TipoTerrenoPaleta::AGUA) {
+            propiedades = propiedades | PropiedadDeCasilla::BLOQUEA;
+        }
+    }
+    mapa_actual->pintar_en_capa(capa_activa, columna, fila, id_tile, propiedades);
     emit mapa_modificado();
     update();
 }
@@ -240,26 +256,27 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
     int cantidad_columnas = mapa_actual->obtener_cantidad_de_columnas();
     int cantidad_filas = mapa_actual->obtener_cantidad_de_filas();
 
-    // 1. Dibujar Casillas de Terreno
+    // 1. Dibujar Capa Suelo (Back)
     int fila = 0;
     while (fila < cantidad_filas) {
         int columna = 0;
         while (columna < cantidad_columnas) {
-            CasillaDelMapa casilla = mapa_actual->obtener_copia_de_casilla(columna, fila);
-            QColor color_casilla = obtener_color_base_terreno(
-                casilla.obtener_id_tile(),
-                casilla.obtener_propiedades(),
+            CasillaDelMapa casilla_suelo =
+                mapa_actual->obtener_casilla_en_capa(TipoCapa::SUELO, columna, fila);
+            QColor color_suelo = obtener_color_base_terreno(
+                casilla_suelo.obtener_id_tile(),
+                casilla_suelo.obtener_propiedades(),
                 sector_actual);
             QRect rectangulo_casilla(
                 columna * tamano_casilla_px,
                 fila * tamano_casilla_px,
                 tamano_casilla_px,
                 tamano_casilla_px);
-            pintor.fillRect(rectangulo_casilla, color_casilla);
+            pintor.fillRect(rectangulo_casilla, color_suelo);
 
             // Textura sutil para tierra cultivable en granja
-            if (sector_actual == SectorActual::GRANJA && casilla.es_cultivable() &&
-                casilla.obtener_id_tile() == 1) {
+            if (sector_actual == SectorActual::GRANJA && casilla_suelo.es_cultivable() &&
+                casilla_suelo.obtener_id_tile() == 1) {
                 pintor.setPen(QColor(110, 67, 29));
                 int y_linea = rectangulo_casilla.top() + tamano_casilla_px / 2;
                 pintor.drawLine(
@@ -273,19 +290,28 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
         fila++;
     }
 
-    // 2. Dibujar Lineas de Grilla
-    pintor.setPen(QColor(0, 0, 0, 45));
-    int columna_linea = 0;
-    while (columna_linea <= cantidad_columnas) {
-        int x_posicion = columna_linea * tamano_casilla_px;
-        pintor.drawLine(x_posicion, 0, x_posicion, cantidad_filas * tamano_casilla_px);
-        columna_linea++;
-    }
-    int fila_linea = 0;
-    while (fila_linea <= cantidad_filas) {
-        int y_posicion = fila_linea * tamano_casilla_px;
-        pintor.drawLine(0, y_posicion, cantidad_columnas * tamano_casilla_px, y_posicion);
-        fila_linea++;
+    // 2. Dibujar Capa Estructuras (Buildings)
+    fila = 0;
+    while (fila < cantidad_filas) {
+        int columna = 0;
+        while (columna < cantidad_columnas) {
+            CasillaDelMapa casilla_estructura =
+                mapa_actual->obtener_casilla_en_capa(TipoCapa::ESTRUCTURAS, columna, fila);
+            if (casilla_estructura.obtener_id_tile() > 0) {
+                QColor color_estructura = obtener_color_base_terreno(
+                    casilla_estructura.obtener_id_tile(),
+                    casilla_estructura.obtener_propiedades(),
+                    sector_actual);
+                QRect rectangulo_estructura(
+                    columna * tamano_casilla_px,
+                    fila * tamano_casilla_px,
+                    tamano_casilla_px,
+                    tamano_casilla_px);
+                pintor.fillRect(rectangulo_estructura, color_estructura);
+            }
+            columna++;
+        }
+        fila++;
     }
 
     // 3. Dibujar Entidades Colocadas
@@ -334,6 +360,48 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
             QString::fromStdString(texto_entidad));
 
         indice_entidad++;
+    }
+
+    // 4. Dibujar Capa Techos (Front)
+    fila = 0;
+    while (fila < cantidad_filas) {
+        int columna = 0;
+        while (columna < cantidad_columnas) {
+            CasillaDelMapa casilla_frente =
+                mapa_actual->obtener_casilla_en_capa(TipoCapa::FRENTE, columna, fila);
+            if (casilla_frente.obtener_id_tile() > 0) {
+                QColor color_frente = obtener_color_base_terreno(
+                    casilla_frente.obtener_id_tile(),
+                    casilla_frente.obtener_propiedades(),
+                    sector_actual);
+                if (capa_activa != TipoCapa::FRENTE) {
+                    color_frente.setAlpha(180);
+                }
+                QRect rectangulo_frente(
+                    columna * tamano_casilla_px,
+                    fila * tamano_casilla_px,
+                    tamano_casilla_px,
+                    tamano_casilla_px);
+                pintor.fillRect(rectangulo_frente, color_frente);
+            }
+            columna++;
+        }
+        fila++;
+    }
+
+    // 5. Dibujar Lineas de Grilla
+    pintor.setPen(QColor(0, 0, 0, 45));
+    int columna_linea = 0;
+    while (columna_linea <= cantidad_columnas) {
+        int x_posicion = columna_linea * tamano_casilla_px;
+        pintor.drawLine(x_posicion, 0, x_posicion, cantidad_filas * tamano_casilla_px);
+        columna_linea++;
+    }
+    int fila_linea = 0;
+    while (fila_linea <= cantidad_filas) {
+        int y_posicion = fila_linea * tamano_casilla_px;
+        pintor.drawLine(0, y_posicion, cantidad_columnas * tamano_casilla_px, y_posicion);
+        fila_linea++;
     }
 
     // 4. Previsualización del Hover o Arrastre
@@ -459,10 +527,23 @@ void LienzoDeEdicion::mousePressEvent(QMouseEvent* evento) {
                 mapa_actual->retirar_entidad(entidad_tocada->obtener_identificador());
                 identificador_entidad_seleccionada = -1;
                 emit entidad_seleccionada_cambio(-1);
-                emit mapa_modificado();
-                update();
+            } else {
+                mapa_actual->borrar_en_capa(capa_activa, columna, fila);
             }
+            emit mapa_modificado();
+            update();
         }
+    } else if (evento->button() == Qt::RightButton) {
+        EntidadDelMapa* entidad_tocada = mapa_actual->buscar_entidad_en_casilla(columna, fila);
+        if (entidad_tocada != nullptr) {
+            mapa_actual->retirar_entidad(entidad_tocada->obtener_identificador());
+            identificador_entidad_seleccionada = -1;
+            emit entidad_seleccionada_cambio(-1);
+        } else {
+            mapa_actual->borrar_en_capa(capa_activa, columna, fila);
+        }
+        emit mapa_modificado();
+        update();
     }
 }
 

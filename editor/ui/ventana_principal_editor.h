@@ -24,6 +24,7 @@ private:
     PanelDeValidacion* panel_validacion;
     QScrollArea* area_desplazamiento;
     QComboBox* combo_sectores;
+    QComboBox* combo_capas;
     QLabel* etiqueta_coordenadas;
     QLabel* etiqueta_nombre_mundo;
     QLabel* etiqueta_dimensiones;
@@ -44,6 +45,7 @@ private slots:
     void guardar_mundo_como();
     void renombrar_mundo();
     void cambiar_sector(int indice);
+    void cambiar_capa(int indice);
     void aumentar_zoom();
     void disminuir_zoom();
     void actualizar_coordenadas(int columna, int fila);

@@ -2,6 +2,7 @@
 #define CUADRICULA_H
 
 #include <vector>
+
 #include "casilla_del_mapa.h"
 
 class Cuadricula {
@@ -28,6 +29,7 @@ public:
         int columna_inicio, int fila_inicio, int ancho, int alto, const CasillaDelMapa& casilla);
     void redimensionar(
         int nuevas_columnas, int nuevas_filas, const CasillaDelMapa& casilla_relleno);
+    std::vector<uint32_t> exportar_tiles() const;
 };
 
 #endif  // CUADRICULA_H

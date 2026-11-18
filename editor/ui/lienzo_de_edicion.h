@@ -3,6 +3,7 @@
 
 #include <QWidget>
 
+#include "capa_del_mapa.h"
 #include "mapa_editable.h"
 #include "tipo_herramienta_editor.h"
 
@@ -12,6 +13,7 @@ class LienzoDeEdicion : public QWidget {
 private:
     MapaEditable* mapa_actual;
     SectorActual sector_actual;
+    TipoCapa capa_activa;
     int tamano_casilla_px;
     ModoEditor modo_actual;
     TipoTerrenoPaleta terreno_actual;
@@ -47,6 +49,8 @@ public:
     void establecer_modo(ModoEditor nuevo_modo);
     void establecer_terreno(TipoTerrenoPaleta nuevo_terreno);
     void establecer_entidad_a_colocar(TipoEntidad nueva_entidad);
+    void establecer_capa_activa(TipoCapa nueva_capa);
+    TipoCapa obtener_capa_activa() const;
 
     void deseleccionar_entidad();
     bool eliminar_entidad_seleccionada();

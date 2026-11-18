@@ -20,11 +20,14 @@
 #include <QToolBar>
 #include <string>
 
+#include "capa_del_mapa.h"
 #include "definicion_de_mundo.h"
 #include "propiedad_de_casilla.h"
 #include "serializador_de_mundo.h"
 #include "tipo_herramienta_editor.h"
 #include "validador_de_mundo.h"
+
+static constexpr int DURACION_MENSAJE_ESTADO_MS = 2000;
 
 VentanaPrincipalEditor::VentanaPrincipalEditor(QWidget* padre)
     : QMainWindow(padre),
@@ -164,6 +167,19 @@ void VentanaPrincipalEditor::inicializar_barra_de_herramientas() {
         this,
         &VentanaPrincipalEditor::cambiar_sector);
     barra->addWidget(combo_sectores);
+
+    barra->addSeparator();
+
+    combo_capas = new QComboBox(barra);
+    combo_capas->addItem("Capa: Suelo (Back)");
+    combo_capas->addItem("Capa: Estructuras (Buildings)");
+    combo_capas->addItem("Capa: Techos (Front)");
+    connect(
+        combo_capas,
+        QOverload<int>::of(&QComboBox::currentIndexChanged),
+        this,
+        &VentanaPrincipalEditor::cambiar_capa);
+    barra->addWidget(combo_capas);
 
     barra->addSeparator();
 
@@ -380,6 +396,13 @@ void VentanaPrincipalEditor::renombrar_mundo() {
 void VentanaPrincipalEditor::cambiar_sector(int indice) {
     (void)indice;
     actualizar_sector_en_pantalla();
+}
+
+void VentanaPrincipalEditor::cambiar_capa(int indice) {
+    lienzo->establecer_capa_activa(static_cast<TipoCapa>(indice));
+    statusBar()->showMessage(
+        QString("Editando %1").arg(combo_capas->currentText()),
+        DURACION_MENSAJE_ESTADO_MS);
 }
 
 void VentanaPrincipalEditor::aumentar_zoom() {

@@ -1,9 +1,12 @@
 #include "cuadricula.h"
 
+#include <vector>
+
 Cuadricula::Cuadricula(int columnas, int filas, const CasillaDelMapa& casilla_por_defecto)
     : cantidad_de_columnas(columnas),
       cantidad_de_filas(filas),
-      casillas(columnas * filas, casilla_por_defecto) {}
+      casillas(columnas * filas, casilla_por_defecto) {
+}
 
 size_t Cuadricula::calcular_indice(int columna, int fila) const {
     return static_cast<size_t>(fila * cantidad_de_columnas + columna);
@@ -33,8 +36,7 @@ CasillaDelMapa& Cuadricula::obtener_casilla_modificable(int columna, int fila) {
     return casillas[calcular_indice(columna, fila)];
 }
 
-void Cuadricula::establecer_casilla(
-    int columna, int fila, const CasillaDelMapa& casilla) {
+void Cuadricula::establecer_casilla(int columna, int fila, const CasillaDelMapa& casilla) {
     if (esta_dentro(columna, fila)) {
         casillas[calcular_indice(columna, fila)] = casilla;
     }
@@ -77,4 +79,14 @@ void Cuadricula::redimensionar(
     cantidad_de_columnas = nuevas_columnas;
     cantidad_de_filas = nuevas_filas;
     casillas = nueva_matriz;
+}
+
+std::vector<uint32_t> Cuadricula::exportar_tiles() const {
+    std::vector<uint32_t> identificadores(casillas.size(), 0);
+    size_t indice = 0;
+    while (indice < casillas.size()) {
+        identificadores[indice] = casillas[indice].obtener_id_tile();
+        indice++;
+    }
+    return identificadores;
 }

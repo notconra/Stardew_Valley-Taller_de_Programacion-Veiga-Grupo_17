@@ -2,15 +2,20 @@
 #define MAPA_EDITABLE_H
 
 #include <cstdint>
+#include <map>
+#include <string>
 #include <vector>
 
-#include "cuadricula.h"
+#include "capa_del_mapa.h"
+#include "casilla_del_mapa.h"
 #include "entidad_del_mapa.h"
 #include "tipo_entidad.h"
 
 class MapaEditable {
 private:
-    Cuadricula cuadricula;
+    int cantidad_de_columnas;
+    int cantidad_de_filas;
+    std::map<TipoCapa, CapaDelMapa> capas;
     std::vector<EntidadDelMapa> entidades;
     uint32_t proximo_identificador_de_entidad;
 
@@ -28,8 +33,12 @@ public:
     bool casilla_es_transitable(int columna, int fila) const;
     bool casilla_es_cultivable(int columna, int fila) const;
     CasillaDelMapa obtener_casilla(int columna, int fila) const;
+    CasillaDelMapa obtener_casilla_en_capa(TipoCapa tipo, int columna, int fila) const;
 
     void pintar_casilla(int columna, int fila, uint32_t id_tile, uint8_t propiedades);
+    void pintar_en_capa(
+        TipoCapa tipo, int columna, int fila, uint32_t id_tile, uint8_t propiedades);
+    void borrar_en_capa(TipoCapa tipo, int columna, int fila);
     void pintar_zona(
         int columna_inicio, int fila_inicio, int ancho, int alto, uint32_t id_tile,
         uint8_t propiedades);
@@ -58,6 +67,7 @@ public:
     void vaciar_entidades();
 
     CasillaDelMapa obtener_copia_de_casilla(int columna, int fila) const;
+    std::vector<uint32_t> exportar_tiles_de_capa(TipoCapa tipo) const;
 };
 
 #endif  // MAPA_EDITABLE_H
