@@ -10,7 +10,7 @@ mapa_inicial = "FarmHouse2"
 [servidor]
 # para tailscale (bren): host = "100.117.194.20"
 # para tailscale (conra): host = "100.126.247.61"
-# local: host = "127.0.0.1"
+# local: host = "100.126.247.61"
 host = "127.0.0.1"
 puerto = "8081"
 
@@ -115,6 +115,11 @@ ruta = "Assets/Characters/minion.png"
 firstgid = 5592
 columnas = 8
 
+[[mapas.tilesets]]
+ruta = "Assets/Characters/mateogp_grande.png"
+firstgid = 5656
+columnas = 3
+
 [[mapas]]
 id = "Town"
 ruta = "Assets/Maps/Town.tmx"
@@ -151,6 +156,16 @@ columnas = 19
 ruta = "Assets/Maps/spring_Waterfalls.png"
 firstgid = 5939
 columnas = 36
+
+[[mapas.tilesets]]
+ruta = "Assets/Characters/el_dipa.png"
+firstgid = 6839
+columnas = 8
+
+[[mapas.tilesets]]
+ruta = "Assets/Characters/el_dipa_grande.png"
+firstgid = 6967
+columnas = 3
 
 [[mapas]]
 id = "FarmHouse2"
