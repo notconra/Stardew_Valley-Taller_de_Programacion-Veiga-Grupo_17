@@ -90,6 +90,8 @@ void EntradaDelUsuario::apretar(SDL_Scancode tecla) {
     } else if (movimiento_de_tecla.contains(tecla)) {
         soltar(tecla);
         teclas_de_movimiento.push_back(tecla);
+        pedidos_actuales.opcion_anterior |= tecla == SDL_SCANCODE_UP || tecla == SDL_SCANCODE_W;
+        pedidos_actuales.opcion_siguiente |= tecla == SDL_SCANCODE_DOWN || tecla == SDL_SCANCODE_S;
     }
 }
 

@@ -47,6 +47,8 @@ private:
     void enviar_comando_hablar_con_npc(const HablarConNpc& hablar);
     void enviar_comando_donar_al_lote(const DonarAlLote& donar);
     void enviar_comando_donar_monedas_al_lote(const DonarMonedasAlLote& donar);
+    void enviar_comando_dormir(const Dormir& dormir);
+    void enviar_comando_levantarse(const Levantarse& levantarse);
 
     // Recepción de eventos
     ErrorServidor recibir_error_servidor();
@@ -96,6 +98,7 @@ private:
     DialogoNpc recibir_dialogo_npc();
     LoteDelCentro recibir_lote_del_centro();
     CentroTerminado recibir_centro_terminado();
+    PreguntaDeDormir recibir_pregunta_de_dormir();
 
     // Auxiliares
     CodigoError codigo_error_desde(uint8_t valor) const;
