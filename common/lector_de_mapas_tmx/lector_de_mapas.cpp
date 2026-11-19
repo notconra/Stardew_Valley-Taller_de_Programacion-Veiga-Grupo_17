@@ -175,6 +175,15 @@ std::vector<std::uint32_t> LectorDeMapasTMX::cargar_capa_con_flags(
     return casillas;
 }
 
+std::vector<ObjetoTMX> LectorDeMapasTMX::cargar_objetos(const std::string& nombre_capa) const {
+    tinyxml2::XMLDocument documento;
+    tinyxml2::XMLElement* nodo_mapa = abrir_mapa(documento);
+    if (!nodo_mapa) {
+        return {};
+    }
+    return leer_objetos(nodo_mapa, nombre_capa);
+}
+
 std::vector<TransicionTMX> LectorDeMapasTMX::cargar_transiciones(
     const std::string& nombre_capa) const {
     std::vector<TransicionTMX> transiciones;

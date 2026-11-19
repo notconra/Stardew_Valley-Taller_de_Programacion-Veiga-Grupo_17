@@ -100,6 +100,10 @@ public:
     // Si falla la lectura o no existe la capa, devuelve un vector vacío.
     std::vector<int> cargar_capa(const std::string& nombre_capa) const;
 
+    // Devuelve todos los objetos de la capa de objetos indicada.
+    // Si no existe la capa o falla la lectura, devuelve un vector vacío.
+    std::vector<ObjetoTMX> cargar_objetos(const std::string& nombre_capa) const;
+
     std::vector<std::uint32_t> cargar_capa_con_flags(const std::string& nombre_capa) const;
 
     // Devuelve las transiciones de la capa de objetos indicada (ver clase Mapa).
