@@ -10,7 +10,7 @@
 #include <utility>
 #include <vector>
 
-#include "../../common/editor/serializador_de_mundo.h"
+#include "../../common/editor/cargador_de_mundo_tmx.h"
 #include "../../common/editor/tipo_entidad.h"
 #include "../juego/cheats/comando_animal.h"
 #include "../juego/cheats/comando_avanzar_dia.h"
@@ -35,9 +35,9 @@ SesionDePartida::SesionDePartida(
       tiempo_inicio_sesion(std::chrono::steady_clock::now()) {
     if (!nombre_mundo.empty() && nombre_mundo != "Mundo Estandar") {
         nombre_mundo_cargado = nombre_mundo;
-        std::string ruta_mundo = SerializadorDeMundo::ruta_por_defecto(nombre_mundo);
-        DefinicionDeMundo definicion;
-        if (SerializadorDeMundo::cargar_desde_archivo(ruta_mundo, definicion)) {
+        std::string ruta_mundo = "mundos/" + nombre_mundo;
+        try {
+            DefinicionDeMundo definicion = CargadorDeMundoTMX::cargar_mundo(ruta_mundo);
             std::cout << "[Servidor] Mundo personalizado '" << nombre_mundo
                       << "' cargado para partida " << codigo_de_partida << "\n";
             std::vector<EntidadDelMapa> cabanias =
@@ -72,6 +72,9 @@ SesionDePartida::SesionDePartida(
                     }
                 }
             }
+        } catch (const std::runtime_error& error) {
+            std::cerr << "[Servidor] Error al cargar mundo personalizado '" << nombre_mundo
+                      << "': " << error.what() << "\n";
         }
     }
     chat.agregar_comando(std::make_unique<ComandoAnimal>(mundo));

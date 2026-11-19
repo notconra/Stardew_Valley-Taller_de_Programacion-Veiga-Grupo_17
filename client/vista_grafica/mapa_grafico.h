@@ -42,8 +42,6 @@ private:
         SDL_Renderer* renderer, const std::vector<std::vector<int>>& capas, int cam_x,
         int cam_y) const;
 
-    void aplicar_mundo_personalizado(const std::string& nombre_mundo);
-
 public:
     // Lanza std::runtime_error si falta una imagen, una capa del mapa o el tamaño del mapa.
     MapaGrafico(

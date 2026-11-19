@@ -21,9 +21,10 @@
 #include <string>
 
 #include "capa_del_mapa.h"
+#include "cargador_de_mundo_tmx.h"
 #include "definicion_de_mundo.h"
+#include "exportador_de_mundo_tmx.h"
 #include "propiedad_de_casilla.h"
-#include "serializador_de_mundo.h"
 #include "tipo_herramienta_editor.h"
 #include "validador_de_mundo.h"
 
@@ -319,29 +320,28 @@ void VentanaPrincipalEditor::nuevo_mundo() {
 void VentanaPrincipalEditor::abrir_mundo() {
     std::filesystem::create_directories("mundos");
     QString directorio_mundos = QDir::current().absoluteFilePath("mundos");
-    QString ruta = QFileDialog::getOpenFileName(
+    QString ruta_directorio = QFileDialog::getExistingDirectory(
         this,
-        "Abrir Mundo",
+        "Seleccionar Carpeta de Mundo TMX",
         directorio_mundos,
-        "Archivos de Mundo (*.dat);;Todos los archivos (*)");
-    if (!ruta.isEmpty()) {
-        DefinicionDeMundo mundo_cargado = DefinicionDeMundo::crear_mundo_por_defecto();
-        bool cargado = SerializadorDeMundo::cargar_desde_archivo(ruta.toStdString(), mundo_cargado);
-        if (cargado) {
-            mundo_actual = mundo_cargado;
-            ruta_archivo_actual = ruta.toStdString();
+        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+
+    if (!ruta_directorio.isEmpty()) {
+        try {
+            mundo_actual = CargadorDeMundoTMX::cargar_mundo(ruta_directorio.toStdString());
+            ruta_archivo_actual = ruta_directorio.toStdString();
             etiqueta_nombre_mundo->setText(
                 QString("Mundo: <b>%1</b>")
                     .arg(QString::fromStdString(mundo_actual.obtener_nombre())));
             combo_sectores->setCurrentIndex(0);
             actualizar_sector_en_pantalla();
             ejecutar_validacion();
-            statusBar()->showMessage("Mundo cargado exitosamente.", 3000);
-        } else {
+            statusBar()->showMessage("Mundo TMX cargado exitosamente.", 3000);
+        } catch (const std::runtime_error& error) {
             QMessageBox::critical(
                 this,
-                "Error de Carga",
-                "No se pudo cargar el archivo del mundo seleccionado.");
+                "Error al Cargar Mundo",
+                QString::fromStdString(error.what()));
         }
     }
 }
@@ -351,28 +351,32 @@ void VentanaPrincipalEditor::guardar_mundo() {
         guardar_mundo_como();
         return;
     }
-    bool guardado = SerializadorDeMundo::guardar_en_archivo(ruta_archivo_actual, mundo_actual);
-    if (guardado) {
+    try {
+        ExportadorDeMundoTMX::exportar_mundo_completo(ruta_archivo_actual, mundo_actual);
         statusBar()->showMessage(
             QString("Mundo guardado en %1").arg(QString::fromStdString(ruta_archivo_actual)),
             4000);
-    } else {
-        QMessageBox::critical(this, "Error al Guardar", "No se pudo guardar el archivo del mundo.");
+    } catch (const std::runtime_error& error) {
+        QMessageBox::critical(this, "Error al Guardar Mundo", QString::fromStdString(error.what()));
     }
 }
 
 void VentanaPrincipalEditor::guardar_mundo_como() {
     std::filesystem::create_directories("mundos");
-    std::string ruta_defecto = SerializadorDeMundo::ruta_por_defecto(mundo_actual.obtener_nombre());
-    QString ruta_absoluta_defecto =
-        QDir::current().absoluteFilePath(QString::fromStdString(ruta_defecto));
-    QString ruta = QFileDialog::getSaveFileName(
+    bool aceptado = false;
+    QString nombre_sugerido = QString::fromStdString(mundo_actual.obtener_nombre());
+    QString nombre_carpeta = QInputDialog::getText(
         this,
-        "Guardar Mundo Como",
-        ruta_absoluta_defecto,
-        "Archivos de Mundo (*.dat);;Todos los archivos (*)");
-    if (!ruta.isEmpty()) {
-        ruta_archivo_actual = ruta.toStdString();
+        "Guardar Mundo TMX",
+        "Nombre de la carpeta del mundo (dentro de mundos/):",
+        QLineEdit::Normal,
+        nombre_sugerido,
+        &aceptado);
+
+    if (aceptado && !nombre_carpeta.trimmed().isEmpty()) {
+        std::filesystem::path ruta_destino =
+            std::filesystem::path("mundos") / nombre_carpeta.trimmed().toStdString();
+        ruta_archivo_actual = ruta_destino.string();
         guardar_mundo();
     }
 }
