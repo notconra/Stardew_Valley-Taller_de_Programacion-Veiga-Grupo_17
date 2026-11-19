@@ -17,6 +17,14 @@ struct ResultadoValidacion {
 };
 
 class ValidadorDeMundo {
+private:
+    static bool tiene_acceso_perimetral_transitable(
+        const MapaEditable& mapa, const EntidadDelMapa& entidad);
+    static bool casilla_puerta_cabania_transitable(
+        const MapaEditable& mapa, const EntidadDelMapa& cabania);
+    static bool existe_camino_transitable(
+        const MapaEditable& mapa, const EntidadDelMapa& origen, const EntidadDelMapa& destino);
+
 public:
     ValidadorDeMundo() = delete;
 

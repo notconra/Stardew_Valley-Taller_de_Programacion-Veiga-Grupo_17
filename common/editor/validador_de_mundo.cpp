@@ -18,7 +18,7 @@ void ResultadoValidacion::agregar_advertencia(const std::string& advertencia) {
     advertencias.push_back(advertencia);
 }
 
-static bool tiene_acceso_perimetral_transitable(
+bool ValidadorDeMundo::tiene_acceso_perimetral_transitable(
     const MapaEditable& mapa, const EntidadDelMapa& entidad) {
     int columna_origen = 0;
     int fila_origen = 0;
@@ -76,7 +76,7 @@ static bool tiene_acceso_perimetral_transitable(
     return encontrado;
 }
 
-static bool casilla_puerta_cabania_transitable(
+bool ValidadorDeMundo::casilla_puerta_cabania_transitable(
     const MapaEditable& mapa, const EntidadDelMapa& cabania) {
     int columna_origen = 0;
     int fila_origen = 0;
@@ -93,7 +93,7 @@ static bool casilla_puerta_cabania_transitable(
            mapa.casilla_es_transitable(col_puerta, fila_frente);
 }
 
-static bool existe_camino_transitable(
+bool ValidadorDeMundo::existe_camino_transitable(
     const MapaEditable& mapa, const EntidadDelMapa& entidad_a, const EntidadDelMapa& entidad_b) {
     if (!tiene_acceso_perimetral_transitable(mapa, entidad_a) ||
         !tiene_acceso_perimetral_transitable(mapa, entidad_b)) {
