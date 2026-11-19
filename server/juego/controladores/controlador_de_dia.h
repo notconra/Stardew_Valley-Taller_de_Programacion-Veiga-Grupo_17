@@ -74,7 +74,12 @@ private:
     bool todos_listos() const;
 
     void terminar_el_dia();
+    // Al empezar el día: con toda la vida y la energía si durmió en la cama, con la mitad si no, y
+    // al lado de su cama.
     void despertar(Personaje& personaje);
+    // Lo saca de la mazmorra y lo deja al lado de su última cama, o en la entrada de la casa si no
+    // tiene una (o ya no está).
+    void llevar_a_la_casa(Personaje& personaje);
 
     // La casilla libre al lado de la cama donde se despierta, si la cama sigue en su lugar.
     // Prefiere una donde no haya otro jugador.
@@ -114,8 +119,14 @@ public:
     // El que entra recibe la hora de ahora, así no espera hasta el próximo aviso para verla.
     void al_conectarse(const Personaje& personaje);
 
-    // El que se va deja de contar para el fin del día y vuelve despierto.
+    // El que se va deja de contar para el fin del día y vuelve despierto. Si estaba acostado, lo
+    // deja parado al lado de la cama (no arriba de ella).
     void al_desconectarse(Personaje& personaje);
+
+    // Si se había ido sin vida o sin energía: vuelve como si se hubiera despertado de un desmayo,
+    // con la mitad de la vida y de la energía y al lado de su cama. Tiene que estar ya en un mapa.
+    // Devuelve si lo tuvo que despertar.
+    bool despertar_si_volvio_desmayado(Personaje& personaje);
 
     // La hora de ahora (la misma que ve el jugador).
     HoraDelJuego hora() const;

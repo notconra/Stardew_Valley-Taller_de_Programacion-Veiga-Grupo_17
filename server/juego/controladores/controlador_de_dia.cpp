@@ -242,7 +242,10 @@ void ControladorDelDia::despertar(Personaje& personaje) {
         durmio_en_la_cama ? personaje.energia_maxima() : personaje.energia_maxima() / 2;
     personaje.descanso = EstadoDeDescanso::DESPIERTO;
     personaje.dio_el_ok = false;
+    llevar_a_la_casa(personaje);
+}
 
+void ControladorDelDia::llevar_a_la_casa(Personaje& personaje) {
     sacar_de_la_mazmorra(personaje);
 
     if (personaje.ultima_cama.has_value()) {
@@ -337,9 +340,20 @@ void ControladorDelDia::al_conectarse(const Personaje& personaje) {
 }
 
 void ControladorDelDia::al_desconectarse(Personaje& personaje) {
+    if (personaje.descanso == EstadoDeDescanso::ACOSTADO) {
+        levantar(personaje);
+    }
     personaje.descanso = EstadoDeDescanso::DESPIERTO;
     personaje.dio_el_ok = false;
     descansos_enviados.erase(personaje.id_jugador);
+}
+
+bool ControladorDelDia::despertar_si_volvio_desmayado(Personaje& personaje) {
+    if (!personaje.esta_inconsciente() && personaje.energia > 0) {
+        return false;
+    }
+    despertar(personaje);
+    return true;
 }
 
 void ControladorDelDia::cambiar_estacion(Estacion estacion) {
