@@ -9,6 +9,7 @@
 
 #include "../server/configuracion/configuracion_servidor.h"
 #include "../server/configuracion/configuracion_servidor_datos.h"
+#include "../server/juego/acciones/accion_regar.h"
 #include "../server/juego/controladores/controlador_de_acciones.h"
 #include "../server/juego/jugadores/personaje.h"
 #include "../server/juego/muebles/muebles.h"
@@ -37,7 +38,8 @@ const RecursosDeJuego& recursos() {
             mapas,
             "granja",
             configuracion.juego(),
-            ConfiguracionMazmorraServidor{});
+            ConfiguracionMazmorraServidor{},
+            configuracion.mercado());
     }();
     return recursos_de_juego;
 }
@@ -65,8 +67,20 @@ protected:
                                    recursos().juego.inventario.cantidad_ranuras_barra)
                                .first->second;
     GestorDeSectores sectores{recursos(), 40, personajes, notificador};
+    ControladorDelDia dia{
+        recursos().juego.dia, 40, sectores, personajes, recursos(), notificador, [](Personaje&) {}};
+    ControladorDelCentro centro{
+        personajes, sectores, recursos(), notificador, dia, DatosCentroGuardado{}};
+    ControladorDeMercado mercado{recursos().mercado, sectores, notificador, centro};
     ControladorDeAcciones acciones{
-        sectores, personajes, recursos(), notificador, [](Personaje&, const Transicion&) {}};
+        sectores,
+        personajes,
+        recursos(),
+        notificador,
+        mercado,
+        dia,
+        centro,
+        [](Personaje&, const Transicion&) {}};
 
     // Lleva al jugador al mapa con los pies centrados en (columna, fila).
     void parar_en(const std::string& mapa, int columna, int fila) {
@@ -161,4 +175,18 @@ TEST_F(ConsultarCasillaTest, LejosOConOtroItemNoSeMarcaNada) {
 
     elegir(TipoItem::ESPADA);
     EXPECT_EQ(consultar(CULTIVABLE.columna, CULTIVABLE.fila).marca, MarcaDeCasilla::NINGUNA);
+}
+
+TEST(AccionesAnimadas, SoloLosGolpesConHerramientasYElRiegoSeAnimanParaLosDemas) {
+    EXPECT_TRUE(ControladorDeAcciones::se_anima(TipoAccion::PICAR));
+    EXPECT_TRUE(ControladorDeAcciones::se_anima(TipoAccion::TRATAR_TIERRA));
+    EXPECT_TRUE(ControladorDeAcciones::se_anima(TipoAccion::ATACAR));
+    EXPECT_TRUE(ControladorDeAcciones::se_anima(TipoAccion::REGAR));
+    EXPECT_FALSE(ControladorDeAcciones::se_anima(TipoAccion::INTERACTUAR));
+    EXPECT_FALSE(ControladorDeAcciones::se_anima(TipoAccion::COLOCAR));
+    EXPECT_FALSE(ControladorDeAcciones::se_anima(TipoAccion::NINGUNA));
+}
+
+TEST(AccionesAnimadas, RegarAvisaQueEstaRegando) {
+    EXPECT_EQ(AccionRegar().tipo(), TipoAccion::REGAR);
 }

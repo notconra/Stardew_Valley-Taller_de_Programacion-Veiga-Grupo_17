@@ -47,6 +47,7 @@ struct Personaje {
     uint8_t ranura_activa = 0;
     TipoAccion accion_actual = TipoAccion::NINGUNA;
     uint16_t ticks_restantes_accion = 0;
+    uint8_t numero_de_accion = 0;
     AparienciaPersonaje apariencia;
     std::string nombre;
     Buzon buzon;  // los regalos que recibió y todavía no abrió

@@ -100,6 +100,7 @@ void Mundo::restaurar(Personaje& personaje, const DatosJugadorGuardado& guardado
 }
 
 void Mundo::dar_de_baja(Personaje& personaje) {
+    controlador_del_dia.al_desconectarse(personaje);
     if (sectores.existe(personaje.mapa_actual)) {
         const JugadorEnPartida* jugador_en_partida =
             sectores.en(personaje.mapa_actual).jugadores.buscar(personaje.id_jugador);
@@ -115,7 +116,6 @@ void Mundo::dar_de_baja(Personaje& personaje) {
     controlador_de_mazmorra.al_desconectarse(personaje);
     controlador_de_cofres.al_desconectarse(personaje);
     controlador_de_acciones.al_desconectarse(personaje);
-    controlador_del_dia.al_desconectarse(personaje);
     controlador_de_mercado.al_desconectarse(personaje);
     sectores.quitar(personaje);
     personaje.conectado = false;
@@ -139,10 +139,6 @@ void Mundo::conectar(
     if (!nombre.empty()) {
         personaje.nombre = nombre;
     }
-    if (personaje.esta_inconsciente()) {
-        return;
-    }
-
     if (personaje.conectado) {
         dar_de_baja(personaje);
     }
@@ -162,6 +158,7 @@ void Mundo::conectar(
     } else {
         sectores.colocar_en_aparicion(personaje, recursos.mapa_inicial);
     }
+    controlador_del_dia.despertar_si_volvio_desmayado(personaje);
 }
 
 void Mundo::desconectar(uint32_t id_jugador) {

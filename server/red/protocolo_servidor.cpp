@@ -49,6 +49,8 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::DONAR_AL_LOTE, [this] { return recibir_comando_donar_al_lote(); }},
           {TipoMensaje::DONAR_MONEDAS_AL_LOTE,
            [this] { return recibir_comando_donar_monedas_al_lote(); }},
+          {TipoMensaje::DORMIR, [this] { return recibir_comando_dormir(); }},
+          {TipoMensaje::LEVANTARSE, [this] { return recibir_comando_levantarse(); }},
       } {
 }
 
@@ -234,6 +236,17 @@ DonarMonedasAlLote ProtocoloServidor::recibir_comando_donar_monedas_al_lote() {
     return DonarMonedasAlLote{recibir_tipo_lote()};
 }
 
+Dormir ProtocoloServidor::recibir_comando_dormir() {
+    Dormir dormir;
+    dormir.columna = recibir_u32();
+    dormir.fila = recibir_u32();
+    return dormir;
+}
+
+Levantarse ProtocoloServidor::recibir_comando_levantarse() {
+    return Levantarse{};
+}
+
 TipoLote ProtocoloServidor::recibir_tipo_lote() {
     const uint8_t lote = recibir_u8();
     if (lote >= CANTIDAD_DE_LOTES) {
@@ -279,6 +292,7 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const DialogoNpc& e) { enviar_evento_dialogo_npc(e); },
             [this](const LoteDelCentro& e) { enviar_evento_lote_del_centro(e); },
             [this](const CentroTerminado& e) { enviar_evento_centro_terminado(e); },
+            [this](const PreguntaDeDormir& e) { enviar_evento_pregunta_de_dormir(e); },
         },
         evento);
 }
@@ -340,6 +354,10 @@ void ProtocoloServidor::enviar_estado_jugador(const EstadoJugador& estado) {
     enviar_booleano(estado.camina);
     enviar_u8(estado.ranura_activa);
     enviar_u8(static_cast<uint8_t>(estado.accion_actual));
+    enviar_u8(static_cast<uint8_t>(estado.item_en_mano));
+    enviar_u8(static_cast<uint8_t>(estado.calidad_en_mano));
+    enviar_u8(estado.numero_de_accion);
+    enviar_u8(static_cast<uint8_t>(estado.descanso));
     enviar_u8(estado.vida);
     enviar_u8(estado.energia);
     enviar_u8(estado.vida_maxima);
@@ -651,6 +669,12 @@ void ProtocoloServidor::enviar_evento_jugadores_de_la_partida(
 
 void ProtocoloServidor::enviar_evento_centro_terminado(const CentroTerminado&) {
     enviar_tipo(TipoMensaje::CENTRO_TERMINADO);
+}
+
+void ProtocoloServidor::enviar_evento_pregunta_de_dormir(const PreguntaDeDormir& pregunta) {
+    enviar_tipo(TipoMensaje::PREGUNTA_DE_DORMIR);
+    enviar_u32(pregunta.columna);
+    enviar_u32(pregunta.fila);
 }
 
 void ProtocoloServidor::enviar_evento_lote_del_centro(const LoteDelCentro& lote) {

@@ -28,13 +28,13 @@ bool AccionDormir::ejecutar(ContextoDeAccion& c) {
     if (cama == nullptr || cama->tipo != TipoObjeto::CAMA) {
         return false;
     }
-    const UbicacionDeCama ubicacion{c.sector.id, cama->columna, cama->fila};
-    if (camas_ocupadas.esta_ocupada(ubicacion.mapa, ubicacion.columna, ubicacion.fila)) {
+    if (camas_ocupadas.esta_ocupada(c.sector.id, cama->columna, cama->fila)) {
         return false;
     }
     c.sector.jugadores.moverse(c.personaje.id_jugador, 0, 0);
-    c.personaje.descanso = EstadoDeDescanso::ACOSTADO;
-    c.personaje.dio_el_ok = false;
-    c.personaje.ultima_cama = ubicacion;
+    PreguntaDeDormir pregunta;
+    pregunta.columna = static_cast<uint32_t>(c.objetivo.columna);
+    pregunta.fila = static_cast<uint32_t>(c.objetivo.fila);
+    c.notificador.a_jugador(c.personaje.id_jugador, pregunta);
     return true;
 }

@@ -87,7 +87,9 @@ public:
 
     // El jugador entra a la partida. Si es la primera vez se crea su Personaje con los ítems
     // iniciales, si ya existía (volvió después de desconectarse o restaurado de partida) conserva
-    // todo. "nombre" vacío deja el que tenía.
+    // todo. Si se había ido desmayado (sin vida o sin energía), vuelve como si se hubiera
+    // despertado de un desmayo: al lado de su cama y con la mitad de la vida y la energía. "nombre"
+    // vacío deja el que tenía.
     void conectar(
         uint32_t id_jugador, const AparienciaPersonaje& apariencia, const std::string& nombre = "");
 

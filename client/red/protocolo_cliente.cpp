@@ -48,6 +48,7 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::DIALOGO_NPC, [this] { return recibir_dialogo_npc(); }},
           {TipoMensaje::LOTE_DEL_CENTRO, [this] { return recibir_lote_del_centro(); }},
           {TipoMensaje::CENTRO_TERMINADO, [this] { return recibir_centro_terminado(); }},
+          {TipoMensaje::PREGUNTA_DE_DORMIR, [this] { return recibir_pregunta_de_dormir(); }},
       } {
 }
 
@@ -88,6 +89,8 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const HablarConNpc& m) { enviar_comando_hablar_con_npc(m); },
             [this](const DonarAlLote& m) { enviar_comando_donar_al_lote(m); },
             [this](const DonarMonedasAlLote& m) { enviar_comando_donar_monedas_al_lote(m); },
+            [this](const Dormir& m) { enviar_comando_dormir(m); },
+            [this](const Levantarse& m) { enviar_comando_levantarse(m); },
         },
         comando);
 }
@@ -247,6 +250,16 @@ void ProtocoloCliente::enviar_comando_donar_monedas_al_lote(const DonarMonedasAl
     enviar_u8(static_cast<uint8_t>(donar.lote));
 }
 
+void ProtocoloCliente::enviar_comando_dormir(const Dormir& dormir) {
+    enviar_tipo(TipoMensaje::DORMIR);
+    enviar_u32(dormir.columna);
+    enviar_u32(dormir.fila);
+}
+
+void ProtocoloCliente::enviar_comando_levantarse(const Levantarse&) {
+    enviar_tipo(TipoMensaje::LEVANTARSE);
+}
+
 // Recepción de eventos
 
 bool ProtocoloCliente::recibir_evento(EventoServidor& evento) {
@@ -340,6 +353,10 @@ EstadoJugador ProtocoloCliente::recibir_estado_jugador() {
     estado.camina = recibir_booleano();
     estado.ranura_activa = recibir_u8();
     estado.accion_actual = static_cast<TipoAccion>(recibir_u8());
+    estado.item_en_mano = static_cast<TipoItem>(recibir_u8());
+    estado.calidad_en_mano = static_cast<Calidad>(recibir_u8());
+    estado.numero_de_accion = recibir_u8();
+    estado.descanso = static_cast<EstadoDeDescanso>(recibir_u8());
     estado.vida = recibir_u8();
     estado.energia = recibir_u8();
     estado.vida_maxima = recibir_u8();
@@ -785,6 +802,13 @@ JugadoresDeLaPartida ProtocoloCliente::recibir_jugadores_de_la_partida() {
 
 CentroTerminado ProtocoloCliente::recibir_centro_terminado() {
     return CentroTerminado{};
+}
+
+PreguntaDeDormir ProtocoloCliente::recibir_pregunta_de_dormir() {
+    PreguntaDeDormir pregunta;
+    pregunta.columna = recibir_u32();
+    pregunta.fila = recibir_u32();
+    return pregunta;
 }
 
 LoteDelCentro ProtocoloCliente::recibir_lote_del_centro() {
