@@ -15,10 +15,6 @@ struct DefinicionTransicionTMX {
     int fila_destino;
 };
 
-static const std::map<TipoEntidad, DefinicionTransicionTMX> TRANSICIONES_POR_TIPO = {
-    {TipoEntidad::TRANSICION_PUEBLO, {"Town", 4, 12}},
-    {TipoEntidad::TRANSICION_GRANJA, {"granja", 64, 15}}};
-
 static const std::map<TipoEntidad, const char*> PUESTOS_POR_TIPO = {
     {TipoEntidad::PUESTO_MARNIE, "marnie"},
     {TipoEntidad::PUESTO_CLINT, "clint"},
@@ -26,12 +22,14 @@ static const std::map<TipoEntidad, const char*> PUESTOS_POR_TIPO = {
     {TipoEntidad::PUESTO_ROBIN, "robin"}};
 
 ExportadorDeSectorTMX::ExportadorDeSectorTMX(
-    SectorActual sector_actual, const MapaEditable& mapa_sector)
+    SectorActual sector_actual, const MapaEditable& mapa_sector,
+    const DestinosDeTransicion& destinos_transicion)
     : escritor(
           mapa_sector.obtener_cantidad_de_columnas(), mapa_sector.obtener_cantidad_de_filas(),
           ANCHO_TILE_PIXELES, ALTO_TILE_PIXELES),
       sector(sector_actual),
-      mapa(mapa_sector) {
+      mapa(mapa_sector),
+      destinos(destinos_transicion) {
     configurar_tileset();
     exportar_capas_de_tiles();
     exportar_entidades();
@@ -50,6 +48,20 @@ void ExportadorDeSectorTMX::exportar_capas_de_tiles() {
 }
 
 void ExportadorDeSectorTMX::exportar_entidades() {
+    std::map<TipoEntidad, DefinicionTransicionTMX> transiciones_por_tipo = {
+        {TipoEntidad::CABANIA, {DESTINO_CABANIA, COLUMNA_SPAWN_CASA, FILA_SPAWN_CASA}},
+        {TipoEntidad::CENTRO_COMUNITARIO,
+         {DESTINO_CENTRO_COMUNITARIO, COLUMNA_ENTRADA_MERCADO, FILA_ENTRADA_MERCADO}},
+        {TipoEntidad::TRANSICION_PUEBLO,
+         {DESTINO_PUEBLO, destinos.columna_destino_pueblo, destinos.fila_destino_pueblo}},
+        {TipoEntidad::TRANSICION_GRANJA,
+         {DESTINO_GRANJA, destinos.columna_destino_granja, destinos.fila_destino_granja}},
+        {TipoEntidad::ENTRADA_CAVERNA,
+         {DESTINO_CAVERNA, destinos.columna_destino_caverna, destinos.fila_destino_caverna}},
+        {TipoEntidad::SALIDA_CAVERNA,
+         {DESTINO_GRANJA, destinos.columna_salida_caverna, destinos.fila_salida_caverna}},
+        {TipoEntidad::ESCALERA_NIVEL, {DESTINO_SIGUIENTE_NIVEL, 0, 0}}};
+
     std::vector<EntidadDelMapa> entidades = mapa.listar_todas_las_entidades();
     size_t indice = 0;
     while (indice < entidades.size()) {
@@ -78,8 +90,16 @@ void ExportadorDeSectorTMX::exportar_entidades() {
         int ancho_pixeles = ancho_casillas * ANCHO_TILE_PIXELES;
         int alto_pixeles = alto_casillas * ALTO_TILE_PIXELES;
 
-        auto iterador_transicion = TRANSICIONES_POR_TIPO.find(tipo);
-        if (iterador_transicion != TRANSICIONES_POR_TIPO.end()) {
+        if (tipo == TipoEntidad::CABANIA) {
+            // La puerta de la cabaña está prefijada en el centro inferior de su fachada
+            posicion_x_pixeles = (columna + 1) * ANCHO_TILE_PIXELES;
+            posicion_y_pixeles = (fila + 2) * ALTO_TILE_PIXELES;
+            ancho_pixeles = ANCHO_TILE_PIXELES;
+            alto_pixeles = ALTO_TILE_PIXELES;
+        }
+
+        auto iterador_transicion = transiciones_por_tipo.find(tipo);
+        if (iterador_transicion != transiciones_por_tipo.end()) {
             escritor.agregar_transicion(
                 CAPA_TRANSICIONES_TMX,
                 posicion_x_pixeles,
