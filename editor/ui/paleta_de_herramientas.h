@@ -2,14 +2,16 @@
 #define PALETA_DE_HERRAMIENTAS_H
 
 #include <QButtonGroup>
+#include <QGridLayout>
+#include <QGroupBox>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QWidget>
 #include <cstdint>
 #include <vector>
 
+#include "catalogo_de_estampas.h"
 #include "catalogo_de_terrenos.h"
-#include "tipo_entidad.h"
 #include "tipo_herramienta_editor.h"
 
 class PaletaDeHerramientas : public QWidget {
@@ -18,34 +20,36 @@ class PaletaDeHerramientas : public QWidget {
 private:
     QVBoxLayout* layout_principal;
     QButtonGroup* grupo_modos;
+    QPushButton* boton_modo_terreno;
+    QPushButton* boton_modo_estampa;
+    QPushButton* boton_modo_colocar;
+    QPushButton* boton_modo_mover;
+    QPushButton* boton_modo_borrar;
+
     QButtonGroup* grupo_tiles;
-    QWidget* contenedor_tiles;
-    QVBoxLayout* layout_tiles;
+    QGridLayout* layout_tiles;
     std::vector<QPushButton*> botones_tiles;
 
-    QButtonGroup* grupo_entidades;
-    QWidget* contenedor_entidades_granja;
-    QWidget* contenedor_entidades_pueblo;
-    QWidget* contenedor_entidades_caverna;
-    QPushButton* boton_eliminar_entidad;
+    QGroupBox* caja_estampas;
+    QButtonGroup* grupo_estampas;
+    QVBoxLayout* layout_estampas;
+    std::vector<QPushButton*> botones_estampas;
+    QPushButton* boton_muro_perimetral;
 
     QPushButton* crear_boton_modo(const QString& texto, ModoEditor modo);
-    QPushButton* crear_boton_entidad(
-        QWidget* contenedor, const QString& texto, TipoEntidad entidad);
-    void inicializar_botones_de_tiles();
-    void inicializar_botones_de_entidades();
+    void limpiar_botones_de_tiles();
+    void limpiar_botones_de_estampas();
 
 public:
     explicit PaletaDeHerramientas(QWidget* padre = nullptr);
 
     void actualizar_sector(SectorActual sector);
-    void habilitar_boton_eliminar(bool habilitado);
 
 signals:
     void modo_cambiado(ModoEditor modo);
     void tile_seleccionado(uint32_t id_tile, uint8_t propiedades);
-    void entidad_cambiada(TipoEntidad entidad);
-    void eliminar_solicitado();
+    void estampa_seleccionada(TipoEstampa estampa);
+    void generar_perimetro_solicitado();
 };
 
 #endif  // PALETA_DE_HERRAMIENTAS_H

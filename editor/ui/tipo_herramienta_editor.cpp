@@ -11,14 +11,14 @@ struct DimensionesEntidad {
 };
 
 static constexpr int DIMENSION_POR_DEFECTO = 1;
-static constexpr int ANCHO_CABANIA = 3;
-static constexpr int ALTO_CABANIA = 3;
-static constexpr int ANCHO_ENTRADA_CAVERNA = 2;
-static constexpr int ALTO_ENTRADA_CAVERNA = 2;
+static constexpr int ANCHO_CABANIA = 9;
+static constexpr int ALTO_CABANIA = 9;
+static constexpr int ANCHO_ENTRADA_CAVERNA = 3;
+static constexpr int ALTO_ENTRADA_CAVERNA = 4;
 static constexpr int ANCHO_PUESTO = 2;
 static constexpr int ALTO_PUESTO = 2;
-static constexpr int ANCHO_CENTRO_COMUNITARIO = 4;
-static constexpr int ALTO_CENTRO_COMUNITARIO = 3;
+static constexpr int ANCHO_CENTRO_COMUNITARIO = 12;
+static constexpr int ALTO_CENTRO_COMUNITARIO = 10;
 static constexpr int ANCHO_ESCALERA = 1;
 static constexpr int ALTO_ESCALERA = 1;
 static constexpr int ANCHO_SALIDA_CAVERNA = 1;
@@ -65,7 +65,7 @@ static const std::map<TipoEntidad, DimensionesEntidad> DIMENSIONES_ENTIDADES = {
     {TipoEntidad::TRANSICION_PUEBLO, {ANCHO_TRANSICION, ALTO_TRANSICION}},
     {TipoEntidad::TRANSICION_GRANJA, {ANCHO_TRANSICION, ALTO_TRANSICION}}};
 
-std::string obtener_nombre_entidad(TipoEntidad entidad) {
+std::string ConfiguracionEntidadesEditor::obtener_nombre(TipoEntidad entidad) {
     auto iterador = NOMBRES_ENTIDADES.find(entidad);
     if (iterador != NOMBRES_ENTIDADES.end()) {
         return iterador->second;
@@ -73,7 +73,8 @@ std::string obtener_nombre_entidad(TipoEntidad entidad) {
     return NOMBRE_DESCONOCIDA;
 }
 
-void consultar_dimensiones_por_defecto_entidad(TipoEntidad entidad, int& ancho, int& alto) {
+void ConfiguracionEntidadesEditor::consultar_dimensiones_por_defecto(
+    TipoEntidad entidad, int& ancho, int& alto) {
     auto iterador = DIMENSIONES_ENTIDADES.find(entidad);
     if (iterador != DIMENSIONES_ENTIDADES.end()) {
         ancho = iterador->second.ancho;

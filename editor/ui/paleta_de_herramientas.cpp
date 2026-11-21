@@ -1,110 +1,124 @@
 #include "paleta_de_herramientas.h"
 
 #include <QButtonGroup>
+#include <QGridLayout>
 #include <QGroupBox>
 #include <QIcon>
 #include <QPixmap>
 #include <QPushButton>
 #include <QSize>
+#include <QString>
 #include <QVBoxLayout>
-#include <cstddef>
 #include <cstdint>
 #include <vector>
 
+#include "catalogo_de_estampas.h"
 #include "catalogo_de_terrenos.h"
-#include "tipo_entidad.h"
 #include "tipo_herramienta_editor.h"
 
-static constexpr int TAMANO_ICONO_TILE_PX = 24;
-static constexpr size_t CANTIDAD_TILES_POR_SECTOR = 5;
+static constexpr int TAMANO_BOTON_TILE_PX = 38;
+static constexpr int TAMANO_ICONO_TILE_PX = 32;
+static constexpr int COLUMNAS_GRILLA_TILES = 3;
+static constexpr int MARGEN_LAYOUT_PX = 8;
+static constexpr int ESPACIADO_LAYOUT_PX = 8;
+static constexpr int ESPACIADO_MODOS_PX = 4;
+static constexpr int ESPACIADO_TILES_PX = 4;
+static constexpr int ESPACIADO_ESTAMPAS_PX = 4;
 
 static constexpr const char* ESTILO_BOTON_MODO =
-    "QPushButton { text-align: left; padding: 6px 10px; font-size: 13px; border-radius: 4px; }"
-    "QPushButton:checked { background-color: #2E6B38; color: white; font-weight: bold; }";
+    "QPushButton { background-color: #383838; color: #EEEEEE; font-weight: bold; padding: 6px; "
+    "border-radius: 4px; border: 1px solid #555555; }"
+    "QPushButton:hover { background-color: #4A4A4A; }"
+    "QPushButton:checked { background-color: #2E6B38; color: white; border: 1px solid #4CAF50; }";
 
-static constexpr const char* ESTILO_BOTON_TILE =
-    "QPushButton { text-align: left; padding: 6px 10px; font-size: 13px; border-radius: 4px; }"
-    "QPushButton:checked { background-color: #2E6B38; color: white; font-weight: bold; }";
+static constexpr const char* ESTILO_BOTON_TILE_CUADRO =
+    "QPushButton { background-color: #2D2D2D; border: 1px solid #444444; border-radius: 4px; "
+    "padding: 2px; }"
+    "QPushButton:hover { background-color: #3D3D3D; border: 1px solid #888888; }"
+    "QPushButton:checked { background-color: #2E6B38; border: 2px solid #55FF55; }";
 
-static constexpr const char* ESTILO_BOTON_ENTIDAD =
-    "QPushButton { text-align: left; padding: 6px 10px; font-size: 13px; border-radius: 4px; }"
-    "QPushButton:checked { background-color: #4A6E82; color: white; font-weight: bold; }";
+static constexpr const char* ESTILO_BOTON_ESTAMPA =
+    "QPushButton { background-color: #2B3D4F; color: white; font-weight: bold; padding: 5px 8px; "
+    "border-radius: 4px; border: 1px solid #3A536B; text-align: left; font-size: 11px; }"
+    "QPushButton:hover { background-color: #385068; }"
+    "QPushButton:checked { background-color: #1E6B9B; border: 2px solid #00D2FF; }";
 
-static constexpr const char* ESTILO_BOTON_ELIMINAR =
-    "QPushButton { background-color: #B22222; color: white; font-weight: bold; padding: 6px; "
-    "border-radius: 4px; }"
-    "QPushButton:hover { background-color: #DC143C; }"
-    "QPushButton:disabled { background-color: #555555; color: #888888; }";
+static constexpr const char* ESTILO_BOTON_PERIMETRO =
+    "QPushButton { background-color: #5A3A1A; color: white; font-weight: bold; padding: 6px; "
+    "border-radius: 4px; border: 1px solid #7A4F23; font-size: 11px; }"
+    "QPushButton:hover { background-color: #7A4F23; }";
 
 PaletaDeHerramientas::PaletaDeHerramientas(QWidget* padre)
     : QWidget(padre),
       layout_principal(nullptr),
       grupo_modos(nullptr),
+      boton_modo_terreno(nullptr),
+      boton_modo_estampa(nullptr),
+      boton_modo_colocar(nullptr),
+      boton_modo_mover(nullptr),
+      boton_modo_borrar(nullptr),
       grupo_tiles(nullptr),
-      contenedor_tiles(nullptr),
       layout_tiles(nullptr),
       botones_tiles(),
-      grupo_entidades(nullptr),
-      contenedor_entidades_granja(nullptr),
-      contenedor_entidades_pueblo(nullptr),
-      contenedor_entidades_caverna(nullptr),
-      boton_eliminar_entidad(nullptr) {
+      caja_estampas(nullptr),
+      grupo_estampas(nullptr),
+      layout_estampas(nullptr),
+      botones_estampas(),
+      boton_muro_perimetral(nullptr) {
     layout_principal = new QVBoxLayout(this);
-    layout_principal->setContentsMargins(8, 8, 8, 8);
-    layout_principal->setSpacing(10);
+    layout_principal->setContentsMargins(
+        MARGEN_LAYOUT_PX,
+        MARGEN_LAYOUT_PX,
+        MARGEN_LAYOUT_PX,
+        MARGEN_LAYOUT_PX);
+    layout_principal->setSpacing(ESPACIADO_LAYOUT_PX);
 
-    // 1. Grupo de Modos
+    // 1. Grupo de Modos de Edición
     QGroupBox* caja_modos = new QGroupBox("Modo de Edicion", this);
     QVBoxLayout* layout_modos = new QVBoxLayout(caja_modos);
+    layout_modos->setSpacing(ESPACIADO_MODOS_PX);
     grupo_modos = new QButtonGroup(this);
 
-    QPushButton* boton_terreno = crear_boton_modo("Pintar Tile", ModoEditor::TERRENO);
-    QPushButton* boton_colocar = crear_boton_modo("Colocar Entidad", ModoEditor::COLOCAR_ENTIDAD);
-    QPushButton* boton_mover = crear_boton_modo("Mover Entidad", ModoEditor::SELECCIONAR_MOVER);
-    QPushButton* boton_borrar = crear_boton_modo("Borrar Entidad", ModoEditor::BORRAR);
+    boton_modo_terreno = crear_boton_modo("Pintar Superficie", ModoEditor::TERRENO);
+    boton_modo_estampa = crear_boton_modo("Estampar Bloque", ModoEditor::ESTAMPAR);
+    boton_modo_colocar = crear_boton_modo("Colocar Entidad", ModoEditor::COLOCAR_ENTIDAD);
+    boton_modo_mover = crear_boton_modo("Mover Entidad", ModoEditor::SELECCIONAR_MOVER);
+    boton_modo_borrar = crear_boton_modo("Borrar Entidad", ModoEditor::BORRAR);
 
-    boton_terreno->setChecked(true);
-    layout_modos->addWidget(boton_terreno);
-    layout_modos->addWidget(boton_colocar);
-    layout_modos->addWidget(boton_mover);
-    layout_modos->addWidget(boton_borrar);
+    boton_modo_terreno->setChecked(true);
+    layout_modos->addWidget(boton_modo_terreno);
+    layout_modos->addWidget(boton_modo_estampa);
+    layout_modos->addWidget(boton_modo_colocar);
+    layout_modos->addWidget(boton_modo_mover);
+    layout_modos->addWidget(boton_modo_borrar);
     layout_principal->addWidget(caja_modos);
 
-    // 2. Grupo de Tiles del Sector
-    QGroupBox* caja_tiles = new QGroupBox("Tiles del Sector", this);
-    QVBoxLayout* layout_caja_tiles = new QVBoxLayout(caja_tiles);
-    contenedor_tiles = new QWidget(caja_tiles);
-    layout_tiles = new QVBoxLayout(contenedor_tiles);
-    layout_tiles->setContentsMargins(0, 0, 0, 0);
-    layout_caja_tiles->addWidget(contenedor_tiles);
+    // 2. Grupo de Superficies del Sector (Tiles continuos)
+    QGroupBox* caja_tiles = new QGroupBox("Superficies (Tiles)", this);
+    layout_tiles = new QGridLayout(caja_tiles);
+    layout_tiles->setContentsMargins(0, ESPACIADO_TILES_PX, 0, ESPACIADO_TILES_PX);
+    layout_tiles->setSpacing(ESPACIADO_TILES_PX);
+
     grupo_tiles = new QButtonGroup(this);
     layout_principal->addWidget(caja_tiles);
-    inicializar_botones_de_tiles();
 
-    // 3. Grupo de Entidades
-    QGroupBox* caja_entidades = new QGroupBox("Entidades del Sector", this);
-    QVBoxLayout* layout_caja_entidades = new QVBoxLayout(caja_entidades);
-    grupo_entidades = new QButtonGroup(this);
+    // 3. Grupo de Estampas y Bloques Prefabricados
+    caja_estampas = new QGroupBox("Bloques y Estanques", this);
+    layout_estampas = new QVBoxLayout(caja_estampas);
+    layout_estampas->setSpacing(ESPACIADO_ESTAMPAS_PX);
 
-    contenedor_entidades_granja = new QWidget(caja_entidades);
-    contenedor_entidades_pueblo = new QWidget(caja_entidades);
-    contenedor_entidades_caverna = new QWidget(caja_entidades);
-    layout_caja_entidades->addWidget(contenedor_entidades_granja);
-    layout_caja_entidades->addWidget(contenedor_entidades_pueblo);
-    layout_caja_entidades->addWidget(contenedor_entidades_caverna);
-    inicializar_botones_de_entidades();
+    grupo_estampas = new QButtonGroup(this);
 
-    boton_eliminar_entidad = new QPushButton("Eliminar Seleccionada", caja_entidades);
-    boton_eliminar_entidad->setStyleSheet(ESTILO_BOTON_ELIMINAR);
-    boton_eliminar_entidad->setEnabled(false);
+    boton_muro_perimetral = new QPushButton("Cerrar Perimetro con Muros", caja_estampas);
+    boton_muro_perimetral->setStyleSheet(ESTILO_BOTON_PERIMETRO);
     connect(
-        boton_eliminar_entidad,
+        boton_muro_perimetral,
         &QPushButton::clicked,
         this,
-        &PaletaDeHerramientas::eliminar_solicitado);
-    layout_caja_entidades->addWidget(boton_eliminar_entidad);
+        &PaletaDeHerramientas::generar_perimetro_solicitado);
+    layout_estampas->addWidget(boton_muro_perimetral);
 
-    layout_principal->addWidget(caja_entidades);
+    layout_principal->addWidget(caja_estampas);
     layout_principal->addStretch();
 
     actualizar_sector(SectorActual::GRANJA);
@@ -119,88 +133,35 @@ QPushButton* PaletaDeHerramientas::crear_boton_modo(const QString& texto, ModoEd
     return boton;
 }
 
-QPushButton* PaletaDeHerramientas::crear_boton_entidad(
-    QWidget* contenedor, const QString& texto, TipoEntidad entidad) {
-    QPushButton* boton = new QPushButton(texto, contenedor);
-    boton->setCheckable(true);
-    boton->setStyleSheet(ESTILO_BOTON_ENTIDAD);
-    grupo_entidades->addButton(boton, static_cast<int>(entidad));
-    connect(boton, &QPushButton::clicked, this, [this, entidad]() {
-        emit entidad_cambiada(entidad);
-    });
-    return boton;
-}
-
-void PaletaDeHerramientas::inicializar_botones_de_tiles() {
+void PaletaDeHerramientas::limpiar_botones_de_tiles() {
     size_t indice = 0;
-    while (indice < CANTIDAD_TILES_POR_SECTOR) {
-        QPushButton* boton = new QPushButton(contenedor_tiles);
-        boton->setCheckable(true);
-        boton->setStyleSheet(ESTILO_BOTON_TILE);
-        boton->setIconSize(QSize(TAMANO_ICONO_TILE_PX, TAMANO_ICONO_TILE_PX));
-        grupo_tiles->addButton(boton, static_cast<int>(indice));
-        layout_tiles->addWidget(boton);
-        botones_tiles.push_back(boton);
+    while (indice < botones_tiles.size()) {
+        QPushButton* boton = botones_tiles[indice];
+        grupo_tiles->removeButton(boton);
+        layout_tiles->removeWidget(boton);
+        delete boton;
         indice++;
     }
+    botones_tiles.clear();
 }
 
-void PaletaDeHerramientas::inicializar_botones_de_entidades() {
-    QVBoxLayout* layout_granja = new QVBoxLayout(contenedor_entidades_granja);
-    layout_granja->setContentsMargins(0, 0, 0, 0);
-    layout_granja->addWidget(crear_boton_entidad(
-        contenedor_entidades_granja,
-        "Cabania del Jugador (3x3)",
-        TipoEntidad::CABANIA));
-    layout_granja->addWidget(crear_boton_entidad(
-        contenedor_entidades_granja,
-        "Entrada Caverna (2x2)",
-        TipoEntidad::ENTRADA_CAVERNA));
-    layout_granja->addWidget(crear_boton_entidad(
-        contenedor_entidades_granja,
-        "Salida a Pueblo (2x2)",
-        TipoEntidad::TRANSICION_PUEBLO));
-
-    QVBoxLayout* layout_pueblo = new QVBoxLayout(contenedor_entidades_pueblo);
-    layout_pueblo->setContentsMargins(0, 0, 0, 0);
-    layout_pueblo->addWidget(crear_boton_entidad(
-        contenedor_entidades_pueblo,
-        "Puesto Marnie (2x2)",
-        TipoEntidad::PUESTO_MARNIE));
-    layout_pueblo->addWidget(crear_boton_entidad(
-        contenedor_entidades_pueblo,
-        "Puesto Clint (2x2)",
-        TipoEntidad::PUESTO_CLINT));
-    layout_pueblo->addWidget(crear_boton_entidad(
-        contenedor_entidades_pueblo,
-        "Puesto Pierre (2x2)",
-        TipoEntidad::PUESTO_PIERRE));
-    layout_pueblo->addWidget(crear_boton_entidad(
-        contenedor_entidades_pueblo,
-        "Puesto Robin (2x2)",
-        TipoEntidad::PUESTO_ROBIN));
-    layout_pueblo->addWidget(crear_boton_entidad(
-        contenedor_entidades_pueblo,
-        "Centro Comunitario (4x3)",
-        TipoEntidad::CENTRO_COMUNITARIO));
-    layout_pueblo->addWidget(crear_boton_entidad(
-        contenedor_entidades_pueblo,
-        "Salida a Granja (2x2)",
-        TipoEntidad::TRANSICION_GRANJA));
-
-    QVBoxLayout* layout_caverna = new QVBoxLayout(contenedor_entidades_caverna);
-    layout_caverna->setContentsMargins(0, 0, 0, 0);
-    layout_caverna->addWidget(crear_boton_entidad(
-        contenedor_entidades_caverna,
-        "Escalera Mazmorra (1x1)",
-        TipoEntidad::ESCALERA_NIVEL));
-    layout_caverna->addWidget(crear_boton_entidad(
-        contenedor_entidades_caverna,
-        "Salida Caverna (1x1)",
-        TipoEntidad::SALIDA_CAVERNA));
+void PaletaDeHerramientas::limpiar_botones_de_estampas() {
+    size_t indice = 0;
+    while (indice < botones_estampas.size()) {
+        QPushButton* boton = botones_estampas[indice];
+        grupo_estampas->removeButton(boton);
+        layout_estampas->removeWidget(boton);
+        delete boton;
+        indice++;
+    }
+    botones_estampas.clear();
 }
 
 void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
+    limpiar_botones_de_tiles();
+    limpiar_botones_de_estampas();
+
+    // 1. Cargar tiles de superficie
     DefinicionTilesetTMX tileset = CatalogoDeTerrenos::obtener_tileset_sector(sector);
     QPixmap pixmap_tileset(QString::fromStdString(tileset.ruta_imagen));
 
@@ -208,7 +169,7 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
         CatalogoDeTerrenos::obtener_catalogo_por_sector(sector);
 
     size_t indice_tile = 0;
-    while (indice_tile < botones_tiles.size() && indice_tile < catalogo_tiles.size()) {
+    while (indice_tile < catalogo_tiles.size()) {
         const DefinicionTile& definicion = catalogo_tiles[indice_tile];
         uint32_t indice_local =
             definicion.identificador_tile_global - tileset.primer_identificador_global;
@@ -223,21 +184,33 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
             tileset.ancho_tile,
             tileset.alto_tile);
 
-        QPushButton* boton = botones_tiles[indice_tile];
-        boton->setText(QString::fromStdString(definicion.nombre));
+        QPushButton* boton = new QPushButton(this);
+        boton->setFixedSize(TAMANO_BOTON_TILE_PX, TAMANO_BOTON_TILE_PX);
+        boton->setCheckable(true);
+        boton->setStyleSheet(ESTILO_BOTON_TILE_CUADRO);
+        boton->setToolTip(QString::fromStdString(definicion.nombre));
         boton->setIcon(QIcon(sprite_recortado.scaled(
             TAMANO_ICONO_TILE_PX,
             TAMANO_ICONO_TILE_PX,
             Qt::KeepAspectRatio,
             Qt::FastTransformation)));
+        boton->setIconSize(QSize(TAMANO_ICONO_TILE_PX, TAMANO_ICONO_TILE_PX));
 
-        disconnect(boton, nullptr, nullptr, nullptr);
+        grupo_tiles->addButton(boton, static_cast<int>(indice_tile));
+
+        int fila_grilla = static_cast<int>(indice_tile / COLUMNAS_GRILLA_TILES);
+        int columna_grilla = static_cast<int>(indice_tile % COLUMNAS_GRILLA_TILES);
+        layout_tiles->addWidget(boton, fila_grilla, columna_grilla);
+
         uint32_t id_global = definicion.identificador_tile_global;
         uint8_t prop = definicion.propiedades;
         connect(boton, &QPushButton::clicked, this, [this, id_global, prop]() {
+            boton_modo_terreno->setChecked(true);
+            emit modo_cambiado(ModoEditor::TERRENO);
             emit tile_seleccionado(id_global, prop);
         });
 
+        botones_tiles.push_back(boton);
         indice_tile++;
     }
 
@@ -248,21 +221,31 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
             catalogo_tiles[0].propiedades);
     }
 
-    contenedor_entidades_granja->setVisible(sector == SectorActual::GRANJA);
-    contenedor_entidades_pueblo->setVisible(sector == SectorActual::PUEBLO);
-    contenedor_entidades_caverna->setVisible(sector == SectorActual::CAVERNA);
+    // 2. Cargar estampas y bloques
+    std::vector<DefinicionEstampa> lista_estampas =
+        CatalogoDeEstampas::listar_estampas_por_sector(sector);
 
-    if (sector == SectorActual::GRANJA) {
-        emit entidad_cambiada(TipoEntidad::CABANIA);
-    } else if (sector == SectorActual::PUEBLO) {
-        emit entidad_cambiada(TipoEntidad::PUESTO_MARNIE);
-    } else if (sector == SectorActual::CAVERNA) {
-        emit entidad_cambiada(TipoEntidad::ESCALERA_NIVEL);
-    }
-}
+    caja_estampas->setVisible(!lista_estampas.empty() || sector == SectorActual::GRANJA);
+    boton_muro_perimetral->setVisible(sector == SectorActual::GRANJA);
 
-void PaletaDeHerramientas::habilitar_boton_eliminar(bool habilitado) {
-    if (boton_eliminar_entidad != nullptr) {
-        boton_eliminar_entidad->setEnabled(habilitado);
+    size_t indice_estampa = 0;
+    while (indice_estampa < lista_estampas.size()) {
+        const DefinicionEstampa& estampa = lista_estampas[indice_estampa];
+        TipoEstampa tipo = estampa.tipo;
+        QPushButton* boton_estampa =
+            new QPushButton(QString::fromStdString(estampa.nombre), caja_estampas);
+        boton_estampa->setCheckable(true);
+        boton_estampa->setStyleSheet(ESTILO_BOTON_ESTAMPA);
+        grupo_estampas->addButton(boton_estampa, static_cast<int>(tipo));
+        layout_estampas->insertWidget(static_cast<int>(indice_estampa), boton_estampa);
+
+        connect(boton_estampa, &QPushButton::clicked, this, [this, tipo]() {
+            boton_modo_estampa->setChecked(true);
+            emit modo_cambiado(ModoEditor::ESTAMPAR);
+            emit estampa_seleccionada(tipo);
+        });
+
+        botones_estampas.push_back(boton_estampa);
+        indice_estampa++;
     }
 }
