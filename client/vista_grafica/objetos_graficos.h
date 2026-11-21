@@ -46,9 +46,10 @@ struct AspectoDeObjeto {
     // Así un objeto más alto que una casilla crece hacia arriba en vez de hacia abajo.
     bool anclar_al_pie = false;
     CapaDeObjeto capa = CapaDeObjeto::DEBAJO_DE_LOS_JUGADORES;
-    // Filas del dibujo que van por encima de la casilla del objeto (la cabecera de la cama). Están
-    // contadas dentro de alto_en_casillas, no bloquean en el servidor y se dibujan sobre los
-    // jugadores, así se puede pasar por detrás.
+    // Filas del dibujo que van por encima de la casilla del objeto (la cabecera de la cama, el
+    // respaldo de una silla). Están contadas dentro de alto_en_casillas y no bloquean en el
+    // servidor. Si el objeto va DEBAJO de los jugadores, se dibujan sobre ellos; si va CON los
+    // jugadores, se dibujan junto con el resto del objeto, ordenado por su pie.
     int casillas_por_encima = 0;
 };
 

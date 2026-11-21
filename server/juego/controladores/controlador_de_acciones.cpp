@@ -137,7 +137,7 @@ CasillaConsultada ControladorDeAcciones::consultar(
         const DefinicionDeObjeto* definicion =
             objeto == nullptr ? nullptr : recursos.catalogo_de_objetos.buscar(objeto->tipo);
         const bool cama_ocupada =
-            objeto != nullptr && objeto->tipo == TipoObjeto::CAMA &&
+            objeto != nullptr && recursos.catalogo_de_objetos.es_cama(objeto->tipo) &&
             camas_ocupadas.esta_ocupada(sector.id, objeto->columna, objeto->fila);
         tendria_efecto =
             (definicion != nullptr && definicion->herramienta == TipoItem::PICO && !cama_ocupada) ||

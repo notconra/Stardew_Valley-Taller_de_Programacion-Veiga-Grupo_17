@@ -1,9 +1,12 @@
 #include "iconos_de_items.h"
 
+#include <algorithm>
 #include <iostream>
 #include <stdexcept>
 #include <unordered_map>
 #include <utility>
+
+#include "../../common/muebles/catalogo_muebles.h"
 
 namespace {
 
@@ -77,6 +80,11 @@ void cargar(
 IconosDeItems::IconosDeItems(SDL_Renderer* renderer) {
     cargar(cultivos, std::begin(RUTAS_DE_CULTIVOS), std::end(RUTAS_DE_CULTIVOS), renderer);
     cargar(individuales, std::begin(RUTAS_INDIVIDUALES), std::end(RUTAS_INDIVIDUALES), renderer);
+    try {
+        hoja_de_muebles = Textura(RUTA_HOJA_DE_MUEBLES, renderer);
+    } catch (const std::runtime_error& error) {
+        std::cerr << "[Aviso] " << error.what() << std::endl;
+    }
 }
 
 Icono IconosDeItems::obtener_icono(TipoItem tipo, Calidad calidad) const {
@@ -97,6 +105,15 @@ Icono IconosDeItems::obtener_icono(TipoItem tipo, Calidad calidad) const {
     if (const auto sola = individuales.find(tipo); sola != individuales.end()) {
         return Icono{sola->second.ptr(), SDL_Rect{0, 0, 0, 0}};
     }
+    if (const DatosDeMueble* mueble = CatalogoDeMuebles::buscar(tipo); mueble != nullptr) {
+        return Icono{
+            hoja_de_muebles.ptr(),
+            SDL_Rect{
+                mueble->columna * LADO_DE_CASILLA_DE_LA_HOJA,
+                mueble->fila * LADO_DE_CASILLA_DE_LA_HOJA,
+                mueble->ancho * LADO_DE_CASILLA_DE_LA_HOJA,
+                mueble->alto * LADO_DE_CASILLA_DE_LA_HOJA}};
+    }
     return Icono{};
 }
 
@@ -108,11 +125,19 @@ void IconosDeItems::dibujar(
         return;
     }
     const bool recortado = icono.origen.w > 0 && icono.origen.h > 0;
+    SDL_Rect dentro = destino;
+    if (recortado && icono.origen.w != icono.origen.h) {
+        const int largo = std::max(icono.origen.w, icono.origen.h);
+        dentro.w = destino.w * icono.origen.w / largo;
+        dentro.h = destino.h * icono.origen.h / largo;
+        dentro.x = destino.x + (destino.w - dentro.w) / 2;
+        dentro.y = destino.y + (destino.h - dentro.h) / 2;
+    }
     SDL_RenderCopyEx(
         renderer,
         icono.textura,
         recortado ? &icono.origen : nullptr,
-        &destino,
+        &dentro,
         angulo,
         nullptr,
         espejo);

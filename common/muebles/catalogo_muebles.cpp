@@ -5,8 +5,9 @@
 namespace {
 
 // Generado a partir de Assets/TileSheets/furniture.png, recortado y nombrado a mano. Quedan afuera
-// los muebles de pared (cuadros, ventanas, apliques, carteles) y los dibujos de las lámparas
-// prendidas, que son la misma lámpara. Columnas, filas, anchos y altos en casillas de la hoja.
+// los muebles de pared (cuadros, ventanas, apliques, carteles), los dibujos de las lámparas
+// prendidas, que son la misma lámpara, y los dibujos que la hoja repite. Columnas, filas, anchos y
+// altos en casillas de la hoja.
 struct FilaDeMueble {
     const char* nombre;
     int columna;
@@ -171,12 +172,6 @@ const FilaDeMueble FILAS[] = {
     {"Mesa larga de madera (costado)", 19, 25, 2, 5, 4, TipoDeMueble::COMUN, 0, 0},
     {"Mesa larga gris (frente)", 21, 25, 5, 3, 2, TipoDeMueble::COMUN, 0, 0},
     {"Mesa larga gris (costado)", 26, 25, 2, 5, 4, TipoDeMueble::COMUN, 0, 0},
-    {"Mesa larga con mantel blanco II (frente)", 0, 30, 5, 3, 2, TipoDeMueble::COMUN, 0, 0},
-    {"Mesa larga con mantel blanco II (costado)", 5, 30, 2, 5, 4, TipoDeMueble::COMUN, 0, 0},
-    {"Mesa larga con mantel rojo II (frente)", 7, 30, 5, 3, 2, TipoDeMueble::COMUN, 0, 0},
-    {"Mesa larga con mantel rojo II (costado)", 12, 30, 2, 5, 4, TipoDeMueble::COMUN, 0, 0},
-    {"Mesa larga de madera II (frente)", 14, 30, 5, 3, 2, TipoDeMueble::COMUN, 0, 0},
-    {"Mesa larga de madera II (costado)", 19, 30, 2, 5, 4, TipoDeMueble::COMUN, 0, 0},
     {"Cactus en maceta", 24, 30, 1, 3, 1, TipoDeMueble::COMUN, 0, 0},
     {"Palmera en maceta alta", 25, 30, 1, 4, 1, TipoDeMueble::COMUN, 0, 0},
     {"Bonsai en maceta rosa", 26, 30, 3, 5, 1, TipoDeMueble::COMUN, 0, 0},
@@ -333,13 +328,10 @@ const FilaDeMueble FILAS[] = {
     {"Cama doble estrellada", 10, 64, 3, 4, 3, TipoDeMueble::CAMA, 13, 65},
     {"Cama doble a cuadros", 16, 64, 3, 4, 3, TipoDeMueble::CAMA, 19, 65},
     {"Cama doble pirata", 22, 64, 3, 4, 3, TipoDeMueble::CAMA, 25, 65},
-    {"Cama simple clara", 28, 64, 2, 4, 3, TipoDeMueble::CAMA, 30, 65},
     {"Cama simple de la selva", 0, 68, 2, 4, 3, TipoDeMueble::CAMA, 2, 69},
     {"Cama doble de la selva", 4, 68, 3, 4, 3, TipoDeMueble::CAMA, 7, 69},
     {"Cama roja de lujo", 10, 68, 3, 4, 3, TipoDeMueble::CAMA, 13, 69},
     {"Cama moderna", 16, 68, 3, 4, 3, TipoDeMueble::CAMA, 19, 69},
-    {"Cama pirata oscura", 22, 68, 3, 4, 3, TipoDeMueble::CAMA, 25, 69},
-    {"Cama simple de madera", 28, 68, 2, 4, 3, TipoDeMueble::CAMA, 30, 69},
     {"Cama doble de hojas", 0, 78, 3, 4, 3, TipoDeMueble::CAMA, 3, 79},
     {"Cama dorada", 6, 78, 3, 4, 3, TipoDeMueble::CAMA, 9, 79},
     {"Cama rosa", 12, 78, 3, 4, 3, TipoDeMueble::CAMA, 15, 79},
