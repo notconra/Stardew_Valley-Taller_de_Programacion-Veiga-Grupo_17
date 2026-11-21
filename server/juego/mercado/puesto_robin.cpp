@@ -17,7 +17,10 @@ PuestoRobin::PuestoRobin(const ConfiguracionMercadoServidor& config)
     for (const DatosDeMueble* mueble : CatalogoDeMuebles::muebles()) {
         std::string descripcion = "Mueble para la casa o la granja.";
         if (mueble->tipo == TipoDeMueble::ALFOMBRA) {
-            descripcion = "Alfombra para la casa o la granja. Se puede pisar.";
+            descripcion = mueble->siguiente != mueble->objeto
+                              ? "Alfombra para la casa o la granja. Se puede pisar. Colocada, se "
+                                "gira con clic derecho."
+                              : "Alfombra para la casa o la granja. Se puede pisar.";
         } else if (mueble->tipo == TipoDeMueble::CAMA) {
             descripcion = "Cama para la casa. Sirve para dormir.";
         } else if (mueble->siguiente != mueble->objeto) {
