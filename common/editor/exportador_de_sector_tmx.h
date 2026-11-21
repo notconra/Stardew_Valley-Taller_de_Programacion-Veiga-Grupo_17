@@ -2,6 +2,7 @@
 #define EXPORTADOR_DE_SECTOR_TMX_H
 
 #include <string>
+#include <vector>
 
 #include "catalogo_de_terrenos.h"
 #include "escritor_tmx.h"
@@ -48,6 +49,45 @@ private:
     static constexpr const char* ID_PUESTO_PIERRE = "pierre";
     static constexpr const char* ID_PUESTO_ROBIN = "robin";
 
+    // Tileset Casas (houses.png)
+    static constexpr uint32_t FIRST_GID_HOUSES = 3224;
+    static constexpr int COLUMNAS_TILESET_HOUSES = 17;
+    static constexpr int TOTAL_TILES_HOUSES = 459;
+    static constexpr int ANCHO_IMAGEN_HOUSES = 272;
+    static constexpr int ALTO_IMAGEN_HOUSES = 432;
+    static constexpr const char* RUTA_TILESET_HOUSES = "Assets/Buildings/houses.png";
+    static constexpr const char* NOMBRE_TILESET_HOUSES = "houses";
+
+    // Dimensiones y capas de la Cabaña (9x9)
+    static constexpr int ANCHO_CABANIA_CASILLAS = 9;
+    static constexpr int ALTO_CABANIA_CASILLAS = 9;
+    static constexpr int COLUMNA_DESPLAZAMIENTO_SPRITE_CABANIA = 1;
+    static constexpr int FILA_LIMITE_TECHO_CABANIA = 4;
+    static constexpr int FILA_PORCHE_CABANIA = 7;
+    static constexpr int FILA_ESCALONES_CABANIA = 8;
+    static constexpr int COLUMNA_INICIO_PORCHE_CABANIA = 1;
+    static constexpr int COLUMNA_FIN_PORCHE_CABANIA = 7;
+    static constexpr int COLUMNA_INICIO_ALFOMBRA_CABANIA = 4;
+    static constexpr int COLUMNA_FIN_ALFOMBRA_CABANIA = 6;
+
+    // Dimensiones y capas del Centro Comunitario (12x10)
+    static constexpr uint32_t FIRST_GID_PUEBLO = 2040;
+    static constexpr int COLUMNAS_TILESET_PUEBLO = 32;
+    static constexpr int FILA_ORIGEN_SPRITE_CENTRO_COMUNITARIO = 40;
+    static constexpr int ANCHO_CENTRO_COMUNITARIO_CASILLAS = 12;
+    static constexpr int ALTO_CENTRO_COMUNITARIO_CASILLAS = 10;
+    static constexpr int FILA_LIMITE_TECHO_CENTRO_COMUNITARIO = 5;
+    static constexpr int FILA_ACCESO_CENTRO_COMUNITARIO = 9;
+    static constexpr int COLUMNA_INICIO_ACCESO_CENTRO_COMUNITARIO = 4;
+    static constexpr int COLUMNA_FIN_ACCESO_CENTRO_COMUNITARIO = 7;
+
+    // Dimensiones y tiles de la Entrada a Caverna (3x4)
+    static constexpr int ANCHO_CAVERNA_CASILLAS = 3;
+    static constexpr int ALTO_CAVERNA_CASILLAS = 4;
+    static constexpr int COLUMNA_ORIGEN_SPRITE_CAVERNA = 8;
+    static constexpr int FILA_ORIGEN_SPRITE_CAVERNA = 65;
+    static constexpr int COLUMNAS_TILESET_EXTERIORES = 25;
+
     EscritorTMX escritor;
     SectorActual sector;
     const MapaEditable& mapa;
@@ -56,6 +96,17 @@ private:
     void configurar_tileset();
     void exportar_capas_de_tiles();
     void exportar_entidades();
+    void inyectar_tiles_de_cabania(
+        int origen_columna, int origen_fila, int total_columnas, int total_filas,
+        std::vector<uint32_t>& tiles_suelo, std::vector<uint32_t>& tiles_estructuras,
+        std::vector<uint32_t>& tiles_frente);
+    void inyectar_tiles_de_centro_comunitario(
+        int origen_columna, int origen_fila, int total_columnas, int total_filas,
+        std::vector<uint32_t>& tiles_suelo, std::vector<uint32_t>& tiles_estructuras,
+        std::vector<uint32_t>& tiles_frente);
+    void inyectar_tiles_de_entrada_caverna(
+        int origen_columna, int origen_fila, int total_columnas, int total_filas,
+        std::vector<uint32_t>& tiles_suelo, std::vector<uint32_t>& tiles_estructuras);
 
 public:
     ExportadorDeSectorTMX(

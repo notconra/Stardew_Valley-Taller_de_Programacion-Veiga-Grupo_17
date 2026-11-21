@@ -12,11 +12,6 @@ private:
         const MapaEditable& mapa, TipoEntidad tipo, const std::string& mensaje_error,
         int& columna_resultado, int& fila_resultado);
 
-private:
-    static void obtener_coordenadas_de_entidad_requerida(
-        const MapaEditable& mapa, TipoEntidad tipo, const std::string& mensaje_error,
-        int& columna_resultado, int& fila_resultado);
-
 public:
     static constexpr const char* NOMBRE_ARCHIVO_GRANJA = "granja.tmx";
     static constexpr const char* NOMBRE_ARCHIVO_PUEBLO = "pueblo.tmx";

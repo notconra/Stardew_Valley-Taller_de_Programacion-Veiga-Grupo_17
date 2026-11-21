@@ -19,12 +19,12 @@ struct InformacionEntidadTransicion {
 };
 
 static const std::map<std::string, InformacionEntidadTransicion> DESTINOS_A_ENTIDADES = {
-    {"FarmHouse2", {TipoEntidad::CABANIA, 1, 2, 3, 3}},
-    {"mercado", {TipoEntidad::CENTRO_COMUNITARIO, 0, 0, 4, 3}},
-    {"Town", {TipoEntidad::TRANSICION_PUEBLO, 0, 0, 1, 1}},
-    {"granja", {TipoEntidad::TRANSICION_GRANJA, 0, 0, 1, 1}},
-    {"caverna", {TipoEntidad::ENTRADA_CAVERNA, 0, 0, 1, 1}},
-    {"mina_1", {TipoEntidad::ENTRADA_CAVERNA, 0, 0, 1, 1}},
+    {"FarmHouse2", {TipoEntidad::CABANIA, 5, 7, 9, 9}},
+    {"mercado", {TipoEntidad::CENTRO_COMUNITARIO, 5, 9, 12, 10}},
+    {"Town", {TipoEntidad::TRANSICION_PUEBLO, 0, 0, 2, 2}},
+    {"granja", {TipoEntidad::TRANSICION_GRANJA, 0, 0, 2, 2}},
+    {"caverna", {TipoEntidad::ENTRADA_CAVERNA, 1, 3, 3, 4}},
+    {"mina_1", {TipoEntidad::ENTRADA_CAVERNA, 1, 3, 3, 4}},
     {"siguiente", {TipoEntidad::ESCALERA_NIVEL, 0, 0, 1, 1}}};
 
 static const std::map<std::string, TipoEntidad> IDENTIFICADORES_A_PUESTO = {
@@ -32,6 +32,45 @@ static const std::map<std::string, TipoEntidad> IDENTIFICADORES_A_PUESTO = {
     {"robin", TipoEntidad::PUESTO_ROBIN},
     {"pierre", TipoEntidad::PUESTO_PIERRE},
     {"clint", TipoEntidad::PUESTO_CLINT}};
+
+bool CargadorDeSectorTMX::es_tile_de_estructura_compuesta(uint32_t id_tile, SectorActual sector) {
+    if (sector == SectorActual::GRANJA) {
+        if (id_tile >= PRIMER_GID_TILES_CABANIA) {
+            return true;
+        }
+        if (id_tile >= PRIMER_GID_TILES_CAVERNA && id_tile <= ULTIMO_GID_TILES_CAVERNA) {
+            return true;
+        }
+    }
+    if (sector == SectorActual::PUEBLO && id_tile >= PRIMER_GID_TILES_CENTRO_COMUNITARIO &&
+        id_tile < ULTIMO_GID_TILES_CENTRO_COMUNITARIO) {
+        return true;
+    }
+    return false;
+}
+
+void CargadorDeSectorTMX::cargar_capa_en_mapa(
+    MapaEditable& mapa, const std::vector<int>& datos_capa, TipoCapa capa, SectorActual sector,
+    uint8_t propiedades_por_defecto) {
+    int cantidad_columnas = mapa.obtener_cantidad_de_columnas();
+    int cantidad_filas = mapa.obtener_cantidad_de_filas();
+    size_t indice_casilla = 0;
+    int fila = 0;
+    while (fila < cantidad_filas) {
+        int columna = 0;
+        while (columna < cantidad_columnas) {
+            if (indice_casilla < datos_capa.size()) {
+                uint32_t id_tile = static_cast<uint32_t>(datos_capa[indice_casilla]);
+                if (id_tile > 0 && !es_tile_de_estructura_compuesta(id_tile, sector)) {
+                    mapa.pintar_en_capa(capa, columna, fila, id_tile, propiedades_por_defecto);
+                }
+            }
+            indice_casilla++;
+            columna++;
+        }
+        fila++;
+    }
+}
 
 MapaEditable CargadorDeSectorTMX::cargar_sector(
     const std::string& ruta_archivo_tmx, SectorActual sector) {
@@ -42,12 +81,10 @@ MapaEditable CargadorDeSectorTMX::cargar_sector(
             "No se pudo leer el archivo TMX o sus dimensiones son invalidas: " + ruta_archivo_tmx);
     }
 
-    uint32_t id_tile_base = CatalogoDeTerrenos::TILE_PASTO;
+    uint32_t id_tile_base = CatalogoDeTerrenos::obtener_tile_base(sector);
     uint8_t propiedades_base = PropiedadDeCasilla::DECORABLE;
 
-    if (sector == SectorActual::CAVERNA) {
-        id_tile_base = CatalogoDeTerrenos::TILE_PISO_PIEDRA_CAVERNA;
-    } else if (sector == SectorActual::GRANJA) {
+    if (sector == SectorActual::GRANJA) {
         propiedades_base = PropiedadDeCasilla::CULTIVABLE | PropiedadDeCasilla::DECORABLE |
                            PropiedadDeCasilla::ADMITE_HIERBA;
     }
@@ -65,67 +102,23 @@ MapaEditable CargadorDeSectorTMX::cargar_sector(
             "El archivo TMX " + ruta_archivo_tmx + " no contiene la capa obligatoria '" +
             CAPA_SUELO_TMX + "'");
     }
-    size_t indice_suelo = 0;
-    int fila_suelo = 0;
-    while (fila_suelo < tamanio.alto_en_casillas) {
-        int columna_suelo = 0;
-        while (columna_suelo < tamanio.ancho_en_casillas) {
-            uint32_t id_tile = static_cast<uint32_t>(capa_suelo[indice_suelo]);
-            if (id_tile > 0) {
-                mapa.pintar_en_capa(
-                    TipoCapa::SUELO,
-                    columna_suelo,
-                    fila_suelo,
-                    id_tile,
-                    propiedades_base);
-            }
-            indice_suelo++;
-            columna_suelo++;
-        }
-        fila_suelo++;
-    }
+    cargar_capa_en_mapa(mapa, capa_suelo, TipoCapa::SUELO, sector, propiedades_base);
 
     // 2. Cargar Capa Buildings (Estructuras)
     std::vector<int> capa_estructuras = lector.cargar_capa(CAPA_ESTRUCTURAS_TMX);
     if (!capa_estructuras.empty()) {
-        size_t indice_estructuras = 0;
-        int fila_estructura = 0;
-        while (fila_estructura < tamanio.alto_en_casillas) {
-            int columna_estructura = 0;
-            while (columna_estructura < tamanio.ancho_en_casillas) {
-                uint32_t id_tile = static_cast<uint32_t>(capa_estructuras[indice_estructuras]);
-                if (id_tile > 0) {
-                    mapa.pintar_en_capa(
-                        TipoCapa::ESTRUCTURAS,
-                        columna_estructura,
-                        fila_estructura,
-                        id_tile,
-                        PropiedadDeCasilla::BLOQUEA);
-                }
-                indice_estructuras++;
-                columna_estructura++;
-            }
-            fila_estructura++;
-        }
+        cargar_capa_en_mapa(
+            mapa,
+            capa_estructuras,
+            TipoCapa::ESTRUCTURAS,
+            sector,
+            PropiedadDeCasilla::BLOQUEA);
     }
 
     // 3. Cargar Capa Front (Frente y Techos)
     std::vector<int> capa_frente = lector.cargar_capa(CAPA_FRENTE_TMX);
     if (!capa_frente.empty()) {
-        size_t indice_frente = 0;
-        int fila_frente = 0;
-        while (fila_frente < tamanio.alto_en_casillas) {
-            int columna_frente = 0;
-            while (columna_frente < tamanio.ancho_en_casillas) {
-                uint32_t id_tile = static_cast<uint32_t>(capa_frente[indice_frente]);
-                if (id_tile > 0) {
-                    mapa.pintar_en_capa(TipoCapa::FRENTE, columna_frente, fila_frente, id_tile, 0);
-                }
-                indice_frente++;
-                columna_frente++;
-            }
-            fila_frente++;
-        }
+        cargar_capa_en_mapa(mapa, capa_frente, TipoCapa::FRENTE, sector, 0);
     }
 
     // 4. Cargar Transiciones (vía Diccionario y Desplazamientos Simétricos)
