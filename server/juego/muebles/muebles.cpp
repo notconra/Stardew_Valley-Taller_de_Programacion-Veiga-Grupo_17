@@ -13,10 +13,16 @@ DefinicionDeObjeto Muebles::definicion_de(const DatosDeMueble& mueble) {
     definicion.producto = mueble.item;
     definicion.cantidad_minima = 1;
     definicion.cantidad_maxima = 1;
-    definicion.item_colocable = mueble.item;
+    if (CatalogoDeMuebles::buscar(mueble.item) == &mueble) {
+        definicion.item_colocable = mueble.item;
+    }
     definicion.ancho_en_casillas = mueble.ancho;
     definicion.alto_en_casillas = mueble.alto_del_pie;
-    definicion.mapas_permitidos = {MAPA_DE_LA_GRANJA, MAPA_DE_LA_CASA};
+    if (mueble.tipo == TipoDeMueble::CAMA) {
+        definicion.mapas_permitidos = {MAPA_DE_LA_CASA};
+    } else {
+        definicion.mapas_permitidos = {MAPA_DE_LA_GRANJA, MAPA_DE_LA_CASA};
+    }
     definicion.se_pisa = mueble.tipo == TipoDeMueble::ALFOMBRA;
     definicion.sirve_para_dormir = mueble.tipo == TipoDeMueble::CAMA;
     return definicion;
@@ -39,7 +45,7 @@ std::vector<DefinicionDeObjeto> Muebles::definiciones() {
     cama.sirve_para_dormir = true;
 
     std::vector<DefinicionDeObjeto> todas = {cama};
-    for (const DatosDeMueble& mueble : CatalogoDeMuebles::todos()) {
+    for (const DatosDeMueble& mueble : CatalogoDeMuebles::vistas()) {
         todas.push_back(definicion_de(mueble));
     }
     return todas;

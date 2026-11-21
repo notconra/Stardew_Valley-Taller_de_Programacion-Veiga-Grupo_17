@@ -51,6 +51,7 @@ struct AspectoDeObjeto {
     // servidor. Si el objeto va DEBAJO de los jugadores, se dibujan sobre ellos; si va CON los
     // jugadores, se dibujan junto con el resto del objeto, ordenado por su pie.
     int casillas_por_encima = 0;
+    bool espejado = false;
 };
 
 // Dibuja los objetos del mundo que manda el servidor. Es genérico, sólo conoce un mapa de

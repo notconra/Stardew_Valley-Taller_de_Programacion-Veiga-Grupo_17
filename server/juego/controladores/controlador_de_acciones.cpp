@@ -11,6 +11,7 @@
 #include "../acciones/accion_colocar.h"
 #include "../acciones/accion_cosechar.h"
 #include "../acciones/accion_dormir.h"
+#include "../acciones/accion_girar_mueble.h"
 #include "../acciones/accion_interactuar_cofre.h"
 #include "../acciones/accion_interactuar_mercado.h"
 #include "../acciones/accion_ordeniar_vaca.h"
@@ -35,6 +36,7 @@ ControladorDeAcciones::ControladorDeAcciones(
 
     acciones.push_back(std::make_unique<AccionUsarTransicion>());
     acciones.push_back(std::make_unique<AccionDormir>(camas_ocupadas));
+    acciones.push_back(std::make_unique<AccionGirarMueble>());
     acciones.push_back(std::make_unique<AccionOrdeniarVaca>());
     acciones.push_back(std::make_unique<AccionCosechar>());
     acciones.push_back(std::make_unique<AccionPicar>(

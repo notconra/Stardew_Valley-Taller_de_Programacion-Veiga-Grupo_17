@@ -707,8 +707,8 @@ void ConfiguracionServidor::cargar_precios_de_compra(const toml::table& tabla_me
     leer("COFRE", TipoItem::COFRE);
     const uint32_t por_casilla = static_cast<uint32_t>(
         lector_toml::leer_entero_en_rango(tabla, "MUEBLE_POR_CASILLA", seccion, 1, INT_MAX));
-    for (const DatosDeMueble& mueble : CatalogoDeMuebles::todos()) {
-        precios[mueble.item] = por_casilla * static_cast<uint32_t>(mueble.ancho * mueble.alto);
+    for (const DatosDeMueble* mueble : CatalogoDeMuebles::muebles()) {
+        precios[mueble->item] = por_casilla * static_cast<uint32_t>(mueble->ancho * mueble->alto);
     }
 }
 

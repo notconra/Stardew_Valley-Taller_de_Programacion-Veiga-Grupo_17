@@ -14,14 +14,16 @@ PuestoRobin::PuestoRobin(const ConfiguracionMercadoServidor& config)
     : PuestoDeMercado("robin", config, {}),
       cofre(producto(TipoItem::COFRE, "Cofre", "Cofre para guardar hasta 30 objetos distintos.")) {
     catalogo.push_back(cofre);
-    for (const DatosDeMueble& mueble : CatalogoDeMuebles::todos()) {
-        const std::string descripcion =
-            mueble.tipo == TipoDeMueble::ALFOMBRA
-                ? "Alfombra para la casa o la granja. Se puede pisar."
-                : (mueble.tipo == TipoDeMueble::CAMA
-                       ? "Cama para la casa o la granja. Sirve para dormir."
-                       : "Mueble para la casa o la granja.");
-        muebles.push_back(producto(mueble.item, mueble.nombre, descripcion));
+    for (const DatosDeMueble* mueble : CatalogoDeMuebles::muebles()) {
+        std::string descripcion = "Mueble para la casa o la granja.";
+        if (mueble->tipo == TipoDeMueble::ALFOMBRA) {
+            descripcion = "Alfombra para la casa o la granja. Se puede pisar.";
+        } else if (mueble->tipo == TipoDeMueble::CAMA) {
+            descripcion = "Cama para la casa. Sirve para dormir.";
+        } else if (mueble->siguiente != mueble->objeto) {
+            descripcion = "Mueble para la casa o la granja. Colocado, se gira con clic derecho.";
+        }
+        muebles.push_back(producto(mueble->item, mueble->nombre, descripcion));
         catalogo.push_back(muebles.back());
     }
 }

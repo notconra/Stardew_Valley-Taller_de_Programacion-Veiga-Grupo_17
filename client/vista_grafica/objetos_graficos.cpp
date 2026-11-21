@@ -135,7 +135,11 @@ std::map<TipoObjeto, AspectoDeObjeto> ObjetosGraficos::crear_aspectos_conocidos(
     cama.casillas_por_encima = 1;
     conocidos.emplace(TipoObjeto::CAMA, cama);
 
-    for (const DatosDeMueble& mueble : CatalogoDeMuebles::todos()) {
+    // Los muebles de Robin, cada uno con su dibujo de furniture.png. Lo que queda por encima de su
+    // pie se dibuja hacia arriba. Las alfombras van debajo de los jugadores y las camas como la
+    // cama inicial (el cuerpo debajo y la cabecera encima). El resto se ordena junto a los
+    // jugadores por su pie, así se puede pasar por detrás de una lámpara o de una biblioteca.
+    for (const DatosDeMueble& mueble : CatalogoDeMuebles::vistas()) {
         AspectoDeObjeto aspecto{{VarianteDeAspecto{
             RUTA_HOJA_DE_MUEBLES,
             SDL_Rect{
@@ -147,6 +151,7 @@ std::map<TipoObjeto, AspectoDeObjeto> ObjetosGraficos::crear_aspectos_conocidos(
         aspecto.ancho_en_casillas = mueble.ancho;
         aspecto.alto_en_casillas = mueble.alto;
         aspecto.casillas_por_encima = mueble.alto - mueble.alto_del_pie;
+        aspecto.espejado = mueble.espejado;
         aspecto.capa = mueble.tipo == TipoDeMueble::COMUN ? CapaDeObjeto::CON_LOS_JUGADORES
                                                           : CapaDeObjeto::DEBAJO_DE_LOS_JUGADORES;
         conocidos.emplace(mueble.objeto, aspecto);
@@ -266,10 +271,18 @@ void ObjetosGraficos::dibujar_filas(
         aspecto.ancho_en_casillas * tamano_en_pantalla,
         (ultima_fila - primera_fila) * tamano_en_pantalla};
 
+    const SDL_RendererFlip espejo = aspecto.espejado ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
     // Sin recorte (textura completa) se dibuja entera: solo pasa con casillas_por_encima = 0, que
     // es cuando se pide del principio al final.
     if (variante.origen.w <= 0) {
-        SDL_RenderCopy(renderer, texturas.at(variante.ruta_de_textura).ptr(), nullptr, &destino);
+        SDL_RenderCopyEx(
+            renderer,
+            texturas.at(variante.ruta_de_textura).ptr(),
+            nullptr,
+            &destino,
+            0.0,
+            nullptr,
+            espejo);
         return;
     }
     const int alto_de_fila = variante.origen.h / aspecto.alto_en_casillas;
@@ -278,7 +291,14 @@ void ObjetosGraficos::dibujar_filas(
         variante.origen.y + primera_fila * alto_de_fila,
         variante.origen.w,
         (ultima_fila - primera_fila) * alto_de_fila};
-    SDL_RenderCopy(renderer, texturas.at(variante.ruta_de_textura).ptr(), &origen, &destino);
+    SDL_RenderCopyEx(
+        renderer,
+        texturas.at(variante.ruta_de_textura).ptr(),
+        &origen,
+        &destino,
+        0.0,
+        nullptr,
+        espejo);
 }
 
 void ObjetosGraficos::dibujar_capa(
@@ -358,9 +378,12 @@ void ObjetosGraficos::dibujar_con_aspecto(
     }
 
     const VarianteDeAspecto& variante = elegir_variante(aspecto, objeto);
-    SDL_RenderCopy(
+    SDL_RenderCopyEx(
         renderer,
         texturas.at(variante.ruta_de_textura).ptr(),
         variante.origen.w > 0 ? &variante.origen : nullptr,
-        &destino);
+        &destino,
+        0.0,
+        nullptr,
+        aspecto.espejado ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE);
 }

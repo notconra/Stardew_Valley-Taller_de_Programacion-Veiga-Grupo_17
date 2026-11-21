@@ -65,10 +65,10 @@ CatalogoDeItems::CatalogoDeItems() {
     // Colocables
     registrar(TipoItem::COFRE, "Cofre", CategoriaItem::COLOCABLE, 50, true, 0, 0);
     registrar(TipoItem::CAMA, "Cama", CategoriaItem::COLOCABLE, 1, false, 1, 0);
-    for (const DatosDeMueble& mueble : CatalogoDeMuebles::todos()) {
+    for (const DatosDeMueble* mueble : CatalogoDeMuebles::muebles()) {
         registrar(
-            mueble.item,
-            mueble.nombre,
+            mueble->item,
+            mueble->nombre,
             CategoriaItem::COLOCABLE,
             MUEBLES_POR_RANURA,
             true,
