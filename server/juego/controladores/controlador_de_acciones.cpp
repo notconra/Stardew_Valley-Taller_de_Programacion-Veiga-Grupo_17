@@ -70,9 +70,17 @@ const Accion* ControladorDeAcciones::ejecutar(ContextoDeAccion& contexto) {
 
         contexto.personaje.accion_actual = accion->tipo();
         contexto.personaje.ticks_restantes_accion = accion->duracion_en_ticks();
+        if (se_anima(accion->tipo())) {
+            ++contexto.personaje.numero_de_accion;
+        }
         return accion.get();
     }
     return nullptr;
+}
+
+bool ControladorDeAcciones::se_anima(TipoAccion tipo) {
+    return tipo == TipoAccion::PICAR || tipo == TipoAccion::TRATAR_TIERRA ||
+           tipo == TipoAccion::ATACAR || tipo == TipoAccion::REGAR;
 }
 
 CasillaConsultada ControladorDeAcciones::consultar(

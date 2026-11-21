@@ -170,6 +170,16 @@ struct DonarMonedasAlLote {
     TipoLote lote = TipoLote::DINERO;
 };
 
+// La respuesta "Si" a la pregunta de dormir: acostarse en la cama de esa casilla (la misma que
+// vino en PreguntaDeDormir).
+struct Dormir {
+    uint32_t columna = 0;
+    uint32_t fila = 0;
+};
+
+// Levantarse de la cama antes de que pase el día (lo mismo que moverse estando acostado).
+struct Levantarse {};
+
 // Servidor a cliente
 
 struct MultijugadorActivado {
@@ -200,6 +210,14 @@ struct EstadoJugador {
     bool camina = false;
     uint8_t ranura_activa = 0;
     TipoAccion accion_actual = TipoAccion::NINGUNA;
+    // Lo que tiene en la ranura activa, para que los demás lo vean en su mano.
+    TipoItem item_en_mano = TipoItem::NINGUNO;
+    Calidad calidad_en_mano = Calidad::BASE;
+    // Cambia con cada acción que se anima (golpe, riego), así los demás ven también la que se
+    // repite con la misma herramienta. Da la vuelta al pasar de 255.
+    uint8_t numero_de_accion = 0;
+    // Acostado en una cama o desmayado, para que los demás lo vean así.
+    EstadoDeDescanso descanso = EstadoDeDescanso::DESPIERTO;
     uint8_t vida = VIDA_MAXIMA_JUGADOR;
     uint8_t energia = ENERGIA_MAXIMA_JUGADOR;
     // Los topes de las barras de este jugador: más altos con la mejora del lote de pelea.
@@ -624,5 +642,12 @@ struct LoteDelCentro {
 // cartel y lo deja seguir jugando o volver al lobby. Cada jugador que estaba en la partida lo
 // recibe una vez.
 struct CentroTerminado {};
+
+// El jugador hizo clic en una cama libre que tiene al alcance: el cliente le pregunta si quiere
+// dormir. La casilla es la que clickeó, y vuelve en Dormir si dice que sí.
+struct PreguntaDeDormir {
+    uint32_t columna = 0;
+    uint32_t fila = 0;
+};
 
 #endif
