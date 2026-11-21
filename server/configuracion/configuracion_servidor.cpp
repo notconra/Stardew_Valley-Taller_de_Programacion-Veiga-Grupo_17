@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "../../common/configuracion/lector_toml.h"
+#include "../../common/muebles/catalogo_muebles.h"
 
 #define MINUTOS_DE_UN_DIA_LENTO 20.0
 #define MINUTOS_DE_UN_DIA_MEDIO 14.0
@@ -703,8 +704,12 @@ void ConfiguracionServidor::cargar_precios_de_compra(const toml::table& tabla_me
     leer("SEMILLA_CEBOLLA_DE_VERDEO", TipoItem::SEMILLA_CEBOLLA_DE_VERDEO);
     leer("SEMILLA_CALABAZA", TipoItem::SEMILLA_CALABAZA);
 
-    // Muebles (Robin).
     leer("COFRE", TipoItem::COFRE);
+    const uint32_t por_casilla = static_cast<uint32_t>(
+        lector_toml::leer_entero_en_rango(tabla, "MUEBLE_POR_CASILLA", seccion, 1, INT_MAX));
+    for (const DatosDeMueble& mueble : CatalogoDeMuebles::todos()) {
+        precios[mueble.item] = por_casilla * static_cast<uint32_t>(mueble.ancho * mueble.alto);
+    }
 }
 
 void ConfiguracionServidor::cargar_precios_de_venta(const toml::table& tabla_mercado) {

@@ -5,7 +5,7 @@
 
 // Identificadores de ítems. Para agregar un ítem nuevo alcanza con sumar un valor acá y
 // registrarlo en el catálogo del servidor (server/juego/objetos/catalogo_de_items.cpp).
-enum class TipoItem : uint8_t {
+enum class TipoItem : uint16_t {
     NINGUNO = 0,
     SEMILLA_PAPA = 1,
     SEMILLA_FRUTILLA = 2,
