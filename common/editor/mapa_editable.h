@@ -8,6 +8,7 @@
 
 #include "capa_del_mapa.h"
 #include "casilla_del_mapa.h"
+#include "catalogo_de_estampas.h"
 #include "entidad_del_mapa.h"
 #include "tipo_entidad.h"
 
@@ -42,6 +43,18 @@ public:
     void pintar_zona(
         int columna_inicio, int fila_inicio, int ancho, int alto, uint32_t id_tile,
         uint8_t propiedades);
+    static constexpr int ALTO_MURO_NORTE_CASILLAS = 4;
+    static constexpr int ALTO_MURO_SUR_CASILLAS = 2;
+    static constexpr int ANCHO_MURO_LATERAL_CASILLAS = 1;
+
+    bool columna_ocupada_por_transicion_norte(int columna) const;
+    bool columna_ocupada_por_transicion_sur(int columna) const;
+    bool fila_ocupada_por_transicion_oeste(int fila) const;
+    bool fila_ocupada_por_transicion_este(int fila) const;
+    bool casilla_ocupada_por_hueco_caverna(int columna, int fila) const;
+
+    void estampar(const DefinicionEstampa& estampa, int columna_origen, int fila_origen);
+    void generar_muro_perimetral_granja();
 
     void agregar_propiedad_a_casilla(int columna, int fila, uint8_t propiedad);
     void quitar_propiedad_de_casilla(int columna, int fila, uint8_t propiedad);

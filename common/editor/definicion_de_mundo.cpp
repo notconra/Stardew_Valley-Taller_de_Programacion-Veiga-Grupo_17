@@ -75,14 +75,14 @@ DefinicionDeMundo DefinicionDeMundo::crear_mundo_por_defecto(const std::string& 
     MapaEditable granja(
         ANCHO_MAPA_EXTERIORES,
         ANCHO_MAPA_EXTERIORES,
-        CatalogoDeTerrenos::TILE_PASTO,
+        CatalogoDeTerrenos::obtener_tile_base(SectorActual::GRANJA),
         PropiedadDeCasilla::CULTIVABLE | PropiedadDeCasilla::DECORABLE |
             PropiedadDeCasilla::ADMITE_HIERBA);
 
     MapaEditable pueblo(
         ANCHO_MAPA_EXTERIORES,
         ANCHO_MAPA_EXTERIORES,
-        CatalogoDeTerrenos::TILE_PASTO,
+        CatalogoDeTerrenos::obtener_tile_base(SectorActual::PUEBLO),
         PropiedadDeCasilla::DECORABLE);
 
     std::vector<MapaEditable> niveles(
@@ -90,21 +90,22 @@ DefinicionDeMundo DefinicionDeMundo::crear_mundo_por_defecto(const std::string& 
         MapaEditable(
             ANCHO_MAPA_MAZMORRA,
             ANCHO_MAPA_MAZMORRA,
-            CatalogoDeTerrenos::TILE_PISO_PIEDRA_CAVERNA,
+            CatalogoDeTerrenos::obtener_tile_base(SectorActual::CAVERNA),
             PropiedadDeCasilla::DECORABLE));
 
     // Configuración inicial de la Granja
-    granja.ubicar_entidad(TipoEntidad::CABANIA, 10, 8, 3, 3);
-    granja.ubicar_entidad(TipoEntidad::ENTRADA_CAVERNA, 26, 4, 2, 2);
+    granja.ubicar_entidad(TipoEntidad::CABANIA, 6, 5, 9, 9);
+    granja.ubicar_entidad(TipoEntidad::ENTRADA_CAVERNA, 22, 0, 3, 4);
     granja.ubicar_entidad(TipoEntidad::TRANSICION_PUEBLO, 33, 16, 2, 2);
+    granja.generar_muro_perimetral_granja();
 
     // Configuración inicial del Pueblo
     pueblo.ubicar_entidad(TipoEntidad::TRANSICION_GRANJA, 0, 16, 2, 2);
-    pueblo.ubicar_entidad(TipoEntidad::PUESTO_MARNIE, 6, 12, 2, 2);
-    pueblo.ubicar_entidad(TipoEntidad::PUESTO_CLINT, 28, 12, 2, 2);
-    pueblo.ubicar_entidad(TipoEntidad::PUESTO_PIERRE, 14, 22, 2, 2);
-    pueblo.ubicar_entidad(TipoEntidad::PUESTO_ROBIN, 28, 22, 2, 2);
-    pueblo.ubicar_entidad(TipoEntidad::CENTRO_COMUNITARIO, 16, 4, 4, 3);
+    pueblo.ubicar_entidad(TipoEntidad::CENTRO_COMUNITARIO, 11, 3, 12, 10);
+    pueblo.ubicar_entidad(TipoEntidad::PUESTO_MARNIE, 6, 18, 2, 2);
+    pueblo.ubicar_entidad(TipoEntidad::PUESTO_PIERRE, 12, 18, 2, 2);
+    pueblo.ubicar_entidad(TipoEntidad::PUESTO_CLINT, 18, 18, 2, 2);
+    pueblo.ubicar_entidad(TipoEntidad::PUESTO_ROBIN, 24, 18, 2, 2);
 
     // Configuración inicial de los 10 niveles de Mazmorra
     size_t indice_nivel = 0;

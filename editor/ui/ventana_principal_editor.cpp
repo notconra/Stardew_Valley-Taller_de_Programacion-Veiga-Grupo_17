@@ -61,6 +61,7 @@ void VentanaPrincipalEditor::inicializar_interfaz() {
     area_desplazamiento = new QScrollArea(this);
     area_desplazamiento->setWidget(lienzo);
     area_desplazamiento->setWidgetResizable(false);
+    area_desplazamiento->setAlignment(Qt::AlignCenter);
     area_desplazamiento->setStyleSheet("background-color: #222222;");
     setCentralWidget(area_desplazamiento);
 
@@ -244,7 +245,7 @@ void VentanaPrincipalEditor::conectar_senales() {
         this,
         &VentanaPrincipalEditor::ejecutar_validacion);
     connect(lienzo, &LienzoDeEdicion::entidad_seleccionada_cambio, this, [this](int id) {
-        paleta->habilitar_boton_eliminar(id >= 0);
+        panel_validacion->habilitar_boton_eliminar(id >= 0);
     });
 
     connect(
@@ -259,12 +260,22 @@ void VentanaPrincipalEditor::conectar_senales() {
         &LienzoDeEdicion::establecer_tile);
     connect(
         paleta,
-        &PaletaDeHerramientas::entidad_cambiada,
+        &PaletaDeHerramientas::estampa_seleccionada,
+        lienzo,
+        &LienzoDeEdicion::establecer_estampa_a_colocar);
+    connect(
+        paleta,
+        &PaletaDeHerramientas::generar_perimetro_solicitado,
+        this,
+        &VentanaPrincipalEditor::generar_muro_perimetral_granja);
+    connect(
+        panel_validacion,
+        &PanelDeValidacion::entidad_cambiada,
         lienzo,
         &LienzoDeEdicion::establecer_entidad_a_colocar);
     connect(
-        paleta,
-        &PaletaDeHerramientas::eliminar_solicitado,
+        panel_validacion,
+        &PanelDeValidacion::eliminar_solicitado,
         lienzo,
         &LienzoDeEdicion::eliminar_entidad_seleccionada);
 
@@ -282,17 +293,20 @@ void VentanaPrincipalEditor::actualizar_sector_en_pantalla() {
             &mundo_actual.obtener_sector_granja_modificable(),
             SectorActual::GRANJA);
         paleta->actualizar_sector(SectorActual::GRANJA);
+        panel_validacion->actualizar_sector(SectorActual::GRANJA);
     } else if (indice == 1) {
         lienzo->establecer_mapa(
             &mundo_actual.obtener_sector_pueblo_modificable(),
             SectorActual::PUEBLO);
         paleta->actualizar_sector(SectorActual::PUEBLO);
+        panel_validacion->actualizar_sector(SectorActual::PUEBLO);
     } else if (indice >= 2) {
         size_t indice_mazmorra = static_cast<size_t>(indice - 2);
         lienzo->establecer_mapa(
             &mundo_actual.obtener_nivel_mazmorra_modificable(indice_mazmorra),
             SectorActual::CAVERNA);
         paleta->actualizar_sector(SectorActual::CAVERNA);
+        panel_validacion->actualizar_sector(SectorActual::CAVERNA);
     }
     actualizar_etiqueta_dimensiones();
 }
@@ -531,6 +545,19 @@ void VentanaPrincipalEditor::abrir_dialogo_redimensionar() {
                     .arg(nuevas_columnas)
                     .arg(nuevas_filas),
                 4000);
+        }
+    }
+}
+
+void VentanaPrincipalEditor::generar_muro_perimetral_granja() {
+    int indice_sector = combo_sectores->currentIndex();
+    if (indice_sector == 0) {
+        MapaEditable* mapa_actual_sector = obtener_mapa_activo();
+        if (mapa_actual_sector != nullptr) {
+            mapa_actual_sector->generar_muro_perimetral_granja();
+            lienzo->update();
+            ejecutar_validacion();
+            statusBar()->showMessage("Perimetro de muros de troncos generado con exito.", 3000);
         }
     }
 }

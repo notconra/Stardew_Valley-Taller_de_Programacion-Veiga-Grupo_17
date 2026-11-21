@@ -19,6 +19,23 @@
 #include "tipo_entidad.h"
 #include "tipo_herramienta_editor.h"
 
+static constexpr int ALFA_COLOR_FONDO_ENTIDAD = 45;
+static constexpr int ALFA_COLOR_TRANSLUCIDO_ENTIDAD = 95;
+static constexpr int ALFA_COLOR_FONDO_ETIQUETA = 175;
+static constexpr int ALFA_COLOR_FANTASMA = 110;
+static constexpr int ALFA_COLOR_ARRASTRE = 130;
+static constexpr int ALFA_COLOR_ESTAMPA = 120;
+static constexpr int GROSOR_BORDE_SELECCIONADO = 3;
+static constexpr int GROSOR_BORDE_NORMAL = 2;
+static constexpr int GROSOR_BORDE_PUERTA = 2;
+
+static constexpr int COLUMNA_PUERTA_CABANIA = 5;
+static constexpr int FILA_PUERTA_CABANIA = 7;
+static constexpr int COLUMNA_PUERTA_CAVERNA = 1;
+static constexpr int FILA_PUERTA_CAVERNA = 3;
+static constexpr int COLUMNA_PUERTA_CENTRO_COMUNITARIO = 5;
+static constexpr int ANCHO_PUERTA_CENTRO_COMUNITARIO = 2;
+
 LienzoDeEdicion::LienzoDeEdicion(QWidget* padre)
     : QWidget(padre),
       mapa_actual(nullptr),
@@ -26,13 +43,24 @@ LienzoDeEdicion::LienzoDeEdicion(QWidget* padre)
       capa_activa(TipoCapa::SUELO),
       tamano_casilla_px(28),
       modo_actual(ModoEditor::TERRENO),
-      id_tile_actual(CatalogoDeTerrenos::TILE_PASTO),
+      id_tile_actual(CatalogoDeTerrenos::obtener_tile_base(SectorActual::GRANJA)),
       propiedades_actuales(
           PropiedadDeCasilla::CULTIVABLE | PropiedadDeCasilla::DECORABLE |
           PropiedadDeCasilla::ADMITE_HIERBA),
       entidad_a_colocar(TipoEntidad::CABANIA),
-      pixmap_tileset(QString::fromStdString(CatalogoDeTerrenos::RUTA_TILESET_EXTERIORES)),
+      estampa_a_colocar(TipoEstampa::ESTANQUE_NATURAL),
+      pixmap_tileset(QString::fromStdString(
+          CatalogoDeTerrenos::obtener_tileset_sector(SectorActual::GRANJA).ruta_imagen)),
       datos_tileset(CatalogoDeTerrenos::obtener_tileset_sector(SectorActual::GRANJA)),
+      pixmap_cabania(QString(RUTA_SPRITE_CABANIA)),
+      pixmap_exteriores_entidades(QString(RUTA_SPRITE_EXTERIORES)),
+      pixmap_caverna_entidades(QString(RUTA_SPRITE_CAVERNA)),
+      pixmap_pueblo_entidades(QString(RUTA_SPRITE_PUEBLO)),
+      pixmap_retrato_marnie(QString(RUTA_RETRATO_MARNIE)),
+      pixmap_retrato_clint(QString(RUTA_RETRATO_CLINT)),
+      pixmap_retrato_pierre(QString(RUTA_RETRATO_PIERRE)),
+      pixmap_retrato_robin(QString(RUTA_RETRATO_ROBIN)),
+      mapa_visual_entidades(),
       identificador_entidad_seleccionada(-1),
       arrastrando_entidad(false),
       columna_arrastre_actual(0),
@@ -41,6 +69,7 @@ LienzoDeEdicion::LienzoDeEdicion(QWidget* padre)
       fila_hover(-1),
       mouse_presionado(false) {
     setMouseTracking(true);
+    inicializar_catalogo_visual_entidades();
     actualizar_tamano_del_lienzo();
 }
 
@@ -84,6 +113,12 @@ void LienzoDeEdicion::establecer_modo(ModoEditor nuevo_modo) {
 void LienzoDeEdicion::establecer_tile(uint32_t nuevo_id_tile, uint8_t nuevas_propiedades) {
     id_tile_actual = nuevo_id_tile;
     propiedades_actuales = nuevas_propiedades;
+}
+
+void LienzoDeEdicion::establecer_estampa_a_colocar(TipoEstampa nueva_estampa) {
+    estampa_a_colocar = nueva_estampa;
+    modo_actual = ModoEditor::ESTAMPAR;
+    update();
 }
 
 void LienzoDeEdicion::establecer_entidad_a_colocar(TipoEntidad nueva_entidad) {
@@ -205,6 +240,101 @@ static const std::map<TipoEntidad, QColor> COLORES_ENTIDADES = {
     {TipoEntidad::TRANSICION_PUEBLO, QColor(30, 144, 255)},
     {TipoEntidad::TRANSICION_GRANJA, QColor(50, 168, 82)}};
 
+void LienzoDeEdicion::inicializar_catalogo_visual_entidades() {
+    mapa_visual_entidades = {
+        {TipoEntidad::CABANIA, {&pixmap_cabania, QRect(16, 0, 144, 144)}},
+        {TipoEntidad::ENTRADA_CAVERNA, {&pixmap_exteriores_entidades, QRect(128, 1040, 48, 64)}},
+        {TipoEntidad::CENTRO_COMUNITARIO, {&pixmap_pueblo_entidades, QRect(0, 640, 192, 160)}},
+        {TipoEntidad::ESCALERA_NIVEL, {&pixmap_caverna_entidades, QRect(208, 160, 16, 16)}},
+        {TipoEntidad::SALIDA_CAVERNA, {&pixmap_caverna_entidades, QRect(48, 112, 16, 16)}},
+        {TipoEntidad::PUESTO_MARNIE, {&pixmap_retrato_marnie, QRect(0, 0, 64, 64)}},
+        {TipoEntidad::PUESTO_CLINT, {&pixmap_retrato_clint, QRect(0, 0, 64, 64)}},
+        {TipoEntidad::PUESTO_PIERRE, {&pixmap_retrato_pierre, QRect(0, 0, 64, 64)}},
+        {TipoEntidad::PUESTO_ROBIN, {&pixmap_retrato_robin, QRect(0, 0, 64, 64)}}};
+}
+
+void LienzoDeEdicion::dibujar_entidad(
+    QPainter& pintor, const EntidadDelMapa& entidad, const QRect& rectangulo_entidad,
+    bool es_seleccionada) {
+    TipoEntidad tipo_entidad = entidad.obtener_tipo();
+    auto iterador_color = COLORES_ENTIDADES.find(tipo_entidad);
+    QColor color_base =
+        iterador_color != COLORES_ENTIDADES.end() ? iterador_color->second : QColor(100, 100, 100);
+
+    QColor color_fondo = color_base;
+    color_fondo.setAlpha(ALFA_COLOR_FONDO_ENTIDAD);
+    pintor.fillRect(rectangulo_entidad, color_fondo);
+
+    if (tipo_entidad == TipoEntidad::ENTRADA_CAVERNA) {
+        int x_hueco = rectangulo_entidad.x() + tamano_casilla_px;
+        int y_hueco = rectangulo_entidad.y() + tamano_casilla_px;
+        int ancho_hueco = tamano_casilla_px;
+        int alto_hueco = rectangulo_entidad.height() - tamano_casilla_px;
+        pintor.fillRect(QRect(x_hueco, y_hueco, ancho_hueco, alto_hueco), QColor(0, 0, 0));
+    }
+
+    auto iterador_visual = mapa_visual_entidades.find(tipo_entidad);
+    if (iterador_visual != mapa_visual_entidades.end() &&
+        iterador_visual->second.pixmap != nullptr && !iterador_visual->second.pixmap->isNull()) {
+        pintor.drawPixmap(
+            rectangulo_entidad,
+            *iterador_visual->second.pixmap,
+            iterador_visual->second.rectangulo_origen);
+    } else {
+        QColor color_translucido = color_base;
+        color_translucido.setAlpha(ALFA_COLOR_TRANSLUCIDO_ENTIDAD);
+        pintor.fillRect(rectangulo_entidad, color_translucido);
+    }
+
+    // Indicador punteado de puerta o entrada para estructuras principales
+    if (tipo_entidad == TipoEntidad::CABANIA || tipo_entidad == TipoEntidad::CENTRO_COMUNITARIO ||
+        tipo_entidad == TipoEntidad::ENTRADA_CAVERNA) {
+        int origen_columna = 0;
+        int origen_fila = 0;
+        entidad.consultar_origen(origen_columna, origen_fila);
+        int ancho_casillas = 0;
+        int alto_casillas = 0;
+        entidad.consultar_dimensiones(ancho_casillas, alto_casillas);
+
+        int columna_puerta = origen_columna + (tipo_entidad == TipoEntidad::ENTRADA_CAVERNA
+                                                   ? COLUMNA_PUERTA_CAVERNA
+                                                   : COLUMNA_PUERTA_CABANIA);
+        int fila_puerta = origen_fila + (tipo_entidad == TipoEntidad::CABANIA ? FILA_PUERTA_CABANIA
+                                                                              : alto_casillas - 1);
+        int ancho_puerta =
+            (tipo_entidad == TipoEntidad::CENTRO_COMUNITARIO) ? ANCHO_PUERTA_CENTRO_COMUNITARIO : 1;
+        QRect rectangulo_puerta(
+            columna_puerta * tamano_casilla_px,
+            fila_puerta * tamano_casilla_px,
+            ancho_puerta * tamano_casilla_px,
+            tamano_casilla_px);
+        pintor.setPen(QPen(QColor(0, 255, 127), GROSOR_BORDE_PUERTA, Qt::DashLine));
+        pintor.drawRect(rectangulo_puerta);
+    }
+
+    if (es_seleccionada) {
+        pintor.setPen(QPen(QColor(255, 215, 0), GROSOR_BORDE_SELECCIONADO));
+    } else {
+        pintor.setPen(QPen(color_base, GROSOR_BORDE_NORMAL));
+    }
+    pintor.drawRect(rectangulo_entidad);
+
+    int alto_etiqueta = tamano_casilla_px > 24 ? 16 : 12;
+    QRect rectangulo_etiqueta(
+        rectangulo_entidad.x(),
+        rectangulo_entidad.bottom() - alto_etiqueta,
+        rectangulo_entidad.width(),
+        alto_etiqueta);
+    pintor.fillRect(rectangulo_etiqueta, QColor(0, 0, 0, ALFA_COLOR_FONDO_ETIQUETA));
+    pintor.setPen(Qt::white);
+    QFont fuente = pintor.font();
+    fuente.setBold(true);
+    fuente.setPointSize(tamano_casilla_px > 24 ? 8 : 6);
+    pintor.setFont(fuente);
+    std::string texto_entidad = ConfiguracionEntidadesEditor::obtener_nombre(tipo_entidad);
+    pintor.drawText(rectangulo_etiqueta, Qt::AlignCenter, QString::fromStdString(texto_entidad));
+}
+
 void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
     (void)evento;
     QPainter pintor(this);
@@ -229,12 +359,11 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
     // 3. Capa Estructuras (Buildings) con sprites reales
     dibujar_capa_de_tiles(pintor, TipoCapa::ESTRUCTURAS, cantidad_columnas, cantidad_filas);
 
-    // 4. Dibujar Entidades Colocadas como zonas translúcidas de objeto TMX
+    // 4. Dibujar Entidades Colocadas con sus sprites reales
     std::vector<EntidadDelMapa> entidades = mapa_actual->listar_todas_las_entidades();
     size_t indice_entidad = 0;
     while (indice_entidad < entidades.size()) {
         uint32_t id_entidad = entidades[indice_entidad].obtener_identificador();
-        TipoEntidad tipo_entidad = entidades[indice_entidad].obtener_tipo();
         int origen_columna = 0;
         int origen_fila = 0;
         entidades[indice_entidad].consultar_origen(origen_columna, origen_fila);
@@ -248,36 +377,11 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
             ancho_casillas * tamano_casilla_px,
             alto_casillas * tamano_casilla_px);
 
-        auto iterador_color = COLORES_ENTIDADES.find(tipo_entidad);
-        QColor color_base = iterador_color != COLORES_ENTIDADES.end() ? iterador_color->second
-                                                                      : QColor(100, 100, 100);
-        QColor color_translúcido = color_base;
-        color_translúcido.setAlpha(85);
-        pintor.fillRect(rectangulo_entidad, color_translúcido);
-
-        // Borde de la entidad
         bool es_seleccionada =
             (identificador_entidad_seleccionada >= 0 &&
              static_cast<uint32_t>(identificador_entidad_seleccionada) == id_entidad);
-        if (es_seleccionada) {
-            pintor.setPen(QPen(QColor(255, 215, 0), 3));
-        } else {
-            pintor.setPen(QPen(color_base, 2));
-        }
-        pintor.drawRect(rectangulo_entidad);
 
-        // Texto de la entidad
-        pintor.setPen(Qt::white);
-        QFont fuente = pintor.font();
-        fuente.setBold(true);
-        fuente.setPointSize(tamano_casilla_px > 24 ? 9 : 7);
-        pintor.setFont(fuente);
-        std::string texto_entidad = obtener_nombre_entidad(tipo_entidad);
-        pintor.drawText(
-            rectangulo_entidad,
-            Qt::AlignCenter | Qt::TextWordWrap,
-            QString::fromStdString(texto_entidad));
-
+        dibujar_entidad(pintor, entidades[indice_entidad], rectangulo_entidad, es_seleccionada);
         indice_entidad++;
     }
 
@@ -310,10 +414,36 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
         pintor.setPen(QPen(QColor(255, 255, 255, 220), 2));
         pintor.drawRect(rectangulo_hover);
     } else if (
+        modo_actual == ModoEditor::ESTAMPAR && columna_hover >= 0 && fila_hover >= 0 &&
+        mapa_actual != nullptr) {
+        DefinicionEstampa estampa = CatalogoDeEstampas::obtener_estampa(estampa_a_colocar);
+        if (estampa.ancho_casillas > 0 && estampa.alto_casillas > 0) {
+            bool dentro = mapa_actual->esta_dentro(columna_hover, fila_hover) &&
+                          mapa_actual->esta_dentro(
+                              columna_hover + estampa.ancho_casillas - 1,
+                              fila_hover + estampa.alto_casillas - 1);
+            QRect rectangulo_estampa(
+                columna_hover * tamano_casilla_px,
+                fila_hover * tamano_casilla_px,
+                estampa.ancho_casillas * tamano_casilla_px,
+                estampa.alto_casillas * tamano_casilla_px);
+            QColor color_estampa = dentro ? QColor(0, 191, 255, ALFA_COLOR_ESTAMPA)
+                                          : QColor(255, 0, 0, ALFA_COLOR_ESTAMPA);
+            pintor.fillRect(rectangulo_estampa, color_estampa);
+            pintor.setPen(QPen(
+                dentro ? QColor(0, 191, 255) : QColor(255, 0, 0),
+                GROSOR_BORDE_NORMAL,
+                Qt::DashLine));
+            pintor.drawRect(rectangulo_estampa);
+        }
+    } else if (
         modo_actual == ModoEditor::COLOCAR_ENTIDAD && columna_hover >= 0 && fila_hover >= 0) {
         int ancho_defecto = 1;
         int alto_defecto = 1;
-        consultar_dimensiones_por_defecto_entidad(entidad_a_colocar, ancho_defecto, alto_defecto);
+        ConfiguracionEntidadesEditor::consultar_dimensiones_por_defecto(
+            entidad_a_colocar,
+            ancho_defecto,
+            alto_defecto);
         bool ubicable = mapa_actual->entidad_puede_ubicarse_en(
             entidad_a_colocar,
             columna_hover,
@@ -326,9 +456,10 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
             fila_hover * tamano_casilla_px,
             ancho_defecto * tamano_casilla_px,
             alto_defecto * tamano_casilla_px);
-        QColor color_fantasma = ubicable ? QColor(0, 255, 0, 110) : QColor(255, 0, 0, 110);
+        QColor color_fantasma = ubicable ? QColor(0, 255, 0, ALFA_COLOR_FANTASMA)
+                                         : QColor(255, 0, 0, ALFA_COLOR_FANTASMA);
         pintor.fillRect(rectangulo_fantasma, color_fantasma);
-        pintor.setPen(QPen(ubicable ? QColor(0, 255, 0) : QColor(255, 0, 0), 2));
+        pintor.setPen(QPen(ubicable ? QColor(0, 255, 0) : QColor(255, 0, 0), GROSOR_BORDE_NORMAL));
         pintor.drawRect(rectangulo_fantasma);
     } else if (
         modo_actual == ModoEditor::SELECCIONAR_MOVER && arrastrando_entidad &&
@@ -353,9 +484,11 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
                 fila_arrastre_actual * tamano_casilla_px,
                 ancho_ent * tamano_casilla_px,
                 alto_ent * tamano_casilla_px);
-            QColor color_arrastre = ubicable ? QColor(0, 255, 0, 130) : QColor(255, 0, 0, 130);
+            QColor color_arrastre = ubicable ? QColor(0, 255, 0, ALFA_COLOR_ARRASTRE)
+                                             : QColor(255, 0, 0, ALFA_COLOR_ARRASTRE);
             pintor.fillRect(rectangulo_arrastre, color_arrastre);
-            pintor.setPen(QPen(ubicable ? QColor(0, 255, 0) : QColor(255, 0, 0), 2));
+            pintor.setPen(
+                QPen(ubicable ? QColor(0, 255, 0) : QColor(255, 0, 0), GROSOR_BORDE_NORMAL));
             pintor.drawRect(rectangulo_arrastre);
         }
     }
@@ -376,10 +509,18 @@ void LienzoDeEdicion::mousePressEvent(QMouseEvent* evento) {
         mouse_presionado = true;
         if (modo_actual == ModoEditor::TERRENO) {
             pintar_casilla_en_posicion(columna, fila);
+        } else if (modo_actual == ModoEditor::ESTAMPAR) {
+            DefinicionEstampa definicion_estampa =
+                CatalogoDeEstampas::obtener_estampa(estampa_a_colocar);
+            if (definicion_estampa.tipo != TipoEstampa::NINGUNA) {
+                mapa_actual->estampar(definicion_estampa, columna, fila);
+                emit mapa_modificado();
+                update();
+            }
         } else if (modo_actual == ModoEditor::COLOCAR_ENTIDAD) {
             int ancho_defecto = 1;
             int alto_defecto = 1;
-            consultar_dimensiones_por_defecto_entidad(
+            ConfiguracionEntidadesEditor::consultar_dimensiones_por_defecto(
                 entidad_a_colocar,
                 ancho_defecto,
                 alto_defecto);

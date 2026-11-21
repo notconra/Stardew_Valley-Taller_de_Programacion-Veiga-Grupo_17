@@ -51,6 +51,7 @@ private slots:
     void actualizar_coordenadas(int columna, int fila);
     void ejecutar_validacion();
     void abrir_dialogo_redimensionar();
+    void generar_muro_perimetral_granja();
 
 public:
     explicit VentanaPrincipalEditor(QWidget* padre = nullptr);
