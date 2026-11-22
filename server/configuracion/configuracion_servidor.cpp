@@ -586,6 +586,13 @@ void ConfiguracionServidor::cargar_mazmorra(const toml::table& archivo_toml) {
             config.por_nivel,
             0,
             INT_MAX);
+        config.lanzallamas_por_nivel = lector_toml::leer_entero_opcional(
+            *trampas,
+            "lanzallamas_por_nivel",
+            seccion_trampas,
+            config.lanzallamas_por_nivel,
+            0,
+            INT_MAX);
         config.danio = lector_toml::leer_entero_opcional(
             *trampas,
             "danio",

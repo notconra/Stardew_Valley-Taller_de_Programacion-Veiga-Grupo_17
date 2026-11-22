@@ -610,6 +610,7 @@ rotura = "Assets/sfx/pico_rotura.wav"
 
 [sonido.trampas]
 activar = "Assets/sfx/activar_trampa_pinches.wav"
+lanzallamas = "Assets/sfx/activar_trampa_fuego.wav"
 
 [sonido.jugador]
 danio = "Assets/sfx/recibir_dano.wav"

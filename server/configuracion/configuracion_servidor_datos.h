@@ -238,6 +238,7 @@ struct ConfiguracionSkullsServidor {
 // activación a cada jugador parado encima.
 struct ConfiguracionTrampasServidor {
     int por_nivel = 6;
+    int lanzallamas_por_nivel = 4;
     int danio = 10;
     int ticks_inactiva = 90;
     int ticks_activa = 30;

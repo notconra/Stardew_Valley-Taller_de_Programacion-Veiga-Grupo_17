@@ -195,6 +195,7 @@ distancia_de_ataque = 4
 # ticks_activa afuera; a cada jugador parado encima le sacan "danio" una vez por activación.
 [mazmorra.trampas]
 por_nivel = 10
+lanzallamas_por_nivel = 4
 danio = 10
 ticks_inactiva = 90
 ticks_activa = 30
