@@ -11,6 +11,12 @@
 #include <utility>
 #include <vector>
 
+// La frazada con el pie de la cama, en la hoja de muebles al lado de la cama, y a cuántos píxeles
+// de la imagen desde arriba del dibujo de la cama va.
+#define ORIGEN_DE_LA_FRAZADA \
+    { 144, 171, 32, 37 }
+#define FRAZADA_DESDE_ARRIBA_DE_LA_CAMA 27
+
 namespace {
 
 uint64_t peso_total(const AspectoDeObjeto& aspecto) {
@@ -162,6 +168,24 @@ void ObjetosGraficos::dibujar_objeto(
         cam_y,
         ancho_de_pantalla,
         alto_de_pantalla);
+}
+
+void ObjetosGraficos::dibujar_frazada(
+    SDL_Renderer* renderer, const EstadoObjetoDelMundo& cama, int cam_x, int cam_y) const {
+    const auto aspecto = aspectos.find(TipoObjeto::CAMA);
+    if (aspecto == aspectos.end()) {
+        return;
+    }
+    const int tamano_en_pantalla = tamano_de_tile * escala_de_tiles;
+    const int arriba_de_la_cama =
+        (static_cast<int>(cama.fila) - aspecto->second.casillas_por_encima) * tamano_en_pantalla;
+    const SDL_Rect origen ORIGEN_DE_LA_FRAZADA;
+    const SDL_Rect destino{
+        static_cast<int>(cama.columna) * tamano_en_pantalla - cam_x,
+        arriba_de_la_cama + FRAZADA_DESDE_ARRIBA_DE_LA_CAMA * escala_de_tiles - cam_y,
+        origen.w * escala_de_tiles,
+        origen.h * escala_de_tiles};
+    SDL_RenderCopy(renderer, texturas.at(RUTA_ASSET_MUEBLES).ptr(), &origen, &destino);
 }
 
 std::optional<CapaDeObjeto> ObjetosGraficos::capa_de(const EstadoObjetoDelMundo& objeto) const {

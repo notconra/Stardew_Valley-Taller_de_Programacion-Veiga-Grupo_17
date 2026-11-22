@@ -96,6 +96,11 @@ public:
     void dibujar_objeto(
         SDL_Renderer* renderer, const EstadoObjetoDelMundo& objeto, int cam_x, int cam_y) const;
 
+    // La frazada y el pie de una cama, para dibujarlos encima de quien está acostado en ella y que
+    // parezca tapado (como en Stardew, es una pieza aparte de la hoja de muebles).
+    void dibujar_frazada(
+        SDL_Renderer* renderer, const EstadoObjetoDelMundo& cama, int cam_x, int cam_y) const;
+
     // La capa en la que se dibuja el objeto, o std::nullopt si su tipo no tiene aspecto.
     std::optional<CapaDeObjeto> capa_de(const EstadoObjetoDelMundo& objeto) const;
 

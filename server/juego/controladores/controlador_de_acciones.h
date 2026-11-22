@@ -42,6 +42,10 @@ private:
     CasillaConsultada consultar(Personaje& personaje, const ConsultarCasilla& pedido);
 
 public:
+    // Si los demás jugadores ven una animación cuando alguien hace esta acción (los golpes con
+    // herramientas y el riego).
+    static bool se_anima(TipoAccion tipo);
+
     ControladorDeAcciones(
         GestorDeSectores& sectores, std::map<uint32_t, Personaje>& personajes,
         const RecursosDeJuego& recursos, Notificador& notificador, ControladorDeMercado& mercado,

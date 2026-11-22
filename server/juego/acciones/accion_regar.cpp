@@ -4,7 +4,7 @@
 #include "../../../common/tipo_item.h"
 
 TipoAccion AccionRegar::tipo() const {
-    return TipoAccion::NINGUNA;
+    return TipoAccion::REGAR;
 }
 
 bool AccionRegar::aplica(const ContextoDeAccion& c) const {
