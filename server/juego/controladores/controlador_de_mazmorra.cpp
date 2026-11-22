@@ -157,6 +157,14 @@ bool contiene(const std::vector<Casilla>& casillas, const Casilla& casilla) {
     return std::find(casillas.begin(), casillas.end(), casilla) != casillas.end();
 }
 
+bool hay_pared_arriba(const GeografiaNivel& geografia, const Casilla& casilla) {
+    const int fila = casilla.fila - 1;
+    if (fila < 0 || casilla.columna < 0 || casilla.columna >= geografia.ancho) {
+        return false;
+    }
+    return !geografia.transitable[static_cast<size_t>(fila) * geografia.ancho + casilla.columna];
+}
+
 }  // namespace
 
 void ControladorDeMazmorra::poblar_trampas(Sector& sector, const Nivel& nivel) {
@@ -184,6 +192,15 @@ void ControladorDeMazmorra::poblar_trampas(Sector& sector, const Nivel& nivel) {
     const int ciclo = sector.trampas.duracion_del_ciclo();
     for (size_t i = 0; i < cantidad; ++i) {
         sector.trampas.agregar(pisos[i], Azar::entero(0, ciclo - 1));
+    }
+
+    // Los lanzallamas van en casillas libres que tienen una pared justo arriba.
+    int lanzallamas = 0;
+    for (size_t i = cantidad; i < pisos.size() && lanzallamas < config.lanzallamas_por_nivel; ++i) {
+        if (hay_pared_arriba(geografia, pisos[i])) {
+            sector.trampas.agregar(pisos[i], Azar::entero(0, ciclo - 1), TipoTrampa::LANZALLAMAS);
+            ++lanzallamas;
+        }
     }
 }
 

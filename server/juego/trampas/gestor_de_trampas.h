@@ -10,7 +10,7 @@
 #include "../../configuracion/configuracion_servidor_datos.h"
 #include "../geometria.h"
 
-// Unos pinches en el suelo de un nivel. Su ciclo dura ticks_inactiva + ticks_activa; "desfase"
+// Unos pinches en el suelo, o un lanzallamas en la pared que quema la casilla de abajo. Su ciclo dura ticks_inactiva + ticks_activa; "desfase"
 // corre el comienzo para que los de un mismo nivel no salgan todos juntos.
 struct Trampa {
     int id = 0;
@@ -50,7 +50,7 @@ public:
     void configurar(const ConfiguracionTrampasServidor& configuracion);
 
     // "desfase" en ticks: en qué momento de su ciclo arranca.
-    void agregar(const Casilla& casilla, int desfase);
+    void agregar(const Casilla& casilla, int desfase, TipoTrampa tipo = TipoTrampa::PINCHES);
 
     // Cuántos ticks dura un ciclo completo (guardada + afuera).
     int duracion_del_ciclo() const;
