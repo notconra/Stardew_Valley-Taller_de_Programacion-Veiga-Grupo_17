@@ -11,7 +11,7 @@
 #include "../configuracion/configuracion_cliente_datos.h"
 #include "textura.h"
 
-// Dibuja los pinches de la mazmorra con peaks/Spike Trap.png. Van en el piso: se dibujan antes que
+// Dibuja los pinches (peaks/Spike Trap.png) y los lanzallamas de la mazmorra. Van en el piso: se dibujan antes que
 // los enemigos y los jugadores, que quedan por delante. El servidor solo avisa cuándo salen y
 // cuándo se guardan; la animación de subir y bajar la arma el cliente a partir de ese momento.
 class TrampasGraficas {
@@ -30,12 +30,17 @@ private:
     };
 
     Textura pinches;  // Spike Trap.png: 14 cuadros de 32x32 en una fila
+    Textura lanzallamas;  // flamethrower_hoja.png: 4 cuadros de 16x32 (2 de fuego, 2 apagados)
     mutable std::map<uint32_t, Seguimiento> seguimientos;
     int tamano_de_tile = 16;
     int escala_de_tiles = 1;
 
     // Qué cuadro de Spike Trap.png dibujar.
     int cuadro_de(const EstadoTrampa& trampa, uint32_t ahora) const;
+
+    // El lanzallamas ocupa la pared de arriba y la casilla que quema.
+    void dibujar_lanzallamas(SDL_Renderer* renderer, const EstadoTrampa& trampa, uint32_t ahora,
+        int cam_x, int cam_y) const;
 };
 
 #endif
