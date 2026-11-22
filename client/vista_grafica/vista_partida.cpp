@@ -11,6 +11,7 @@
 #include <memory>
 #include <optional>
 #include <set>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -752,6 +753,11 @@ void VistaPartida::procesar_entrada(
                 pedidos.con_shift);
         }
     }
+
+    if (cartel_pendiente.has_value()) {
+        cuadro_de_dialogo.mostrar(cartel_pendiente->id_npc, cartel_pendiente->texto);
+        cartel_pendiente.reset();
+    }
 }
 
 void VistaPartida::elegir_ranura_de_la_barra(const EntradaDelUsuario::Pedidos& pedidos) {
@@ -772,6 +778,35 @@ void VistaPartida::elegir_ranura_de_la_barra(const EntradaDelUsuario::Pedidos& p
         conexion.enviar_comando(SeleccionarRanuraDeLaBarra{static_cast<uint8_t>(nueva)});
     }
 }
+bool VistaPartida::mostrar_cartel_en(int columna, int fila) {
+    if (!carteles_por_mapa.contains(mapa_actual)) {
+        carteles_por_mapa[mapa_actual] =
+            LectorDeMapasTMX(configuracion_de(mapa_actual).ruta).cargar_carteles("Interacciones");
+    }
+    const int x = columna * 16 + 8;
+    const int y = fila * 16 + 8;
+    for (CartelTMX& cartel : carteles_por_mapa[mapa_actual]) {
+        if (x >= cartel.x && x < cartel.x + cartel.ancho && y >= cartel.y &&
+            y < cartel.y + cartel.alto) {
+            std::vector<std::string> frases;
+            std::stringstream texto(cartel.texto);
+            for (std::string frase; std::getline(texto, frase, '|');) {
+                frases.push_back(frase);
+            }
+            if (frases.empty()) {
+                return false;
+            }
+            cartel_pendiente = DialogoNpc{cartel.npc, frases[std::rand() % frases.size()]};
+            if (!cartel.comando.empty()) {
+                conexion.enviar_comando(EnviarMensajeDeChat{cartel.comando});
+                cartel.comando.clear();  // Solo se usa una vez.
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
 void VistaPartida::procesar_clic(
     const EntradaDelUsuario& entrada, HudInventario& hud, HudMercado& hud_mercado,
     PanelDeRegalos& regalos, VentanaDeLote& ventana_de_lote, const NpcsGraficos& npcs,
@@ -846,6 +881,9 @@ void VistaPartida::procesar_clic(
             static_cast<int>(casilla->fila));
         if (!id_npc.empty()) {
             conexion.enviar_comando(HablarConNpc{id_npc});
+            return;
+        }
+        if (mostrar_cartel_en(static_cast<int>(casilla->columna), static_cast<int>(casilla->fila))) {
             return;
         }
     }

@@ -16,6 +16,7 @@ mapa_inicial = "FarmHouse2"
 mapas = [
     { id = "granja", ruta_tmx = "Assets/Maps/Farm.tmx", propiedad_cultivable = "Diggable" },
     { id = "BusStop", ruta_tmx = "Assets/Maps/BusStop.tmx" },
+    { id = "Bus_Interior", ruta_tmx = "Assets/Maps/Bus_Interior.tmx" },
     { id = "Town", ruta_tmx = "Assets/Maps/Town.tmx" },
     { id = "FarmHouse2", ruta_tmx = "Assets/Maps/FarmHouse2.tmx" },
     { id = "mercado", ruta_tmx = "Assets/Maps/Mercado.tmx" },

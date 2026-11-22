@@ -31,7 +31,8 @@ public:
     // "ruta_fuente" es la .ttf del juego. Lanza std::runtime_error si no se puede abrir la fuente.
     CuadroDeDialogo(SDL_Renderer* renderer, const std::string& ruta_fuente);
 
-    // Lanza std::runtime_error si no se puede abrir la imagen de fondo de ese NPC.
+    // Si no existe la imagen de ese NPC usa la genérica (dialogo_npc.png). Lanza
+    // std::runtime_error si no se puede abrir.
     void mostrar(const std::string& nuevo_id_npc, const std::string& texto);
     void cerrar();
     bool esta_visible() const;
