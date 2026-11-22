@@ -69,7 +69,7 @@ Hoja hoja_de_skull(SDL_Color tinte) {
     hoja.frame_alto = 16;
     hoja.pies_y = 16;
     hoja.cabeza_y = 1;
-    hoja.escala = 1.5f;
+    hoja.escala = 1.2f;
     hoja.quieto = {imagen, {0, 0, 0, 0}, 4, 150};
     hoja.caminar = {imagen, {0, 0, 0, 0}, 4, 110};
     hoja.ataque = {imagen, {0, 0, 0, 0}, 4, 60};
@@ -77,13 +77,9 @@ Hoja hoja_de_skull(SDL_Color tinte) {
     return hoja;
 }
 
-// Bolas de fuego de 8x8, 4 cuadros por fila (se usa la primera fila). Son redondas: no se rotan.
-constexpr const char* RUTA_LLAMA_AZUL = "Assets/Caverns/Enemies/Skull/fire/llama_azul.png";
-constexpr const char* RUTA_LLAMA_VERDE = "Assets/Caverns/Enemies/Skull/fire/llama_verde.png";
-constexpr int LADO_DEL_CUADRO_DE_LLAMA = 8;
-constexpr int CUADROS_DE_LLAMA = 4;
-constexpr uint32_t MS_POR_CUADRO_DE_LLAMA = 80;
-constexpr float LADO_DE_LLAMA_EN_CASILLAS = 0.6f;
+// La llama de las Skulls: una sola imagen azul. La verde es la misma, teñida.
+constexpr const char* RUTA_LLAMA = "Assets/Caverns/Enemies/Skull/fire/fire_skull.png";
+constexpr float LADO_DE_LLAMA_EN_CASILLAS = 0.9f;
 constexpr SDL_Color TINTE_VERDE{110, 255, 110, 255};
 
 int cuadro_una_vez(const Animacion& animacion, uint32_t desde, uint32_t ahora) {
@@ -109,8 +105,7 @@ float interpolar(float desde, float hasta, float t) {
 }  // namespace
 
 EnemigosGraficos::EnemigosGraficos(SDL_Renderer* renderer, const ConfiguracionGraficos& graficos)
-    : llama_azul(RUTA_LLAMA_AZUL, renderer),
-      llama_verde(RUTA_LLAMA_VERDE, renderer),
+    : llama(RUTA_LLAMA, renderer),
       tamano_de_tile(graficos.tamano_de_tile),
       escala_de_tiles(graficos.escala_de_tiles) {
     hojas.emplace(TipoEnemigo::ESQUELETO, hoja_de_esqueleto());
@@ -156,22 +151,17 @@ void EnemigosGraficos::dibujar_llamas(
     }
     const float casilla = static_cast<float>(tamano_de_tile * escala_de_tiles);
     const int lado = static_cast<int>(casilla * LADO_DE_LLAMA_EN_CASILLAS);
-    const uint32_t ahora = SDL_GetTicks();
     for (const EstadoLlama& actual : estado.llamas) {
         const float x = static_cast<float>(actual.x_centesimas) / 100.0f * casilla;
         const float y = static_cast<float>(actual.y_centesimas) / 100.0f * casilla;
         const SDL_Rect destino{
             static_cast<int>(x) - cam_x - lado / 2, static_cast<int>(y) - cam_y - lado / 2, lado,
             lado};
-        // Cada llama arranca en un cuadro distinto para que no titilen todas juntas.
-        const int cuadro =
-            static_cast<int>((ahora / MS_POR_CUADRO_DE_LLAMA + actual.id) % CUADROS_DE_LLAMA);
-        const SDL_Rect origen{
-            cuadro * LADO_DEL_CUADRO_DE_LLAMA, 0, LADO_DEL_CUADRO_DE_LLAMA,
-            LADO_DEL_CUADRO_DE_LLAMA};
-        SDL_Texture* imagen = actual.verde ? llama_verde.ptr() : llama_azul.ptr();
-        SDL_RenderCopy(renderer, imagen, &origen, &destino);
+        const SDL_Color tinte = actual.verde ? TINTE_VERDE : SDL_Color{255, 255, 255, 255};
+        SDL_SetTextureColorMod(llama.ptr(), tinte.r, tinte.g, tinte.b);
+        SDL_RenderCopy(renderer, llama.ptr(), nullptr, &destino);
     }
+    SDL_SetTextureColorMod(llama.ptr(), 255, 255, 255);
 }
 
 EnemigosGraficos::Posicion EnemigosGraficos::avanzar(

@@ -90,8 +90,7 @@ private:
     };
 
     std::map<TipoEnemigo, Hoja> hojas;
-    Textura llama_azul;
-    Textura llama_verde;
+    Textura llama;  // fire_skull.png, teñida de verde para las Skulls verdes
     std::map<std::string, Textura> texturas;  // por ruta
     mutable std::map<uint32_t, Recorrido> recorridos;
     int tamano_de_tile = 16;
