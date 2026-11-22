@@ -681,7 +681,7 @@ bool VistaPartida::mostrar_cartel_en(int columna, int fila) {
     }
     const int x = columna * 16 + 8;
     const int y = fila * 16 + 8;
-    for (const CartelTMX& cartel : carteles_por_mapa[mapa_actual]) {
+    for (CartelTMX& cartel : carteles_por_mapa[mapa_actual]) {
         if (x >= cartel.x && x < cartel.x + cartel.ancho && y >= cartel.y &&
             y < cartel.y + cartel.alto) {
             std::vector<std::string> frases;
@@ -693,6 +693,10 @@ bool VistaPartida::mostrar_cartel_en(int columna, int fila) {
                 return false;
             }
             cartel_pendiente = DialogoNpc{cartel.npc, frases[std::rand() % frases.size()]};
+            if (!cartel.comando.empty()) {
+                conexion.enviar_comando(EnviarMensajeDeChat{cartel.comando});
+                cartel.comando.clear();  // Solo se usa una vez.
+            }
             return true;
         }
     }

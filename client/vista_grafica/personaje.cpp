@@ -254,6 +254,33 @@ void Personaje::dibujar(
     const SDL_Rect origen_brazos{columna_brazos * ancho, fila_brazos * alto, ancho, alto};
     SDL_RenderCopyEx(renderer, cuerpo, &origen_brazos, &destino_cuerpo, 0.0, nullptr, flip);
 
+    const int columna_remera =
+        columnas_remera > 0 ? (jugador.apariencia.indice_remera % columnas_remera) : 0;
+    const int pagina_remera =
+        columnas_remera > 0 ? (jugador.apariencia.indice_remera / columnas_remera) : 0;
+    const SDL_Rect origen_remera{
+        columna_remera * ANCHO_CELDA_REMERA,
+        FILA_REMERA_POR_DIRECCION[fila_direccion] + pagina_remera * ALTO_BLOQUE_REMERA,
+        ANCHO_CELDA_REMERA,
+        ANCHO_CELDA_REMERA};
+    const int margen_remera = (ancho - ANCHO_CELDA_REMERA) / 2;
+    const SDL_Rect destino_remera{
+        x_pantalla + (desvio_x_accesorios + margen_remera) * escala_de_tiles,
+        y_pantalla + (offset_y_remera + desvio_y_accesorios) * escala_de_tiles,
+        ANCHO_CELDA_REMERA * escala_de_tiles,
+        ANCHO_CELDA_REMERA * escala_de_tiles};
+    // De espaldas el pelo va por encima de la remera.
+    if (fila_direccion == FILA_ARRIBA) {
+        SDL_RenderCopyEx(
+            renderer,
+            remera.ptr(),
+            &origen_remera,
+            &destino_remera,
+            0.0,
+            nullptr,
+            flip);
+    }
+
     SDL_SetTextureColorMod(
         pelo.ptr(),
         jugador.apariencia.color_pelo.rojo,
@@ -301,22 +328,16 @@ void Personaje::dibujar(
             flip_sombrero);
     }
 
-    const int columna_remera =
-        columnas_remera > 0 ? (jugador.apariencia.indice_remera % columnas_remera) : 0;
-    const int pagina_remera =
-        columnas_remera > 0 ? (jugador.apariencia.indice_remera / columnas_remera) : 0;
-    const SDL_Rect origen_remera{
-        columna_remera * ANCHO_CELDA_REMERA,
-        FILA_REMERA_POR_DIRECCION[fila_direccion] + pagina_remera * ALTO_BLOQUE_REMERA,
-        ANCHO_CELDA_REMERA,
-        ANCHO_CELDA_REMERA};
-    const int margen_remera = (ancho - ANCHO_CELDA_REMERA) / 2;
-    const SDL_Rect destino_remera{
-        x_pantalla + (desvio_x_accesorios + margen_remera) * escala_de_tiles,
-        y_pantalla + (offset_y_remera + desvio_y_accesorios) * escala_de_tiles,
-        ANCHO_CELDA_REMERA * escala_de_tiles,
-        ANCHO_CELDA_REMERA * escala_de_tiles};
-    SDL_RenderCopyEx(renderer, remera.ptr(), &origen_remera, &destino_remera, 0.0, nullptr, flip);
+    if (fila_direccion != FILA_ARRIBA) {
+        SDL_RenderCopyEx(
+            renderer,
+            remera.ptr(),
+            &origen_remera,
+            &destino_remera,
+            0.0,
+            nullptr,
+            flip);
+    }
 
     if (haciendo_accion || item_en_alto) {
         SDL_RenderCopyEx(renderer, cuerpo, &origen_brazos, &destino_cuerpo, 0.0, nullptr, flip);
