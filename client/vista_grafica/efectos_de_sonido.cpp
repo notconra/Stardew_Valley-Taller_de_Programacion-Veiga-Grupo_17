@@ -19,7 +19,10 @@ constexpr int VOLUMEN_LLUVIA_BAJO_TECHO = 20;
 EfectosDeSonido::EfectosDeSonido(const ConfiguracionSonido& configuracion)
     : ruta_ambiente_general(configuracion.ruta_ambiente),
       ruta_paso_general(configuracion.ruta_caminar) {
+    Mix_AllocateChannels(32);
     Mix_ReserveChannels(2);
+    fijar_volumen_musica(100);
+    fijar_volumen_efectos(100);
     accion = cargar(configuracion.ruta_accion);
     for (const auto& [item, ruta] : configuracion.rutas_de_uso) {
         sonido_de_uso[item] = cargar(ruta);
@@ -112,6 +115,8 @@ void EfectosDeSonido::actualizar_ambiente() {
         return;
     }
     Mix_PlayChannel(CANAL_AMBIENTE, nuevo, -1);
+    int volumen_sdl = (volumen_musica * MIX_MAX_VOLUME) / 100;
+    Mix_Volume(CANAL_AMBIENTE, volumen_sdl);
     ambiente_sonando = nuevo;
 }
 
@@ -268,4 +273,39 @@ void EfectosDeSonido::enemigo_aparecio(const EstadoEnemigo& enemigo) const {
     }
     ultimo_grito_de_aparicion = ahora;
     reproducir(sonidos->second.aparicion);
+}
+
+void EfectosDeSonido::fijar_volumen_musica(int porcentaje) {
+    if (porcentaje < 0) {
+        volumen_musica = 0;
+    } else if (porcentaje > 100) {
+        volumen_musica = 100;
+    } else {
+        volumen_musica = porcentaje;
+    }
+    int volumen_sdl = (volumen_musica * MIX_MAX_VOLUME) / 100;
+    Mix_Volume(CANAL_AMBIENTE, volumen_sdl);
+}
+
+int EfectosDeSonido::obtener_volumen_musica() const {
+    return volumen_musica;
+}
+
+void EfectosDeSonido::fijar_volumen_efectos(int porcentaje) {
+    if (porcentaje < 0) {
+        volumen_efectos = 0;
+    } else if (porcentaje > 100) {
+        volumen_efectos = 100;
+    } else {
+        volumen_efectos = porcentaje;
+    }
+    int volumen_sdl = (volumen_efectos * MIX_MAX_VOLUME) / 100;
+    int cantidad_de_canales = Mix_AllocateChannels(-1);
+    for (int canal = 1; canal < cantidad_de_canales; ++canal) {
+        Mix_Volume(canal, volumen_sdl);
+    }
+}
+
+int EfectosDeSonido::obtener_volumen_efectos() const {
+    return volumen_efectos;
 }

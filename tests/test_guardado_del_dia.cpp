@@ -7,6 +7,7 @@
 
 #include "../server/configuracion/configuracion_servidor.h"
 #include "../server/configuracion/configuracion_servidor_datos.h"
+#include "../server/juego/geometria.h"
 #include "../server/juego/muebles/muebles.h"
 #include "../server/juego/mundo.h"
 #include "../server/juego/notificador.h"
@@ -34,7 +35,8 @@ const RecursosDeJuego& recursos() {
             mapas,
             "granja",
             configuracion.juego(),
-            ConfiguracionMazmorraServidor{});
+            ConfiguracionMazmorraServidor{},
+            configuracion.mercado());
     }();
     return recursos_de_juego;
 }
@@ -159,4 +161,91 @@ TEST(GuardadoDelDia, MientrasSigueElDiaNoHayQueGuardar) {
         mundo.actualizar();
         EXPECT_FALSE(mundo.tomar_dia_terminado());
     }
+}
+
+namespace {
+// La casilla donde tiene los pies un jugador guardado en (x, y).
+Casilla pies_de(const DatosJugadorGuardado& datos) {
+    const ConfiguracionMovimientoJugador& cuerpo = recursos().juego.movimiento;
+    const int lado = 16;
+    return Casilla{
+        static_cast<int>(datos.x + cuerpo.hitbox_x + cuerpo.hitbox_ancho / 2) / lado,
+        static_cast<int>(datos.y + cuerpo.hitbox_y + cuerpo.hitbox_alto) / lado - 1};
+}
+
+DatosMundoGuardado con_el_jugador(int vida, int energia) {
+    DatosMundoGuardado mundo = un_mundo_guardado();
+    mundo.jugadores[0].vida = static_cast<uint16_t>(vida);
+    mundo.jugadores[0].energia = static_cast<uint16_t>(energia);
+    return mundo;
+}
+}  // namespace
+
+TEST(GuardadoDelDia, ElQueVuelveSinVidaSeDespiertaAlLadoDeLaCamaConLaMitad) {
+    SinAvisos notificador;
+    Mundo mundo(recursos(), notificador, 40, con_el_jugador(0, 35));
+    mundo.conectar(ID_JUGADOR, AparienciaPersonaje{});
+
+    const std::optional<DatosJugadorGuardado> datos = mundo.obtener_datos_jugador(ID_JUGADOR);
+    ASSERT_TRUE(datos.has_value());
+    EXPECT_EQ(datos->vida, VIDA_MAXIMA_JUGADOR / 2);
+    EXPECT_EQ(datos->energia, ENERGIA_MAXIMA_JUGADOR / 2);
+    EXPECT_EQ(datos->mapa_actual, MAPA_DE_LA_CASA);
+    // Al pie de la cama (38..39, 23..25).
+    EXPECT_EQ(pies_de(*datos), (Casilla{38, 26}));
+}
+
+TEST(GuardadoDelDia, ElQueVuelveSinEnergiaTambienSeDespiertaEnLaCasa) {
+    SinAvisos notificador;
+    Mundo mundo(recursos(), notificador, 40, con_el_jugador(50, 0));
+    mundo.conectar(ID_JUGADOR, AparienciaPersonaje{});
+
+    const std::optional<DatosJugadorGuardado> datos = mundo.obtener_datos_jugador(ID_JUGADOR);
+    ASSERT_TRUE(datos.has_value());
+    EXPECT_EQ(datos->vida, VIDA_MAXIMA_JUGADOR / 2);
+    EXPECT_EQ(datos->energia, ENERGIA_MAXIMA_JUGADOR / 2);
+    EXPECT_EQ(pies_de(*datos), (Casilla{38, 26}));
+}
+
+TEST(GuardadoDelDia, ElQueVuelveSinVidaPuedeSeguirJugando) {
+    SinAvisos notificador;
+    Mundo mundo(recursos(), notificador, 40, con_el_jugador(0, 0));
+    mundo.conectar(ID_JUGADOR, AparienciaPersonaje{});
+    for (int i = 0; i < 10; ++i) {
+        mundo.actualizar();
+    }
+
+    // Sigue despierto: no se volvió a desmayar al primer tick.
+    const std::optional<DatosJugadorGuardado> datos = mundo.obtener_datos_jugador(ID_JUGADOR);
+    ASSERT_TRUE(datos.has_value());
+    EXPECT_GT(datos->vida, 0);
+    mundo.atender(ID_JUGADOR, Moverse{1, 0});
+    for (int i = 0; i < 20; ++i) {
+        mundo.actualizar();
+    }
+    const std::optional<DatosJugadorGuardado> despues = mundo.obtener_datos_jugador(ID_JUGADOR);
+    ASSERT_TRUE(despues.has_value());
+    EXPECT_GT(despues->x, datos->x);
+}
+
+TEST(GuardadoDelDia, ElQueSeVaAcostadoVuelveParadoAlLadoDeLaCama) {
+    const ConfiguracionMovimientoJugador& cuerpo = recursos().juego.movimiento;
+    DatosMundoGuardado guardado = un_mundo_guardado();
+    guardado.jugadores[0].x = 38 * 16 + (16 - cuerpo.hitbox_ancho) / 2 - cuerpo.hitbox_x;
+    guardado.jugadores[0].y = 27 * 16 - cuerpo.hitbox_y - cuerpo.hitbox_alto;
+    SinAvisos notificador;
+    Mundo mundo(recursos(), notificador, 40, guardado);
+    mundo.conectar(ID_JUGADOR, AparienciaPersonaje{});
+    mundo.atender(ID_JUGADOR, Dormir{38, 25});
+    const std::optional<DatosJugadorGuardado> acostado = mundo.obtener_datos_jugador(ID_JUGADOR);
+    ASSERT_TRUE(acostado.has_value());
+    ASSERT_EQ(acostado->x, 38 * 16 + 8);  // en el medio de la cama
+
+    mundo.desconectar(ID_JUGADOR);
+    mundo.conectar(ID_JUGADOR, AparienciaPersonaje{});
+
+    const std::optional<DatosJugadorGuardado> datos = mundo.obtener_datos_jugador(ID_JUGADOR);
+    ASSERT_TRUE(datos.has_value());
+    EXPECT_EQ(datos->mapa_actual, MAPA_DE_LA_CASA);
+    EXPECT_EQ(pies_de(*datos), (Casilla{38, 26}));
 }

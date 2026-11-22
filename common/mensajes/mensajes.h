@@ -37,7 +37,13 @@ using ComandoCliente = std::variant<
     ComprarEnMercado, VenderEnMercado, ComprarAnimalMercado, VenderAnimalMercado, CerrarMercado,
 
     // NPCs
-    HablarConNpc>;
+    HablarConNpc,
+
+    // Centro comunitario
+    DonarAlLote, DonarMonedasAlLote,
+
+    // Dormir
+    Dormir, Levantarse>;
 
 using EventoServidor = std::variant<
     // Error
@@ -82,6 +88,11 @@ using EventoServidor = std::variant<
     NpcsEnSector, DialogoNpc,
 
     // - Llamas de las Skulls
-    LlamasEnSector>;
+    LlamasEnSector,
+    // - Centro comunitario
+    LoteDelCentro, CentroTerminado,
+
+    // - Dormir
+    PreguntaDeDormir>;
 
 #endif

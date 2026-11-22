@@ -1,5 +1,6 @@
 #include "cuadro_de_dialogo.h"
 
+#include <filesystem>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -26,9 +27,11 @@ CuadroDeDialogo::CuadroDeDialogo(SDL_Renderer* renderer, const std::string& ruta
 
 void CuadroDeDialogo::mostrar(const std::string& nuevo_id_npc, const std::string& texto) {
     if (fondos.count(nuevo_id_npc) == 0) {
-        fondos.emplace(
-            nuevo_id_npc,
-            Textura(std::string(CARPETA_DE_DIALOGOS) + nuevo_id_npc + ".png", renderer));
+        std::string ruta = std::string(CARPETA_DE_DIALOGOS) + nuevo_id_npc + ".png";
+        if (!std::filesystem::exists(ruta)) {
+            ruta = std::string(CARPETA_DE_DIALOGOS) + "npc.png";
+        }
+        fondos.emplace(nuevo_id_npc, Textura(ruta, renderer));
     }
     id_npc = nuevo_id_npc;
     mensaje = texto;

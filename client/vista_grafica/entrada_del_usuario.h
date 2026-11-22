@@ -12,10 +12,11 @@
 class EntradaDelUsuario {
 public:
     struct Pedidos {
-        bool salir = false;    // ESC
-        bool guardar = false;  // F5 (cheat: guardar la partida ya, sin esperar al fin del día)
-        bool multijugador = false;  // M (para probar)
-        bool confirmar = false;     // Enter (el OK para pasar al día siguiente)
+        bool salir = false;      // ESC
+        bool guardar = false;    // F5 (cheat: guardar la partida ya, sin esperar al fin del día)
+        bool confirmar = false;  // Enter (el OK para pasar al día siguiente)
+        bool opcion_anterior = false;
+        bool opcion_siguiente = false;
         bool clic_izquierdo = false;
         bool clic_derecho = false;
         bool con_shift = false;       // Shift estaba apretado al hacer el clic

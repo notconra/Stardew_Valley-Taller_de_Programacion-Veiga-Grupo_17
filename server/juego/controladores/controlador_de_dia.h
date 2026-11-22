@@ -10,6 +10,7 @@
 #include "../../../common/mensajes/mensajes.h"
 #include "../../configuracion/configuracion_servidor_datos.h"
 #include "../jugadores/personaje.h"
+#include "../muebles/camas_ocupadas.h"
 #include "../notificador.h"
 #include "../recursos/recursos_de_juego.h"
 #include "../sector/gestor_de_sectores.h"
@@ -39,6 +40,7 @@ private:
     const RecursosDeJuego& recursos;
     Notificador& notificador;
     SacarDeLaMazmorra sacar_de_la_mazmorra;
+    CamasOcupadas camas_ocupadas;
     std::map<uint32_t, EstadoDelDescanso> descansos_enviados;
     bool dia_terminado = false;
     double probabilidad_de_lluvia;
@@ -52,6 +54,19 @@ private:
 
     void desmayar_persona(Personaje& personaje);
 
+    // Les avisa a todos por el chat que se desmayó por quedarse sin vida o sin energía.
+    void avisar_el_desmayo(const Personaje& personaje);
+
+    // La respuesta "Si" a la pregunta de dormir: si la cama sigue libre y al alcance, lo acuesta
+    // en el medio de la cama.
+    void acostar(Personaje& personaje, const Dormir& pedido);
+
+    // Se levanta de la cama antes de que pase el día y queda parado al lado.
+    void levantar(Personaje& personaje);
+
+    // Lo pone en esa posición (la esquina del dibujo, en píxeles) dentro de su mapa.
+    void reubicar(Personaje& personaje, double x, double y);
+
     // Los acostados y desmayados no se mueven.
     void frenar_a_los_que_descansan();
 
@@ -59,7 +74,12 @@ private:
     bool todos_listos() const;
 
     void terminar_el_dia();
+    // Al empezar el día: con toda la vida y la energía si durmió en la cama, con la mitad si no, y
+    // al lado de su cama.
     void despertar(Personaje& personaje);
+    // Lo saca de la mazmorra y lo deja al lado de su última cama, o en la entrada de la casa si no
+    // tiene una (o ya no está).
+    void llevar_a_la_casa(Personaje& personaje);
 
     // La casilla libre al lado de la cama donde se despierta, si la cama sigue en su lugar.
     // Prefiere una donde no haya otro jugador.
@@ -87,9 +107,10 @@ public:
         const RecursosDeJuego& recursos, Notificador& notificador,
         SacarDeLaMazmorra sacar_de_la_mazmorra);
 
-    // DarElOk, y los comandos que no puede hacer quien está descansando. Devuelve true si lo
-    // consumió. Si un jugador acostado que todavía no dio el OK se mueve antes de las 2 am, se
-    // levanta (y el movimiento sigue su camino, devuelve false).
+    // Dormir, Levantarse, DarElOk, y los comandos que no puede hacer quien está descansando.
+    // Devuelve true si lo consumió. Si un jugador acostado que todavía no dio el OK se mueve antes
+    // de las 2 am, se levanta al lado de la cama (y el movimiento sigue su camino, devuelve
+    // false).
     bool atender(Personaje& personaje, const ComandoCliente& comando);
 
     // Un tick del servidor.
@@ -98,8 +119,14 @@ public:
     // El que entra recibe la hora de ahora, así no espera hasta el próximo aviso para verla.
     void al_conectarse(const Personaje& personaje);
 
-    // El que se va deja de contar para el fin del día y vuelve despierto.
+    // El que se va deja de contar para el fin del día y vuelve despierto. Si estaba acostado, lo
+    // deja parado al lado de la cama (no arriba de ella).
     void al_desconectarse(Personaje& personaje);
+
+    // Si se había ido sin vida o sin energía: vuelve como si se hubiera despertado de un desmayo,
+    // con la mitad de la vida y de la energía y al lado de su cama. Tiene que estar ya en un mapa.
+    // Devuelve si lo tuvo que despertar.
+    bool despertar_si_volvio_desmayado(Personaje& personaje);
 
     // La hora de ahora (la misma que ve el jugador).
     HoraDelJuego hora() const;

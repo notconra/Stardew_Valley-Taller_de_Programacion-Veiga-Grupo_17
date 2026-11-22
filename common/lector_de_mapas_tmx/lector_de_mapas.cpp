@@ -235,6 +235,57 @@ std::vector<PuestoTMX> LectorDeMapasTMX::cargar_puestos(const std::string& nombr
     return puestos;
 }
 
+std::vector<LoteTMX> LectorDeMapasTMX::cargar_lotes(const std::string& nombre_capa) const {
+    std::vector<LoteTMX> lotes;
+    tinyxml2::XMLDocument documento;
+    tinyxml2::XMLElement* nodo_mapa = abrir_mapa(documento);
+    if (!nodo_mapa) {
+        return lotes;
+    }
+
+    for (const ObjetoTMX& objeto : leer_objetos(nodo_mapa, nombre_capa)) {
+        if (objeto.texto_de("tipo") != "lote") {
+            continue;
+        }
+        LoteTMX lote;
+        lote.x = objeto.x();
+        lote.y = objeto.y();
+        lote.ancho = objeto.ancho() > 0 ? objeto.ancho() : 1;
+        lote.alto = objeto.alto() > 0 ? objeto.alto() : 1;
+        lote.clave = objeto.texto_de("lote");
+        lotes.push_back(lote);
+    }
+    return lotes;
+}
+
+std::vector<CartelTMX> LectorDeMapasTMX::cargar_carteles(const std::string& nombre_capa) const {
+    std::vector<CartelTMX> carteles;
+    tinyxml2::XMLDocument documento;
+    tinyxml2::XMLElement* nodo_mapa = abrir_mapa(documento);
+    if (!nodo_mapa) {
+        return carteles;
+    }
+
+    for (const ObjetoTMX& objeto : leer_objetos(nodo_mapa, nombre_capa)) {
+        if (objeto.texto_de("tipo") != "cartel" || !objeto.tiene_propiedad("npc") ||
+            !objeto.tiene_propiedad("texto")) {
+            continue;
+        }
+        CartelTMX cartel;
+        cartel.x = objeto.x();
+        cartel.y = objeto.y();
+        cartel.ancho = objeto.ancho() > 0 ? objeto.ancho() : 1;
+        cartel.alto = objeto.alto() > 0 ? objeto.alto() : 1;
+        cartel.npc = objeto.texto_de("npc");
+        cartel.texto = objeto.texto_de("texto");
+        if (objeto.tiene_propiedad("comando")) {
+            cartel.comando = objeto.texto_de("comando");
+        }
+        carteles.push_back(cartel);
+    }
+    return carteles;
+}
+
 std::vector<int> LectorDeMapasTMX::ids_con_propiedad(
     const std::string& propiedad, const std::string& valor) const {
     std::vector<int> ids;

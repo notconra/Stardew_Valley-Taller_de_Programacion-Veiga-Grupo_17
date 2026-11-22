@@ -13,14 +13,18 @@ Mundo::Mundo(
       sectores(recursos_de_juego, ticks_por_segundo, personajes, notificador_de_juego),
       gestor_de_npcs(recursos_de_juego, sectores, ticks_por_segundo),
       controlador_de_jugador(sectores, notificador_de_juego),
-      controlador_de_mercado(recursos_de_juego.mercado, sectores, notificador_de_juego),
       controlador_del_dia(
           recursos_de_juego.juego.dia, ticks_por_segundo, sectores, personajes, recursos_de_juego,
           notificador_de_juego,
           [this](Personaje& personaje) { controlador_de_mazmorra.al_desconectarse(personaje); }),
+      controlador_del_centro(
+          personajes, sectores, recursos_de_juego, notificador_de_juego, controlador_del_dia,
+          datos_guardados.centro),
+      controlador_de_mercado(
+          recursos_de_juego.mercado, sectores, notificador_de_juego, controlador_del_centro),
       controlador_de_acciones(
           sectores, personajes, recursos_de_juego, notificador_de_juego, controlador_de_mercado,
-          controlador_del_dia,
+          controlador_del_dia, controlador_del_centro,
           [this](Personaje& personaje, const Transicion& transicion) {
               resolver_transicion(personaje, transicion);
           }),
@@ -28,7 +32,7 @@ Mundo::Mundo(
       controlador_de_drops(
           sectores, personajes, notificador_de_juego, recursos_de_juego.juego.drops),
       controlador_de_mazmorra(recursos_de_juego, sectores, datos_guardados.niveles_mazmorra),
-      controlador_de_enemigos(sectores, personajes, notificador_de_juego),
+      controlador_de_enemigos(sectores, personajes, notificador_de_juego, controlador_del_centro),
       controlador_de_trampas(sectores, personajes, notificador_de_juego),
       controlador_de_cultivos(sectores, notificador_de_juego),
       controlador_de_regalos(
@@ -66,6 +70,7 @@ void Mundo::completar_datos_guardados(
     datos.vida = static_cast<uint16_t>(std::max(personaje.vida, 0));
     datos.energia = static_cast<uint16_t>(std::max(personaje.energia, 0));
     datos.monedas = personaje.monedas;
+    datos.tiene_mejora_de_pelea = personaje.tiene_mejora_de_pelea;
     datos.regalos_pendientes = personaje.buzon.pendientes();
     datos.tiene_cama = personaje.ultima_cama.has_value();
     datos.mapa_cama = datos.tiene_cama ? personaje.ultima_cama->mapa : "";
@@ -80,8 +85,9 @@ void Mundo::restaurar(Personaje& personaje, const DatosJugadorGuardado& guardado
     if (!guardado.inventario.empty()) {
         personaje.inventario.cargar_ranuras(guardado.inventario);
     }
-    personaje.vida = std::min<int>(guardado.vida, Personaje::VIDA_MAXIMA);
-    personaje.energia = std::min<int>(guardado.energia, Personaje::ENERGIA_MAXIMA);
+    personaje.tiene_mejora_de_pelea = guardado.tiene_mejora_de_pelea;
+    personaje.vida = std::min<int>(guardado.vida, personaje.vida_maxima());
+    personaje.energia = std::min<int>(guardado.energia, personaje.energia_maxima());
     personaje.monedas = guardado.monedas;
     personaje.nombre = guardado.nombre_jugador;
     personaje.buzon = Buzon(guardado.regalos_pendientes);
@@ -94,6 +100,7 @@ void Mundo::restaurar(Personaje& personaje, const DatosJugadorGuardado& guardado
 }
 
 void Mundo::dar_de_baja(Personaje& personaje) {
+    controlador_del_dia.al_desconectarse(personaje);
     if (sectores.existe(personaje.mapa_actual)) {
         const JugadorEnPartida* jugador_en_partida =
             sectores.en(personaje.mapa_actual).jugadores.buscar(personaje.id_jugador);
@@ -109,7 +116,6 @@ void Mundo::dar_de_baja(Personaje& personaje) {
     controlador_de_mazmorra.al_desconectarse(personaje);
     controlador_de_cofres.al_desconectarse(personaje);
     controlador_de_acciones.al_desconectarse(personaje);
-    controlador_del_dia.al_desconectarse(personaje);
     controlador_de_mercado.al_desconectarse(personaje);
     sectores.quitar(personaje);
     personaje.conectado = false;
@@ -133,10 +139,6 @@ void Mundo::conectar(
     if (!nombre.empty()) {
         personaje.nombre = nombre;
     }
-    if (personaje.esta_inconsciente()) {
-        return;
-    }
-
     if (personaje.conectado) {
         dar_de_baja(personaje);
     }
@@ -145,19 +147,18 @@ void Mundo::conectar(
     notificador.a_jugador(id_jugador, personaje.actualizacion_de_inventario());
     controlador_del_dia.al_conectarse(personaje);
     controlador_de_regalos.al_conectarse(personaje);
+    controlador_del_centro.al_conectarse(personaje);
 
     auto guardado = datos_jugadores.find(id_jugador);
     if (guardado != datos_jugadores.end() && !guardado->second.mapa_actual.empty() &&
         sectores.existe(guardado->second.mapa_actual)) {
-        sectores.colocar_en(
-            personaje,
-            guardado->second.mapa_actual,
-            guardado->second.x,
-            guardado->second.y,
-            guardado->second.mirando);
+        const LugarEnElMundo lugar = controlador_del_centro.lugar_para(
+            LugarEnElMundo{guardado->second.mapa_actual, guardado->second.x, guardado->second.y});
+        sectores.colocar_en(personaje, lugar.mapa, lugar.x, lugar.y, guardado->second.mirando);
     } else {
         sectores.colocar_en_aparicion(personaje, recursos.mapa_inicial);
     }
+    controlador_del_dia.despertar_si_volvio_desmayado(personaje);
 }
 
 void Mundo::desconectar(uint32_t id_jugador) {
@@ -184,6 +185,9 @@ void Mundo::atender(uint32_t id_jugador, const ComandoCliente& comando) {
         return;
     }
     if (controlador_de_jugador.atender(personaje, comando)) {
+        return;
+    }
+    if (controlador_del_centro.atender(personaje, comando)) {
         return;
     }
     if (controlador_de_acciones.atender(personaje, comando)) {
@@ -233,12 +237,15 @@ void Mundo::resolver_transicion(Personaje& personaje, const Transicion& transici
         controlador_de_mercado.al_cambiar_de_mapa(personaje);
         return;
     }
-    if (!sectores.existe(transicion.mapa_destino)) {
+    // La puerta del pueblo lleva al centro en ruinas, o al arreglado si ya se completaron todos los
+    // lotes. Los dos mapas tienen la entrada en el mismo lugar.
+    const std::string destino = controlador_del_centro.mapa_para(transicion.mapa_destino);
+    if (!sectores.existe(destino)) {
         return;
     }
     sectores.trasladar_a_casilla(
         personaje,
-        transicion.mapa_destino,
+        destino,
         transicion.columna_destino,
         transicion.fila_destino);
     controlador_de_mercado.al_cambiar_de_mapa(personaje);
@@ -293,6 +300,7 @@ void Mundo::actualizar() {
     controlador_de_acciones.actualizar();
     controlador_de_cofres.actualizar();
     controlador_de_drops.actualizar();
+    controlador_del_centro.actualizar();
 }
 
 std::optional<DatosJugadorGuardado> Mundo::obtener_datos_jugador(uint32_t id_jugador) const {
@@ -368,8 +376,28 @@ void Mundo::cambiar_estacion(Estacion estacion) {
     controlador_del_dia.cambiar_estacion(estacion);
 }
 
+DatosCentroGuardado Mundo::obtener_centro_guardado() const {
+    return controlador_del_centro.obtener_guardado();
+}
+
+bool Mundo::completar_lote_del_centro(const std::string& clave) {
+    return controlador_del_centro.completar_lote(clave);
+}
+
+void Mundo::completar_todos_los_lotes_del_centro() {
+    controlador_del_centro.completar_todos_los_lotes();
+}
+
+const CentroComunitario& Mundo::centro_comunitario() const {
+    return controlador_del_centro.estado();
+}
+
 uint32_t Mundo::obtener_dia() const {
     return controlador_del_dia.hora().dia;
+}
+
+bool Mundo::tomar_centro_terminado() {
+    return controlador_del_centro.tomar_terminado_para_guardar();
 }
 
 bool Mundo::tomar_dia_terminado() {

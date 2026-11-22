@@ -4,12 +4,14 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <map>
 #include <memory>
 #include <optional>
 #include <set>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -26,6 +28,14 @@
 
 #define HORA_DEL_ANOCHECER 20
 #define HORA_FIN_DE_LA_NOCHE 2
+
+// Lo que dura la animación de una acción (picar, cavar, atacar, regar), propia o de otro.
+#define DURACION_DE_UNA_ACCION_MS 475
+// Dónde queda un jugador acostado respecto de la esquina de arriba a la izquierda de su cama (lo
+// mismo que usa el servidor al acostarlo), y cuánto se le permite errar al buscar la cama.
+#define ACOSTADO_DESDE_LA_CAMA_X 8
+#define ACOSTADO_DESDE_LA_CAMA_Y -2
+#define TOLERANCIA_PARA_ENCONTRAR_LA_CAMA 1.0f
 
 namespace {
 
@@ -46,8 +56,7 @@ constexpr char AYUDA_DE_TECLAS[] =
     "  T / botón del chat abrir o cerrar el chat\n"
     "  clic en el chat   casilla de abajo: escribir. Enter envía, ESC o clic afuera sueltan\n"
     "  rueda sobre chat  recorrer los mensajes (el personaje puede seguir caminando)\n"
-    "  M                 permitir que otros jugadores se unan (el código sale acá)\n"
-    "  ESC               salir de la partida y volver al lobby\n";
+    "  ESC               Abrir el menú in-game\n";
 
 using TexturaDelMundo = std::unique_ptr<SDL_Texture, void (*)(SDL_Texture*)>;
 
@@ -161,6 +170,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     hora_del_juego.reset();
     jugadores_de_la_partida = JugadoresDeLaPartida{};
     regalos_pendientes = RegalosPendientes{};
+    lotes_recibidos.clear();
+    lotes_del_centro.clear();
     ultimo_riego.reset();
     olvidar_el_piso();
     partida_terminada = false;
@@ -243,6 +254,29 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         iconos,
         ancho_de_pantalla,
         alto_de_pantalla);
+    IconosDeLotes iconos_de_lotes(renderizador.ptr());
+    MarcasDeLotes marcas_de_lotes(iconos_de_lotes, graficos);
+    std::optional<VentanaDeLote> ventana_de_lote;
+    ventana_de_lote.emplace(
+        renderizador.ptr(),
+        configuracion.chat.ruta_fuente,
+        iconos,
+        iconos_de_lotes,
+        ancho_de_pantalla,
+        alto_de_pantalla);
+    std::optional<MenuEnJuego> menu;
+    menu.emplace(
+        renderizador.ptr(),
+        configuracion.chat.ruta_fuente,
+        efectos,
+        iconos_de_lotes,
+        ancho_de_pantalla,
+        alto_de_pantalla);
+    menu_actual = &(*menu);
+    if (partida.multijugador) {
+        menu->marcar_multijugador(partida.codigo_partida);
+    }
+
     EntradaDelUsuario entrada;
     Camara camara = camara_para(mapa_de(mapa_actual));
 
@@ -251,7 +285,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         entrada.leer(chat.esta_escribiendo());
 
         VistaChat::ConsumoDeEntrada consumo_del_chat{};
-        if (!cuadro_de_aviso.esta_visible() && !cuadro_de_dialogo.esta_visible()) {
+        if (!menu->esta_abierto() && !cuadro_de_aviso.esta_visible() &&
+            !cuadro_de_dialogo.esta_visible()) {
             consumo_del_chat = chat.procesar_entrada(entrada, ancho_de_pantalla, alto_de_pantalla);
             if (std::optional<EnviarMensajeDeChat> mensaje = chat.tomar_mensaje_a_enviar();
                 mensaje.has_value()) {
@@ -261,24 +296,63 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
 
         if (entrada.pidio_cerrar()) {
             efectos_actuales = nullptr;
+            menu_actual = nullptr;
             return false;
         }
         if (!cuadro_de_aviso.esta_visible() && !cuadro_de_dialogo.esta_visible() &&
             entrada.pedidos().salir) {
-            if (hud_mercado.esta_abierto()) {
+            if (pantalla_de_descanso->esta_preguntando()) {
+                pantalla_de_descanso->cancelar_la_pregunta();
+            } else if (menu->esta_abierto()) {
+                if (!menu->cancelar_confirmacion_si_esta_activa()) {
+                    menu->cerrar();
+                }
+            } else if (ventana_de_lote->esta_abierta()) {
+                ventana_de_lote->cerrar();
+            } else if (hud_mercado.esta_abierto()) {
                 conexion.enviar_comando(CerrarMercado{});
             } else if (regalos->esta_abierto()) {
                 regalos->cerrar();
             } else if (ultimo_cofre.abierto) {
                 conexion.enviar_comando(CerrarCofre{});
-            } else {
-                efectos_actuales = nullptr;
-                return salir_de_partida_y_confirmar();
+            } else if (!chat.esta_abierto()) {
+                menu->abrir();
             }
         }
-        if (haciendo_accion && SDL_GetTicks() - inicio_accion_ms >= 475) {
+        bool despierto = hora_del_juego.has_value() && (hora_del_juego->hora == HORA_INICIO_DIA) &&
+                         (hora_del_juego->minuto == 0);
+        menu->configurar_despierto(despierto);
+
+        bool menu_estaba_abierto = menu->esta_abierto();
+        if (menu->esta_abierto()) {
+            menu->raton_movido(entrada.raton_x(), entrada.raton_y());
+            bool boton_izquierdo_presionado =
+                (SDL_GetMouseState(nullptr, nullptr) & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0;
+            if (entrada.pedidos().clic_izquierdo) {
+                AccionMenu accion = menu->clic_presionado(entrada.raton_x(), entrada.raton_y());
+                if (accion == AccionMenu::VOLVER_AL_LOBBY) {
+                    efectos_actuales = nullptr;
+                    menu_actual = nullptr;
+                    salir_de_partida_y_confirmar();
+                    return true;
+                }
+                if (accion == AccionMenu::SALIR_DEL_JUEGO) {
+                    efectos_actuales = nullptr;
+                    menu_actual = nullptr;
+                    salir_de_partida_y_confirmar();
+                    return false;
+                }
+                if (accion == AccionMenu::ACTIVAR_MULTIJUGADOR) {
+                    conexion.enviar_comando(ActivarMultijugador{});
+                }
+            } else if (!boton_izquierdo_presionado) {
+                menu->clic_liberado();
+            }
+        }
+        if (haciendo_accion && SDL_GetTicks() - inicio_accion_ms >= DURACION_DE_UNA_ACCION_MS) {
             haciendo_accion = false;
         }
+        actualizar_acciones_de_otros();
         if (pico_pendiente_desde_ms != 0 &&
             SDL_GetTicks() - pico_pendiente_desde_ms >= MS_ESPERA_SONIDO_PICO) {
             pico_pendiente_desde_ms = 0;
@@ -295,7 +369,17 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
         if (!recibir_eventos(chat, hud_mercado, cuadro_de_aviso, cuadro_de_dialogo)) {
             efectos_actuales = nullptr;
+            menu_actual = nullptr;
             return true;
+        }
+        for (const LoteDelCentro& lote : lotes_recibidos) {
+            ventana_de_lote->recibir(lote);
+            lotes_del_centro[lote.lote] = lote;
+        }
+        lotes_recibidos.clear();
+        if (pregunta_de_dormir_recibida.has_value()) {
+            pantalla_de_descanso->preguntar(*pregunta_de_dormir_recibida);
+            pregunta_de_dormir_recibida.reset();
         }
 
         const EstadoJugador* propio = jugador_propio();
@@ -306,6 +390,11 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
                     crear_textura_del_mundo(renderizador.ptr(), ancho_del_mundo, alto_del_mundo);
             }
             camara = camara_para(mapa_de(mapa_actual));
+            ventana_de_lote->configurar(
+                renderizador.ptr(),
+                configuracion.chat.ruta_fuente,
+                ancho_de_pantalla,
+                alto_de_pantalla);
             regalos.emplace(
                 renderizador.ptr(),
                 configuracion.chat.ruta_fuente,
@@ -320,6 +409,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
                 renderizador.ptr(),
                 configuracion.chat.ruta_fuente,
                 alto_de_pantalla);
+            menu->configurar_dimensiones_pantalla(ancho_de_pantalla, alto_de_pantalla);
         }
         if (propio != nullptr && propio->mapa != mapa_actual) {
             mapa_actual = propio->mapa;
@@ -328,6 +418,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             ultimo_cofre = CofreJugador{};
             hud_mercado.cerrar();
             ultimo_riego.reset();
+            ventana_de_lote->cerrar();
             camara = camara_para(mapa_de(mapa_actual));
         }
         efectos.cambiar_lluvia(
@@ -343,17 +434,35 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
 
         hud.actualizar(ultimo_inventario, ultimo_cofre);
-        procesar_entrada(
-            entrada,
-            hud,
-            hud_mercado,
-            *regalos,
-            npcs,
-            cuadro_de_aviso,
-            cuadro_de_dialogo,
-            camara,
-            consumo_del_chat);
-        consultar_el_piso_si_cambio(entrada, hud, camara);
+        // Mientras pregunta si dormir o el jugador descansa, la caja de abajo se lleva el mouse y
+        // Enter: no se usa nada del mundo ni del inventario. El chat sigue andando.
+        const bool atiende_el_descanso =
+            !menu_estaba_abierto && !menu->esta_abierto() && !cuadro_de_aviso.esta_visible() &&
+            !cuadro_de_dialogo.esta_visible() && pantalla_de_descanso->visible(descanso);
+        if (atiende_el_descanso) {
+            if (std::optional<ComandoCliente> comando =
+                    pantalla_de_descanso
+                        ->procesar_entrada(entrada, descanso, ancho_de_pantalla, alto_de_pantalla);
+                comando.has_value()) {
+                conexion.enviar_comando(*comando);
+            }
+            olvidar_el_piso();
+        } else if (!menu_estaba_abierto && !menu->esta_abierto()) {
+            procesar_entrada(
+                entrada,
+                hud,
+                hud_mercado,
+                *regalos,
+                *ventana_de_lote,
+                npcs,
+                cuadro_de_aviso,
+                cuadro_de_dialogo,
+                camara,
+                consumo_del_chat);
+            consultar_el_piso_si_cambio(entrada, hud, camara);
+        } else {
+            olvidar_el_piso();
+        }
         if (mapa_actual == "granja" && propio != nullptr && efectos_actuales != nullptr) {
             int tamano_tile = std::max(1, configuracion.graficos.tamano_de_tile);
             uint32_t columna_jugador =
@@ -369,7 +478,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
         if (cuadro_de_aviso.esta_visible() || cuadro_de_dialogo.esta_visible() ||
             chat.esta_escribiendo() || ultimo_cofre.abierto || hud_mercado.esta_abierto() ||
-            regalos->esta_abierto()) {
+            regalos->esta_abierto() || ventana_de_lote->esta_abierta() || menu->esta_abierto() ||
+            pantalla_de_descanso->esta_preguntando()) {
             enviar_intencion_si_cambio(Moverse{});
         } else {
             enviar_intencion_si_cambio(entrada.intencion());
@@ -398,11 +508,93 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             *reloj_grafico,
             *pantalla_de_descanso,
             *regalos,
+            *ventana_de_lote,
+            marcas_de_lotes,
             cuadro_de_aviso,
             cuadro_de_dialogo,
-            lluvia);
+            lluvia,
+            *menu);
         limitar_cuadro(inicio_del_cuadro);
     }
+}
+
+void VistaPartida::seguir_acciones_de_otros() {
+    const uint32_t ahora = SDL_GetTicks();
+    std::map<uint32_t, AccionDeOtro> siguientes;
+    for (const EstadoJugador& otro : ultimo_estado_juego.jugadores) {
+        if (otro.id_jugador == id_jugador) {
+            continue;
+        }
+        AccionDeOtro accion;
+        accion.numero = otro.numero_de_accion;
+        const auto anterior = acciones_de_otros.find(otro.id_jugador);
+        if (anterior != acciones_de_otros.end()) {
+            accion = anterior->second;
+            if (otro.numero_de_accion != accion.numero) {
+                accion.numero = otro.numero_de_accion;
+                accion.inicio_ms = ahora | 1;
+                accion.item = otro.item_en_mano;
+                if (accion.item == TipoItem::PICO) {
+                    accion.sonido_pendiente_desde_ms = ahora | 1;
+                } else if (efectos_actuales != nullptr && se_escucha(otro)) {
+                    efectos_actuales->reproducir_uso(accion.item);
+                }
+            }
+        }
+        siguientes[otro.id_jugador] = accion;
+    }
+    // Los que ya no están en el mapa se olvidan: si vuelven, cuentan como vistos por primera vez.
+    acciones_de_otros = std::move(siguientes);
+}
+
+void VistaPartida::actualizar_acciones_de_otros() {
+    const uint32_t ahora = SDL_GetTicks();
+    for (auto& [id, accion] : acciones_de_otros) {
+        if (accion.inicio_ms != 0 && ahora - accion.inicio_ms >= DURACION_DE_UNA_ACCION_MS) {
+            accion.inicio_ms = 0;
+        }
+        if (accion.sonido_pendiente_desde_ms == 0 ||
+            ahora - accion.sonido_pendiente_desde_ms < MS_ESPERA_SONIDO_PICO) {
+            continue;
+        }
+        accion.sonido_pendiente_desde_ms = 0;
+        for (const EstadoJugador& otro : ultimo_estado_juego.jugadores) {
+            if (otro.id_jugador == id && efectos_actuales != nullptr && se_escucha(otro)) {
+                efectos_actuales->reproducir_uso(TipoItem::PICO);
+            }
+        }
+    }
+}
+
+bool VistaPartida::se_escucha(const EstadoJugador& otro) const {
+    const EstadoJugador* propio = jugador_propio();
+    if (propio == nullptr || propio->mapa != otro.mapa) {
+        return false;
+    }
+    const int tamano_de_tile = std::max(1, configuracion.graficos.tamano_de_tile);
+    const int columnas = std::abs(
+        static_cast<int>(propio->x) / tamano_de_tile - static_cast<int>(otro.x) / tamano_de_tile);
+    const int filas = std::abs(
+        static_cast<int>(propio->y) / tamano_de_tile - static_cast<int>(otro.y) / tamano_de_tile);
+    return std::max(columnas, filas) <= CASILLAS_AUDICION_ANIMAL;
+}
+
+const EstadoObjetoDelMundo* VistaPartida::cama_de(const EstadoJugador& jugador) const {
+    const float tamano_de_tile = static_cast<float>(configuracion.graficos.tamano_de_tile);
+    for (const EstadoObjetoDelMundo& objeto : ultimo_estado_juego.objetos) {
+        if (objeto.tipo != TipoObjeto::CAMA || objeto.mapa != jugador.mapa) {
+            continue;
+        }
+        const float x = static_cast<float>(objeto.columna) * tamano_de_tile +
+                        static_cast<float>(ACOSTADO_DESDE_LA_CAMA_X);
+        const float y = static_cast<float>(objeto.fila) * tamano_de_tile +
+                        static_cast<float>(ACOSTADO_DESDE_LA_CAMA_Y);
+        if (std::abs(static_cast<float>(jugador.x) - x) <= TOLERANCIA_PARA_ENCONTRAR_LA_CAMA &&
+            std::abs(static_cast<float>(jugador.y) - y) <= TOLERANCIA_PARA_ENCONTRAR_LA_CAMA) {
+            return &objeto;
+        }
+    }
+    return nullptr;
 }
 
 void VistaPartida::enviar_intencion_si_cambio(const Moverse& intencion) {
@@ -482,23 +674,44 @@ PanelDeRegalos::Datos VistaPartida::datos_de_regalos() const {
         ultimo_inventario};
 }
 
+uint32_t VistaPartida::contar_huevos_en_la_granja() const {
+    if (mapa_actual != "granja") {
+        return 0;
+    }
+
+    uint32_t huevos = 0;
+    for (const EstadoDrop& drop : ultimo_estado_juego.drops) {
+        if (drop.tipo == TipoItem::HUEVO) {
+            huevos += drop.cantidad;
+        }
+    }
+    return huevos;
+}
+
+MenuEnJuego::DatosAnimales VistaPartida::datos_de_animales() const {
+    MenuEnJuego::DatosAnimales datos;
+    for (const EstadoAnimal& animal : ultimo_estado_juego.animales) {
+        if (animal.tipo == TipoAnimal::VACA) {
+            datos.cantidad_de_vacas += 1;
+        } else if (animal.tipo == TipoAnimal::GALLINA) {
+            datos.cantidad_de_gallinas += 1;
+        }
+    }
+
+    datos.vacas_para_ordeniar = ultimo_estado_juego.vacas_para_ordeniar.size();
+    datos.huevos_para_recolectar = contar_huevos_en_la_granja();
+    return datos;
+}
+
 void VistaPartida::procesar_entrada(
     const EntradaDelUsuario& entrada, HudInventario& hud, HudMercado& hud_mercado,
-    PanelDeRegalos& regalos, const NpcsGraficos& npcs, CuadroDeAviso& cuadro_de_aviso,
-    CuadroDeDialogo& cuadro_de_dialogo, const Camara& camara,
+    PanelDeRegalos& regalos, VentanaDeLote& ventana_de_lote, const NpcsGraficos& npcs,
+    CuadroDeAviso& cuadro_de_aviso, CuadroDeDialogo& cuadro_de_dialogo, const Camara& camara,
     const VistaChat::ConsumoDeEntrada& consumo_del_chat) {
     const EntradaDelUsuario::Pedidos& pedidos = entrada.pedidos();
 
     if (cuadro_de_aviso.procesar_entrada(entrada) || cuadro_de_dialogo.procesar_entrada(entrada)) {
         return;
-    }
-
-    if (pedidos.multijugador) {
-        conexion.enviar_comando(ActivarMultijugador{});
-    }
-    if (pedidos.confirmar && descanso.estado != EstadoDeDescanso::DESPIERTO &&
-        !descanso.dio_el_ok) {
-        conexion.enviar_comando(DarElOk{});
     }
 
     if (pedidos.guardar) {
@@ -521,6 +734,7 @@ void VistaPartida::procesar_entrada(
                 hud,
                 hud_mercado,
                 regalos,
+                ventana_de_lote,
                 npcs,
                 camara,
                 false,
@@ -532,11 +746,17 @@ void VistaPartida::procesar_entrada(
                 hud,
                 hud_mercado,
                 regalos,
+                ventana_de_lote,
                 npcs,
                 camara,
                 true,
                 pedidos.con_shift);
         }
+    }
+
+    if (cartel_pendiente.has_value()) {
+        cuadro_de_dialogo.mostrar(cartel_pendiente->id_npc, cartel_pendiente->texto);
+        cartel_pendiente.reset();
     }
 }
 
@@ -558,10 +778,51 @@ void VistaPartida::elegir_ranura_de_la_barra(const EntradaDelUsuario::Pedidos& p
         conexion.enviar_comando(SeleccionarRanuraDeLaBarra{static_cast<uint8_t>(nueva)});
     }
 }
+bool VistaPartida::mostrar_cartel_en(int columna, int fila) {
+    if (!carteles_por_mapa.contains(mapa_actual)) {
+        carteles_por_mapa[mapa_actual] =
+            LectorDeMapasTMX(configuracion_de(mapa_actual).ruta).cargar_carteles("Interacciones");
+    }
+    const int x = columna * 16 + 8;
+    const int y = fila * 16 + 8;
+    for (CartelTMX& cartel : carteles_por_mapa[mapa_actual]) {
+        if (x >= cartel.x && x < cartel.x + cartel.ancho && y >= cartel.y &&
+            y < cartel.y + cartel.alto) {
+            std::vector<std::string> frases;
+            std::stringstream texto(cartel.texto);
+            for (std::string frase; std::getline(texto, frase, '|');) {
+                frases.push_back(frase);
+            }
+            if (frases.empty()) {
+                return false;
+            }
+            cartel_pendiente = DialogoNpc{cartel.npc, frases[std::rand() % frases.size()]};
+            if (!cartel.comando.empty()) {
+                conexion.enviar_comando(EnviarMensajeDeChat{cartel.comando});
+                cartel.comando.clear();  // Solo se usa una vez.
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
 void VistaPartida::procesar_clic(
     const EntradaDelUsuario& entrada, HudInventario& hud, HudMercado& hud_mercado,
-    PanelDeRegalos& regalos, const NpcsGraficos& npcs, const Camara& camara, bool clic_derecho,
-    bool con_shift) {
+    PanelDeRegalos& regalos, VentanaDeLote& ventana_de_lote, const NpcsGraficos& npcs,
+    const Camara& camara, bool clic_derecho, bool con_shift) {
+    if (ventana_de_lote.captura_el_clic()) {
+        const EstadoJugador* propio = jugador_propio();
+        const std::optional<ComandoCliente> comando = ventana_de_lote.procesar_clic(
+            ultimo_inventario,
+            propio != nullptr ? propio->monedas : 0,
+            entrada.raton_x(),
+            entrada.raton_y());
+        if (comando.has_value()) {
+            conexion.enviar_comando(*comando);
+        }
+        return;
+    }
     if (hud_mercado.esta_abierto()) {
         for (const ComandoCliente& comando : hud_mercado.procesar_clic(
                  ultimo_inventario,
@@ -620,6 +881,9 @@ void VistaPartida::procesar_clic(
             static_cast<int>(casilla->fila));
         if (!id_npc.empty()) {
             conexion.enviar_comando(HablarConNpc{id_npc});
+            return;
+        }
+        if (mostrar_cartel_en(static_cast<int>(casilla->columna), static_cast<int>(casilla->fila))) {
             return;
         }
     }
@@ -735,6 +999,7 @@ void VistaPartida::aplicar(
                 olvidar_el_piso();
                 estado = e;
                 guardar_tierra(e);
+                seguir_acciones_de_otros();
                 const EstadoJugador* ahora = jugador_propio();
                 if (tenia_monedas && ahora != nullptr && ahora->monedas != monedas_antes &&
                     efectos_actuales != nullptr) {
@@ -751,6 +1016,7 @@ void VistaPartida::aplicar(
                 const uint32_t monedas_antes = antes != nullptr ? antes->monedas : 0;
                 estado.mapa = e.mapa;
                 estado.jugadores = e.jugadores;
+                seguir_acciones_de_otros();
                 const EstadoJugador* ahora = jugador_propio();
                 bool pica = ahora != nullptr && ahora->accion_actual == TipoAccion::PICAR;
                 if (antes_tenia_vida && ahora != nullptr && ahora->vida < vida_antes &&
@@ -903,12 +1169,22 @@ void VistaPartida::aplicar(
                 hora_del_juego = e;
             },
             [&](const EstadoDelDescanso& e) { descanso = e; },
+            [&](const PreguntaDeDormir& e) { pregunta_de_dormir_recibida = e; },
             [&](const MultijugadorActivado& e) {
+                if (menu_actual != nullptr) {
+                    menu_actual->marcar_multijugador(e.codigo_partida);
+                }
                 std::cout << "[partida] multijugador activado, código para invitar: "
                           << e.codigo_partida << std::endl;
             },
             [&](const MensajeDeChat& e) { chat.recibir(e); },
             [&](const JugadoresDeLaPartida& e) { jugadores_de_la_partida = e; },
+            [&](const LoteDelCentro& e) { lotes_recibidos.push_back(e); },
+            [&](const CentroTerminado&) {
+                if (menu_actual != nullptr) {
+                    menu_actual->mostrar_felicitacion();
+                }
+            },
             [&](const RegalosPendientes& e) {
                 if (e.regalos.size() > regalos_pendientes.regalos.size() &&
                     efectos_actuales != nullptr) {
@@ -976,8 +1252,9 @@ void VistaPartida::dibujar(
     const HudInventario& hud, const HudMercado& hud_mercado, const VisionMazmorra& vision_mazmorra,
     const EntradaDelUsuario& entrada, const VistaChat& chat, RelojGrafico& reloj_grafico,
     const PantallaDeDescanso& pantalla_de_descanso, const PanelDeRegalos& regalos,
+    const VentanaDeLote& ventana_de_lote, const MarcasDeLotes& marcas_de_lotes,
     const CuadroDeAviso& cuadro_de_aviso, const CuadroDeDialogo& cuadro_de_dialogo,
-    LluviaGrafica& lluvia) const {
+    LluviaGrafica& lluvia, const MenuEnJuego& menu) const {
     SDL_Renderer* renderer = renderizador.ptr();
     if (mundo != nullptr) {
         SDL_SetRenderTarget(renderer, mundo);
@@ -1081,12 +1358,23 @@ void VistaPartida::dibujar(
         if (dibujable.jugador != nullptr) {
             const EstadoJugador& jugador = *dibujable.jugador;
             const bool es_el_propio = jugador.id_jugador == id_jugador;
-            const bool mostrar_accion = es_el_propio && haciendo_accion;
-            const Uint32 ms_de_accion = mostrar_accion ? SDL_GetTicks() - inicio_accion_ms : 0;
+            bool mostrar_accion = es_el_propio && haciendo_accion;
+            Uint32 ms_de_accion = mostrar_accion ? SDL_GetTicks() - inicio_accion_ms : 0;
             RanuraInventario en_mano{};
             if (es_el_propio &&
                 ultimo_inventario.ranura_activa < ultimo_inventario.ranuras.size()) {
                 en_mano = ultimo_inventario.ranuras[ultimo_inventario.ranura_activa];
+            }
+            if (!es_el_propio) {
+                // De los otros no se tiene el inventario: el servidor manda qué tienen en la mano.
+                en_mano = RanuraInventario{jugador.item_en_mano, 1, jugador.calidad_en_mano};
+                const auto accion = acciones_de_otros.find(jugador.id_jugador);
+                if (accion != acciones_de_otros.end() && accion->second.inicio_ms != 0) {
+                    mostrar_accion = true;
+                    ms_de_accion = SDL_GetTicks() - accion->second.inicio_ms;
+                    // La animación es la del ítem con el que la empezó.
+                    en_mano.tipo = accion->second.item;
+                }
             }
             personaje.dibujar(
                 renderer,
@@ -1099,6 +1387,11 @@ void VistaPartida::dibujar(
                 camara.y(),
                 en_mano,
                 iconos);
+            if (jugador.descanso == EstadoDeDescanso::ACOSTADO) {
+                if (const EstadoObjetoDelMundo* cama = cama_de(jugador); cama != nullptr) {
+                    objetos.dibujar_frazada(renderer, *cama, camara.x(), camara.y());
+                }
+            }
         } else if (dibujable.objeto != nullptr) {
             objetos.dibujar_objeto(renderer, *dibujable.objeto, camara.x(), camara.y());
         } else if (dibujable.animal != nullptr) {
@@ -1113,6 +1406,7 @@ void VistaPartida::dibujar(
         }
     }
     mapa.dibujar_sobre_los_jugadores(renderer, camara.x(), camara.y());
+    marcas_de_lotes.dibujar(renderer, lotes_del_centro, mapa_actual, camara.x(), camara.y());
     objetos.dibujar_sobre_los_jugadores(
         renderer,
         ultimo_estado_juego,
@@ -1147,9 +1441,9 @@ void VistaPartida::dibujar(
     hud_mercado.dibujar(entrada.raton_x(), entrada.raton_y());
     hud.dibujar(renderer, ultimo_inventario, ultimo_cofre, entrada.raton_x(), entrada.raton_y());
     if (const EstadoJugador* propio = jugador_propio(); propio != nullptr) {
-        hud.dibujar_energia(renderer, propio->energia, ENERGIA_MAXIMA_JUGADOR);
-        if (mapa_actual_es_mazmorra() || propio->vida < VIDA_MAXIMA_JUGADOR) {
-            hud.dibujar_vida(renderer, propio->vida, VIDA_MAXIMA_JUGADOR);
+        hud.dibujar_energia(renderer, propio->energia, propio->energia_maxima);
+        if (mapa_actual_es_mazmorra() || propio->vida < propio->vida_maxima) {
+            hud.dibujar_vida(renderer, propio->vida, propio->vida_maxima);
         }
         reloj_grafico.dibujar_dinero(renderer, propio->monedas, ancho_de_pantalla);
     }
@@ -1159,10 +1453,19 @@ void VistaPartida::dibujar(
     }
 
     regalos.dibujar(renderer, datos_de_regalos());
+    if (const EstadoJugador* propio = jugador_propio(); propio != nullptr) {
+        ventana_de_lote.dibujar(
+            renderer,
+            ultimo_inventario,
+            propio->monedas,
+            entrada.raton_x(),
+            entrada.raton_y());
+    }
     pantalla_de_descanso.dibujar(renderer, descanso, ancho_de_pantalla, alto_de_pantalla);
     chat.dibujar(renderer, ancho_de_pantalla, alto_de_pantalla);
     cuadro_de_aviso.dibujar(renderer, ancho_de_pantalla, alto_de_pantalla);
     cuadro_de_dialogo.dibujar(renderer, ancho_de_pantalla, alto_de_pantalla);
+    menu.dibujar(renderer, datos_de_animales(), lotes_del_centro);
 
     SDL_RenderPresent(renderer);
 }

@@ -30,7 +30,8 @@ const RecursosDeJuego& recursos() {
         configuracion().mapas(),
         configuracion().mapa_inicial(),
         configuracion().juego(),
-        configuracion().mazmorra());
+        configuracion().mazmorra(),
+        configuracion().mercado());
     return recursos_de_juego;
 }
 
@@ -55,7 +56,9 @@ TEST(MapaDeLaMazmorra, ElNivelNoTieneCapaColisiones) {
     }
 }
 
-TEST(MapaDeLaMazmorra, LasParedesYLasEscalerasBloquean) {
+// La escalera de bajada se usa con clic desde una casilla vecina, así que bloquea. La de subida se
+// pisa para salir a la granja, como las demás salidas del juego.
+TEST(MapaDeLaMazmorra, LasParedesYLaEscaleraDeBajadaBloqueanYLaDeSubidaSePisa) {
     const std::vector<ConfiguracionMapaServidor> niveles = niveles_de_la_mazmorra();
     ASSERT_FALSE(niveles.empty());
 
@@ -76,7 +79,8 @@ TEST(MapaDeLaMazmorra, LasParedesYLasEscalerasBloquean) {
             }
             const int columna = static_cast<int>(i) % mapa.cantidad_de_columnas();
             const int fila = static_cast<int>(i) / mapa.cantidad_de_columnas();
-            EXPECT_TRUE(mapa.tiene(columna, fila, PropiedadDeCasilla::BLOQUEA))
+            const bool se_pisa = buildings[i] == ESCALERA_DE_SUBIDA;
+            EXPECT_EQ(mapa.tiene(columna, fila, PropiedadDeCasilla::BLOQUEA), !se_pisa)
                 << nivel.id << ": (" << columna << ", " << fila << ")";
         }
         EXPECT_EQ(escaleras, 2) << nivel.id;

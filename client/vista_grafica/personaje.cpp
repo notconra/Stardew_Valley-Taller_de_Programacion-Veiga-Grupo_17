@@ -56,6 +56,12 @@ constexpr PoseDeMano MANO_ACCION[3][4] = {
     {{9, 16, -45}, {9, 18, -15}, {9, 20, 25}, {9, 22, 50}},
 };
 
+// Desmayado: tirado en el piso, el personaje entero (con ropa, pelo y gorro) girado alrededor de
+// un punto cerca de los pies, así queda acostado sobre su casilla.
+#define ANGULO_TIRADO 90.0
+#define PIVOTE_TIRADO_X 8
+#define PIVOTE_TIRADO_Y 24
+
 #define MS_PRIMER_CUADRO_DE_RIEGO 150
 #define COLUMNA_PRIMER_BRAZO 6
 const int FILA_DE_RIEGO[3] = {9, 9, 10};
@@ -141,14 +147,22 @@ int Personaje::alto_del_sprite() const {
 }
 
 void Personaje::dibujar(
-    SDL_Renderer* renderer, const EstadoJugador& jugador, bool haciendo_accion, Uint32 ms_de_accion,
-    int x_en_mapa, int y_en_mapa, int cam_x, int cam_y, const RanuraInventario& en_mano,
-    const IconosDeItems& iconos) const {
-    const auto encontrada = FILA_DE_DIRECCION.find(jugador.mirando);
+    SDL_Renderer* renderer, const EstadoJugador& jugador, bool haciendo_accion_pedida,
+    Uint32 ms_de_accion, int x_en_mapa, int y_en_mapa, int cam_x, int cam_y,
+    const RanuraInventario& en_mano_pedida, const IconosDeItems& iconos) const {
+    // Acostado en la cama o desmayado: de frente, quieto y sin nada en la mano.
+    const bool descansando = jugador.descanso != EstadoDeDescanso::DESPIERTO;
+    const bool tirado = jugador.descanso == EstadoDeDescanso::DESMAYADO;
+    const Direccion mirando = descansando ? Direccion::ABAJO : jugador.mirando;
+    const bool haciendo_accion = haciendo_accion_pedida && !descansando;
+    const bool camina = jugador.camina && !descansando;
+    const RanuraInventario en_mano = descansando ? RanuraInventario{} : en_mano_pedida;
+
+    const auto encontrada = FILA_DE_DIRECCION.find(mirando);
     const int fila_direccion =
         encontrada != FILA_DE_DIRECCION.end() ? encontrada->second : FILA_ABAJO;
     const SDL_RendererFlip flip =
-        jugador.mirando == Direccion::IZQUIERDA ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
+        mirando == Direccion::IZQUIERDA ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
 
     int columna_cuerpo = 0;
     int columna_brazos = 6;
@@ -181,7 +195,7 @@ void Personaje::dibujar(
         columna_cuerpo = cuadro_accion;
         columna_brazos = 6 + cuadro_accion;
         desvio_y_accesorios = desvio_de_accion(fila_direccion, cuadro_accion);
-    } else if (jugador.camina) {
+    } else if (camina) {
         const Uint32 ahora = SDL_GetTicks();
         const int cuadro = static_cast<int>((ahora / ms_por_cuadro_caminando) % 3);
         columna_cuerpo = cuadro;
@@ -198,6 +212,20 @@ void Personaje::dibujar(
         y_pantalla,
         ancho * escala_de_tiles,
         alto * escala_de_tiles};
+
+    // Tirado: todas las capas giran juntas alrededor del mismo punto, siempre con la cabeza a la
+    // derecha.
+    const double angulo = tirado ? ANGULO_TIRADO : 0.0;
+    const SDL_Point pivote{
+        x_pantalla + PIVOTE_TIRADO_X * escala_de_tiles,
+        y_pantalla + PIVOTE_TIRADO_Y * escala_de_tiles};
+    const auto pintar = [&](SDL_Texture* textura,
+                            const SDL_Rect& origen,
+                            const SDL_Rect& destino,
+                            SDL_RendererFlip espejo) {
+        const SDL_Point centro{pivote.x - destino.x, pivote.y - destino.y};
+        SDL_RenderCopyEx(renderer, textura, &origen, &destino, angulo, &centro, espejo);
+    };
     if (item_en_alto) {
         fila_brazos = FILA_BRAZOS_EN_ALTO;
         columna_brazos = fila_direccion == FILA_LATERAL ? COLUMNA_BRAZOS_EN_ALTO_LATERAL
@@ -231,7 +259,7 @@ void Personaje::dibujar(
     const int offset_y_pelo = es_femenino ? OFFSET_Y_PELO_FEMENINO : OFFSET_Y_PELO_MASCULINO;
 
     const SDL_Rect origen_cuerpo{columna_cuerpo * ancho, fila_cuerpo * alto, ancho, alto};
-    SDL_RenderCopyEx(renderer, cuerpo, &origen_cuerpo, &destino_cuerpo, 0.0, nullptr, flip);
+    pintar(cuerpo, origen_cuerpo, destino_cuerpo, flip);
 
     SDL_SetTextureColorMod(
         pantalon.ptr(),
@@ -242,17 +270,37 @@ void Personaje::dibujar(
         columnas_pantalon > 0 ? (jugador.apariencia.indice_pantalon % columnas_pantalon) : 0;
     SDL_Rect origen_pantalon = origen_cuerpo;
     origen_pantalon.x += columna_pantalon * ancho_hoja_cuerpo;
-    SDL_RenderCopyEx(
-        renderer,
-        pantalon.ptr(),
-        &origen_pantalon,
-        &destino_cuerpo,
-        0.0,
-        nullptr,
-        flip);
+    pintar(pantalon.ptr(), origen_pantalon, destino_cuerpo, flip);
 
     const SDL_Rect origen_brazos{columna_brazos * ancho, fila_brazos * alto, ancho, alto};
-    SDL_RenderCopyEx(renderer, cuerpo, &origen_brazos, &destino_cuerpo, 0.0, nullptr, flip);
+    pintar(cuerpo, origen_brazos, destino_cuerpo, flip);
+
+    const int columna_remera =
+        columnas_remera > 0 ? (jugador.apariencia.indice_remera % columnas_remera) : 0;
+    const int pagina_remera =
+        columnas_remera > 0 ? (jugador.apariencia.indice_remera / columnas_remera) : 0;
+    const SDL_Rect origen_remera{
+        columna_remera * ANCHO_CELDA_REMERA,
+        FILA_REMERA_POR_DIRECCION[fila_direccion] + pagina_remera * ALTO_BLOQUE_REMERA,
+        ANCHO_CELDA_REMERA,
+        ANCHO_CELDA_REMERA};
+    const int margen_remera = (ancho - ANCHO_CELDA_REMERA) / 2;
+    const SDL_Rect destino_remera{
+        x_pantalla + (desvio_x_accesorios + margen_remera) * escala_de_tiles,
+        y_pantalla + (offset_y_remera + desvio_y_accesorios) * escala_de_tiles,
+        ANCHO_CELDA_REMERA * escala_de_tiles,
+        ANCHO_CELDA_REMERA * escala_de_tiles};
+    // De espaldas el pelo va por encima de la remera.
+    if (fila_direccion == FILA_ARRIBA) {
+        SDL_RenderCopyEx(
+            renderer,
+            remera.ptr(),
+            &origen_remera,
+            &destino_remera,
+            0.0,
+            nullptr,
+            flip);
+    }
 
     SDL_SetTextureColorMod(
         pelo.ptr(),
@@ -273,7 +321,7 @@ void Personaje::dibujar(
         y_pantalla + (offset_y_pelo + desvio_y_accesorios) * escala_de_tiles,
         ancho * escala_de_tiles,
         alto * escala_de_tiles};
-    SDL_RenderCopyEx(renderer, pelo.ptr(), &origen_pelo, &destino_pelo, 0.0, nullptr, flip);
+    pintar(pelo.ptr(), origen_pelo, destino_pelo, flip);
 
     if (jugador.apariencia.indice_sombrero >= 0 && columnas_sombrero > 0) {
         const int columna_sombrero = jugador.apariencia.indice_sombrero % columnas_sombrero;
@@ -291,42 +339,22 @@ void Personaje::dibujar(
             ANCHO_CELDA_SOMBRERO * escala_de_tiles};
         const SDL_RendererFlip flip_sombrero =
             flip == SDL_FLIP_NONE ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
-        SDL_RenderCopyEx(
-            renderer,
-            sombrero.ptr(),
-            &origen_sombrero,
-            &destino_sombrero,
-            0.0,
-            nullptr,
-            flip_sombrero);
+        pintar(sombrero.ptr(), origen_sombrero, destino_sombrero, flip_sombrero);
     }
 
-    const int columna_remera =
-        columnas_remera > 0 ? (jugador.apariencia.indice_remera % columnas_remera) : 0;
-    const int pagina_remera =
-        columnas_remera > 0 ? (jugador.apariencia.indice_remera / columnas_remera) : 0;
-    const SDL_Rect origen_remera{
-        columna_remera * ANCHO_CELDA_REMERA,
-        FILA_REMERA_POR_DIRECCION[fila_direccion] + pagina_remera * ALTO_BLOQUE_REMERA,
-        ANCHO_CELDA_REMERA,
-        ANCHO_CELDA_REMERA};
-    const int margen_remera = (ancho - ANCHO_CELDA_REMERA) / 2;
-    const SDL_Rect destino_remera{
-        x_pantalla + (desvio_x_accesorios + margen_remera) * escala_de_tiles,
-        y_pantalla + (offset_y_remera + desvio_y_accesorios) * escala_de_tiles,
-        ANCHO_CELDA_REMERA * escala_de_tiles,
-        ANCHO_CELDA_REMERA * escala_de_tiles};
-    SDL_RenderCopyEx(renderer, remera.ptr(), &origen_remera, &destino_remera, 0.0, nullptr, flip);
+    if (fila_direccion != FILA_ARRIBA) {
+        pintar(remera.ptr(), origen_remera, destino_remera, flip);
+    }
 
     if (haciendo_accion || item_en_alto) {
-        SDL_RenderCopyEx(renderer, cuerpo, &origen_brazos, &destino_cuerpo, 0.0, nullptr, flip);
+        pintar(cuerpo, origen_brazos, destino_cuerpo, flip);
     }
 
     if (item_en_alto) {
         int corrimiento = 0;
         if (fila_direccion == FILA_LATERAL) {
-            corrimiento = jugador.mirando == Direccion::IZQUIERDA ? -CORRIMIENTO_ITEM_LATERAL
-                                                                  : CORRIMIENTO_ITEM_LATERAL;
+            corrimiento = mirando == Direccion::IZQUIERDA ? -CORRIMIENTO_ITEM_LATERAL
+                                                          : CORRIMIENTO_ITEM_LATERAL;
         }
         const SDL_Rect destino_item{
             x_pantalla + ((ancho - TAMANO_ITEM_EN_ALTO) / 2 + corrimiento) * escala_de_tiles,

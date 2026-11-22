@@ -42,7 +42,8 @@ const RecursosDeJuego& recursos() {
             mapas,
             "granja",
             configuracion.juego(),
-            ConfiguracionMazmorraServidor{});
+            ConfiguracionMazmorraServidor{},
+            configuracion.mercado());
     }();
     return recursos_de_juego;
 }
@@ -63,11 +64,6 @@ public:
     void responder_a_jugador(uint32_t id_jugador, const std::string& texto) override {
         ultimo_destinatario = id_jugador;
         ultimo_mensaje = texto;
-    }
-
-    void responder_como_comerciante(
-        uint32_t /*id_jugador*/, const std::string& /*nombre*/,
-        const std::string& /*texto*/) override {
     }
 };
 
@@ -186,15 +182,14 @@ TEST(Dinero, ComandoDineroConsultarSaldo) {
     ComandoDinero comando{mundo};
     RespuestasDePrueba respuestas;
 
-    ContextoDeComandoDeChat contexto_vacio{ID_JUGADOR, "Jugador1", "dinero", {}, "", respuestas};
+    ContextoDeComandoDeChat contexto_vacio{ID_JUGADOR, "Jugador1", "dinero", {}, respuestas};
     comando.ejecutar(contexto_vacio);
 
     const uint32_t saldo = mundo.obtener_monedas(ID_JUGADOR);
     EXPECT_EQ(respuestas.ultimo_destinatario, ID_JUGADOR);
     EXPECT_EQ(respuestas.ultimo_mensaje, "Tenes " + std::to_string(saldo) + " monedas de oro.");
 
-    ContextoDeComandoDeChat
-        contexto_saldo{ID_JUGADOR, "Jugador1", "dinero", {"saldo"}, "", respuestas};
+    ContextoDeComandoDeChat contexto_saldo{ID_JUGADOR, "Jugador1", "dinero", {"saldo"}, respuestas};
     comando.ejecutar(contexto_saldo);
     EXPECT_EQ(respuestas.ultimo_mensaje, "Tenes " + std::to_string(saldo) + " monedas de oro.");
 }
@@ -209,8 +204,12 @@ TEST(Dinero, ComandoDineroRecibirMonedas) {
     ComandoDinero comando{mundo};
     RespuestasDePrueba respuestas;
 
-    ContextoDeComandoDeChat
-        contexto{ID_JUGADOR, "Jugador1", "dinero", {"recibir", "500"}, "", respuestas};
+    ContextoDeComandoDeChat contexto{
+        ID_JUGADOR,
+        "Jugador1",
+        "dinero",
+        {"recibir", "500"},
+        respuestas};
     comando.ejecutar(contexto);
 
     const uint32_t saldo_esperado = saldo_inicial + 500;
@@ -232,8 +231,12 @@ TEST(Dinero, ComandoDineroGastarMonedasConExito) {
     ComandoDinero comando{mundo};
     RespuestasDePrueba respuestas;
 
-    ContextoDeComandoDeChat
-        contexto{ID_JUGADOR, "Jugador1", "dinero", {"gastar", "150"}, "", respuestas};
+    ContextoDeComandoDeChat contexto{
+        ID_JUGADOR,
+        "Jugador1",
+        "dinero",
+        {"gastar", "150"},
+        respuestas};
     comando.ejecutar(contexto);
 
     const uint32_t saldo_esperado = saldo_previo - 150;
@@ -254,8 +257,12 @@ TEST(Dinero, ComandoDineroGastarMonedasSinSaldoSuficiente) {
     ComandoDinero comando{mundo};
     RespuestasDePrueba respuestas;
 
-    ContextoDeComandoDeChat
-        contexto{ID_JUGADOR, "Jugador1", "dinero", {"gastar", "1000000"}, "", respuestas};
+    ContextoDeComandoDeChat contexto{
+        ID_JUGADOR,
+        "Jugador1",
+        "dinero",
+        {"gastar", "1000000"},
+        respuestas};
     comando.ejecutar(contexto);
 
     EXPECT_EQ(mundo.obtener_monedas(ID_JUGADOR), saldo_actual);
@@ -275,28 +282,39 @@ TEST(Dinero, ComandoDineroValidacionDeArgumentosYAyuda) {
     RespuestasDePrueba respuestas;
 
     // Falta cantidad en recibir
-    ContextoDeComandoDeChat
-        sin_cantidad{ID_JUGADOR, "Jugador1", "dinero", {"recibir"}, "", respuestas};
+    ContextoDeComandoDeChat sin_cantidad{ID_JUGADOR, "Jugador1", "dinero", {"recibir"}, respuestas};
     comando.ejecutar(sin_cantidad);
     EXPECT_EQ(respuestas.ultimo_mensaje, "Uso: /dinero recibir <cantidad>");
 
     // Cantidad no numérica
-    ContextoDeComandoDeChat
-        cantidad_invalida{ID_JUGADOR, "Jugador1", "dinero", {"recibir", "mucho"}, "", respuestas};
+    ContextoDeComandoDeChat cantidad_invalida{
+        ID_JUGADOR,
+        "Jugador1",
+        "dinero",
+        {"recibir", "mucho"},
+        respuestas};
     comando.ejecutar(cantidad_invalida);
     EXPECT_EQ(
         respuestas.ultimo_mensaje,
         "La cantidad debe ser un numero entero positivo menor a 100 millones.");
 
     // Cantidad cero
-    ContextoDeComandoDeChat
-        cantidad_cero{ID_JUGADOR, "Jugador1", "dinero", {"gastar", "0"}, "", respuestas};
+    ContextoDeComandoDeChat cantidad_cero{
+        ID_JUGADOR,
+        "Jugador1",
+        "dinero",
+        {"gastar", "0"},
+        respuestas};
     comando.ejecutar(cantidad_cero);
     EXPECT_EQ(respuestas.ultimo_mensaje, "La cantidad debe ser un numero entero positivo.");
 
     // Subcomando desconocido
-    ContextoDeComandoDeChat
-        subcomando_invalido{ID_JUGADOR, "Jugador1", "dinero", {"inventar"}, "", respuestas};
+    ContextoDeComandoDeChat subcomando_invalido{
+        ID_JUGADOR,
+        "Jugador1",
+        "dinero",
+        {"inventar"},
+        respuestas};
     comando.ejecutar(subcomando_invalido);
     EXPECT_EQ(
         respuestas.ultimo_mensaje,

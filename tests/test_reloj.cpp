@@ -222,7 +222,8 @@ TEST(ControladorDelDia, AvisaATodosCadaDiezMinutosYAlQueEntra) {
         mapas,
         "granja",
         configuracion_del_servidor.juego(),
-        ConfiguracionMazmorraServidor{});
+        ConfiguracionMazmorraServidor{},
+        configuracion_del_servidor.mercado());
     NotificadorDePrueba notificador;
     std::map<uint32_t, Personaje> personajes;
     GestorDeSectores sectores(recursos, TICKS_POR_SEGUNDO, personajes, notificador);
@@ -257,7 +258,8 @@ TEST(ControladorDelDia, ElQueEntraALaPartidaRecibeLaHora) {
         mapas,
         "granja",
         configuracion.juego(),
-        ConfiguracionMazmorraServidor{});
+        ConfiguracionMazmorraServidor{},
+        configuracion.mercado());
     NotificadorDePrueba notificador;
     Mundo mundo(recursos, notificador, 40);
 

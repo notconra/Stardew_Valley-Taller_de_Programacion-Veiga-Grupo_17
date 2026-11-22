@@ -10,6 +10,7 @@
 #include "../jugadores/personaje.h"
 #include "../notificador.h"
 #include "../sector/gestor_de_sectores.h"
+#include "controlador_del_centro.h"
 
 // El otro lado del combate: los enemigos persiguen al jugador cercano (ver mover_hacia()) y, si
 // quedan al lado de uno, lo golpean. GestorDeEnemigos sabe "hacia dónde avanza cada uno" y "quién
@@ -21,9 +22,9 @@ private:
     GestorDeSectores& sectores;
     std::map<uint32_t, Personaje>& personajes;
     Notificador& notificador;
+    ControladorDelCentro& centro;
     // Lo último que se mandó de las llamas de cada sector, para no repetirlo.
     std::map<std::string, std::vector<EstadoLlama>> llamas_enviadas;
-
     void atacar_en_sector(Sector& sector);
     // Le aplica un golpe de enemigo (cuerpo a cuerpo o una llama) al personaje y avisa cómo quedó
     // el enemigo que lo dio.
@@ -38,7 +39,7 @@ private:
 public:
     ControladorDeEnemigos(
         GestorDeSectores& sectores, std::map<uint32_t, Personaje>& personajes,
-        Notificador& notificador);
+        Notificador& notificador, ControladorDelCentro& centro);
 
     // Un tick: en cada sector, los enemigos avanzan hacia el jugador más cercano y los que quedan
     // listos para pegar con un jugador al lado le bajan la vida.

@@ -6,6 +6,7 @@
 #include <utility>
 #include <variant>
 
+#include "../acciones/accion_abrir_lote.h"
 #include "../acciones/accion_atacar.h"
 #include "../acciones/accion_colocar.h"
 #include "../acciones/accion_cosechar.h"
@@ -22,7 +23,8 @@
 ControladorDeAcciones::ControladorDeAcciones(
     GestorDeSectores& sectores, std::map<uint32_t, Personaje>& personajes,
     const RecursosDeJuego& recursos, Notificador& notificador, ControladorDeMercado& mercado,
-    const ControladorDelDia& dia, ResolverDeTransicion resolver_transicion)
+    const ControladorDelDia& dia, ControladorDelCentro& centro,
+    ResolverDeTransicion resolver_transicion)
     : sectores(sectores),
       personajes(personajes),
       recursos(recursos),
@@ -44,9 +46,11 @@ ControladorDeAcciones::ControladorDeAcciones(
     acciones.push_back(std::make_unique<AccionPlantar>());
     acciones.push_back(std::make_unique<AccionInteractuarCofre>());
     acciones.push_back(std::make_unique<AccionColocar>());
-    acciones.push_back(
-        std::make_unique<AccionAtacar>(static_cast<uint16_t>(duraciones.duracion_atacar_en_ticks)));
+    acciones.push_back(std::make_unique<AccionAtacar>(
+        centro,
+        static_cast<uint16_t>(duraciones.duracion_atacar_en_ticks)));
     acciones.push_back(std::make_unique<AccionInteractuarMercado>(mercado, dia));
+    acciones.push_back(std::make_unique<AccionAbrirLote>(centro));
 }
 
 bool ControladorDeAcciones::al_alcance(
@@ -66,9 +70,17 @@ const Accion* ControladorDeAcciones::ejecutar(ContextoDeAccion& contexto) {
 
         contexto.personaje.accion_actual = accion->tipo();
         contexto.personaje.ticks_restantes_accion = accion->duracion_en_ticks();
+        if (se_anima(accion->tipo())) {
+            ++contexto.personaje.numero_de_accion;
+        }
         return accion.get();
     }
     return nullptr;
+}
+
+bool ControladorDeAcciones::se_anima(TipoAccion tipo) {
+    return tipo == TipoAccion::PICAR || tipo == TipoAccion::TRATAR_TIERRA ||
+           tipo == TipoAccion::ATACAR || tipo == TipoAccion::REGAR;
 }
 
 CasillaConsultada ControladorDeAcciones::consultar(
@@ -110,9 +122,6 @@ CasillaConsultada ControladorDeAcciones::consultar(
         return respuesta;
     }
 
-    // La pala, el pico, la regadera y las semillas: una casilla en verde solo si harían algo. Igual
-    // que al usarlos, el pico primero rompe lo que haya en la casilla y si no hay nada, vuelve la
-    // tierra a común.
     if (!alcanza) {
         return respuesta;
     }

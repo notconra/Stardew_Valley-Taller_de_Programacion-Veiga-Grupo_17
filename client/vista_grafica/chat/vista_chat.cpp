@@ -65,6 +65,10 @@ bool VistaChat::esta_escribiendo() const {
     return modelo.esta_escribiendo();
 }
 
+bool VistaChat::esta_abierto() const {
+    return modelo.esta_abierto();
+}
+
 ConsumoDeEntradaChat VistaChat::procesar_entrada(
     const EntradaDelUsuario& entrada, int ancho_pantalla, int alto_pantalla) {
     ajustar_envoltura(disponer(ancho_pantalla, alto_pantalla));

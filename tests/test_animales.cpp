@@ -26,7 +26,8 @@ const RecursosDeJuego& recursos_test() {
             mapas,
             "granja",
             configuracion.juego(),
-            ConfiguracionMazmorraServidor{});
+            ConfiguracionMazmorraServidor{},
+            configuracion.mercado());
     }();
     return recursos_de_juego;
 }

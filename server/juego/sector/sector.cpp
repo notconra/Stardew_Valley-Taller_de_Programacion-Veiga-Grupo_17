@@ -270,7 +270,12 @@ int Sector::soltar(
 }
 
 void Sector::avanzar_dia(Notificador& notificador) {
-    animales.avanzar_dia(drops);
+    std::vector<EstadoDrop> nuevos_drops = animales.avanzar_dia(drops);
+    for (const EstadoDrop& drop : nuevos_drops) {
+        DropAparecido evento;
+        evento.drop = drop;
+        avisar(notificador, evento);
+    }
     std::vector<uint32_t> ids_vacas = animales.obtener_ids_vacas_listas_para_ordeniar();
     for (uint32_t id_vaca : ids_vacas) {
         VacaOrdeniable evento;

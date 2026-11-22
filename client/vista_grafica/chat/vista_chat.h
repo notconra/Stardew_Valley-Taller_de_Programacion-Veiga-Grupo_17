@@ -81,6 +81,7 @@ public:
     ConsumoDeEntrada procesar_entrada(
         const EntradaDelUsuario& entrada, int ancho_pantalla, int alto_pantalla);
     std::optional<EnviarMensajeDeChat> tomar_mensaje_a_enviar();
+    bool esta_abierto() const;
     bool esta_escribiendo() const;
     void dibujar(SDL_Renderer* renderer, int ancho_pantalla, int alto_pantalla) const;
 
