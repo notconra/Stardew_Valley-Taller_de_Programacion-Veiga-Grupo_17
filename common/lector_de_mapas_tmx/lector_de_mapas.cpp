@@ -278,6 +278,9 @@ std::vector<CartelTMX> LectorDeMapasTMX::cargar_carteles(const std::string& nomb
         cartel.alto = objeto.alto() > 0 ? objeto.alto() : 1;
         cartel.npc = objeto.texto_de("npc");
         cartel.texto = objeto.texto_de("texto");
+        if (objeto.tiene_propiedad("comando")) {
+            cartel.comando = objeto.texto_de("comando");
+        }
         carteles.push_back(cartel);
     }
     return carteles;

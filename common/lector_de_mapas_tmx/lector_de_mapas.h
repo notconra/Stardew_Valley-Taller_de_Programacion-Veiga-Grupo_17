@@ -64,6 +64,7 @@ struct CartelTMX {
     int alto = 0;
     std::string npc;
     std::string texto;
+    std::string comando;  // Opcional: se manda como mensaje de chat (ej. "/dinero 200").
 };
 
 // Un objeto de una capa de objetos de Tiled, tal cual está en el TMX, con su zona y sus
