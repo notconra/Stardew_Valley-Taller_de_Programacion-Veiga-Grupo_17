@@ -23,8 +23,9 @@ static const std::map<std::string, InformacionEntidadTransicion> DESTINOS_A_ENTI
     {"mercado", {TipoEntidad::CENTRO_COMUNITARIO, 5, 9, 12, 10}},
     {"Town", {TipoEntidad::TRANSICION_PUEBLO, 0, 0, 2, 2}},
     {"granja", {TipoEntidad::TRANSICION_GRANJA, 0, 0, 2, 2}},
-    {"caverna", {TipoEntidad::ENTRADA_CAVERNA, 1, 3, 3, 4}},
-    {"mina_1", {TipoEntidad::ENTRADA_CAVERNA, 1, 3, 3, 4}},
+    {"caverna", {TipoEntidad::ENTRADA_CAVERNA, 2, 6, 5, 7}},
+    {"mina_1", {TipoEntidad::ENTRADA_CAVERNA, 2, 6, 5, 7}},
+    {"mazmorra", {TipoEntidad::ENTRADA_CAVERNA, 2, 6, 5, 7}},
     {"siguiente", {TipoEntidad::ESCALERA_NIVEL, 0, 0, 1, 1}}};
 
 static const std::map<std::string, TipoEntidad> IDENTIFICADORES_A_PUESTO = {
@@ -36,9 +37,6 @@ static const std::map<std::string, TipoEntidad> IDENTIFICADORES_A_PUESTO = {
 bool CargadorDeSectorTMX::es_tile_de_estructura_compuesta(uint32_t id_tile, SectorActual sector) {
     if (sector == SectorActual::GRANJA) {
         if (id_tile >= PRIMER_GID_TILES_CABANIA) {
-            return true;
-        }
-        if (id_tile >= PRIMER_GID_TILES_CAVERNA && id_tile <= ULTIMO_GID_TILES_CAVERNA) {
             return true;
         }
     }

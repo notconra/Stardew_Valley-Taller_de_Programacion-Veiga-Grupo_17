@@ -85,12 +85,63 @@ bool ValidadorDeMundo::casilla_puerta_cabania_transitable(
     int alto = 0;
     cabania.consultar_dimensiones(ancho, alto);
 
-    // La puerta de la cabaña está en el centro inferior
-    int col_puerta = columna_origen + ancho / 2;
+    int columna_puerta = columna_origen + COLUMNA_PUERTA_CABANIA;
+    int fila_puerta = fila_origen + FILA_PUERTA_CABANIA;
     int fila_frente = fila_origen + alto;
 
-    return mapa.esta_dentro(col_puerta, fila_frente) &&
-           mapa.casilla_es_transitable(col_puerta, fila_frente);
+    if (!mapa.esta_dentro(columna_puerta, fila_puerta)) {
+        return false;
+    }
+
+    return mapa.esta_dentro(columna_puerta, fila_frente) &&
+           mapa.casilla_es_transitable(columna_puerta, fila_frente);
+}
+
+bool ValidadorDeMundo::casilla_puerta_entrada_caverna_transitable(
+    const MapaEditable& mapa, const EntidadDelMapa& entrada_caverna) {
+    int columna_origen = 0;
+    int fila_origen = 0;
+    entrada_caverna.consultar_origen(columna_origen, fila_origen);
+    int ancho = 0;
+    int alto = 0;
+    entrada_caverna.consultar_dimensiones(ancho, alto);
+
+    int columna_puerta = columna_origen + COLUMNA_PUERTA_CASETA_MINA;
+    int fila_puerta = fila_origen + FILA_PUERTA_CASETA_MINA;
+    int fila_frente = fila_origen + alto;
+
+    if (!mapa.esta_dentro(columna_puerta, fila_puerta)) {
+        return false;
+    }
+
+    return mapa.esta_dentro(columna_puerta, fila_frente) &&
+           mapa.casilla_es_transitable(columna_puerta, fila_frente);
+}
+
+bool ValidadorDeMundo::casilla_puerta_centro_comunitario_transitable(
+    const MapaEditable& mapa, const EntidadDelMapa& centro_comunitario) {
+    int columna_origen = 0;
+    int fila_origen = 0;
+    centro_comunitario.consultar_origen(columna_origen, fila_origen);
+    int ancho = 0;
+    int alto = 0;
+    centro_comunitario.consultar_dimensiones(ancho, alto);
+
+    int columna_puerta_izquierda = columna_origen + COLUMNA_PUERTA_CENTRO_COMUNITARIO;
+    int columna_puerta_derecha = columna_puerta_izquierda + 1;
+    int fila_puerta = fila_origen + FILA_PUERTA_CENTRO_COMUNITARIO;
+    int fila_frente = fila_origen + alto;
+
+    if (!mapa.esta_dentro(columna_puerta_izquierda, fila_puerta)) {
+        return false;
+    }
+
+    bool transitable_izquierda = mapa.esta_dentro(columna_puerta_izquierda, fila_frente) &&
+                                 mapa.casilla_es_transitable(columna_puerta_izquierda, fila_frente);
+    bool transitable_derecha = mapa.esta_dentro(columna_puerta_derecha, fila_frente) &&
+                               mapa.casilla_es_transitable(columna_puerta_derecha, fila_frente);
+
+    return transitable_izquierda || transitable_derecha;
 }
 
 bool ValidadorDeMundo::existe_camino_transitable(
@@ -184,6 +235,14 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
 
     // 1. Validar Sector Granja
     const MapaEditable& granja = mundo.obtener_sector_granja();
+    if (granja.obtener_cantidad_de_columnas() < MapaEditable::MINIMO_COLUMNAS_TOTALES_GRANJA ||
+        granja.obtener_cantidad_de_filas() < MapaEditable::MINIMO_FILAS_TOTALES_GRANJA) {
+        resultado.agregar_error(
+            "La granja es demasiado chica. Las dimensiones minimas con perimetro son 16x13 "
+            "casillas "
+            "para poder albergar la cabania y la caseta de la mina sin solapamientos.");
+    }
+
     std::vector<EntidadDelMapa> cabanias = granja.listar_entidades_por_tipo(TipoEntidad::CABANIA);
     if (cabanias.empty()) {
         resultado.agregar_error("Falta la cabania del jugador en la granja.");
@@ -203,7 +262,10 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
     if (entradas_caverna.empty()) {
         resultado.agregar_error("Falta la entrada a la caverna en la granja.");
     } else {
-        if (!tiene_acceso_perimetral_transitable(granja, entradas_caverna[0])) {
+        if (!casilla_puerta_entrada_caverna_transitable(granja, entradas_caverna[0])) {
+            resultado.agregar_error(
+                "La puerta de entrada a la caverna esta bloqueada por agua u obstaculos.");
+        } else if (!tiene_acceso_perimetral_transitable(granja, entradas_caverna[0])) {
             resultado.agregar_error(
                 "La entrada a la caverna esta totalmente bloqueada por obstaculos.");
         }
@@ -220,8 +282,7 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
     std::vector<EntidadDelMapa> salidas_pueblo =
         granja.listar_entidades_por_tipo(TipoEntidad::TRANSICION_PUEBLO);
     if (salidas_pueblo.empty()) {
-        resultado.agregar_advertencia(
-            "Se sugiere colocar una salida hacia el pueblo en la granja.");
+        resultado.agregar_error("Falta la salida hacia el pueblo en la granja.");
     } else {
         if (!tiene_acceso_perimetral_transitable(granja, salidas_pueblo[0])) {
             resultado.agregar_error(
@@ -272,15 +333,21 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
         pueblo.listar_entidades_por_tipo(TipoEntidad::CENTRO_COMUNITARIO);
     if (centros_comunitarios.empty()) {
         resultado.agregar_error("Falta el Centro Comunitario en el pueblo.");
-    } else if (!tiene_acceso_perimetral_transitable(pueblo, centros_comunitarios[0])) {
-        resultado.agregar_error("El Centro Comunitario esta totalmente bloqueado por obstaculos.");
+    } else {
+        if (!casilla_puerta_centro_comunitario_transitable(pueblo, centros_comunitarios[0])) {
+            resultado.agregar_error(
+                "La puerta de entrada del Centro Comunitario esta bloqueada por agua u "
+                "obstaculos.");
+        } else if (!tiene_acceso_perimetral_transitable(pueblo, centros_comunitarios[0])) {
+            resultado.agregar_error(
+                "El Centro Comunitario esta totalmente bloqueado por obstaculos.");
+        }
     }
 
     std::vector<EntidadDelMapa> salidas_granja =
         pueblo.listar_entidades_por_tipo(TipoEntidad::TRANSICION_GRANJA);
     if (salidas_granja.empty()) {
-        resultado.agregar_advertencia(
-            "Se sugiere colocar una salida hacia la granja en el pueblo.");
+        resultado.agregar_error("Falta la salida hacia la granja en el pueblo.");
     } else if (!tiene_acceso_perimetral_transitable(pueblo, salidas_granja[0])) {
         resultado.agregar_error(
             "La salida hacia la granja esta totalmente bloqueada por obstaculos.");

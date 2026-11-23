@@ -81,12 +81,25 @@ private:
     static constexpr int COLUMNA_INICIO_ACCESO_CENTRO_COMUNITARIO = 4;
     static constexpr int COLUMNA_FIN_ACCESO_CENTRO_COMUNITARIO = 7;
 
-    // Dimensiones y tiles de la Entrada a Caverna (3x4)
-    static constexpr int ANCHO_CAVERNA_CASILLAS = 3;
-    static constexpr int ALTO_CAVERNA_CASILLAS = 4;
-    static constexpr int COLUMNA_ORIGEN_SPRITE_CAVERNA = 8;
-    static constexpr int FILA_ORIGEN_SPRITE_CAVERNA = 65;
-    static constexpr int COLUMNAS_TILESET_EXTERIORES = 25;
+    // Tileset Caseta de Mina (Stone Cabin.png)
+    static constexpr uint32_t FIRST_GID_CASETA_MINA = 3683;
+    static constexpr int COLUMNAS_TILESET_CASETA_MINA = 15;
+    static constexpr int TOTAL_TILES_CASETA_MINA = 105;
+    static constexpr int ANCHO_IMAGEN_CASETA_MINA = 240;
+    static constexpr int ALTO_IMAGEN_CASETA_MINA = 112;
+    static constexpr const char* RUTA_TILESET_CASETA_MINA = "Assets/Buildings/Stone Cabin.png";
+    static constexpr const char* NOMBRE_TILESET_CASETA_MINA = "Stone Cabin";
+
+    // Dimensiones y capas de la Caseta de Mina (5x7)
+    static constexpr int ANCHO_CASETA_MINA_CASILLAS = 5;
+    static constexpr int ALTO_CASETA_MINA_CASILLAS = 7;
+    static constexpr int COLUMNA_DESPLAZAMIENTO_SPRITE_CASETA_MINA =
+        5;  // Etapa 2 (columna 5 = 80px)
+    static constexpr int FILA_LIMITE_TECHO_CASETA_MINA = 3;
+    static constexpr int FILA_PORCHE_CASETA_MINA = 6;
+    static constexpr int COLUMNA_BUZON_CASETA_MINA = 4;
+    static constexpr int COLUMNA_PUERTA_CASETA_MINA = 2;
+    static constexpr int FILA_PUERTA_CASETA_MINA = 6;
 
     EscritorTMX escritor;
     SectorActual sector;
@@ -106,7 +119,8 @@ private:
         std::vector<uint32_t>& tiles_frente);
     void inyectar_tiles_de_entrada_caverna(
         int origen_columna, int origen_fila, int total_columnas, int total_filas,
-        std::vector<uint32_t>& tiles_suelo, std::vector<uint32_t>& tiles_estructuras);
+        std::vector<uint32_t>& tiles_suelo, std::vector<uint32_t>& tiles_estructuras,
+        std::vector<uint32_t>& tiles_frente);
 
 public:
     ExportadorDeSectorTMX(

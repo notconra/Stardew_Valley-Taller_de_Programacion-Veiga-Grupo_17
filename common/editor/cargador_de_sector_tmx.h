@@ -19,8 +19,6 @@ private:
     static constexpr const char* CAPA_INTERACCIONES_TMX = "Interacciones";
 
     static constexpr uint32_t PRIMER_GID_TILES_CABANIA = 3224;
-    static constexpr uint32_t PRIMER_GID_TILES_CAVERNA = 1634;
-    static constexpr uint32_t ULTIMO_GID_TILES_CAVERNA = 1711;
     static constexpr uint32_t PRIMER_GID_TILES_CENTRO_COMUNITARIO = 3320;
     static constexpr uint32_t ULTIMO_GID_TILES_CENTRO_COMUNITARIO = 3640;
 

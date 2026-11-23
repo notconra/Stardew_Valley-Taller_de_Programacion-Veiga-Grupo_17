@@ -73,8 +73,8 @@ void DefinicionDeMundo::establecer_niveles_mazmorra(const std::vector<MapaEditab
 
 DefinicionDeMundo DefinicionDeMundo::crear_mundo_por_defecto(const std::string& nombre) {
     MapaEditable granja(
-        ANCHO_MAPA_EXTERIORES,
-        ANCHO_MAPA_EXTERIORES,
+        COLUMNAS_MAPA_GRANJA,
+        FILAS_MAPA_GRANJA,
         CatalogoDeTerrenos::obtener_tile_base(SectorActual::GRANJA),
         PropiedadDeCasilla::CULTIVABLE | PropiedadDeCasilla::DECORABLE |
             PropiedadDeCasilla::ADMITE_HIERBA);
@@ -95,8 +95,8 @@ DefinicionDeMundo DefinicionDeMundo::crear_mundo_por_defecto(const std::string& 
 
     // Configuración inicial de la Granja
     granja.ubicar_entidad(TipoEntidad::CABANIA, 6, 5, 9, 9);
-    granja.ubicar_entidad(TipoEntidad::ENTRADA_CAVERNA, 22, 0, 3, 4);
-    granja.ubicar_entidad(TipoEntidad::TRANSICION_PUEBLO, 33, 16, 2, 2);
+    granja.ubicar_entidad(TipoEntidad::ENTRADA_CAVERNA, 20, 5, 5, 7);
+    granja.ubicar_entidad(TipoEntidad::TRANSICION_PUEBLO, 32, 16, 2, 2);
     granja.generar_muro_perimetral_granja();
 
     // Configuración inicial del Pueblo

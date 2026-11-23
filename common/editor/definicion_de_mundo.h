@@ -15,6 +15,8 @@ private:
     std::vector<MapaEditable> niveles_mazmorra;
 
     static constexpr size_t CANTIDAD_DE_NIVELES_MAZMORRA = 10;
+    static constexpr int COLUMNAS_MAPA_GRANJA = 34;
+    static constexpr int FILAS_MAPA_GRANJA = 30;
     static constexpr int ANCHO_MAPA_EXTERIORES = 35;
     static constexpr int ALTO_MAPA_EXTERIORES = 35;
     static constexpr int ANCHO_MAPA_MAZMORRA = 25;

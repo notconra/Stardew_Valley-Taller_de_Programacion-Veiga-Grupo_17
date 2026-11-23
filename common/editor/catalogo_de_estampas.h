@@ -61,39 +61,27 @@ public:
     static constexpr uint32_t TILE_RIBERA_INTERNA_SURESTE = 310;
     static constexpr uint32_t TILE_DETALLE_TIERRA_AGUA = 1294;
 
-    // Tiles de acantilado norte lore-friendly (4 casillas de alto, calco de Farm.tmx)
-    static constexpr uint32_t TILE_ACANTILADO_FILA_0_A = 468;
-    static constexpr uint32_t TILE_ACANTILADO_FILA_0_B = 469;
-    static constexpr uint32_t TILE_ACANTILADO_FILA_1_A = 493;
-    static constexpr uint32_t TILE_ACANTILADO_FILA_1_B = 494;
-    static constexpr uint32_t TILE_ACANTILADO_FILA_2_A = 518;
-    static constexpr uint32_t TILE_ACANTILADO_FILA_2_B = 519;
-    static constexpr uint32_t TILE_ACANTILADO_FILA_3_A = 543;
-    static constexpr uint32_t TILE_ACANTILADO_FILA_3_B = 544;
+    // Tile de pasto verde para el perimetro exterior de la granja (spring_outdoorsTileSheet.png)
+    static constexpr uint32_t TILE_PASTO_PERIMETRAL = 176;
 
-    // Esquinas superiores del acantilado
-    static constexpr uint32_t TILE_ACANTILADO_ESQUINA_NOROESTE = 467;
-    static constexpr uint32_t TILE_ACANTILADO_ESQUINA_NORESTE = 470;
+    // Tiles de valla perimetral de madera (spring_outdoorsTileSheet.png)
+    // Horizontal (capas Frente y Estructuras):
+    static constexpr uint32_t TILE_VALLA_POSTE_IZQUIERDO_FRENTE = 359;
+    static constexpr uint32_t TILE_VALLA_POSTE_IZQUIERDO_BASE = 384;
+    static constexpr uint32_t TILE_VALLA_POSTE_CENTRAL_FRENTE = 360;
+    static constexpr uint32_t TILE_VALLA_POSTE_CENTRAL_BASE = 385;
+    static constexpr uint32_t TILE_VALLA_POSTE_DERECHO_FRENTE = 361;
+    static constexpr uint32_t TILE_VALLA_POSTE_DERECHO_BASE = 386;
 
-    // Acantilado lateral oeste (borde izquierdo)
-    static constexpr uint32_t TILE_ACANTILADO_OESTE_A = 492;
-    static constexpr uint32_t TILE_ACANTILADO_OESTE_B = 517;
-
-    // Acantilado lateral este (borde derecho)
-    static constexpr uint32_t TILE_ACANTILADO_ESTE_A = 495;
-    static constexpr uint32_t TILE_ACANTILADO_ESTE_B = 520;
-
-    // Cresta rocosa perimetral sur (2 casillas de alto: borde superior y base)
-    static constexpr uint32_t TILE_ROCA_SUR_SUPERIOR_A = 447;
-    static constexpr uint32_t TILE_ROCA_SUR_SUPERIOR_B = 448;
-    static constexpr uint32_t TILE_ROCA_SUR_INFERIOR_A = 523;
-    static constexpr uint32_t TILE_ROCA_SUR_INFERIOR_B = 524;
-
-    // Tile interior oscuro de la caverna (spring_outdoorsTileSheet.png)
-    static constexpr uint32_t TILE_FONDO_NEGRO_CAVERNA = 509;
+    // Vertical (capa Estructuras):
+    static constexpr uint32_t TILE_POSTE_VERTICAL_REMATE_SUPERIOR = 362;
+    static constexpr uint32_t TILE_POSTE_VERTICAL_FUSTE_A = 387;
+    static constexpr uint32_t TILE_POSTE_VERTICAL_FUSTE_B = 412;
+    static constexpr uint32_t TILE_POSTE_VERTICAL_BASE_INFERIOR = 437;
 
     static const DefinicionEstampa& obtener_estampa(TipoEstampa tipo);
     static std::vector<DefinicionEstampa> listar_estampas_por_sector(SectorActual sector);
+    static bool es_tile_de_estanque(uint32_t id_tile);
 };
 
 #endif  // CATALOGO_DE_ESTAMPAS_H

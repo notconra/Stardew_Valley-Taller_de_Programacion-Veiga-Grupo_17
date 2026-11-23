@@ -50,6 +50,18 @@ void ExportadorDeSectorTMX::configurar_tileset() {
         tileset_casas.ancho_imagen = ANCHO_IMAGEN_HOUSES;
         tileset_casas.alto_imagen = ALTO_IMAGEN_HOUSES;
         escritor.agregar_tileset(tileset_casas);
+
+        DefinicionTilesetTMX tileset_caseta_mina;
+        tileset_caseta_mina.nombre = NOMBRE_TILESET_CASETA_MINA;
+        tileset_caseta_mina.ruta_imagen = RUTA_TILESET_CASETA_MINA;
+        tileset_caseta_mina.primer_identificador_global = FIRST_GID_CASETA_MINA;
+        tileset_caseta_mina.ancho_tile = ANCHO_TILE_PIXELES;
+        tileset_caseta_mina.alto_tile = ALTO_TILE_PIXELES;
+        tileset_caseta_mina.cantidad_de_columnas = COLUMNAS_TILESET_CASETA_MINA;
+        tileset_caseta_mina.cantidad_de_tiles = TOTAL_TILES_CASETA_MINA;
+        tileset_caseta_mina.ancho_imagen = ANCHO_IMAGEN_CASETA_MINA;
+        tileset_caseta_mina.alto_imagen = ALTO_IMAGEN_CASETA_MINA;
+        escritor.agregar_tileset(tileset_caseta_mina);
     }
 }
 
@@ -85,7 +97,8 @@ void ExportadorDeSectorTMX::exportar_capas_de_tiles() {
                 total_columnas,
                 total_filas,
                 tiles_suelo,
-                tiles_estructuras);
+                tiles_estructuras,
+                tiles_frente);
         } else if (tipo == TipoEntidad::CENTRO_COMUNITARIO && sector == SectorActual::PUEBLO) {
             inyectar_tiles_de_centro_comunitario(
                 origen_columna,
@@ -181,28 +194,32 @@ void ExportadorDeSectorTMX::inyectar_tiles_de_centro_comunitario(
 
 void ExportadorDeSectorTMX::inyectar_tiles_de_entrada_caverna(
     int origen_columna, int origen_fila, int total_columnas, int total_filas,
-    std::vector<uint32_t>& tiles_suelo, std::vector<uint32_t>& tiles_estructuras) {
+    std::vector<uint32_t>& tiles_suelo, std::vector<uint32_t>& tiles_estructuras,
+    std::vector<uint32_t>& tiles_frente) {
     int fila_local = 0;
-    while (fila_local < ALTO_CAVERNA_CASILLAS) {
+    while (fila_local < ALTO_CASETA_MINA_CASILLAS) {
         int columna_local = 0;
-        while (columna_local < ANCHO_CAVERNA_CASILLAS) {
+        while (columna_local < ANCHO_CASETA_MINA_CASILLAS) {
             int columna_mapa = origen_columna + columna_local;
             int fila_mapa = origen_fila + fila_local;
             if (columna_mapa >= 0 && columna_mapa < total_columnas && fila_mapa >= 0 &&
                 fila_mapa < total_filas) {
                 size_t indice_mapa = static_cast<size_t>(fila_mapa * total_columnas + columna_mapa);
-                // La apertura central de la cueva en las filas 1, 2, 3 es el hueco
-                // transitable/entrada
-                bool es_hueco_entrada = (columna_local == 1 && fila_local > 0);
-                if (!es_hueco_entrada) {
-                    uint32_t id_tile_local = static_cast<uint32_t>(
-                        (FILA_ORIGEN_SPRITE_CAVERNA + fila_local) * COLUMNAS_TILESET_EXTERIORES +
-                        (COLUMNA_ORIGEN_SPRITE_CAVERNA + columna_local));
-                    uint32_t gid_global = 1 + id_tile_local;
-                    tiles_estructuras[indice_mapa] = gid_global;
+                uint32_t id_tile_local = static_cast<uint32_t>(
+                    fila_local * COLUMNAS_TILESET_CASETA_MINA +
+                    (columna_local + COLUMNA_DESPLAZAMIENTO_SPRITE_CASETA_MINA));
+                uint32_t gid_global = FIRST_GID_CASETA_MINA + id_tile_local;
+
+                if (fila_local <= FILA_LIMITE_TECHO_CASETA_MINA) {
+                    tiles_frente[indice_mapa] = gid_global;
+                } else if (
+                    fila_local == FILA_PORCHE_CASETA_MINA &&
+                    columna_local != COLUMNA_BUZON_CASETA_MINA) {
+                    // Porche y alfombra verde van a la capa suelo para permitir el paso
+                    tiles_suelo[indice_mapa] = gid_global;
                 } else {
-                    tiles_estructuras[indice_mapa] = 0;
-                    tiles_suelo[indice_mapa] = 1 + CatalogoDeEstampas::TILE_FONDO_NEGRO_CAVERNA;
+                    // Muros de piedra, puerta y buzón bloquean en capa Estructuras
+                    tiles_estructuras[indice_mapa] = gid_global;
                 }
             }
             columna_local++;
@@ -261,9 +278,9 @@ void ExportadorDeSectorTMX::exportar_entidades() {
             ancho_pixeles = ANCHO_TILE_PIXELES;
             alto_pixeles = ALTO_TILE_PIXELES;
         } else if (tipo == TipoEntidad::ENTRADA_CAVERNA) {
-            // El arco de entrada de la caverna está centrado en su base
-            posicion_x_pixeles = (columna + 1) * ANCHO_TILE_PIXELES;
-            posicion_y_pixeles = (fila + 3) * ALTO_TILE_PIXELES;
+            // La puerta/alfombra de la caseta de la mina está en columna 2, fila 6
+            posicion_x_pixeles = (columna + COLUMNA_PUERTA_CASETA_MINA) * ANCHO_TILE_PIXELES;
+            posicion_y_pixeles = (fila + FILA_PUERTA_CASETA_MINA) * ALTO_TILE_PIXELES;
             ancho_pixeles = ANCHO_TILE_PIXELES;
             alto_pixeles = ALTO_TILE_PIXELES;
         } else if (tipo == TipoEntidad::CENTRO_COMUNITARIO) {

@@ -372,3 +372,9 @@ std::vector<DefinicionEstampa> CatalogoDeEstampas::listar_estampas_por_sector(Se
     }
     return {};
 }
+
+bool CatalogoDeEstampas::es_tile_de_estanque(uint32_t id_tile) {
+    bool es_agua = (id_tile >= 1244 && id_tile <= 1325);
+    bool es_ribera = (id_tile >= 184 && id_tile <= 315);
+    return es_agua || es_ribera;
+}

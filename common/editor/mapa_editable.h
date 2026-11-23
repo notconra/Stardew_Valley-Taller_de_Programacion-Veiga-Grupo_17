@@ -12,6 +12,15 @@
 #include "entidad_del_mapa.h"
 #include "tipo_entidad.h"
 
+struct EstampaUbicada {
+    uint32_t identificador;
+    TipoEstampa tipo;
+    int columna;
+    int fila;
+    int ancho;
+    int alto;
+};
+
 class MapaEditable {
 private:
     int cantidad_de_columnas;
@@ -19,6 +28,8 @@ private:
     std::map<TipoCapa, CapaDelMapa> capas;
     std::vector<EntidadDelMapa> entidades;
     uint32_t proximo_identificador_de_entidad;
+    std::vector<EstampaUbicada> estampas_ubicadas;
+    uint32_t proximo_identificador_de_estampa;
 
     int buscar_indice_de_entidad(uint32_t identificador) const;
 
@@ -43,16 +54,33 @@ public:
     void pintar_zona(
         int columna_inicio, int fila_inicio, int ancho, int alto, uint32_t id_tile,
         uint8_t propiedades);
-    static constexpr int ALTO_MURO_NORTE_CASILLAS = 4;
-    static constexpr int ALTO_MURO_SUR_CASILLAS = 2;
-    static constexpr int ANCHO_MURO_LATERAL_CASILLAS = 1;
+    static constexpr int ANCHO_VALLA_OESTE_CASILLAS = 1;
+    static constexpr int ANCHO_VALLA_ESTE_CASILLAS = 1;
+    static constexpr int ALTO_VALLA_NORTE_CASILLAS = 2;
+    static constexpr int ALTO_VALLA_SUR_CASILLAS = 1;
+    static constexpr int ANCHO_VALLA_LATERAL_CASILLAS = 1;
+    static constexpr int ALTO_VALLA_HORIZONTAL_CASILLAS = 2;
+    static constexpr int MINIMO_ANCHO_UTIL_GRANJA = 14;
+    static constexpr int MINIMO_ALTO_UTIL_GRANJA = 10;
+    static constexpr int MINIMO_COLUMNAS_TOTALES_GRANJA =
+        MINIMO_ANCHO_UTIL_GRANJA + ANCHO_VALLA_OESTE_CASILLAS + ANCHO_VALLA_ESTE_CASILLAS;
+    static constexpr int MINIMO_FILAS_TOTALES_GRANJA =
+        MINIMO_ALTO_UTIL_GRANJA + ALTO_VALLA_NORTE_CASILLAS + ALTO_VALLA_SUR_CASILLAS;
 
     bool columna_ocupada_por_transicion_norte(int columna) const;
     bool columna_ocupada_por_transicion_sur(int columna) const;
     bool fila_ocupada_por_transicion_oeste(int fila) const;
     bool fila_ocupada_por_transicion_este(int fila) const;
-    bool casilla_ocupada_por_hueco_caverna(int columna, int fila) const;
 
+    int obtener_columna_maxima_ocupada() const;
+    int obtener_fila_maxima_ocupada() const;
+
+    bool estampa_puede_colocarse_en(
+        const DefinicionEstampa& estampa, int columna_origen, int fila_origen) const;
+    bool casilla_pertenece_a_estanque(int columna, int fila) const;
+    const EstampaUbicada* buscar_estampa_en_casilla(int columna, int fila) const;
+    bool retirar_estanque_en_casilla(
+        int columna, int fila, uint32_t tile_base, uint8_t propiedades_base);
     void estampar(const DefinicionEstampa& estampa, int columna_origen, int fila_origen);
     void generar_muro_perimetral_granja();
 
@@ -69,6 +97,7 @@ public:
         uint32_t identificador_a_ignorar) const;
 
     EntidadDelMapa* buscar_entidad_en_casilla(int columna, int fila);
+    const EntidadDelMapa* buscar_entidad_en_casilla(int columna, int fila) const;
     EntidadDelMapa* buscar_entidad_por_identificador(uint32_t identificador);
 
     std::vector<EntidadDelMapa> listar_entidades_por_tipo(TipoEntidad tipo) const;
