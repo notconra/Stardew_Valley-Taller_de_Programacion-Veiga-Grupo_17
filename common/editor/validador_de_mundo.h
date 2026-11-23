@@ -24,6 +24,8 @@ private:
     static constexpr int FILA_PUERTA_CASETA_MINA = 6;
     static constexpr int COLUMNA_PUERTA_CENTRO_COMUNITARIO = 5;
     static constexpr int FILA_PUERTA_CENTRO_COMUNITARIO = 9;
+    static constexpr int COLUMNA_PUERTA_MERCADO = 5;
+    static constexpr int FILA_PUERTA_MERCADO = 9;
 
     static bool tiene_acceso_perimetral_transitable(
         const MapaEditable& mapa, const EntidadDelMapa& entidad);
@@ -33,6 +35,8 @@ private:
         const MapaEditable& mapa, const EntidadDelMapa& entrada_caverna);
     static bool casilla_puerta_centro_comunitario_transitable(
         const MapaEditable& mapa, const EntidadDelMapa& centro_comunitario);
+    static bool casilla_puerta_mercado_transitable(
+        const MapaEditable& mapa, const EntidadDelMapa& mercado);
     static bool existe_camino_transitable(
         const MapaEditable& mapa, const EntidadDelMapa& origen, const EntidadDelMapa& destino);
 
