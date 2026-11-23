@@ -40,6 +40,7 @@ private:
     QPixmap pixmap_exteriores_entidades;
     QPixmap pixmap_caverna_entidades;
     QPixmap pixmap_pueblo_entidades;
+    QPixmap pixmap_mercado;
     QPixmap pixmap_retrato_marnie;
     QPixmap pixmap_retrato_clint;
     QPixmap pixmap_retrato_pierre;
@@ -71,6 +72,7 @@ protected:
     void mouseMoveEvent(QMouseEvent* evento) override;
     void mouseReleaseEvent(QMouseEvent* evento) override;
     void leaveEvent(QEvent* evento) override;
+    void keyPressEvent(QKeyEvent* evento) override;
 
 public:
     static constexpr const char* RUTA_SPRITE_CABANIA = "Assets/Buildings/houses.png";
@@ -102,10 +104,16 @@ public:
     bool eliminar_entidad_seleccionada();
     int obtener_identificador_entidad_seleccionada() const;
 
+    void rotar_elemento_actual();
+    TipoEstampa obtener_estampa_a_colocar() const;
+    uint32_t obtener_id_tile_actual() const;
+
 signals:
     void casilla_apuntada(int columna, int fila);
     void mapa_modificado();
     void entidad_seleccionada_cambio(int identificador_entidad);
+    void estampa_rotada(TipoEstampa nueva_estampa);
+    void tile_rotado(uint32_t nuevo_id_tile);
 };
 
 #endif  // LIENZO_DE_EDICION_H

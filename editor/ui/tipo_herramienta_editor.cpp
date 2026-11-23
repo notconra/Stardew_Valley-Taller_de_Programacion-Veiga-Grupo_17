@@ -19,6 +19,8 @@ static constexpr int ANCHO_PUESTO = 2;
 static constexpr int ALTO_PUESTO = 2;
 static constexpr int ANCHO_CENTRO_COMUNITARIO = 12;
 static constexpr int ALTO_CENTRO_COMUNITARIO = 10;
+static constexpr int ANCHO_MERCADO = 10;
+static constexpr int ALTO_MERCADO = 10;
 static constexpr int ANCHO_ESCALERA = 1;
 static constexpr int ALTO_ESCALERA = 1;
 static constexpr int ANCHO_SALIDA_CAVERNA = 1;
@@ -33,6 +35,7 @@ static constexpr const char* NOMBRE_PUESTO_CLINT = "Puesto Clint";
 static constexpr const char* NOMBRE_PUESTO_PIERRE = "Puesto Pierre";
 static constexpr const char* NOMBRE_PUESTO_ROBIN = "Puesto Robin";
 static constexpr const char* NOMBRE_CENTRO_COMUNITARIO = "Centro Comunitario";
+static constexpr const char* NOMBRE_MERCADO = "Mercado";
 static constexpr const char* NOMBRE_ESCALERA = "Escalera Mazmorra";
 static constexpr const char* NOMBRE_SALIDA_CAVERNA = "Salida Caverna";
 static constexpr const char* NOMBRE_TRANSICION_PUEBLO = "Salida a Pueblo";
@@ -47,6 +50,7 @@ static const std::map<TipoEntidad, std::string> NOMBRES_ENTIDADES = {
     {TipoEntidad::PUESTO_PIERRE, NOMBRE_PUESTO_PIERRE},
     {TipoEntidad::PUESTO_ROBIN, NOMBRE_PUESTO_ROBIN},
     {TipoEntidad::CENTRO_COMUNITARIO, NOMBRE_CENTRO_COMUNITARIO},
+    {TipoEntidad::MERCADO, NOMBRE_MERCADO},
     {TipoEntidad::ESCALERA_NIVEL, NOMBRE_ESCALERA},
     {TipoEntidad::SALIDA_CAVERNA, NOMBRE_SALIDA_CAVERNA},
     {TipoEntidad::TRANSICION_PUEBLO, NOMBRE_TRANSICION_PUEBLO},
@@ -60,6 +64,7 @@ static const std::map<TipoEntidad, DimensionesEntidad> DIMENSIONES_ENTIDADES = {
     {TipoEntidad::PUESTO_PIERRE, {ANCHO_PUESTO, ALTO_PUESTO}},
     {TipoEntidad::PUESTO_ROBIN, {ANCHO_PUESTO, ALTO_PUESTO}},
     {TipoEntidad::CENTRO_COMUNITARIO, {ANCHO_CENTRO_COMUNITARIO, ALTO_CENTRO_COMUNITARIO}},
+    {TipoEntidad::MERCADO, {ANCHO_MERCADO, ALTO_MERCADO}},
     {TipoEntidad::ESCALERA_NIVEL, {ANCHO_ESCALERA, ALTO_ESCALERA}},
     {TipoEntidad::SALIDA_CAVERNA, {ANCHO_SALIDA_CAVERNA, ALTO_SALIDA_CAVERNA}},
     {TipoEntidad::TRANSICION_PUEBLO, {ANCHO_TRANSICION, ALTO_TRANSICION}},

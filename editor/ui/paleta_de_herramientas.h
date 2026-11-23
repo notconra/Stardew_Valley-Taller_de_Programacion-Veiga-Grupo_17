@@ -36,6 +36,15 @@ private:
     std::vector<QPushButton*> botones_estampas;
     QPushButton* boton_muro_perimetral;
 
+    QPixmap pixmap_tileset;
+    DefinicionTilesetTMX datos_tileset;
+    TipoEstampa estampa_recto_activa;
+    TipoEstampa estampa_union_t_activa;
+    TipoEstampa estampa_esquina_activa;
+    uint32_t id_tile_borde_activo;
+    uint32_t id_tile_esquina_exterior_activa;
+    uint32_t id_tile_esquina_interior_activa;
+
     QPushButton* crear_boton_modo(const QString& texto, ModoEditor modo);
     void limpiar_botones_de_tiles();
     void limpiar_botones_de_estampas();
@@ -44,6 +53,8 @@ public:
     explicit PaletaDeHerramientas(QWidget* padre = nullptr);
 
     void actualizar_sector(SectorActual sector);
+    void sincronizar_rotacion_estampa(TipoEstampa estampa);
+    void sincronizar_rotacion_tile(uint32_t id_tile);
 
 signals:
     void modo_cambiado(ModoEditor modo);

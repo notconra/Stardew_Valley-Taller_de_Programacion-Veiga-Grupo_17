@@ -14,6 +14,7 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QScrollArea>
+#include <QShortcut>
 #include <QSpinBox>
 #include <QStatusBar>
 #include <QString>
@@ -158,6 +159,7 @@ void VentanaPrincipalEditor::inicializar_barra_de_herramientas() {
     combo_sectores = new QComboBox(barra);
     combo_sectores->addItem("Granja");
     combo_sectores->addItem("Pueblo");
+    combo_sectores->addItem("Mercado");
     int nivel = 1;
     while (nivel <= 10) {
         combo_sectores->addItem(QString("Caverna - Nivel %1").arg(nivel));
@@ -284,6 +286,20 @@ void VentanaPrincipalEditor::conectar_senales() {
         &PanelDeValidacion::validacion_solicitada,
         this,
         &VentanaPrincipalEditor::ejecutar_validacion);
+
+    QShortcut* atajo_rotar = new QShortcut(QKeySequence(Qt::Key_R), this);
+    connect(atajo_rotar, &QShortcut::activated, lienzo, &LienzoDeEdicion::rotar_elemento_actual);
+
+    connect(
+        lienzo,
+        &LienzoDeEdicion::estampa_rotada,
+        paleta,
+        &PaletaDeHerramientas::sincronizar_rotacion_estampa);
+    connect(
+        lienzo,
+        &LienzoDeEdicion::tile_rotado,
+        paleta,
+        &PaletaDeHerramientas::sincronizar_rotacion_tile);
 }
 
 void VentanaPrincipalEditor::actualizar_sector_en_pantalla() {
@@ -300,8 +316,14 @@ void VentanaPrincipalEditor::actualizar_sector_en_pantalla() {
             SectorActual::PUEBLO);
         paleta->actualizar_sector(SectorActual::PUEBLO);
         panel_validacion->actualizar_sector(SectorActual::PUEBLO);
-    } else if (indice >= 2) {
-        size_t indice_mazmorra = static_cast<size_t>(indice - 2);
+    } else if (indice == 2) {
+        lienzo->establecer_mapa(
+            &mundo_actual.obtener_sector_mercado_modificable(),
+            SectorActual::MERCADO);
+        paleta->actualizar_sector(SectorActual::MERCADO);
+        panel_validacion->actualizar_sector(SectorActual::MERCADO);
+    } else if (indice >= 3) {
+        size_t indice_mazmorra = static_cast<size_t>(indice - 3);
         lienzo->establecer_mapa(
             &mundo_actual.obtener_nivel_mazmorra_modificable(indice_mazmorra),
             SectorActual::CAVERNA);
@@ -450,8 +472,11 @@ MapaEditable* VentanaPrincipalEditor::obtener_mapa_activo() {
     if (indice == 1) {
         return &mundo_actual.obtener_sector_pueblo_modificable();
     }
-    if (indice >= 2) {
-        size_t indice_mazmorra = static_cast<size_t>(indice - 2);
+    if (indice == 2) {
+        return &mundo_actual.obtener_sector_mercado_modificable();
+    }
+    if (indice >= 3) {
+        size_t indice_mazmorra = static_cast<size_t>(indice - 3);
         return &mundo_actual.obtener_nivel_mazmorra_modificable(indice_mazmorra);
     }
     return nullptr;
@@ -677,6 +702,8 @@ void VentanaPrincipalEditor::abrir_dialogo_redimensionar() {
 
             if (es_sector_granja) {
                 mapa_actual_sector->generar_muro_perimetral_granja();
+            } else if (indice_sector == 1) {
+                mapa_actual_sector->generar_muro_perimetral_pueblo();
             }
 
             lienzo->actualizar_tamano_del_lienzo();
@@ -694,13 +721,19 @@ void VentanaPrincipalEditor::abrir_dialogo_redimensionar() {
 
 void VentanaPrincipalEditor::generar_muro_perimetral_granja() {
     int indice_sector = combo_sectores->currentIndex();
+    MapaEditable* mapa_actual_sector = obtener_mapa_activo();
+    if (mapa_actual_sector == nullptr) {
+        return;
+    }
     if (indice_sector == 0) {
-        MapaEditable* mapa_actual_sector = obtener_mapa_activo();
-        if (mapa_actual_sector != nullptr) {
-            mapa_actual_sector->generar_muro_perimetral_granja();
-            lienzo->update();
-            ejecutar_validacion();
-            statusBar()->showMessage("Perimetro de muros de troncos generado con exito.", 3000);
-        }
+        mapa_actual_sector->generar_muro_perimetral_granja();
+        lienzo->update();
+        ejecutar_validacion();
+        statusBar()->showMessage("Perimetro de muros de troncos generado con exito.", 3000);
+    } else if (indice_sector == 1) {
+        mapa_actual_sector->generar_muro_perimetral_pueblo();
+        lienzo->update();
+        ejecutar_validacion();
+        statusBar()->showMessage("Perimetro de vallas urbanas generado con exito.", 3000);
     }
 }

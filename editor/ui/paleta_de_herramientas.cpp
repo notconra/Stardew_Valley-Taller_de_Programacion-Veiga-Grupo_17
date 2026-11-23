@@ -64,7 +64,18 @@ PaletaDeHerramientas::PaletaDeHerramientas(QWidget* padre)
       grupo_estampas(nullptr),
       layout_estampas(nullptr),
       botones_estampas(),
-      boton_muro_perimetral(nullptr) {
+      boton_muro_perimetral(nullptr),
+      pixmap_tileset(QString::fromStdString(
+          CatalogoDeTerrenos::obtener_tileset_sector(SectorActual::GRANJA).ruta_imagen)),
+      datos_tileset(CatalogoDeTerrenos::obtener_tileset_sector(SectorActual::GRANJA)),
+      estampa_recto_activa(TipoEstampa::CAMINO_RECTO_HORIZONTAL),
+      estampa_union_t_activa(TipoEstampa::CAMINO_UNION_T_NORTE),
+      estampa_esquina_activa(TipoEstampa::CAMINO_ESQUINA_NOROESTE),
+      id_tile_borde_activo(CatalogoDeEstampas::TILE_PUEBLO_CAMINO_BORDE_NORTE),
+      id_tile_esquina_exterior_activa(
+          CatalogoDeEstampas::TILE_PUEBLO_CAMINO_ESQUINA_EXTERIOR_NOROESTE),
+      id_tile_esquina_interior_activa(
+          CatalogoDeEstampas::TILE_PUEBLO_CAMINO_ESQUINA_INTERIOR_NOROESTE) {
     layout_principal = new QVBoxLayout(this);
     layout_principal->setContentsMargins(
         MARGEN_LAYOUT_PX,
@@ -161,10 +172,16 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
     limpiar_botones_de_tiles();
     limpiar_botones_de_estampas();
 
-    // 1. Cargar tiles de superficie
-    DefinicionTilesetTMX tileset = CatalogoDeTerrenos::obtener_tileset_sector(sector);
-    QPixmap pixmap_tileset(QString::fromStdString(tileset.ruta_imagen));
+    datos_tileset = CatalogoDeTerrenos::obtener_tileset_sector(sector);
+    pixmap_tileset.load(QString::fromStdString(datos_tileset.ruta_imagen));
+    estampa_recto_activa = TipoEstampa::CAMINO_RECTO_HORIZONTAL;
+    estampa_union_t_activa = TipoEstampa::CAMINO_UNION_T_NORTE;
+    estampa_esquina_activa = TipoEstampa::CAMINO_ESQUINA_NOROESTE;
+    id_tile_borde_activo = CatalogoDeEstampas::TILE_PUEBLO_CAMINO_BORDE_NORTE;
+    id_tile_esquina_exterior_activa = 609;
+    id_tile_esquina_interior_activa = 706;
 
+    // 1. Cargar tiles de superficie
     const std::vector<DefinicionTile>& catalogo_tiles =
         CatalogoDeTerrenos::obtener_catalogo_por_sector(sector);
 
@@ -172,17 +189,17 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
     while (indice_tile < catalogo_tiles.size()) {
         const DefinicionTile& definicion = catalogo_tiles[indice_tile];
         uint32_t indice_local =
-            definicion.identificador_tile_global - tileset.primer_identificador_global;
-        int columna_sprite =
-            static_cast<int>(indice_local % static_cast<uint32_t>(tileset.cantidad_de_columnas));
-        int fila_sprite =
-            static_cast<int>(indice_local / static_cast<uint32_t>(tileset.cantidad_de_columnas));
+            definicion.identificador_tile_global - datos_tileset.primer_identificador_global;
+        int columna_sprite = static_cast<int>(
+            indice_local % static_cast<uint32_t>(datos_tileset.cantidad_de_columnas));
+        int fila_sprite = static_cast<int>(
+            indice_local / static_cast<uint32_t>(datos_tileset.cantidad_de_columnas));
 
         QPixmap sprite_recortado = pixmap_tileset.copy(
-            columna_sprite * tileset.ancho_tile,
-            fila_sprite * tileset.alto_tile,
-            tileset.ancho_tile,
-            tileset.alto_tile);
+            columna_sprite * datos_tileset.ancho_tile,
+            fila_sprite * datos_tileset.alto_tile,
+            datos_tileset.ancho_tile,
+            datos_tileset.alto_tile);
 
         QPushButton* boton = new QPushButton(this);
         boton->setFixedSize(TAMANO_BOTON_TILE_PX, TAMANO_BOTON_TILE_PX);
@@ -207,7 +224,15 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
         connect(boton, &QPushButton::clicked, this, [this, id_global, prop]() {
             boton_modo_terreno->setChecked(true);
             emit modo_cambiado(ModoEditor::TERRENO);
-            emit tile_seleccionado(id_global, prop);
+            uint32_t id_a_emitir = id_global;
+            if (id_global == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_BORDE_NORTE) {
+                id_a_emitir = id_tile_borde_activo;
+            } else if (id_global == 609) {
+                id_a_emitir = id_tile_esquina_exterior_activa;
+            } else if (id_global == 706) {
+                id_a_emitir = id_tile_esquina_interior_activa;
+            }
+            emit tile_seleccionado(id_a_emitir, prop);
         });
 
         botones_tiles.push_back(boton);
@@ -225,8 +250,11 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
     std::vector<DefinicionEstampa> lista_estampas =
         CatalogoDeEstampas::listar_estampas_por_sector(sector);
 
-    caja_estampas->setVisible(!lista_estampas.empty() || sector == SectorActual::GRANJA);
-    boton_muro_perimetral->setVisible(sector == SectorActual::GRANJA);
+    caja_estampas->setVisible(
+        !lista_estampas.empty() || sector == SectorActual::GRANJA ||
+        sector == SectorActual::PUEBLO);
+    boton_muro_perimetral->setVisible(
+        sector == SectorActual::GRANJA || sector == SectorActual::PUEBLO);
 
     size_t indice_estampa = 0;
     while (indice_estampa < lista_estampas.size()) {
@@ -242,10 +270,172 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
         connect(boton_estampa, &QPushButton::clicked, this, [this, tipo]() {
             boton_modo_estampa->setChecked(true);
             emit modo_cambiado(ModoEditor::ESTAMPAR);
-            emit estampa_seleccionada(tipo);
+            TipoEstampa estampa_a_emitir = tipo;
+            if (tipo == TipoEstampa::CAMINO_RECTO_HORIZONTAL) {
+                estampa_a_emitir = estampa_recto_activa;
+            } else if (tipo == TipoEstampa::CAMINO_UNION_T_NORTE) {
+                estampa_a_emitir = estampa_union_t_activa;
+            } else if (tipo == TipoEstampa::CAMINO_ESQUINA_NOROESTE) {
+                estampa_a_emitir = estampa_esquina_activa;
+            }
+            emit estampa_seleccionada(estampa_a_emitir);
         });
 
         botones_estampas.push_back(boton_estampa);
         indice_estampa++;
+    }
+}
+
+void PaletaDeHerramientas::sincronizar_rotacion_estampa(TipoEstampa estampa) {
+    size_t indice = 0;
+    while (indice < botones_estampas.size()) {
+        QPushButton* boton = botones_estampas[indice];
+        if (estampa == TipoEstampa::CAMINO_RECTO_HORIZONTAL ||
+            estampa == TipoEstampa::CAMINO_RECTO_VERTICAL) {
+            estampa_recto_activa = estampa;
+            if (grupo_estampas->id(boton) ==
+                static_cast<int>(TipoEstampa::CAMINO_RECTO_HORIZONTAL)) {
+                boton->setChecked(true);
+                QString texto = (estampa == TipoEstampa::CAMINO_RECTO_HORIZONTAL)
+                                    ? "Camino Recto (Horizontal) [R]"
+                                    : "Camino Recto (Vertical) [R]";
+                boton->setText(texto);
+            }
+        } else if (
+            estampa == TipoEstampa::CAMINO_UNION_T_NORTE ||
+            estampa == TipoEstampa::CAMINO_UNION_T_ESTE ||
+            estampa == TipoEstampa::CAMINO_UNION_T_SUR ||
+            estampa == TipoEstampa::CAMINO_UNION_T_OESTE) {
+            estampa_union_t_activa = estampa;
+            if (grupo_estampas->id(boton) == static_cast<int>(TipoEstampa::CAMINO_UNION_T_NORTE)) {
+                boton->setChecked(true);
+                QString texto = "Union T (Norte) [R]";
+                if (estampa == TipoEstampa::CAMINO_UNION_T_ESTE) {
+                    texto = "Union T (Este) [R]";
+                } else if (estampa == TipoEstampa::CAMINO_UNION_T_SUR) {
+                    texto = "Union T (Sur) [R]";
+                } else if (estampa == TipoEstampa::CAMINO_UNION_T_OESTE) {
+                    texto = "Union T (Oeste) [R]";
+                }
+                boton->setText(texto);
+            }
+        } else if (
+            estampa == TipoEstampa::CAMINO_ESQUINA_NOROESTE ||
+            estampa == TipoEstampa::CAMINO_ESQUINA_NORESTE ||
+            estampa == TipoEstampa::CAMINO_ESQUINA_SUDESTE ||
+            estampa == TipoEstampa::CAMINO_ESQUINA_SUDOESTE) {
+            estampa_esquina_activa = estampa;
+            if (grupo_estampas->id(boton) ==
+                static_cast<int>(TipoEstampa::CAMINO_ESQUINA_NOROESTE)) {
+                boton->setChecked(true);
+                QString texto = "Esquina (Noroeste) [R]";
+                if (estampa == TipoEstampa::CAMINO_ESQUINA_NORESTE) {
+                    texto = "Esquina (Noreste) [R]";
+                } else if (estampa == TipoEstampa::CAMINO_ESQUINA_SUDESTE) {
+                    texto = "Esquina (Sudeste) [R]";
+                } else if (estampa == TipoEstampa::CAMINO_ESQUINA_SUDOESTE) {
+                    texto = "Esquina (Sudoeste) [R]";
+                }
+                boton->setText(texto);
+            }
+        }
+        indice++;
+    }
+}
+
+void PaletaDeHerramientas::sincronizar_rotacion_tile(uint32_t id_tile) {
+    if (id_tile == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_BORDE_NORTE ||
+        id_tile == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_BORDE_ESTE ||
+        id_tile == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_BORDE_SUR ||
+        id_tile == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_BORDE_OESTE) {
+        id_tile_borde_activo = id_tile;
+        if (botones_tiles.size() >= 3) {
+            QPushButton* boton_borde = botones_tiles[2];
+            boton_borde->setChecked(true);
+            uint32_t indice_local = id_tile - datos_tileset.primer_identificador_global;
+            int columna_sprite = static_cast<int>(
+                indice_local % static_cast<uint32_t>(datos_tileset.cantidad_de_columnas));
+            int fila_sprite = static_cast<int>(
+                indice_local / static_cast<uint32_t>(datos_tileset.cantidad_de_columnas));
+            QPixmap sprite_recortado = pixmap_tileset.copy(
+                columna_sprite * datos_tileset.ancho_tile,
+                fila_sprite * datos_tileset.alto_tile,
+                datos_tileset.ancho_tile,
+                datos_tileset.alto_tile);
+            boton_borde->setIcon(QIcon(sprite_recortado.scaled(
+                TAMANO_ICONO_TILE_PX,
+                TAMANO_ICONO_TILE_PX,
+                Qt::KeepAspectRatio,
+                Qt::FastTransformation)));
+            QString direccion_borde = "Norte";
+            if (id_tile == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_BORDE_ESTE) {
+                direccion_borde = "Este";
+            } else if (id_tile == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_BORDE_SUR) {
+                direccion_borde = "Sur";
+            } else if (id_tile == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_BORDE_OESTE) {
+                direccion_borde = "Oeste";
+            }
+            boton_borde->setToolTip("Borde de Camino (" + direccion_borde + ") [R]");
+        }
+    } else if (id_tile == 609 || id_tile == 611 || id_tile == 675 || id_tile == 673) {
+        id_tile_esquina_exterior_activa = id_tile;
+        if (botones_tiles.size() >= 4) {
+            QPushButton* boton_esquina = botones_tiles[3];
+            boton_esquina->setChecked(true);
+            uint32_t indice_local = id_tile - datos_tileset.primer_identificador_global;
+            int columna_sprite = static_cast<int>(
+                indice_local % static_cast<uint32_t>(datos_tileset.cantidad_de_columnas));
+            int fila_sprite = static_cast<int>(
+                indice_local / static_cast<uint32_t>(datos_tileset.cantidad_de_columnas));
+            QPixmap sprite_recortado = pixmap_tileset.copy(
+                columna_sprite * datos_tileset.ancho_tile,
+                fila_sprite * datos_tileset.alto_tile,
+                datos_tileset.ancho_tile,
+                datos_tileset.alto_tile);
+            boton_esquina->setIcon(QIcon(sprite_recortado.scaled(
+                TAMANO_ICONO_TILE_PX,
+                TAMANO_ICONO_TILE_PX,
+                Qt::KeepAspectRatio,
+                Qt::FastTransformation)));
+            QString orientacion = "Noroeste";
+            if (id_tile == 611) {
+                orientacion = "Noreste";
+            } else if (id_tile == 675) {
+                orientacion = "Sudeste";
+            } else if (id_tile == 673) {
+                orientacion = "Sudoeste";
+            }
+            boton_esquina->setToolTip("Esquina Exterior (" + orientacion + ") [R]");
+        }
+    } else if (id_tile == 706 || id_tile == 705 || id_tile == 739 || id_tile == 707) {
+        id_tile_esquina_interior_activa = id_tile;
+        if (botones_tiles.size() >= 5) {
+            QPushButton* boton_interior = botones_tiles[4];
+            boton_interior->setChecked(true);
+            uint32_t indice_local = id_tile - datos_tileset.primer_identificador_global;
+            int columna_sprite = static_cast<int>(
+                indice_local % static_cast<uint32_t>(datos_tileset.cantidad_de_columnas));
+            int fila_sprite = static_cast<int>(
+                indice_local / static_cast<uint32_t>(datos_tileset.cantidad_de_columnas));
+            QPixmap sprite_recortado = pixmap_tileset.copy(
+                columna_sprite * datos_tileset.ancho_tile,
+                fila_sprite * datos_tileset.alto_tile,
+                datos_tileset.ancho_tile,
+                datos_tileset.alto_tile);
+            boton_interior->setIcon(QIcon(sprite_recortado.scaled(
+                TAMANO_ICONO_TILE_PX,
+                TAMANO_ICONO_TILE_PX,
+                Qt::KeepAspectRatio,
+                Qt::FastTransformation)));
+            QString orientacion = "Noroeste";
+            if (id_tile == 705) {
+                orientacion = "Noreste";
+            } else if (id_tile == 739) {
+                orientacion = "Sudeste";
+            } else if (id_tile == 707) {
+                orientacion = "Sudoeste";
+            }
+            boton_interior->setToolTip("Esquina Interior (" + orientacion + ") [R]");
+        }
     }
 }
