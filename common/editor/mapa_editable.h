@@ -83,6 +83,7 @@ public:
         int columna, int fila, uint32_t tile_base, uint8_t propiedades_base);
     void estampar(const DefinicionEstampa& estampa, int columna_origen, int fila_origen);
     void generar_muro_perimetral_granja();
+    void generar_muro_perimetral_pueblo();
 
     void agregar_propiedad_a_casilla(int columna, int fila, uint8_t propiedad);
     void quitar_propiedad_de_casilla(int columna, int fila, uint8_t propiedad);

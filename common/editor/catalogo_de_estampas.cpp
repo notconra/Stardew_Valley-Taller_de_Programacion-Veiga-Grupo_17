@@ -348,12 +348,449 @@ static const DefinicionEstampa ESTAMPA_ESTANQUE_NATURAL = {
          TipoCapa::ESTRUCTURAS,
          PropiedadDeCasilla::BLOQUEA}}};
 
+static const DefinicionEstampa ESTAMPA_CAMINO_RECTO_HORIZONTAL = {
+    TipoEstampa::CAMINO_RECTO_HORIZONTAL,
+    "Camino Recto (3x3) [R]",
+    3,
+    3,
+    {CasillaEstampa{0, 0, 610, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 0, 610, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 0, 610, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 2, 674, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 2, 674, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 2, 674, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA}}};
+
+static const DefinicionEstampa ESTAMPA_CAMINO_RECTO_VERTICAL = {
+    TipoEstampa::CAMINO_RECTO_VERTICAL,
+    "Camino Vertical (3x3)",
+    3,
+    3,
+    {CasillaEstampa{0, 0, 641, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 0, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 0, 643, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 1, 641, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 1, 643, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 2, 641, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 2, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 2, 643, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA}}};
+
+static const DefinicionEstampa ESTAMPA_CAMINO_UNION_T_NORTE = {
+    TipoEstampa::CAMINO_UNION_T_NORTE,
+    "Union T (3x3) [R]",
+    3,
+    3,
+    {CasillaEstampa{0, 0, 706, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 0, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 0, 705, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 2, 674, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 2, 674, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 2, 674, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA}}};
+
+static const DefinicionEstampa ESTAMPA_CAMINO_UNION_T_SUR = {
+    TipoEstampa::CAMINO_UNION_T_SUR,
+    "Union T-Sur (3x3)",
+    3,
+    3,
+    {CasillaEstampa{0, 0, 610, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 0, 610, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 0, 610, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 2, 707, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 2, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 2, 739, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA}}};
+
+static const DefinicionEstampa ESTAMPA_CAMINO_UNION_T_OESTE = {
+    TipoEstampa::CAMINO_UNION_T_OESTE,
+    "Union T-Oeste (3x3)",
+    3,
+    3,
+    {CasillaEstampa{0, 0, 706, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 0, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 0, 643, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 1, 643, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 2, 707, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 2, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 2, 643, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA}}};
+
+static const DefinicionEstampa ESTAMPA_CAMINO_UNION_T_ESTE = {
+    TipoEstampa::CAMINO_UNION_T_ESTE,
+    "Union T-Este (3x3)",
+    3,
+    3,
+    {CasillaEstampa{0, 0, 641, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 0, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 0, 705, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 1, 641, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 2, 641, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 2, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 2, 739, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA}}};
+
+static const DefinicionEstampa ESTAMPA_CAMINO_CRUZ = {
+    TipoEstampa::CAMINO_CRUZ,
+    "Cruce de Caminos (3x3)",
+    3,
+    3,
+    {CasillaEstampa{0, 0, 706, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 0, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 0, 705, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 2, 707, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 2, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 2, 739, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA}}};
+
+static const DefinicionEstampa ESTAMPA_CAMINO_ESQUINA_NOROESTE = {
+    TipoEstampa::CAMINO_ESQUINA_NOROESTE,
+    "Esquina (3x3) [R]",
+    3,
+    3,
+    {CasillaEstampa{0, 0, 609, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 0, 610, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 0, 610, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 1, 641, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 2, 641, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 2, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 2, 739, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA}}};
+
+static const DefinicionEstampa ESTAMPA_CAMINO_ESQUINA_NORESTE = {
+    TipoEstampa::CAMINO_ESQUINA_NORESTE,
+    "Esquina Noreste (3x3)",
+    3,
+    3,
+    {CasillaEstampa{0, 0, 610, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 0, 610, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 0, 611, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 1, 643, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 2, 707, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 2, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 2, 643, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA}}};
+
+static const DefinicionEstampa ESTAMPA_CAMINO_ESQUINA_SUDOESTE = {
+    TipoEstampa::CAMINO_ESQUINA_SUDOESTE,
+    "Esquina Sudoeste (3x3)",
+    3,
+    3,
+    {CasillaEstampa{0, 0, 641, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 0, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 0, 705, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 1, 641, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 2, 673, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 2, 674, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 2, 674, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA}}};
+
+static const DefinicionEstampa ESTAMPA_CAMINO_ESQUINA_SUDESTE = {
+    TipoEstampa::CAMINO_ESQUINA_SUDESTE,
+    "Esquina Sudeste (3x3)",
+    3,
+    3,
+    {CasillaEstampa{0, 0, 706, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 0, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 0, 643, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 1, 737, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 1, 643, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 2, 674, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 2, 674, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 2, 675, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA}}};
+
+static const DefinicionEstampa ESTAMPA_FAROLA_URBANA = {
+    TipoEstampa::FAROLA_URBANA,
+    "Farola Urbana (1x4)",
+    1,
+    4,
+    {CasillaEstampa{
+         0,
+         0,
+         CatalogoDeEstampas::TILE_FAROLA_LINTERNA,
+         TipoCapa::FRENTE,
+         PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{
+         0,
+         1,
+         CatalogoDeEstampas::TILE_FAROLA_CUELLO,
+         TipoCapa::FRENTE,
+         PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{
+         0,
+         2,
+         CatalogoDeEstampas::TILE_FAROLA_POSTE,
+         TipoCapa::FRENTE,
+         PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{
+         0,
+         3,
+         CatalogoDeEstampas::TILE_FAROLA_BASE,
+         TipoCapa::ESTRUCTURAS,
+         PropiedadDeCasilla::BLOQUEA}}};
+
+static const DefinicionEstampa ESTAMPA_LOCAL_DE_PIERRE = {
+    TipoEstampa::LOCAL_DE_PIERRE,
+    "Local de Pierre (10x10)",
+    10,
+    10,
+    {CasillaEstampa{0, 0, 346, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 0, 347, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 0, 348, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{3, 0, 349, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{4, 0, 350, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{5, 0, 351, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{6, 0, 352, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 1, 358, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 1, 359, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 1, 360, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{3, 1, 361, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{4, 1, 362, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{5, 1, 363, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{6, 1, 364, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{7, 1, 365, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{8, 1, 366, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{9, 1, 367, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 2, 390, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 2, 391, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 2, 392, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{3, 2, 393, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{4, 2, 394, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{5, 2, 395, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{6, 2, 396, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{7, 2, 397, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{8, 2, 398, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{9, 2, 399, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 3, 422, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 3, 423, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 3, 424, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{3, 3, 425, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{4, 3, 426, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{5, 3, 427, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{6, 3, 428, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{7, 3, 429, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{8, 3, 430, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{9, 3, 431, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 4, 454, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 4, 455, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 4, 456, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{3, 4, 457, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{4, 4, 458, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{5, 4, 459, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{6, 4, 460, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{7, 4, 461, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{8, 4, 462, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{9, 4, 463, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{0, 5, 486, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 5, 487, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 5, 488, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{3, 5, 489, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{4, 5, 490, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{5, 5, 491, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{6, 5, 492, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{7, 5, 493, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{8, 5, 494, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{9, 5, 495, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{0, 6, 518, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 6, 519, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 6, 520, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{3, 6, 521, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{4, 6, 522, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{5, 6, 523, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{6, 6, 524, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{7, 6, 525, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{8, 6, 526, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{9, 6, 527, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{0, 7, 550, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 7, 551, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 7, 552, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{3, 7, 553, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{4, 7, 554, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{5, 7, 555, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{6, 7, 556, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{7, 7, 557, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{8, 7, 558, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{9, 7, 559, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{0, 8, 582, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 8, 583, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 8, 584, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{3, 8, 585, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{4, 8, 586, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{5, 8, 587, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{6, 8, 588, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{7, 8, 589, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{8, 8, 590, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{9, 8, 591, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{0, 9, 614, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 9, 615, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 9, 616, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{3, 9, 617, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{4, 9, 618, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{5, 9, 619, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{6, 9, 620, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{7, 9, 621, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{8, 9, 622, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{9, 9, 623, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA}}};
+
+static const DefinicionEstampa ESTAMPA_CASA_CELESTE = {
+    TipoEstampa::CASA_CELESTE,
+    "Casa Celeste (8x11)",
+    8,
+    11,
+    {CasillaEstampa{2, 0, 11, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{3, 0, 12, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 1, 43, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{3, 1, 44, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{4, 1, 45, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 2, 74, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 2, 75, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{3, 2, 76, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{4, 2, 77, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{5, 2, 78, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 3, 105, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 3, 106, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 3, 107, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{3, 3, 108, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{4, 3, 109, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{5, 3, 110, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{6, 3, 111, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 4, 137, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 4, 138, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 4, 139, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{3, 4, 140, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{4, 4, 141, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{5, 4, 142, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{6, 4, 143, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{7, 4, 144, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 5, 169, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 5, 170, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 5, 171, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{3, 5, 172, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{4, 5, 173, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{5, 5, 174, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{6, 5, 175, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{7, 5, 176, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{0, 6, 201, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 6, 202, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 6, 203, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{3, 6, 204, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{4, 6, 205, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{5, 6, 206, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{6, 6, 207, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{7, 6, 208, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{0, 7, 233, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 7, 234, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 7, 235, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{3, 7, 236, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{4, 7, 237, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{5, 7, 238, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{6, 7, 239, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{7, 7, 240, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{0, 8, 265, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 8, 266, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 8, 267, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{3, 8, 268, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{4, 8, 269, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{5, 8, 270, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{6, 8, 271, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{7, 8, 272, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{0, 9, 297, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 9, 298, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 9, 299, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{3, 9, 300, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{4, 9, 301, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{5, 9, 302, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{6, 9, 303, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{7, 9, 304, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{0, 10, 329, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 10, 330, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 10, 331, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{3, 10, 332, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{4, 10, 333, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{5, 10, 334, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{6, 10, 335, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{7, 10, 336, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA}}};
+
+static const DefinicionEstampa ESTAMPA_TRAILER_PAM = {
+    TipoEstampa::TRAILER_PAM,
+    "Trailer de Pam (8x4)",
+    8,
+    4,
+    {CasillaEstampa{0, 0, 655, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 0, 656, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 0, 657, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{3, 0, 658, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{4, 0, 659, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{5, 0, 660, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{6, 0, 661, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{7, 0, 662, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 1, 687, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 1, 688, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 1, 689, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{3, 1, 690, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{4, 1, 691, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{5, 1, 692, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{6, 1, 693, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{7, 1, 694, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 2, 719, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 2, 720, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 2, 721, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{3, 2, 722, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{4, 2, 723, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{5, 2, 724, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{6, 2, 725, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{7, 2, 726, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{0, 3, 751, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 3, 752, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 3, 753, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{3, 3, 754, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{4, 3, 755, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{5, 3, 756, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{6, 3, 757, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{7, 3, 758, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA}}};
+
 static const std::map<TipoEstampa, DefinicionEstampa> MAPA_ESTAMPAS = {
-    {TipoEstampa::ESTANQUE_NATURAL, ESTAMPA_ESTANQUE_NATURAL}};
+    {TipoEstampa::ESTANQUE_NATURAL, ESTAMPA_ESTANQUE_NATURAL},
+    {TipoEstampa::CAMINO_RECTO_HORIZONTAL, ESTAMPA_CAMINO_RECTO_HORIZONTAL},
+    {TipoEstampa::CAMINO_RECTO_VERTICAL, ESTAMPA_CAMINO_RECTO_VERTICAL},
+    {TipoEstampa::CAMINO_UNION_T_NORTE, ESTAMPA_CAMINO_UNION_T_NORTE},
+    {TipoEstampa::CAMINO_UNION_T_SUR, ESTAMPA_CAMINO_UNION_T_SUR},
+    {TipoEstampa::CAMINO_UNION_T_OESTE, ESTAMPA_CAMINO_UNION_T_OESTE},
+    {TipoEstampa::CAMINO_UNION_T_ESTE, ESTAMPA_CAMINO_UNION_T_ESTE},
+    {TipoEstampa::CAMINO_CRUZ, ESTAMPA_CAMINO_CRUZ},
+    {TipoEstampa::CAMINO_ESQUINA_NOROESTE, ESTAMPA_CAMINO_ESQUINA_NOROESTE},
+    {TipoEstampa::CAMINO_ESQUINA_NORESTE, ESTAMPA_CAMINO_ESQUINA_NORESTE},
+    {TipoEstampa::CAMINO_ESQUINA_SUDOESTE, ESTAMPA_CAMINO_ESQUINA_SUDOESTE},
+    {TipoEstampa::CAMINO_ESQUINA_SUDESTE, ESTAMPA_CAMINO_ESQUINA_SUDESTE},
+    {TipoEstampa::FAROLA_URBANA, ESTAMPA_FAROLA_URBANA},
+    {TipoEstampa::LOCAL_DE_PIERRE, ESTAMPA_LOCAL_DE_PIERRE},
+    {TipoEstampa::CASA_CELESTE, ESTAMPA_CASA_CELESTE},
+    {TipoEstampa::TRAILER_PAM, ESTAMPA_TRAILER_PAM}};
 
 static const std::map<SectorActual, std::vector<DefinicionEstampa>> ESTAMPAS_POR_SECTOR = {
     {SectorActual::GRANJA, {ESTAMPA_ESTANQUE_NATURAL}},
-    {SectorActual::PUEBLO, {}},
+    {SectorActual::PUEBLO,
+     {ESTAMPA_CASA_CELESTE,
+      ESTAMPA_TRAILER_PAM,
+      ESTAMPA_CAMINO_RECTO_HORIZONTAL,
+      ESTAMPA_CAMINO_UNION_T_NORTE,
+      ESTAMPA_CAMINO_ESQUINA_NOROESTE,
+      ESTAMPA_CAMINO_CRUZ,
+      ESTAMPA_FAROLA_URBANA}},
     {SectorActual::CAVERNA, {}}};
 
 const DefinicionEstampa& CatalogoDeEstampas::obtener_estampa(TipoEstampa tipo) {
@@ -371,6 +808,40 @@ std::vector<DefinicionEstampa> CatalogoDeEstampas::listar_estampas_por_sector(Se
         return iterador->second;
     }
     return {};
+}
+
+TipoEstampa CatalogoDeEstampas::rotar_estampa(TipoEstampa tipo) {
+    if (tipo == TipoEstampa::CAMINO_RECTO_HORIZONTAL) {
+        return TipoEstampa::CAMINO_RECTO_VERTICAL;
+    }
+    if (tipo == TipoEstampa::CAMINO_RECTO_VERTICAL) {
+        return TipoEstampa::CAMINO_RECTO_HORIZONTAL;
+    }
+    if (tipo == TipoEstampa::CAMINO_UNION_T_NORTE) {
+        return TipoEstampa::CAMINO_UNION_T_ESTE;
+    }
+    if (tipo == TipoEstampa::CAMINO_UNION_T_ESTE) {
+        return TipoEstampa::CAMINO_UNION_T_SUR;
+    }
+    if (tipo == TipoEstampa::CAMINO_UNION_T_SUR) {
+        return TipoEstampa::CAMINO_UNION_T_OESTE;
+    }
+    if (tipo == TipoEstampa::CAMINO_UNION_T_OESTE) {
+        return TipoEstampa::CAMINO_UNION_T_NORTE;
+    }
+    if (tipo == TipoEstampa::CAMINO_ESQUINA_NOROESTE) {
+        return TipoEstampa::CAMINO_ESQUINA_NORESTE;
+    }
+    if (tipo == TipoEstampa::CAMINO_ESQUINA_NORESTE) {
+        return TipoEstampa::CAMINO_ESQUINA_SUDESTE;
+    }
+    if (tipo == TipoEstampa::CAMINO_ESQUINA_SUDESTE) {
+        return TipoEstampa::CAMINO_ESQUINA_SUDOESTE;
+    }
+    if (tipo == TipoEstampa::CAMINO_ESQUINA_SUDOESTE) {
+        return TipoEstampa::CAMINO_ESQUINA_NOROESTE;
+    }
+    return tipo;
 }
 
 bool CatalogoDeEstampas::es_tile_de_estanque(uint32_t id_tile) {
