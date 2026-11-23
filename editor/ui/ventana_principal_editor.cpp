@@ -474,10 +474,12 @@ void VentanaPrincipalEditor::abrir_dialogo_redimensionar() {
 
     int columnas_actuales = mapa_actual_sector->obtener_cantidad_de_columnas();
     int filas_actuales = mapa_actual_sector->obtener_cantidad_de_filas();
+    int indice_sector = combo_sectores->currentIndex();
+    bool es_sector_granja = (indice_sector == 0);
 
     QDialog dialogo(this);
-    dialogo.setWindowTitle("Redimensionar Mapa del Sector");
-    dialogo.setMinimumWidth(320);
+    dialogo.setWindowTitle("Redimensionar Terreno del Sector");
+    dialogo.setMinimumWidth(380);
 
     QVBoxLayout* layout_dialogo = new QVBoxLayout(&dialogo);
 
@@ -488,23 +490,89 @@ void VentanaPrincipalEditor::abrir_dialogo_redimensionar() {
 
     QFormLayout* layout_formulario = new QFormLayout();
 
+    int ancho_util_actual = columnas_actuales;
+    int alto_util_actual = filas_actuales;
+    int minimo_columnas = 10;
+    int minimo_filas = 10;
+
+    if (es_sector_granja) {
+        ancho_util_actual = columnas_actuales - (MapaEditable::ANCHO_VALLA_OESTE_CASILLAS +
+                                                 MapaEditable::ANCHO_VALLA_ESTE_CASILLAS);
+        alto_util_actual = filas_actuales - (MapaEditable::ALTO_VALLA_NORTE_CASILLAS +
+                                             MapaEditable::ALTO_VALLA_SUR_CASILLAS);
+        if (ancho_util_actual < MapaEditable::MINIMO_ANCHO_UTIL_GRANJA) {
+            ancho_util_actual = MapaEditable::MINIMO_ANCHO_UTIL_GRANJA;
+        }
+        if (alto_util_actual < MapaEditable::MINIMO_ALTO_UTIL_GRANJA) {
+            alto_util_actual = MapaEditable::MINIMO_ALTO_UTIL_GRANJA;
+        }
+
+        minimo_columnas = MapaEditable::MINIMO_ANCHO_UTIL_GRANJA;
+        minimo_filas = MapaEditable::MINIMO_ALTO_UTIL_GRANJA;
+
+        int columna_maxima_ocupada = mapa_actual_sector->obtener_columna_maxima_ocupada();
+        int fila_maxima_ocupada = mapa_actual_sector->obtener_fila_maxima_ocupada();
+        if (columna_maxima_ocupada > minimo_columnas) {
+            minimo_columnas = columna_maxima_ocupada;
+        }
+        if (fila_maxima_ocupada > minimo_filas) {
+            minimo_filas = fila_maxima_ocupada;
+        }
+    }
+
     QSpinBox* spin_columnas = new QSpinBox(&dialogo);
-    spin_columnas->setRange(10, 80);
-    spin_columnas->setValue(columnas_actuales);
+    spin_columnas->setRange(minimo_columnas, es_sector_granja ? 78 : 80);
+    spin_columnas->setValue(ancho_util_actual);
     spin_columnas->setSuffix(" casillas");
-    layout_formulario->addRow("Ancho (Columnas):", spin_columnas);
+    layout_formulario->addRow(
+        es_sector_granja ? "Ancho Util (Columnas):" : "Ancho (Columnas):",
+        spin_columnas);
 
     QSpinBox* spin_filas = new QSpinBox(&dialogo);
-    spin_filas->setRange(10, 80);
-    spin_filas->setValue(filas_actuales);
+    spin_filas->setRange(minimo_filas, es_sector_granja ? 77 : 80);
+    spin_filas->setValue(alto_util_actual);
     spin_filas->setSuffix(" casillas");
-    layout_formulario->addRow("Alto (Filas):", spin_filas);
+    layout_formulario->addRow(
+        es_sector_granja ? "Alto Util (Filas):" : "Alto (Filas):",
+        spin_filas);
 
     layout_dialogo->addLayout(layout_formulario);
 
+    QLabel* etiqueta_total = new QLabel(&dialogo);
+    if (es_sector_granja) {
+        auto actualizar_etiqueta_total = [spin_columnas, spin_filas, etiqueta_total]() {
+            int ancho_util = spin_columnas->value();
+            int alto_util = spin_filas->value();
+            int total_columnas = ancho_util + (MapaEditable::ANCHO_VALLA_OESTE_CASILLAS +
+                                               MapaEditable::ANCHO_VALLA_ESTE_CASILLAS);
+            int total_filas = alto_util + (MapaEditable::ALTO_VALLA_NORTE_CASILLAS +
+                                           MapaEditable::ALTO_VALLA_SUR_CASILLAS);
+            etiqueta_total->setText(
+                QString(
+                    "<div style='background-color: #2D3139; padding: 8px; border-radius: 4px;'>"
+                    "<b>Tamano total con vallas perimetrales:</b> %1 x %2 casillas<br>"
+                    "<small style='color: #88C0D0;'>(+2 columnas para vallas laterales este/oeste, "
+                    "+2 filas para valla norte, +1 fila para base de valla sur)</small></div>")
+                    .arg(total_columnas)
+                    .arg(total_filas));
+        };
+        connect(
+            spin_columnas,
+            QOverload<int>::of(&QSpinBox::valueChanged),
+            &dialogo,
+            actualizar_etiqueta_total);
+        connect(
+            spin_filas,
+            QOverload<int>::of(&QSpinBox::valueChanged),
+            &dialogo,
+            actualizar_etiqueta_total);
+        actualizar_etiqueta_total();
+        layout_dialogo->addWidget(etiqueta_total);
+    }
+
     QLabel* etiqueta_aviso = new QLabel(
-        "<small style='color: #AAAAAA;'>Nota: Al reducir el mapa, las casillas y entidades que "
-        "queden fuera se recortaran.</small>",
+        "<small style='color: #AAAAAA;'>Nota: El limite inferior garantiza que todas las "
+        "estructuras obligatorias y entidades ubicadas quepan sin solaparse ni recortarse.</small>",
         &dialogo);
     layout_dialogo->addWidget(etiqueta_aviso);
 
@@ -518,14 +586,84 @@ void VentanaPrincipalEditor::abrir_dialogo_redimensionar() {
         int nuevas_columnas = spin_columnas->value();
         int nuevas_filas = spin_filas->value();
 
+        if (es_sector_granja) {
+            nuevas_columnas +=
+                (MapaEditable::ANCHO_VALLA_OESTE_CASILLAS +
+                 MapaEditable::ANCHO_VALLA_ESTE_CASILLAS);
+            nuevas_filas +=
+                (MapaEditable::ALTO_VALLA_NORTE_CASILLAS + MapaEditable::ALTO_VALLA_SUR_CASILLAS);
+        }
+
         if (nuevas_columnas != columnas_actuales || nuevas_filas != filas_actuales) {
             uint32_t identificador_tile_relleno = 0;
             uint8_t propiedades_relleno = PropiedadDeCasilla::DECORABLE;
-            int indice_sector = combo_sectores->currentIndex();
-            if (indice_sector == 0) {
+            if (es_sector_granja) {
+                identificador_tile_relleno =
+                    CatalogoDeTerrenos::obtener_tile_base(SectorActual::GRANJA);
                 propiedades_relleno = PropiedadDeCasilla::CULTIVABLE |
                                       PropiedadDeCasilla::DECORABLE |
                                       PropiedadDeCasilla::ADMITE_HIERBA;
+
+                // Limpiar vallas y pasto perimetral viejo en este y sur antes de redimensionar
+                int columna_este_vieja = columnas_actuales - 1;
+                int fila_limpiar = 0;
+                while (fila_limpiar < filas_actuales) {
+                    if (mapa_actual_sector
+                            ->obtener_casilla_en_capa(
+                                TipoCapa::SUELO,
+                                columna_este_vieja,
+                                fila_limpiar)
+                            .obtener_id_tile() == CatalogoDeEstampas::TILE_PASTO_PERIMETRAL) {
+                        mapa_actual_sector->pintar_en_capa(
+                            TipoCapa::SUELO,
+                            columna_este_vieja,
+                            fila_limpiar,
+                            identificador_tile_relleno,
+                            propiedades_relleno);
+                    }
+                    mapa_actual_sector->borrar_en_capa(
+                        TipoCapa::ESTRUCTURAS,
+                        columna_este_vieja,
+                        fila_limpiar);
+                    mapa_actual_sector->borrar_en_capa(
+                        TipoCapa::FRENTE,
+                        columna_este_vieja,
+                        fila_limpiar);
+                    fila_limpiar++;
+                }
+
+                int columna_limpiar = 0;
+                while (columna_limpiar < columnas_actuales) {
+                    int fila_sur_base_vieja = filas_actuales - 1;
+                    if (mapa_actual_sector
+                            ->obtener_casilla_en_capa(
+                                TipoCapa::SUELO,
+                                columna_limpiar,
+                                fila_sur_base_vieja)
+                            .obtener_id_tile() == CatalogoDeEstampas::TILE_PASTO_PERIMETRAL) {
+                        mapa_actual_sector->pintar_en_capa(
+                            TipoCapa::SUELO,
+                            columna_limpiar,
+                            fila_sur_base_vieja,
+                            identificador_tile_relleno,
+                            propiedades_relleno);
+                    }
+                    mapa_actual_sector->borrar_en_capa(
+                        TipoCapa::ESTRUCTURAS,
+                        columna_limpiar,
+                        fila_sur_base_vieja);
+                    mapa_actual_sector->borrar_en_capa(
+                        TipoCapa::FRENTE,
+                        columna_limpiar,
+                        fila_sur_base_vieja);
+
+                    int fila_sur_frente_vieja = filas_actuales - 2;
+                    mapa_actual_sector->borrar_en_capa(
+                        TipoCapa::FRENTE,
+                        columna_limpiar,
+                        fila_sur_frente_vieja);
+                    columna_limpiar++;
+                }
             } else if (indice_sector >= 2) {
                 propiedades_relleno =
                     PropiedadDeCasilla::DECORABLE | PropiedadDeCasilla::ADMITE_MINERAL;
@@ -536,6 +674,11 @@ void VentanaPrincipalEditor::abrir_dialogo_redimensionar() {
                 nuevas_filas,
                 identificador_tile_relleno,
                 propiedades_relleno);
+
+            if (es_sector_granja) {
+                mapa_actual_sector->generar_muro_perimetral_granja();
+            }
+
             lienzo->actualizar_tamano_del_lienzo();
             lienzo->update();
             actualizar_etiqueta_dimensiones();

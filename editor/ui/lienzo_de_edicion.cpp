@@ -31,8 +31,8 @@ static constexpr int GROSOR_BORDE_PUERTA = 2;
 
 static constexpr int COLUMNA_PUERTA_CABANIA = 5;
 static constexpr int FILA_PUERTA_CABANIA = 7;
-static constexpr int COLUMNA_PUERTA_CAVERNA = 1;
-static constexpr int FILA_PUERTA_CAVERNA = 3;
+static constexpr int COLUMNA_PUERTA_CAVERNA = 2;
+static constexpr int FILA_PUERTA_CAVERNA = 6;
 static constexpr int COLUMNA_PUERTA_CENTRO_COMUNITARIO = 5;
 static constexpr int ANCHO_PUERTA_CENTRO_COMUNITARIO = 2;
 
@@ -53,6 +53,7 @@ LienzoDeEdicion::LienzoDeEdicion(QWidget* padre)
           CatalogoDeTerrenos::obtener_tileset_sector(SectorActual::GRANJA).ruta_imagen)),
       datos_tileset(CatalogoDeTerrenos::obtener_tileset_sector(SectorActual::GRANJA)),
       pixmap_cabania(QString(RUTA_SPRITE_CABANIA)),
+      pixmap_caseta_mina(QString(RUTA_SPRITE_CASETA_MINA)),
       pixmap_exteriores_entidades(QString(RUTA_SPRITE_EXTERIORES)),
       pixmap_caverna_entidades(QString(RUTA_SPRITE_CAVERNA)),
       pixmap_pueblo_entidades(QString(RUTA_SPRITE_PUEBLO)),
@@ -186,6 +187,9 @@ void LienzoDeEdicion::pintar_casilla_en_posicion(int columna, int fila) {
     if (mapa_actual == nullptr || !mapa_actual->esta_dentro(columna, fila)) {
         return;
     }
+    if (mapa_actual->casilla_pertenece_a_estanque(columna, fila)) {
+        return;
+    }
     mapa_actual->pintar_en_capa(capa_activa, columna, fila, id_tile_actual, propiedades_actuales);
     emit mapa_modificado();
     update();
@@ -243,7 +247,7 @@ static const std::map<TipoEntidad, QColor> COLORES_ENTIDADES = {
 void LienzoDeEdicion::inicializar_catalogo_visual_entidades() {
     mapa_visual_entidades = {
         {TipoEntidad::CABANIA, {&pixmap_cabania, QRect(16, 0, 144, 144)}},
-        {TipoEntidad::ENTRADA_CAVERNA, {&pixmap_exteriores_entidades, QRect(128, 1040, 48, 64)}},
+        {TipoEntidad::ENTRADA_CAVERNA, {&pixmap_caseta_mina, QRect(80, 0, 80, 112)}},
         {TipoEntidad::CENTRO_COMUNITARIO, {&pixmap_pueblo_entidades, QRect(0, 640, 192, 160)}},
         {TipoEntidad::ESCALERA_NIVEL, {&pixmap_caverna_entidades, QRect(208, 160, 16, 16)}},
         {TipoEntidad::SALIDA_CAVERNA, {&pixmap_caverna_entidades, QRect(48, 112, 16, 16)}},
@@ -264,14 +268,6 @@ void LienzoDeEdicion::dibujar_entidad(
     QColor color_fondo = color_base;
     color_fondo.setAlpha(ALFA_COLOR_FONDO_ENTIDAD);
     pintor.fillRect(rectangulo_entidad, color_fondo);
-
-    if (tipo_entidad == TipoEntidad::ENTRADA_CAVERNA) {
-        int x_hueco = rectangulo_entidad.x() + tamano_casilla_px;
-        int y_hueco = rectangulo_entidad.y() + tamano_casilla_px;
-        int ancho_hueco = tamano_casilla_px;
-        int alto_hueco = rectangulo_entidad.height() - tamano_casilla_px;
-        pintor.fillRect(QRect(x_hueco, y_hueco, ancho_hueco, alto_hueco), QColor(0, 0, 0));
-    }
 
     auto iterador_visual = mapa_visual_entidades.find(tipo_entidad);
     if (iterador_visual != mapa_visual_entidades.end() &&
@@ -418,23 +414,43 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
         mapa_actual != nullptr) {
         DefinicionEstampa estampa = CatalogoDeEstampas::obtener_estampa(estampa_a_colocar);
         if (estampa.ancho_casillas > 0 && estampa.alto_casillas > 0) {
-            bool dentro = mapa_actual->esta_dentro(columna_hover, fila_hover) &&
-                          mapa_actual->esta_dentro(
-                              columna_hover + estampa.ancho_casillas - 1,
-                              fila_hover + estampa.alto_casillas - 1);
+            bool puede_colocarse =
+                mapa_actual->estampa_puede_colocarse_en(estampa, columna_hover, fila_hover);
             QRect rectangulo_estampa(
                 columna_hover * tamano_casilla_px,
                 fila_hover * tamano_casilla_px,
                 estampa.ancho_casillas * tamano_casilla_px,
                 estampa.alto_casillas * tamano_casilla_px);
-            QColor color_estampa = dentro ? QColor(0, 191, 255, ALFA_COLOR_ESTAMPA)
-                                          : QColor(255, 0, 0, ALFA_COLOR_ESTAMPA);
+            QColor color_estampa = puede_colocarse ? QColor(0, 191, 255, ALFA_COLOR_ESTAMPA)
+                                                   : QColor(255, 0, 0, ALFA_COLOR_ESTAMPA);
             pintor.fillRect(rectangulo_estampa, color_estampa);
             pintor.setPen(QPen(
-                dentro ? QColor(0, 191, 255) : QColor(255, 0, 0),
+                puede_colocarse ? QColor(0, 191, 255) : QColor(255, 0, 0),
                 GROSOR_BORDE_NORMAL,
                 Qt::DashLine));
             pintor.drawRect(rectangulo_estampa);
+        }
+    } else if (
+        modo_actual == ModoEditor::BORRAR && columna_hover >= 0 && fila_hover >= 0 &&
+        mapa_actual != nullptr) {
+        auto* estampa_hover = mapa_actual->buscar_estampa_en_casilla(columna_hover, fila_hover);
+        if (estampa_hover != nullptr) {
+            QRect rectangulo_borrar(
+                estampa_hover->columna * tamano_casilla_px,
+                estampa_hover->fila * tamano_casilla_px,
+                estampa_hover->ancho * tamano_casilla_px,
+                estampa_hover->alto * tamano_casilla_px);
+            pintor.fillRect(rectangulo_borrar, QColor(255, 69, 0, 100));
+            pintor.setPen(QPen(QColor(255, 69, 0), GROSOR_BORDE_NORMAL, Qt::DashLine));
+            pintor.drawRect(rectangulo_borrar);
+        } else {
+            QRect rectangulo_hover(
+                columna_hover * tamano_casilla_px,
+                fila_hover * tamano_casilla_px,
+                tamano_casilla_px,
+                tamano_casilla_px);
+            pintor.setPen(QPen(QColor(255, 0, 0, 220), 2));
+            pintor.drawRect(rectangulo_hover);
         }
     } else if (
         modo_actual == ModoEditor::COLOCAR_ENTIDAD && columna_hover >= 0 && fila_hover >= 0) {
@@ -512,7 +528,8 @@ void LienzoDeEdicion::mousePressEvent(QMouseEvent* evento) {
         } else if (modo_actual == ModoEditor::ESTAMPAR) {
             DefinicionEstampa definicion_estampa =
                 CatalogoDeEstampas::obtener_estampa(estampa_a_colocar);
-            if (definicion_estampa.tipo != TipoEstampa::NINGUNA) {
+            if (definicion_estampa.tipo != TipoEstampa::NINGUNA &&
+                mapa_actual->estampa_puede_colocarse_en(definicion_estampa, columna, fila)) {
                 mapa_actual->estampar(definicion_estampa, columna, fila);
                 emit mapa_modificado();
                 update();
@@ -563,8 +580,27 @@ void LienzoDeEdicion::mousePressEvent(QMouseEvent* evento) {
                 mapa_actual->retirar_entidad(entidad_tocada->obtener_identificador());
                 identificador_entidad_seleccionada = -1;
                 emit entidad_seleccionada_cambio(-1);
+            } else if (mapa_actual->casilla_pertenece_a_estanque(columna, fila)) {
+                uint32_t tile_base = CatalogoDeTerrenos::obtener_tile_base(sector_actual);
+                uint8_t prop_base =
+                    (sector_actual == SectorActual::GRANJA)
+                        ? (PropiedadDeCasilla::CULTIVABLE | PropiedadDeCasilla::DECORABLE |
+                           PropiedadDeCasilla::ADMITE_HIERBA)
+                        : PropiedadDeCasilla::DECORABLE;
+                mapa_actual->retirar_estanque_en_casilla(columna, fila, tile_base, prop_base);
             } else {
-                mapa_actual->borrar_en_capa(capa_activa, columna, fila);
+                if (capa_activa == TipoCapa::SUELO) {
+                    uint32_t tile_base = CatalogoDeTerrenos::obtener_tile_base(sector_actual);
+                    uint8_t prop_base =
+                        (sector_actual == SectorActual::GRANJA)
+                            ? (PropiedadDeCasilla::CULTIVABLE | PropiedadDeCasilla::DECORABLE |
+                               PropiedadDeCasilla::ADMITE_HIERBA)
+                            : PropiedadDeCasilla::DECORABLE;
+                    mapa_actual
+                        ->pintar_en_capa(TipoCapa::SUELO, columna, fila, tile_base, prop_base);
+                } else {
+                    mapa_actual->borrar_en_capa(capa_activa, columna, fila);
+                }
             }
             emit mapa_modificado();
             update();
@@ -575,8 +611,26 @@ void LienzoDeEdicion::mousePressEvent(QMouseEvent* evento) {
             mapa_actual->retirar_entidad(entidad_tocada->obtener_identificador());
             identificador_entidad_seleccionada = -1;
             emit entidad_seleccionada_cambio(-1);
+        } else if (mapa_actual->casilla_pertenece_a_estanque(columna, fila)) {
+            uint32_t tile_base = CatalogoDeTerrenos::obtener_tile_base(sector_actual);
+            uint8_t prop_base =
+                (sector_actual == SectorActual::GRANJA)
+                    ? (PropiedadDeCasilla::CULTIVABLE | PropiedadDeCasilla::DECORABLE |
+                       PropiedadDeCasilla::ADMITE_HIERBA)
+                    : PropiedadDeCasilla::DECORABLE;
+            mapa_actual->retirar_estanque_en_casilla(columna, fila, tile_base, prop_base);
         } else {
-            mapa_actual->borrar_en_capa(capa_activa, columna, fila);
+            if (capa_activa == TipoCapa::SUELO) {
+                uint32_t tile_base = CatalogoDeTerrenos::obtener_tile_base(sector_actual);
+                uint8_t prop_base =
+                    (sector_actual == SectorActual::GRANJA)
+                        ? (PropiedadDeCasilla::CULTIVABLE | PropiedadDeCasilla::DECORABLE |
+                           PropiedadDeCasilla::ADMITE_HIERBA)
+                        : PropiedadDeCasilla::DECORABLE;
+                mapa_actual->pintar_en_capa(TipoCapa::SUELO, columna, fila, tile_base, prop_base);
+            } else {
+                mapa_actual->borrar_en_capa(capa_activa, columna, fila);
+            }
         }
         emit mapa_modificado();
         update();

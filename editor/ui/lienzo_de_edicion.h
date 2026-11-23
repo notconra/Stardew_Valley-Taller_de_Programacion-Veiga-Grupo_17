@@ -36,6 +36,7 @@ private:
     DefinicionTilesetTMX datos_tileset;
 
     QPixmap pixmap_cabania;
+    QPixmap pixmap_caseta_mina;
     QPixmap pixmap_exteriores_entidades;
     QPixmap pixmap_caverna_entidades;
     QPixmap pixmap_pueblo_entidades;
@@ -73,6 +74,7 @@ protected:
 
 public:
     static constexpr const char* RUTA_SPRITE_CABANIA = "Assets/Buildings/houses.png";
+    static constexpr const char* RUTA_SPRITE_CASETA_MINA = "Assets/Buildings/Stone Cabin.png";
     static constexpr const char* RUTA_SPRITE_EXTERIORES =
         "Assets/Maps/spring_outdoorsTileSheet.png";
     static constexpr const char* RUTA_SPRITE_CAVERNA = "Assets/Maps/Mines/mine.png";

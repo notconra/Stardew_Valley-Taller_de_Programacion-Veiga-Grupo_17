@@ -109,7 +109,7 @@ PaletaDeHerramientas::PaletaDeHerramientas(QWidget* padre)
 
     grupo_estampas = new QButtonGroup(this);
 
-    boton_muro_perimetral = new QPushButton("Cerrar Perimetro con Muros", caja_estampas);
+    boton_muro_perimetral = new QPushButton("Cerrar Perimetro con Vallas", caja_estampas);
     boton_muro_perimetral->setStyleSheet(ESTILO_BOTON_PERIMETRO);
     connect(
         boton_muro_perimetral,

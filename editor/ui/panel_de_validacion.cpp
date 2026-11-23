@@ -35,7 +35,7 @@ struct ConfiguracionBotonEntidad {
 static const std::map<SectorActual, std::vector<ConfiguracionBotonEntidad>> ENTIDADES_POR_SECTOR = {
     {SectorActual::GRANJA,
      {{TipoEntidad::CABANIA, "Cabania del Jugador (9x9)"},
-      {TipoEntidad::ENTRADA_CAVERNA, "Entrada Caverna (3x4)"},
+      {TipoEntidad::ENTRADA_CAVERNA, "Entrada Mina (5x7)"},
       {TipoEntidad::TRANSICION_PUEBLO, "Salida a Pueblo (2x2)"}}},
     {SectorActual::PUEBLO,
      {{TipoEntidad::CENTRO_COMUNITARIO, "Centro Comunitario (12x10)"},
