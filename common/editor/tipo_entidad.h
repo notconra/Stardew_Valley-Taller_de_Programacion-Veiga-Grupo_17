@@ -14,7 +14,8 @@ enum class TipoEntidad : uint8_t {
     ESCALERA_NIVEL = 7,
     SALIDA_CAVERNA = 8,
     TRANSICION_PUEBLO = 9,
-    TRANSICION_GRANJA = 10
+    TRANSICION_GRANJA = 10,
+    MERCADO = 11
 };
 
 #endif  // TIPO_ENTIDAD_H

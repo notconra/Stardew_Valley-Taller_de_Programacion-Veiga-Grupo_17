@@ -1,9 +1,11 @@
 #include "definicion_de_mundo.h"
 
+#include <filesystem>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
+#include "cargador_de_sector_tmx.h"
 #include "catalogo_de_terrenos.h"
 #include "propiedad_de_casilla.h"
 #include "tipo_entidad.h"
@@ -14,6 +16,17 @@ DefinicionDeMundo::DefinicionDeMundo(
     : nombre_del_mundo(nombre),
       sector_granja(granja),
       sector_pueblo(pueblo),
+      sector_mercado(crear_sector_mercado_por_defecto()),
+      niveles_mazmorra(niveles) {
+}
+
+DefinicionDeMundo::DefinicionDeMundo(
+    const std::string& nombre, const MapaEditable& granja, const MapaEditable& pueblo,
+    const MapaEditable& mercado, const std::vector<MapaEditable>& niveles)
+    : nombre_del_mundo(nombre),
+      sector_granja(granja),
+      sector_pueblo(pueblo),
+      sector_mercado(mercado),
       niveles_mazmorra(niveles) {
 }
 
@@ -39,6 +52,14 @@ const MapaEditable& DefinicionDeMundo::obtener_sector_pueblo() const {
 
 MapaEditable& DefinicionDeMundo::obtener_sector_pueblo_modificable() {
     return sector_pueblo;
+}
+
+const MapaEditable& DefinicionDeMundo::obtener_sector_mercado() const {
+    return sector_mercado;
+}
+
+MapaEditable& DefinicionDeMundo::obtener_sector_mercado_modificable() {
+    return sector_mercado;
 }
 
 size_t DefinicionDeMundo::obtener_cantidad_de_niveles_mazmorra() const {
@@ -67,8 +88,29 @@ void DefinicionDeMundo::establecer_sector_pueblo(const MapaEditable& pueblo) {
     sector_pueblo = pueblo;
 }
 
+void DefinicionDeMundo::establecer_sector_mercado(const MapaEditable& mercado) {
+    sector_mercado = mercado;
+}
+
 void DefinicionDeMundo::establecer_niveles_mazmorra(const std::vector<MapaEditable>& niveles) {
     niveles_mazmorra = niveles;
+}
+
+MapaEditable DefinicionDeMundo::crear_sector_mercado_por_defecto() {
+    if (std::filesystem::exists("Assets/Maps/Mercado.tmx")) {
+        return CargadorDeSectorTMX::cargar_sector("Assets/Maps/Mercado.tmx", SectorActual::MERCADO);
+    }
+    MapaEditable mercado(
+        19,
+        17,
+        CatalogoDeTerrenos::obtener_tile_base(SectorActual::MERCADO),
+        PropiedadDeCasilla::DECORABLE);
+    mercado.ubicar_entidad(TipoEntidad::PUESTO_MARNIE, 3, 9, 2, 2);
+    mercado.ubicar_entidad(TipoEntidad::PUESTO_ROBIN, 2, 6, 2, 2);
+    mercado.ubicar_entidad(TipoEntidad::PUESTO_PIERRE, 14, 6, 2, 2);
+    mercado.ubicar_entidad(TipoEntidad::PUESTO_CLINT, 15, 9, 2, 2);
+    mercado.ubicar_entidad(TipoEntidad::TRANSICION_PUEBLO, 9, 15, 2, 2);
+    return mercado;
 }
 
 DefinicionDeMundo DefinicionDeMundo::crear_mundo_por_defecto(const std::string& nombre) {
@@ -99,13 +141,11 @@ DefinicionDeMundo DefinicionDeMundo::crear_mundo_por_defecto(const std::string& 
     granja.ubicar_entidad(TipoEntidad::TRANSICION_PUEBLO, 32, 16, 2, 2);
     granja.generar_muro_perimetral_granja();
 
-    // Configuración inicial del Pueblo
+    // Configuración inicial del Pueblo (Centro Comunitario y Mercado obligatorio, sin puestos)
     pueblo.ubicar_entidad(TipoEntidad::TRANSICION_GRANJA, 0, 16, 2, 2);
-    pueblo.ubicar_entidad(TipoEntidad::CENTRO_COMUNITARIO, 11, 3, 12, 10);
-    pueblo.ubicar_entidad(TipoEntidad::PUESTO_MARNIE, 6, 18, 2, 2);
-    pueblo.ubicar_entidad(TipoEntidad::PUESTO_PIERRE, 12, 18, 2, 2);
-    pueblo.ubicar_entidad(TipoEntidad::PUESTO_CLINT, 18, 18, 2, 2);
-    pueblo.ubicar_entidad(TipoEntidad::PUESTO_ROBIN, 24, 18, 2, 2);
+    pueblo.ubicar_entidad(TipoEntidad::CENTRO_COMUNITARIO, 4, 3, 12, 10);
+    pueblo.ubicar_entidad(TipoEntidad::MERCADO, 19, 3, 10, 10);
+    pueblo.generar_muro_perimetral_pueblo();
 
     // Configuración inicial de los 10 niveles de Mazmorra
     size_t indice_nivel = 0;
@@ -115,5 +155,5 @@ DefinicionDeMundo DefinicionDeMundo::crear_mundo_por_defecto(const std::string& 
         indice_nivel++;
     }
 
-    return DefinicionDeMundo(nombre, granja, pueblo, niveles);
+    return DefinicionDeMundo(nombre, granja, pueblo, crear_sector_mercado_por_defecto(), niveles);
 }

@@ -17,10 +17,10 @@ struct DefinicionTransicionTMX {
 };
 
 static const std::map<TipoEntidad, const char*> PUESTOS_POR_TIPO = {
-    {TipoEntidad::PUESTO_MARNIE, "marnie"},
-    {TipoEntidad::PUESTO_CLINT, "clint"},
-    {TipoEntidad::PUESTO_PIERRE, "pierre"},
-    {TipoEntidad::PUESTO_ROBIN, "robin"}};
+    {TipoEntidad::PUESTO_MARNIE, "0"},
+    {TipoEntidad::PUESTO_CLINT, "1"},
+    {TipoEntidad::PUESTO_PIERRE, "2"},
+    {TipoEntidad::PUESTO_ROBIN, "3"}};
 
 ExportadorDeSectorTMX::ExportadorDeSectorTMX(
     SectorActual sector_actual, const MapaEditable& mapa_sector,
@@ -101,6 +101,15 @@ void ExportadorDeSectorTMX::exportar_capas_de_tiles() {
                 tiles_frente);
         } else if (tipo == TipoEntidad::CENTRO_COMUNITARIO && sector == SectorActual::PUEBLO) {
             inyectar_tiles_de_centro_comunitario(
+                origen_columna,
+                origen_fila,
+                total_columnas,
+                total_filas,
+                tiles_suelo,
+                tiles_estructuras,
+                tiles_frente);
+        } else if (tipo == TipoEntidad::MERCADO && sector == SectorActual::PUEBLO) {
+            inyectar_tiles_de_mercado(
                 origen_columna,
                 origen_fila,
                 total_columnas,
@@ -192,6 +201,50 @@ void ExportadorDeSectorTMX::inyectar_tiles_de_centro_comunitario(
     }
 }
 
+void ExportadorDeSectorTMX::inyectar_tiles_de_mercado(
+    int origen_columna, int origen_fila, int total_columnas, int total_filas,
+    std::vector<uint32_t>& tiles_suelo, std::vector<uint32_t>& tiles_estructuras,
+    std::vector<uint32_t>& tiles_frente) {
+    int fila_local = 0;
+    while (fila_local < ALTO_MERCADO_CASILLAS) {
+        int columna_local = 0;
+        while (columna_local < ANCHO_MERCADO_CASILLAS) {
+            int columna_mapa = origen_columna + columna_local;
+            int fila_mapa = origen_fila + fila_local;
+            if (columna_mapa >= 0 && columna_mapa < total_columnas && fila_mapa >= 0 &&
+                fila_mapa < total_filas) {
+                size_t indice_mapa = static_cast<size_t>(fila_mapa * total_columnas + columna_mapa);
+                uint32_t id_tile_local = 0;
+                if (fila_local == 0) {
+                    if (columna_local < 7) {
+                        id_tile_local = static_cast<uint32_t>(
+                            10 * COLUMNAS_TILESET_PUEBLO + (25 + columna_local));
+                    }
+                } else {
+                    id_tile_local = static_cast<uint32_t>(
+                        (11 + (fila_local - 1)) * COLUMNAS_TILESET_PUEBLO + (5 + columna_local));
+                }
+
+                if (id_tile_local > 0) {
+                    uint32_t gid_global = FIRST_GID_PUEBLO + id_tile_local;
+                    if (fila_local <= FILA_LIMITE_TECHO_MERCADO) {
+                        tiles_frente[indice_mapa] = gid_global;
+                    } else if (
+                        fila_local == FILA_ACCESO_MERCADO &&
+                        columna_local >= COLUMNA_INICIO_ACCESO_MERCADO &&
+                        columna_local <= COLUMNA_FIN_ACCESO_MERCADO) {
+                        tiles_suelo[indice_mapa] = gid_global;
+                    } else {
+                        tiles_estructuras[indice_mapa] = gid_global;
+                    }
+                }
+            }
+            columna_local++;
+        }
+        fila_local++;
+    }
+}
+
 void ExportadorDeSectorTMX::inyectar_tiles_de_entrada_caverna(
     int origen_columna, int origen_fila, int total_columnas, int total_filas,
     std::vector<uint32_t>& tiles_suelo, std::vector<uint32_t>& tiles_estructuras,
@@ -231,8 +284,9 @@ void ExportadorDeSectorTMX::inyectar_tiles_de_entrada_caverna(
 void ExportadorDeSectorTMX::exportar_entidades() {
     std::map<TipoEntidad, DefinicionTransicionTMX> transiciones_por_tipo = {
         {TipoEntidad::CABANIA, {DESTINO_CABANIA, COLUMNA_SPAWN_CASA, FILA_SPAWN_CASA}},
-        {TipoEntidad::CENTRO_COMUNITARIO,
-         {DESTINO_CENTRO_COMUNITARIO, COLUMNA_ENTRADA_MERCADO, FILA_ENTRADA_MERCADO}},
+        {TipoEntidad::CENTRO_COMUNITARIO, {DESTINO_CENTRO_COMUNITARIO, 15, 20}},
+        {TipoEntidad::MERCADO,
+         {DESTINO_MERCADO, destinos.columna_destino_mercado, destinos.fila_destino_mercado}},
         {TipoEntidad::TRANSICION_PUEBLO,
          {DESTINO_PUEBLO, destinos.columna_destino_pueblo, destinos.fila_destino_pueblo}},
         {TipoEntidad::TRANSICION_GRANJA,
@@ -285,6 +339,12 @@ void ExportadorDeSectorTMX::exportar_entidades() {
             alto_pixeles = ALTO_TILE_PIXELES;
         } else if (tipo == TipoEntidad::CENTRO_COMUNITARIO) {
             // Las puertas dobles del centro comunitario en sus escalones de entrada
+            posicion_x_pixeles = (columna + 5) * ANCHO_TILE_PIXELES;
+            posicion_y_pixeles = (fila + 9) * ALTO_TILE_PIXELES;
+            ancho_pixeles = ANCHO_TILE_PIXELES * 2;
+            alto_pixeles = ALTO_TILE_PIXELES;
+        } else if (tipo == TipoEntidad::MERCADO) {
+            // La puerta del Mercado en sus escalones de entrada
             posicion_x_pixeles = (columna + 5) * ANCHO_TILE_PIXELES;
             posicion_y_pixeles = (fila + 9) * ALTO_TILE_PIXELES;
             ancho_pixeles = ANCHO_TILE_PIXELES * 2;

@@ -12,6 +12,7 @@ private:
     std::string nombre_del_mundo;
     MapaEditable sector_granja;
     MapaEditable sector_pueblo;
+    MapaEditable sector_mercado;
     std::vector<MapaEditable> niveles_mazmorra;
 
     static constexpr size_t CANTIDAD_DE_NIVELES_MAZMORRA = 10;
@@ -27,6 +28,10 @@ public:
         const std::string& nombre, const MapaEditable& granja, const MapaEditable& pueblo,
         const std::vector<MapaEditable>& niveles);
 
+    DefinicionDeMundo(
+        const std::string& nombre, const MapaEditable& granja, const MapaEditable& pueblo,
+        const MapaEditable& mercado, const std::vector<MapaEditable>& niveles);
+
     const std::string& obtener_nombre() const;
     void establecer_nombre(const std::string& nuevo_nombre);
 
@@ -36,14 +41,19 @@ public:
     const MapaEditable& obtener_sector_pueblo() const;
     MapaEditable& obtener_sector_pueblo_modificable();
 
+    const MapaEditable& obtener_sector_mercado() const;
+    MapaEditable& obtener_sector_mercado_modificable();
+
     size_t obtener_cantidad_de_niveles_mazmorra() const;
     const MapaEditable& obtener_nivel_mazmorra(size_t indice_nivel) const;
     MapaEditable& obtener_nivel_mazmorra_modificable(size_t indice_nivel);
 
     void establecer_sector_granja(const MapaEditable& granja);
     void establecer_sector_pueblo(const MapaEditable& pueblo);
+    void establecer_sector_mercado(const MapaEditable& mercado);
     void establecer_niveles_mazmorra(const std::vector<MapaEditable>& niveles);
 
+    static MapaEditable crear_sector_mercado_por_defecto();
     static DefinicionDeMundo crear_mundo_por_defecto(const std::string& nombre = "Mundo Nuevo");
 };
 

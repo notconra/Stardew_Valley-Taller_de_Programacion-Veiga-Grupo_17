@@ -33,6 +33,12 @@ DefinicionDeMundo CargadorDeMundoTMX::cargar_mundo(const std::string& ruta_direc
     MapaEditable pueblo =
         CargadorDeSectorTMX::cargar_sector(ruta_pueblo.string(), SectorActual::PUEBLO);
 
+    std::filesystem::path ruta_mercado = ruta / ARCHIVO_MERCADO;
+    MapaEditable mercado =
+        std::filesystem::exists(ruta_mercado)
+            ? CargadorDeSectorTMX::cargar_sector(ruta_mercado.string(), SectorActual::MERCADO)
+            : DefinicionDeMundo::crear_sector_mercado_por_defecto();
+
     std::filesystem::path ruta_caverna = ruta / ARCHIVO_CAVERNA;
     if (!std::filesystem::exists(ruta_caverna)) {
         throw std::runtime_error(
@@ -42,5 +48,5 @@ DefinicionDeMundo CargadorDeMundoTMX::cargar_mundo(const std::string& ruta_direc
     niveles_caverna.push_back(
         CargadorDeSectorTMX::cargar_sector(ruta_caverna.string(), SectorActual::CAVERNA));
 
-    return DefinicionDeMundo(nombre_mundo, granja, pueblo, niveles_caverna);
+    return DefinicionDeMundo(nombre_mundo, granja, pueblo, mercado, niveles_caverna);
 }

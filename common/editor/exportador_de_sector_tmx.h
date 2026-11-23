@@ -17,6 +17,8 @@ struct DestinosDeTransicion {
     int fila_destino_caverna = 5;
     int columna_salida_caverna = 10;
     int fila_salida_caverna = 10;
+    int columna_destino_mercado = 9;
+    int fila_destino_mercado = 14;
 };
 
 class ExportadorDeSectorTMX {
@@ -34,7 +36,8 @@ private:
     static constexpr const char* DESTINO_PUEBLO = "Town";
     static constexpr const char* DESTINO_GRANJA = "granja";
     static constexpr const char* DESTINO_CABANIA = "FarmHouse2";
-    static constexpr const char* DESTINO_CENTRO_COMUNITARIO = "mercado";
+    static constexpr const char* DESTINO_CENTRO_COMUNITARIO = "CommunityCenter";
+    static constexpr const char* DESTINO_MERCADO = "mercado";
     static constexpr const char* DESTINO_CAVERNA = "caverna";
     static constexpr const char* DESTINO_SIGUIENTE_NIVEL = "siguiente";
 
@@ -44,10 +47,10 @@ private:
     static constexpr int COLUMNA_ENTRADA_MERCADO = 9;
     static constexpr int FILA_ENTRADA_MERCADO = 14;
 
-    static constexpr const char* ID_PUESTO_MARNIE = "marnie";
-    static constexpr const char* ID_PUESTO_CLINT = "clint";
-    static constexpr const char* ID_PUESTO_PIERRE = "pierre";
-    static constexpr const char* ID_PUESTO_ROBIN = "robin";
+    static constexpr const char* ID_PUESTO_MARNIE = "0";
+    static constexpr const char* ID_PUESTO_CLINT = "1";
+    static constexpr const char* ID_PUESTO_PIERRE = "2";
+    static constexpr const char* ID_PUESTO_ROBIN = "3";
 
     // Tileset Casas (houses.png)
     static constexpr uint32_t FIRST_GID_HOUSES = 3224;
@@ -80,6 +83,14 @@ private:
     static constexpr int FILA_ACCESO_CENTRO_COMUNITARIO = 9;
     static constexpr int COLUMNA_INICIO_ACCESO_CENTRO_COMUNITARIO = 4;
     static constexpr int COLUMNA_FIN_ACCESO_CENTRO_COMUNITARIO = 7;
+
+    // Dimensiones y capas del Mercado (10x10)
+    static constexpr int ANCHO_MERCADO_CASILLAS = 10;
+    static constexpr int ALTO_MERCADO_CASILLAS = 10;
+    static constexpr int FILA_LIMITE_TECHO_MERCADO = 5;
+    static constexpr int FILA_ACCESO_MERCADO = 9;
+    static constexpr int COLUMNA_INICIO_ACCESO_MERCADO = 5;
+    static constexpr int COLUMNA_FIN_ACCESO_MERCADO = 6;
 
     // Tileset Caseta de Mina (Stone Cabin.png)
     static constexpr uint32_t FIRST_GID_CASETA_MINA = 3683;
@@ -114,6 +125,10 @@ private:
         std::vector<uint32_t>& tiles_suelo, std::vector<uint32_t>& tiles_estructuras,
         std::vector<uint32_t>& tiles_frente);
     void inyectar_tiles_de_centro_comunitario(
+        int origen_columna, int origen_fila, int total_columnas, int total_filas,
+        std::vector<uint32_t>& tiles_suelo, std::vector<uint32_t>& tiles_estructuras,
+        std::vector<uint32_t>& tiles_frente);
+    void inyectar_tiles_de_mercado(
         int origen_columna, int origen_fila, int total_columnas, int total_filas,
         std::vector<uint32_t>& tiles_suelo, std::vector<uint32_t>& tiles_estructuras,
         std::vector<uint32_t>& tiles_frente);

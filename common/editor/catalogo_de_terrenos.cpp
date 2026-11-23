@@ -14,15 +14,20 @@ static constexpr uint32_t TILE_CAMINO_MADERA = 1132;
 static constexpr uint32_t TILE_CAMINO_PIEDRA = 1459;
 
 // Pueblo (spring_town.png, 32 columnas)
-static constexpr uint32_t TILE_PASTO_URBANO = 609;
+static constexpr uint32_t TILE_PASTO_URBANO = 709;
 static constexpr uint32_t TILE_ADOQUIN_CALLE_1 = 737;
-static constexpr uint32_t TILE_ADOQUIN_CALLE_2 = 769;
-static constexpr uint32_t TILE_ADOQUIN_CLARO = 996;
-static constexpr uint32_t TILE_VEREDA_PIEDRA = 687;
-static constexpr uint32_t TILE_PARED_LADRILLO = 66;
-static constexpr uint32_t TILE_MURO_EDIFICIO = 1093;
-static constexpr uint32_t TILE_AGUA_PUEBLO = 1890;
-static constexpr uint32_t TILE_PUENTE_MADERA = 1251;
+static constexpr uint32_t TILE_BORDE_CAMINO_NORTE = 610;
+static constexpr uint32_t TILE_BORDE_CAMINO_SUR = 674;
+static constexpr uint32_t TILE_BORDE_CAMINO_OESTE = 641;
+static constexpr uint32_t TILE_BORDE_CAMINO_ESTE = 643;
+static constexpr uint32_t TILE_ESQUINA_EXTERIOR_NOROESTE = 609;
+static constexpr uint32_t TILE_ESQUINA_EXTERIOR_NORESTE = 611;
+static constexpr uint32_t TILE_ESQUINA_EXTERIOR_SUDESTE = 675;
+static constexpr uint32_t TILE_ESQUINA_EXTERIOR_SUDOESTE = 673;
+static constexpr uint32_t TILE_ESQUINA_INTERIOR_NOROESTE = 706;
+static constexpr uint32_t TILE_ESQUINA_INTERIOR_NORESTE = 705;
+static constexpr uint32_t TILE_ESQUINA_INTERIOR_SUDESTE = 739;
+static constexpr uint32_t TILE_ESQUINA_INTERIOR_SUDOESTE = 707;
 
 // Caverna (Minas: mine.png, 16 columnas)
 static constexpr uint32_t TILE_PISO_PIEDRA_CAVERNA = 139;
@@ -59,6 +64,17 @@ static constexpr int CANTIDAD_TILES_CAVERNA = 288;
 static constexpr int ANCHO_IMAGEN_CAVERNA = 256;
 static constexpr int ALTO_IMAGEN_CAVERNA = 288;
 
+// Metadatos de tileset de mercado (Interior)
+static constexpr const char* NOMBRE_TILESET_MERCADO = "townInterior";
+static constexpr const char* RUTA_TILESET_MERCADO = "Assets/Maps/townInterior.png";
+static constexpr int COLUMNAS_TILESET_MERCADO = 32;
+static constexpr int CANTIDAD_TILES_MERCADO = 2176;
+static constexpr int ANCHO_IMAGEN_MERCADO = 512;
+static constexpr int ALTO_IMAGEN_MERCADO = 1088;
+static constexpr uint32_t TILE_PISO_MERCADO = 263;
+static constexpr uint32_t TILE_PARED_MERCADO = 22;
+static constexpr uint32_t TILE_ALFOMBRA_MERCADO = 113;
+
 // Nombres temáticos de terrenos - Granja
 static constexpr const char* NOMBRE_TIERRA_BASE = "Tierra de Granja";
 static constexpr const char* NOMBRE_PASTO = "Pasto Natural";
@@ -67,14 +83,10 @@ static constexpr const char* NOMBRE_CAMINO_PIEDRA = "Sendero de Piedra";
 
 // Nombres temáticos de terrenos - Pueblo
 static constexpr const char* NOMBRE_PASTO_URBANO = "Pasto Urbano";
-static constexpr const char* NOMBRE_ADOQUIN_CALLE_1 = "Adoquin Calle";
-static constexpr const char* NOMBRE_ADOQUIN_CALLE_2 = "Adoquin Borde";
-static constexpr const char* NOMBRE_ADOQUIN_CLARO = "Adoquin Claro Plaza";
-static constexpr const char* NOMBRE_VEREDA_PIEDRA = "Vereda Gris";
-static constexpr const char* NOMBRE_PARED_LADRILLO = "Pared Ladrillo";
-static constexpr const char* NOMBRE_MURO_EDIFICIO = "Muro Edificio";
-static constexpr const char* NOMBRE_AGUA_PUEBLO = "Canal / Rio";
-static constexpr const char* NOMBRE_PUENTE_MADERA = "Puente Madera";
+static constexpr const char* NOMBRE_ADOQUIN_CALLE_1 = "Adoquin de Pueblo (Baldosa)";
+static constexpr const char* NOMBRE_BORDE_CAMINO = "Borde de Camino (Rotable [R])";
+static constexpr const char* NOMBRE_ESQUINA_EXTERIOR = "Esquina Exterior (Rotable [R])";
+static constexpr const char* NOMBRE_ESQUINA_INTERIOR = "Esquina Interior (Rotable [R])";
 
 // Nombres temáticos de terrenos - Caverna
 static constexpr const char* NOMBRE_PISO_PIEDRA = "Piso de Piedra";
@@ -103,13 +115,11 @@ static const std::map<SectorActual, std::vector<DefinicionTile>> CATALOGO_POR_SE
     {SectorActual::PUEBLO,
      {DefinicionTile{NOMBRE_PASTO_URBANO, TILE_PASTO_URBANO, PropiedadDeCasilla::DECORABLE},
       DefinicionTile{NOMBRE_ADOQUIN_CALLE_1, TILE_ADOQUIN_CALLE_1, PropiedadDeCasilla::DECORABLE},
-      DefinicionTile{NOMBRE_ADOQUIN_CALLE_2, TILE_ADOQUIN_CALLE_2, PropiedadDeCasilla::DECORABLE},
-      DefinicionTile{NOMBRE_ADOQUIN_CLARO, TILE_ADOQUIN_CLARO, PropiedadDeCasilla::DECORABLE},
-      DefinicionTile{NOMBRE_VEREDA_PIEDRA, TILE_VEREDA_PIEDRA, PropiedadDeCasilla::DECORABLE},
-      DefinicionTile{NOMBRE_PARED_LADRILLO, TILE_PARED_LADRILLO, PropiedadDeCasilla::BLOQUEA},
-      DefinicionTile{NOMBRE_MURO_EDIFICIO, TILE_MURO_EDIFICIO, PropiedadDeCasilla::BLOQUEA},
-      DefinicionTile{NOMBRE_AGUA_PUEBLO, TILE_AGUA_PUEBLO, PropiedadDeCasilla::BLOQUEA},
-      DefinicionTile{NOMBRE_PUENTE_MADERA, TILE_PUENTE_MADERA, PropiedadDeCasilla::DECORABLE}}},
+      DefinicionTile{NOMBRE_BORDE_CAMINO, TILE_BORDE_CAMINO_NORTE, PropiedadDeCasilla::DECORABLE},
+      DefinicionTile{
+          NOMBRE_ESQUINA_EXTERIOR, TILE_ESQUINA_EXTERIOR_NOROESTE, PropiedadDeCasilla::DECORABLE},
+      DefinicionTile{
+          NOMBRE_ESQUINA_INTERIOR, TILE_ESQUINA_INTERIOR_NOROESTE, PropiedadDeCasilla::DECORABLE}}},
     {SectorActual::CAVERNA,
      {DefinicionTile{
           NOMBRE_PISO_PIEDRA,
@@ -127,7 +137,11 @@ static const std::map<SectorActual, std::vector<DefinicionTile>> CATALOGO_POR_SE
       DefinicionTile{NOMBRE_AGUA_SUBTERRANEA, TILE_AGUA_SUBTERRANEA, PropiedadDeCasilla::BLOQUEA},
       DefinicionTile{NOMBRE_MURO_PIEDRA, TILE_MURO_PIEDRA_CAVERNA, PropiedadDeCasilla::BLOQUEA},
       DefinicionTile{
-          NOMBRE_MURO_PIEDRA_LABRADA, TILE_MURO_PIEDRA_LABRADA, PropiedadDeCasilla::BLOQUEA}}}};
+          NOMBRE_MURO_PIEDRA_LABRADA, TILE_MURO_PIEDRA_LABRADA, PropiedadDeCasilla::BLOQUEA}}},
+    {SectorActual::MERCADO,
+     {DefinicionTile{"Piso de Madera", TILE_PISO_MERCADO, PropiedadDeCasilla::DECORABLE},
+      DefinicionTile{"Pared Interior", TILE_PARED_MERCADO, PropiedadDeCasilla::BLOQUEA},
+      DefinicionTile{"Alfombra de Tienda", TILE_ALFOMBRA_MERCADO, PropiedadDeCasilla::DECORABLE}}}};
 
 static const std::map<SectorActual, DefinicionTilesetTMX> TILESETS_POR_SECTOR = {
     {SectorActual::GRANJA,
@@ -159,7 +173,17 @@ static const std::map<SectorActual, DefinicionTilesetTMX> TILESETS_POR_SECTOR = 
       COLUMNAS_TILESET_CAVERNA,
       CANTIDAD_TILES_CAVERNA,
       ANCHO_IMAGEN_CAVERNA,
-      ALTO_IMAGEN_CAVERNA}}};
+      ALTO_IMAGEN_CAVERNA}},
+    {SectorActual::MERCADO,
+     {NOMBRE_TILESET_MERCADO,
+      RUTA_TILESET_MERCADO,
+      CatalogoDeTerrenos::PRIMER_GID_POR_DEFECTO,
+      CatalogoDeTerrenos::ANCHO_TILE_PIXELES,
+      CatalogoDeTerrenos::ALTO_TILE_PIXELES,
+      COLUMNAS_TILESET_MERCADO,
+      CANTIDAD_TILES_MERCADO,
+      ANCHO_IMAGEN_MERCADO,
+      ALTO_IMAGEN_MERCADO}}};
 
 const std::vector<DefinicionTile>& CatalogoDeTerrenos::obtener_catalogo_por_sector(
     SectorActual sector) {
@@ -185,7 +209,53 @@ uint32_t CatalogoDeTerrenos::obtener_tile_base(SectorActual sector) {
     if (sector == SectorActual::PUEBLO) {
         return TILE_PASTO_URBANO;
     }
+    if (sector == SectorActual::MERCADO) {
+        return TILE_PISO_MERCADO;
+    }
     return TILE_TIERRA_BASE;
+}
+
+uint32_t CatalogoDeTerrenos::rotar_tile_terreno(uint32_t id_tile) {
+    if (id_tile == TILE_BORDE_CAMINO_NORTE) {
+        return TILE_BORDE_CAMINO_ESTE;
+    }
+    if (id_tile == TILE_BORDE_CAMINO_ESTE) {
+        return TILE_BORDE_CAMINO_SUR;
+    }
+    if (id_tile == TILE_BORDE_CAMINO_SUR) {
+        return TILE_BORDE_CAMINO_OESTE;
+    }
+    if (id_tile == TILE_BORDE_CAMINO_OESTE) {
+        return TILE_BORDE_CAMINO_NORTE;
+    }
+
+    if (id_tile == TILE_ESQUINA_EXTERIOR_NOROESTE) {
+        return TILE_ESQUINA_EXTERIOR_NORESTE;
+    }
+    if (id_tile == TILE_ESQUINA_EXTERIOR_NORESTE) {
+        return TILE_ESQUINA_EXTERIOR_SUDESTE;
+    }
+    if (id_tile == TILE_ESQUINA_EXTERIOR_SUDESTE) {
+        return TILE_ESQUINA_EXTERIOR_SUDOESTE;
+    }
+    if (id_tile == TILE_ESQUINA_EXTERIOR_SUDOESTE) {
+        return TILE_ESQUINA_EXTERIOR_NOROESTE;
+    }
+
+    if (id_tile == TILE_ESQUINA_INTERIOR_NOROESTE) {
+        return TILE_ESQUINA_INTERIOR_NORESTE;
+    }
+    if (id_tile == TILE_ESQUINA_INTERIOR_NORESTE) {
+        return TILE_ESQUINA_INTERIOR_SUDESTE;
+    }
+    if (id_tile == TILE_ESQUINA_INTERIOR_SUDESTE) {
+        return TILE_ESQUINA_INTERIOR_SUDOESTE;
+    }
+    if (id_tile == TILE_ESQUINA_INTERIOR_SUDOESTE) {
+        return TILE_ESQUINA_INTERIOR_NOROESTE;
+    }
+
+    return id_tile;
 }
 
 std::string CatalogoDeTerrenos::obtener_nombre_sector(SectorActual sector) {
@@ -194,6 +264,9 @@ std::string CatalogoDeTerrenos::obtener_nombre_sector(SectorActual sector) {
     }
     if (sector == SectorActual::PUEBLO) {
         return "Pueblo";
+    }
+    if (sector == SectorActual::MERCADO) {
+        return "Mercado";
     }
     return "Caverna";
 }

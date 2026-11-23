@@ -8,7 +8,7 @@
 
 #include "escritor_tmx.h"
 
-enum class SectorActual : uint8_t { GRANJA = 0, PUEBLO = 1, CAVERNA = 2 };
+enum class SectorActual : uint8_t { GRANJA = 0, PUEBLO = 1, CAVERNA = 2, MERCADO = 3 };
 
 struct DefinicionTile {
     std::string nombre;
@@ -25,6 +25,7 @@ public:
     static const std::vector<DefinicionTile>& obtener_catalogo_por_sector(SectorActual sector);
     static DefinicionTilesetTMX obtener_tileset_sector(SectorActual sector);
     static uint32_t obtener_tile_base(SectorActual sector);
+    static uint32_t rotar_tile_terreno(uint32_t id_tile);
     static std::string obtener_nombre_sector(SectorActual sector);
 };
 

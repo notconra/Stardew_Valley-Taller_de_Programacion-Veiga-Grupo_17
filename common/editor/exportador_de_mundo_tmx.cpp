@@ -29,6 +29,7 @@ bool ExportadorDeMundoTMX::exportar_mundo_completo(
 
     const MapaEditable& granja = mundo.obtener_sector_granja();
     const MapaEditable& pueblo = mundo.obtener_sector_pueblo();
+    const MapaEditable& mercado = mundo.obtener_sector_mercado();
     const MapaEditable& caverna = mundo.obtener_nivel_mazmorra(0);
 
     // 1. Validar que existan las transiciones obligatorias entre sectores
@@ -59,6 +60,15 @@ bool ExportadorDeMundoTMX::exportar_mundo_completo(
         col_granja_en_pueblo,
         fil_granja_en_pueblo);
 
+    int col_mercado_en_pueblo = 0;
+    int fil_mercado_en_pueblo = 0;
+    obtener_coordenadas_de_entidad_requerida(
+        pueblo,
+        TipoEntidad::MERCADO,
+        "No se puede guardar el mundo: el pueblo debe tener un Mercado.",
+        col_mercado_en_pueblo,
+        fil_mercado_en_pueblo);
+
     int col_salida_en_caverna = 0;
     int fil_salida_en_caverna = 0;
     obtener_coordenadas_de_entidad_requerida(
@@ -79,6 +89,12 @@ bool ExportadorDeMundoTMX::exportar_mundo_completo(
     DestinosDeTransicion destinos_pueblo;
     destinos_pueblo.columna_destino_granja = col_pueblo_en_granja;
     destinos_pueblo.fila_destino_granja = fil_pueblo_en_granja;
+    destinos_pueblo.columna_destino_mercado = 9;
+    destinos_pueblo.fila_destino_mercado = 14;
+
+    DestinosDeTransicion destinos_mercado;
+    destinos_mercado.columna_destino_pueblo = col_mercado_en_pueblo + 5;
+    destinos_mercado.fila_destino_pueblo = fil_mercado_en_pueblo + 10;
 
     DestinosDeTransicion destinos_caverna;
     destinos_caverna.columna_salida_caverna = col_entrada_en_granja;
@@ -89,10 +105,12 @@ bool ExportadorDeMundoTMX::exportar_mundo_completo(
 
     std::string ruta_granja = ruta_directorio_destino + "/" + NOMBRE_ARCHIVO_GRANJA;
     std::string ruta_pueblo = ruta_directorio_destino + "/" + NOMBRE_ARCHIVO_PUEBLO;
+    std::string ruta_mercado = ruta_directorio_destino + "/" + NOMBRE_ARCHIVO_MERCADO;
     std::string ruta_caverna = ruta_directorio_destino + "/" + NOMBRE_ARCHIVO_CAVERNA;
 
     ExportadorDeSectorTMX exportador_granja(SectorActual::GRANJA, granja, destinos_granja);
     ExportadorDeSectorTMX exportador_pueblo(SectorActual::PUEBLO, pueblo, destinos_pueblo);
+    ExportadorDeSectorTMX exportador_mercado(SectorActual::MERCADO, mercado, destinos_mercado);
     ExportadorDeSectorTMX exportador_caverna(SectorActual::CAVERNA, caverna, destinos_caverna);
 
     if (!exportador_granja.exportar_a_archivo(ruta_granja)) {
@@ -100,6 +118,9 @@ bool ExportadorDeMundoTMX::exportar_mundo_completo(
     }
     if (!exportador_pueblo.exportar_a_archivo(ruta_pueblo)) {
         throw std::runtime_error("Fallo al escribir el archivo: " + ruta_pueblo);
+    }
+    if (!exportador_mercado.exportar_a_archivo(ruta_mercado)) {
+        throw std::runtime_error("Fallo al escribir el archivo: " + ruta_mercado);
     }
     if (!exportador_caverna.exportar_a_archivo(ruta_caverna)) {
         throw std::runtime_error("Fallo al escribir el archivo: " + ruta_caverna);

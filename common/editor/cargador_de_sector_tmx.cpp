@@ -20,7 +20,8 @@ struct InformacionEntidadTransicion {
 
 static const std::map<std::string, InformacionEntidadTransicion> DESTINOS_A_ENTIDADES = {
     {"FarmHouse2", {TipoEntidad::CABANIA, 5, 7, 9, 9}},
-    {"mercado", {TipoEntidad::CENTRO_COMUNITARIO, 5, 9, 12, 10}},
+    {"mercado", {TipoEntidad::MERCADO, 5, 9, 10, 10}},
+    {"CommunityCenter", {TipoEntidad::CENTRO_COMUNITARIO, 5, 9, 12, 10}},
     {"Town", {TipoEntidad::TRANSICION_PUEBLO, 0, 0, 2, 2}},
     {"granja", {TipoEntidad::TRANSICION_GRANJA, 0, 0, 2, 2}},
     {"caverna", {TipoEntidad::ENTRADA_CAVERNA, 2, 6, 5, 7}},
@@ -29,6 +30,10 @@ static const std::map<std::string, InformacionEntidadTransicion> DESTINOS_A_ENTI
     {"siguiente", {TipoEntidad::ESCALERA_NIVEL, 0, 0, 1, 1}}};
 
 static const std::map<std::string, TipoEntidad> IDENTIFICADORES_A_PUESTO = {
+    {"0", TipoEntidad::PUESTO_MARNIE},
+    {"1", TipoEntidad::PUESTO_CLINT},
+    {"2", TipoEntidad::PUESTO_PIERRE},
+    {"3", TipoEntidad::PUESTO_ROBIN},
     {"marnie", TipoEntidad::PUESTO_MARNIE},
     {"robin", TipoEntidad::PUESTO_ROBIN},
     {"pierre", TipoEntidad::PUESTO_PIERRE},
