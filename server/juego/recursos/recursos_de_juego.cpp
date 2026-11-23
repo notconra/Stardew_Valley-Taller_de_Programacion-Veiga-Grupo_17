@@ -8,6 +8,7 @@
 #include "../cofres/gestor_de_cofres.h"
 #include "../enemigos/esqueletos.h"
 #include "../enemigos/orcos.h"
+#include "../enemigos/skulls.h"
 #include "../enemigos/vampiros.h"
 #include "../mazmorra/cargador_mazmorra.h"
 #include "../mazmorra/mazmorra.h"
@@ -59,9 +60,9 @@ CatalogoDeEnemigos RecursosDeJuego::crear_catalogo_de_enemigos(
         Esqueletos::definicion(configuracion_mazmorra.esqueleto),
         Orcos::definicion(configuracion_mazmorra.orco),
         Vampiros::vampira(configuracion_mazmorra.vampiros),
-        Vampiros::vampiro(configuracion_mazmorra.vampiros)};
-
-    // Acá se suman las definiciones de Skulls cuando estén listas.
+        Vampiros::vampiro(configuracion_mazmorra.vampiros),
+        Skulls::azul(configuracion_mazmorra.skulls),
+        Skulls::verde(configuracion_mazmorra.skulls)};
     return CatalogoDeEnemigos(definiciones);
 }
 

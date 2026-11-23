@@ -68,6 +68,16 @@ struct DefinicionDeEnemigo {
     // Vampiros: qué se multiplica, y por cuánto, mientras su pareja está muerta.
     HabilidadDeFrenesi habilidad_de_frenesi = HabilidadDeFrenesi::NINGUNA;
     double multiplicador_de_frenesi = 1.0;
+
+    // Skulls: en vez de pegar al lado, lanzan una llama (de "danio" puntos) hacia el jugador cada
+    // ticks_entre_ataques. La llama vuela en línea recta a casillas_por_segundo_de_llama y se apaga
+    // al recorrer alcance_de_llama casillas o chocar con algo. No se acercan más que
+    // distancia_de_ataque casillas al jugador.
+    bool a_distancia = false;
+    bool llama_verde = false;
+    double casillas_por_segundo_de_llama = 0.0;
+    int alcance_de_llama = 0;
+    int distancia_de_ataque = 1;
 };
 
 // Arma la definición con los números de combate comunes a todos los tipos (vida, daño, ticks,

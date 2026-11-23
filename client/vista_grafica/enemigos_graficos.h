@@ -50,13 +50,16 @@ public:
         Animacion muerte;
         Animacion correr;  // opcional: reemplaza a caminar mientras está en frenesí
         bool muerte_en_huesos = false;
+        // Color con el que se tiñe la imagen (las Skulls verdes usan la misma que las azules).
+        SDL_Color tinte{255, 255, 255, 255};
     };
 
     // Lanza std::runtime_error si falta alguna imagen.
     EnemigosGraficos(SDL_Renderer* renderer, const ConfiguracionGraficos& graficos);
 
     // cam_x y cam_y son la esquina de la cámara, en píxeles de pantalla. Dibuja los enemigos vivos
-    // o muriendo; un cadáver que ya terminó de caer no se dibuja hasta que reviva.
+    // o muriendo (un cadáver que ya terminó de caer no se dibuja hasta que reviva) y las llamas que
+    // lanzaron las Skulls.
     void dibujar(SDL_Renderer* renderer, const EstadoJuego& estado, int cam_x, int cam_y) const;
 
 private:
@@ -87,6 +90,7 @@ private:
     };
 
     std::map<TipoEnemigo, Hoja> hojas;
+    Textura llama;  // fire_skull.png, teñida de verde para las Skulls verdes
     std::map<std::string, Textura> texturas;  // por ruta
     mutable std::map<uint32_t, Recorrido> recorridos;
     int tamano_de_tile = 16;
@@ -103,6 +107,8 @@ private:
     // desvaneciéndose.
     void dibujar_huesos(SDL_Renderer* renderer, const Hoja& hoja, uint32_t ms_desde_la_muerte,
         int centro_x, int pies_y) const;
+
+    void dibujar_llamas(SDL_Renderer* renderer, const EstadoJuego& estado, int cam_x, int cam_y) const;
 
     void dibujar_barra_de_vida(SDL_Renderer* renderer, const SDL_Rect& sobre_el_enemigo,
         uint16_t vida, uint16_t vida_maxima) const;

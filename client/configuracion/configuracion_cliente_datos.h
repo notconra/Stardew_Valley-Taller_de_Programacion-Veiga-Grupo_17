@@ -131,6 +131,7 @@ struct ConfiguracionSonido {
     std::string ruta_pico_rotura;
     std::map<TipoEnemigo, SonidosDeEnemigo> sonidos_de_enemigos;
     std::string ruta_trampa_activada;  // [sonido.trampas] activar
+    std::string ruta_lanzallamas_activado;  // [sonido.trampas] lanzallamas
     std::string ruta_jugador_danio;    // [sonido.jugador] danio: el jugador propio perdió vida
     std::string ruta_vaca;             // [sonido.animales] vaca
     std::string ruta_gallina;          // [sonido.animales] gallina

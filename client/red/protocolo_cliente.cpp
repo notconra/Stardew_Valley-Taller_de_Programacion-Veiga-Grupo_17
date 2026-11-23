@@ -45,6 +45,7 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
            [this] { return recibir_jugadores_de_la_partida(); }},
           {TipoMensaje::REGALOS_PENDIENTES, [this] { return recibir_regalos_pendientes(); }},
           {TipoMensaje::NPCS_EN_SECTOR, [this] { return recibir_npcs_en_sector(); }},
+          {TipoMensaje::LLAMAS_EN_SECTOR, [this] { return recibir_llamas_en_sector(); }},
           {TipoMensaje::DIALOGO_NPC, [this] { return recibir_dialogo_npc(); }},
           {TipoMensaje::LOTE_DEL_CENTRO, [this] { return recibir_lote_del_centro(); }},
           {TipoMensaje::CENTRO_TERMINADO, [this] { return recibir_centro_terminado(); }},
@@ -600,6 +601,22 @@ NpcsEnSector ProtocoloCliente::recibir_npcs_en_sector() {
         npcs.npcs.push_back(recibir_estado_npc());
     }
     return npcs;
+}
+
+LlamasEnSector ProtocoloCliente::recibir_llamas_en_sector() {
+    LlamasEnSector llamas;
+    llamas.mapa = recibir_texto();
+    uint16_t cantidad = recibir_u16();
+    llamas.llamas.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        EstadoLlama llama;
+        llama.id = recibir_u32();
+        llama.verde = recibir_booleano();
+        llama.x_centesimas = recibir_u32();
+        llama.y_centesimas = recibir_u32();
+        llamas.llamas.push_back(llama);
+    }
+    return llamas;
 }
 
 ObjetoColocado ProtocoloCliente::recibir_objeto_colocado() {

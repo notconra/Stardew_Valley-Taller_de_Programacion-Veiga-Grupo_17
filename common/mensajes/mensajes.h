@@ -87,6 +87,8 @@ using EventoServidor = std::variant<
     // - NPCs
     NpcsEnSector, DialogoNpc,
 
+    // - Llamas de las Skulls
+    LlamasEnSector,
     // - Centro comunitario
     LoteDelCentro, CentroTerminado,
 

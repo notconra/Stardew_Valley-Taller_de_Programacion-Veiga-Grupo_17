@@ -14,9 +14,10 @@ void GestorDeTrampas::configurar(const ConfiguracionTrampasServidor& configuraci
     config.ticks_activa = std::max(1, config.ticks_activa);
 }
 
-void GestorDeTrampas::agregar(const Casilla& casilla, int desfase) {
+void GestorDeTrampas::agregar(const Casilla& casilla, int desfase, TipoTrampa tipo) {
     Trampa trampa;
     trampa.id = siguiente_id++;
+    trampa.tipo = tipo;
     trampa.casilla = casilla;
     trampa.desfase = std::max(0, desfase);
     trampa.activa = deberia_estar_activa(trampa);

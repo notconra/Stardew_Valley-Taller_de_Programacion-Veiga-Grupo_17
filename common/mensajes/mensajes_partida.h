@@ -277,6 +277,17 @@ struct EstadoEnemigo {
     bool sangre = false;
 };
 
+// Una llama que lanzó una Skull. Su centro viaja en centésimas de casilla (350 = casilla 3 y media)
+// para que el cliente la dibuje suave.
+struct EstadoLlama {
+    uint32_t id = 0;
+    bool verde = false;  // false: azul (básica)
+    uint32_t x_centesimas = 0;
+    uint32_t y_centesimas = 0;
+
+    bool operator==(const EstadoLlama&) const = default;
+};
+
 // Una trampa de la mazmorra, en la casilla (columna, fila). "activa": los pinches están afuera y
 // lastiman.
 struct EstadoTrampa {
@@ -372,6 +383,8 @@ struct EstadoJuego {
     std::vector<EstadoAnimal> animales;
     std::vector<uint32_t> vacas_para_ordeniar;
     std::vector<EstadoNpc> npcs;
+    // No viaja en ESTADO_JUEGO: llega con LlamasEnSector en cada tick que haya llamas volando.
+    std::vector<EstadoLlama> llamas;
 };
 
 // Posición y estado de todos los jugadores del sector del receptor. Se manda cada tick, pero solo
@@ -385,6 +398,13 @@ struct JugadoresEnSector {
 struct NpcsEnSector {
     std::string mapa;
     std::vector<EstadoNpc> npcs;
+};
+
+// Todas las llamas que están volando en el sector del receptor. Se manda en cada tick en que cambia
+// algo (incluida la vez en que se apaga la última, con la lista vacía).
+struct LlamasEnSector {
+    std::string mapa;
+    std::vector<EstadoLlama> llamas;
 };
 
 // Un objeto nuevo en el sector del receptor. Si el id ya existía, el cliente lo reemplaza.

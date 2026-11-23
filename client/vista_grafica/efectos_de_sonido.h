@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "../../common/tipo_trampa.h"
 #include "../../common/mensajes/mensajes_partida.h"
 #include "../../common/tipo_animal.h"
 #include "../../common/tipo_enemigo.h"
@@ -52,6 +53,7 @@ private:
     Mix_Chunk* pico_rotura = nullptr;
     std::map<TipoEnemigo, SonidosCargadosDeEnemigo> sonidos_de_enemigos;
     Mix_Chunk* trampa_activada = nullptr;
+    Mix_Chunk* lanzallamas_activado = nullptr;
     Mix_Chunk* jugador_danio = nullptr;
     Mix_Chunk* compra = nullptr;
     Mix_Chunk* venta = nullptr;
@@ -102,8 +104,8 @@ public:
     // aparición de su tipo, como mucho uno cada MS_ENTRE_GRITOS_DE_APARICION.
     void enemigo_aparecio(const EstadoEnemigo& enemigo) const;
 
-    // Unos pinches cerca del jugador salieron.
-    void reproducir_trampa_activada() const;
+    // Una trampa cerca del jugador se activó (pinches o lanzallamas, cada una con su sonido).
+    void reproducir_trampa_activada(TipoTrampa tipo) const;
 
     // El jugador propio perdió vida (lo golpeó un enemigo o lo quemó una trampa).
     void reproducir_jugador_danio() const;
