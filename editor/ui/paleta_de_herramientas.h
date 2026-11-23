@@ -41,6 +41,9 @@ private:
     TipoEstampa estampa_recto_activa;
     TipoEstampa estampa_union_t_activa;
     TipoEstampa estampa_esquina_activa;
+    TipoEstampa estampa_mostrador_activa;
+    TipoEstampa estampa_puesto_mercado_activa;
+    TipoEstampa estampa_estanteria_activa;
     uint32_t id_tile_borde_activo;
     uint32_t id_tile_esquina_exterior_activa;
     uint32_t id_tile_esquina_interior_activa;

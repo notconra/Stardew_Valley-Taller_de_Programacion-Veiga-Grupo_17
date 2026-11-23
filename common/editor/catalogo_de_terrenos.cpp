@@ -71,9 +71,9 @@ static constexpr int COLUMNAS_TILESET_MERCADO = 32;
 static constexpr int CANTIDAD_TILES_MERCADO = 2176;
 static constexpr int ANCHO_IMAGEN_MERCADO = 512;
 static constexpr int ALTO_IMAGEN_MERCADO = 1088;
-static constexpr uint32_t TILE_PISO_MERCADO = 263;
+static constexpr uint32_t TILE_ALFOMBRA_MERCADO = 263;
+static constexpr uint32_t TILE_PISO_MERCADO = 4705;
 static constexpr uint32_t TILE_PARED_MERCADO = 22;
-static constexpr uint32_t TILE_ALFOMBRA_MERCADO = 113;
 
 // Nombres temáticos de terrenos - Granja
 static constexpr const char* NOMBRE_TIERRA_BASE = "Tierra de Granja";
@@ -139,9 +139,10 @@ static const std::map<SectorActual, std::vector<DefinicionTile>> CATALOGO_POR_SE
       DefinicionTile{
           NOMBRE_MURO_PIEDRA_LABRADA, TILE_MURO_PIEDRA_LABRADA, PropiedadDeCasilla::BLOQUEA}}},
     {SectorActual::MERCADO,
-     {DefinicionTile{"Piso de Madera", TILE_PISO_MERCADO, PropiedadDeCasilla::DECORABLE},
-      DefinicionTile{"Pared Interior", TILE_PARED_MERCADO, PropiedadDeCasilla::BLOQUEA},
-      DefinicionTile{"Alfombra de Tienda", TILE_ALFOMBRA_MERCADO, PropiedadDeCasilla::DECORABLE}}}};
+     {DefinicionTile{"Alfombra de Tienda", TILE_ALFOMBRA_MERCADO, PropiedadDeCasilla::DECORABLE},
+      DefinicionTile{"Piso de Madera", TILE_PISO_MERCADO, PropiedadDeCasilla::DECORABLE},
+      DefinicionTile{"Pared de Mercado", TILE_PARED_MERCADO, PropiedadDeCasilla::BLOQUEA},
+      DefinicionTile{"Pared de Madera", 113, PropiedadDeCasilla::BLOQUEA}}}};
 
 static const std::map<SectorActual, DefinicionTilesetTMX> TILESETS_POR_SECTOR = {
     {SectorActual::GRANJA,
@@ -210,7 +211,7 @@ uint32_t CatalogoDeTerrenos::obtener_tile_base(SectorActual sector) {
         return TILE_PASTO_URBANO;
     }
     if (sector == SectorActual::MERCADO) {
-        return TILE_PISO_MERCADO;
+        return TILE_ALFOMBRA_MERCADO;
     }
     return TILE_TIERRA_BASE;
 }

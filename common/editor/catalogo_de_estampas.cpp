@@ -763,6 +763,175 @@ static const DefinicionEstampa ESTAMPA_TRAILER_PAM = {
      CasillaEstampa{6, 3, 757, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
      CasillaEstampa{7, 3, 758, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA}}};
 
+static const DefinicionEstampa ESTAMPA_MERCADO_MESA_FRUTAS = {
+    TipoEstampa::MERCADO_MESA_FRUTAS,
+    "Mesa de Frutas (5x3)",
+    5,
+    3,
+    {CasillaEstampa{0, 0, 1871u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 0, 1872u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 0, 1873u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{3, 0, 1874u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{4, 0, 1875u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 1, 1903u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 1, 1904u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 1, 1905u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{3, 1, 1906u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{4, 1, 1907u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{0, 2, 1935u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 2, 1936u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 2, 1937u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{3, 2, 1938u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{4, 2, 1939u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA}}};
+
+static const DefinicionEstampa ESTAMPA_MERCADO_MOSTRADOR_IZQUIERDO = {
+    TipoEstampa::MERCADO_MOSTRADOR_IZQUIERDO,
+    "Mostrador Principal (6x4) [R]",
+    6,
+    4,
+    {CasillaEstampa{5, 0, 921u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{5, 1, 953u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{0, 2, 980u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 2, 981u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 2, 982u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{3, 2, 2147484629u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{4, 2, 2147484628u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{5, 2, 985u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{0, 3, 1012u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 3, 1013u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 3, 1014u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{3, 3, 1015u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{4, 3, 2147484660u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{5, 3, 2147485749u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA}}};
+
+static const DefinicionEstampa ESTAMPA_MERCADO_MOSTRADOR_DERECHO = {
+    TipoEstampa::MERCADO_MOSTRADOR_DERECHO,
+    "Mostrador Derecho (6x4) [R]",
+    6,
+    4,
+    {CasillaEstampa{0, 0, 921u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 1, 2147484601u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{0, 2, 2147484633u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 2, 980u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 2, 981u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{3, 2, 2147484630u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{4, 2, 2147484629u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{5, 2, 2147484628u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 3, 2101u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 3, 1012u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 3, 1013u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{3, 3, 2147484662u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{4, 3, 2147484661u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{5, 3, 2147484660u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA}}};
+
+static const DefinicionEstampa ESTAMPA_MERCADO_PUESTO_IZQUIERDO = {
+    TipoEstampa::MERCADO_PUESTO_IZQUIERDO,
+    "Puesto de Atencion (3x4) [R]",
+    3,
+    4,
+    {CasillaEstampa{0, 0, 2005u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 0, 2007u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 1, 2037u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 1, 2039u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{0, 2, 2069u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 2, 2070u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 2, 2071u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{0, 3, 2101u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 3, 2102u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 3, 2103u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA}}};
+
+static const DefinicionEstampa ESTAMPA_MERCADO_PUESTO_DERECHO = {
+    TipoEstampa::MERCADO_PUESTO_DERECHO,
+    "Puesto Derecho (3x4) [R]",
+    3,
+    4,
+    {CasillaEstampa{0, 0, 2147485655u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 0, 2147485653u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 1, 2147485687u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 1, 2147485685u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{0, 2, 2147485719u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 2, 2070u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 2, 2147485717u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{0, 3, 2147485751u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 3, 2147485750u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 3, 2147485749u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA}}};
+
+static const DefinicionEstampa ESTAMPA_MERCADO_ESTANTERIA_IZQUIERDA = {
+    TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA,
+    "Estanteria Comercial (6x3) [R]",
+    6,
+    3,
+    {CasillaEstampa{0, 0, 2147484608u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 0, 2147484607u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 0, 2147484606u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{3, 0, 2147484605u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{4, 0, 2147484604u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{5, 0, 2147484603u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 1, 2147484640u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 1, 2147484639u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 1, 2147484638u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{3, 1, 2147484637u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{4, 1, 2147484636u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{5, 1, 2147484635u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{0, 2, 2147484672u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 2, 2147484671u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 2, 2147484670u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{3, 2, 2147484670u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{4, 2, 2147484668u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{5, 2, 2147484667u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA}}};
+
+static const DefinicionEstampa ESTAMPA_MERCADO_ESTANTERIA_DERECHA = {
+    TipoEstampa::MERCADO_ESTANTERIA_DERECHA,
+    "Estanteria Derecha (6x3) [R]",
+    6,
+    3,
+    {CasillaEstampa{0, 0, 955u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 0, 956u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{2, 0, 957u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{3, 0, 958u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{4, 0, 959u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{5, 0, 960u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 1, 987u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 1, 988u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 1, 989u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{3, 1, 990u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{4, 1, 991u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{5, 1, 992u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{0, 2, 1019u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{1, 2, 1020u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{2, 2, 1022u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{3, 2, 1022u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{4, 2, 1023u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
+     CasillaEstampa{5, 2, 1024u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA}}};
+
+static const DefinicionEstampa ESTAMPA_MERCADO_PLANTA_MACETA = {
+    TipoEstampa::MERCADO_PLANTA_MACETA,
+    "Planta en Maceta (1x2)",
+    1,
+    2,
+    {CasillaEstampa{0, 0, 332u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 1, 364u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA}}};
+
+static const DefinicionEstampa ESTAMPA_MERCADO_PALMERA_IZQUIERDA = {
+    TipoEstampa::MERCADO_PALMERA_IZQUIERDA,
+    "Palmera Decorativa (2x3) [R]",
+    2,
+    3,
+    {CasillaEstampa{0, 0, 2147483985u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 0, 2147483984u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 1, 2147484017u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{0, 2, 2147484049u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA}}};
+
+static const DefinicionEstampa ESTAMPA_MERCADO_PALMERA_DERECHA = {
+    TipoEstampa::MERCADO_PALMERA_DERECHA,
+    "Palmera Decorativa Derecha (2x3) [R]",
+    2,
+    3,
+    {CasillaEstampa{0, 0, 336u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 0, 337u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 1, 369u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
+     CasillaEstampa{1, 2, 401u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA}}};
+
 static const std::map<TipoEstampa, DefinicionEstampa> MAPA_ESTAMPAS = {
     {TipoEstampa::ESTANQUE_NATURAL, ESTAMPA_ESTANQUE_NATURAL},
     {TipoEstampa::CAMINO_RECTO_HORIZONTAL, ESTAMPA_CAMINO_RECTO_HORIZONTAL},
@@ -779,7 +948,17 @@ static const std::map<TipoEstampa, DefinicionEstampa> MAPA_ESTAMPAS = {
     {TipoEstampa::FAROLA_URBANA, ESTAMPA_FAROLA_URBANA},
     {TipoEstampa::LOCAL_DE_PIERRE, ESTAMPA_LOCAL_DE_PIERRE},
     {TipoEstampa::CASA_CELESTE, ESTAMPA_CASA_CELESTE},
-    {TipoEstampa::TRAILER_PAM, ESTAMPA_TRAILER_PAM}};
+    {TipoEstampa::TRAILER_PAM, ESTAMPA_TRAILER_PAM},
+    {TipoEstampa::MERCADO_MESA_FRUTAS, ESTAMPA_MERCADO_MESA_FRUTAS},
+    {TipoEstampa::MERCADO_MOSTRADOR_IZQUIERDO, ESTAMPA_MERCADO_MOSTRADOR_IZQUIERDO},
+    {TipoEstampa::MERCADO_MOSTRADOR_DERECHO, ESTAMPA_MERCADO_MOSTRADOR_DERECHO},
+    {TipoEstampa::MERCADO_PUESTO_IZQUIERDO, ESTAMPA_MERCADO_PUESTO_IZQUIERDO},
+    {TipoEstampa::MERCADO_PUESTO_DERECHO, ESTAMPA_MERCADO_PUESTO_DERECHO},
+    {TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA, ESTAMPA_MERCADO_ESTANTERIA_IZQUIERDA},
+    {TipoEstampa::MERCADO_ESTANTERIA_DERECHA, ESTAMPA_MERCADO_ESTANTERIA_DERECHA},
+    {TipoEstampa::MERCADO_PLANTA_MACETA, ESTAMPA_MERCADO_PLANTA_MACETA},
+    {TipoEstampa::MERCADO_PALMERA_IZQUIERDA, ESTAMPA_MERCADO_PALMERA_IZQUIERDA},
+    {TipoEstampa::MERCADO_PALMERA_DERECHA, ESTAMPA_MERCADO_PALMERA_DERECHA}};
 
 static const std::map<SectorActual, std::vector<DefinicionEstampa>> ESTAMPAS_POR_SECTOR = {
     {SectorActual::GRANJA, {ESTAMPA_ESTANQUE_NATURAL}},
@@ -791,7 +970,13 @@ static const std::map<SectorActual, std::vector<DefinicionEstampa>> ESTAMPAS_POR
       ESTAMPA_CAMINO_ESQUINA_NOROESTE,
       ESTAMPA_CAMINO_CRUZ,
       ESTAMPA_FAROLA_URBANA}},
-    {SectorActual::CAVERNA, {}}};
+    {SectorActual::CAVERNA, {}},
+    {SectorActual::MERCADO,
+     {ESTAMPA_MERCADO_MESA_FRUTAS,
+      ESTAMPA_MERCADO_MOSTRADOR_IZQUIERDO,
+      ESTAMPA_MERCADO_PUESTO_IZQUIERDO,
+      ESTAMPA_MERCADO_ESTANTERIA_IZQUIERDA,
+      ESTAMPA_MERCADO_PLANTA_MACETA}}};
 
 const DefinicionEstampa& CatalogoDeEstampas::obtener_estampa(TipoEstampa tipo) {
     auto iterador = MAPA_ESTAMPAS.find(tipo);
@@ -841,11 +1026,52 @@ TipoEstampa CatalogoDeEstampas::rotar_estampa(TipoEstampa tipo) {
     if (tipo == TipoEstampa::CAMINO_ESQUINA_SUDOESTE) {
         return TipoEstampa::CAMINO_ESQUINA_NOROESTE;
     }
+    if (tipo == TipoEstampa::MERCADO_MOSTRADOR_IZQUIERDO) {
+        return TipoEstampa::MERCADO_MOSTRADOR_DERECHO;
+    }
+    if (tipo == TipoEstampa::MERCADO_MOSTRADOR_DERECHO) {
+        return TipoEstampa::MERCADO_MOSTRADOR_IZQUIERDO;
+    }
+    if (tipo == TipoEstampa::MERCADO_PUESTO_IZQUIERDO) {
+        return TipoEstampa::MERCADO_PUESTO_DERECHO;
+    }
+    if (tipo == TipoEstampa::MERCADO_PUESTO_DERECHO) {
+        return TipoEstampa::MERCADO_PUESTO_IZQUIERDO;
+    }
+    if (tipo == TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA) {
+        return TipoEstampa::MERCADO_ESTANTERIA_DERECHA;
+    }
+    if (tipo == TipoEstampa::MERCADO_ESTANTERIA_DERECHA) {
+        return TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA;
+    }
+    if (tipo == TipoEstampa::MERCADO_PALMERA_IZQUIERDA) {
+        return TipoEstampa::MERCADO_PALMERA_DERECHA;
+    }
+    if (tipo == TipoEstampa::MERCADO_PALMERA_DERECHA) {
+        return TipoEstampa::MERCADO_PALMERA_IZQUIERDA;
+    }
     return tipo;
 }
 
-bool CatalogoDeEstampas::es_tile_de_estanque(uint32_t id_tile) {
-    bool es_agua = (id_tile >= 1244 && id_tile <= 1325);
-    bool es_ribera = (id_tile >= 184 && id_tile <= 315);
-    return es_agua || es_ribera;
+bool CatalogoDeEstampas::es_tile_de_estanque(uint32_t identificador_tile) {
+    return (identificador_tile >= 1244 && identificador_tile <= 1325);
+}
+
+bool CatalogoDeEstampas::es_estampa_decorativa(TipoEstampa tipo) {
+    if (tipo == TipoEstampa::FAROLA_URBANA) {
+        return true;
+    }
+    if (tipo == TipoEstampa::MERCADO_MESA_FRUTAS ||
+        tipo == TipoEstampa::MERCADO_MOSTRADOR_IZQUIERDO ||
+        tipo == TipoEstampa::MERCADO_MOSTRADOR_DERECHO ||
+        tipo == TipoEstampa::MERCADO_PUESTO_IZQUIERDO ||
+        tipo == TipoEstampa::MERCADO_PUESTO_DERECHO ||
+        tipo == TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA ||
+        tipo == TipoEstampa::MERCADO_ESTANTERIA_DERECHA ||
+        tipo == TipoEstampa::MERCADO_PLANTA_MACETA ||
+        tipo == TipoEstampa::MERCADO_PALMERA_IZQUIERDA ||
+        tipo == TipoEstampa::MERCADO_PALMERA_DERECHA) {
+        return true;
+    }
+    return false;
 }

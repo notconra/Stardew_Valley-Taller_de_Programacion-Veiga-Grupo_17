@@ -9,8 +9,11 @@
 #include <QPainter>
 #include <QPen>
 #include <QRect>
+#include <algorithm>
 #include <map>
+#include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "casilla_del_mapa.h"
@@ -75,8 +78,101 @@ LienzoDeEdicion::LienzoDeEdicion(QWidget* padre)
       mouse_presionado(false) {
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
+    cargar_tilesets_de_sector(SectorActual::GRANJA);
     inicializar_catalogo_visual_entidades();
     actualizar_tamano_del_lienzo();
+}
+
+void LienzoDeEdicion::cargar_tilesets_de_sector(SectorActual sector) {
+    lista_tilesets_actuales.clear();
+    if (sector == SectorActual::MERCADO) {
+        EntradaTilesetLienzo tileset_interior;
+        tileset_interior.pixmap.load("Assets/Maps/townInterior.png");
+        tileset_interior.primer_identificador_global = 1;
+        tileset_interior.cantidad_de_columnas = 32;
+        tileset_interior.ancho_tile = 16;
+        tileset_interior.alto_tile = 16;
+        lista_tilesets_actuales.push_back(tileset_interior);
+
+        EntradaTilesetLienzo tileset_interior_secundario;
+        tileset_interior_secundario.pixmap = tileset_interior.pixmap;
+        tileset_interior_secundario.primer_identificador_global = 2177;
+        tileset_interior_secundario.cantidad_de_columnas = 32;
+        tileset_interior_secundario.ancho_tile = 16;
+        tileset_interior_secundario.alto_tile = 16;
+        lista_tilesets_actuales.push_back(tileset_interior_secundario);
+
+        EntradaTilesetLienzo tileset_paredes_suelos;
+        tileset_paredes_suelos.pixmap.load("Assets/Maps/walls_and_floors.png");
+        tileset_paredes_suelos.primer_identificador_global = 4353;
+        tileset_paredes_suelos.cantidad_de_columnas = 16;
+        tileset_paredes_suelos.ancho_tile = 16;
+        tileset_paredes_suelos.alto_tile = 16;
+        lista_tilesets_actuales.push_back(tileset_paredes_suelos);
+    } else {
+        DefinicionTilesetTMX tileset_base = CatalogoDeTerrenos::obtener_tileset_sector(sector);
+        EntradaTilesetLienzo entrada;
+        entrada.pixmap.load(QString::fromStdString(tileset_base.ruta_imagen));
+        entrada.primer_identificador_global = tileset_base.primer_identificador_global;
+        entrada.cantidad_de_columnas = tileset_base.cantidad_de_columnas;
+        entrada.ancho_tile = tileset_base.ancho_tile;
+        entrada.alto_tile = tileset_base.alto_tile;
+        lista_tilesets_actuales.push_back(entrada);
+    }
+}
+
+void LienzoDeEdicion::dibujar_tile_en_lienzo(
+    QPainter& pintor, uint32_t valor_crudo, int columna, int fila) {
+    if (valor_crudo == 0) {
+        return;
+    }
+    uint32_t identificador_tile = valor_crudo & 0x1FFFFFFF;
+    bool espejo_horizontal = (valor_crudo & 0x80000000) != 0;
+    bool espejo_vertical = (valor_crudo & 0x40000000) != 0;
+
+    EntradaTilesetLienzo* tileset_elegido = nullptr;
+    size_t indice = 0;
+    while (indice < lista_tilesets_actuales.size()) {
+        EntradaTilesetLienzo& candidato = lista_tilesets_actuales[indice];
+        if (identificador_tile >= candidato.primer_identificador_global) {
+            if (tileset_elegido == nullptr || candidato.primer_identificador_global >
+                                                  tileset_elegido->primer_identificador_global) {
+                tileset_elegido = &candidato;
+            }
+        }
+        indice++;
+    }
+
+    if (tileset_elegido == nullptr || tileset_elegido->pixmap.isNull() ||
+        tileset_elegido->cantidad_de_columnas <= 0) {
+        return;
+    }
+
+    uint32_t indice_local = identificador_tile - tileset_elegido->primer_identificador_global;
+    int columna_sprite = static_cast<int>(
+        indice_local % static_cast<uint32_t>(tileset_elegido->cantidad_de_columnas));
+    int fila_sprite = static_cast<int>(
+        indice_local / static_cast<uint32_t>(tileset_elegido->cantidad_de_columnas));
+
+    QRect rectangulo_origen(
+        columna_sprite * tileset_elegido->ancho_tile,
+        fila_sprite * tileset_elegido->alto_tile,
+        tileset_elegido->ancho_tile,
+        tileset_elegido->alto_tile);
+    QRect rectangulo_destino(
+        columna * tamano_casilla_px,
+        fila * tamano_casilla_px,
+        tamano_casilla_px,
+        tamano_casilla_px);
+
+    if (!espejo_horizontal && !espejo_vertical) {
+        pintor.drawPixmap(rectangulo_destino, tileset_elegido->pixmap, rectangulo_origen);
+    } else {
+        QImage imagen_espejada = tileset_elegido->pixmap.copy(rectangulo_origen)
+                                     .toImage()
+                                     .mirrored(espejo_horizontal, espejo_vertical);
+        pintor.drawImage(rectangulo_destino, imagen_espejada);
+    }
 }
 
 void LienzoDeEdicion::establecer_mapa(MapaEditable* mapa, SectorActual sector) {
@@ -84,6 +180,7 @@ void LienzoDeEdicion::establecer_mapa(MapaEditable* mapa, SectorActual sector) {
     sector_actual = sector;
     datos_tileset = CatalogoDeTerrenos::obtener_tileset_sector(sector);
     pixmap_tileset.load(QString::fromStdString(datos_tileset.ruta_imagen));
+    cargar_tilesets_de_sector(sector);
     identificador_entidad_seleccionada = -1;
     arrastrando_entidad = false;
     actualizar_tamano_del_lienzo();
@@ -188,8 +285,38 @@ void LienzoDeEdicion::actualizar_tamano_del_lienzo() {
     setFixedSize(ancho_total, alto_total);
 }
 
+bool LienzoDeEdicion::casilla_es_perimetro_protegido(int columna, int fila) const {
+    if (mapa_actual == nullptr) {
+        return false;
+    }
+    int cantidad_columnas = mapa_actual->obtener_cantidad_de_columnas();
+    int cantidad_filas = mapa_actual->obtener_cantidad_de_filas();
+
+    if (sector_actual == SectorActual::MERCADO) {
+        if (fila == 0 || fila == cantidad_filas - 1 || columna == 0 ||
+            columna == cantidad_columnas - 1) {
+            return true;
+        }
+        return false;
+    } else if (sector_actual == SectorActual::GRANJA) {
+        if (columna == 0 || columna >= cantidad_columnas - 1 || fila <= 1 ||
+            fila >= cantidad_filas - 1) {
+            return true;
+        }
+    } else if (sector_actual == SectorActual::PUEBLO) {
+        if (columna == 0 || columna >= cantidad_columnas - 1 || fila <= 1 ||
+            fila >= cantidad_filas - 2) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void LienzoDeEdicion::pintar_casilla_en_posicion(int columna, int fila) {
     if (mapa_actual == nullptr || !mapa_actual->esta_dentro(columna, fila)) {
+        return;
+    }
+    if (casilla_es_perimetro_protegido(columna, fila)) {
         return;
     }
     if (mapa_actual->casilla_pertenece_a_estanque(columna, fila)) {
@@ -208,27 +335,8 @@ void LienzoDeEdicion::dibujar_capa_de_tiles(
         while (columna < cantidad_columnas) {
             CasillaDelMapa casilla = mapa_actual->obtener_casilla_en_capa(tipo_capa, columna, fila);
             uint32_t id_tile = casilla.obtener_id_tile();
-            if (id_tile > 0 && !pixmap_tileset.isNull() &&
-                datos_tileset.primer_identificador_global > 0 &&
-                datos_tileset.cantidad_de_columnas > 0) {
-                uint32_t indice_local = id_tile - datos_tileset.primer_identificador_global;
-                int columna_sprite = static_cast<int>(
-                    indice_local % static_cast<uint32_t>(datos_tileset.cantidad_de_columnas));
-                int fila_sprite = static_cast<int>(
-                    indice_local / static_cast<uint32_t>(datos_tileset.cantidad_de_columnas));
-
-                QRect rectangulo_destino(
-                    columna * tamano_casilla_px,
-                    fila * tamano_casilla_px,
-                    tamano_casilla_px,
-                    tamano_casilla_px);
-                QRect rectangulo_origen(
-                    columna_sprite * datos_tileset.ancho_tile,
-                    fila_sprite * datos_tileset.alto_tile,
-                    datos_tileset.ancho_tile,
-                    datos_tileset.alto_tile);
-
-                pintor.drawPixmap(rectangulo_destino, pixmap_tileset, rectangulo_origen);
+            if (id_tile > 0) {
+                dibujar_tile_en_lienzo(pintor, id_tile, columna, fila);
             }
             columna++;
         }
@@ -286,10 +394,28 @@ void LienzoDeEdicion::dibujar_entidad(
     auto iterador_visual = mapa_visual_entidades.find(tipo_entidad);
     if (iterador_visual != mapa_visual_entidades.end() &&
         iterador_visual->second.pixmap != nullptr && !iterador_visual->second.pixmap->isNull()) {
-        pintor.drawPixmap(
-            rectangulo_entidad,
-            *iterador_visual->second.pixmap,
-            iterador_visual->second.rectangulo_origen);
+        bool es_puesto_comerciante =
+            (tipo_entidad == TipoEntidad::PUESTO_MARNIE ||
+             tipo_entidad == TipoEntidad::PUESTO_CLINT ||
+             tipo_entidad == TipoEntidad::PUESTO_PIERRE ||
+             tipo_entidad == TipoEntidad::PUESTO_ROBIN);
+        if (es_puesto_comerciante) {
+            int dimension_lado = std::min(rectangulo_entidad.width(), rectangulo_entidad.height());
+            QRect rectangulo_retrato(
+                rectangulo_entidad.x() + (rectangulo_entidad.width() - dimension_lado) / 2,
+                rectangulo_entidad.y() + (rectangulo_entidad.height() - dimension_lado) / 2,
+                dimension_lado,
+                dimension_lado);
+            pintor.drawPixmap(
+                rectangulo_retrato,
+                *iterador_visual->second.pixmap,
+                iterador_visual->second.rectangulo_origen);
+        } else {
+            pintor.drawPixmap(
+                rectangulo_entidad,
+                *iterador_visual->second.pixmap,
+                iterador_visual->second.rectangulo_origen);
+        }
     } else {
         QColor color_translucido = color_base;
         color_translucido.setAlpha(ALFA_COLOR_TRANSLUCIDO_ENTIDAD);
@@ -329,6 +455,43 @@ void LienzoDeEdicion::dibujar_entidad(
             tamano_casilla_px);
         pintor.setPen(QPen(QColor(0, 255, 127), GROSOR_BORDE_PUERTA, Qt::DashLine));
         pintor.drawRect(rectangulo_puerta);
+    }
+
+    bool es_puesto_comerciante =
+        (tipo_entidad == TipoEntidad::PUESTO_MARNIE || tipo_entidad == TipoEntidad::PUESTO_CLINT ||
+         tipo_entidad == TipoEntidad::PUESTO_PIERRE || tipo_entidad == TipoEntidad::PUESTO_ROBIN);
+    if (es_puesto_comerciante) {
+        int columna_atencion = 0;
+        int fila_atencion = 0;
+        bool tiene_atencion = false;
+        entidad.consultar_punto_de_atencion(columna_atencion, fila_atencion, tiene_atencion);
+        if (tiene_atencion) {
+            QRect rectangulo_atencion(
+                columna_atencion * tamano_casilla_px,
+                fila_atencion * tamano_casilla_px,
+                tamano_casilla_px,
+                tamano_casilla_px);
+            pintor.setPen(QPen(QColor(255, 215, 0), GROSOR_BORDE_PUERTA, Qt::DashLine));
+            pintor.drawRect(rectangulo_atencion);
+            pintor.fillRect(rectangulo_atencion, QColor(255, 215, 0, 45));
+
+            int alto_etiqueta_atencion = tamano_casilla_px > 24 ? 12 : 10;
+            QRect rectangulo_etiqueta_atencion(
+                rectangulo_atencion.x(),
+                rectangulo_atencion.bottom() - alto_etiqueta_atencion,
+                rectangulo_atencion.width(),
+                alto_etiqueta_atencion);
+            pintor.fillRect(rectangulo_etiqueta_atencion, QColor(0, 0, 0, 180));
+            pintor.setPen(QColor(255, 215, 0));
+            QFont fuente_atencion = pintor.font();
+            fuente_atencion.setPointSize(tamano_casilla_px > 24 ? 7 : 6);
+            fuente_atencion.setBold(true);
+            pintor.setFont(fuente_atencion);
+            pintor.drawText(
+                rectangulo_etiqueta_atencion,
+                Qt::AlignCenter,
+                QString::fromUtf8("Atención"));
+        }
     }
 
     if (es_seleccionada) {
@@ -425,25 +588,10 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
     // 4. Previsualización del Hover o Arrastre
     if (modo_actual == ModoEditor::TERRENO && columna_hover >= 0 && fila_hover >= 0 &&
         mapa_actual->esta_dentro(columna_hover, fila_hover)) {
-        if (id_tile_actual >= datos_tileset.primer_identificador_global) {
-            uint32_t indice_local = id_tile_actual - datos_tileset.primer_identificador_global;
-            int columna_sprite = static_cast<int>(
-                indice_local % static_cast<uint32_t>(datos_tileset.cantidad_de_columnas));
-            int fila_sprite = static_cast<int>(
-                indice_local / static_cast<uint32_t>(datos_tileset.cantidad_de_columnas));
-            QRect rectangulo_origen(
-                columna_sprite * datos_tileset.ancho_tile,
-                fila_sprite * datos_tileset.alto_tile,
-                datos_tileset.ancho_tile,
-                datos_tileset.alto_tile);
-            QRect rectangulo_destino(
-                columna_hover * tamano_casilla_px,
-                fila_hover * tamano_casilla_px,
-                tamano_casilla_px,
-                tamano_casilla_px);
+        if (id_tile_actual > 0) {
             pintor.save();
             pintor.setOpacity(0.65);
-            pintor.drawPixmap(rectangulo_destino, pixmap_tileset, rectangulo_origen);
+            dibujar_tile_en_lienzo(pintor, id_tile_actual, columna_hover, fila_hover);
             pintor.restore();
         }
         QRect rectangulo_hover(
@@ -473,37 +621,41 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
                 CasillaEstampa casilla = estampa.casillas[indice_casilla];
                 int columna_destino = columna_hover + casilla.desplazamiento_columna;
                 int fila_destino = fila_hover + casilla.desplazamiento_fila;
-                uint32_t id_tile = casilla.id_tile;
-                if (id_tile >= datos_tileset.primer_identificador_global) {
-                    uint32_t indice_local = id_tile - datos_tileset.primer_identificador_global;
-                    int columna_sprite = static_cast<int>(
-                        indice_local % static_cast<uint32_t>(datos_tileset.cantidad_de_columnas));
-                    int fila_sprite = static_cast<int>(
-                        indice_local / static_cast<uint32_t>(datos_tileset.cantidad_de_columnas));
-                    QRect rectangulo_origen(
-                        columna_sprite * datos_tileset.ancho_tile,
-                        fila_sprite * datos_tileset.alto_tile,
-                        datos_tileset.ancho_tile,
-                        datos_tileset.alto_tile);
-                    QRect rectangulo_destino(
-                        columna_destino * tamano_casilla_px,
-                        fila_destino * tamano_casilla_px,
-                        tamano_casilla_px,
-                        tamano_casilla_px);
-                    pintor.drawPixmap(rectangulo_destino, pixmap_tileset, rectangulo_origen);
-                }
+                dibujar_tile_en_lienzo(pintor, casilla.id_tile, columna_destino, fila_destino);
                 indice_casilla++;
             }
             pintor.restore();
 
             QColor color_estampa = puede_colocarse ? QColor(0, 191, 255, ALFA_COLOR_ESTAMPA)
                                                    : QColor(255, 0, 0, ALFA_COLOR_ESTAMPA);
-            pintor.fillRect(rectangulo_estampa, color_estampa);
-            pintor.setPen(QPen(
+            QPen lapiz_borde(
                 puede_colocarse ? QColor(0, 191, 255) : QColor(255, 0, 0),
                 GROSOR_BORDE_NORMAL,
-                Qt::DashLine));
-            pintor.drawRect(rectangulo_estampa);
+                Qt::DashLine);
+            pintor.setPen(lapiz_borde);
+
+            std::set<std::pair<int, int>> casillas_unicas;
+            size_t indice_conjunto = 0;
+            while (indice_conjunto < estampa.casillas.size()) {
+                casillas_unicas.insert(
+                    {estampa.casillas[indice_conjunto].desplazamiento_columna,
+                     estampa.casillas[indice_conjunto].desplazamiento_fila});
+                indice_conjunto++;
+            }
+
+            auto iterador_casilla = casillas_unicas.begin();
+            while (iterador_casilla != casillas_unicas.end()) {
+                int desplazamiento_columna = iterador_casilla->first;
+                int desplazamiento_fila = iterador_casilla->second;
+                QRect rectangulo_casilla(
+                    (columna_hover + desplazamiento_columna) * tamano_casilla_px,
+                    (fila_hover + desplazamiento_fila) * tamano_casilla_px,
+                    tamano_casilla_px,
+                    tamano_casilla_px);
+                pintor.fillRect(rectangulo_casilla, color_estampa);
+                pintor.drawRect(rectangulo_casilla);
+                iterador_casilla++;
+            }
         }
     } else if (
         modo_actual == ModoEditor::BORRAR && columna_hover >= 0 && fila_hover >= 0 &&
@@ -650,6 +802,9 @@ void LienzoDeEdicion::mousePressEvent(QMouseEvent* evento) {
             }
             update();
         } else if (modo_actual == ModoEditor::BORRAR) {
+            if (casilla_es_perimetro_protegido(columna, fila)) {
+                return;
+            }
             EntidadDelMapa* entidad_tocada = mapa_actual->buscar_entidad_en_casilla(columna, fila);
             if (entidad_tocada != nullptr) {
                 mapa_actual->retirar_entidad(entidad_tocada->obtener_identificador());
@@ -680,6 +835,9 @@ void LienzoDeEdicion::mousePressEvent(QMouseEvent* evento) {
             update();
         }
     } else if (evento->button() == Qt::RightButton) {
+        if (casilla_es_perimetro_protegido(columna, fila)) {
+            return;
+        }
         EntidadDelMapa* entidad_tocada = mapa_actual->buscar_entidad_en_casilla(columna, fila);
         if (entidad_tocada != nullptr) {
             mapa_actual->retirar_entidad(entidad_tocada->obtener_identificador());

@@ -252,6 +252,56 @@ bool ValidadorDeMundo::existe_camino_transitable(
     return camino_encontrado;
 }
 
+bool ValidadorDeMundo::existe_camino_desde_coordenada(
+    const MapaEditable& mapa, int columna_inicio, int fila_inicio, const EntidadDelMapa& destino) {
+    if (!mapa.esta_dentro(columna_inicio, fila_inicio) ||
+        !mapa.casilla_es_transitable(columna_inicio, fila_inicio)) {
+        return false;
+    }
+
+    int cantidad_columnas = mapa.obtener_cantidad_de_columnas();
+    int cantidad_filas = mapa.obtener_cantidad_de_filas();
+    std::vector<std::vector<bool>> visitados(
+        cantidad_filas,
+        std::vector<bool>(cantidad_columnas, false));
+    std::vector<std::pair<int, int>> cola;
+    size_t indice_cola = 0;
+
+    visitados[fila_inicio][columna_inicio] = true;
+    cola.push_back({columna_inicio, fila_inicio});
+
+    bool camino_encontrado = false;
+    while (indice_cola < cola.size() && !camino_encontrado) {
+        int actual_x = cola[indice_cola].first;
+        int actual_y = cola[indice_cola].second;
+        indice_cola++;
+
+        if (destino.ocupa_casilla(actual_x, actual_y) ||
+            destino.ocupa_casilla(actual_x + 1, actual_y) ||
+            destino.ocupa_casilla(actual_x - 1, actual_y) ||
+            destino.ocupa_casilla(actual_x, actual_y + 1) ||
+            destino.ocupa_casilla(actual_x, actual_y - 1)) {
+            camino_encontrado = true;
+        } else {
+            int desplazamientos_x[4] = {0, 0, 1, -1};
+            int desplazamientos_y[4] = {1, -1, 0, 0};
+            int vecino = 0;
+            while (vecino < 4) {
+                int nuevo_x = actual_x + desplazamientos_x[vecino];
+                int nuevo_y = actual_y + desplazamientos_y[vecino];
+                if (mapa.esta_dentro(nuevo_x, nuevo_y) && !visitados[nuevo_y][nuevo_x] &&
+                    mapa.casilla_es_transitable(nuevo_x, nuevo_y)) {
+                    visitados[nuevo_y][nuevo_x] = true;
+                    cola.push_back({nuevo_x, nuevo_y});
+                }
+                vecino++;
+            }
+        }
+    }
+
+    return camino_encontrado;
+}
+
 ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
     ResultadoValidacion resultado;
 
@@ -379,6 +429,8 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
         mercado.listar_entidades_por_tipo(TipoEntidad::PUESTO_MARNIE);
     if (puestos_marnie.empty()) {
         resultado.agregar_error("Falta el puesto de Marnie en el mercado.");
+    } else if (puestos_marnie.size() > 1) {
+        resultado.agregar_error("Solo puede haber un puesto de Marnie en el mercado.");
     } else if (!tiene_acceso_perimetral_transitable(mercado, puestos_marnie[0])) {
         resultado.agregar_error("El puesto de Marnie esta totalmente bloqueado por obstaculos.");
     }
@@ -387,6 +439,8 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
         mercado.listar_entidades_por_tipo(TipoEntidad::PUESTO_CLINT);
     if (puestos_clint.empty()) {
         resultado.agregar_error("Falta el puesto de Clint en el mercado.");
+    } else if (puestos_clint.size() > 1) {
+        resultado.agregar_error("Solo puede haber un puesto de Clint en el mercado.");
     } else if (!tiene_acceso_perimetral_transitable(mercado, puestos_clint[0])) {
         resultado.agregar_error("El puesto de Clint esta totalmente bloqueado por obstaculos.");
     }
@@ -395,6 +449,8 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
         mercado.listar_entidades_por_tipo(TipoEntidad::PUESTO_PIERRE);
     if (puestos_pierre.empty()) {
         resultado.agregar_error("Falta el puesto de Pierre en el mercado.");
+    } else if (puestos_pierre.size() > 1) {
+        resultado.agregar_error("Solo puede haber un puesto de Pierre en el mercado.");
     } else if (!tiene_acceso_perimetral_transitable(mercado, puestos_pierre[0])) {
         resultado.agregar_error("El puesto de Pierre esta totalmente bloqueado por obstaculos.");
     }
@@ -403,37 +459,48 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
         mercado.listar_entidades_por_tipo(TipoEntidad::PUESTO_ROBIN);
     if (puestos_robin.empty()) {
         resultado.agregar_error("Falta el puesto de Robin en el mercado.");
+    } else if (puestos_robin.size() > 1) {
+        resultado.agregar_error("Solo puede haber un puesto de Robin en el mercado.");
     } else if (!tiene_acceso_perimetral_transitable(mercado, puestos_robin[0])) {
         resultado.agregar_error("El puesto de Robin esta totalmente bloqueado por obstaculos.");
     }
 
-    std::vector<EntidadDelMapa> salidas_pueblo_mercado =
-        mercado.listar_entidades_por_tipo(TipoEntidad::TRANSICION_PUEBLO);
-    if (salidas_pueblo_mercado.empty()) {
-        resultado.agregar_error("Falta la salida hacia el pueblo en el mercado.");
-    } else if (!tiene_acceso_perimetral_transitable(mercado, salidas_pueblo_mercado[0])) {
-        resultado.agregar_error(
-            "La salida hacia el pueblo en el mercado esta bloqueada por obstaculos.");
-    }
+    int columna_salida_mercado = mercado.obtener_cantidad_de_columnas() / 2;
+    int fila_salida_mercado = mercado.obtener_cantidad_de_filas() - 2;
 
-    if (!salidas_pueblo_mercado.empty()) {
-        if (!puestos_marnie.empty() &&
-            !existe_camino_transitable(mercado, salidas_pueblo_mercado[0], puestos_marnie[0])) {
+    if (!mercado.casilla_es_transitable(columna_salida_mercado, fila_salida_mercado)) {
+        resultado.agregar_error(
+            "La salida hacia el pueblo en el mercado (puerta sur) esta bloqueada por obstaculos.");
+    } else {
+        if (!puestos_marnie.empty() && !existe_camino_desde_coordenada(
+                                           mercado,
+                                           columna_salida_mercado,
+                                           fila_salida_mercado,
+                                           puestos_marnie[0])) {
             resultado.agregar_error(
                 "No existe un camino transitable entre la salida al pueblo y el puesto de Marnie.");
         }
-        if (!puestos_clint.empty() &&
-            !existe_camino_transitable(mercado, salidas_pueblo_mercado[0], puestos_clint[0])) {
+        if (!puestos_clint.empty() && !existe_camino_desde_coordenada(
+                                          mercado,
+                                          columna_salida_mercado,
+                                          fila_salida_mercado,
+                                          puestos_clint[0])) {
             resultado.agregar_error(
                 "No existe un camino transitable entre la salida al pueblo y el puesto de Clint.");
         }
-        if (!puestos_pierre.empty() &&
-            !existe_camino_transitable(mercado, salidas_pueblo_mercado[0], puestos_pierre[0])) {
+        if (!puestos_pierre.empty() && !existe_camino_desde_coordenada(
+                                           mercado,
+                                           columna_salida_mercado,
+                                           fila_salida_mercado,
+                                           puestos_pierre[0])) {
             resultado.agregar_error(
                 "No existe un camino transitable entre la salida al pueblo y el puesto de Pierre.");
         }
-        if (!puestos_robin.empty() &&
-            !existe_camino_transitable(mercado, salidas_pueblo_mercado[0], puestos_robin[0])) {
+        if (!puestos_robin.empty() && !existe_camino_desde_coordenada(
+                                          mercado,
+                                          columna_salida_mercado,
+                                          fila_salida_mercado,
+                                          puestos_robin[0])) {
             resultado.agregar_error(
                 "No existe un camino transitable entre la salida al pueblo y el puesto de Robin.");
         }
@@ -449,7 +516,7 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
 
     size_t indice_nivel = 0;
     while (indice_nivel < cantidad_de_niveles) {
-        const MapaEditable& nivel = mundo.obtener_nivel_mazmorra(indice_nivel);
+        auto& nivel = mundo.obtener_nivel_mazmorra(indice_nivel);
         std::vector<EntidadDelMapa> escaleras =
             nivel.listar_entidades_por_tipo(TipoEntidad::ESCALERA_NIVEL);
         if (escaleras.empty()) {

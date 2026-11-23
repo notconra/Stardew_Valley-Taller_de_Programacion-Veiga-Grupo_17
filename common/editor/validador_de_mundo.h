@@ -39,6 +39,9 @@ private:
         const MapaEditable& mapa, const EntidadDelMapa& mercado);
     static bool existe_camino_transitable(
         const MapaEditable& mapa, const EntidadDelMapa& origen, const EntidadDelMapa& destino);
+    static bool existe_camino_desde_coordenada(
+        const MapaEditable& mapa, int columna_inicio, int fila_inicio,
+        const EntidadDelMapa& destino);
 
 public:
     ValidadorDeMundo() = delete;

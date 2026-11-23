@@ -27,7 +27,18 @@ enum class TipoEstampa : uint8_t {
     // Edificios del Pueblo
     LOCAL_DE_PIERRE = 14,
     CASA_CELESTE = 15,
-    TRAILER_PAM = 16
+    TRAILER_PAM = 16,
+    // Muebles y Decoración del Mercado
+    MERCADO_MESA_FRUTAS = 17,
+    MERCADO_MOSTRADOR_IZQUIERDO = 18,
+    MERCADO_MOSTRADOR_DERECHO = 19,
+    MERCADO_PUESTO_IZQUIERDO = 20,
+    MERCADO_PUESTO_DERECHO = 21,
+    MERCADO_ESTANTERIA_IZQUIERDA = 22,
+    MERCADO_ESTANTERIA_DERECHA = 23,
+    MERCADO_PLANTA_MACETA = 24,
+    MERCADO_PALMERA_IZQUIERDA = 25,
+    MERCADO_PALMERA_DERECHA = 26
 };
 
 struct CasillaEstampa {
@@ -142,7 +153,8 @@ public:
     static const DefinicionEstampa& obtener_estampa(TipoEstampa tipo);
     static std::vector<DefinicionEstampa> listar_estampas_por_sector(SectorActual sector);
     static TipoEstampa rotar_estampa(TipoEstampa tipo);
-    static bool es_tile_de_estanque(uint32_t id_tile);
+    static bool es_tile_de_estanque(uint32_t identificador_tile);
+    static bool es_estampa_decorativa(TipoEstampa tipo);
 };
 
 #endif  // CATALOGO_DE_ESTAMPAS_H

@@ -45,8 +45,7 @@ static const std::map<SectorActual, std::vector<ConfiguracionBotonEntidad>> ENTI
      {{TipoEntidad::PUESTO_MARNIE, "Puesto Marnie (2x2)"},
       {TipoEntidad::PUESTO_CLINT, "Puesto Clint (2x2)"},
       {TipoEntidad::PUESTO_PIERRE, "Puesto Pierre (2x2)"},
-      {TipoEntidad::PUESTO_ROBIN, "Puesto Robin (2x2)"},
-      {TipoEntidad::TRANSICION_PUEBLO, "Salida a Pueblo (2x2)"}}},
+      {TipoEntidad::PUESTO_ROBIN, "Puesto Robin (2x2)"}}},
     {SectorActual::CAVERNA,
      {{TipoEntidad::ESCALERA_NIVEL, "Escalera Mazmorra (1x1)"},
       {TipoEntidad::SALIDA_CAVERNA, "Salida Caverna (1x1)"}}}};

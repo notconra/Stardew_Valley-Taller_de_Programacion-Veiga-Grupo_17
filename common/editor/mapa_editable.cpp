@@ -167,9 +167,9 @@ uint32_t MapaEditable::ubicar_entidad(
     uint32_t nuevo_identificador = proximo_identificador_de_entidad;
     proximo_identificador_de_entidad++;
     entidades.emplace_back(nuevo_identificador, tipo, columna, fila, ancho, alto);
-    if (tipo == TipoEntidad::TRANSICION_PUEBLO) {
+    if (tipo == TipoEntidad::TRANSICION_PUEBLO && cantidad_de_columnas >= 30) {
         generar_muro_perimetral_granja();
-    } else if (tipo == TipoEntidad::TRANSICION_GRANJA) {
+    } else if (tipo == TipoEntidad::TRANSICION_GRANJA && cantidad_de_columnas >= 30) {
         generar_muro_perimetral_pueblo();
     }
     return nuevo_identificador;
@@ -193,13 +193,40 @@ bool MapaEditable::entidad_puede_ubicarse_en(
 
     bool es_entidad_perimetral =
         (tipo == TipoEntidad::TRANSICION_PUEBLO || tipo == TipoEntidad::TRANSICION_GRANJA);
+    bool es_puesto_mercado =
+        (tipo == TipoEntidad::PUESTO_MARNIE || tipo == TipoEntidad::PUESTO_CLINT ||
+         tipo == TipoEntidad::PUESTO_PIERRE || tipo == TipoEntidad::PUESTO_ROBIN);
+
+    if (es_puesto_mercado) {
+        size_t indice_puesto = 0;
+        bool ya_existe_puesto = false;
+        while (indice_puesto < entidades.size() && !ya_existe_puesto) {
+            if (entidades[indice_puesto].obtener_identificador() != identificador_a_ignorar &&
+                entidades[indice_puesto].obtener_tipo() == tipo) {
+                ya_existe_puesto = true;
+            } else {
+                indice_puesto++;
+            }
+        }
+        if (ya_existe_puesto) {
+            return false;
+        }
+    }
 
     bool casillas_validas = true;
     int fila_actual = fila;
     while (fila_actual < fila + alto && casillas_validas) {
         int columna_actual = columna;
         while (columna_actual < columna + ancho && casillas_validas) {
-            if (!es_entidad_perimetral && !casilla_es_transitable(columna_actual, fila_actual)) {
+            int columna_puerta = cantidad_de_columnas / 2;
+            bool es_pasillo_puerta_mercado =
+                (cantidad_de_columnas < 30 && columna_actual == columna_puerta &&
+                 (fila_actual == cantidad_de_filas - 2 || fila_actual == cantidad_de_filas - 1));
+            if (es_pasillo_puerta_mercado) {
+                casillas_validas = false;
+            } else if (
+                !es_entidad_perimetral && !es_puesto_mercado &&
+                !casilla_es_transitable(columna_actual, fila_actual)) {
                 casillas_validas = false;
             } else {
                 columna_actual++;
@@ -244,9 +271,9 @@ bool MapaEditable::deslizar_entidad(uint32_t identificador, int nueva_columna, i
         return false;
     }
     entidades[posicion].trasladar_a(nueva_columna, nueva_fila);
-    if (tipo == TipoEntidad::TRANSICION_PUEBLO) {
+    if (tipo == TipoEntidad::TRANSICION_PUEBLO && cantidad_de_columnas >= 30) {
         generar_muro_perimetral_granja();
-    } else if (tipo == TipoEntidad::TRANSICION_GRANJA) {
+    } else if (tipo == TipoEntidad::TRANSICION_GRANJA && cantidad_de_columnas >= 30) {
         generar_muro_perimetral_pueblo();
     }
     return true;
@@ -259,9 +286,9 @@ bool MapaEditable::retirar_entidad(uint32_t identificador) {
     }
     TipoEntidad tipo = entidades[static_cast<size_t>(indice)].obtener_tipo();
     entidades.erase(entidades.begin() + indice);
-    if (tipo == TipoEntidad::TRANSICION_PUEBLO) {
+    if (tipo == TipoEntidad::TRANSICION_PUEBLO && cantidad_de_columnas >= 30) {
         generar_muro_perimetral_granja();
-    } else if (tipo == TipoEntidad::TRANSICION_GRANJA) {
+    } else if (tipo == TipoEntidad::TRANSICION_GRANJA && cantidad_de_columnas >= 30) {
         generar_muro_perimetral_pueblo();
     }
     return true;
@@ -387,39 +414,61 @@ bool MapaEditable::estampa_puede_colocarse_en(
         return false;
     }
 
+    int columna_puerta = cantidad_de_columnas / 2;
+    size_t indice_casilla = 0;
     bool casillas_validas = true;
-    int fila_actual = fila_origen;
-    while (fila_actual < fila_origen + estampa.alto_casillas && casillas_validas) {
-        int columna_actual = columna_origen;
-        while (columna_actual < columna_origen + estampa.ancho_casillas && casillas_validas) {
-            if (columna_actual < 1 || columna_actual >= cantidad_de_columnas - 1 ||
-                fila_actual < 1 || fila_actual >= cantidad_de_filas - 1) {
-                casillas_validas = false;
-            } else if (
-                capas.at(TipoCapa::ESTRUCTURAS)
+    while (indice_casilla < estampa.casillas.size() && casillas_validas) {
+        int columna_actual =
+            columna_origen + estampa.casillas[indice_casilla].desplazamiento_columna;
+        int fila_actual = fila_origen + estampa.casillas[indice_casilla].desplazamiento_fila;
+        TipoCapa capa_casilla = estampa.casillas[indice_casilla].capa;
+
+        bool es_pasillo_puerta_mercado =
+            (cantidad_de_columnas < 30 && columna_actual == columna_puerta &&
+             (fila_actual == cantidad_de_filas - 2 || fila_actual == cantidad_de_filas - 1));
+
+        if (columna_actual < 1 || columna_actual >= cantidad_de_columnas - 1 || fila_actual < 1 ||
+            fila_actual >= cantidad_de_filas - 1) {
+            casillas_validas = false;
+        } else if (es_pasillo_puerta_mercado) {
+            casillas_validas = false;
+        } else if (
+            capa_casilla == TipoCapa::ESTRUCTURAS &&
+            capas.at(TipoCapa::ESTRUCTURAS)
                     .consultar_casilla(columna_actual, fila_actual)
                     .obtener_id_tile() > 0) {
-                casillas_validas = false;
-            } else if (
-                capas.at(TipoCapa::FRENTE)
+            casillas_validas = false;
+        } else if (
+            capa_casilla == TipoCapa::FRENTE &&
+            capas.at(TipoCapa::FRENTE)
                     .consultar_casilla(columna_actual, fila_actual)
                     .obtener_id_tile() > 0) {
-                casillas_validas = false;
-            } else if (
-                capas.at(TipoCapa::SUELO)
+            casillas_validas = false;
+        } else if (
+            capa_casilla == TipoCapa::ESTRUCTURAS &&
+            capas.at(TipoCapa::SUELO)
                     .consultar_casilla(columna_actual, fila_actual)
                     .obtener_id_tile() == CatalogoDeEstampas::TILE_PASTO_PERIMETRAL) {
-                casillas_validas = false;
-            } else if (buscar_entidad_en_casilla(columna_actual, fila_actual) != nullptr) {
-                casillas_validas = false;
-            } else if (casilla_pertenece_a_estanque(columna_actual, fila_actual)) {
+            casillas_validas = false;
+        } else if (
+            capa_casilla == TipoCapa::ESTRUCTURAS &&
+            buscar_entidad_en_casilla(columna_actual, fila_actual) != nullptr) {
+            auto* entidad_encontrada = buscar_entidad_en_casilla(columna_actual, fila_actual);
+            TipoEntidad tipo_encontrado = entidad_encontrada->obtener_tipo();
+            bool es_puesto_mercado =
+                (tipo_encontrado == TipoEntidad::PUESTO_MARNIE ||
+                 tipo_encontrado == TipoEntidad::PUESTO_CLINT ||
+                 tipo_encontrado == TipoEntidad::PUESTO_PIERRE ||
+                 tipo_encontrado == TipoEntidad::PUESTO_ROBIN);
+            if (!es_puesto_mercado) {
                 casillas_validas = false;
             } else {
-                columna_actual++;
+                indice_casilla++;
             }
-        }
-        if (casillas_validas) {
-            fila_actual++;
+        } else if (casilla_pertenece_a_estanque(columna_actual, fila_actual)) {
+            casillas_validas = false;
+        } else {
+            indice_casilla++;
         }
     }
     return casillas_validas;
@@ -491,18 +540,17 @@ bool MapaEditable::retirar_estanque_en_casilla(
     if (indice_encontrado >= 0) {
         EstampaUbicada estampa_a_retirar =
             estampas_ubicadas[static_cast<size_t>(indice_encontrado)];
-        if (estampa_a_retirar.tipo == TipoEstampa::FAROLA_URBANA) {
-            int fila_actual = estampa_a_retirar.fila;
-            while (fila_actual < estampa_a_retirar.fila + estampa_a_retirar.alto) {
-                int columna_actual = estampa_a_retirar.columna;
-                while (columna_actual < estampa_a_retirar.columna + estampa_a_retirar.ancho) {
-                    if (esta_dentro(columna_actual, fila_actual)) {
-                        borrar_en_capa(TipoCapa::ESTRUCTURAS, columna_actual, fila_actual);
-                        borrar_en_capa(TipoCapa::FRENTE, columna_actual, fila_actual);
-                    }
-                    columna_actual++;
+        if (CatalogoDeEstampas::es_estampa_decorativa(estampa_a_retirar.tipo)) {
+            auto& definicion_estampa = CatalogoDeEstampas::obtener_estampa(estampa_a_retirar.tipo);
+            size_t indice_casilla = 0;
+            while (indice_casilla < definicion_estampa.casillas.size()) {
+                auto& casilla = definicion_estampa.casillas[indice_casilla];
+                int columna_destino = estampa_a_retirar.columna + casilla.desplazamiento_columna;
+                int fila_destino = estampa_a_retirar.fila + casilla.desplazamiento_fila;
+                if (esta_dentro(columna_destino, fila_destino)) {
+                    borrar_en_capa(casilla.capa, columna_destino, fila_destino);
                 }
-                fila_actual++;
+                indice_casilla++;
             }
         } else {
             int fila_actual = estampa_a_retirar.fila;
@@ -1199,5 +1247,224 @@ void MapaEditable::generar_muro_perimetral_pueblo() {
             borrar_en_capa(TipoCapa::FRENTE, columna_este, fila_lateral);
         }
         fila_lateral++;
+    }
+}
+
+bool MapaEditable::es_tile_perimetro_mercado(uint32_t identificador_tile) {
+    if (identificador_tile == 2177 || identificador_tile == 2179 || identificador_tile == 2186 ||
+        identificador_tile == 2188 || identificador_tile == 2241 || identificador_tile == 2245 ||
+        identificador_tile == 2273 || identificador_tile == 2307 || identificador_tile == 2337 ||
+        identificador_tile == 2338 || identificador_tile == 2339 || identificador_tile == 2340 ||
+        identificador_tile == 2342 || identificador_tile == 2343 || identificador_tile == 2344 ||
+        identificador_tile == 4385 || identificador_tile == 1 || identificador_tile == 162 ||
+        identificador_tile == 163 || identificador_tile == 164 || identificador_tile == 166 ||
+        identificador_tile == 167 || identificador_tile == 113 || identificador_tile == 22) {
+        return true;
+    }
+    return false;
+}
+
+void MapaEditable::reconstruir_perimetro_mercado() {
+    int fila = 0;
+    while (fila < cantidad_de_filas) {
+        int columna = 0;
+        while (columna < cantidad_de_columnas) {
+            bool es_perimetro_norte = (fila < 4);
+            bool es_lateral = (columna == 0 || columna == cantidad_de_columnas - 1);
+            bool es_perimetro_sur = (fila >= cantidad_de_filas - 2);
+
+            if (!es_perimetro_norte && !es_lateral && !es_perimetro_sur) {
+                uint32_t identificador_suelo =
+                    obtener_casilla_en_capa(TipoCapa::SUELO, columna, fila).obtener_id_tile();
+                if (es_tile_perimetro_mercado(identificador_suelo)) {
+                    pintar_en_capa(
+                        TipoCapa::SUELO,
+                        columna,
+                        fila,
+                        CatalogoDeTerrenos::obtener_tile_base(SectorActual::MERCADO),
+                        PropiedadDeCasilla::DECORABLE);
+                }
+
+                uint32_t identificador_estructuras =
+                    obtener_casilla_en_capa(TipoCapa::ESTRUCTURAS, columna, fila).obtener_id_tile();
+                if (es_tile_perimetro_mercado(identificador_estructuras)) {
+                    borrar_en_capa(TipoCapa::ESTRUCTURAS, columna, fila);
+                }
+                uint32_t identificador_frente =
+                    obtener_casilla_en_capa(TipoCapa::FRENTE, columna, fila).obtener_id_tile();
+                if (es_tile_perimetro_mercado(identificador_frente)) {
+                    borrar_en_capa(TipoCapa::FRENTE, columna, fila);
+                }
+            } else if (
+                fila >= 1 && fila <= 4 && columna >= 1 && columna < cantidad_de_columnas - 1) {
+                uint32_t identificador_estructuras =
+                    obtener_casilla_en_capa(TipoCapa::ESTRUCTURAS, columna, fila).obtener_id_tile();
+                if (es_tile_perimetro_mercado(identificador_estructuras)) {
+                    borrar_en_capa(TipoCapa::ESTRUCTURAS, columna, fila);
+                }
+                uint32_t identificador_frente =
+                    obtener_casilla_en_capa(TipoCapa::FRENTE, columna, fila).obtener_id_tile();
+                if (es_tile_perimetro_mercado(identificador_frente)) {
+                    borrar_en_capa(TipoCapa::FRENTE, columna, fila);
+                }
+            }
+            columna++;
+        }
+        fila++;
+    }
+
+    // 1. Pared norte:
+    // Fila 0: Bloques superiores de piedra
+    pintar_en_capa(TipoCapa::ESTRUCTURAS, 0, 0, 2186, PropiedadDeCasilla::BLOQUEA);
+    pintar_en_capa(
+        TipoCapa::ESTRUCTURAS,
+        cantidad_de_columnas - 1,
+        0,
+        2188,
+        PropiedadDeCasilla::BLOQUEA);
+    int columna_norte = 1;
+    while (columna_norte < cantidad_de_columnas - 1) {
+        pintar_en_capa(TipoCapa::ESTRUCTURAS, columna_norte, 0, 2179, PropiedadDeCasilla::BLOQUEA);
+        columna_norte++;
+    }
+
+    // Filas 1 y 2: Pared norte (piedra original)
+    int fila_norte = 1;
+    while (fila_norte <= 2) {
+        pintar_en_capa(TipoCapa::ESTRUCTURAS, 0, fila_norte, 2241, PropiedadDeCasilla::BLOQUEA);
+        pintar_en_capa(
+            TipoCapa::ESTRUCTURAS,
+            cantidad_de_columnas - 1,
+            fila_norte,
+            2245,
+            PropiedadDeCasilla::BLOQUEA);
+        int columna_norte_suelo = 1;
+        while (columna_norte_suelo < cantidad_de_columnas - 1) {
+            pintar_en_capa(
+                TipoCapa::SUELO,
+                columna_norte_suelo,
+                fila_norte,
+                22,
+                PropiedadDeCasilla::BLOQUEA);
+            columna_norte_suelo++;
+        }
+        fila_norte++;
+    }
+
+    // Fila 3: Zocalo inferior de madera de la pared norte
+    pintar_en_capa(TipoCapa::ESTRUCTURAS, 0, 3, 2241, PropiedadDeCasilla::BLOQUEA);
+    pintar_en_capa(
+        TipoCapa::ESTRUCTURAS,
+        cantidad_de_columnas - 1,
+        3,
+        2245,
+        PropiedadDeCasilla::BLOQUEA);
+    int columna_viga = 1;
+    while (columna_viga < cantidad_de_columnas - 1) {
+        pintar_en_capa(TipoCapa::SUELO, columna_viga, 3, 113, PropiedadDeCasilla::BLOQUEA);
+        borrar_en_capa(TipoCapa::ESTRUCTURAS, columna_viga, 3);
+        columna_viga++;
+    }
+
+    // 2. Paredes laterales (oeste y este) desde fila 4 hasta fila zócalo - 1
+    int fila_lateral = 4;
+    while (fila_lateral < cantidad_de_filas - 2) {
+        pintar_en_capa(TipoCapa::ESTRUCTURAS, 0, fila_lateral, 2241, PropiedadDeCasilla::BLOQUEA);
+        pintar_en_capa(
+            TipoCapa::ESTRUCTURAS,
+            cantidad_de_columnas - 1,
+            fila_lateral,
+            2245,
+            PropiedadDeCasilla::BLOQUEA);
+        fila_lateral++;
+    }
+
+    // 3. Pared Sur y Puerta Centrada
+    int columna_puerta = cantidad_de_columnas / 2;
+    int fila_zocalo = cantidad_de_filas - 2;
+    int fila_inferior = cantidad_de_filas - 1;
+
+    int columna_sur = 0;
+    while (columna_sur < cantidad_de_columnas) {
+        if (columna_sur == columna_puerta) {
+            pintar_en_capa(
+                TipoCapa::SUELO,
+                columna_sur,
+                fila_zocalo,
+                CatalogoDeTerrenos::obtener_tile_base(SectorActual::MERCADO),
+                PropiedadDeCasilla::DECORABLE);
+            pintar_en_capa(
+                TipoCapa::SUELO,
+                columna_sur,
+                fila_inferior,
+                CatalogoDeTerrenos::obtener_tile_base(SectorActual::MERCADO),
+                PropiedadDeCasilla::DECORABLE);
+            borrar_en_capa(TipoCapa::ESTRUCTURAS, columna_sur, fila_zocalo);
+            pintar_en_capa(
+                TipoCapa::ESTRUCTURAS,
+                columna_sur,
+                fila_inferior,
+                2342,
+                PropiedadDeCasilla::NINGUNA);
+            borrar_en_capa(TipoCapa::FRENTE, columna_sur, fila_zocalo);
+            borrar_en_capa(TipoCapa::FRENTE, columna_sur, fila_inferior);
+        } else {
+            uint32_t tile_zocalo = 2342;
+            uint32_t tile_base = 2177;
+            uint32_t tile_frente = 166;
+
+            if (columna_sur == 0) {
+                tile_zocalo = 2337;
+                tile_frente = 0;
+            } else if (columna_sur == columna_puerta - 1) {
+                tile_zocalo = 2339;
+                tile_base = 2273;
+                tile_frente = 163;
+            } else if (columna_sur == columna_puerta + 1) {
+                tile_zocalo = 2340;
+                tile_base = 2307;
+                tile_frente = 164;
+            } else if (columna_sur == cantidad_de_columnas - 1) {
+                tile_zocalo = 2344;
+                tile_frente = 0;
+            } else if (columna_sur == 1) {
+                tile_frente = 162;
+            } else if (columna_sur == cantidad_de_columnas - 2) {
+                tile_frente = 167;
+            }
+
+            pintar_en_capa(
+                TipoCapa::ESTRUCTURAS,
+                columna_sur,
+                fila_zocalo,
+                tile_zocalo,
+                PropiedadDeCasilla::BLOQUEA);
+            pintar_en_capa(
+                TipoCapa::ESTRUCTURAS,
+                columna_sur,
+                fila_inferior,
+                tile_base,
+                PropiedadDeCasilla::BLOQUEA);
+            if (tile_frente > 0) {
+                pintar_en_capa(TipoCapa::FRENTE, columna_sur, fila_zocalo, tile_frente, 0);
+            } else {
+                borrar_en_capa(TipoCapa::FRENTE, columna_sur, fila_zocalo);
+            }
+            borrar_en_capa(TipoCapa::FRENTE, columna_sur, fila_inferior);
+        }
+        columna_sur++;
+    }
+
+    int columna_palmera_derecha = cantidad_de_columnas - 3;
+    if (capas.at(TipoCapa::ESTRUCTURAS).consultar_casilla(1, 4).obtener_id_tile() == 0) {
+        estampar(CatalogoDeEstampas::obtener_estampa(TipoEstampa::MERCADO_PALMERA_IZQUIERDA), 1, 2);
+    }
+    if (columna_palmera_derecha >= 1 && capas.at(TipoCapa::ESTRUCTURAS)
+                                                .consultar_casilla(columna_palmera_derecha + 1, 4)
+                                                .obtener_id_tile() == 0) {
+        estampar(
+            CatalogoDeEstampas::obtener_estampa(TipoEstampa::MERCADO_PALMERA_DERECHA),
+            columna_palmera_derecha,
+            2);
     }
 }

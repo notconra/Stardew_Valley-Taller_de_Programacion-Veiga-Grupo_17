@@ -71,6 +71,9 @@ PaletaDeHerramientas::PaletaDeHerramientas(QWidget* padre)
       estampa_recto_activa(TipoEstampa::CAMINO_RECTO_HORIZONTAL),
       estampa_union_t_activa(TipoEstampa::CAMINO_UNION_T_NORTE),
       estampa_esquina_activa(TipoEstampa::CAMINO_ESQUINA_NOROESTE),
+      estampa_mostrador_activa(TipoEstampa::MERCADO_MOSTRADOR_IZQUIERDO),
+      estampa_puesto_mercado_activa(TipoEstampa::MERCADO_PUESTO_IZQUIERDO),
+      estampa_estanteria_activa(TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA),
       id_tile_borde_activo(CatalogoDeEstampas::TILE_PUEBLO_CAMINO_BORDE_NORTE),
       id_tile_esquina_exterior_activa(
           CatalogoDeEstampas::TILE_PUEBLO_CAMINO_ESQUINA_EXTERIOR_NOROESTE),
@@ -177,29 +180,44 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
     estampa_recto_activa = TipoEstampa::CAMINO_RECTO_HORIZONTAL;
     estampa_union_t_activa = TipoEstampa::CAMINO_UNION_T_NORTE;
     estampa_esquina_activa = TipoEstampa::CAMINO_ESQUINA_NOROESTE;
+    estampa_mostrador_activa = TipoEstampa::MERCADO_MOSTRADOR_IZQUIERDO;
+    estampa_puesto_mercado_activa = TipoEstampa::MERCADO_PUESTO_IZQUIERDO;
+    estampa_estanteria_activa = TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA;
     id_tile_borde_activo = CatalogoDeEstampas::TILE_PUEBLO_CAMINO_BORDE_NORTE;
     id_tile_esquina_exterior_activa = 609;
     id_tile_esquina_interior_activa = 706;
 
+    QPixmap pixmap_paredes_suelos;
+    if (sector == SectorActual::MERCADO) {
+        pixmap_paredes_suelos.load("Assets/Maps/walls_and_floors.png");
+    }
+
     // 1. Cargar tiles de superficie
-    const std::vector<DefinicionTile>& catalogo_tiles =
-        CatalogoDeTerrenos::obtener_catalogo_por_sector(sector);
+    auto& catalogo_tiles = CatalogoDeTerrenos::obtener_catalogo_por_sector(sector);
 
     size_t indice_tile = 0;
     while (indice_tile < catalogo_tiles.size()) {
-        const DefinicionTile& definicion = catalogo_tiles[indice_tile];
-        uint32_t indice_local =
-            definicion.identificador_tile_global - datos_tileset.primer_identificador_global;
-        int columna_sprite = static_cast<int>(
-            indice_local % static_cast<uint32_t>(datos_tileset.cantidad_de_columnas));
-        int fila_sprite = static_cast<int>(
-            indice_local / static_cast<uint32_t>(datos_tileset.cantidad_de_columnas));
-
-        QPixmap sprite_recortado = pixmap_tileset.copy(
-            columna_sprite * datos_tileset.ancho_tile,
-            fila_sprite * datos_tileset.alto_tile,
-            datos_tileset.ancho_tile,
-            datos_tileset.alto_tile);
+        auto& definicion = catalogo_tiles[indice_tile];
+        QPixmap sprite_recortado;
+        if (definicion.identificador_tile_global >= 4353 && !pixmap_paredes_suelos.isNull()) {
+            uint32_t indice_local = definicion.identificador_tile_global - 4353;
+            int columna_sprite = static_cast<int>(indice_local % 16);
+            int fila_sprite = static_cast<int>(indice_local / 16);
+            sprite_recortado =
+                pixmap_paredes_suelos.copy(columna_sprite * 16, fila_sprite * 16, 16, 16);
+        } else {
+            uint32_t indice_local =
+                definicion.identificador_tile_global - datos_tileset.primer_identificador_global;
+            int columna_sprite = static_cast<int>(
+                indice_local % static_cast<uint32_t>(datos_tileset.cantidad_de_columnas));
+            int fila_sprite = static_cast<int>(
+                indice_local / static_cast<uint32_t>(datos_tileset.cantidad_de_columnas));
+            sprite_recortado = pixmap_tileset.copy(
+                columna_sprite * datos_tileset.ancho_tile,
+                fila_sprite * datos_tileset.alto_tile,
+                datos_tileset.ancho_tile,
+                datos_tileset.alto_tile);
+        }
 
         QPushButton* boton = new QPushButton(this);
         boton->setFixedSize(TAMANO_BOTON_TILE_PX, TAMANO_BOTON_TILE_PX);
@@ -252,13 +270,19 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
 
     caja_estampas->setVisible(
         !lista_estampas.empty() || sector == SectorActual::GRANJA ||
-        sector == SectorActual::PUEBLO);
+        sector == SectorActual::PUEBLO || sector == SectorActual::MERCADO);
     boton_muro_perimetral->setVisible(
-        sector == SectorActual::GRANJA || sector == SectorActual::PUEBLO);
+        sector == SectorActual::GRANJA || sector == SectorActual::PUEBLO ||
+        sector == SectorActual::MERCADO);
+    if (sector == SectorActual::MERCADO) {
+        boton_muro_perimetral->setText("Restaurar Paredes Perimetrales");
+    } else {
+        boton_muro_perimetral->setText("Cerrar Perimetro con Vallas");
+    }
 
     size_t indice_estampa = 0;
     while (indice_estampa < lista_estampas.size()) {
-        const DefinicionEstampa& estampa = lista_estampas[indice_estampa];
+        auto& estampa = lista_estampas[indice_estampa];
         TipoEstampa tipo = estampa.tipo;
         QPushButton* boton_estampa =
             new QPushButton(QString::fromStdString(estampa.nombre), caja_estampas);
@@ -277,6 +301,12 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
                 estampa_a_emitir = estampa_union_t_activa;
             } else if (tipo == TipoEstampa::CAMINO_ESQUINA_NOROESTE) {
                 estampa_a_emitir = estampa_esquina_activa;
+            } else if (tipo == TipoEstampa::MERCADO_MOSTRADOR_IZQUIERDO) {
+                estampa_a_emitir = estampa_mostrador_activa;
+            } else if (tipo == TipoEstampa::MERCADO_PUESTO_IZQUIERDO) {
+                estampa_a_emitir = estampa_puesto_mercado_activa;
+            } else if (tipo == TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA) {
+                estampa_a_emitir = estampa_estanteria_activa;
             }
             emit estampa_seleccionada(estampa_a_emitir);
         });
@@ -336,6 +366,42 @@ void PaletaDeHerramientas::sincronizar_rotacion_estampa(TipoEstampa estampa) {
                 } else if (estampa == TipoEstampa::CAMINO_ESQUINA_SUDOESTE) {
                     texto = "Esquina (Sudoeste) [R]";
                 }
+                boton->setText(texto);
+            }
+        } else if (
+            estampa == TipoEstampa::MERCADO_MOSTRADOR_IZQUIERDO ||
+            estampa == TipoEstampa::MERCADO_MOSTRADOR_DERECHO) {
+            estampa_mostrador_activa = estampa;
+            if (grupo_estampas->id(boton) ==
+                static_cast<int>(TipoEstampa::MERCADO_MOSTRADOR_IZQUIERDO)) {
+                boton->setChecked(true);
+                QString texto = (estampa == TipoEstampa::MERCADO_MOSTRADOR_IZQUIERDO)
+                                    ? "Mostrador Principal (6x2) [R]"
+                                    : "Mostrador Principal (Derecha) [R]";
+                boton->setText(texto);
+            }
+        } else if (
+            estampa == TipoEstampa::MERCADO_PUESTO_IZQUIERDO ||
+            estampa == TipoEstampa::MERCADO_PUESTO_DERECHO) {
+            estampa_puesto_mercado_activa = estampa;
+            if (grupo_estampas->id(boton) ==
+                static_cast<int>(TipoEstampa::MERCADO_PUESTO_IZQUIERDO)) {
+                boton->setChecked(true);
+                QString texto = (estampa == TipoEstampa::MERCADO_PUESTO_IZQUIERDO)
+                                    ? "Puesto de Atencion (3x4) [R]"
+                                    : "Puesto de Atencion (Derecha) [R]";
+                boton->setText(texto);
+            }
+        } else if (
+            estampa == TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA ||
+            estampa == TipoEstampa::MERCADO_ESTANTERIA_DERECHA) {
+            estampa_estanteria_activa = estampa;
+            if (grupo_estampas->id(boton) ==
+                static_cast<int>(TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA)) {
+                boton->setChecked(true);
+                QString texto = (estampa == TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA)
+                                    ? "Estanteria Comercial (6x3) [R]"
+                                    : "Estanteria Comercial (Derecha) [R]";
                 boton->setText(texto);
             }
         }

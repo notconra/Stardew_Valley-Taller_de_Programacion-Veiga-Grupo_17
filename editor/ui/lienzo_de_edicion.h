@@ -6,6 +6,7 @@
 #include <QWidget>
 #include <cstdint>
 #include <map>
+#include <vector>
 
 #include "capa_del_mapa.h"
 #include "catalogo_de_estampas.h"
@@ -16,6 +17,14 @@
 struct DefinicionVisualEntidad {
     const QPixmap* pixmap;
     QRect rectangulo_origen;
+};
+
+struct EntradaTilesetLienzo {
+    QPixmap pixmap;
+    uint32_t primer_identificador_global;
+    int cantidad_de_columnas;
+    int ancho_tile;
+    int alto_tile;
 };
 
 class LienzoDeEdicion : public QWidget {
@@ -34,6 +43,7 @@ private:
 
     QPixmap pixmap_tileset;
     DefinicionTilesetTMX datos_tileset;
+    std::vector<EntradaTilesetLienzo> lista_tilesets_actuales;
 
     QPixmap pixmap_cabania;
     QPixmap pixmap_caseta_mina;
@@ -58,7 +68,10 @@ private:
     bool mouse_presionado;
 
     void inicializar_catalogo_visual_entidades();
+    void cargar_tilesets_de_sector(SectorActual sector);
+    void dibujar_tile_en_lienzo(QPainter& pintor, uint32_t valor_crudo, int columna, int fila);
     void obtener_coordenadas_desde_posicion(const QPoint& posicion, int& columna, int& fila) const;
+    bool casilla_es_perimetro_protegido(int columna, int fila) const;
     void pintar_casilla_en_posicion(int columna, int fila);
     void dibujar_capa_de_tiles(
         QPainter& pintor, TipoCapa tipo_capa, int cantidad_columnas, int cantidad_filas);

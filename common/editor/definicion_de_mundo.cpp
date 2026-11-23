@@ -105,11 +105,27 @@ MapaEditable DefinicionDeMundo::crear_sector_mercado_por_defecto() {
         17,
         CatalogoDeTerrenos::obtener_tile_base(SectorActual::MERCADO),
         PropiedadDeCasilla::DECORABLE);
-    mercado.ubicar_entidad(TipoEntidad::PUESTO_MARNIE, 3, 9, 2, 2);
-    mercado.ubicar_entidad(TipoEntidad::PUESTO_ROBIN, 2, 6, 2, 2);
-    mercado.ubicar_entidad(TipoEntidad::PUESTO_PIERRE, 14, 6, 2, 2);
-    mercado.ubicar_entidad(TipoEntidad::PUESTO_CLINT, 15, 9, 2, 2);
-    mercado.ubicar_entidad(TipoEntidad::TRANSICION_PUEBLO, 9, 15, 2, 2);
+    mercado.reconstruir_perimetro_mercado();
+    uint32_t identificador_clint = mercado.ubicar_entidad(TipoEntidad::PUESTO_CLINT, 2, 6, 2, 2);
+    EntidadDelMapa* entidad_clint = mercado.buscar_entidad_por_identificador(identificador_clint);
+    if (entidad_clint != nullptr) {
+        entidad_clint->configurar_punto_de_atencion(3, 8);
+    }
+    uint32_t identificador_pierre = mercado.ubicar_entidad(TipoEntidad::PUESTO_PIERRE, 14, 6, 2, 2);
+    EntidadDelMapa* entidad_pierre = mercado.buscar_entidad_por_identificador(identificador_pierre);
+    if (entidad_pierre != nullptr) {
+        entidad_pierre->configurar_punto_de_atencion(15, 8);
+    }
+    uint32_t identificador_marnie = mercado.ubicar_entidad(TipoEntidad::PUESTO_MARNIE, 2, 9, 2, 2);
+    EntidadDelMapa* entidad_marnie = mercado.buscar_entidad_por_identificador(identificador_marnie);
+    if (entidad_marnie != nullptr) {
+        entidad_marnie->configurar_punto_de_atencion(4, 10);
+    }
+    uint32_t identificador_robin = mercado.ubicar_entidad(TipoEntidad::PUESTO_ROBIN, 15, 9, 2, 2);
+    EntidadDelMapa* entidad_robin = mercado.buscar_entidad_por_identificador(identificador_robin);
+    if (entidad_robin != nullptr) {
+        entidad_robin->configurar_punto_de_atencion(14, 10);
+    }
     return mercado;
 }
 

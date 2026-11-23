@@ -98,37 +98,240 @@ MapaEditable CargadorDeSectorTMX::cargar_sector(
         id_tile_base,
         propiedades_base);
 
-    // 1. Cargar Capa Back (Suelo)
-    std::vector<int> capa_suelo = lector.cargar_capa(CAPA_SUELO_TMX);
-    if (capa_suelo.empty()) {
-        throw std::runtime_error(
-            "El archivo TMX " + ruta_archivo_tmx + " no contiene la capa obligatoria '" +
-            CAPA_SUELO_TMX + "'");
-    }
-    cargar_capa_en_mapa(mapa, capa_suelo, TipoCapa::SUELO, sector, propiedades_base);
+    if (sector == SectorActual::MERCADO) {
+        std::vector<uint32_t> capa_back2 = lector.cargar_capa_con_flags("Back2");
+        if (!capa_back2.empty()) {
+            int cantidad_columnas = mapa.obtener_cantidad_de_columnas();
+            int cantidad_filas = mapa.obtener_cantidad_de_filas();
 
-    // 2. Cargar Capa Buildings (Estructuras)
-    std::vector<int> capa_estructuras = lector.cargar_capa(CAPA_ESTRUCTURAS_TMX);
-    if (!capa_estructuras.empty()) {
-        cargar_capa_en_mapa(
-            mapa,
-            capa_estructuras,
-            TipoCapa::ESTRUCTURAS,
-            sector,
-            PropiedadDeCasilla::BLOQUEA);
-    }
+            // 1. Capa SUELO: Back2 contiene el muro de piedra superior (filas 1-2), moldura (fila
+            // 3) y alfombra azul (filas 4-15)
+            size_t indice_casilla = 0;
+            int fila = 0;
+            while (fila < cantidad_filas) {
+                int columna = 0;
+                while (columna < cantidad_columnas) {
+                    if (indice_casilla < capa_back2.size()) {
+                        uint32_t identificador_tile_suelo = capa_back2[indice_casilla];
+                        uint8_t propiedad_suelo = propiedades_base;
+                        if (fila >= 1 && fila <= 2 && columna >= 1 &&
+                            columna < cantidad_columnas - 1) {
+                            identificador_tile_suelo = 22;
+                            propiedad_suelo = PropiedadDeCasilla::BLOQUEA;
+                        } else if (fila == 3 && columna >= 1 && columna < cantidad_columnas - 1) {
+                            identificador_tile_suelo = 113;
+                            propiedad_suelo = PropiedadDeCasilla::BLOQUEA;
+                        }
+                        if (identificador_tile_suelo > 0) {
+                            mapa.pintar_en_capa(
+                                TipoCapa::SUELO,
+                                columna,
+                                fila,
+                                identificador_tile_suelo,
+                                propiedad_suelo);
+                        }
+                    }
+                    indice_casilla++;
+                    columna++;
+                }
+                fila++;
+            }
 
-    // 3. Cargar Capa Front (Frente y Techos)
-    std::vector<int> capa_frente = lector.cargar_capa(CAPA_FRENTE_TMX);
-    if (!capa_frente.empty()) {
-        cargar_capa_en_mapa(mapa, capa_frente, TipoCapa::FRENTE, sector, 0);
+            // Asegurar alfombra azul en el pasillo de salida (col 9, filas 15 y 16)
+            mapa.pintar_en_capa(TipoCapa::SUELO, 9, 15, 263, propiedades_base);
+            mapa.pintar_en_capa(TipoCapa::SUELO, 9, 16, 263, propiedades_base);
+
+            // 2. Capa ESTRUCTURAS: Paredes perimetrales base de la sala
+            std::vector<uint32_t> capa_buildings =
+                lector.cargar_capa_con_flags(CAPA_ESTRUCTURAS_TMX);
+            std::vector<uint32_t> capa_paredes = lector.cargar_capa_con_flags("Paredes");
+
+            indice_casilla = 0;
+            fila = 0;
+            while (fila < cantidad_filas) {
+                int columna = 0;
+                while (columna < cantidad_columnas) {
+                    bool es_perimetro_lateral_o_extremo =
+                        (fila == 0 || fila >= 15 || columna == 0 ||
+                         columna == cantidad_columnas - 1);
+                    if (es_perimetro_lateral_o_extremo) {
+                        if (indice_casilla < capa_buildings.size()) {
+                            uint32_t identificador_edificio = capa_buildings[indice_casilla];
+                            if (identificador_edificio > 0) {
+                                mapa.pintar_en_capa(
+                                    TipoCapa::ESTRUCTURAS,
+                                    columna,
+                                    fila,
+                                    identificador_edificio,
+                                    PropiedadDeCasilla::BLOQUEA);
+                            }
+                        }
+                        if (indice_casilla < capa_paredes.size()) {
+                            uint32_t identificador_pared = capa_paredes[indice_casilla];
+                            if (identificador_pared > 0) {
+                                mapa.pintar_en_capa(
+                                    TipoCapa::ESTRUCTURAS,
+                                    columna,
+                                    fila,
+                                    identificador_pared,
+                                    PropiedadDeCasilla::BLOQUEA);
+                            }
+                        }
+                    }
+                    indice_casilla++;
+                    columna++;
+                }
+                fila++;
+            }
+
+            // Umbral de la puerta en columna 9: libre y transitable
+            mapa.pintar_en_capa(TipoCapa::ESTRUCTURAS, 9, 15, 0, PropiedadDeCasilla::DECORABLE);
+            mapa.pintar_en_capa(TipoCapa::ESTRUCTURAS, 9, 16, 2342, PropiedadDeCasilla::NINGUNA);
+
+            // 3. Capa FRENTE: Zócalo y umbrales inferiores
+            std::vector<uint32_t> capa_frente_origen =
+                lector.cargar_capa_con_flags(CAPA_FRENTE_TMX);
+            if (capa_frente_origen.size() ==
+                static_cast<size_t>(cantidad_columnas * cantidad_filas)) {
+                int columna_frente = 0;
+                while (columna_frente < cantidad_columnas) {
+                    uint32_t id_frente_15 =
+                        capa_frente_origen[15 * cantidad_columnas + columna_frente];
+                    if (id_frente_15 > 0) {
+                        mapa.pintar_en_capa(TipoCapa::FRENTE, columna_frente, 15, id_frente_15, 0);
+                    }
+                    uint32_t id_frente_16 =
+                        capa_frente_origen[16 * cantidad_columnas + columna_frente];
+                    if (id_frente_16 > 0) {
+                        mapa.pintar_en_capa(TipoCapa::FRENTE, columna_frente, 16, id_frente_16, 0);
+                    }
+                    columna_frente++;
+                }
+            }
+
+            // 4. Palmeras de esquinas superiores
+            mapa.estampar(
+                CatalogoDeEstampas::obtener_estampa(TipoEstampa::MERCADO_PALMERA_IZQUIERDA),
+                1,
+                2);
+            mapa.estampar(
+                CatalogoDeEstampas::obtener_estampa(TipoEstampa::MERCADO_PALMERA_DERECHA),
+                16,
+                2);
+
+            // 5. Estampas iniciales de mobiliario
+            mapa.estampar(
+                CatalogoDeEstampas::obtener_estampa(TipoEstampa::MERCADO_MOSTRADOR_IZQUIERDO),
+                1,
+                4);
+            mapa.estampar(
+                CatalogoDeEstampas::obtener_estampa(TipoEstampa::MERCADO_MOSTRADOR_DERECHO),
+                12,
+                4);
+            mapa.estampar(
+                CatalogoDeEstampas::obtener_estampa(TipoEstampa::MERCADO_PUESTO_IZQUIERDO),
+                1,
+                8);
+            mapa.estampar(
+                CatalogoDeEstampas::obtener_estampa(TipoEstampa::MERCADO_PUESTO_DERECHO),
+                15,
+                8);
+            mapa.estampar(
+                CatalogoDeEstampas::obtener_estampa(TipoEstampa::MERCADO_MESA_FRUTAS),
+                7,
+                9);
+            mapa.estampar(
+                CatalogoDeEstampas::obtener_estampa(TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA),
+                1,
+                13);
+            mapa.estampar(
+                CatalogoDeEstampas::obtener_estampa(TipoEstampa::MERCADO_ESTANTERIA_DERECHA),
+                12,
+                13);
+            mapa.estampar(
+                CatalogoDeEstampas::obtener_estampa(TipoEstampa::MERCADO_PLANTA_MACETA),
+                7,
+                14);
+            mapa.estampar(
+                CatalogoDeEstampas::obtener_estampa(TipoEstampa::MERCADO_PLANTA_MACETA),
+                11,
+                14);
+        } else {
+            std::vector<uint32_t> capa_suelo = lector.cargar_capa_con_flags(CAPA_SUELO_TMX);
+            std::vector<uint32_t> capa_estructuras =
+                lector.cargar_capa_con_flags(CAPA_ESTRUCTURAS_TMX);
+            std::vector<uint32_t> capa_frente = lector.cargar_capa_con_flags(CAPA_FRENTE_TMX);
+            int cantidad_columnas = mapa.obtener_cantidad_de_columnas();
+            int cantidad_filas = mapa.obtener_cantidad_de_filas();
+            size_t indice_casilla = 0;
+            int fila = 0;
+            while (fila < cantidad_filas) {
+                int columna = 0;
+                while (columna < cantidad_columnas) {
+                    if (indice_casilla < capa_suelo.size() && capa_suelo[indice_casilla] > 0) {
+                        mapa.pintar_en_capa(
+                            TipoCapa::SUELO,
+                            columna,
+                            fila,
+                            capa_suelo[indice_casilla],
+                            propiedades_base);
+                    }
+                    if (indice_casilla < capa_estructuras.size() &&
+                        capa_estructuras[indice_casilla] > 0) {
+                        mapa.pintar_en_capa(
+                            TipoCapa::ESTRUCTURAS,
+                            columna,
+                            fila,
+                            capa_estructuras[indice_casilla],
+                            PropiedadDeCasilla::BLOQUEA);
+                    }
+                    if (indice_casilla < capa_frente.size() && capa_frente[indice_casilla] > 0) {
+                        mapa.pintar_en_capa(
+                            TipoCapa::FRENTE,
+                            columna,
+                            fila,
+                            capa_frente[indice_casilla],
+                            0);
+                    }
+                    indice_casilla++;
+                    columna++;
+                }
+                fila++;
+            }
+        }
+    } else {
+        // 1. Cargar Capa Back (Suelo)
+        std::vector<int> capa_suelo = lector.cargar_capa(CAPA_SUELO_TMX);
+        if (capa_suelo.empty()) {
+            throw std::runtime_error(
+                "El archivo TMX " + ruta_archivo_tmx + " no contiene la capa obligatoria '" +
+                CAPA_SUELO_TMX + "'");
+        }
+        cargar_capa_en_mapa(mapa, capa_suelo, TipoCapa::SUELO, sector, propiedades_base);
+
+        // 2. Cargar Capa Buildings (Estructuras)
+        std::vector<int> capa_estructuras = lector.cargar_capa(CAPA_ESTRUCTURAS_TMX);
+        if (!capa_estructuras.empty()) {
+            cargar_capa_en_mapa(
+                mapa,
+                capa_estructuras,
+                TipoCapa::ESTRUCTURAS,
+                sector,
+                PropiedadDeCasilla::BLOQUEA);
+        }
+
+        // 3. Cargar Capa Front (Frente y Techos)
+        std::vector<int> capa_frente = lector.cargar_capa(CAPA_FRENTE_TMX);
+        if (!capa_frente.empty()) {
+            cargar_capa_en_mapa(mapa, capa_frente, TipoCapa::FRENTE, sector, 0);
+        }
     }
 
     // 4. Cargar Transiciones (vía Diccionario y Desplazamientos Simétricos)
     std::vector<TransicionTMX> transiciones = lector.cargar_transiciones(CAPA_TRANSICIONES_TMX);
     size_t indice_transicion = 0;
     while (indice_transicion < transiciones.size()) {
-        const TransicionTMX& transicion = transiciones[indice_transicion];
+        TransicionTMX& transicion = transiciones[indice_transicion];
         auto iterador_destino = DESTINOS_A_ENTIDADES.find(transicion.mapa_destino);
         if (iterador_destino != DESTINOS_A_ENTIDADES.end()) {
             int columna = (transicion.x / ANCHO_TILE_PIXELES) -
@@ -138,12 +341,14 @@ MapaEditable CargadorDeSectorTMX::cargar_sector(
             int ancho_casillas = iterador_destino->second.ancho_casillas;
             int alto_casillas = iterador_destino->second.alto_casillas;
 
-            mapa.ubicar_entidad(
-                iterador_destino->second.tipo_entidad,
-                columna,
-                fila,
-                ancho_casillas,
-                alto_casillas);
+            if (sector != SectorActual::MERCADO) {
+                mapa.ubicar_entidad(
+                    iterador_destino->second.tipo_entidad,
+                    columna,
+                    fila,
+                    ancho_casillas,
+                    alto_casillas);
+            }
         }
         indice_transicion++;
     }
@@ -152,27 +357,50 @@ MapaEditable CargadorDeSectorTMX::cargar_sector(
     std::vector<PuestoTMX> puestos = lector.cargar_puestos(CAPA_INTERACCIONES_TMX);
     size_t indice_puesto = 0;
     while (indice_puesto < puestos.size()) {
-        const PuestoTMX& puesto = puestos[indice_puesto];
+        PuestoTMX& puesto = puestos[indice_puesto];
         auto iterador_puesto = IDENTIFICADORES_A_PUESTO.find(puesto.id);
         if (iterador_puesto != IDENTIFICADORES_A_PUESTO.end()) {
             int columna = puesto.x / ANCHO_TILE_PIXELES;
             int fila = puesto.y / ALTO_TILE_PIXELES;
-            int ancho_casillas = puesto.ancho / ANCHO_TILE_PIXELES;
-            int alto_casillas = puesto.alto / ALTO_TILE_PIXELES;
-
-            if (ancho_casillas <= 0) {
-                ancho_casillas = 1;
+            int ancho_casillas = 2;
+            int alto_casillas = 2;
+            if (iterador_puesto->second == TipoEntidad::PUESTO_MARNIE) {
+                columna = 2;
+                fila = 9;
+            } else if (iterador_puesto->second == TipoEntidad::PUESTO_ROBIN) {
+                columna = 15;
+                fila = 9;
+            } else if (iterador_puesto->second == TipoEntidad::PUESTO_CLINT) {
+                columna = 2;
+                fila = 6;
+            } else if (iterador_puesto->second == TipoEntidad::PUESTO_PIERRE) {
+                columna = 14;
+                fila = 6;
             }
-            if (alto_casillas <= 0) {
-                alto_casillas = 1;
-            }
 
-            mapa.ubicar_entidad(
+            uint32_t identificador_entidad = mapa.ubicar_entidad(
                 iterador_puesto->second,
                 columna,
                 fila,
                 ancho_casillas,
                 alto_casillas);
+            EntidadDelMapa* entidad_colocada =
+                mapa.buscar_entidad_por_identificador(identificador_entidad);
+            if (entidad_colocada != nullptr) {
+                if (iterador_puesto->second == TipoEntidad::PUESTO_MARNIE) {
+                    entidad_colocada->configurar_punto_de_atencion(4, 10);
+                } else if (iterador_puesto->second == TipoEntidad::PUESTO_ROBIN) {
+                    entidad_colocada->configurar_punto_de_atencion(14, 10);
+                } else if (iterador_puesto->second == TipoEntidad::PUESTO_CLINT) {
+                    entidad_colocada->configurar_punto_de_atencion(3, 8);
+                } else if (iterador_puesto->second == TipoEntidad::PUESTO_PIERRE) {
+                    entidad_colocada->configurar_punto_de_atencion(15, 8);
+                } else if (puesto.tiene_atencion) {
+                    entidad_colocada->configurar_punto_de_atencion(
+                        puesto.columna_atencion,
+                        puesto.fila_atencion);
+                }
+            }
         }
         indice_puesto++;
     }

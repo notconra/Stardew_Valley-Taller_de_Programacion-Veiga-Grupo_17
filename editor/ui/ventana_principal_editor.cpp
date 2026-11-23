@@ -501,6 +501,7 @@ void VentanaPrincipalEditor::abrir_dialogo_redimensionar() {
     int filas_actuales = mapa_actual_sector->obtener_cantidad_de_filas();
     int indice_sector = combo_sectores->currentIndex();
     bool es_sector_granja = (indice_sector == 0);
+    bool es_sector_mercado = (indice_sector == 2);
 
     QDialog dialogo(this);
     dialogo.setWindowTitle("Redimensionar Terreno del Sector");
@@ -534,6 +535,18 @@ void VentanaPrincipalEditor::abrir_dialogo_redimensionar() {
 
         minimo_columnas = MapaEditable::MINIMO_ANCHO_UTIL_GRANJA;
         minimo_filas = MapaEditable::MINIMO_ALTO_UTIL_GRANJA;
+
+        int columna_maxima_ocupada = mapa_actual_sector->obtener_columna_maxima_ocupada();
+        int fila_maxima_ocupada = mapa_actual_sector->obtener_fila_maxima_ocupada();
+        if (columna_maxima_ocupada > minimo_columnas) {
+            minimo_columnas = columna_maxima_ocupada;
+        }
+        if (fila_maxima_ocupada > minimo_filas) {
+            minimo_filas = fila_maxima_ocupada;
+        }
+    } else if (es_sector_mercado) {
+        minimo_columnas = MapaEditable::MINIMO_COLUMNAS_MERCADO;
+        minimo_filas = MapaEditable::MINIMO_FILAS_MERCADO;
 
         int columna_maxima_ocupada = mapa_actual_sector->obtener_columna_maxima_ocupada();
         int fila_maxima_ocupada = mapa_actual_sector->obtener_fila_maxima_ocupada();
@@ -689,7 +702,11 @@ void VentanaPrincipalEditor::abrir_dialogo_redimensionar() {
                         fila_sur_frente_vieja);
                     columna_limpiar++;
                 }
-            } else if (indice_sector >= 2) {
+            } else if (es_sector_mercado) {
+                identificador_tile_relleno =
+                    CatalogoDeTerrenos::obtener_tile_base(SectorActual::MERCADO);
+                propiedades_relleno = PropiedadDeCasilla::DECORABLE;
+            } else if (indice_sector >= 3) {
                 propiedades_relleno =
                     PropiedadDeCasilla::DECORABLE | PropiedadDeCasilla::ADMITE_MINERAL;
             }
@@ -704,6 +721,8 @@ void VentanaPrincipalEditor::abrir_dialogo_redimensionar() {
                 mapa_actual_sector->generar_muro_perimetral_granja();
             } else if (indice_sector == 1) {
                 mapa_actual_sector->generar_muro_perimetral_pueblo();
+            } else if (es_sector_mercado) {
+                mapa_actual_sector->reconstruir_perimetro_mercado();
             }
 
             lienzo->actualizar_tamano_del_lienzo();
@@ -735,5 +754,10 @@ void VentanaPrincipalEditor::generar_muro_perimetral_granja() {
         lienzo->update();
         ejecutar_validacion();
         statusBar()->showMessage("Perimetro de vallas urbanas generado con exito.", 3000);
+    } else if (indice_sector == 2) {
+        mapa_actual_sector->reconstruir_perimetro_mercado();
+        lienzo->update();
+        ejecutar_validacion();
+        statusBar()->showMessage("Perimetro del mercado restaurado con exito.", 3000);
     }
 }

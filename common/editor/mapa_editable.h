@@ -66,6 +66,8 @@ public:
         MINIMO_ANCHO_UTIL_GRANJA + ANCHO_VALLA_OESTE_CASILLAS + ANCHO_VALLA_ESTE_CASILLAS;
     static constexpr int MINIMO_FILAS_TOTALES_GRANJA =
         MINIMO_ALTO_UTIL_GRANJA + ALTO_VALLA_NORTE_CASILLAS + ALTO_VALLA_SUR_CASILLAS;
+    static constexpr int MINIMO_COLUMNAS_MERCADO = 15;
+    static constexpr int MINIMO_FILAS_MERCADO = 13;
 
     bool columna_ocupada_por_transicion_norte(int columna) const;
     bool columna_ocupada_por_transicion_sur(int columna) const;
@@ -84,6 +86,8 @@ public:
     void estampar(const DefinicionEstampa& estampa, int columna_origen, int fila_origen);
     void generar_muro_perimetral_granja();
     void generar_muro_perimetral_pueblo();
+    void reconstruir_perimetro_mercado();
+    static bool es_tile_perimetro_mercado(uint32_t identificador_tile);
 
     void agregar_propiedad_a_casilla(int columna, int fila, uint8_t propiedad);
     void quitar_propiedad_de_casilla(int columna, int fila, uint8_t propiedad);
