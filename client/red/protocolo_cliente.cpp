@@ -86,6 +86,7 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const CerrarMercado& m) { enviar_comando_cerrar_mercado(m); },
             [this](const EnviarRegalo& m) { enviar_comando_enviar_regalo(m); },
             [this](const AbrirRegalos& m) { enviar_comando_abrir_regalos(m); },
+            [this](const RechazarRegalo& m) { enviar_comando_rechazar_regalo(m); },
             [this](const HablarConNpc& m) { enviar_comando_hablar_con_npc(m); },
             [this](const DonarAlLote& m) { enviar_comando_donar_al_lote(m); },
             [this](const DonarMonedasAlLote& m) { enviar_comando_donar_monedas_al_lote(m); },
@@ -232,6 +233,11 @@ void ProtocoloCliente::enviar_comando_enviar_regalo(const EnviarRegalo& regalo) 
 
 void ProtocoloCliente::enviar_comando_abrir_regalos(const AbrirRegalos&) {
     enviar_tipo(TipoMensaje::ABRIR_REGALOS);
+}
+
+void ProtocoloCliente::enviar_comando_rechazar_regalo(const RechazarRegalo& rechazo) {
+    enviar_tipo(TipoMensaje::RECHAZAR_REGALO);
+    enviar_u8(rechazo.indice);
 }
 
 void ProtocoloCliente::enviar_comando_hablar_con_npc(const HablarConNpc& hablar) {
