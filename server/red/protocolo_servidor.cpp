@@ -45,6 +45,7 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::CERRAR_MERCADO, [this] { return recibir_comando_cerrar_mercado(); }},
           {TipoMensaje::ENVIAR_REGALO, [this] { return recibir_comando_enviar_regalo(); }},
           {TipoMensaje::ABRIR_REGALOS, [this] { return recibir_comando_abrir_regalos(); }},
+          {TipoMensaje::RECHAZAR_REGALO, [this] { return recibir_comando_rechazar_regalo(); }},
           {TipoMensaje::HABLAR_CON_NPC, [this] { return recibir_comando_hablar_con_npc(); }},
           {TipoMensaje::DONAR_AL_LOTE, [this] { return recibir_comando_donar_al_lote(); }},
           {TipoMensaje::DONAR_MONEDAS_AL_LOTE,
@@ -220,6 +221,10 @@ EnviarRegalo ProtocoloServidor::recibir_comando_enviar_regalo() {
 
 AbrirRegalos ProtocoloServidor::recibir_comando_abrir_regalos() {
     return AbrirRegalos{};
+}
+
+RechazarRegalo ProtocoloServidor::recibir_comando_rechazar_regalo() {
+    return RechazarRegalo{recibir_u8()};
 }
 
 HablarConNpc ProtocoloServidor::recibir_comando_hablar_con_npc() {

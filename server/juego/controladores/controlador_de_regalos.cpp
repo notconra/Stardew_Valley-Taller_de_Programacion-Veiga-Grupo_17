@@ -1,5 +1,7 @@
 #include "controlador_de_regalos.h"
 
+#include <optional>
+#include <string>
 #include <variant>
 
 namespace {
@@ -26,6 +28,10 @@ bool ControladorDeRegalos::atender(Personaje& personaje, const ComandoCliente& c
         abrir(personaje);
         return true;
     }
+    if (const auto* pedido = std::get_if<RechazarRegalo>(&comando)) {
+        rechazar(personaje, *pedido);
+        return true;
+    }
     return false;
 }
 
@@ -36,8 +42,7 @@ void ControladorDeRegalos::enviar(Personaje& remitente, const EnviarRegalo& pedi
     }
 
     const RanuraInventario ranura = remitente.inventario.ranura(pedido.ranura);
-    if (ranura.tipo == TipoItem::NINGUNO || ranura.cantidad == 0 ||
-        catalogo.es_herramienta(ranura.tipo)) {
+    if (ranura.cantidad == 0 || !se_puede_regalar(catalogo, ranura.tipo)) {
         return;
     }
 
@@ -53,6 +58,30 @@ void ControladorDeRegalos::enviar(Personaje& remitente, const EnviarRegalo& pedi
     notificador.a_jugador(remitente.id_jugador, remitente.actualizacion_de_inventario());
     if (receptor.conectado) {
         avisar_regalos_pendientes(receptor);
+    }
+}
+
+bool ControladorDeRegalos::se_puede_regalar(const CatalogoDeItems& catalogo, TipoItem tipo) {
+    return tipo != TipoItem::NINGUNO && tipo != TipoItem::CAMA && !catalogo.es_herramienta(tipo);
+}
+
+void ControladorDeRegalos::rechazar(Personaje& personaje, const RechazarRegalo& pedido) {
+    std::optional<RegaloRecibido> regalo = personaje.buzon.sacar(pedido.indice);
+    if (!regalo.has_value()) {
+        return;
+    }
+    avisar_regalos_pendientes(personaje);
+
+    // Vuelve al buzón de quien lo mandó (el buzón sólo guarda el nombre del remitente).
+    const std::string nombre = personaje.nombre.empty() ? "Alguien" : personaje.nombre;
+    for (auto& [id, remitente] : personajes) {
+        if (id != personaje.id_jugador && remitente.nombre == regalo->remitente) {
+            remitente.buzon.depositar(nombre + " (devuelto)", regalo->item);
+            if (remitente.conectado) {
+                avisar_regalos_pendientes(remitente);
+            }
+            return;
+        }
     }
 }
 
