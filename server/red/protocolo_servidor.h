@@ -105,6 +105,7 @@ private:
     void enviar_evento_regalos_pendientes(const RegalosPendientes& pendientes);
     void enviar_evento_npcs_en_sector(const NpcsEnSector& npcs);
     void enviar_evento_dialogo_npc(const DialogoNpc& dialogo);
+    void enviar_evento_llamas_en_sector(const LlamasEnSector& llamas);
     void enviar_evento_lote_del_centro(const LoteDelCentro& lote);
     void enviar_evento_centro_terminado(const CentroTerminado& m);
     void enviar_evento_pregunta_de_dormir(const PreguntaDeDormir& pregunta);

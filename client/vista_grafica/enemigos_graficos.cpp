@@ -63,6 +63,27 @@ Hoja hoja_de_vampiro(const std::string& carpeta, const std::string& prefijo) {
     return hoja;
 }
 
+// Las Skulls: una calavera flotante de 4 cuadros, sin direcciones. No mueren (son invulnerables).
+Hoja hoja_de_skull(SDL_Color tinte) {
+    const std::string imagen = "Assets/Caverns/Enemies/Skull/skull_hoja.png";
+    Hoja hoja;
+    hoja.frame_ancho = 16;
+    hoja.frame_alto = 16;
+    hoja.pies_y = 16;
+    hoja.cabeza_y = 1;
+    hoja.escala = 1.2f;
+    hoja.quieto = {imagen, {0, 0, 0, 0}, 4, 150};
+    hoja.caminar = {imagen, {0, 0, 0, 0}, 4, 110};
+    hoja.ataque = {imagen, {0, 0, 0, 0}, 4, 60};
+    hoja.tinte = tinte;
+    return hoja;
+}
+
+// La llama de las Skulls: una sola imagen azul. La verde es la misma, teñida.
+constexpr const char* RUTA_LLAMA = "Assets/Caverns/Enemies/Skull/fire/fire_skull.png";
+constexpr float LADO_DE_LLAMA_EN_CASILLAS = 0.9f;
+constexpr SDL_Color TINTE_VERDE{110, 255, 110, 255};
+
 int cuadro_una_vez(const Animacion& animacion, uint32_t desde, uint32_t ahora) {
     return std::min(static_cast<int>((ahora - desde) / animacion.ms_por_cuadro), animacion.cuadros - 1);
 }
@@ -87,12 +108,15 @@ float interpolar(float desde, float hasta, float t) {
 
 EnemigosGraficos::EnemigosGraficos(SDL_Renderer* renderer, const ConfiguracionGraficos& graficos)
     : textura_de_sangre(RUTA_DE_SANGRE, renderer),
+    : llama(RUTA_LLAMA, renderer),
       tamano_de_tile(graficos.tamano_de_tile),
       escala_de_tiles(graficos.escala_de_tiles) {
     hojas.emplace(TipoEnemigo::ESQUELETO, hoja_de_esqueleto());
     hojas.emplace(TipoEnemigo::ORCO, hoja_de_orco());
     hojas.emplace(TipoEnemigo::VAMPIRA, hoja_de_vampiro("vampira", "Vampires3"));
     hojas.emplace(TipoEnemigo::VAMPIRO, hoja_de_vampiro("vampiro", "Vampires2"));
+    hojas.emplace(TipoEnemigo::SKULL_AZUL, hoja_de_skull(SDL_Color{255, 255, 255, 255}));
+    hojas.emplace(TipoEnemigo::SKULL_VERDE, hoja_de_skull(TINTE_VERDE));
 
     for (const auto& [tipo, hoja] : hojas) {
         for (const Animacion* animacion :
@@ -122,6 +146,28 @@ void EnemigosGraficos::dibujar(
         return std::none_of(estado.enemigos.begin(), estado.enemigos.end(),
             [&entrada](const EstadoEnemigo& e) { return e.id == entrada.first; });
     });
+
+    dibujar_llamas(renderer, estado, cam_x, cam_y);
+}
+
+void EnemigosGraficos::dibujar_llamas(
+    SDL_Renderer* renderer, const EstadoJuego& estado, int cam_x, int cam_y) const {
+    if (estado.llamas.empty()) {
+        return;
+    }
+    const float casilla = static_cast<float>(tamano_de_tile * escala_de_tiles);
+    const int lado = static_cast<int>(casilla * LADO_DE_LLAMA_EN_CASILLAS);
+    for (const EstadoLlama& actual : estado.llamas) {
+        const float x = static_cast<float>(actual.x_centesimas) / 100.0f * casilla;
+        const float y = static_cast<float>(actual.y_centesimas) / 100.0f * casilla;
+        const SDL_Rect destino{
+            static_cast<int>(x) - cam_x - lado / 2, static_cast<int>(y) - cam_y - lado / 2, lado,
+            lado};
+        const SDL_Color tinte = actual.verde ? TINTE_VERDE : SDL_Color{255, 255, 255, 255};
+        SDL_SetTextureColorMod(llama.ptr(), tinte.r, tinte.g, tinte.b);
+        SDL_RenderCopy(renderer, llama.ptr(), nullptr, &destino);
+    }
+    SDL_SetTextureColorMod(llama.ptr(), 255, 255, 255);
 }
 
 EnemigosGraficos::Posicion EnemigosGraficos::avanzar(
@@ -219,6 +265,7 @@ void EnemigosGraficos::dibujar_enemigo(SDL_Renderer* renderer, const Hoja& hoja,
         alto_px};
 
     SDL_SetTextureAlphaMod(imagen, cuadro.opacidad);
+    SDL_SetTextureColorMod(imagen, hoja.tinte.r, hoja.tinte.g, hoja.tinte.b);
     if (enemigo.frenesi) {
         SDL_SetTextureColorMod(imagen, 255, 110, 110);
     }

@@ -295,6 +295,7 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const RegalosPendientes& e) { enviar_evento_regalos_pendientes(e); },
             [this](const NpcsEnSector& e) { enviar_evento_npcs_en_sector(e); },
             [this](const DialogoNpc& e) { enviar_evento_dialogo_npc(e); },
+            [this](const LlamasEnSector& e) { enviar_evento_llamas_en_sector(e); },
             [this](const LoteDelCentro& e) { enviar_evento_lote_del_centro(e); },
             [this](const CentroTerminado& e) { enviar_evento_centro_terminado(e); },
             [this](const PreguntaDeDormir& e) { enviar_evento_pregunta_de_dormir(e); },
@@ -724,4 +725,16 @@ void ProtocoloServidor::enviar_evento_dialogo_npc(const DialogoNpc& dialogo) {
     enviar_tipo(TipoMensaje::DIALOGO_NPC);
     enviar_texto(dialogo.id_npc);
     enviar_texto(dialogo.texto);
+}
+
+void ProtocoloServidor::enviar_evento_llamas_en_sector(const LlamasEnSector& llamas) {
+    enviar_tipo(TipoMensaje::LLAMAS_EN_SECTOR);
+    enviar_texto(llamas.mapa);
+    enviar_largo(llamas.llamas.size());
+    for (const EstadoLlama& llama : llamas.llamas) {
+        enviar_u32(llama.id);
+        enviar_booleano(llama.verde);
+        enviar_u32(llama.x_centesimas);
+        enviar_u32(llama.y_centesimas);
+    }
 }

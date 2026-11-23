@@ -50,6 +50,7 @@ void ControladorDeEnemigos::atacar_en_sector(Sector& sector) {
             posiciones.emplace_back(id_jugador, *casilla);
         }
     }
+    manejar_llamas(sector, posiciones);
     if (posiciones.empty()) {
         return;
     }
@@ -63,25 +64,55 @@ void ControladorDeEnemigos::atacar_en_sector(Sector& sector) {
     }
 
     for (const GolpeDeEnemigo& golpe : sector.enemigos.atacar_adyacentes(posiciones)) {
-        const auto personaje = personajes.find(golpe.id_jugador);
-        if (personaje != personajes.end()) {
-            personaje->second.recibir_golpe(golpe.danio);
-            if (golpe.danio > 0) {
-                centro.al_lastimar_un_enemigo_a(golpe.id_jugador);
-            }
-            if (personaje->second.esta_inconsciente()) {
-                // Cae donde está: se frena. El fin de su día queda para cuando exista el ciclo
-                // de días (ver Mundo::atender, que ya le ignora los comandos).
-                sector.jugadores.moverse(golpe.id_jugador, 0, 0);
-            }
+        aplicar_golpe(sector, golpe);
+    }
+}
+void ControladorDeEnemigos::aplicar_golpe(Sector& sector, const GolpeDeEnemigo& golpe) {
+    const auto personaje = personajes.find(golpe.id_jugador);
+    if (personaje != personajes.end()) {
+        personaje->second.recibir_golpe(golpe.danio);
+        if (golpe.danio > 0) {
+            centro.al_lastimar_un_enemigo_a(golpe.id_jugador);
         }
+        if (personaje->second.esta_inconsciente()) {
+            // Cae donde está: se frena. El fin de su día queda para cuando exista el ciclo
+            // de días (ver Mundo::atender, que ya le ignora los comandos).
+            sector.jugadores.moverse(golpe.id_jugador, 0, 0);
+        }
+    }
 
-        const Enemigo* enemigo = sector.enemigos.buscar(static_cast<int>(golpe.id_enemigo));
-        if (enemigo != nullptr) {
-            EnemigoActualizado evento;
-            evento.enemigo = GestorDeEnemigos::estado_de(*enemigo);
-            sector.avisar(notificador, evento);
-        }
+    avisar_enemigo(sector, static_cast<int>(golpe.id_enemigo));
+}
+
+void ControladorDeEnemigos::manejar_llamas(
+    Sector& sector, const std::vector<std::pair<uint32_t, Casilla>>& posiciones) {
+    // 1. Las Skulls que pueden, disparan.
+    for (int id_enemigo : sector.enemigos.disparar(posiciones)) {
+        avisar_enemigo(sector, id_enemigo);
+    }
+
+    // 2. Las llamas avanzan; las que alcanzan a un jugador lo queman.
+    for (const GolpeDeEnemigo& golpe :
+         sector.enemigos.avanzar_llamas(posiciones, sector.colisiones)) {
+        aplicar_golpe(sector, golpe);
+    }
+
+    // 3. Si cambió algo, se les manda a los jugadores del sector dónde están las llamas.
+    std::vector<EstadoLlama> actuales = sector.enemigos.estado_de_llamas();
+    std::vector<EstadoLlama>& enviadas = llamas_enviadas[sector.id];
+    if (actuales == enviadas) {
+        return;
+    }
+    enviadas = actuales;
+    sector.avisar(notificador, LlamasEnSector{sector.id, std::move(actuales)});
+}
+
+void ControladorDeEnemigos::avisar_enemigo(Sector& sector, int id_enemigo) {
+    const Enemigo* enemigo = sector.enemigos.buscar(id_enemigo);
+    if (enemigo != nullptr) {
+        EnemigoActualizado evento;
+        evento.enemigo = GestorDeEnemigos::estado_de(*enemigo);
+        sector.avisar(notificador, evento);
     }
 }
 

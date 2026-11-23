@@ -277,6 +277,8 @@ void ConfiguracionCliente::cargar_sonido(const toml::table& archivo_toml) {
     if (const toml::table* trampas = sonido["trampas"].as_table()) {
         configuracion_vista.sonido.ruta_trampa_activada =
             lector_toml::leer_texto_opcional(*trampas, "activar", "sonido.trampas", "");
+        configuracion_vista.sonido.ruta_lanzallamas_activado =
+            lector_toml::leer_texto_opcional(*trampas, "lanzallamas", "sonido.trampas", "");
     }
     if (const toml::table* jugador = sonido["jugador"].as_table()) {
         configuracion_vista.sonido.ruta_jugador_danio =

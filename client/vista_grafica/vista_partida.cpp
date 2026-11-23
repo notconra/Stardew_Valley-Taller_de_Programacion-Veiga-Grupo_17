@@ -1098,7 +1098,7 @@ void VistaPartida::aplicar(
                 const bool se_encendio =
                     e.trampa.activa && (existente == estado.trampas.end() || !existente->activa);
                 if (se_encendio && trampa_se_escucha(e.trampa) && efectos_actuales != nullptr) {
-                    efectos_actuales->reproducir_trampa_activada();
+                    efectos_actuales->reproducir_trampa_activada(e.trampa.tipo);
                 }
                 if (existente == estado.trampas.end()) {
                     estado.trampas.push_back(e.trampa);
@@ -1195,6 +1195,11 @@ void VistaPartida::aplicar(
             [&](const NpcsEnSector& e) {
                 if (estado.mapa == e.mapa) {
                     estado.npcs = e.npcs;
+                }
+            },
+            [&](const LlamasEnSector& e) {
+                if (estado.mapa == e.mapa) {
+                    estado.llamas = e.llamas;
                 }
             },
             [&](const DialogoNpc& e) { cuadro_de_dialogo.mostrar(e.id_npc, e.texto); },
