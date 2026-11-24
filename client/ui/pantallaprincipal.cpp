@@ -295,7 +295,11 @@ bool PantallaPrincipal::procesar_evento_ingreso(const EventoServidor& evento) {
 
 std::string PantallaPrincipal::mundo_seleccionado() const {
     if (!ruta_mundo_personalizado.isEmpty()) {
-        return ruta_mundo_personalizado.toStdString();
+        QFileInfo info_directorio(ruta_mundo_personalizado);
+        QString nombre_carpeta = info_directorio.fileName();
+        if (!nombre_carpeta.isEmpty()) {
+            return nombre_carpeta.toStdString();
+        }
     }
     return "Mundo Estandar";
 }
