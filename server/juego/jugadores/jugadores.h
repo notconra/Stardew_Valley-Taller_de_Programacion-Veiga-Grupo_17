@@ -66,6 +66,7 @@ public:
     void agregar_en(uint32_t id_jugador, double x, double y, Direccion mirando = Direccion::ABAJO);
     void agregar_en_aparicion(uint32_t id_jugador);
     void establecer_aparicion(double x, double y);
+    bool puede_pararse_en_casilla(int columna, int fila) const;
 
     // Rota la dirección del personaje hacia la casilla del objetivo
     void mirar_hacia(uint32_t id_jugador, const Casilla& casilla_destino);

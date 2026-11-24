@@ -112,6 +112,14 @@ private:
     static constexpr int COLUMNA_PUERTA_CASETA_MINA = 2;
     static constexpr int FILA_PUERTA_CASETA_MINA = 6;
 
+    // Tiles de entidades en Caverna (mine.png)
+    static constexpr uint32_t TILE_ESCALERA_CAVERNA = 174;
+    static constexpr uint32_t TILE_SALIDA_CAVERNA_BASE = 116;
+    static constexpr uint32_t TILE_SALIDA_CAVERNA_TRAMO_1 = 100;
+    static constexpr uint32_t TILE_SALIDA_CAVERNA_TRAMO_2 = 84;
+    static constexpr uint32_t TILE_SALIDA_CAVERNA_TRAMO_3 = 68;
+    static constexpr int CANTIDAD_TRAMOS_SALIDA_CAVERNA = 4;
+
     EscritorTMX escritor;
     SectorActual sector;
     const MapaEditable& mapa;
@@ -136,6 +144,12 @@ private:
         int origen_columna, int origen_fila, int total_columnas, int total_filas,
         std::vector<uint32_t>& tiles_suelo, std::vector<uint32_t>& tiles_estructuras,
         std::vector<uint32_t>& tiles_frente, std::vector<uint32_t>& tiles_colisiones);
+    void inyectar_tiles_de_escalera_caverna(
+        int origen_columna, int origen_fila, int total_columnas, int total_filas,
+        std::vector<uint32_t>& tiles_estructuras, std::vector<uint32_t>& tiles_colisiones);
+    void inyectar_tiles_de_salida_caverna(
+        int origen_columna, int origen_fila, int total_columnas, int total_filas,
+        std::vector<uint32_t>& tiles_estructuras, std::vector<uint32_t>& tiles_colisiones);
 
 public:
     ExportadorDeSectorTMX(

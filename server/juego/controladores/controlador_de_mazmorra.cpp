@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "../../../common/editor/definicion_de_mundo.h"
 #include "../../../common/tipo_enemigo.h"
 #include "../../../common/tipo_item.h"
 #include "../../../common/tipo_objeto.h"
@@ -25,7 +26,18 @@ ControladorDeMazmorra::ControladorDeMazmorra(
     std::random_device dispositivo;
     std::mt19937 generador(dispositivo());
     generador_de_cofres.seed(dispositivo());
-    if (!niveles_guardados.empty()) {
+    if (sectores.tiene_mazmorra_personalizada()) {
+        bool guardados_validos = !niveles_guardados.empty();
+        size_t indice_nivel = 0;
+        while (indice_nivel < niveles_guardados.size() && guardados_validos) {
+            if (!sectores.es_mapa_personalizado(niveles_guardados[indice_nivel])) {
+                guardados_validos = false;
+            }
+            indice_nivel++;
+        }
+        niveles_de_mazmorra =
+            guardados_validos ? niveles_guardados : DefinicionDeMundo::ids_sectores_mazmorra();
+    } else if (!niveles_guardados.empty()) {
         niveles_de_mazmorra = niveles_guardados;
     } else {
         niveles_de_mazmorra = CargadorMazmorra::elegir_niveles(recursos.mazmorra.mapas, generador);
@@ -34,7 +46,12 @@ ControladorDeMazmorra::ControladorDeMazmorra(
     std::vector<GeografiaNivel> geografias;
     geografias.reserve(niveles_de_mazmorra.size());
     for (const std::string& id_mapa : niveles_de_mazmorra) {
-        geografias.push_back(recursos.geografias_de_mazmorra.at(id_mapa));
+        if (sectores.es_mapa_personalizado(id_mapa)) {
+            geografias.push_back(
+                CargadorMazmorra::crear_geografia(id_mapa, sectores.en(id_mapa).mapa));
+        } else {
+            geografias.push_back(recursos.geografias_de_mazmorra.at(id_mapa));
+        }
     }
     mazmorra.emplace(
         std::move(geografias),

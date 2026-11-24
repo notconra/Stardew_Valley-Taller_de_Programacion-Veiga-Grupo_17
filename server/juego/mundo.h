@@ -55,6 +55,10 @@ private:
     ControladorDeRegalos controlador_de_regalos;
 
     void resolver_transicion(Personaje& personaje, const Transicion& transicion);
+    bool trasladar_a_transicion_opuesta(
+        Personaje& personaje, Sector& sector_destino, const std::string& destino,
+        const std::vector<std::string>& destinos_buscados, int desplazamiento_columna,
+        int desplazamiento_fila, bool usar_borde_inferior, bool incluir_prefijo_mina);
 
     // Responde el diálogo del NPC si el jugador está cerca. El texto lo elige el servidor según
     // el día y la hora.

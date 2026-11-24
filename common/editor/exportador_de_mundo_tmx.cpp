@@ -22,15 +22,16 @@ void ExportadorDeMundoTMX::obtener_coordenadas_de_entidad_requerida(
 
 bool ExportadorDeMundoTMX::exportar_mundo_completo(
     const std::string& ruta_directorio_destino, const DefinicionDeMundo& mundo) {
-    if (mundo.obtener_cantidad_de_niveles_mazmorra() == 0) {
+    size_t cantidad_de_niveles = mundo.obtener_cantidad_de_niveles_mazmorra();
+    if (cantidad_de_niveles != DefinicionDeMundo::ids_sectores_mazmorra().size()) {
         throw std::runtime_error(
-            "No se puede guardar el mundo: no hay niveles de caverna definidos.");
+            "No se puede guardar el mundo: debe tener exactamente 10 niveles de caverna "
+            "definidos.");
     }
 
     const MapaEditable& granja = mundo.obtener_sector_granja();
     const MapaEditable& pueblo = mundo.obtener_sector_pueblo();
     const MapaEditable& mercado = mundo.obtener_sector_mercado();
-    const MapaEditable& caverna = mundo.obtener_nivel_mazmorra(0);
 
     // 1. Validar que existan las transiciones obligatorias entre sectores
     int col_pueblo_en_granja = 0;
@@ -72,10 +73,10 @@ bool ExportadorDeMundoTMX::exportar_mundo_completo(
     int col_salida_en_caverna = 0;
     int fil_salida_en_caverna = 0;
     obtener_coordenadas_de_entidad_requerida(
-        caverna,
+        mundo.obtener_nivel_mazmorra(0),
         TipoEntidad::SALIDA_CAVERNA,
-        "No se puede guardar el mundo: la caverna debe tener configurada una salida hacia la "
-        "granja.",
+        "No se puede guardar el mundo: el nivel 1 de la caverna debe tener configurada una "
+        "salida hacia la granja.",
         col_salida_en_caverna,
         fil_salida_en_caverna);
 
@@ -115,12 +116,10 @@ bool ExportadorDeMundoTMX::exportar_mundo_completo(
     std::string ruta_granja = ruta_directorio_destino + "/" + NOMBRE_ARCHIVO_GRANJA;
     std::string ruta_pueblo = ruta_directorio_destino + "/" + NOMBRE_ARCHIVO_PUEBLO;
     std::string ruta_mercado = ruta_directorio_destino + "/" + NOMBRE_ARCHIVO_MERCADO;
-    std::string ruta_caverna = ruta_directorio_destino + "/" + NOMBRE_ARCHIVO_CAVERNA;
 
     ExportadorDeSectorTMX exportador_granja(SectorActual::GRANJA, granja, destinos_granja);
     ExportadorDeSectorTMX exportador_pueblo(SectorActual::PUEBLO, pueblo, destinos_pueblo);
     ExportadorDeSectorTMX exportador_mercado(SectorActual::MERCADO, mercado, destinos_mercado);
-    ExportadorDeSectorTMX exportador_caverna(SectorActual::CAVERNA, caverna, destinos_caverna);
 
     if (!exportador_granja.exportar_a_archivo(ruta_granja)) {
         throw std::runtime_error("Fallo al escribir el archivo: " + ruta_granja);
@@ -131,8 +130,36 @@ bool ExportadorDeMundoTMX::exportar_mundo_completo(
     if (!exportador_mercado.exportar_a_archivo(ruta_mercado)) {
         throw std::runtime_error("Fallo al escribir el archivo: " + ruta_mercado);
     }
-    if (!exportador_caverna.exportar_a_archivo(ruta_caverna)) {
-        throw std::runtime_error("Fallo al escribir el archivo: " + ruta_caverna);
+
+    size_t indice_nivel = 0;
+    while (indice_nivel < cantidad_de_niveles) {
+        const MapaEditable& nivel = mundo.obtener_nivel_mazmorra(indice_nivel);
+        int col_salida_nivel = 0;
+        int fil_salida_nivel = 0;
+        obtener_coordenadas_de_entidad_requerida(
+            nivel,
+            TipoEntidad::SALIDA_CAVERNA,
+            "No se puede guardar el mundo: el nivel " + std::to_string(indice_nivel + 1) +
+                " de la caverna debe tener configurada una salida hacia la granja.",
+            col_salida_nivel,
+            fil_salida_nivel);
+        int col_escalera_nivel = 0;
+        int fil_escalera_nivel = 0;
+        obtener_coordenadas_de_entidad_requerida(
+            nivel,
+            TipoEntidad::ESCALERA_NIVEL,
+            "No se puede guardar el mundo: el nivel " + std::to_string(indice_nivel + 1) +
+                " de la caverna debe tener una escalera hacia el siguiente nivel.",
+            col_escalera_nivel,
+            fil_escalera_nivel);
+
+        std::string ruta_caverna =
+            ruta_directorio_destino + "/" + DefinicionDeMundo::nombre_archivo_caverna(indice_nivel);
+        ExportadorDeSectorTMX exportador_caverna(SectorActual::CAVERNA, nivel, destinos_caverna);
+        if (!exportador_caverna.exportar_a_archivo(ruta_caverna)) {
+            throw std::runtime_error("Fallo al escribir el archivo: " + ruta_caverna);
+        }
+        indice_nivel++;
     }
 
     return true;

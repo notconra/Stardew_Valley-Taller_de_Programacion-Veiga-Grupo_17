@@ -16,7 +16,6 @@ public:
     static constexpr const char* NOMBRE_ARCHIVO_GRANJA = "granja.tmx";
     static constexpr const char* NOMBRE_ARCHIVO_PUEBLO = "pueblo.tmx";
     static constexpr const char* NOMBRE_ARCHIVO_MERCADO = "mercado.tmx";
-    static constexpr const char* NOMBRE_ARCHIVO_CAVERNA = "caverna.tmx";
 
     static bool exportar_mundo_completo(
         const std::string& ruta_directorio_destino, const DefinicionDeMundo& mundo);

@@ -178,10 +178,14 @@ void ExportadorDeSectorTMX::exportar_capas_de_tiles() {
         CasillaDelMapa casilla_suelo = mapa.obtener_casilla_en_capa(TipoCapa::SUELO, columna, fila);
         CasillaDelMapa casilla_estructuras =
             mapa.obtener_casilla_en_capa(TipoCapa::ESTRUCTURAS, columna, fila);
+        CasillaDelMapa casilla_frente =
+            mapa.obtener_casilla_en_capa(TipoCapa::FRENTE, columna, fila);
 
         if (casilla_suelo.tiene_propiedad(PropiedadDeCasilla::BLOQUEA)) {
             tiles_colisiones[indice_casilla] = 1;
         } else if (casilla_estructuras.tiene_propiedad(PropiedadDeCasilla::BLOQUEA)) {
+            tiles_colisiones[indice_casilla] = 1;
+        } else if (casilla_frente.tiene_propiedad(PropiedadDeCasilla::BLOQUEA)) {
             tiles_colisiones[indice_casilla] = 1;
         } else if (tiles_estructuras[indice_casilla] != 0) {
             tiles_colisiones[indice_casilla] = 1;
@@ -237,6 +241,22 @@ void ExportadorDeSectorTMX::exportar_capas_de_tiles() {
                 tiles_estructuras,
                 tiles_frente,
                 tiles_colisiones);
+        } else if (tipo == TipoEntidad::ESCALERA_NIVEL && sector == SectorActual::CAVERNA) {
+            inyectar_tiles_de_escalera_caverna(
+                origen_columna,
+                origen_fila,
+                total_columnas,
+                total_filas,
+                tiles_estructuras,
+                tiles_colisiones);
+        } else if (tipo == TipoEntidad::SALIDA_CAVERNA && sector == SectorActual::CAVERNA) {
+            inyectar_tiles_de_salida_caverna(
+                origen_columna,
+                origen_fila,
+                total_columnas,
+                total_filas,
+                tiles_estructuras,
+                tiles_colisiones);
         }
         indice_entidad++;
     }
@@ -271,15 +291,21 @@ void ExportadorDeSectorTMX::exportar_capas_de_tiles() {
             f++;
         }
 
-        // Exportar Back2 (muro de piedra, moldura y alfombra azul)
+        // Exportar Back2 (muro de piedra, moldura y alfombra azul sin pisar paredes exteriores)
+        int columna_puerta_mercado = total_columnas / 2;
         f = 0;
         while (f < total_filas) {
             int c = 0;
             while (c < total_columnas) {
                 size_t idx = static_cast<size_t>(f * total_columnas + c);
-                uint32_t identificador_suelo = tiles_suelo[idx];
-                if (identificador_suelo > 0) {
-                    capa_back2[idx] = identificador_suelo;
+                bool es_interior =
+                    (f >= 1 && f < total_filas - 1 && c >= 1 && c < total_columnas - 1);
+                bool es_umbral_puerta = (f == total_filas - 1 && c == columna_puerta_mercado);
+                if (es_interior || es_umbral_puerta) {
+                    uint32_t identificador_suelo = tiles_suelo[idx];
+                    if (identificador_suelo > 0) {
+                        capa_back2[idx] = identificador_suelo;
+                    }
                 }
                 c++;
             }
@@ -345,7 +371,8 @@ void ExportadorDeSectorTMX::exportar_capas_de_tiles() {
             f++;
         }
 
-        // Exportar Buildings2 (muebles y estructuras interiores)
+        // Exportar Buildings2 (muebles y estructuras interiores, sin duplicar paredes en fila
+        // zócalo)
         f = 1;
         while (f < total_filas - 1) {
             int c = 1;
@@ -353,7 +380,9 @@ void ExportadorDeSectorTMX::exportar_capas_de_tiles() {
                 if (f != 3) {
                     size_t idx = static_cast<size_t>(f * total_columnas + c);
                     uint32_t identificador_estructura = tiles_estructuras[idx];
-                    if (identificador_estructura > 0) {
+                    bool es_muro_duplicado =
+                        (f == total_filas - 2 && identificador_estructura == capa_paredes[idx]);
+                    if (identificador_estructura > 0 && !es_muro_duplicado) {
                         capa_buildings2[idx] = identificador_estructura;
                     }
                 }
@@ -398,17 +427,20 @@ void ExportadorDeSectorTMX::exportar_capas_de_tiles() {
         while (indice_colisiones < total_casillas) {
             int fila = static_cast<int>(indice_colisiones / static_cast<size_t>(total_columnas));
             int columna = static_cast<int>(indice_colisiones % static_cast<size_t>(total_columnas));
+            CasillaDelMapa casilla_suelo =
+                mapa.obtener_casilla_en_capa(TipoCapa::SUELO, columna, fila);
             CasillaDelMapa casilla =
                 mapa.obtener_casilla_en_capa(TipoCapa::ESTRUCTURAS, columna, fila);
-            if (fila == 0 || fila >= total_filas - 2 || columna == 0 ||
+            if (fila == 0 || fila >= total_filas - 1 || columna == 0 ||
                 columna == total_columnas - 1) {
-                if (columna == columna_puerta_frente &&
-                    (fila == total_filas - 2 || fila == total_filas - 1)) {
+                if (columna == columna_puerta_frente && fila == total_filas - 1) {
                     tiles_colisiones[indice_colisiones] = 0;
                 } else {
                     tiles_colisiones[indice_colisiones] = 1;
                 }
-            } else if (casilla.tiene_propiedad(PropiedadDeCasilla::BLOQUEA)) {
+            } else if (
+                casilla.tiene_propiedad(PropiedadDeCasilla::BLOQUEA) ||
+                casilla_suelo.tiene_propiedad(PropiedadDeCasilla::BLOQUEA)) {
                 tiles_colisiones[indice_colisiones] = 1;
             }
             indice_colisiones++;
@@ -614,6 +646,63 @@ void ExportadorDeSectorTMX::inyectar_tiles_de_entrada_caverna(
             columna_local++;
         }
         fila_local++;
+    }
+}
+
+void ExportadorDeSectorTMX::inyectar_tiles_de_escalera_caverna(
+    int origen_columna, int origen_fila, int total_columnas, int total_filas,
+    std::vector<uint32_t>& tiles_estructuras, std::vector<uint32_t>& tiles_colisiones) {
+    if (origen_columna < 0 || origen_columna >= total_columnas || origen_fila < 0 ||
+        origen_fila >= total_filas) {
+        return;
+    }
+    size_t indice_mapa = static_cast<size_t>(origen_fila * total_columnas + origen_columna);
+    tiles_estructuras[indice_mapa] = TILE_ESCALERA_CAVERNA;
+    tiles_colisiones[indice_mapa] = 1;
+}
+
+void ExportadorDeSectorTMX::inyectar_tiles_de_salida_caverna(
+    int origen_columna, int origen_fila, int total_columnas, int total_filas,
+    std::vector<uint32_t>& tiles_estructuras, std::vector<uint32_t>& tiles_colisiones) {
+    if (origen_columna < 0 || origen_columna >= total_columnas || origen_fila < 0 ||
+        origen_fila >= total_filas) {
+        return;
+    }
+    size_t indice_base = static_cast<size_t>(origen_fila * total_columnas + origen_columna);
+    tiles_estructuras[indice_base] = TILE_SALIDA_CAVERNA_BASE;
+    tiles_colisiones[indice_base] = 0;
+
+    int altura_muro = 0;
+    bool continuar_subiendo = true;
+    while (altura_muro < CANTIDAD_TRAMOS_SALIDA_CAVERNA && continuar_subiendo) {
+        int fila_objetivo = origen_fila - (altura_muro + 1);
+        if (fila_objetivo < 0) {
+            continuar_subiendo = false;
+        } else {
+            size_t indice_objetivo =
+                static_cast<size_t>(fila_objetivo * total_columnas + origen_columna);
+            if (tiles_colisiones[indice_objetivo] == 1 &&
+                MapaEditable::es_tile_muro_caverna(tiles_estructuras[indice_objetivo])) {
+                altura_muro++;
+            } else {
+                continuar_subiendo = false;
+            }
+        }
+    }
+
+    int paso = 1;
+    while (paso <= altura_muro) {
+        int fila_objetivo = origen_fila - paso;
+        size_t indice_objetivo =
+            static_cast<size_t>(fila_objetivo * total_columnas + origen_columna);
+        if (paso == altura_muro) {
+            tiles_estructuras[indice_objetivo] = TILE_SALIDA_CAVERNA_TRAMO_3;
+        } else if (paso % 2 == 1) {
+            tiles_estructuras[indice_objetivo] = TILE_SALIDA_CAVERNA_TRAMO_1;
+        } else {
+            tiles_estructuras[indice_objetivo] = TILE_SALIDA_CAVERNA_TRAMO_2;
+        }
+        paso++;
     }
 }
 
