@@ -13,6 +13,7 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
       receptores_eventos{
           {TipoMensaje::ERROR_SERVIDOR, [this] { return recibir_error_servidor(); }},
           {TipoMensaje::LISTA_PARTIDAS, [this] { return recibir_lista_partidas(); }},
+          {TipoMensaje::LISTA_MUNDOS, [this] { return recibir_lista_mundos(); }},
           {TipoMensaje::PARTIDA_ENTRADA, [this] { return recibir_entrada_exitosa_a_partida(); }},
           {TipoMensaje::MULTIJUGADOR_ACTIVADO, [this] { return recibir_multijugador_activado(); }},
           {TipoMensaje::PARTIDA_ABANDONADA, [this] { return recibir_partida_abandonada(); }},
@@ -66,6 +67,7 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const UnirsePartida& m) { enviar_comando_unirse_partida(m); },
             [this](const RetomarPartida& m) { enviar_comando_retomar_partida(m); },
             [this](const EliminarPartida& m) { enviar_comando_eliminar_partida(m); },
+            [this](const ListarMundos& m) { enviar_comando_listar_mundos(m); },
             [this](const ActivarMultijugador& m) { enviar_comando_activar_multijugador(m); },
             [this](const SalirDePartida& m) { enviar_comando_salir_de_partida(m); },
             [this](const GuardarPartida& m) { enviar_comando_guardar_partida(m); },
@@ -131,6 +133,10 @@ void ProtocoloCliente::enviar_comando_retomar_partida(const RetomarPartida& reto
 void ProtocoloCliente::enviar_comando_eliminar_partida(const EliminarPartida& eliminar) {
     enviar_tipo(TipoMensaje::ELIMINAR_PARTIDA);
     enviar_texto(eliminar.codigo_partida);
+}
+
+void ProtocoloCliente::enviar_comando_listar_mundos(const ListarMundos&) {
+    enviar_tipo(TipoMensaje::LISTAR_MUNDOS);
 }
 
 void ProtocoloCliente::enviar_comando_activar_multijugador(const ActivarMultijugador&) {
@@ -329,6 +335,16 @@ ListaPartidas ProtocoloCliente::recibir_lista_partidas() {
     }
 
     return ListaPartidas{partidas};
+}
+
+ListaMundos ProtocoloCliente::recibir_lista_mundos() {
+    uint16_t cantidad = recibir_u16();
+    std::vector<std::string> mundos;
+    mundos.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        mundos.push_back(recibir_texto());
+    }
+    return ListaMundos{mundos};
 }
 
 EntradaExitosaAPartida ProtocoloCliente::recibir_entrada_exitosa_a_partida() {

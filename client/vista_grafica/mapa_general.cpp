@@ -1,13 +1,27 @@
 #include "mapa_general.h"
 
 #include <algorithm>
+#include <cmath>
+#include <exception>
+#include <iostream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "../../common/editor/cargador_de_mundo_tmx.h"
+#include "../../common/lector_de_mapas_tmx/lector_de_mapas.h"
+#include "../../common/llegadas.h"
+#include "mapa_grafico.h"
+
 // La parte del valle de map.png (la de arriba; el resto son otras zonas de Stardew).
 #define ANCHO_DEL_VALLE 300
 #define ALTO_DEL_VALLE 180
+
+// En un mundo del editor, el espacio entre la granja y el pueblo, en píxeles del plano.
+#define SEPARACION_DE_LOS_MAPAS 32
+// La capa de los TMX con las llegadas.
+#define CAPA_DE_TRANSICIONES "Transiciones"
 
 #define PUNTOS_DEL_TITULO 26
 #define PUNTOS_DE_LA_LETRA 18
@@ -21,52 +35,13 @@
 
 namespace {
 
-struct ZonaDelValle {
-    const char* mapa;
-    const char* nombre;
-    SDL_Rect en_el_dibujo;
-    int columnas;
-    int filas;
-};
-
-const ZonaDelValle ZONAS[] = {
-    {"granja", "Granja", {70, 60, 48, 52}, 80, 65},
-    {"BusStop", "Parada del bus", {118, 48, 27, 14}, 65, 30},
-    {"Town", "Pueblo", {145, 42, 95, 85}, 130, 110},
-};
-
-struct Interior {
-    const char* mapa;
-    const char* nombre;
-    SDL_Point en_el_dibujo;
-};
-
+// Dónde está cada cosa en el dibujo del valle (píxeles de map.png).
 const SDL_Point CASA{106, 70};
 const SDL_Point ENTRADA_A_LA_MAZMORRA{90, 63};
 const SDL_Point MERCADO{176, 84};
 const SDL_Point CENTRO_COMUNITARIO{183, 57};
 const SDL_Point COLECTIVO{125, 56};
-
-const Interior INTERIORES[] = {
-    {"FarmHouse2", "Casa", CASA},
-    {"mercado", "Mercado", MERCADO},
-    {"centro_comunitario", "Centro comunitario", CENTRO_COMUNITARIO},
-    {"centro_comunitario_arreglado", "Centro comunitario", CENTRO_COMUNITARIO},
-    {"Bus_Interior", "Colectivo", COLECTIVO},
-};
-
-struct LugarImportante {
-    const char* nombre;
-    SDL_Point en_el_dibujo;
-};
-
-const LugarImportante LUGARES[] = {
-    {"Granja", {94, 92}},
-    {"Casa", CASA},
-    {"Entrada a la mazmorra", ENTRADA_A_LA_MAZMORRA},
-    {"Mercado", MERCADO},
-    {"Centro comunitario", CENTRO_COMUNITARIO},
-};
+const SDL_Point GRANJA{94, 92};
 
 const std::pair<Estacion, const char*> RUTAS_DE_LOS_FONDOS[] = {
     {Estacion::PRIMAVERA, "Assets/LooseSprites/map.png"},
@@ -75,6 +50,7 @@ const std::pair<Estacion, const char*> RUTAS_DE_LOS_FONDOS[] = {
     {Estacion::INVIERNO, "Assets/LooseSprites/map_winter.png"},
 };
 
+// El propio va en celeste; los demás, en el orden de la partida, con estos colores.
 const SDL_Color COLOR_PROPIO{70, 200, 255, 255};
 const SDL_Color COLORES_DE_LOS_DEMAS[] = {
     {240, 90, 90, 255},
@@ -97,8 +73,179 @@ const SDL_Color COLOR_DE_LA_LISTA{60, 30, 10, 255};
 MapaGeneral::MapaGeneral(SDL_Renderer* renderer, const std::string& ruta_fuente)
     : fuente_del_titulo(renderer, ruta_fuente, PUNTOS_DEL_TITULO),
       fuente(renderer, ruta_fuente, PUNTOS_DE_LA_LETRA) {
+    usar_el_valle(renderer);
+}
+
+void MapaGeneral::usar_el_valle(SDL_Renderer* renderer) {
+    mundo_propio.reset();
+    ancho_del_plano = ANCHO_DEL_VALLE;
+    alto_del_plano = ALTO_DEL_VALLE;
+    // Su tamaño en casillas es el de su .tmx.
+    zonas = {
+        {"granja", "Granja", {70, 60, 48, 52}, 80, 65},
+        {"BusStop", "Parada del bus", {118, 48, 27, 14}, 65, 30},
+        {"Town", "Pueblo", {145, 42, 95, 85}, 130, 110},
+    };
+    interiores = {
+        {"FarmHouse2", "Casa", CASA},
+        {"mercado", "Mercado", MERCADO},
+        {"centro_comunitario", "Centro comunitario", CENTRO_COMUNITARIO},
+        {"centro_comunitario_arreglado", "Centro comunitario", CENTRO_COMUNITARIO},
+        {"Bus_Interior", "Colectivo", COLECTIVO},
+    };
+    lugares = {
+        {"", "Granja", GRANJA},
+        {"", "Casa", CASA},
+        {"", "Entrada a la mazmorra", ENTRADA_A_LA_MAZMORRA},
+        {"", "Mercado", MERCADO},
+        {"", "Centro comunitario", CENTRO_COMUNITARIO},
+    };
+    entrada_a_la_mazmorra = ENTRADA_A_LA_MAZMORRA;
+    fondos.clear();
     for (const auto& [estacion, ruta] : RUTAS_DE_LOS_FONDOS) {
-        fondos.try_emplace(estacion, ruta, renderer);
+        std::vector<Pieza> piezas;
+        piezas.push_back(Pieza{
+            Textura(ruta, renderer),
+            SDL_Rect{0, 0, ANCHO_DEL_VALLE, ALTO_DEL_VALLE},
+            SDL_Rect{0, 0, ANCHO_DEL_VALLE, ALTO_DEL_VALLE}});
+        fondos.emplace(estacion, std::move(piezas));
+    }
+}
+
+void MapaGeneral::usar_mundo(
+    const std::string& nombre_mundo, const ConfiguracionMapa& granja,
+    const ConfiguracionMapa& pueblo, const ConfiguracionGraficos& graficos) {
+    const std::string ruta_granja =
+        CargadorDeMundoTMX::resolver_ruta_sector(nombre_mundo, "granja");
+    const std::string ruta_pueblo = CargadorDeMundoTMX::resolver_ruta_sector(nombre_mundo, "Town");
+    if (ruta_granja.empty() || ruta_pueblo.empty()) {
+        return;
+    }
+    const LectorDeMapasTMX lector_granja(ruta_granja);
+    const LectorDeMapasTMX lector_pueblo(ruta_pueblo);
+    const TamanioMapa tamanio_granja = lector_granja.leer_tamanio();
+    const TamanioMapa tamanio_pueblo = lector_pueblo.leer_tamanio();
+    if (tamanio_granja.ancho_en_casillas <= 0 || tamanio_pueblo.ancho_en_casillas <= 0) {
+        std::cerr << "[mapa general] no se pudo leer el mundo " << nombre_mundo << "\n";
+        return;
+    }
+
+    // La granja a la izquierda y el pueblo a la derecha, centrados a lo alto.
+    const int ancho_granja = tamanio_granja.ancho_en_casillas * tamanio_granja.ancho_de_casilla;
+    const int alto_granja = tamanio_granja.alto_en_casillas * tamanio_granja.alto_de_casilla;
+    const int ancho_pueblo = tamanio_pueblo.ancho_en_casillas * tamanio_pueblo.ancho_de_casilla;
+    const int alto_pueblo = tamanio_pueblo.alto_en_casillas * tamanio_pueblo.alto_de_casilla;
+    ancho_del_plano = ancho_granja + SEPARACION_DE_LOS_MAPAS + ancho_pueblo;
+    alto_del_plano = std::max(alto_granja, alto_pueblo);
+    const SDL_Rect en_la_granja{0, (alto_del_plano - alto_granja) / 2, ancho_granja, alto_granja};
+    const SDL_Rect en_el_pueblo{
+        ancho_granja + SEPARACION_DE_LOS_MAPAS,
+        (alto_del_plano - alto_pueblo) / 2,
+        ancho_pueblo,
+        alto_pueblo};
+    zonas = {
+        {"granja",
+         "Granja",
+         en_la_granja,
+         tamanio_granja.ancho_en_casillas,
+         tamanio_granja.alto_en_casillas},
+        {"Town",
+         "Pueblo",
+         en_el_pueblo,
+         tamanio_pueblo.ancho_en_casillas,
+         tamanio_pueblo.alto_en_casillas},
+    };
+
+    // El medio de la casilla de la llegada, o el medio del mapa si no la tiene.
+    const std::vector<LlegadaTMX> llegadas_granja =
+        lector_granja.cargar_llegadas(CAPA_DE_TRANSICIONES);
+    const std::vector<LlegadaTMX> llegadas_pueblo =
+        lector_pueblo.cargar_llegadas(CAPA_DE_TRANSICIONES);
+    const auto punto_de = [](const std::vector<LlegadaTMX>& llegadas,
+                             const SDL_Rect& zona,
+                             const TamanioMapa& tamanio,
+                             const std::string& nombre) {
+        for (const LlegadaTMX& llegada : llegadas) {
+            if (llegada.nombre == nombre) {
+                return SDL_Point{
+                    zona.x + llegada.x + tamanio.ancho_de_casilla / 2,
+                    zona.y + llegada.y + tamanio.alto_de_casilla / 2};
+            }
+        }
+        return SDL_Point{zona.x + zona.w / 2, zona.y + zona.h / 2};
+    };
+    const SDL_Point casa =
+        punto_de(llegadas_granja, en_la_granja, tamanio_granja, LLEGADA_PUERTA_DE_LA_CASA);
+    const SDL_Point cueva = punto_de(llegadas_granja, en_la_granja, tamanio_granja, LLEGADA_CUEVA);
+    const SDL_Point mercado =
+        punto_de(llegadas_pueblo, en_el_pueblo, tamanio_pueblo, LLEGADA_PUERTA_DEL_MERCADO);
+    const SDL_Point centro =
+        punto_de(llegadas_pueblo, en_el_pueblo, tamanio_pueblo, LLEGADA_PUERTA_DEL_CENTRO);
+    interiores = {
+        {"FarmHouse2", "Casa", casa},
+        {"mercado", "Mercado", mercado},
+        {"centro_comunitario", "Centro comunitario", centro},
+        {"centro_comunitario_arreglado", "Centro comunitario", centro},
+    };
+    lugares = {
+        {"", "Granja", SDL_Point{en_la_granja.x + MARGEN, en_la_granja.y + MARGEN}},
+        {"", "Pueblo", SDL_Point{en_el_pueblo.x + MARGEN, en_el_pueblo.y + MARGEN}},
+        {"", "Casa", casa},
+        {"", "Entrada a la mazmorra", cueva},
+        {"", "Mercado", mercado},
+        {"", "Centro comunitario", centro},
+    };
+    entrada_a_la_mazmorra = cueva;
+    mundo_propio = MundoPropio{nombre_mundo, granja, pueblo, graficos};
+    fondos.clear();
+}
+
+Textura MapaGeneral::dibujar_en_una_imagen(
+    SDL_Renderer* renderer, const ConfiguracionMapa& configuracion, Estacion estacion) const {
+    ConfiguracionGraficos graficos = mundo_propio->graficos;
+    graficos.escala_de_tiles = 1;
+    const MapaGrafico mapa(renderer, configuracion, graficos, estacion, mundo_propio->nombre);
+    SDL_Texture* imagen = SDL_CreateTexture(
+        renderer,
+        SDL_PIXELFORMAT_RGBA8888,
+        SDL_TEXTUREACCESS_TARGET,
+        mapa.ancho_en_casillas() * graficos.tamano_de_tile,
+        mapa.alto_en_casillas() * graficos.tamano_de_tile);
+    if (imagen == nullptr) {
+        throw std::runtime_error(
+            std::string("no se pudo crear la imagen del mapa: ") + SDL_GetError());
+    }
+    Textura textura(imagen);
+    SDL_SetTextureBlendMode(imagen, SDL_BLENDMODE_BLEND);
+    SDL_Texture* anterior = SDL_GetRenderTarget(renderer);
+    SDL_SetRenderTarget(renderer, imagen);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+    mapa.dibujar_bajo_los_jugadores(renderer, 0, 0);
+    mapa.dibujar_sobre_los_jugadores(renderer, 0, 0);
+    SDL_SetRenderTarget(renderer, anterior);
+    return textura;
+}
+
+void MapaGeneral::preparar(SDL_Renderer* renderer, Estacion estacion) {
+    if (!mundo_propio.has_value() || fondos.count(estacion) > 0) {
+        return;
+    }
+    try {
+        std::vector<Pieza> piezas;
+        const ConfiguracionMapa* mapas[] = {&mundo_propio->granja, &mundo_propio->pueblo};
+        for (size_t indice = 0; indice < zonas.size() && indice < std::size(mapas); ++indice) {
+            const SDL_Rect& zona = zonas[indice].en_el_plano;
+            piezas.push_back(Pieza{
+                dibujar_en_una_imagen(renderer, *mapas[indice], estacion),
+                SDL_Rect{0, 0, zona.w, zona.h},
+                zona});
+        }
+        fondos.emplace(estacion, std::move(piezas));
+    } catch (const std::exception& error) {
+        std::cerr << "[mapa general] no se pudo dibujar el mundo " << mundo_propio->nombre << ": "
+                  << error.what() << "\n";
+        usar_el_valle(renderer);
     }
 }
 
@@ -114,27 +261,26 @@ bool MapaGeneral::esta_abierto() const {
     return abierto;
 }
 
-std::optional<SDL_Point> MapaGeneral::punto_en_el_dibujo(
+std::optional<SDL_Point> MapaGeneral::punto_en_el_plano(
     const PosicionDeJugador& posicion, int lado) const {
     if (posicion.piso_de_mazmorra > 0) {
-        return ENTRADA_A_LA_MAZMORRA;
+        return entrada_a_la_mazmorra;
     }
-    for (const Interior& interior : INTERIORES) {
-        if (posicion.mapa == interior.mapa) {
-            return interior.en_el_dibujo;
+    for (const Punto& interior : interiores) {
+        if (posicion.mapa == interior.clave) {
+            return interior.en_el_plano;
         }
     }
-    for (const ZonaDelValle& zona : ZONAS) {
+    for (const Zona& zona : zonas) {
         if (posicion.mapa != zona.mapa) {
             continue;
         }
+        // En proporción dentro del rectángulo de la zona, sin salirse de él.
         const double en_x = static_cast<double>(posicion.x) / (zona.columnas * lado);
         const double en_y = static_cast<double>(posicion.y) / (zona.filas * lado);
         return SDL_Point{
-            zona.en_el_dibujo.x +
-                static_cast<int>(std::clamp(en_x, 0.0, 1.0) * zona.en_el_dibujo.w),
-            zona.en_el_dibujo.y +
-                static_cast<int>(std::clamp(en_y, 0.0, 1.0) * zona.en_el_dibujo.h)};
+            zona.en_el_plano.x + static_cast<int>(std::clamp(en_x, 0.0, 1.0) * zona.en_el_plano.w),
+            zona.en_el_plano.y + static_cast<int>(std::clamp(en_y, 0.0, 1.0) * zona.en_el_plano.h)};
     }
     return std::nullopt;
 }
@@ -143,12 +289,12 @@ std::string MapaGeneral::lugar_de(const PosicionDeJugador& posicion) const {
     if (posicion.piso_de_mazmorra > 0) {
         return "Mazmorra, piso " + std::to_string(posicion.piso_de_mazmorra);
     }
-    for (const Interior& interior : INTERIORES) {
-        if (posicion.mapa == interior.mapa) {
+    for (const Punto& interior : interiores) {
+        if (posicion.mapa == interior.clave) {
             return interior.nombre;
         }
     }
-    for (const ZonaDelValle& zona : ZONAS) {
+    for (const Zona& zona : zonas) {
         if (posicion.mapa == zona.mapa) {
             return zona.nombre;
         }
@@ -169,6 +315,7 @@ SDL_Color MapaGeneral::color_de(const Datos& datos, uint32_t id_jugador) const {
     if (id_jugador == datos.id_propio) {
         return COLOR_PROPIO;
     }
+    // Según su lugar entre los demás de la partida, así cada uno tiene siempre el mismo color.
     size_t indice = 0;
     for (const JugadorDeLaPartida& jugador : datos.jugadores.jugadores) {
         if (jugador.id_jugador == id_jugador) {
@@ -265,16 +412,21 @@ void MapaGeneral::dibujar(SDL_Renderer* renderer, const Datos& datos, const SDL_
                                        GROSOR_DEL_MARCO * 2 +
                                        static_cast<int>(datos.posiciones.jugadores.size()) *
                                            (fuente.alto_de_renglon() + MARGEN / 2);
-    const int escala_al_costado = std::min(
-        (area.w - ANCHO_DE_LA_LISTA - 3 * MARGEN) / ANCHO_DEL_VALLE,
-        (area.h - alto_del_titulo - 2 * MARGEN) / ALTO_DEL_VALLE);
-    const int escala_abajo = std::min(
-        (area.w - 2 * MARGEN) / ANCHO_DEL_VALLE,
-        (area.h - alto_del_titulo - alto_de_la_lista_abajo - 3 * MARGEN) / ALTO_DEL_VALLE);
+    // El plano se agranda en números enteros si entra más grande que su tamaño (el valle, que es
+    // pixel art) y si no se achica lo que haga falta (un mundo del editor). La lista va al costado
+    // o, si así el plano queda más grande (por ejemplo con el chat abierto), abajo.
+    const double escala_al_costado = std::min(
+        static_cast<double>(area.w - ANCHO_DE_LA_LISTA - 3 * MARGEN) / ancho_del_plano,
+        static_cast<double>(area.h - alto_del_titulo - 2 * MARGEN) / alto_del_plano);
+    const double escala_abajo = std::min(
+        static_cast<double>(area.w - 2 * MARGEN) / ancho_del_plano,
+        static_cast<double>(area.h - alto_del_titulo - alto_de_la_lista_abajo - 3 * MARGEN) /
+            alto_del_plano);
     const bool lista_abajo = escala_abajo > escala_al_costado;
-    const int escala = std::max(1, lista_abajo ? escala_abajo : escala_al_costado);
-    const int ancho = ANCHO_DEL_VALLE * escala;
-    const int alto = ALTO_DEL_VALLE * escala;
+    double escala = lista_abajo ? escala_abajo : escala_al_costado;
+    escala = escala >= 1.0 ? std::floor(escala) : std::max(escala, 0.1);
+    const int ancho = static_cast<int>(ancho_del_plano * escala);
+    const int alto = static_cast<int>(alto_del_plano * escala);
     const int ancho_total = lista_abajo ? ancho : ancho + MARGEN + ANCHO_DE_LA_LISTA;
     const int alto_total =
         alto_del_titulo + alto + (lista_abajo ? MARGEN + alto_de_la_lista_abajo : 0);
@@ -288,6 +440,7 @@ void MapaGeneral::dibujar(SDL_Renderer* renderer, const Datos& datos, const SDL_
             ? SDL_Rect{dibujo.x, dibujo.y + dibujo.h + MARGEN, ancho, alto_de_la_lista_abajo}
             : SDL_Rect{dibujo.x + dibujo.w + MARGEN, dibujo.y, ANCHO_DE_LA_LISTA, dibujo.h};
 
+    // Se oscurece lo de atrás, pero se sigue viendo el juego.
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, OPACIDAD_DEL_OSCURECIDO);
     SDL_RenderFillRect(renderer, &area);
@@ -296,7 +449,8 @@ void MapaGeneral::dibujar(SDL_Renderer* renderer, const Datos& datos, const SDL_
     escribir(
         renderer,
         fuente_del_titulo,
-        "Mapa del valle  (Tab o M para cerrar)",
+        mundo_propio.has_value() ? "Mapa de " + mundo_propio->nombre + "  (Tab o M para cerrar)"
+                                 : std::string("Mapa del valle  (Tab o M para cerrar)"),
         dibujo.x,
         dibujo.y - alto_del_titulo,
         COLOR_DEL_TEXTO);
@@ -312,19 +466,26 @@ void MapaGeneral::dibujar(SDL_Renderer* renderer, const Datos& datos, const SDL_
         COLOR_DEL_MARCO.b,
         COLOR_DEL_MARCO.a);
     SDL_RenderFillRect(renderer, &marco);
-    const auto fondo = fondos.find(datos.estacion);
-    const SDL_Rect valle{0, 0, ANCHO_DEL_VALLE, ALTO_DEL_VALLE};
-    SDL_RenderCopy(
-        renderer,
-        (fondo != fondos.end() ? fondo->second : fondos.at(Estacion::PRIMAVERA)).ptr(),
-        &valle,
-        &dibujo);
-
     const auto en_pantalla = [&](const SDL_Point& punto) {
-        return SDL_Point{dibujo.x + punto.x * escala, dibujo.y + punto.y * escala};
+        return SDL_Point{
+            dibujo.x + static_cast<int>(punto.x * escala),
+            dibujo.y + static_cast<int>(punto.y * escala)};
     };
-    for (const LugarImportante& lugar : LUGARES) {
-        const SDL_Point punto = en_pantalla(lugar.en_el_dibujo);
+    const auto fondo = fondos.find(datos.estacion);
+    if (fondo != fondos.end()) {
+        for (const Pieza& pieza : fondo->second) {
+            const SDL_Point esquina = en_pantalla({pieza.en_el_plano.x, pieza.en_el_plano.y});
+            const SDL_Rect destino{
+                esquina.x,
+                esquina.y,
+                static_cast<int>(pieza.en_el_plano.w * escala),
+                static_cast<int>(pieza.en_el_plano.h * escala)};
+            SDL_RenderCopy(renderer, pieza.imagen.ptr(), &pieza.recorte, &destino);
+        }
+    }
+
+    for (const Punto& lugar : lugares) {
+        const SDL_Point punto = en_pantalla(lugar.en_el_plano);
         dibujar_circulo(renderer, punto.x, punto.y, RADIO_DE_UN_LUGAR + 2, COLOR_DEL_BORDE);
         dibujar_circulo(renderer, punto.x, punto.y, RADIO_DE_UN_LUGAR, COLOR_DE_UN_LUGAR);
         escribir(
@@ -336,6 +497,7 @@ void MapaGeneral::dibujar(SDL_Renderer* renderer, const Datos& datos, const SDL_
             COLOR_DEL_TEXTO);
     }
 
+    // El propio al final, así queda encima de los demás.
     std::vector<const PosicionDeJugador*> en_orden;
     for (const PosicionDeJugador& posicion : datos.posiciones.jugadores) {
         if (posicion.id_jugador != datos.id_propio) {
@@ -349,7 +511,7 @@ void MapaGeneral::dibujar(SDL_Renderer* renderer, const Datos& datos, const SDL_
     }
     for (const PosicionDeJugador* posicion : en_orden) {
         const std::optional<SDL_Point> punto =
-            punto_en_el_dibujo(*posicion, std::max(1, datos.tamano_de_tile));
+            punto_en_el_plano(*posicion, std::max(1, datos.tamano_de_tile));
         if (!punto.has_value()) {
             continue;
         }

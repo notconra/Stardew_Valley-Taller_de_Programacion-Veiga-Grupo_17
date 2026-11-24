@@ -345,6 +345,7 @@
  <objectgroup id="8" name="Transiciones">
   <object id="1" name="salida" x="368" y="48" width="16" height="16">
    <properties>
+    <property name="llegada" value="cueva" />
     <property name="mapa_destino" value="granja" />
     <property name="columna_destino" value="34" type="int" />
     <property name="fila_destino" value="7" type="int" />

@@ -168,9 +168,7 @@ void VistaPartida::limitar_cuadro(uint32_t inicio_del_cuadro) const {
 
 bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     id_jugador = partida.id_jugador;
-    if (!partida.nombre_mundo.empty()) {
-        establecer_mundo(partida.nombre_mundo);
-    }
+    establecer_mundo(partida.nombre_mundo);
     intencion_enviada = Moverse{};
     ultimo_estado_juego = EstadoJuego{};
     ultimo_inventario = InventarioJugador{};
@@ -257,6 +255,9 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     CuadroDeAviso cuadro_de_aviso(renderizador.ptr(), configuracion.chat.ruta_fuente);
     CuadroDeDialogo cuadro_de_dialogo(renderizador.ptr(), configuracion.chat.ruta_fuente);
     MapaGeneral mapa_general(renderizador.ptr(), configuracion.chat.ruta_fuente);
+    // Con un mundo del editor, el mapa general muestra su granja y su pueblo.
+    mapa_general
+        .usar_mundo(mundo_actual, configuracion_de("granja"), configuracion_de("Town"), graficos);
     std::optional<RelojGrafico> reloj_grafico;
     std::optional<PantallaDeDescanso> pantalla_de_descanso;
     std::optional<PanelDeRegalos> regalos;
@@ -317,6 +318,9 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         if (entrada.pedidos().alternar_mapa) {
             mapa_general.alternar();
         }
+        mapa_general.preparar(
+            renderizador.ptr(),
+            hora_del_juego.has_value() ? hora_del_juego->estacion : Estacion::PRIMAVERA);
 
         if (entrada.pidio_cerrar()) {
             efectos_actuales = nullptr;

@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<map version="1.4" tiledversion="1.4.2" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="70" height="30" tilewidth="16" tileheight="16" infinite="0" nextlayerid="11" nextobjectid="8">
+<map version="1.4" tiledversion="1.4.2" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="70" height="30" tilewidth="16" tileheight="16" infinite="0" nextlayerid="11" nextobjectid="9">
   <properties>
     <property name="AmbientLight" type="string" value="140 110 90" />
     <property name="DayTiles" type="string" value="Buildings 28 5 256 Buildings 28 6 288 Buildings 37 5 256 Buildings 37 6 288 Buildings 50 1 256 Buildings 50 2 288" />
@@ -173,12 +173,19 @@
   <objectgroup id="9" name="Transiciones">
     <object id="2" x="512" y="384" width="32" height="16">
       <properties>
+       <property name="llegada" value="puerta_centro" />
         <property name="columna_destino" type="int" value="52" />
         <property name="fila_destino" type="int" value="20" />
         <property name="mapa_destino" type="string" value="Town" />
       </properties>
     </object>
-  </objectgroup>
+   <object id="8" name="entrada" x="512" y="352" width="16" height="16">
+   <properties>
+    <property name="nombre" value="entrada" />
+    <property name="tipo" value="llegada" />
+   </properties>
+  </object>
+ </objectgroup>
   <objectgroup id="10" name="Interacciones">
     <object id="3" x="80" y="64" width="16" height="16">
       <properties>
