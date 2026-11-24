@@ -62,6 +62,9 @@ EstadoDeConexion::ProximoEstado EstadoLobby::crear_partida(const CrearPartida& c
         // creador adentro.
         responder_error(error.codigo(), error.what());
         return nullptr;
+    } catch (const std::exception& error) {
+        responder_error(CodigoError::NO_PERMITIDO, error.what());
+        return nullptr;
     }
 }
 

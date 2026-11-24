@@ -62,6 +62,7 @@ struct EntradaExitosaAPartida {
     std::string codigo_partida;
     uint32_t id_jugador = 0;
     bool multijugador = false;
+    std::string nombre_mundo;
 };
 
 #endif

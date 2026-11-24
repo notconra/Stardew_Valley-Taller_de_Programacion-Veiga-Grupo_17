@@ -317,6 +317,7 @@ void ProtocoloServidor::enviar_evento_entrada_exitosa_a_partida(
     enviar_texto(entrada.codigo_partida);
     enviar_u32(entrada.id_jugador);
     enviar_booleano(entrada.multijugador);
+    enviar_texto(entrada.nombre_mundo);
 }
 
 void ProtocoloServidor::enviar_evento_multijugador_activado(const MultijugadorActivado& activado) {

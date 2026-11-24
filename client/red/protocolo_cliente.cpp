@@ -313,8 +313,9 @@ EntradaExitosaAPartida ProtocoloCliente::recibir_entrada_exitosa_a_partida() {
     std::string codigo_partida = recibir_texto();
     uint32_t id_jugador = recibir_u32();
     bool multijugador = recibir_booleano();
+    std::string nombre_mundo = recibir_texto();
 
-    return EntradaExitosaAPartida{codigo_partida, id_jugador, multijugador};
+    return EntradaExitosaAPartida{codigo_partida, id_jugador, multijugador, nombre_mundo};
 }
 
 MultijugadorActivado ProtocoloCliente::recibir_multijugador_activado() {

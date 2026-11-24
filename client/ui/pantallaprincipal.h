@@ -39,8 +39,6 @@ public:
         ConfiguracionJugador& configuracion_jugador, QWidget* parent = nullptr);
     ~PantallaPrincipal();
 
-    std::string mapa_seleccionado() const;
-    int tipo_granja_seleccionado() const;
     std::string mundo_seleccionado() const;
 
 protected:
@@ -62,7 +60,8 @@ private slots:
     void actualizar_color_ojos();
     void actualizar_color_pelo();
     void actualizar_color_pantalon();
-    void al_seleccionar_tipo_granja(int indice);
+    void seleccionar_carpeta_mundo();
+    void restablecer_mundo();
 
 private:
     Ui::PantallaPrincipal* ui;
@@ -71,8 +70,6 @@ private:
     void actualizar_seleccion_tarjetas();
     void configurar_formulario_granja(bool visible);
     void inicializar_selectores_personaje();
-    void inicializar_selector_granjas();
-    void seleccionar_tipo_granja(int indice);
     void sincronizar_sliders_desde_colores();
     void sincronizar_canal_slider(QSlider* slider, QLabel* etiqueta_valor, int valor);
     ColorRGB convertir_hsv_a_rgb(
@@ -106,10 +103,7 @@ private:
     ColorRGB color_pelo_actual = {193, 90, 33};
     ColorRGB color_pantalon_actual = {45, 60, 140};
     bool es_personaje_femenino = false;
-    int indice_granja_seleccionada = 0;
-    std::string mapa_granja_seleccionado = "Farm";
-    QButtonGroup grupo_botones_granja{this};
-    std::vector<QPushButton*> botones_tipo_granja;
+    QString ruta_mundo_personalizado;
     std::mt19937 generador_azar{std::random_device{}()};
 
     FondoAnimado fondo_animado;
