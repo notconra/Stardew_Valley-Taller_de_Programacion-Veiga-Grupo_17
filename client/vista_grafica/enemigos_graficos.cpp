@@ -14,6 +14,8 @@ using Animacion = EnemigosGraficos::Animacion;
 
 constexpr std::array<int, 4> FILAS_CRAFTPIX{1, 0, 2, 3};
 
+const std::string RUTA_DE_SANGRE = "Assets/Caverns/Effects/sangre.png";
+
 Hoja hoja_de_esqueleto() {
     const std::string imagen = "Assets/Characters/Monsters/Skeleton.png";
     Hoja hoja;
@@ -105,6 +107,7 @@ float interpolar(float desde, float hasta, float t) {
 }  // namespace
 
 EnemigosGraficos::EnemigosGraficos(SDL_Renderer* renderer, const ConfiguracionGraficos& graficos)
+    : textura_de_sangre(RUTA_DE_SANGRE, renderer),
     : llama(RUTA_LLAMA, renderer),
       tamano_de_tile(graficos.tamano_de_tile),
       escala_de_tiles(graficos.escala_de_tiles) {
@@ -128,6 +131,9 @@ EnemigosGraficos::EnemigosGraficos(SDL_Renderer* renderer, const ConfiguracionGr
 void EnemigosGraficos::dibujar(
     SDL_Renderer* renderer, const EstadoJuego& estado, int cam_x, int cam_y) const {
     const uint32_t ahora = SDL_GetTicks();
+    for (const EstadoEnemigo& enemigo : estado.enemigos) {
+        dibujar_sangre(renderer, enemigo, ahora, cam_x, cam_y);
+    }
     for (const EstadoEnemigo& enemigo : estado.enemigos) {
         const auto hoja = hojas.find(enemigo.tipo);
         const bool cadaver = enemigo.vida == 0 && !enemigo.muriendo;
@@ -304,6 +310,24 @@ void EnemigosGraficos::dibujar_huesos(SDL_Renderer* renderer, const Hoja& hoja,
         SDL_RenderCopy(renderer, imagen, &origen, &destino);
     }
     SDL_SetTextureAlphaMod(imagen, 255);
+}
+
+void EnemigosGraficos::dibujar_sangre(SDL_Renderer* renderer, const EstadoEnemigo& enemigo,
+    uint32_t ahora, int cam_x, int cam_y) const {
+    uint32_t& desde = recorridos[enemigo.id].sangre_desde_ms;
+    marcar_inicio(enemigo.sangre && enemigo.vida == 0, desde, ahora);
+    if (desde == 0) {
+        return;
+    }
+    constexpr uint32_t MS_PARA_CRECER = 400;
+    const float crecido = std::min(1.0f, static_cast<float>(ahora - desde) / MS_PARA_CRECER);
+
+    const int casilla = tamano_de_tile * escala_de_tiles;
+    const int lado = static_cast<int>(casilla * 1.5f * crecido);
+    const int centro_x = static_cast<int>((enemigo.columna + 0.5f) * casilla) - cam_x;
+    const int centro_y = static_cast<int>((enemigo.fila + 0.7f) * casilla) - cam_y;
+    const SDL_Rect destino{centro_x - lado / 2, centro_y - lado / 2, lado, lado};
+    SDL_RenderCopy(renderer, textura_de_sangre.ptr(), nullptr, &destino);
 }
 
 void EnemigosGraficos::dibujar_barra_de_vida(SDL_Renderer* renderer,

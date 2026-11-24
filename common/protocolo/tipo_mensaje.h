@@ -46,6 +46,9 @@ enum class TipoMensaje : uint8_t {
     DORMIR = 0x20,
     LEVANTARSE = 0x21,
 
+    // Regalos (sigue)
+    RECHAZAR_REGALO = 0x22,
+
     // Servidor a cliente
     ERROR_SERVIDOR = 0x81,
     LISTA_PARTIDAS = 0x82,
