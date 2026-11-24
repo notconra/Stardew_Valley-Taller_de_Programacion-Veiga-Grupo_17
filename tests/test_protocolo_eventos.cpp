@@ -107,6 +107,14 @@ TEST_F(ProtocoloEventosTest, ListaPartidasVacia) {
     verificar_evento(ListaPartidas{});
 }
 
+TEST_F(ProtocoloEventosTest, ListaMundos) {
+    verificar_evento(ListaMundos{{"Isla", "Valle del norte"}});
+}
+
+TEST_F(ProtocoloEventosTest, ListaMundosVacia) {
+    verificar_evento(ListaMundos{});
+}
+
 TEST_F(ProtocoloEventosTest, EntradaExitosaAPartida) {
     verificar_evento(EntradaExitosaAPartida{"ABC123", 0x11223344, true});
 }
@@ -237,6 +245,17 @@ TEST_F(ProtocoloEventosTest, LlamasEnSector) {
 
 TEST_F(ProtocoloEventosTest, LlamasEnSectorVacio) {
     verificar_evento(LlamasEnSector{"mazmorra", {}});
+}
+
+TEST_F(ProtocoloEventosTest, PosicionesDeLosJugadores) {
+    const PosicionDeJugador en_la_granja{0x01020304, "granja", 0x05060708, 0x090A0B0C, 0};
+    const PosicionDeJugador en_la_mazmorra{0x11121314, "mina_3", 0x15161718, 0x191A1B1C, 7};
+
+    verificar_evento(PosicionesDeLosJugadores{{en_la_granja, en_la_mazmorra}});
+}
+
+TEST_F(ProtocoloEventosTest, PosicionesDeLosJugadoresVacio) {
+    verificar_evento(PosicionesDeLosJugadores{});
 }
 
 TEST_F(ProtocoloEventosTest, HoraDelJuego) {
