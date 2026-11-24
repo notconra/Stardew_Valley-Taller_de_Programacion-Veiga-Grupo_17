@@ -3,6 +3,11 @@
 #include <map>
 #include <string>
 
+#include "../../../common/muebles/catalogo_muebles.h"
+
+// Los muebles se apilan como el cofre.
+#define MUEBLES_POR_RANURA 50
+
 CatalogoDeItems::CatalogoDeItems() {
     // Las herramientas no se apilan y no se pueden eliminar desde el tacho.
     registrar(TipoItem::PICO, "Pico", CategoriaItem::HERRAMIENTA, 1, false, 1, 0);
@@ -60,6 +65,16 @@ CatalogoDeItems::CatalogoDeItems() {
     // Colocables
     registrar(TipoItem::COFRE, "Cofre", CategoriaItem::COLOCABLE, 50, true, 0, 0);
     registrar(TipoItem::CAMA, "Cama", CategoriaItem::COLOCABLE, 1, false, 1, 0);
+    for (const DatosDeMueble* mueble : CatalogoDeMuebles::muebles()) {
+        registrar(
+            mueble->item,
+            mueble->nombre,
+            CategoriaItem::COLOCABLE,
+            MUEBLES_POR_RANURA,
+            true,
+            0,
+            0);
+    }
 
     // Productos animales
     registrar(TipoItem::LECHE, "Leche", CategoriaItem::RECURSO, 50, true, 0, 30);

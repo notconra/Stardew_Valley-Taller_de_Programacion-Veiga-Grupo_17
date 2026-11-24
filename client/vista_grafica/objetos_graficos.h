@@ -46,10 +46,12 @@ struct AspectoDeObjeto {
     // Así un objeto más alto que una casilla crece hacia arriba en vez de hacia abajo.
     bool anclar_al_pie = false;
     CapaDeObjeto capa = CapaDeObjeto::DEBAJO_DE_LOS_JUGADORES;
-    // Filas del dibujo que van por encima de la casilla del objeto (la cabecera de la cama). Están
-    // contadas dentro de alto_en_casillas, no bloquean en el servidor y se dibujan sobre los
-    // jugadores, así se puede pasar por detrás.
+    // Filas del dibujo que van por encima de la casilla del objeto (la cabecera de la cama, el
+    // respaldo de una silla). Están contadas dentro de alto_en_casillas y no bloquean en el
+    // servidor. Si el objeto va DEBAJO de los jugadores, se dibujan sobre ellos; si va CON los
+    // jugadores, se dibujan junto con el resto del objeto, ordenado por su pie.
     int casillas_por_encima = 0;
+    bool espejado = false;
 };
 
 // Dibuja los objetos del mundo que manda el servidor. Es genérico, sólo conoce un mapa de
@@ -95,6 +97,11 @@ public:
     // de la capa CON_LOS_JUGADORES con los jugadores, ordenados por su pie.
     void dibujar_objeto(
         SDL_Renderer* renderer, const EstadoObjetoDelMundo& objeto, int cam_x, int cam_y) const;
+
+    // La frazada y el pie de una cama, para dibujarlos encima de quien está acostado en ella y que
+    // parezca tapado (como en Stardew, es una pieza aparte de la hoja de muebles).
+    void dibujar_frazada(
+        SDL_Renderer* renderer, const EstadoObjetoDelMundo& cama, int cam_x, int cam_y) const;
 
     // La capa en la que se dibuja el objeto, o std::nullopt si su tipo no tiene aspecto.
     std::optional<CapaDeObjeto> capa_de(const EstadoObjetoDelMundo& objeto) const;

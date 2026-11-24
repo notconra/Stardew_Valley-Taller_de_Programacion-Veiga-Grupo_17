@@ -42,6 +42,13 @@ enum class TipoMensaje : uint8_t {
     DONAR_AL_LOTE = 0x1E,
     DONAR_MONEDAS_AL_LOTE = 0x1F,
 
+    // Dormir
+    DORMIR = 0x20,
+    LEVANTARSE = 0x21,
+
+    // Regalos (sigue)
+    RECHAZAR_REGALO = 0x22,
+
     // Servidor a cliente
     ERROR_SERVIDOR = 0x81,
     LISTA_PARTIDAS = 0x82,
@@ -98,12 +105,18 @@ enum class TipoMensaje : uint8_t {
     // NPCs
     NPCS_EN_SECTOR = 0xA4,
     DIALOGO_NPC = 0xA5,
-
+    
     // Estado de un lote del centro comunitario (al abrirlo o cuando cambia)
     LOTE_DEL_CENTRO = 0xA6,
 
     // Se completaron todos los lotes del centro comunitario (el cliente muestra el cartel)
     CENTRO_TERMINADO = 0xA7,
+
+    // Clic en una cama libre: el cliente pregunta si quiere dormir (0xA8 lo usa otra rama)
+    PREGUNTA_DE_DORMIR = 0xA9,
+
+    // Llamas que lanzaron las Skulls, volando por el sector
+    LLAMAS_EN_SECTOR = 0xAA,
 };
 
 #endif

@@ -45,10 +45,13 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::CERRAR_MERCADO, [this] { return recibir_comando_cerrar_mercado(); }},
           {TipoMensaje::ENVIAR_REGALO, [this] { return recibir_comando_enviar_regalo(); }},
           {TipoMensaje::ABRIR_REGALOS, [this] { return recibir_comando_abrir_regalos(); }},
+          {TipoMensaje::RECHAZAR_REGALO, [this] { return recibir_comando_rechazar_regalo(); }},
           {TipoMensaje::HABLAR_CON_NPC, [this] { return recibir_comando_hablar_con_npc(); }},
           {TipoMensaje::DONAR_AL_LOTE, [this] { return recibir_comando_donar_al_lote(); }},
           {TipoMensaje::DONAR_MONEDAS_AL_LOTE,
            [this] { return recibir_comando_donar_monedas_al_lote(); }},
+          {TipoMensaje::DORMIR, [this] { return recibir_comando_dormir(); }},
+          {TipoMensaje::LEVANTARSE, [this] { return recibir_comando_levantarse(); }},
       } {
 }
 
@@ -221,6 +224,10 @@ AbrirRegalos ProtocoloServidor::recibir_comando_abrir_regalos() {
     return AbrirRegalos{};
 }
 
+RechazarRegalo ProtocoloServidor::recibir_comando_rechazar_regalo() {
+    return RechazarRegalo{recibir_u8()};
+}
+
 HablarConNpc ProtocoloServidor::recibir_comando_hablar_con_npc() {
     return HablarConNpc{recibir_texto()};
 }
@@ -233,6 +240,17 @@ DonarAlLote ProtocoloServidor::recibir_comando_donar_al_lote() {
 
 DonarMonedasAlLote ProtocoloServidor::recibir_comando_donar_monedas_al_lote() {
     return DonarMonedasAlLote{recibir_tipo_lote()};
+}
+
+Dormir ProtocoloServidor::recibir_comando_dormir() {
+    Dormir dormir;
+    dormir.columna = recibir_u32();
+    dormir.fila = recibir_u32();
+    return dormir;
+}
+
+Levantarse ProtocoloServidor::recibir_comando_levantarse() {
+    return Levantarse{};
 }
 
 TipoLote ProtocoloServidor::recibir_tipo_lote() {
@@ -278,8 +296,10 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const RegalosPendientes& e) { enviar_evento_regalos_pendientes(e); },
             [this](const NpcsEnSector& e) { enviar_evento_npcs_en_sector(e); },
             [this](const DialogoNpc& e) { enviar_evento_dialogo_npc(e); },
+            [this](const LlamasEnSector& e) { enviar_evento_llamas_en_sector(e); },
             [this](const LoteDelCentro& e) { enviar_evento_lote_del_centro(e); },
             [this](const CentroTerminado& e) { enviar_evento_centro_terminado(e); },
+            [this](const PreguntaDeDormir& e) { enviar_evento_pregunta_de_dormir(e); },
         },
         evento);
 }
@@ -342,6 +362,10 @@ void ProtocoloServidor::enviar_estado_jugador(const EstadoJugador& estado) {
     enviar_booleano(estado.camina);
     enviar_u8(estado.ranura_activa);
     enviar_u8(static_cast<uint8_t>(estado.accion_actual));
+    enviar_u16(static_cast<uint16_t>(estado.item_en_mano));
+    enviar_u8(static_cast<uint8_t>(estado.calidad_en_mano));
+    enviar_u8(estado.numero_de_accion);
+    enviar_u8(static_cast<uint8_t>(estado.descanso));
     enviar_u8(estado.vida);
     enviar_u8(estado.energia);
     enviar_u8(estado.vida_maxima);
@@ -355,14 +379,14 @@ void ProtocoloServidor::enviar_estado_objeto_del_mundo(const EstadoObjetoDelMund
     enviar_texto(estado.mapa);
     enviar_u32(estado.columna);
     enviar_u32(estado.fila);
-    enviar_u8(static_cast<uint8_t>(estado.tipo));
+    enviar_u16(static_cast<uint16_t>(estado.tipo));
 }
 
 void ProtocoloServidor::enviar_estado_drop(const EstadoDrop& estado) {
     enviar_u32(estado.id);
     enviar_u32(estado.columna);
     enviar_u32(estado.fila);
-    enviar_u8(static_cast<uint8_t>(estado.tipo));
+    enviar_u16(static_cast<uint16_t>(estado.tipo));
     enviar_u16(estado.cantidad);
     enviar_u8(static_cast<uint8_t>(estado.calidad));
 }
@@ -423,7 +447,7 @@ void ProtocoloServidor::enviar_casilla_tratada(const CasillaTratada& casilla) {
 }
 
 void ProtocoloServidor::enviar_ranura_inventario(const RanuraInventario& ranura) {
-    enviar_u8(static_cast<uint8_t>(ranura.tipo));
+    enviar_u16(static_cast<uint16_t>(ranura.tipo));
     enviar_u16(ranura.cantidad);
     enviar_u8(static_cast<uint8_t>(ranura.calidad));
 }
@@ -513,7 +537,7 @@ void ProtocoloServidor::enviar_evento_objeto_colocado(const ObjetoColocado& obje
     enviar_u32(objeto.id);
     enviar_u32(objeto.columna);
     enviar_u32(objeto.fila);
-    enviar_u8(static_cast<uint8_t>(objeto.tipo));
+    enviar_u16(static_cast<uint16_t>(objeto.tipo));
 }
 
 void ProtocoloServidor::enviar_evento_objeto_retirado(const ObjetoRetirado& objeto) {
@@ -613,7 +637,7 @@ void ProtocoloServidor::enviar_evento_mensaje_de_chat(const MensajeDeChat& mensa
 }
 
 void ProtocoloServidor::enviar_item_catalogo_info(const ItemCatalogoInfo& item) {
-    enviar_u8(static_cast<uint8_t>(item.tipo_item));
+    enviar_u16(static_cast<uint16_t>(item.tipo_item));
     enviar_u8(static_cast<uint8_t>(item.tipo_animal));
     enviar_texto(item.nombre);
     enviar_u32(item.precio);
@@ -655,6 +679,12 @@ void ProtocoloServidor::enviar_evento_centro_terminado(const CentroTerminado&) {
     enviar_tipo(TipoMensaje::CENTRO_TERMINADO);
 }
 
+void ProtocoloServidor::enviar_evento_pregunta_de_dormir(const PreguntaDeDormir& pregunta) {
+    enviar_tipo(TipoMensaje::PREGUNTA_DE_DORMIR);
+    enviar_u32(pregunta.columna);
+    enviar_u32(pregunta.fila);
+}
+
 void ProtocoloServidor::enviar_evento_lote_del_centro(const LoteDelCentro& lote) {
     enviar_tipo(TipoMensaje::LOTE_DEL_CENTRO);
     enviar_u8(static_cast<uint8_t>(lote.lote));
@@ -664,7 +694,7 @@ void ProtocoloServidor::enviar_evento_lote_del_centro(const LoteDelCentro& lote)
     enviar_largo(lote.requisitos.size());
     for (const RequisitoDeLote& requisito : lote.requisitos) {
         enviar_u8(static_cast<uint8_t>(requisito.tipo));
-        enviar_u8(static_cast<uint8_t>(requisito.item));
+        enviar_u16(static_cast<uint16_t>(requisito.item));
         enviar_u8(static_cast<uint8_t>(requisito.calidad_minima));
         enviar_u8(static_cast<uint8_t>(requisito.logro));
         enviar_u32(requisito.cantidad);
@@ -697,4 +727,16 @@ void ProtocoloServidor::enviar_evento_dialogo_npc(const DialogoNpc& dialogo) {
     enviar_tipo(TipoMensaje::DIALOGO_NPC);
     enviar_texto(dialogo.id_npc);
     enviar_texto(dialogo.texto);
+}
+
+void ProtocoloServidor::enviar_evento_llamas_en_sector(const LlamasEnSector& llamas) {
+    enviar_tipo(TipoMensaje::LLAMAS_EN_SECTOR);
+    enviar_texto(llamas.mapa);
+    enviar_largo(llamas.llamas.size());
+    for (const EstadoLlama& llama : llamas.llamas) {
+        enviar_u32(llama.id);
+        enviar_booleano(llama.verde);
+        enviar_u32(llama.x_centesimas);
+        enviar_u32(llama.y_centesimas);
+    }
 }

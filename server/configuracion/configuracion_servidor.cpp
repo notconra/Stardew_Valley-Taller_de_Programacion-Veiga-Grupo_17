@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "../../common/configuracion/lector_toml.h"
+#include "../../common/muebles/catalogo_muebles.h"
 
 #define MINUTOS_DE_UN_DIA_LENTO 20.0
 #define MINUTOS_DE_UN_DIA_MEDIO 14.0
@@ -557,6 +558,23 @@ void ConfiguracionServidor::cargar_mazmorra(const toml::table& archivo_toml) {
                 cargar_enemigo(*vampiro, seccion_vampiros + ".vampiro", config.vampiro);
             }
         }
+        if (const toml::table* skulls = (*enemigos)["skulls"].as_table()) {
+            const std::string seccion_skulls = "mazmorra.enemigos.skulls";
+            ConfiguracionSkullsServidor& config = mazmorra.skulls;
+            cargar_enemigo(*skulls, seccion_skulls, config.combate);
+            config.skulls_por_nivel = lector_toml::leer_entero_opcional(
+                *skulls, "skulls_por_nivel", seccion_skulls, config.skulls_por_nivel, 0, 1);
+            config.probabilidad_verde = lector_toml::leer_decimal_opcional(
+                *skulls, "probabilidad_verde", seccion_skulls, config.probabilidad_verde, 0.0, 1.0);
+            config.velocidad_de_llama = lector_toml::leer_decimal_opcional(
+                *skulls, "velocidad_de_llama", seccion_skulls, config.velocidad_de_llama, 0.5,
+                20.0);
+            config.alcance_de_llama = lector_toml::leer_entero_opcional(
+                *skulls, "alcance_de_llama", seccion_skulls, config.alcance_de_llama, 1, 100);
+            config.distancia_de_ataque = lector_toml::leer_entero_opcional(
+                *skulls, "distancia_de_ataque", seccion_skulls, config.distancia_de_ataque, 1,
+                100);
+        }
     }
 
     if (const toml::table* trampas = (*tabla)["trampas"].as_table()) {
@@ -567,6 +585,13 @@ void ConfiguracionServidor::cargar_mazmorra(const toml::table& archivo_toml) {
             "por_nivel",
             seccion_trampas,
             config.por_nivel,
+            0,
+            INT_MAX);
+        config.lanzallamas_por_nivel = lector_toml::leer_entero_opcional(
+            *trampas,
+            "lanzallamas_por_nivel",
+            seccion_trampas,
+            config.lanzallamas_por_nivel,
             0,
             INT_MAX);
         config.danio = lector_toml::leer_entero_opcional(
@@ -703,8 +728,12 @@ void ConfiguracionServidor::cargar_precios_de_compra(const toml::table& tabla_me
     leer("SEMILLA_CEBOLLA_DE_VERDEO", TipoItem::SEMILLA_CEBOLLA_DE_VERDEO);
     leer("SEMILLA_CALABAZA", TipoItem::SEMILLA_CALABAZA);
 
-    // Muebles (Robin).
     leer("COFRE", TipoItem::COFRE);
+    const uint32_t por_casilla = static_cast<uint32_t>(
+        lector_toml::leer_entero_en_rango(tabla, "MUEBLE_POR_CASILLA", seccion, 1, INT_MAX));
+    for (const DatosDeMueble* mueble : CatalogoDeMuebles::muebles()) {
+        precios[mueble->item] = por_casilla * static_cast<uint32_t>(mueble->ancho * mueble->alto);
+    }
 }
 
 void ConfiguracionServidor::cargar_precios_de_venta(const toml::table& tabla_mercado) {

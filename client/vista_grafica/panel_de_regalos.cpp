@@ -156,7 +156,7 @@ std::optional<ComandoCliente> PanelDeRegalos::procesar_clic(
         return std::nullopt;
     }
     if (pestana_actual == Pestana::RECIBIDOS) {
-        return clic_en_recibidos(datos, x, y);
+        return clic_en_recibidos(datos, x, y, clic_derecho);
     }
     return clic_en_enviar(datos, x, y, clic_derecho);
 }
@@ -186,13 +186,22 @@ bool PanelDeRegalos::clic_en_flechas(VentanaDeLista& lista, size_t total, int x,
     return false;
 }
 
-std::optional<ComandoCliente> PanelDeRegalos::clic_en_recibidos(const Datos& datos, int x, int y) {
+std::optional<ComandoCliente> PanelDeRegalos::clic_en_recibidos(
+    const Datos& datos, int x, int y, bool clic_derecho) {
     const size_t cantidad_de_regalos = datos.pendientes.regalos.size();
     if (contiene(rectangulo_en_pantalla(BOTON), x, y) && cantidad_de_regalos > 0) {
         ventana_de_regalos.volver_al_principio();
         return AbrirRegalos{};
     }
-    clic_en_flechas(ventana_de_regalos, cantidad_de_regalos, x, y);
+    if (clic_en_flechas(ventana_de_regalos, cantidad_de_regalos, x, y) || !clic_derecho) {
+        return std::nullopt;
+    }
+    const size_t primero_visible = ventana_de_regalos.desde(cantidad_de_regalos);
+    for (size_t fila = 0; fila < ventana_de_regalos.visibles(cantidad_de_regalos); ++fila) {
+        if (contiene(rectangulo_de_la_fila(static_cast<int>(fila)), x, y)) {
+            return RechazarRegalo{static_cast<uint8_t>(primero_visible + fila)};
+        }
+    }
     return std::nullopt;
 }
 
@@ -320,8 +329,6 @@ void PanelDeRegalos::dibujar_barra(SDL_Renderer* renderer, const Datos& datos) c
         if (ranuras[i].cantidad == 0) {
             continue;
         }
-        // El dibujo de la ranura no está centrado en su imagen de 64x64 (sobran
-        // columnas transparentes a la derecha), así que se centra el ítem a mano.
         const int lado = ranura.w - 2 * MARGEN_DEL_ITEM_EN_LA_RANURA * pixel;
         const int centro_x = ranura.x + ranura.w * CENTRO_X_DE_LA_RANURA / LADO_DE_LA_IMAGEN_DE_RANURA;
         const int centro_y = ranura.y + ranura.h * CENTRO_Y_DE_LA_RANURA / LADO_DE_LA_IMAGEN_DE_RANURA;
@@ -338,7 +345,7 @@ void PanelDeRegalos::dibujar_recibidos(SDL_Renderer* renderer, const Datos& dato
     const std::vector<RegaloRecibido>& regalos = datos.pendientes.regalos;
     escribir(
         renderer,
-        regalos.empty() ? "No tenes regalos sin abrir" : "Regalos sin abrir",
+        regalos.empty() ? "No tenes regalos sin abrir" : "Sin abrir (clic der.: rechazar)",
         rectangulo_en_pantalla(TITULO));
 
     dibujar_filas(

@@ -11,6 +11,7 @@
 #include "../acciones/accion_colocar.h"
 #include "../acciones/accion_cosechar.h"
 #include "../acciones/accion_dormir.h"
+#include "../acciones/accion_girar_mueble.h"
 #include "../acciones/accion_interactuar_cofre.h"
 #include "../acciones/accion_interactuar_mercado.h"
 #include "../acciones/accion_ordeniar_vaca.h"
@@ -35,6 +36,7 @@ ControladorDeAcciones::ControladorDeAcciones(
 
     acciones.push_back(std::make_unique<AccionUsarTransicion>());
     acciones.push_back(std::make_unique<AccionDormir>(camas_ocupadas));
+    acciones.push_back(std::make_unique<AccionGirarMueble>());
     acciones.push_back(std::make_unique<AccionOrdeniarVaca>());
     acciones.push_back(std::make_unique<AccionCosechar>());
     acciones.push_back(std::make_unique<AccionPicar>(
@@ -70,9 +72,17 @@ const Accion* ControladorDeAcciones::ejecutar(ContextoDeAccion& contexto) {
 
         contexto.personaje.accion_actual = accion->tipo();
         contexto.personaje.ticks_restantes_accion = accion->duracion_en_ticks();
+        if (se_anima(accion->tipo())) {
+            ++contexto.personaje.numero_de_accion;
+        }
         return accion.get();
     }
     return nullptr;
+}
+
+bool ControladorDeAcciones::se_anima(TipoAccion tipo) {
+    return tipo == TipoAccion::PICAR || tipo == TipoAccion::TRATAR_TIERRA ||
+           tipo == TipoAccion::ATACAR || tipo == TipoAccion::REGAR;
 }
 
 CasillaConsultada ControladorDeAcciones::consultar(
@@ -129,7 +139,7 @@ CasillaConsultada ControladorDeAcciones::consultar(
         const DefinicionDeObjeto* definicion =
             objeto == nullptr ? nullptr : recursos.catalogo_de_objetos.buscar(objeto->tipo);
         const bool cama_ocupada =
-            objeto != nullptr && objeto->tipo == TipoObjeto::CAMA &&
+            objeto != nullptr && recursos.catalogo_de_objetos.es_cama(objeto->tipo) &&
             camas_ocupadas.esta_ocupada(sector.id, objeto->columna, objeto->fila);
         tendria_efecto =
             (definicion != nullptr && definicion->herramienta == TipoItem::PICO && !cama_ocupada) ||

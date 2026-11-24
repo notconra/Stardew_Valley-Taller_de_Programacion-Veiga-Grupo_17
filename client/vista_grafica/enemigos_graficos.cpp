@@ -14,6 +14,8 @@ using Animacion = EnemigosGraficos::Animacion;
 
 constexpr std::array<int, 4> FILAS_CRAFTPIX{1, 0, 2, 3};
 
+const char RUTA_DE_SANGRE[] = "Assets/Caverns/Effects/sangre.png";
+
 Hoja hoja_de_esqueleto() {
     const std::string imagen = "Assets/Characters/Monsters/Skeleton.png";
     Hoja hoja;
@@ -61,8 +63,31 @@ Hoja hoja_de_vampiro(const std::string& carpeta, const std::string& prefijo) {
     return hoja;
 }
 
+// Las Skulls: una calavera flotante de 4 cuadros, sin direcciones. No mueren (son invulnerables).
+Hoja hoja_de_skull(SDL_Color tinte) {
+    const std::string imagen = "Assets/Caverns/Enemies/Skull/skull_hoja.png";
+    Hoja hoja;
+    hoja.frame_ancho = 16;
+    hoja.frame_alto = 16;
+    hoja.pies_y = 16;
+    hoja.cabeza_y = 1;
+    hoja.escala = 1.2f;
+    hoja.quieto = {imagen, {0, 0, 0, 0}, 4, 150};
+    hoja.caminar = {imagen, {0, 0, 0, 0}, 4, 110};
+    hoja.ataque = {imagen, {0, 0, 0, 0}, 4, 60};
+    hoja.tinte = tinte;
+    return hoja;
+}
+
+// La llama de las Skulls: una sola imagen azul. La verde es la misma, teñida.
+constexpr const char* RUTA_LLAMA = "Assets/Caverns/Enemies/Skull/fire/fire_skull.png";
+constexpr float LADO_DE_LLAMA_EN_CASILLAS = 0.9f;
+constexpr SDL_Color TINTE_VERDE{110, 255, 110, 255};
+
 int cuadro_una_vez(const Animacion& animacion, uint32_t desde, uint32_t ahora) {
-    return std::min(static_cast<int>((ahora - desde) / animacion.ms_por_cuadro), animacion.cuadros - 1);
+    return std::min(
+        static_cast<int>((ahora - desde) / animacion.ms_por_cuadro),
+        animacion.cuadros - 1);
 }
 
 int cuadro_en_bucle(const Animacion& animacion, uint32_t ahora) {
@@ -84,11 +109,16 @@ float interpolar(float desde, float hasta, float t) {
 }  // namespace
 
 EnemigosGraficos::EnemigosGraficos(SDL_Renderer* renderer, const ConfiguracionGraficos& graficos)
-    : tamano_de_tile(graficos.tamano_de_tile), escala_de_tiles(graficos.escala_de_tiles) {
+    : llama(RUTA_LLAMA, renderer),
+      textura_de_sangre(RUTA_DE_SANGRE, renderer),
+      tamano_de_tile(graficos.tamano_de_tile),
+      escala_de_tiles(graficos.escala_de_tiles) {
     hojas.emplace(TipoEnemigo::ESQUELETO, hoja_de_esqueleto());
     hojas.emplace(TipoEnemigo::ORCO, hoja_de_orco());
     hojas.emplace(TipoEnemigo::VAMPIRA, hoja_de_vampiro("vampira", "Vampires3"));
     hojas.emplace(TipoEnemigo::VAMPIRO, hoja_de_vampiro("vampiro", "Vampires2"));
+    hojas.emplace(TipoEnemigo::SKULL_AZUL, hoja_de_skull(SDL_Color{255, 255, 255, 255}));
+    hojas.emplace(TipoEnemigo::SKULL_VERDE, hoja_de_skull(TINTE_VERDE));
 
     for (const auto& [tipo, hoja] : hojas) {
         for (const Animacion* animacion :
@@ -104,6 +134,9 @@ void EnemigosGraficos::dibujar(
     SDL_Renderer* renderer, const EstadoJuego& estado, int cam_x, int cam_y) const {
     const uint32_t ahora = SDL_GetTicks();
     for (const EstadoEnemigo& enemigo : estado.enemigos) {
+        dibujar_sangre(renderer, enemigo, ahora, cam_x, cam_y);
+    }
+    for (const EstadoEnemigo& enemigo : estado.enemigos) {
         const auto hoja = hojas.find(enemigo.tipo);
         const bool cadaver = enemigo.vida == 0 && !enemigo.muriendo;
         if (hoja != hojas.end() && !cadaver) {
@@ -112,20 +145,48 @@ void EnemigosGraficos::dibujar(
     }
 
     std::erase_if(recorridos, [&estado](const auto& entrada) {
-        return std::none_of(estado.enemigos.begin(), estado.enemigos.end(),
+        return std::none_of(
+            estado.enemigos.begin(),
+            estado.enemigos.end(),
             [&entrada](const EstadoEnemigo& e) { return e.id == entrada.first; });
     });
+
+    dibujar_llamas(renderer, estado, cam_x, cam_y);
+}
+
+void EnemigosGraficos::dibujar_llamas(
+    SDL_Renderer* renderer, const EstadoJuego& estado, int cam_x, int cam_y) const {
+    if (estado.llamas.empty()) {
+        return;
+    }
+    const float casilla = static_cast<float>(tamano_de_tile * escala_de_tiles);
+    const int lado = static_cast<int>(casilla * LADO_DE_LLAMA_EN_CASILLAS);
+    for (const EstadoLlama& actual : estado.llamas) {
+        const float x = static_cast<float>(actual.x_centesimas) / 100.0f * casilla;
+        const float y = static_cast<float>(actual.y_centesimas) / 100.0f * casilla;
+        const SDL_Rect destino{
+            static_cast<int>(x) - cam_x - lado / 2,
+            static_cast<int>(y) - cam_y - lado / 2,
+            lado,
+            lado};
+        const SDL_Color tinte = actual.verde ? TINTE_VERDE : SDL_Color{255, 255, 255, 255};
+        SDL_SetTextureColorMod(llama.ptr(), tinte.r, tinte.g, tinte.b);
+        SDL_RenderCopy(renderer, llama.ptr(), nullptr, &destino);
+    }
+    SDL_SetTextureColorMod(llama.ptr(), 255, 255, 255);
 }
 
 EnemigosGraficos::Posicion EnemigosGraficos::avanzar(
     Recorrido& recorrido, const EstadoEnemigo& enemigo, uint32_t ahora) const {
-    const uint32_t ms_del_paso = enemigo.ms_por_casilla > 0 ? enemigo.ms_por_casilla : MS_POR_CASILLA;
+    const uint32_t ms_del_paso =
+        enemigo.ms_por_casilla > 0 ? enemigo.ms_por_casilla : MS_POR_CASILLA;
     const auto avance = [&]() {
         return std::min(1.0f, static_cast<float>(ahora - recorrido.desde_ms) / ms_del_paso);
     };
 
-    const int salto = std::abs(static_cast<int>(enemigo.columna) - static_cast<int>(recorrido.columna_destino)) +
-                      std::abs(static_cast<int>(enemigo.fila) - static_cast<int>(recorrido.fila_destino));
+    const int salto =
+        std::abs(static_cast<int>(enemigo.columna) - static_cast<int>(recorrido.columna_destino)) +
+        std::abs(static_cast<int>(enemigo.fila) - static_cast<int>(recorrido.fila_destino));
     if (recorrido.desde_ms == 0 || salto > 1) {
         recorrido.columna_origen = static_cast<float>(enemigo.columna);
         recorrido.fila_origen = static_cast<float>(enemigo.fila);
@@ -136,7 +197,8 @@ EnemigosGraficos::Posicion EnemigosGraficos::avanzar(
 
     if (recorrido.columna_destino != enemigo.columna || recorrido.fila_destino != enemigo.fila) {
         const float t = avance();
-        recorrido.columna_origen = interpolar(recorrido.columna_origen, recorrido.columna_destino, t);
+        recorrido.columna_origen =
+            interpolar(recorrido.columna_origen, recorrido.columna_destino, t);
         recorrido.fila_origen = interpolar(recorrido.fila_origen, recorrido.fila_destino, t);
         recorrido.columna_destino = enemigo.columna;
         recorrido.fila_destino = enemigo.fila;
@@ -150,16 +212,20 @@ EnemigosGraficos::Posicion EnemigosGraficos::avanzar(
         t < 1.0f};
 }
 
-EnemigosGraficos::Cuadro EnemigosGraficos::elegir_cuadro(const Hoja& hoja,
-    const EstadoEnemigo& enemigo, Recorrido& recorrido, bool caminando, uint32_t ahora) const {
+EnemigosGraficos::Cuadro EnemigosGraficos::elegir_cuadro(
+    const Hoja& hoja, const EstadoEnemigo& enemigo, Recorrido& recorrido, bool caminando,
+    uint32_t ahora) const {
     marcar_inicio(enemigo.atacando && !enemigo.muriendo, recorrido.ataque_desde_ms, ahora);
     marcar_inicio(enemigo.muriendo, recorrido.muerte_desde_ms, ahora);
 
     if (enemigo.muriendo) {
         if (hoja.muerte.existe()) {
-            return Cuadro{&hoja.muerte, cuadro_una_vez(hoja.muerte, recorrido.muerte_desde_ms, ahora)};
+            return Cuadro{
+                &hoja.muerte,
+                cuadro_una_vez(hoja.muerte, recorrido.muerte_desde_ms, ahora)};
         }
-        const float avance = std::min(1.0f,
+        const float avance = std::min(
+            1.0f,
             static_cast<float>(ahora - recorrido.muerte_desde_ms) / hoja.muerte.ms_por_cuadro);
         Cuadro cuadro{&hoja.quieto, 0};
         cuadro.opacidad = static_cast<uint8_t>(255 * (1.0f - avance));
@@ -177,8 +243,9 @@ EnemigosGraficos::Cuadro EnemigosGraficos::elegir_cuadro(const Hoja& hoja,
     return Cuadro{&paso, cuadro_en_bucle(paso, ahora)};
 }
 
-void EnemigosGraficos::dibujar_enemigo(SDL_Renderer* renderer, const Hoja& hoja,
-    const EstadoEnemigo& enemigo, uint32_t ahora, int cam_x, int cam_y) const {
+void EnemigosGraficos::dibujar_enemigo(
+    SDL_Renderer* renderer, const Hoja& hoja, const EstadoEnemigo& enemigo, uint32_t ahora,
+    int cam_x, int cam_y) const {
     const int casilla = tamano_de_tile * escala_de_tiles;
     const float escala = static_cast<float>(escala_de_tiles) * hoja.escala;
     const int ancho_px = static_cast<int>(hoja.frame_ancho * escala);
@@ -204,7 +271,10 @@ void EnemigosGraficos::dibujar_enemigo(SDL_Renderer* renderer, const Hoja& hoja,
     SDL_Texture* imagen = textura->second.ptr();
 
     const SDL_Rect origen{
-        cuadro.columna * hoja.frame_ancho, fila * hoja.frame_alto, hoja.frame_ancho, hoja.frame_alto};
+        cuadro.columna * hoja.frame_ancho,
+        fila * hoja.frame_alto,
+        hoja.frame_ancho,
+        hoja.frame_alto};
     const SDL_Rect destino{
         centro_x - ancho_px / 2,
         piso_y - static_cast<int>(hoja.pies_y * escala),
@@ -212,6 +282,7 @@ void EnemigosGraficos::dibujar_enemigo(SDL_Renderer* renderer, const Hoja& hoja,
         alto_px};
 
     SDL_SetTextureAlphaMod(imagen, cuadro.opacidad);
+    SDL_SetTextureColorMod(imagen, hoja.tinte.r, hoja.tinte.g, hoja.tinte.b);
     if (enemigo.frenesi) {
         SDL_SetTextureColorMod(imagen, 255, 110, 110);
     }
@@ -230,8 +301,9 @@ void EnemigosGraficos::dibujar_enemigo(SDL_Renderer* renderer, const Hoja& hoja,
     }
 }
 
-void EnemigosGraficos::dibujar_huesos(SDL_Renderer* renderer, const Hoja& hoja,
-    uint32_t ms_desde_la_muerte, int centro_x, int pies_y) const {
+void EnemigosGraficos::dibujar_huesos(
+    SDL_Renderer* renderer, const Hoja& hoja, uint32_t ms_desde_la_muerte, int centro_x,
+    int pies_y) const {
     const uint32_t duracion = hoja.muerte.ms_por_cuadro;
     const auto textura = texturas.find(hoja.muerte.ruta);
     if (ms_desde_la_muerte >= duracion || textura == texturas.end()) {
@@ -258,14 +330,38 @@ void EnemigosGraficos::dibujar_huesos(SDL_Renderer* renderer, const Hoja& hoja,
     SDL_SetTextureAlphaMod(imagen, 255);
 }
 
-void EnemigosGraficos::dibujar_barra_de_vida(SDL_Renderer* renderer,
-    const SDL_Rect& sobre_el_enemigo, uint16_t vida, uint16_t vida_maxima) const {
+void EnemigosGraficos::dibujar_sangre(
+    SDL_Renderer* renderer, const EstadoEnemigo& enemigo, uint32_t ahora, int cam_x,
+    int cam_y) const {
+    uint32_t& desde = recorridos[enemigo.id].sangre_desde_ms;
+    marcar_inicio(enemigo.sangre && enemigo.vida == 0, desde, ahora);
+    if (desde == 0) {
+        return;
+    }
+    constexpr uint32_t MS_PARA_CRECER = 400;
+    const float crecido = std::min(1.0f, static_cast<float>(ahora - desde) / MS_PARA_CRECER);
+
+    const int casilla = tamano_de_tile * escala_de_tiles;
+    const int lado = static_cast<int>(casilla * 1.5f * crecido);
+    const int centro_x = static_cast<int>((enemigo.columna + 0.5f) * casilla) - cam_x;
+    const int centro_y = static_cast<int>((enemigo.fila + 0.7f) * casilla) - cam_y;
+    const SDL_Rect destino{centro_x - lado / 2, centro_y - lado / 2, lado, lado};
+    SDL_RenderCopy(renderer, textura_de_sangre.ptr(), nullptr, &destino);
+}
+
+void EnemigosGraficos::dibujar_barra_de_vida(
+    SDL_Renderer* renderer, const SDL_Rect& sobre_el_enemigo, uint16_t vida,
+    uint16_t vida_maxima) const {
     if (vida_maxima == 0 || vida >= vida_maxima) {
         return;
     }
 
     const int alto = std::max(2, sobre_el_enemigo.h / 10);
-    const SDL_Rect fondo{sobre_el_enemigo.x, sobre_el_enemigo.y - alto - 2, sobre_el_enemigo.w, alto};
+    const SDL_Rect fondo{
+        sobre_el_enemigo.x,
+        sobre_el_enemigo.y - alto - 2,
+        sobre_el_enemigo.w,
+        alto};
     SDL_SetRenderDrawColor(renderer, 20, 20, 20, 255);
     SDL_RenderFillRect(renderer, &fondo);
 

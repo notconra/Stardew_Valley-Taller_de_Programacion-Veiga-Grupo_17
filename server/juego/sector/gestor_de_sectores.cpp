@@ -327,6 +327,12 @@ std::vector<EstadoJugador> GestorDeSectores::armar_jugadores(const std::string& 
         if (personaje != personajes.end()) {
             estado.ranura_activa = personaje->second.ranura_activa;
             estado.accion_actual = personaje->second.accion_actual;
+            const RanuraInventario en_mano =
+                personaje->second.inventario.ranura(personaje->second.ranura_activa);
+            estado.item_en_mano = en_mano.tipo;
+            estado.calidad_en_mano = en_mano.calidad;
+            estado.numero_de_accion = personaje->second.numero_de_accion;
+            estado.descanso = personaje->second.descanso;
             estado.vida = static_cast<uint8_t>(personaje->second.vida);
             estado.energia = static_cast<uint8_t>(personaje->second.energia);
             estado.vida_maxima = static_cast<uint8_t>(personaje->second.vida_maxima());

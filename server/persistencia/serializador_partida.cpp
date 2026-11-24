@@ -15,14 +15,14 @@ constexpr uint16_t VERSION_ACTUAL = 11;
 
 namespace {
 void escribir_ranura(EscritorBinario& escritor, const RanuraInventario& ranura) {
-    escritor.escribir_u8(static_cast<uint8_t>(ranura.tipo));
+    escritor.escribir_u16(static_cast<uint16_t>(ranura.tipo));
     escritor.escribir_u16(ranura.cantidad);
     escritor.escribir_u8(static_cast<uint8_t>(ranura.calidad));
 }
 
 RanuraInventario leer_ranura(LectorBinario& lector) {
     RanuraInventario ranura;
-    ranura.tipo = static_cast<TipoItem>(lector.leer_u8());
+    ranura.tipo = static_cast<TipoItem>(lector.leer_u16());
     ranura.cantidad = lector.leer_u16();
     ranura.calidad = static_cast<Calidad>(lector.leer_u8());
     return ranura;
@@ -131,7 +131,7 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
     escritor.escribir_u16(static_cast<uint16_t>(datos.mundo.muebles.size()));
     for (const auto& mueble : datos.mundo.muebles) {
         escritor.escribir_texto(mueble.id_mapa);
-        escritor.escribir_u8(static_cast<uint8_t>(mueble.tipo));
+        escritor.escribir_u16(static_cast<uint16_t>(mueble.tipo));
         escritor.escribir_u32(mueble.columna);
         escritor.escribir_u32(mueble.fila);
     }
@@ -288,7 +288,7 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
     for (uint16_t i = 0; i < cant_muebles; ++i) {
         DatosMuebleGuardado mueble;
         mueble.id_mapa = lector.leer_texto();
-        mueble.tipo = static_cast<TipoObjeto>(lector.leer_u8());
+        mueble.tipo = static_cast<TipoObjeto>(lector.leer_u16());
         mueble.columna = lector.leer_u32();
         mueble.fila = lector.leer_u32();
         datos.mundo.muebles.push_back(mueble);

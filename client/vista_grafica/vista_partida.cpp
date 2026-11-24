@@ -4,12 +4,14 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <map>
 #include <memory>
 #include <optional>
 #include <set>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -18,6 +20,7 @@
 #include <vector>
 
 #include "../../common/modo_uso.h"
+#include "../../common/muebles/catalogo_muebles.h"
 #include "../../common/visitantes.h"
 #include "entrada_del_usuario.h"
 #include "iconos_de_items.h"
@@ -26,6 +29,15 @@
 
 #define HORA_DEL_ANOCHECER 20
 #define HORA_FIN_DE_LA_NOCHE 2
+
+// Lo que dura la animación de una acción (picar, cavar, atacar, regar), propia o de otro.
+#define DURACION_DE_UNA_ACCION_MS 475
+// Dónde queda un jugador acostado respecto de la fila de arriba de su cama (lo mismo que usa el
+// servidor al acostarlo; a lo ancho, en el medio), y cuánto se le permite errar al buscarla.
+#define ACOSTADO_DESDE_LA_CAMA_Y -2
+// La cama inicial ocupa dos casillas de ancho; las de Robin dicen su ancho en el catálogo.
+#define ANCHO_DE_LA_CAMA_INICIAL 2
+#define TOLERANCIA_PARA_ENCONTRAR_LA_CAMA 1.0f
 
 namespace {
 
@@ -305,7 +317,9 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
         if (!cuadro_de_aviso.esta_visible() && !cuadro_de_dialogo.esta_visible() &&
             entrada.pedidos().salir) {
-            if (menu->esta_abierto()) {
+            if (pantalla_de_descanso->esta_preguntando()) {
+                pantalla_de_descanso->cancelar_la_pregunta();
+            } else if (menu->esta_abierto()) {
                 if (!menu->cancelar_confirmacion_si_esta_activa()) {
                     menu->cerrar();
                 }
@@ -351,9 +365,10 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
                 menu->clic_liberado();
             }
         }
-        if (haciendo_accion && SDL_GetTicks() - inicio_accion_ms >= 475) {
+        if (haciendo_accion && SDL_GetTicks() - inicio_accion_ms >= DURACION_DE_UNA_ACCION_MS) {
             haciendo_accion = false;
         }
+        actualizar_acciones_de_otros();
         if (pico_pendiente_desde_ms != 0 &&
             SDL_GetTicks() - pico_pendiente_desde_ms >= MS_ESPERA_SONIDO_PICO) {
             pico_pendiente_desde_ms = 0;
@@ -378,6 +393,10 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             lotes_del_centro[lote.lote] = lote;
         }
         lotes_recibidos.clear();
+        if (pregunta_de_dormir_recibida.has_value()) {
+            pantalla_de_descanso->preguntar(*pregunta_de_dormir_recibida);
+            pregunta_de_dormir_recibida.reset();
+        }
 
         const EstadoJugador* propio = jugador_propio();
         const bool cambio_el_tamano = actualizar_tamano_de_pantalla(ventana, hud, hud_mercado);
@@ -431,7 +450,20 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
 
         hud.actualizar(ultimo_inventario, ultimo_cofre);
-        if (!menu_estaba_abierto && !menu->esta_abierto()) {
+        // Mientras pregunta si dormir o el jugador descansa, la caja de abajo se lleva el mouse y
+        // Enter: no se usa nada del mundo ni del inventario. El chat sigue andando.
+        const bool atiende_el_descanso =
+            !menu_estaba_abierto && !menu->esta_abierto() && !cuadro_de_aviso.esta_visible() &&
+            !cuadro_de_dialogo.esta_visible() && pantalla_de_descanso->visible(descanso);
+        if (atiende_el_descanso) {
+            if (std::optional<ComandoCliente> comando =
+                    pantalla_de_descanso
+                        ->procesar_entrada(entrada, descanso, ancho_de_pantalla, alto_de_pantalla);
+                comando.has_value()) {
+                conexion.enviar_comando(*comando);
+            }
+            olvidar_el_piso();
+        } else if (!menu_estaba_abierto && !menu->esta_abierto()) {
             procesar_entrada(
                 entrada,
                 hud,
@@ -462,7 +494,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
         if (cuadro_de_aviso.esta_visible() || cuadro_de_dialogo.esta_visible() ||
             chat.esta_escribiendo() || ultimo_cofre.abierto || hud_mercado.esta_abierto() ||
-            regalos->esta_abierto() || ventana_de_lote->esta_abierta() || menu->esta_abierto()) {
+            regalos->esta_abierto() || ventana_de_lote->esta_abierta() || menu->esta_abierto() ||
+            pantalla_de_descanso->esta_preguntando()) {
             enviar_intencion_si_cambio(Moverse{});
         } else {
             enviar_intencion_si_cambio(entrada.intencion());
@@ -499,6 +532,89 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             *menu);
         limitar_cuadro(inicio_del_cuadro);
     }
+}
+
+void VistaPartida::seguir_acciones_de_otros() {
+    const uint32_t ahora = SDL_GetTicks();
+    std::map<uint32_t, AccionDeOtro> siguientes;
+    for (const EstadoJugador& otro : ultimo_estado_juego.jugadores) {
+        if (otro.id_jugador == id_jugador) {
+            continue;
+        }
+        AccionDeOtro accion;
+        accion.numero = otro.numero_de_accion;
+        const auto anterior = acciones_de_otros.find(otro.id_jugador);
+        if (anterior != acciones_de_otros.end()) {
+            accion = anterior->second;
+            if (otro.numero_de_accion != accion.numero) {
+                accion.numero = otro.numero_de_accion;
+                accion.inicio_ms = ahora | 1;
+                accion.item = otro.item_en_mano;
+                if (accion.item == TipoItem::PICO) {
+                    accion.sonido_pendiente_desde_ms = ahora | 1;
+                } else if (efectos_actuales != nullptr && se_escucha(otro)) {
+                    efectos_actuales->reproducir_uso(accion.item);
+                }
+            }
+        }
+        siguientes[otro.id_jugador] = accion;
+    }
+    // Los que ya no están en el mapa se olvidan: si vuelven, cuentan como vistos por primera vez.
+    acciones_de_otros = std::move(siguientes);
+}
+
+void VistaPartida::actualizar_acciones_de_otros() {
+    const uint32_t ahora = SDL_GetTicks();
+    for (auto& [id, accion] : acciones_de_otros) {
+        if (accion.inicio_ms != 0 && ahora - accion.inicio_ms >= DURACION_DE_UNA_ACCION_MS) {
+            accion.inicio_ms = 0;
+        }
+        if (accion.sonido_pendiente_desde_ms == 0 ||
+            ahora - accion.sonido_pendiente_desde_ms < MS_ESPERA_SONIDO_PICO) {
+            continue;
+        }
+        accion.sonido_pendiente_desde_ms = 0;
+        for (const EstadoJugador& otro : ultimo_estado_juego.jugadores) {
+            if (otro.id_jugador == id && efectos_actuales != nullptr && se_escucha(otro)) {
+                efectos_actuales->reproducir_uso(TipoItem::PICO);
+            }
+        }
+    }
+}
+
+bool VistaPartida::se_escucha(const EstadoJugador& otro) const {
+    const EstadoJugador* propio = jugador_propio();
+    if (propio == nullptr || propio->mapa != otro.mapa) {
+        return false;
+    }
+    const int tamano_de_tile = std::max(1, configuracion.graficos.tamano_de_tile);
+    const int columnas = std::abs(
+        static_cast<int>(propio->x) / tamano_de_tile - static_cast<int>(otro.x) / tamano_de_tile);
+    const int filas = std::abs(
+        static_cast<int>(propio->y) / tamano_de_tile - static_cast<int>(otro.y) / tamano_de_tile);
+    return std::max(columnas, filas) <= CASILLAS_AUDICION_ANIMAL;
+}
+
+const EstadoObjetoDelMundo* VistaPartida::cama_de(const EstadoJugador& jugador) const {
+    const float tamano_de_tile = static_cast<float>(configuracion.graficos.tamano_de_tile);
+    for (const EstadoObjetoDelMundo& objeto : ultimo_estado_juego.objetos) {
+        const DatosDeMueble* mueble = CatalogoDeMuebles::buscar(objeto.tipo);
+        const bool es_cama = objeto.tipo == TipoObjeto::CAMA ||
+                             (mueble != nullptr && mueble->tipo == TipoDeMueble::CAMA);
+        if (!es_cama || objeto.mapa != jugador.mapa) {
+            continue;
+        }
+        const int ancho = mueble != nullptr ? mueble->ancho : ANCHO_DE_LA_CAMA_INICIAL;
+        const float x = static_cast<float>(objeto.columna) * tamano_de_tile +
+                        static_cast<float>(ancho - 1) * tamano_de_tile / 2.0f;
+        const float y = static_cast<float>(objeto.fila) * tamano_de_tile +
+                        static_cast<float>(ACOSTADO_DESDE_LA_CAMA_Y);
+        if (std::abs(static_cast<float>(jugador.x) - x) <= TOLERANCIA_PARA_ENCONTRAR_LA_CAMA &&
+            std::abs(static_cast<float>(jugador.y) - y) <= TOLERANCIA_PARA_ENCONTRAR_LA_CAMA) {
+            return &objeto;
+        }
+    }
+    return nullptr;
 }
 
 void VistaPartida::enviar_intencion_si_cambio(const Moverse& intencion) {
@@ -618,11 +734,6 @@ void VistaPartida::procesar_entrada(
         return;
     }
 
-    if (pedidos.confirmar && descanso.estado != EstadoDeDescanso::DESPIERTO &&
-        !descanso.dio_el_ok) {
-        conexion.enviar_comando(DarElOk{});
-    }
-
     if (pedidos.guardar) {
         conexion.enviar_comando(GuardarPartida{});
         std::cout << "[partida] guardando partida en el servidor..." << std::endl;
@@ -662,6 +773,11 @@ void VistaPartida::procesar_entrada(
                 pedidos.con_shift);
         }
     }
+
+    if (cartel_pendiente.has_value()) {
+        cuadro_de_dialogo.mostrar(cartel_pendiente->id_npc, cartel_pendiente->texto);
+        cartel_pendiente.reset();
+    }
 }
 
 void VistaPartida::elegir_ranura_de_la_barra(const EntradaDelUsuario::Pedidos& pedidos) {
@@ -682,6 +798,35 @@ void VistaPartida::elegir_ranura_de_la_barra(const EntradaDelUsuario::Pedidos& p
         conexion.enviar_comando(SeleccionarRanuraDeLaBarra{static_cast<uint8_t>(nueva)});
     }
 }
+bool VistaPartida::mostrar_cartel_en(int columna, int fila) {
+    if (!carteles_por_mapa.contains(mapa_actual)) {
+        carteles_por_mapa[mapa_actual] =
+            LectorDeMapasTMX(configuracion_de(mapa_actual).ruta).cargar_carteles("Interacciones");
+    }
+    const int x = columna * 16 + 8;
+    const int y = fila * 16 + 8;
+    for (CartelTMX& cartel : carteles_por_mapa[mapa_actual]) {
+        if (x >= cartel.x && x < cartel.x + cartel.ancho && y >= cartel.y &&
+            y < cartel.y + cartel.alto) {
+            std::vector<std::string> frases;
+            std::stringstream texto(cartel.texto);
+            for (std::string frase; std::getline(texto, frase, '|');) {
+                frases.push_back(frase);
+            }
+            if (frases.empty()) {
+                return false;
+            }
+            cartel_pendiente = DialogoNpc{cartel.npc, frases[std::rand() % frases.size()]};
+            if (!cartel.comando.empty()) {
+                conexion.enviar_comando(EnviarMensajeDeChat{cartel.comando});
+                cartel.comando.clear();  // Solo se usa una vez.
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
 void VistaPartida::procesar_clic(
     const EntradaDelUsuario& entrada, HudInventario& hud, HudMercado& hud_mercado,
     PanelDeRegalos& regalos, VentanaDeLote& ventana_de_lote, const NpcsGraficos& npcs,
@@ -756,6 +901,11 @@ void VistaPartida::procesar_clic(
             static_cast<int>(casilla->fila));
         if (!id_npc.empty()) {
             conexion.enviar_comando(HablarConNpc{id_npc});
+            return;
+        }
+        if (mostrar_cartel_en(
+                static_cast<int>(casilla->columna),
+                static_cast<int>(casilla->fila))) {
             return;
         }
     }
@@ -871,6 +1021,7 @@ void VistaPartida::aplicar(
                 olvidar_el_piso();
                 estado = e;
                 guardar_tierra(e);
+                seguir_acciones_de_otros();
                 const EstadoJugador* ahora = jugador_propio();
                 if (tenia_monedas && ahora != nullptr && ahora->monedas != monedas_antes &&
                     efectos_actuales != nullptr) {
@@ -893,6 +1044,7 @@ void VistaPartida::aplicar(
                 }
                 estado.mapa = e.mapa;
                 estado.jugadores = e.jugadores;
+                seguir_acciones_de_otros();
                 const EstadoJugador* ahora = jugador_propio();
                 bool pica = ahora != nullptr && ahora->accion_actual == TipoAccion::PICAR;
                 if (antes_tenia_vida && ahora != nullptr && ahora->vida < vida_antes &&
@@ -974,7 +1126,7 @@ void VistaPartida::aplicar(
                 const bool se_encendio =
                     e.trampa.activa && (existente == estado.trampas.end() || !existente->activa);
                 if (se_encendio && trampa_se_escucha(e.trampa) && efectos_actuales != nullptr) {
-                    efectos_actuales->reproducir_trampa_activada();
+                    efectos_actuales->reproducir_trampa_activada(e.trampa.tipo);
                 }
                 if (existente == estado.trampas.end()) {
                     estado.trampas.push_back(e.trampa);
@@ -1045,6 +1197,7 @@ void VistaPartida::aplicar(
                 hora_del_juego = e;
             },
             [&](const EstadoDelDescanso& e) { descanso = e; },
+            [&](const PreguntaDeDormir& e) { pregunta_de_dormir_recibida = e; },
             [&](const MultijugadorActivado& e) {
                 if (menu_actual != nullptr) {
                     menu_actual->marcar_multijugador(e.codigo_partida);
@@ -1070,6 +1223,11 @@ void VistaPartida::aplicar(
             [&](const NpcsEnSector& e) {
                 if (estado.mapa == e.mapa) {
                     estado.npcs = e.npcs;
+                }
+            },
+            [&](const LlamasEnSector& e) {
+                if (estado.mapa == e.mapa) {
+                    estado.llamas = e.llamas;
                 }
             },
             [&](const DialogoNpc& e) { cuadro_de_dialogo.mostrar(e.id_npc, e.texto); },
@@ -1228,12 +1386,23 @@ void VistaPartida::dibujar(
         if (dibujable.jugador != nullptr) {
             const EstadoJugador& jugador = *dibujable.jugador;
             const bool es_el_propio = jugador.id_jugador == id_jugador;
-            const bool mostrar_accion = es_el_propio && haciendo_accion;
-            const Uint32 ms_de_accion = mostrar_accion ? SDL_GetTicks() - inicio_accion_ms : 0;
+            bool mostrar_accion = es_el_propio && haciendo_accion;
+            Uint32 ms_de_accion = mostrar_accion ? SDL_GetTicks() - inicio_accion_ms : 0;
             RanuraInventario en_mano{};
             if (es_el_propio &&
                 ultimo_inventario.ranura_activa < ultimo_inventario.ranuras.size()) {
                 en_mano = ultimo_inventario.ranuras[ultimo_inventario.ranura_activa];
+            }
+            if (!es_el_propio) {
+                // De los otros no se tiene el inventario: el servidor manda qué tienen en la mano.
+                en_mano = RanuraInventario{jugador.item_en_mano, 1, jugador.calidad_en_mano};
+                const auto accion = acciones_de_otros.find(jugador.id_jugador);
+                if (accion != acciones_de_otros.end() && accion->second.inicio_ms != 0) {
+                    mostrar_accion = true;
+                    ms_de_accion = SDL_GetTicks() - accion->second.inicio_ms;
+                    // La animación es la del ítem con el que la empezó.
+                    en_mano.tipo = accion->second.item;
+                }
             }
             personaje.dibujar(
                 renderer,
@@ -1246,6 +1415,11 @@ void VistaPartida::dibujar(
                 camara.y(),
                 en_mano,
                 iconos);
+            if (jugador.descanso == EstadoDeDescanso::ACOSTADO) {
+                if (const EstadoObjetoDelMundo* cama = cama_de(jugador); cama != nullptr) {
+                    objetos.dibujar_frazada(renderer, *cama, camara.x(), camara.y());
+                }
+            }
         } else if (dibujable.objeto != nullptr) {
             objetos.dibujar_objeto(renderer, *dibujable.objeto, camara.x(), camara.y());
         } else if (dibujable.animal != nullptr) {

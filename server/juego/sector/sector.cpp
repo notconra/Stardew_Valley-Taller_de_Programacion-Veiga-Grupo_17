@@ -36,7 +36,7 @@ void Sector::avisar(Notificador& notificador, const EventoServidor& evento) cons
 }
 
 bool Sector::tratar_tierra(Notificador& notificador, const Casilla& casilla) {
-    if (!tierra.tratar(casilla)) {
+    if (objetos.objeto_en(casilla.columna, casilla.fila) != nullptr || !tierra.tratar(casilla)) {
         return false;
     }
     avisar_casilla(notificador, casilla);

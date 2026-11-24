@@ -17,7 +17,7 @@ bool AccionDormir::aplica(const ContextoDeAccion& c) const {
         return false;
     }
     const ObjetoDelMundo* objeto = c.sector.objetos.objeto_en(c.objetivo.columna, c.objetivo.fila);
-    return objeto != nullptr && objeto->tipo == TipoObjeto::CAMA;
+    return objeto != nullptr && c.recursos.catalogo_de_objetos.es_cama(objeto->tipo);
 }
 
 bool AccionDormir::ejecutar(ContextoDeAccion& c) {
@@ -25,16 +25,16 @@ bool AccionDormir::ejecutar(ContextoDeAccion& c) {
         return false;
     }
     const ObjetoDelMundo* cama = c.sector.objetos.objeto_en(c.objetivo.columna, c.objetivo.fila);
-    if (cama == nullptr || cama->tipo != TipoObjeto::CAMA) {
+    if (cama == nullptr || !c.recursos.catalogo_de_objetos.es_cama(cama->tipo)) {
         return false;
     }
-    const UbicacionDeCama ubicacion{c.sector.id, cama->columna, cama->fila};
-    if (camas_ocupadas.esta_ocupada(ubicacion.mapa, ubicacion.columna, ubicacion.fila)) {
+    if (camas_ocupadas.esta_ocupada(c.sector.id, cama->columna, cama->fila)) {
         return false;
     }
     c.sector.jugadores.moverse(c.personaje.id_jugador, 0, 0);
-    c.personaje.descanso = EstadoDeDescanso::ACOSTADO;
-    c.personaje.dio_el_ok = false;
-    c.personaje.ultima_cama = ubicacion;
+    PreguntaDeDormir pregunta;
+    pregunta.columna = static_cast<uint32_t>(c.objetivo.columna);
+    pregunta.fila = static_cast<uint32_t>(c.objetivo.fila);
+    c.notificador.a_jugador(c.personaje.id_jugador, pregunta);
     return true;
 }

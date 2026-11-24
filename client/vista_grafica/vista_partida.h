@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "../../common/lector_de_mapas_tmx/lector_de_mapas.h"
 #include "../../common/mensajes/mensajes.h"
 #include "../../common/modo_uso.h"
 #include "../configuracion/configuracion_cliente_datos.h"
@@ -71,12 +72,17 @@ private:
     CofreJugador ultimo_cofre{};
     std::string mapa_actual;
     std::string mundo_actual;
+    std::map<std::string, std::vector<CartelTMX>> carteles_por_mapa;
+    std::optional<DialogoNpc>
+        cartel_pendiente;  // lo deja procesar_clic, lo muestra procesar_entrada
     std::map<std::pair<int, int>, CasillaTratada> tierra_tratada;
     std::optional<HoraDelJuego> hora_del_juego;
     EstadoDelDescanso descanso{};
     JugadoresDeLaPartida jugadores_de_la_partida{};
     RegalosPendientes regalos_pendientes{};
     std::vector<LoteDelCentro> lotes_recibidos;
+    // La cama por la que preguntó el servidor, hasta pasársela a la pantalla de descanso.
+    std::optional<PreguntaDeDormir> pregunta_de_dormir_recibida;
     // El último estado de cada lote del centro comunitario. Lo usan las marcas del mapa y la
     // pestaña del centro del menú.
     std::map<TipoLote, LoteDelCentro> lotes_del_centro;
@@ -125,6 +131,7 @@ private:
     const EstadoJugador* jugador_propio() const;
     bool trampa_se_escucha(const EstadoTrampa& trampa) const;
     const ConfiguracionMapa& configuracion_de(const std::string& id_mapa) const;
+    bool mostrar_cartel_en(int columna, int fila);
     Camara camara_para(const MapaGrafico& mapa) const;
 
     // Escala que se usa según la altura de la pantalla, acotada por "escala_de_tiles" y
@@ -161,6 +168,30 @@ private:
     static constexpr int CASILLAS_AUDICION_ANIMAL = 10;
     static constexpr uint8_t HORA_INICIO_DIA = 6;
     uint32_t ultimo_paso_ms = 0;
+
+    // Lo último que se sabe de las acciones de cada uno de los otros jugadores del mapa, por id. El
+    // servidor solo manda cuántas acciones animadas lleva cada uno (numero_de_accion): cuando ese
+    // número cambia, acá se empieza su animación y su sonido.
+    struct AccionDeOtro {
+        uint8_t numero = 0;
+        // 0: no está haciendo ninguna.
+        uint32_t inicio_ms = 0;
+        TipoItem item = TipoItem::NINGUNO;
+        // Como el propio, el pico suena un poco después del golpe. 0: no hay sonido pendiente.
+        uint32_t sonido_pendiente_desde_ms = 0;
+    };
+    std::map<uint32_t, AccionDeOtro> acciones_de_otros;
+
+    // Después de recibir los jugadores: anima y hace sonar a los que hicieron una acción nueva.
+    // La primera vez que se ve a alguien solo se anota su número, sin animar.
+    void seguir_acciones_de_otros();
+    // En cada cuadro: termina las animaciones viejas y hace sonar los picos pendientes.
+    void actualizar_acciones_de_otros();
+    // Si el propio jugador está a CASILLAS_AUDICION_ANIMAL casillas o menos de ese otro.
+    bool se_escucha(const EstadoJugador& otro) const;
+    // La cama en la que está acostado ese jugador, o nada.
+    const EstadoObjetoDelMundo* cama_de(const EstadoJugador& jugador) const;
+
     EfectosDeSonido* efectos_actuales = nullptr;
     MenuEnJuego* menu_actual = nullptr;
 

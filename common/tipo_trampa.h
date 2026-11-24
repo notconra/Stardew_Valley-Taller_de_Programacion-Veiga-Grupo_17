@@ -8,6 +8,7 @@
 enum class TipoTrampa : uint8_t {
     NINGUNA = 0,
     PINCHES = 1,
+    LANZALLAMAS = 2,  // en la pared de arriba de su casilla: quema esa casilla
 };
 
 #endif

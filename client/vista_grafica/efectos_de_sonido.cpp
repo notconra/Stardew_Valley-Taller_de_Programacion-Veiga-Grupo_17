@@ -44,6 +44,9 @@ EfectosDeSonido::EfectosDeSonido(const ConfiguracionSonido& configuracion)
     trampa_activada = configuracion.ruta_trampa_activada.empty()
                           ? nullptr
                           : cargar(configuracion.ruta_trampa_activada);
+    lanzallamas_activado = configuracion.ruta_lanzallamas_activado.empty()
+                               ? nullptr
+                               : cargar(configuracion.ruta_lanzallamas_activado);
     jugador_danio = configuracion.ruta_jugador_danio.empty()
                         ? nullptr
                         : cargar(configuracion.ruta_jugador_danio);
@@ -153,8 +156,8 @@ void EfectosDeSonido::reproducir(Mix_Chunk* sonido) {
     }
 }
 
-void EfectosDeSonido::reproducir_trampa_activada() const {
-    reproducir(trampa_activada);
+void EfectosDeSonido::reproducir_trampa_activada(TipoTrampa tipo) const {
+    reproducir(tipo == TipoTrampa::LANZALLAMAS ? lanzallamas_activado : trampa_activada);
 }
 
 void EfectosDeSonido::reproducir_jugador_danio() const {

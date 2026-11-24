@@ -43,9 +43,12 @@ private:
     CerrarMercado recibir_comando_cerrar_mercado();
     EnviarRegalo recibir_comando_enviar_regalo();
     AbrirRegalos recibir_comando_abrir_regalos();
+    RechazarRegalo recibir_comando_rechazar_regalo();
     HablarConNpc recibir_comando_hablar_con_npc();
     DonarAlLote recibir_comando_donar_al_lote();
     DonarMonedasAlLote recibir_comando_donar_monedas_al_lote();
+    Dormir recibir_comando_dormir();
+    Levantarse recibir_comando_levantarse();
     // Lee un lote y lanza ErrorProtocolo si no existe.
     TipoLote recibir_tipo_lote();
 
@@ -102,8 +105,10 @@ private:
     void enviar_evento_regalos_pendientes(const RegalosPendientes& pendientes);
     void enviar_evento_npcs_en_sector(const NpcsEnSector& npcs);
     void enviar_evento_dialogo_npc(const DialogoNpc& dialogo);
+    void enviar_evento_llamas_en_sector(const LlamasEnSector& llamas);
     void enviar_evento_lote_del_centro(const LoteDelCentro& lote);
     void enviar_evento_centro_terminado(const CentroTerminado& m);
+    void enviar_evento_pregunta_de_dormir(const PreguntaDeDormir& pregunta);
 
 public:
     explicit ProtocoloServidor(ISocket& socket_conectado);
