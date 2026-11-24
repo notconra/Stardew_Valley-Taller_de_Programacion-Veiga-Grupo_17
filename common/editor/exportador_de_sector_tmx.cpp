@@ -17,10 +17,10 @@ struct DefinicionTransicionTMX {
 };
 
 static const std::map<TipoEntidad, const char*> PUESTOS_POR_TIPO = {
-    {TipoEntidad::PUESTO_MARNIE, "0"},
-    {TipoEntidad::PUESTO_CLINT, "1"},
-    {TipoEntidad::PUESTO_PIERRE, "2"},
-    {TipoEntidad::PUESTO_ROBIN, "3"}};
+    {TipoEntidad::PUESTO_MARNIE, "marnie"},
+    {TipoEntidad::PUESTO_CLINT, "clint"},
+    {TipoEntidad::PUESTO_PIERRE, "pierre"},
+    {TipoEntidad::PUESTO_ROBIN, "robin"}};
 
 ExportadorDeSectorTMX::ExportadorDeSectorTMX(
     SectorActual sector_actual, const MapaEditable& mapa_sector,
@@ -537,29 +537,33 @@ void ExportadorDeSectorTMX::exportar_entidades() {
             columna_atencion,
             fila_atencion,
             tiene_atencion);
-        if (!tiene_atencion) {
-            if (tipo == TipoEntidad::PUESTO_MARNIE) {
-                columna_atencion = columna + 2;
-                fila_atencion = fila + 1;
-            } else if (tipo == TipoEntidad::PUESTO_ROBIN) {
-                columna_atencion = columna - 1;
-                fila_atencion = fila + 1;
-            } else if (tipo == TipoEntidad::PUESTO_CLINT) {
-                columna_atencion = columna + 1;
-                fila_atencion = fila + 2;
-            } else if (tipo == TipoEntidad::PUESTO_PIERRE) {
-                columna_atencion = columna + 1;
-                fila_atencion = fila + 2;
-            } else {
-                columna_atencion = columna;
-                fila_atencion = fila;
-            }
-        }
-
         int posicion_x_pixeles = columna * ANCHO_TILE_PIXELES;
         int posicion_y_pixeles = fila * ALTO_TILE_PIXELES;
         int ancho_pixeles = ancho_casillas * ANCHO_TILE_PIXELES;
         int alto_pixeles = alto_casillas * ALTO_TILE_PIXELES;
+
+        bool es_puesto_mercado =
+            (tipo == TipoEntidad::PUESTO_MARNIE || tipo == TipoEntidad::PUESTO_CLINT ||
+             tipo == TipoEntidad::PUESTO_PIERRE || tipo == TipoEntidad::PUESTO_ROBIN);
+        if (es_puesto_mercado) {
+            int columna_interaccion = 0;
+            int fila_interaccion = 0;
+            mapa.calcular_interaccion_puesto(
+                columna,
+                fila,
+                entidades[indice].obtener_orientacion(),
+                columna_interaccion,
+                fila_interaccion,
+                columna_atencion,
+                fila_atencion);
+            posicion_x_pixeles = columna_interaccion * ANCHO_TILE_PIXELES;
+            posicion_y_pixeles = fila_interaccion * ALTO_TILE_PIXELES;
+            ancho_pixeles = ANCHO_TILE_PIXELES;
+            alto_pixeles = ALTO_TILE_PIXELES;
+        } else if (!tiene_atencion) {
+            columna_atencion = columna;
+            fila_atencion = fila;
+        }
 
         if (tipo == TipoEntidad::CABANIA) {
             // La puerta de la cabaña está en la alfombra de bienvenida (fila 7)
@@ -609,7 +613,11 @@ void ExportadorDeSectorTMX::exportar_entidades() {
                     alto_pixeles,
                     iterador_puesto->second,
                     columna_atencion,
-                    fila_atencion);
+                    fila_atencion,
+                    columna,
+                    fila,
+                    entidades[indice].obtener_orientacion(),
+                    es_puesto_mercado);
             }
         }
         indice++;

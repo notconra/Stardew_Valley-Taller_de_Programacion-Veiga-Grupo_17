@@ -163,10 +163,28 @@ void MapaEditable::quitar_propiedad_de_casilla(int columna, int fila, uint8_t pr
 }
 
 uint32_t MapaEditable::ubicar_entidad(
-    TipoEntidad tipo, int columna, int fila, int ancho, int alto) {
+    TipoEntidad tipo, int columna, int fila, int ancho, int alto, Direccion orientacion) {
     uint32_t nuevo_identificador = proximo_identificador_de_entidad;
     proximo_identificador_de_entidad++;
-    entidades.emplace_back(nuevo_identificador, tipo, columna, fila, ancho, alto);
+    entidades.emplace_back(nuevo_identificador, tipo, columna, fila, ancho, alto, orientacion);
+    bool es_puesto_mercado =
+        (tipo == TipoEntidad::PUESTO_MARNIE || tipo == TipoEntidad::PUESTO_CLINT ||
+         tipo == TipoEntidad::PUESTO_PIERRE || tipo == TipoEntidad::PUESTO_ROBIN);
+    if (es_puesto_mercado) {
+        int columna_interaccion = 0;
+        int fila_interaccion = 0;
+        int columna_atencion = 0;
+        int fila_atencion = 0;
+        calcular_interaccion_puesto(
+            columna,
+            fila,
+            orientacion,
+            columna_interaccion,
+            fila_interaccion,
+            columna_atencion,
+            fila_atencion);
+        entidades.back().configurar_punto_de_atencion(columna_atencion, fila_atencion);
+    }
     if (tipo == TipoEntidad::TRANSICION_PUEBLO && cantidad_de_columnas >= 30) {
         generar_muro_perimetral_granja();
     } else if (tipo == TipoEntidad::TRANSICION_GRANJA && cantidad_de_columnas >= 30) {
@@ -267,10 +285,80 @@ bool MapaEditable::deslizar_entidad(uint32_t identificador, int nueva_columna, i
     int alto = 0;
     entidades[posicion].consultar_dimensiones(ancho, alto);
     TipoEntidad tipo = entidades[posicion].obtener_tipo();
+    bool es_puesto_mercado =
+        (tipo == TipoEntidad::PUESTO_MARNIE || tipo == TipoEntidad::PUESTO_CLINT ||
+         tipo == TipoEntidad::PUESTO_PIERRE || tipo == TipoEntidad::PUESTO_ROBIN);
+
+    EntidadDelMapa* otra_entidad = buscar_entidad_en_casilla(nueva_columna, nueva_fila);
+    bool es_intercambio = false;
+    if (otra_entidad != nullptr && otra_entidad->obtener_identificador() != identificador) {
+        TipoEntidad tipo_otro = otra_entidad->obtener_tipo();
+        bool otro_es_puesto =
+            (tipo_otro == TipoEntidad::PUESTO_MARNIE || tipo_otro == TipoEntidad::PUESTO_CLINT ||
+             tipo_otro == TipoEntidad::PUESTO_PIERRE || tipo_otro == TipoEntidad::PUESTO_ROBIN);
+        if (es_puesto_mercado && otro_es_puesto) {
+            es_intercambio = true;
+        }
+    }
+
+    if (es_intercambio && otra_entidad != nullptr) {
+        int columna_vieja = 0;
+        int fila_vieja = 0;
+        entidades[posicion].consultar_origen(columna_vieja, fila_vieja);
+        Direccion orientacion_vieja = entidades[posicion].obtener_orientacion();
+        Direccion orientacion_otra = otra_entidad->obtener_orientacion();
+
+        entidades[posicion].trasladar_a(nueva_columna, nueva_fila);
+        entidades[posicion].establecer_orientacion(orientacion_otra);
+
+        otra_entidad->trasladar_a(columna_vieja, fila_vieja);
+        otra_entidad->establecer_orientacion(orientacion_vieja);
+
+        int columna_interaccion = 0;
+        int fila_interaccion = 0;
+        int columna_atencion = 0;
+        int fila_atencion = 0;
+        calcular_interaccion_puesto(
+            nueva_columna,
+            nueva_fila,
+            orientacion_otra,
+            columna_interaccion,
+            fila_interaccion,
+            columna_atencion,
+            fila_atencion);
+        entidades[posicion].configurar_punto_de_atencion(columna_atencion, fila_atencion);
+
+        calcular_interaccion_puesto(
+            columna_vieja,
+            fila_vieja,
+            orientacion_vieja,
+            columna_interaccion,
+            fila_interaccion,
+            columna_atencion,
+            fila_atencion);
+        otra_entidad->configurar_punto_de_atencion(columna_atencion, fila_atencion);
+        return true;
+    }
+
     if (!entidad_puede_ubicarse_en(tipo, nueva_columna, nueva_fila, ancho, alto, identificador)) {
         return false;
     }
     entidades[posicion].trasladar_a(nueva_columna, nueva_fila);
+    if (es_puesto_mercado) {
+        int columna_interaccion = 0;
+        int fila_interaccion = 0;
+        int columna_atencion = 0;
+        int fila_atencion = 0;
+        calcular_interaccion_puesto(
+            nueva_columna,
+            nueva_fila,
+            entidades[posicion].obtener_orientacion(),
+            columna_interaccion,
+            fila_interaccion,
+            columna_atencion,
+            fila_atencion);
+        entidades[posicion].configurar_punto_de_atencion(columna_atencion, fila_atencion);
+    }
     if (tipo == TipoEntidad::TRANSICION_PUEBLO && cantidad_de_columnas >= 30) {
         generar_muro_perimetral_granja();
     } else if (tipo == TipoEntidad::TRANSICION_GRANJA && cantidad_de_columnas >= 30) {
@@ -1262,6 +1350,36 @@ bool MapaEditable::es_tile_perimetro_mercado(uint32_t identificador_tile) {
         return true;
     }
     return false;
+}
+
+void MapaEditable::calcular_interaccion_puesto(
+    int columna, int fila, Direccion orientacion, int& columna_interaccion, int& fila_interaccion,
+    int& columna_atencion, int& fila_atencion) const {
+    int distancia_columna = 0;
+    int distancia_fila = 0;
+    if (orientacion == Direccion::ABAJO) {
+        distancia_fila = 1;
+    } else if (orientacion == Direccion::ARRIBA) {
+        distancia_fila = -1;
+    } else if (orientacion == Direccion::DERECHA) {
+        distancia_columna = 1;
+    } else if (orientacion == Direccion::IZQUIERDA) {
+        distancia_columna = -1;
+    }
+
+    columna_interaccion = columna + distancia_columna;
+    fila_interaccion = fila + distancia_fila;
+
+    bool casilla_frente_bloquea = esta_dentro(columna_interaccion, fila_interaccion) &&
+                                  obtener_casilla(columna_interaccion, fila_interaccion)
+                                      .tiene_propiedad(PropiedadDeCasilla::BLOQUEA);
+    if (casilla_frente_bloquea) {
+        columna_atencion = columna + 2 * distancia_columna;
+        fila_atencion = fila + 2 * distancia_fila;
+    } else {
+        columna_atencion = columna_interaccion;
+        fila_atencion = fila_interaccion;
+    }
 }
 
 void MapaEditable::reconstruir_perimetro_mercado() {

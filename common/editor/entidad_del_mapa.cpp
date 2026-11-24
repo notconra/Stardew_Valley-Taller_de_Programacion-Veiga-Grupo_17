@@ -1,12 +1,8 @@
 #include "entidad_del_mapa.h"
 
 EntidadDelMapa::EntidadDelMapa(
-    uint32_t identificador_entidad,
-    TipoEntidad tipo,
-    int columna,
-    int fila,
-    int ancho,
-    int alto)
+    uint32_t identificador_entidad, TipoEntidad tipo, int columna, int fila, int ancho, int alto,
+    Direccion orientacion)
     : identificador(identificador_entidad),
       tipo_de_entidad(tipo),
       columna_origen(columna),
@@ -15,7 +11,9 @@ EntidadDelMapa::EntidadDelMapa(
       alto_en_casillas(alto),
       columna_de_atencion(0),
       fila_de_atencion(0),
-      tiene_casilla_de_atencion(false) {}
+      tiene_casilla_de_atencion(false),
+      orientacion_de_entidad(orientacion) {
+}
 
 uint32_t EntidadDelMapa::obtener_identificador() const {
     return identificador;
@@ -23,6 +21,26 @@ uint32_t EntidadDelMapa::obtener_identificador() const {
 
 TipoEntidad EntidadDelMapa::obtener_tipo() const {
     return tipo_de_entidad;
+}
+
+Direccion EntidadDelMapa::obtener_orientacion() const {
+    return orientacion_de_entidad;
+}
+
+void EntidadDelMapa::establecer_orientacion(Direccion nueva_orientacion) {
+    orientacion_de_entidad = nueva_orientacion;
+}
+
+void EntidadDelMapa::rotar_orientacion() {
+    if (orientacion_de_entidad == Direccion::ABAJO) {
+        orientacion_de_entidad = Direccion::DERECHA;
+    } else if (orientacion_de_entidad == Direccion::DERECHA) {
+        orientacion_de_entidad = Direccion::ARRIBA;
+    } else if (orientacion_de_entidad == Direccion::ARRIBA) {
+        orientacion_de_entidad = Direccion::IZQUIERDA;
+    } else {
+        orientacion_de_entidad = Direccion::ABAJO;
+    }
 }
 
 void EntidadDelMapa::consultar_origen(int& columna, int& fila) const {
@@ -64,10 +82,9 @@ void EntidadDelMapa::remover_punto_de_atencion() {
 }
 
 bool EntidadDelMapa::ocupa_casilla(int columna, int fila) const {
-    bool dentro_horizontal = (columna >= columna_origen) &&
-                             (columna < (columna_origen + ancho_en_casillas));
-    bool dentro_vertical = (fila >= fila_origen) &&
-                           (fila < (fila_origen + alto_en_casillas));
+    bool dentro_horizontal =
+        (columna >= columna_origen) && (columna < (columna_origen + ancho_en_casillas));
+    bool dentro_vertical = (fila >= fila_origen) && (fila < (fila_origen + alto_en_casillas));
     return dentro_horizontal && dentro_vertical;
 }
 
@@ -81,8 +98,8 @@ bool EntidadDelMapa::se_superpone_con(const EntidadDelMapa& otra_entidad) const 
 
     bool solapa_horizontal = (columna_origen < otra_columna + otro_ancho) &&
                              (columna_origen + ancho_en_casillas > otra_columna);
-    bool solapa_vertical = (fila_origen < otra_fila + otro_alto) &&
-                           (fila_origen + alto_en_casillas > otra_fila);
+    bool solapa_vertical =
+        (fila_origen < otra_fila + otro_alto) && (fila_origen + alto_en_casillas > otra_fila);
     return solapa_horizontal && solapa_vertical;
 }
 

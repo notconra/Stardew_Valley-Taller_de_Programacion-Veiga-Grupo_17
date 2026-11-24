@@ -53,7 +53,8 @@ void EscritorTMX::agregar_transicion(
 
 void EscritorTMX::agregar_puesto(
     const std::string& nombre_capa_objetos, int posicion_x, int posicion_y, int ancho, int alto,
-    const std::string& identificador_puesto, int columna_atencion, int fila_atencion) {
+    const std::string& identificador_puesto, int columna_atencion, int fila_atencion,
+    int columna_npc, int fila_npc, Direccion orientacion_npc, bool tiene_posicion_npc) {
     ObjetoMapaTMX puesto;
     puesto.nombre = identificador_puesto;
     puesto.tipo = "puesto";
@@ -65,6 +66,19 @@ void EscritorTMX::agregar_puesto(
     puesto.propiedades["id_puesto"] = identificador_puesto;
     puesto.propiedades["columna_atencion"] = std::to_string(columna_atencion);
     puesto.propiedades["fila_atencion"] = std::to_string(fila_atencion);
+    if (tiene_posicion_npc) {
+        puesto.propiedades["columna_npc"] = std::to_string(columna_npc);
+        puesto.propiedades["fila_npc"] = std::to_string(fila_npc);
+        std::string texto_orientacion = "abajo";
+        if (orientacion_npc == Direccion::ARRIBA) {
+            texto_orientacion = "arriba";
+        } else if (orientacion_npc == Direccion::DERECHA) {
+            texto_orientacion = "derecha";
+        } else if (orientacion_npc == Direccion::IZQUIERDA) {
+            texto_orientacion = "izquierda";
+        }
+        puesto.propiedades["orientacion_npc"] = texto_orientacion;
+    }
     agregar_objeto(nombre_capa_objetos, puesto);
 }
 

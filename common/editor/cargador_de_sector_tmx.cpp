@@ -360,45 +360,60 @@ MapaEditable CargadorDeSectorTMX::cargar_sector(
         PuestoTMX& puesto = puestos[indice_puesto];
         auto iterador_puesto = IDENTIFICADORES_A_PUESTO.find(puesto.id);
         if (iterador_puesto != IDENTIFICADORES_A_PUESTO.end()) {
-            int columna = puesto.x / ANCHO_TILE_PIXELES;
-            int fila = puesto.y / ALTO_TILE_PIXELES;
-            int ancho_casillas = 2;
-            int alto_casillas = 2;
-            if (iterador_puesto->second == TipoEntidad::PUESTO_MARNIE) {
-                columna = 2;
-                fila = 9;
-            } else if (iterador_puesto->second == TipoEntidad::PUESTO_ROBIN) {
-                columna = 15;
-                fila = 9;
-            } else if (iterador_puesto->second == TipoEntidad::PUESTO_CLINT) {
-                columna = 2;
-                fila = 6;
-            } else if (iterador_puesto->second == TipoEntidad::PUESTO_PIERRE) {
-                columna = 14;
-                fila = 6;
+            int columna_zona = puesto.x / ANCHO_TILE_PIXELES;
+            int fila_zona = puesto.y / ALTO_TILE_PIXELES;
+            int columna_npc = columna_zona;
+            int fila_npc = fila_zona;
+            Direccion orientacion = Direccion::ABAJO;
+
+            if (puesto.tiene_posicion_npc) {
+                columna_npc = puesto.columna_npc;
+                fila_npc = puesto.fila_npc;
+                orientacion = puesto.orientacion_npc;
+            } else if (puesto.tiene_atencion) {
+                if (puesto.fila_atencion > fila_zona) {
+                    orientacion = Direccion::ABAJO;
+                    columna_npc = puesto.columna_atencion;
+                    fila_npc = puesto.fila_atencion - 2;
+                } else if (puesto.columna_atencion > columna_zona) {
+                    orientacion = Direccion::DERECHA;
+                    columna_npc = puesto.columna_atencion - 2;
+                    fila_npc = puesto.fila_atencion;
+                } else if (puesto.columna_atencion < columna_zona) {
+                    orientacion = Direccion::IZQUIERDA;
+                    columna_npc = puesto.columna_atencion + 2;
+                    fila_npc = puesto.fila_atencion;
+                } else if (puesto.fila_atencion < fila_zona) {
+                    orientacion = Direccion::ARRIBA;
+                    columna_npc = puesto.columna_atencion;
+                    fila_npc = puesto.fila_atencion + 2;
+                }
             }
 
-            uint32_t identificador_entidad = mapa.ubicar_entidad(
-                iterador_puesto->second,
-                columna,
-                fila,
-                ancho_casillas,
-                alto_casillas);
+            uint32_t identificador_entidad =
+                mapa.ubicar_entidad(iterador_puesto->second, columna_npc, fila_npc, 1, 1);
             EntidadDelMapa* entidad_colocada =
                 mapa.buscar_entidad_por_identificador(identificador_entidad);
             if (entidad_colocada != nullptr) {
-                if (iterador_puesto->second == TipoEntidad::PUESTO_MARNIE) {
-                    entidad_colocada->configurar_punto_de_atencion(4, 10);
-                } else if (iterador_puesto->second == TipoEntidad::PUESTO_ROBIN) {
-                    entidad_colocada->configurar_punto_de_atencion(14, 10);
-                } else if (iterador_puesto->second == TipoEntidad::PUESTO_CLINT) {
-                    entidad_colocada->configurar_punto_de_atencion(3, 8);
-                } else if (iterador_puesto->second == TipoEntidad::PUESTO_PIERRE) {
-                    entidad_colocada->configurar_punto_de_atencion(15, 8);
-                } else if (puesto.tiene_atencion) {
+                entidad_colocada->establecer_orientacion(orientacion);
+                if (puesto.tiene_atencion) {
                     entidad_colocada->configurar_punto_de_atencion(
                         puesto.columna_atencion,
                         puesto.fila_atencion);
+                } else {
+                    int col_int = 0;
+                    int fil_int = 0;
+                    int col_atn = 0;
+                    int fil_atn = 0;
+                    mapa.calcular_interaccion_puesto(
+                        columna_npc,
+                        fila_npc,
+                        orientacion,
+                        col_int,
+                        fil_int,
+                        col_atn,
+                        fil_atn);
+                    entidad_colocada->configurar_punto_de_atencion(col_atn, fil_atn);
                 }
             }
         }

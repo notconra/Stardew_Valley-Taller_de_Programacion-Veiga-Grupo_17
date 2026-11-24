@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "../direccion.h"
+
 struct DefinicionTilesetTMX {
     std::string nombre;
     std::string ruta_imagen;
@@ -55,7 +57,9 @@ public:
 
     void agregar_puesto(
         const std::string& nombre_capa_objetos, int posicion_x, int posicion_y, int ancho, int alto,
-        const std::string& identificador_puesto, int columna_atencion, int fila_atencion);
+        const std::string& identificador_puesto, int columna_atencion, int fila_atencion,
+        int columna_npc = 0, int fila_npc = 0, Direccion orientacion_npc = Direccion::ABAJO,
+        bool tiene_posicion_npc = false);
 
     bool guardar(const std::string& ruta_archivo_destino) const;
 };

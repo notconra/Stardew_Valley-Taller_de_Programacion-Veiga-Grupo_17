@@ -88,11 +88,16 @@ public:
     void generar_muro_perimetral_pueblo();
     void reconstruir_perimetro_mercado();
     static bool es_tile_perimetro_mercado(uint32_t identificador_tile);
+    void calcular_interaccion_puesto(
+        int columna, int fila, Direccion orientacion, int& columna_interaccion,
+        int& fila_interaccion, int& columna_atencion, int& fila_atencion) const;
 
     void agregar_propiedad_a_casilla(int columna, int fila, uint8_t propiedad);
     void quitar_propiedad_de_casilla(int columna, int fila, uint8_t propiedad);
 
-    uint32_t ubicar_entidad(TipoEntidad tipo, int columna, int fila, int ancho, int alto);
+    uint32_t ubicar_entidad(
+        TipoEntidad tipo, int columna, int fila, int ancho, int alto,
+        Direccion orientacion = Direccion::ABAJO);
     void cargar_entidad(const EntidadDelMapa& entidad);
     bool deslizar_entidad(uint32_t identificador, int nueva_columna, int nueva_fila);
     bool retirar_entidad(uint32_t identificador);

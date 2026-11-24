@@ -2,6 +2,8 @@
 #define ENTIDAD_DEL_MAPA_H
 
 #include <cstdint>
+
+#include "../direccion.h"
 #include "tipo_entidad.h"
 
 class EntidadDelMapa {
@@ -15,18 +17,18 @@ private:
     int columna_de_atencion;
     int fila_de_atencion;
     bool tiene_casilla_de_atencion;
+    Direccion orientacion_de_entidad;
 
 public:
     EntidadDelMapa(
-        uint32_t identificador_entidad,
-        TipoEntidad tipo,
-        int columna,
-        int fila,
-        int ancho,
-        int alto);
+        uint32_t identificador_entidad, TipoEntidad tipo, int columna, int fila, int ancho,
+        int alto, Direccion orientacion = Direccion::ABAJO);
 
     uint32_t obtener_identificador() const;
     TipoEntidad obtener_tipo() const;
+    Direccion obtener_orientacion() const;
+    void establecer_orientacion(Direccion nueva_orientacion);
+    void rotar_orientacion();
 
     void consultar_origen(int& columna, int& fila) const;
     void consultar_dimensiones(int& ancho, int& alto) const;
