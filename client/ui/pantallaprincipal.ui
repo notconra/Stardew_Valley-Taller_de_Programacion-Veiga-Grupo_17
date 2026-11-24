@@ -238,46 +238,54 @@ QPushButton#btn_genero_femenino:checked {
 QFrame#contenedor_lateral_granjas {
     border-image: url("Assets/LooseSprites/menu_box.png") 12 12 12 12 repeat;
     border-width: 12px;
-    padding: 8px;
+    padding: 10px 14px;
+    min-width: 185px;
     background-color: transparent;
 }
 
 QPushButton[class="btn_carpeta_mundo"] {
-    background-color: transparent;
-    border: 3px solid transparent;
+    background-color: rgba(255, 248, 235, 110);
+    border: 2px solid #8e4c19;
     border-radius: 6px;
-    min-width: 64px;
-    max-width: 64px;
-    min-height: 64px;
-    max-height: 64px;
-    padding: 2px;
+    min-width: 56px;
+    max-width: 56px;
+    min-height: 56px;
+    max-height: 56px;
+    padding: 4px;
 }
 
 QPushButton[class="btn_carpeta_mundo"]:hover {
-    border: 3px solid #e09642;
-    background-color: rgba(255, 238, 211, 60);
+    border: 2px solid #e09642;
+    background-color: rgba(255, 238, 211, 180);
 }
 
 QPushButton[class="btn_carpeta_mundo"]:pressed {
-    border: 3px solid #d22a2a;
-    background-color: rgba(255, 238, 211, 120);
+    border: 2px solid #d22a2a;
+    background-color: rgba(255, 238, 211, 220);
 }
 
 QLabel[class="label_nombre_mundo"] {
-    font-family: "Stardew Valley";
-    font-size: 14px;
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
+    font-size: 18px;
+    font-weight: normal;
     color: #4c2207;
-    max-width: 110px;
+    background-color: rgba(255, 248, 235, 190);
+    border: 2px solid #8e4c19;
+    border-radius: 4px;
+    padding: 4px 10px;
+    min-width: 155px;
 }
 
 QPushButton[class="btn_restablecer_mundo"] {
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
     background-color: #d89658;
     color: #fff8eb;
     border: 2px solid #5c2c0e;
     border-radius: 4px;
-    padding: 4px 8px;
-    font-size: 11px;
-    font-weight: bold;
+    padding: 4px 10px;
+    font-size: 16px;
+    font-weight: normal;
+    min-width: 120px;
 }
 
 QPushButton[class="btn_restablecer_mundo"]:hover {
@@ -1755,6 +1763,9 @@ QPushButton.btn_dialogo_accion:pressed {
                <property name="text">
                 <string>Mundo</string>
                </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
                <property name="class" stdset="0">
                 <string>label_seccion_color</string>
                </property>
@@ -1777,14 +1788,20 @@ QPushButton.btn_dialogo_accion:pressed {
                </property>
                <property name="iconSize">
                 <size>
-                 <width>48</width>
-                 <height>48</height>
+                 <width>40</width>
+                 <height>40</height>
                 </size>
                </property>
               </widget>
              </item>
-             <item alignment="Qt::AlignHCenter">
+             <item>
               <widget class="QLabel" name="label_nombre_mundo_seleccionado">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>Mundo Estándar</string>
                </property>
