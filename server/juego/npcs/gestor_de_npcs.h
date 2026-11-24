@@ -76,6 +76,10 @@ private:
     void cargar_dia(uint32_t dia, int dia_de_la_semana, int minuto_actual);
     void empezar_el_dia(NpcEnPartida& npc, int dia_de_la_semana, int minuto_actual);
 
+    // Si la parada es un lugar con nombre, le pone la casilla de ese lugar (o la de su respaldo, o
+    // el medio del mapa si tampoco está).
+    void ubicar_en_su_lugar(Parada& parada) const;
+
     // La casilla de la parada, o la caminable mas cercana.
     int nodo_de_la_parada(const Parada& parada);
 

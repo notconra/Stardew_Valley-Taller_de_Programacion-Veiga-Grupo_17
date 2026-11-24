@@ -68,11 +68,11 @@ void MapaDeCaminos::unir_mapas_por_las_puertas(GestorDeSectores& sectores) {
                 continue;
             }
 
-            int llegada =
-                nodo_en(mapa_destino, transicion.columna_destino, transicion.fila_destino + 1);
+            const Casilla casilla =
+                sectores.casilla_de_llegada(transicion.mapa_destino, transicion);
+            int llegada = nodo_en(mapa_destino, casilla.columna, casilla.fila + 1);
             if (llegada == SIN_NODO) {
-                llegada =
-                    nodo_en(mapa_destino, transicion.columna_destino, transicion.fila_destino);
+                llegada = nodo_en(mapa_destino, casilla.columna, casilla.fila);
             }
             llegada = casilla_libre_cercana(llegada, false);
             if (llegada != SIN_NODO) {

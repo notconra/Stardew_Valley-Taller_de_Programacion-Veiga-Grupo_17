@@ -15,6 +15,7 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::UNIRSE_PARTIDA, [this] { return recibir_comando_unirse_partida(); }},
           {TipoMensaje::RETOMAR_PARTIDA, [this] { return recibir_comando_retomar_partida(); }},
           {TipoMensaje::ELIMINAR_PARTIDA, [this] { return recibir_comando_eliminar_partida(); }},
+          {TipoMensaje::LISTAR_MUNDOS, [this] { return recibir_comando_listar_mundos(); }},
           {TipoMensaje::ACTIVAR_MULTIJUGADOR,
            [this] { return recibir_comando_activar_multijugador(); }},
           {TipoMensaje::SALIR_DE_PARTIDA, [this] { return recibir_comando_salir_de_partida(); }},
@@ -110,6 +111,10 @@ EliminarPartida ProtocoloServidor::recibir_comando_eliminar_partida() {
     std::string codigo_partida = recibir_texto();
 
     return EliminarPartida{codigo_partida};
+}
+
+ListarMundos ProtocoloServidor::recibir_comando_listar_mundos() {
+    return ListarMundos{};
 }
 
 ActivarMultijugador ProtocoloServidor::recibir_comando_activar_multijugador() {
@@ -267,6 +272,7 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
         ManejadoresPorTipo{
             [this](const ErrorServidor& e) { enviar_evento_error_servidor(e); },
             [this](const ListaPartidas& e) { enviar_evento_lista_partidas(e); },
+            [this](const ListaMundos& e) { enviar_evento_lista_mundos(e); },
             [this](const EntradaExitosaAPartida& e) { enviar_evento_entrada_exitosa_a_partida(e); },
             [this](const MultijugadorActivado& e) { enviar_evento_multijugador_activado(e); },
             [this](const PartidaAbandonada& e) { enviar_evento_partida_abandonada(e); },
@@ -331,6 +337,14 @@ void ProtocoloServidor::enviar_evento_lista_partidas(const ListaPartidas& lista_
     enviar_largo(lista_partidas.partidas.size());
     for (const InfoPartida& info_partida : lista_partidas.partidas) {
         enviar_info_partida(info_partida);
+    }
+}
+
+void ProtocoloServidor::enviar_evento_lista_mundos(const ListaMundos& lista_mundos) {
+    enviar_tipo(TipoMensaje::LISTA_MUNDOS);
+    enviar_largo(lista_mundos.mundos.size());
+    for (const std::string& mundo : lista_mundos.mundos) {
+        enviar_texto(mundo);
     }
 }
 
