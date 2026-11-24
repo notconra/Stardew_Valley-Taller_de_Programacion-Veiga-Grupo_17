@@ -26,6 +26,7 @@ class GestorDeSectores {
 private:
     Notificador& notificador;
     const std::map<uint32_t, Personaje>& personajes;
+    std::map<std::string, Mapa> mapas_personalizados;
     std::map<std::string, Sector> sectores;
     std::map<std::string, std::vector<EstadoJugador>> jugadores_enviados;
     std::map<std::string, std::vector<EstadoNpc>> npcs_enviados;
@@ -34,10 +35,12 @@ private:
 
 public:
     // Cada sector usa por referencia el mapa que ya está cargado en "recursos", que tiene que
-    // vivir más que el gestor.
+    // vivir más que el gestor. Si se especifica un nombre de mundo personalizado, carga los mapas
+    // TMX correspondientes en mapas_personalizados.
     GestorDeSectores(
         const RecursosDeJuego& recursos, uint8_t ticks_por_segundo,
-        const std::map<uint32_t, Personaje>& personajes, Notificador& notificador);
+        const std::map<uint32_t, Personaje>& personajes, Notificador& notificador,
+        const std::string& nombre_mundo = "");
 
     GestorDeSectores(const GestorDeSectores&) = delete;
     GestorDeSectores& operator=(const GestorDeSectores&) = delete;
@@ -61,6 +64,8 @@ public:
     std::vector<DatosCultivoGuardado> obtener_cultivos_guardados() const;
 
     bool existe(const std::string& id_mapa) const;
+    bool es_mapa_personalizado(const std::string& id_mapa) const;
+    bool tiene_mazmorra_personalizada() const;
 
     // Los ids de todos los mapas con sector, para quien necesite recorrerlos todos (por ejemplo,
     // ControladorDeEnemigos). Sin orden garantizado.
@@ -72,6 +77,8 @@ public:
 
     // Un jugador que entra al mundo, aparece en el punto de aparición del mapa indicado.
     void colocar_en_aparicion(Personaje& personaje, const std::string& id_mapa);
+    void establecer_aparicion(const std::string& id_mapa, double x, double y);
+    void bloquear_casilla(const std::string& id_mapa, int columna, int fila);
 
     // Coloca al jugador directamente en el mapa y coordenadas indicadas.
     void colocar_en(

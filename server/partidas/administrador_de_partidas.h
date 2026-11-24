@@ -46,7 +46,8 @@ private:
 
     // Arranca una sesión nueva. Se llama sin el mutex tomado. La sesión guarda la partida sola
     // cada vez que termina un día.
-    std::unique_ptr<SesionDePartida> crear_sesion(const std::string& codigo_partida);
+    std::unique_ptr<SesionDePartida> crear_sesion(
+        const std::string& codigo_partida, const std::string& nombre_mundo = "");
 
     IndicePartidas indice;
 
@@ -73,7 +74,7 @@ public:
     // entra a ella.
     IngresoAPartida crear(
         uint32_t id_cliente, const std::string& nombre_jugador, const std::string& nombre_partida,
-        const AparienciaPersonaje& apariencia);
+        const AparienciaPersonaje& apariencia, const std::string& nombre_mundo = "");
 
     IngresoAPartida unirse(
         uint32_t id_cliente, const std::string& nombre_jugador, const std::string& codigo_partida,

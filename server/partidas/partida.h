@@ -27,6 +27,7 @@ class Partida {
 private:
     std::string codigo;
     std::string nombre;
+    std::string nombre_mundo;
     uint8_t jugadores_maximos;
     bool multijugador;
     std::vector<Jugador> jugadores;
@@ -45,15 +46,17 @@ public:
     Partida(
         const std::string& codigo_de_partida, const std::string& nombre_de_partida,
         uint8_t maximo_de_jugadores, uint32_t id_cliente_creador,
-        const std::string& nombre_jugador_creador, const AparienciaPersonaje& apariencia_creador);
+        const std::string& nombre_jugador_creador, const AparienciaPersonaje& apariencia_creador,
+        const std::string& nombre_mundo_partida = "");
 
     Partida(
         const std::string& codigo_de_partida, const std::string& nombre_de_partida,
         uint8_t maximo_de_jugadores, bool es_multijugador,
         const std::vector<Jugador>& lista_jugadores, uint32_t dia_partida = 1,
-        uint32_t segundos_partida = 0);
+        uint32_t segundos_partida = 0, const std::string& nombre_mundo_partida = "");
 
     const std::string& obtener_nombre() const;
+    const std::string& obtener_nombre_mundo() const;
     const std::vector<Jugador>& obtener_jugadores() const;
     const AparienciaPersonaje& obtener_apariencia_jugador(uint32_t id_cliente) const;
     DatosPartidaGuardada generar_datos_guardado(const DatosMundoGuardado& datos_mundo) const;

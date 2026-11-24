@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "../direccion.h"
 #include "externo/tinyxml2/tinyxml2.h"
 
 // Los bits altos de un id de tile guardan si está espejado o rotado. El id real es el resto.
@@ -42,6 +43,10 @@ struct PuestoTMX {
     int columna_atencion = 0;
     int fila_atencion = 0;
     bool tiene_atencion = false;  // false si falta columna_atencion o fila_atencion
+    int columna_npc = 0;
+    int fila_npc = 0;
+    Direccion orientacion_npc = Direccion::ABAJO;
+    bool tiene_posicion_npc = false;
 };
 
 // Un lote del centro comunitario tal como está en el TMX (objeto con tipo = "lote" en la capa de
@@ -122,6 +127,10 @@ public:
     // Devuelve los identificadores de las casillas de la capa, fila por fila.
     // Si falla la lectura o no existe la capa, devuelve un vector vacío.
     std::vector<int> cargar_capa(const std::string& nombre_capa) const;
+
+    // Devuelve todos los objetos de la capa de objetos indicada.
+    // Si no existe la capa o falla la lectura, devuelve un vector vacío.
+    std::vector<ObjetoTMX> cargar_objetos(const std::string& nombre_capa) const;
 
     std::vector<std::uint32_t> cargar_capa_con_flags(const std::string& nombre_capa) const;
 

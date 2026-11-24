@@ -44,18 +44,23 @@ Partida& AdministradorDePartidas::buscar_partida(const std::string& codigo_parti
 }
 
 std::unique_ptr<SesionDePartida> AdministradorDePartidas::crear_sesion(
-    const std::string& codigo_partida) {
+    const std::string& codigo_partida, const std::string& nombre_mundo) {
     auto datos_guardados = cargar_datos_guardados(codigo_partida);
     DatosMundoGuardado datos_mundo;
+    std::string mundo_efectivo = nombre_mundo;
     if (datos_guardados.has_value()) {
         datos_mundo = datos_guardados->mundo;
+        if (mundo_efectivo.empty() && !datos_guardados->nombre_mundo.empty()) {
+            mundo_efectivo = datos_guardados->nombre_mundo;
+        }
     }
     return std::make_unique<SesionDePartida>(
         codigo_partida,
         configuracion,
         recursos,
         datos_mundo,
-        [this, codigo_partida] { guardar_partida(codigo_partida); });
+        [this, codigo_partida] { guardar_partida(codigo_partida); },
+        mundo_efectivo);
 }
 
 bool AdministradorDePartidas::comparar_por_ultima_modificacion(
@@ -122,7 +127,7 @@ void AdministradorDePartidas::eliminar(const std::string& codigo_partida) {
 
 IngresoAPartida AdministradorDePartidas::crear(
     uint32_t id_cliente, const std::string& nombre_jugador, const std::string& nombre_partida,
-    const AparienciaPersonaje& apariencia) {
+    const AparienciaPersonaje& apariencia, const std::string& nombre_mundo) {
     EntradaExitosaAPartida entrada;
     ColorDeJugador color_jugador = ColorDeJugador::AZUL;
     std::string codigo;
@@ -146,7 +151,8 @@ IngresoAPartida AdministradorDePartidas::crear(
             static_cast<uint8_t>(configuracion.jugadores_maximos_por_partida),
             id_cliente,
             nombre_jugador,
-            apariencia);
+            apariencia,
+            nombre_mundo);
         try {
             entrada = insertada.first->second.conectar(id_cliente, nombre_jugador, apariencia);
             color_jugador = insertada.first->second.color_de_jugador(id_cliente);
@@ -159,7 +165,7 @@ IngresoAPartida AdministradorDePartidas::crear(
     // La sesión arranca un hilo, por eso se crea sin el mutex tomado.
     std::unique_ptr<SesionDePartida> sesion;
     try {
-        sesion = crear_sesion(codigo);
+        sesion = crear_sesion(codigo, nombre_mundo);
     } catch (...) {
         std::lock_guard<std::mutex> lock(mutex);
         partidas.erase(codigo);
@@ -178,9 +184,11 @@ IngresoAPartida AdministradorDePartidas::unirse(
     uint32_t id_cliente, const std::string& nombre_jugador, const std::string& codigo_partida,
     const AparienciaPersonaje& apariencia) {
     bool hay_sesion = false;
+    std::string nombre_mundo_partida;
     {
         std::lock_guard<std::mutex> lock(mutex);
-        buscar_partida(codigo_partida);
+        Partida& partida = buscar_partida(codigo_partida);
+        nombre_mundo_partida = partida.obtener_nombre_mundo();
         const auto existente = sesiones.find(codigo_partida);
         if (existente != sesiones.end()) {
             if (!existente->second->esta_viva()) {
@@ -195,7 +203,7 @@ IngresoAPartida AdministradorDePartidas::unirse(
     // La sesión arranca un hilo, por eso se crea sin el mutex tomado.
     std::unique_ptr<SesionDePartida> sesion_nueva;
     if (!hay_sesion) {
-        sesion_nueva = crear_sesion(codigo_partida);
+        sesion_nueva = crear_sesion(codigo_partida, nombre_mundo_partida);
     }
 
     std::unique_ptr<SesionDePartida> sesion_sobrante;
@@ -250,9 +258,11 @@ IngresoAPartida AdministradorDePartidas::retomar(
     uint32_t id_cliente, const std::string& codigo_partida) {
     std::string nombre_jugador;
     bool hay_sesion = false;
+    std::string nombre_mundo_partida;
     {
         std::lock_guard<std::mutex> lock(mutex);
         Partida& partida = buscar_partida(codigo_partida);
+        nombre_mundo_partida = partida.obtener_nombre_mundo();
         if (!partida.es_miembro(id_cliente)) {
             throw ErrorDePartida(
                 CodigoError::NO_PERMITIDO,
@@ -271,7 +281,7 @@ IngresoAPartida AdministradorDePartidas::retomar(
 
     std::unique_ptr<SesionDePartida> sesion_nueva;
     if (!hay_sesion) {
-        sesion_nueva = crear_sesion(codigo_partida);
+        sesion_nueva = crear_sesion(codigo_partida, nombre_mundo_partida);
     }
 
     std::unique_ptr<SesionDePartida> sesion_sobrante;
@@ -394,7 +404,8 @@ void AdministradorDePartidas::cargar_partida(const std::string& ruta_archivo) {
             datos.multijugador,
             miembros,
             datos.mundo.dia,
-            datos.mundo.segundos_jugados));
+            datos.mundo.segundos_jugados,
+            datos.nombre_mundo));
 
     if (datos.codigo.size() > 1 && datos.codigo[0] == 'P') {
         try {

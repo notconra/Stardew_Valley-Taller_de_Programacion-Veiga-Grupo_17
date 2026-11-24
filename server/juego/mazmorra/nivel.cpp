@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdlib>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -97,7 +98,14 @@ Nivel::Nivel(GeografiaNivel geografia_del_nivel) : geografia(std::move(geografia
 std::vector<Casilla> Nivel::casillas_generables() const {
     std::vector<Casilla> casillas = alcanzables(geografia, geografia.entrada);
     casillas.erase(
-        std::remove(casillas.begin(), casillas.end(), geografia.entrada),
+        std::remove_if(
+            casillas.begin(),
+            casillas.end(),
+            [this](const Casilla& casilla) {
+                int distancia_entrada = std::abs(casilla.columna - geografia.entrada.columna) +
+                                        std::abs(casilla.fila - geografia.entrada.fila);
+                return distancia_entrada <= 1;
+            }),
         casillas.end());
     return casillas;
 }

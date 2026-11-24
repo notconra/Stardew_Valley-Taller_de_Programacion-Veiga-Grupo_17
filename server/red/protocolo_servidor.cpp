@@ -87,8 +87,9 @@ CrearPartida ProtocoloServidor::recibir_comando_crear_partida() {
     std::string nombre_partida = recibir_texto();
     std::string nombre_jugador = recibir_texto();
     AparienciaPersonaje apariencia = recibir_apariencia();
+    std::string nombre_mundo = recibir_texto();
 
-    return CrearPartida{nombre_partida, nombre_jugador, apariencia};
+    return CrearPartida{nombre_partida, nombre_jugador, apariencia, nombre_mundo};
 }
 
 UnirsePartida ProtocoloServidor::recibir_comando_unirse_partida() {
@@ -339,6 +340,7 @@ void ProtocoloServidor::enviar_evento_entrada_exitosa_a_partida(
     enviar_texto(entrada.codigo_partida);
     enviar_u32(entrada.id_jugador);
     enviar_booleano(entrada.multijugador);
+    enviar_texto(entrada.nombre_mundo);
 }
 
 void ProtocoloServidor::enviar_evento_multijugador_activado(const MultijugadorActivado& activado) {

@@ -83,7 +83,14 @@ target_link_libraries(server PRIVATE lib_server)
 add_executable(client client/main.cpp)
 target_link_libraries(client PRIVATE lib_client)
 
-set_target_properties(lib_client client PROPERTIES AUTOMOC ON AUTOUIC ON AUTORCC ON)
+file(GLOB_RECURSE EDITOR_FUENTES CONFIGURE_DEPENDS editor/*.cpp)
+add_executable(editor ${EDITOR_FUENTES})
+target_include_directories(
+  editor PUBLIC ${PROJECT_SOURCE_DIR}/editor ${PROJECT_SOURCE_DIR}/common
+                ${PROJECT_SOURCE_DIR}/common/editor)
+target_link_libraries(editor PRIVATE lib_common Qt6::Widgets)
+
+set_target_properties(lib_client client editor PROPERTIES AUTOMOC ON AUTOUIC ON AUTORCC ON)
 
 find_package(GTest)
 if(GTest_FOUND)

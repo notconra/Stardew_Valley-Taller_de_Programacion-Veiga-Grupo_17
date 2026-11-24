@@ -238,29 +238,58 @@ QPushButton#btn_genero_femenino:checked {
 QFrame#contenedor_lateral_granjas {
     border-image: url("Assets/LooseSprites/menu_box.png") 12 12 12 12 repeat;
     border-width: 12px;
-    padding: 8px;
+    padding: 10px 14px;
+    min-width: 185px;
     background-color: transparent;
 }
 
-QPushButton[class="btn_granja"] {
-    background-color: transparent;
-    border: 3px solid transparent;
-    border-radius: 4px;
-    min-width: 48px;
-    max-width: 48px;
-    min-height: 44px;
-    max-height: 44px;
-    padding: 0px;
+QPushButton[class="btn_carpeta_mundo"] {
+    background-color: rgba(255, 248, 235, 110);
+    border: 2px solid #8e4c19;
+    border-radius: 6px;
+    min-width: 56px;
+    max-width: 56px;
+    min-height: 56px;
+    max-height: 56px;
+    padding: 4px;
 }
 
-QPushButton[class="btn_granja"]:hover {
-    border: 3px solid #e09642;
-    border-radius: 4px;
+QPushButton[class="btn_carpeta_mundo"]:hover {
+    border: 2px solid #e09642;
+    background-color: rgba(255, 238, 211, 180);
 }
 
-QPushButton[class="btn_granja"]:checked {
-    border: 3px solid #d22a2a;
+QPushButton[class="btn_carpeta_mundo"]:pressed {
+    border: 2px solid #d22a2a;
+    background-color: rgba(255, 238, 211, 220);
+}
+
+QLabel[class="label_nombre_mundo"] {
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
+    font-size: 18px;
+    font-weight: normal;
+    color: #4c2207;
+    background-color: rgba(255, 248, 235, 190);
+    border: 2px solid #8e4c19;
     border-radius: 4px;
+    padding: 4px 10px;
+    min-width: 155px;
+}
+
+QPushButton[class="btn_restablecer_mundo"] {
+    font-family: "Stardew Valley", "Ubuntu", sans-serif;
+    background-color: #d89658;
+    color: #fff8eb;
+    border: 2px solid #5c2c0e;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 16px;
+    font-weight: normal;
+    min-width: 120px;
+}
+
+QPushButton[class="btn_restablecer_mundo"]:hover {
+    background-color: #e6a76a;
 }
 
 QToolTip {
@@ -1303,22 +1332,6 @@ QPushButton.btn_dialogo_accion:pressed {
                  <item row="2" column="1">
                   <widget class="QLineEdit" name="input_cosa_fav"/>
                  </item>
-                 <item row="3" column="0">
-                  <widget class="QLabel" name="label_mundo">
-                   <property name="text">
-                    <string>Mundo</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="3" column="1">
-                  <widget class="QComboBox" name="combo_mundo">
-                   <item>
-                    <property name="text">
-                     <string>Granja Normal</string>
-                    </property>
-                   </item>
-                  </widget>
-                 </item>
                 </layout>
                </item>
                <item>
@@ -1729,102 +1742,90 @@ QPushButton.btn_dialogo_accion:pressed {
             <property name="frameShadow">
              <enum>QFrame::Shadow::Raised</enum>
             </property>
-            <layout class="QGridLayout" name="layout_granjas_grid">
+            <layout class="QVBoxLayout" name="layout_selector_mundo">
              <property name="spacing">
-              <number>8</number>
+              <number>10</number>
              </property>
              <property name="leftMargin">
-              <number>10</number>
+              <number>12</number>
              </property>
              <property name="topMargin">
-              <number>10</number>
+              <number>12</number>
              </property>
              <property name="rightMargin">
-              <number>10</number>
+              <number>12</number>
              </property>
              <property name="bottomMargin">
-              <number>10</number>
+              <number>12</number>
              </property>
-             <item row="0" column="0">
-              <widget class="QPushButton" name="btn_granja_0">
-               <property name="checkable">
-                <bool>true</bool>
+             <item alignment="Qt::AlignHCenter">
+              <widget class="QLabel" name="label_titulo_mundo">
+               <property name="text">
+                <string>Mundo</string>
                </property>
-               <property name="checked">
-                <bool>true</bool>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
                </property>
                <property name="class" stdset="0">
-                <string>btn_granja</string>
+                <string>label_seccion_color</string>
                </property>
               </widget>
              </item>
-             <item row="0" column="1">
-              <widget class="QPushButton" name="btn_granja_6">
-               <property name="checkable">
-                <bool>true</bool>
+             <item alignment="Qt::AlignHCenter">
+              <widget class="QPushButton" name="btn_seleccionar_carpeta_mundo">
+               <property name="cursor">
+                <cursorShape>PointingHandCursor</cursorShape>
+               </property>
+               <property name="toolTip">
+                <string>Seleccionar carpeta de mundo personalizado</string>
                </property>
                <property name="class" stdset="0">
-                <string>btn_granja</string>
+                <string>btn_carpeta_mundo</string>
+               </property>
+               <property name="icon">
+                <iconset>
+                 <normaloff>Assets/hud/carpeta_abierta.png</normaloff>Assets/hud/carpeta_abierta.png</iconset>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>40</width>
+                 <height>40</height>
+                </size>
                </property>
               </widget>
              </item>
-             <item row="1" column="0">
-              <widget class="QPushButton" name="btn_granja_1">
-               <property name="checkable">
+             <item>
+              <widget class="QLabel" name="label_nombre_mundo_seleccionado">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Mundo Estándar</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="wordWrap">
                 <bool>true</bool>
                </property>
                <property name="class" stdset="0">
-                <string>btn_granja</string>
+                <string>label_nombre_mundo</string>
                </property>
               </widget>
              </item>
-             <item row="1" column="1">
-              <widget class="QPushButton" name="btn_granja_7">
-               <property name="checkable">
-                <bool>true</bool>
+             <item alignment="Qt::AlignHCenter">
+              <widget class="QPushButton" name="btn_restablecer_mundo">
+               <property name="cursor">
+                <cursorShape>PointingHandCursor</cursorShape>
+               </property>
+               <property name="text">
+                <string>Usar Estándar</string>
                </property>
                <property name="class" stdset="0">
-                <string>btn_granja</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="0">
-              <widget class="QPushButton" name="btn_granja_2">
-               <property name="checkable">
-                <bool>true</bool>
-               </property>
-               <property name="class" stdset="0">
-                <string>btn_granja</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="0">
-              <widget class="QPushButton" name="btn_granja_3">
-               <property name="checkable">
-                <bool>true</bool>
-               </property>
-               <property name="class" stdset="0">
-                <string>btn_granja</string>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="0">
-              <widget class="QPushButton" name="btn_granja_4">
-               <property name="checkable">
-                <bool>true</bool>
-               </property>
-               <property name="class" stdset="0">
-                <string>btn_granja</string>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="0">
-              <widget class="QPushButton" name="btn_granja_5">
-               <property name="checkable">
-                <bool>true</bool>
-               </property>
-               <property name="class" stdset="0">
-                <string>btn_granja</string>
+                <string>btn_restablecer_mundo</string>
                </property>
               </widget>
              </item>

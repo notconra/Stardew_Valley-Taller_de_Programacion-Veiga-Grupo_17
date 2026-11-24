@@ -53,13 +53,17 @@ EstadoDeConexion::ProximoEstado EstadoLobby::crear_partida(const CrearPartida& c
             contexto.identidad.id_cliente,
             comando.nombre_jugador,
             comando.nombre_partida,
-            comando.apariencia);
+            comando.apariencia,
+            comando.nombre_mundo);
         entrar_a_partida(ingreso);
         return std::make_unique<EstadoEnPartida>(contexto, ingreso);
     } catch (const ErrorDePartida& error) {
         // si falla antes de crearla no limpia y si falla después, la sesión ya tiene al
         // creador adentro.
         responder_error(error.codigo(), error.what());
+        return nullptr;
+    } catch (const std::exception& error) {
+        responder_error(CodigoError::NO_PERMITIDO, error.what());
         return nullptr;
     }
 }

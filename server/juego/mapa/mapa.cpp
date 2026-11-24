@@ -108,9 +108,14 @@ void Mapa::cargar_tierra_cultivable(
             std::string("falta la capa ") + CAPA_DE_PISO + " para la tierra cultivable de " +
             configuracion.ruta_tmx);
     }
+    std::vector<int> identificadores_cultivables =
+        lector.ids_con_propiedad(configuracion.propiedad_cultivable, VALOR_VERDADERO_TMX);
+    if (identificadores_cultivables.empty()) {
+        identificadores_cultivables.push_back(716);
+    }
     marcar_si_es_alguno(
         piso,
-        lector.ids_con_propiedad(configuracion.propiedad_cultivable, VALOR_VERDADERO_TMX),
+        identificadores_cultivables,
         PropiedadDeCasilla::CULTIVABLE,
         CAPA_DE_PISO);
 }
@@ -166,7 +171,11 @@ void Mapa::agregar_puesto(const PuestoTMX& puesto_tmx, const std::string& ruta_t
         puesto_tmx.id,
         Rectangulo{puesto_tmx.x, puesto_tmx.y, puesto_tmx.ancho, puesto_tmx.alto},
         puesto_tmx.columna_atencion,
-        puesto_tmx.fila_atencion});
+        puesto_tmx.fila_atencion,
+        puesto_tmx.columna_npc,
+        puesto_tmx.fila_npc,
+        puesto_tmx.orientacion_npc,
+        puesto_tmx.tiene_posicion_npc});
 }
 
 void Mapa::marcar(const std::vector<int>& capa, uint8_t propiedad, const std::string& nombre_capa) {

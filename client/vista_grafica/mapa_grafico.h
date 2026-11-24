@@ -46,7 +46,8 @@ public:
     // Lanza std::runtime_error si falta una imagen, una capa del mapa o el tamaño del mapa.
     MapaGrafico(
         SDL_Renderer* renderer, const ConfiguracionMapa& configuracion_mapa,
-        const ConfiguracionGraficos& configuracion_graficos, Estacion estacion);
+        const ConfiguracionGraficos& configuracion_graficos, Estacion estacion,
+        const std::string& nombre_mundo = "");
 
     int ancho_en_casillas() const;
     int alto_en_casillas() const;

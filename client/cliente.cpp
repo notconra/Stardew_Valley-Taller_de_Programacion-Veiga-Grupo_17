@@ -47,6 +47,8 @@ EstadoDelJuego Cliente::ejecutar_lobby() {
 
     app.exec();
 
+    mundo_actual = ventana_lobby.mundo_seleccionado();
+
     // Esto es por si se cerró el lobby para dar paso a SDL
     if (!partida_actual.codigo_partida.empty()) {
         return EstadoDelJuego::PARTIDA;
@@ -56,6 +58,7 @@ EstadoDelJuego Cliente::ejecutar_lobby() {
 }
 
 EstadoDelJuego Cliente::ejecutar_partida() {
+    vista_sdl.establecer_mundo(mundo_actual);
     bool volver_al_lobby = vista_sdl.ejecutar(partida_actual);
     return volver_al_lobby ? EstadoDelJuego::LOBBY : EstadoDelJuego::SALIR;
 }

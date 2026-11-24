@@ -1,6 +1,7 @@
 #include "sesion_de_partida.h"
 
 #include <exception>
+#include <filesystem>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -10,6 +11,8 @@
 #include <utility>
 #include <vector>
 
+#include "../../common/editor/cargador_de_mundo_tmx.h"
+#include "../../common/editor/tipo_entidad.h"
 #include "../juego/cheats/comando_animal.h"
 #include "../juego/cheats/comando_avanzar_dia.h"
 #include "../juego/cheats/comando_dinero.h"
@@ -21,17 +24,45 @@
 SesionDePartida::SesionDePartida(
     const std::string& codigo_de_partida, const ConfiguracionPartidaServidor& configuracion_partida,
     const RecursosDeJuego& recursos, const DatosMundoGuardado& datos_guardados,
-    GuardarAlTerminarElDia guardar)
+    GuardarAlTerminarElDia guardar, const std::string& nombre_mundo)
     : codigo_partida(codigo_de_partida),
       periodo_de_tick(1000 / configuracion_partida.ticks_por_segundo),
       mundo(
           recursos, *this, static_cast<uint8_t>(configuracion_partida.ticks_por_segundo),
-          datos_guardados),
+          datos_guardados, nombre_mundo),
       chat(*this),
       comandos(static_cast<unsigned int>(configuracion_partida.capacidad_de_comandos)),
       guardar_al_terminar_el_dia(std::move(guardar)),
       segundos_jugados_iniciales(datos_guardados.segundos_jugados),
       tiempo_inicio_sesion(std::chrono::steady_clock::now()) {
+    if (!nombre_mundo.empty() && nombre_mundo != "Mundo Estandar") {
+        nombre_mundo_cargado = nombre_mundo;
+        std::string ruta_mundo =
+            std::filesystem::exists(nombre_mundo) ? nombre_mundo : ("mundos/" + nombre_mundo);
+        try {
+            DefinicionDeMundo definicion = CargadorDeMundoTMX::cargar_mundo(ruta_mundo);
+            std::cout << "[Servidor] Mundo personalizado '" << nombre_mundo
+                      << "' cargado para partida " << codigo_de_partida << "\n";
+            std::vector<EntidadDelMapa> cabanias =
+                definicion.obtener_sector_granja().listar_entidades_por_tipo(TipoEntidad::CABANIA);
+            if (!cabanias.empty()) {
+                int columna_casa = 0;
+                int fila_casa = 0;
+                int ancho_casa = 0;
+                int alto_casa = 0;
+                cabanias[0].consultar_origen(columna_casa, fila_casa);
+                cabanias[0].consultar_dimensiones(ancho_casa, alto_casa);
+                double puerta_x = (columna_casa + 5) * 16.0;
+                double puerta_y = (fila_casa + 7) * 16.0;
+                mundo.establecer_aparicion("granja", puerta_x, puerta_y);
+                std::cout << "[Servidor] Posición de spawn configurada en la cabaña del editor: ("
+                          << puerta_x << ", " << puerta_y << ")\n";
+            }
+        } catch (const std::runtime_error& error) {
+            std::cerr << "[Servidor] Error al cargar mundo personalizado '" << nombre_mundo
+                      << "': " << error.what() << "\n";
+        }
+    }
     chat.agregar_comando(std::make_unique<ComandoAnimal>(mundo));
     chat.agregar_comando(std::make_unique<ComandoAvanzarDia>(mundo));
     chat.agregar_comando(std::make_unique<ComandoSemillas>(mundo, recursos.catalogo_de_cultivos));
@@ -81,6 +112,11 @@ void SesionDePartida::aplicar_cambios_de_conexion() {
         if (cambio.entra) {
             mundo.conectar(cambio.id_jugador, cambio.apariencia, cambio.nombre_jugador);
             chat.conectar(cambio.id_jugador, cambio.nombre_jugador, cambio.color_jugador);
+            if (!nombre_mundo_cargado.empty()) {
+                chat.responder_a_jugador(
+                    cambio.id_jugador,
+                    "Partida iniciada con el mundo: " + nombre_mundo_cargado);
+            }
         } else {
             mundo.desconectar(cambio.id_jugador);
             chat.desconectar(cambio.id_jugador);

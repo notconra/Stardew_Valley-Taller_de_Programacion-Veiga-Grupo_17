@@ -9,9 +9,11 @@
 Partida::Partida(
     const std::string& codigo_de_partida, const std::string& nombre_de_partida,
     uint8_t maximo_de_jugadores, uint32_t id_cliente_creador,
-    const std::string& nombre_jugador_creador, const AparienciaPersonaje& apariencia_creador)
+    const std::string& nombre_jugador_creador, const AparienciaPersonaje& apariencia_creador,
+    const std::string& nombre_mundo_partida)
     : codigo(codigo_de_partida),
       nombre(nombre_de_partida),
+      nombre_mundo(nombre_mundo_partida),
       jugadores_maximos(maximo_de_jugadores),
       multijugador(false),
       dia(1),
@@ -28,9 +30,10 @@ Partida::Partida(
 Partida::Partida(
     const std::string& codigo_de_partida, const std::string& nombre_de_partida,
     uint8_t maximo_de_jugadores, bool es_multijugador, const std::vector<Jugador>& lista_jugadores,
-    uint32_t dia_partida, uint32_t segundos_partida)
+    uint32_t dia_partida, uint32_t segundos_partida, const std::string& nombre_mundo_partida)
     : codigo(codigo_de_partida),
       nombre(nombre_de_partida),
+      nombre_mundo(nombre_mundo_partida),
       jugadores_maximos(maximo_de_jugadores),
       multijugador(es_multijugador),
       jugadores(lista_jugadores),
@@ -81,6 +84,10 @@ const std::string& Partida::obtener_nombre() const {
     return nombre;
 }
 
+const std::string& Partida::obtener_nombre_mundo() const {
+    return nombre_mundo;
+}
+
 const std::vector<Jugador>& Partida::obtener_jugadores() const {
     return jugadores;
 }
@@ -100,6 +107,7 @@ DatosPartidaGuardada Partida::generar_datos_guardado(const DatosMundoGuardado& d
     DatosPartidaGuardada datos;
     datos.codigo = codigo;
     datos.nombre = nombre;
+    datos.nombre_mundo = nombre_mundo;
     datos.jugadores_maximos = jugadores_maximos;
     datos.multijugador = multijugador;
     datos.mundo = datos_mundo;
@@ -214,7 +222,7 @@ EntradaExitosaAPartida Partida::reconectar(uint32_t id_cliente) {
             "ya estás conectado a la partida \"" + nombre + "\"");
     }
     jugador->conectado = true;
-    return EntradaExitosaAPartida{codigo, jugador->id_jugador, multijugador};
+    return EntradaExitosaAPartida{codigo, jugador->id_jugador, multijugador, nombre_mundo};
 }
 
 EntradaExitosaAPartida Partida::conectar(
@@ -249,7 +257,7 @@ EntradaExitosaAPartida Partida::conectar(
     const uint32_t id_jugador = static_cast<uint32_t>(jugadores.size()) + 1;
     jugadores.push_back(
         Jugador{id_cliente, id_jugador, nombre_jugador, proximo_color_libre(), true, apariencia});
-    return EntradaExitosaAPartida{codigo, id_jugador, multijugador};
+    return EntradaExitosaAPartida{codigo, id_jugador, multijugador, nombre_mundo};
 }
 
 void Partida::desconectar(uint32_t id_cliente) {

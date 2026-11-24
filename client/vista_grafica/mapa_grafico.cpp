@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "../../common/editor/cargador_de_mundo_tmx.h"
 #include "../../common/lector_de_mapas_tmx/lector_de_mapas.h"
 
 namespace {
@@ -20,23 +21,30 @@ std::string ruta_para_estacion(const std::string& ruta, Estacion estacion) {
     }
     std::string nueva = ruta;
     nueva.replace(
-        posicion, std::string(PREFIJO_PRIMAVERA).size(), PREFIJOS[static_cast<int>(estacion)]);
+        posicion,
+        std::string(PREFIJO_PRIMAVERA).size(),
+        PREFIJOS[static_cast<int>(estacion)]);
     return std::filesystem::exists(nueva) ? nueva : ruta;
 }
 }  // namespace
 
 MapaGrafico::MapaGrafico(
     SDL_Renderer* renderer, const ConfiguracionMapa& configuracion_mapa,
-    const ConfiguracionGraficos& configuracion_graficos, Estacion estacion) {
+    const ConfiguracionGraficos& configuracion_graficos, Estacion estacion,
+    const std::string& nombre_mundo) {
     texturas = cargar_texturas(configuracion_mapa.tilesets, renderer, estacion);
     tilesets = crear_tilesets(configuracion_mapa.tilesets);
     dibujado.configurar(tilesets, configuracion_graficos);
 
-    capas_bajo_los_jugadores =
-        cargar_capas(configuracion_mapa.ruta, configuracion_mapa.capas_bajo_los_jugadores);
+    std::string ruta_personalizada =
+        CargadorDeMundoTMX::resolver_ruta_sector(nombre_mundo, configuracion_mapa.id);
+    std::string ruta_mapa =
+        ruta_personalizada.empty() ? configuracion_mapa.ruta : ruta_personalizada;
+
+    capas_bajo_los_jugadores = cargar_capas(ruta_mapa, configuracion_mapa.capas_bajo_los_jugadores);
     capas_sobre_los_jugadores =
-        cargar_capas(configuracion_mapa.ruta, configuracion_mapa.capas_sobre_los_jugadores);
-    cargar_tamanio_del_mapa(configuracion_mapa.ruta);
+        cargar_capas(ruta_mapa, configuracion_mapa.capas_sobre_los_jugadores);
+    cargar_tamanio_del_mapa(ruta_mapa);
 }
 
 std::vector<Textura> MapaGrafico::cargar_texturas(
@@ -70,23 +78,21 @@ std::vector<Tileset> MapaGrafico::crear_tilesets(
 
 std::vector<std::vector<int>> MapaGrafico::cargar_capas(
     const std::string& ruta_mapa, const std::vector<std::string>& nombres) {
-    const LectorDeMapasTMX lector(ruta_mapa);
+    LectorDeMapasTMX lector(ruta_mapa);
 
     std::vector<std::vector<int>> capas;
     capas.reserve(nombres.size());
     for (const std::string& nombre : nombres) {
-        const std::vector<std::uint32_t> cruda = lector.cargar_capa_con_flags(nombre);
-        if (cruda.empty()) {
-            throw std::runtime_error(
-                std::string("no se pudo cargar la capa ") + nombre + " de " + ruta_mapa);
+        std::vector<std::uint32_t> cruda = lector.cargar_capa_con_flags(nombre);
+        if (!cruda.empty()) {
+            // Se conservan los bits de espejado, dibujado los interpreta.
+            std::vector<int> capa;
+            capa.reserve(cruda.size());
+            for (std::uint32_t valor : cruda) {
+                capa.push_back(static_cast<int>(valor));
+            }
+            capas.push_back(std::move(capa));
         }
-        // Se conservan los bits de espejado, dibujado los interpreta.
-        std::vector<int> capa;
-        capa.reserve(cruda.size());
-        for (std::uint32_t valor : cruda) {
-            capa.push_back(static_cast<int>(valor));
-        }
-        capas.push_back(std::move(capa));
     }
     return capas;
 }

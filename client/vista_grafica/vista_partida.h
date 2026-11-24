@@ -72,6 +72,7 @@ private:
     InventarioJugador ultimo_inventario{};
     CofreJugador ultimo_cofre{};
     std::string mapa_actual;
+    std::string mundo_actual;
     std::map<std::string, std::vector<CartelTMX>> carteles_por_mapa;
     std::optional<DialogoNpc>
         cartel_pendiente;  // lo deja procesar_clic, lo muestra procesar_entrada
@@ -236,6 +237,7 @@ private:
 public:
     VistaPartida(ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion);
 
+    void establecer_mundo(const std::string& nombre_mundo);
     bool ejecutar(const EntradaExitosaAPartida& partida);
 
     VistaPartida(const VistaPartida&) = delete;
