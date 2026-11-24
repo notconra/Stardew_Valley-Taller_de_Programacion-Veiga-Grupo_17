@@ -77,6 +77,10 @@ bool MapaEditable::casilla_es_transitable(int columna, int fila) const {
     if (casilla_estructura.obtener_id_tile() > 0 && !casilla_estructura.es_transitable()) {
         return false;
     }
+    CasillaDelMapa casilla_frente = capas.at(TipoCapa::FRENTE).consultar_casilla(columna, fila);
+    if (casilla_frente.tiene_propiedad(PropiedadDeCasilla::BLOQUEA)) {
+        return false;
+    }
     return true;
 }
 
@@ -214,19 +218,24 @@ bool MapaEditable::entidad_puede_ubicarse_en(
     bool es_puesto_mercado =
         (tipo == TipoEntidad::PUESTO_MARNIE || tipo == TipoEntidad::PUESTO_CLINT ||
          tipo == TipoEntidad::PUESTO_PIERRE || tipo == TipoEntidad::PUESTO_ROBIN);
+    bool es_entidad_unica =
+        (es_puesto_mercado || tipo == TipoEntidad::CABANIA ||
+         tipo == TipoEntidad::ENTRADA_CAVERNA || tipo == TipoEntidad::CENTRO_COMUNITARIO ||
+         tipo == TipoEntidad::MERCADO || tipo == TipoEntidad::ESCALERA_NIVEL ||
+         tipo == TipoEntidad::SALIDA_CAVERNA);
 
-    if (es_puesto_mercado) {
-        size_t indice_puesto = 0;
-        bool ya_existe_puesto = false;
-        while (indice_puesto < entidades.size() && !ya_existe_puesto) {
-            if (entidades[indice_puesto].obtener_identificador() != identificador_a_ignorar &&
-                entidades[indice_puesto].obtener_tipo() == tipo) {
-                ya_existe_puesto = true;
+    if (es_entidad_unica) {
+        size_t indice_entidad = 0;
+        bool ya_existe = false;
+        while (indice_entidad < entidades.size() && !ya_existe) {
+            if (entidades[indice_entidad].obtener_identificador() != identificador_a_ignorar &&
+                entidades[indice_entidad].obtener_tipo() == tipo) {
+                ya_existe = true;
             } else {
-                indice_puesto++;
+                indice_entidad++;
             }
         }
-        if (ya_existe_puesto) {
+        if (ya_existe) {
             return false;
         }
     }
@@ -434,23 +443,47 @@ std::vector<EntidadDelMapa> MapaEditable::listar_todas_las_entidades() const {
 
 void MapaEditable::redimensionar(
     int nuevas_columnas, int nuevas_filas, uint32_t id_tile_relleno, uint8_t propiedades_relleno) {
+    expandir(
+        0,
+        0,
+        nuevas_columnas - cantidad_de_columnas,
+        nuevas_filas - cantidad_de_filas,
+        id_tile_relleno,
+        propiedades_relleno);
+}
+
+void MapaEditable::expandir(
+    int agregar_izquierda, int agregar_arriba, int agregar_derecha, int agregar_abajo,
+    uint32_t id_tile_relleno, uint8_t propiedades_relleno) {
+    int nuevas_columnas = cantidad_de_columnas + agregar_izquierda + agregar_derecha;
+    int nuevas_filas = cantidad_de_filas + agregar_arriba + agregar_abajo;
+    if (nuevas_columnas <= 0 || nuevas_filas <= 0) {
+        return;
+    }
+
     cantidad_de_columnas = nuevas_columnas;
     cantidad_de_filas = nuevas_filas;
 
     capas.at(TipoCapa::SUELO)
-        .redimensionar(
-            nuevas_columnas,
-            nuevas_filas,
+        .desplazar_y_redimensionar(
+            agregar_izquierda,
+            agregar_arriba,
+            agregar_derecha,
+            agregar_abajo,
             CasillaDelMapa(id_tile_relleno, propiedades_relleno));
     capas.at(TipoCapa::ESTRUCTURAS)
-        .redimensionar(
-            nuevas_columnas,
-            nuevas_filas,
+        .desplazar_y_redimensionar(
+            agregar_izquierda,
+            agregar_arriba,
+            agregar_derecha,
+            agregar_abajo,
             CasillaDelMapa(0, PropiedadDeCasilla::NINGUNA));
     capas.at(TipoCapa::FRENTE)
-        .redimensionar(
-            nuevas_columnas,
-            nuevas_filas,
+        .desplazar_y_redimensionar(
+            agregar_izquierda,
+            agregar_arriba,
+            agregar_derecha,
+            agregar_abajo,
             CasillaDelMapa(0, PropiedadDeCasilla::NINGUNA));
 
     std::vector<EntidadDelMapa> entidades_conservadas;
@@ -459,16 +492,30 @@ void MapaEditable::redimensionar(
         int columna_origen = 0;
         int fila_origen = 0;
         entidades[indice].consultar_origen(columna_origen, fila_origen);
-        int ancho = 0;
-        int alto = 0;
-        entidades[indice].consultar_dimensiones(ancho, alto);
-
-        if (columna_origen + ancho <= nuevas_columnas && fila_origen + alto <= nuevas_filas) {
+        int nueva_columna = columna_origen + agregar_izquierda;
+        int nueva_fila = fila_origen + agregar_arriba;
+        entidades[indice].trasladar_a(nueva_columna, nueva_fila);
+        if (entidades[indice].esta_contenida_en_rectangulo(0, 0, nuevas_columnas, nuevas_filas)) {
             entidades_conservadas.push_back(entidades[indice]);
         }
         indice++;
     }
     entidades = entidades_conservadas;
+
+    std::vector<EstampaUbicada> estampas_conservadas;
+    size_t indice_estampa = 0;
+    while (indice_estampa < estampas_ubicadas.size()) {
+        EstampaUbicada estampa = estampas_ubicadas[indice_estampa];
+        estampa.columna = estampa.columna + agregar_izquierda;
+        estampa.fila = estampa.fila + agregar_arriba;
+        if (estampa.columna >= 0 && estampa.fila >= 0 &&
+            estampa.columna + estampa.ancho <= nuevas_columnas &&
+            estampa.fila + estampa.alto <= nuevas_filas) {
+            estampas_conservadas.push_back(estampa);
+        }
+        indice_estampa++;
+    }
+    estampas_ubicadas = estampas_conservadas;
 }
 
 void MapaEditable::vaciar_entidades() {
@@ -503,6 +550,7 @@ bool MapaEditable::estampa_puede_colocarse_en(
     }
 
     int columna_puerta = cantidad_de_columnas / 2;
+    bool permite_sobre_muro_caverna = (estampa.tipo == TipoEstampa::CAVERNA_ANDAMIO_MINERO);
     size_t indice_casilla = 0;
     bool casillas_validas = true;
     while (indice_casilla < estampa.casillas.size() && casillas_validas) {
@@ -515,8 +563,14 @@ bool MapaEditable::estampa_puede_colocarse_en(
             (cantidad_de_columnas < 30 && columna_actual == columna_puerta &&
              (fila_actual == cantidad_de_filas - 2 || fila_actual == cantidad_de_filas - 1));
 
-        if (columna_actual < 1 || columna_actual >= cantidad_de_columnas - 1 || fila_actual < 1 ||
-            fila_actual >= cantidad_de_filas - 1) {
+        bool fuera_de_margen =
+            permite_sobre_muro_caverna
+                ? (columna_actual < 0 || columna_actual >= cantidad_de_columnas ||
+                   fila_actual < 0 || fila_actual >= cantidad_de_filas)
+                : (columna_actual < 1 || columna_actual >= cantidad_de_columnas - 1 ||
+                   fila_actual < 1 || fila_actual >= cantidad_de_filas - 1);
+
+        if (fuera_de_margen) {
             casillas_validas = false;
         } else if (es_pasillo_puerta_mercado) {
             casillas_validas = false;
@@ -535,11 +589,26 @@ bool MapaEditable::estampa_puede_colocarse_en(
         } else if (
             capa_casilla == TipoCapa::ESTRUCTURAS &&
             capas.at(TipoCapa::SUELO)
+                .consultar_casilla(columna_actual, fila_actual)
+                .tiene_propiedad(PropiedadDeCasilla::BLOQUEA)) {
+            casillas_validas = false;
+        } else if (
+            permite_sobre_muro_caverna &&
+            capas.at(TipoCapa::ESTRUCTURAS)
+                    .consultar_casilla(columna_actual, fila_actual)
+                    .obtener_id_tile() > 0 &&
+            !es_tile_muro_caverna(capas.at(TipoCapa::ESTRUCTURAS)
+                                      .consultar_casilla(columna_actual, fila_actual)
+                                      .obtener_id_tile())) {
+            casillas_validas = false;
+        } else if (
+            capa_casilla == TipoCapa::ESTRUCTURAS &&
+            capas.at(TipoCapa::SUELO)
                     .consultar_casilla(columna_actual, fila_actual)
                     .obtener_id_tile() == CatalogoDeEstampas::TILE_PASTO_PERIMETRAL) {
             casillas_validas = false;
         } else if (
-            capa_casilla == TipoCapa::ESTRUCTURAS &&
+            (capa_casilla == TipoCapa::ESTRUCTURAS || permite_sobre_muro_caverna) &&
             buscar_entidad_en_casilla(columna_actual, fila_actual) != nullptr) {
             auto* entidad_encontrada = buscar_entidad_en_casilla(columna_actual, fila_actual);
             TipoEntidad tipo_encontrado = entidad_encontrada->obtener_tipo();
@@ -1392,7 +1461,7 @@ void MapaEditable::reconstruir_perimetro_mercado() {
         while (columna < cantidad_de_columnas) {
             bool es_perimetro_norte = (fila < 4);
             bool es_lateral = (columna == 0 || columna == cantidad_de_columnas - 1);
-            bool es_perimetro_sur = (fila >= cantidad_de_filas - 2);
+            bool es_perimetro_sur = (fila == cantidad_de_filas - 1);
 
             if (!es_perimetro_norte && !es_lateral && !es_perimetro_sur) {
                 uint32_t identificador_suelo =
@@ -1554,12 +1623,32 @@ void MapaEditable::reconstruir_perimetro_mercado() {
                 tile_frente = 167;
             }
 
-            pintar_en_capa(
-                TipoCapa::ESTRUCTURAS,
-                columna_sur,
-                fila_zocalo,
-                tile_zocalo,
-                PropiedadDeCasilla::BLOQUEA);
+            if (columna_sur == 0 || columna_sur == cantidad_de_columnas - 1) {
+                pintar_en_capa(
+                    TipoCapa::ESTRUCTURAS,
+                    columna_sur,
+                    fila_zocalo,
+                    tile_zocalo,
+                    PropiedadDeCasilla::BLOQUEA);
+            } else {
+                uint32_t tile_suelo_zocalo =
+                    obtener_casilla_en_capa(TipoCapa::SUELO, columna_sur, fila_zocalo)
+                        .obtener_id_tile();
+                if (tile_suelo_zocalo == 0 || es_tile_perimetro_mercado(tile_suelo_zocalo)) {
+                    pintar_en_capa(
+                        TipoCapa::SUELO,
+                        columna_sur,
+                        fila_zocalo,
+                        CatalogoDeTerrenos::obtener_tile_base(SectorActual::MERCADO),
+                        PropiedadDeCasilla::DECORABLE);
+                }
+                uint32_t tile_estructuras_zocalo =
+                    obtener_casilla_en_capa(TipoCapa::ESTRUCTURAS, columna_sur, fila_zocalo)
+                        .obtener_id_tile();
+                if (es_tile_perimetro_mercado(tile_estructuras_zocalo)) {
+                    borrar_en_capa(TipoCapa::ESTRUCTURAS, columna_sur, fila_zocalo);
+                }
+            }
             pintar_en_capa(
                 TipoCapa::ESTRUCTURAS,
                 columna_sur,
@@ -1587,5 +1676,476 @@ void MapaEditable::reconstruir_perimetro_mercado() {
             CatalogoDeEstampas::obtener_estampa(TipoEstampa::MERCADO_PALMERA_DERECHA),
             columna_palmera_derecha,
             2);
+    }
+}
+
+bool MapaEditable::es_tile_muro_caverna(uint32_t identificador_tile) {
+    static constexpr uint32_t TILES_MURO_CAVERNA[] = {
+        69,  72,  73,  74,  75,  76,  77,  78,  85,  88,  89,  90,  91,  92,  93,  101,
+        104, 105, 106, 107, 108, 109, 112, 117, 120, 121, 122, 123, 124, 125, 128, 133,
+        144, 149, 160, 165, 176, 181, 192, 197, 207, 214, 215, 216, 222, 233, 237};
+    size_t indice = 0;
+    size_t cantidad = sizeof(TILES_MURO_CAVERNA) / sizeof(TILES_MURO_CAVERNA[0]);
+    bool encontrado = false;
+    while (indice < cantidad && !encontrado) {
+        if (TILES_MURO_CAVERNA[indice] == identificador_tile) {
+            encontrado = true;
+        } else {
+            indice++;
+        }
+    }
+    return encontrado;
+}
+
+bool MapaEditable::es_piso_en_mascara(
+    const std::vector<std::vector<bool>>& mascara_piso, int columna, int fila) {
+    if (fila < 0 || static_cast<size_t>(fila) >= mascara_piso.size()) {
+        return false;
+    }
+    if (columna < 0 ||
+        static_cast<size_t>(columna) >= mascara_piso[static_cast<size_t>(fila)].size()) {
+        return false;
+    }
+    return mascara_piso[static_cast<size_t>(fila)][static_cast<size_t>(columna)];
+}
+
+void MapaEditable::generar_muros_caverna() {
+    static constexpr uint32_t TILE_PISO_RELLENO_BORDE = 139;
+    static constexpr uint32_t ACANTILADO_NORTE[4][4] = {
+        {74, 75, 76, 77},
+        {90, 91, 92, 93},
+        {106, 107, 108, 109},
+        {122, 123, 124, 125}};
+    static constexpr uint32_t TAPA_IZQUIERDA_ACANTILADO[4] = {69, 85, 101, 117};
+    static constexpr uint32_t TAPA_DERECHA_ACANTILADO[4] = {112, 128, 144, 160};
+    static constexpr uint32_t MURO_OESTE[4] = {133, 149, 165, 181};
+    static constexpr uint32_t MURO_OESTE_INTERIOR[4] = {72, 88, 104, 120};
+    static constexpr uint32_t MURO_ESTE[6] = {112, 128, 144, 160, 176, 192};
+    static constexpr uint32_t MURO_ESTE_INTERIOR[4] = {73, 89, 105, 121};
+    static constexpr uint32_t TILE_ESQUINA_OESTE_INFERIOR = 197;
+    static constexpr uint32_t TILE_ESQUINA_ESTE_INFERIOR = 207;
+    static constexpr uint32_t TILE_BORDE_SUR_IZQUIERDO = 214;
+    static constexpr uint32_t TILE_BORDE_SUR_PAR = 215;
+    static constexpr uint32_t TILE_BORDE_SUR_IMPAR = 216;
+    static constexpr uint32_t TILE_BORDE_SUR_DERECHO = 222;
+    static constexpr uint32_t TILE_ESQUINA_CONCAVA_OESTE = 233;
+    static constexpr uint32_t TILE_ESQUINA_CONCAVA_ESTE = 237;
+
+    // 1. Limpiar muros generados previamente manteniendo piso, entidades y estampas
+    int fila_limpiar = 0;
+    while (fila_limpiar < cantidad_de_filas) {
+        int columna_limpiar = 0;
+        while (columna_limpiar < cantidad_de_columnas) {
+            CasillaDelMapa casilla_suelo =
+                capas.at(TipoCapa::SUELO).consultar_casilla(columna_limpiar, fila_limpiar);
+            if (casilla_suelo.tiene_propiedad(PropiedadDeCasilla::BLOQUEA) ||
+                es_tile_muro_caverna(casilla_suelo.obtener_id_tile())) {
+                pintar_en_capa(
+                    TipoCapa::SUELO,
+                    columna_limpiar,
+                    fila_limpiar,
+                    0,
+                    PropiedadDeCasilla::BLOQUEA);
+            }
+            uint32_t tile_estructuras = capas.at(TipoCapa::ESTRUCTURAS)
+                                            .consultar_casilla(columna_limpiar, fila_limpiar)
+                                            .obtener_id_tile();
+            if (es_tile_muro_caverna(tile_estructuras)) {
+                borrar_en_capa(TipoCapa::ESTRUCTURAS, columna_limpiar, fila_limpiar);
+            }
+            uint32_t tile_frente = capas.at(TipoCapa::FRENTE)
+                                       .consultar_casilla(columna_limpiar, fila_limpiar)
+                                       .obtener_id_tile();
+            if (es_tile_muro_caverna(tile_frente)) {
+                borrar_en_capa(TipoCapa::FRENTE, columna_limpiar, fila_limpiar);
+            }
+            columna_limpiar++;
+        }
+        fila_limpiar++;
+    }
+
+    // 2. Calcular envolvente exacta del piso, entidades y estampas para ajustar márgenes
+    bool hay_contenido = false;
+    int columna_minima = cantidad_de_columnas;
+    int columna_maxima = -1;
+    int fila_minima = cantidad_de_filas;
+    int fila_maxima = -1;
+
+    int fila_limite = 0;
+    while (fila_limite < cantidad_de_filas) {
+        int columna_limite = 0;
+        while (columna_limite < cantidad_de_columnas) {
+            if (capas.at(TipoCapa::SUELO)
+                    .consultar_casilla(columna_limite, fila_limite)
+                    .obtener_id_tile() > 0) {
+                hay_contenido = true;
+                if (columna_limite < columna_minima) {
+                    columna_minima = columna_limite;
+                }
+                if (columna_limite > columna_maxima) {
+                    columna_maxima = columna_limite;
+                }
+                if (fila_limite < fila_minima) {
+                    fila_minima = fila_limite;
+                }
+                if (fila_limite > fila_maxima) {
+                    fila_maxima = fila_limite;
+                }
+            }
+            columna_limite++;
+        }
+        fila_limite++;
+    }
+
+    size_t indice_entidad = 0;
+    while (indice_entidad < entidades.size()) {
+        int columna_entidad = 0;
+        int fila_entidad = 0;
+        int ancho_entidad = 0;
+        int alto_entidad = 0;
+        entidades[indice_entidad].consultar_origen(columna_entidad, fila_entidad);
+        entidades[indice_entidad].consultar_dimensiones(ancho_entidad, alto_entidad);
+        hay_contenido = true;
+        if (columna_entidad < columna_minima) {
+            columna_minima = columna_entidad;
+        }
+        if (columna_entidad + ancho_entidad - 1 > columna_maxima) {
+            columna_maxima = columna_entidad + ancho_entidad - 1;
+        }
+        if (fila_entidad < fila_minima) {
+            fila_minima = fila_entidad;
+        }
+        if (fila_entidad + alto_entidad - 1 > fila_maxima) {
+            fila_maxima = fila_entidad + alto_entidad - 1;
+        }
+        indice_entidad++;
+    }
+
+    size_t indice_estampa = 0;
+    while (indice_estampa < estampas_ubicadas.size()) {
+        EstampaUbicada estampa = estampas_ubicadas[indice_estampa];
+        hay_contenido = true;
+        if (estampa.columna < columna_minima) {
+            columna_minima = estampa.columna;
+        }
+        if (estampa.columna + estampa.ancho - 1 > columna_maxima) {
+            columna_maxima = estampa.columna + estampa.ancho - 1;
+        }
+        if (estampa.fila < fila_minima) {
+            fila_minima = estampa.fila;
+        }
+        if (estampa.fila + estampa.alto - 1 > fila_maxima) {
+            fila_maxima = estampa.fila + estampa.alto - 1;
+        }
+        indice_estampa++;
+    }
+
+    if (!hay_contenido) {
+        return;
+    }
+
+    int agregar_izquierda = MARGEN_MURO_LATERAL_CAVERNA - columna_minima;
+    int agregar_arriba = MARGEN_MURO_NORTE_CAVERNA - fila_minima;
+    int agregar_derecha = (columna_maxima + 1 + MARGEN_MURO_LATERAL_CAVERNA) - cantidad_de_columnas;
+    int agregar_abajo = (fila_maxima + 1 + MARGEN_MURO_SUR_CAVERNA) - cantidad_de_filas;
+    expandir(
+        agregar_izquierda,
+        agregar_arriba,
+        agregar_derecha,
+        agregar_abajo,
+        0,
+        PropiedadDeCasilla::BLOQUEA);
+
+    int total_columnas = cantidad_de_columnas;
+    int total_filas = cantidad_de_filas;
+    std::vector<std::vector<bool>> es_piso(
+        static_cast<size_t>(total_filas),
+        std::vector<bool>(static_cast<size_t>(total_columnas), false));
+    int fila_piso = 0;
+    while (fila_piso < total_filas) {
+        int columna_piso = 0;
+        while (columna_piso < total_columnas) {
+            if (capas.at(TipoCapa::SUELO)
+                    .consultar_casilla(columna_piso, fila_piso)
+                    .obtener_id_tile() > 0) {
+                es_piso[static_cast<size_t>(fila_piso)][static_cast<size_t>(columna_piso)] = true;
+            }
+            columna_piso++;
+        }
+        fila_piso++;
+    }
+
+    // 3. Marcar bordes sur (inmediatamente debajo de una casilla de piso)
+    std::vector<std::vector<bool>> es_borde_sur(
+        static_cast<size_t>(total_filas),
+        std::vector<bool>(static_cast<size_t>(total_columnas), false));
+    int fila_sur = 0;
+    while (fila_sur < total_filas) {
+        int columna_sur = 0;
+        while (columna_sur < total_columnas) {
+            if (!es_piso_en_mascara(es_piso, columna_sur, fila_sur) &&
+                es_piso_en_mascara(es_piso, columna_sur, fila_sur - 1)) {
+                es_borde_sur[static_cast<size_t>(fila_sur)][static_cast<size_t>(columna_sur)] =
+                    true;
+            }
+            columna_sur++;
+        }
+        fila_sur++;
+    }
+
+    // 4. Acantilados Norte (hasta 4 casillas sobre el piso)
+    std::vector<std::vector<int>> fila_acantilado_norte(
+        static_cast<size_t>(total_filas),
+        std::vector<int>(static_cast<size_t>(total_columnas), 0));
+    int fila_actual = 0;
+    while (fila_actual < total_filas) {
+        int columna_actual = 0;
+        while (columna_actual < total_columnas) {
+            if (es_piso_en_mascara(es_piso, columna_actual, fila_actual) &&
+                !es_piso_en_mascara(es_piso, columna_actual, fila_actual - 1)) {
+                int distancia = 1;
+                bool continuar_subiendo = true;
+                while (distancia <= 4 && continuar_subiendo) {
+                    int fila_destino = fila_actual - distancia;
+                    if (!esta_dentro(columna_actual, fila_destino) ||
+                        es_piso_en_mascara(es_piso, columna_actual, fila_destino) ||
+                        es_borde_sur[static_cast<size_t>(fila_destino)]
+                                    [static_cast<size_t>(columna_actual)]) {
+                        continuar_subiendo = false;
+                    } else {
+                        int indice_fila_acantilado = 4 - distancia;
+                        fila_acantilado_norte[static_cast<size_t>(fila_destino)]
+                                             [static_cast<size_t>(columna_actual)] =
+                                                 indice_fila_acantilado + 1;
+                        pintar_en_capa(
+                            TipoCapa::ESTRUCTURAS,
+                            columna_actual,
+                            fila_destino,
+                            ACANTILADO_NORTE[indice_fila_acantilado][columna_actual % 4],
+                            PropiedadDeCasilla::BLOQUEA);
+                        if (distancia == 1) {
+                            pintar_en_capa(
+                                TipoCapa::SUELO,
+                                columna_actual,
+                                fila_destino,
+                                TILE_PISO_RELLENO_BORDE,
+                                PropiedadDeCasilla::BLOQUEA);
+                        }
+                        distancia++;
+                    }
+                }
+            }
+            columna_actual++;
+        }
+        fila_actual++;
+    }
+
+    // 5. Remates laterales de los acantilados Norte
+    fila_actual = 0;
+    while (fila_actual < total_filas) {
+        int columna_actual = 0;
+        while (columna_actual < total_columnas) {
+            int nivel_acantilado = fila_acantilado_norte[static_cast<size_t>(fila_actual)]
+                                                        [static_cast<size_t>(columna_actual)];
+            if (nivel_acantilado > 0) {
+                int indice_acantilado = nivel_acantilado - 1;
+                if (esta_dentro(columna_actual - 1, fila_actual) &&
+                    !es_piso_en_mascara(es_piso, columna_actual - 1, fila_actual) &&
+                    fila_acantilado_norte[static_cast<size_t>(fila_actual)]
+                                         [static_cast<size_t>(columna_actual - 1)] == 0 &&
+                    !es_borde_sur[static_cast<size_t>(fila_actual)]
+                                 [static_cast<size_t>(columna_actual - 1)] &&
+                    capas.at(TipoCapa::ESTRUCTURAS)
+                            .consultar_casilla(columna_actual - 1, fila_actual)
+                            .obtener_id_tile() == 0) {
+                    pintar_en_capa(
+                        TipoCapa::ESTRUCTURAS,
+                        columna_actual - 1,
+                        fila_actual,
+                        TAPA_IZQUIERDA_ACANTILADO[indice_acantilado],
+                        PropiedadDeCasilla::BLOQUEA);
+                    if (indice_acantilado == 3) {
+                        pintar_en_capa(
+                            TipoCapa::SUELO,
+                            columna_actual - 1,
+                            fila_actual,
+                            TILE_PISO_RELLENO_BORDE,
+                            PropiedadDeCasilla::BLOQUEA);
+                    }
+                }
+                if (esta_dentro(columna_actual + 1, fila_actual) &&
+                    !es_piso_en_mascara(es_piso, columna_actual + 1, fila_actual) &&
+                    fila_acantilado_norte[static_cast<size_t>(fila_actual)]
+                                         [static_cast<size_t>(columna_actual + 1)] == 0 &&
+                    !es_borde_sur[static_cast<size_t>(fila_actual)]
+                                 [static_cast<size_t>(columna_actual + 1)] &&
+                    capas.at(TipoCapa::ESTRUCTURAS)
+                            .consultar_casilla(columna_actual + 1, fila_actual)
+                            .obtener_id_tile() == 0) {
+                    pintar_en_capa(
+                        TipoCapa::ESTRUCTURAS,
+                        columna_actual + 1,
+                        fila_actual,
+                        TAPA_DERECHA_ACANTILADO[indice_acantilado],
+                        PropiedadDeCasilla::BLOQUEA);
+                    if (indice_acantilado == 3) {
+                        pintar_en_capa(
+                            TipoCapa::SUELO,
+                            columna_actual + 1,
+                            fila_actual,
+                            TILE_PISO_RELLENO_BORDE,
+                            PropiedadDeCasilla::BLOQUEA);
+                    }
+                }
+            }
+            columna_actual++;
+        }
+        fila_actual++;
+    }
+
+    // 6. Muros Oeste (piso a la derecha) y Muros Este (piso a la izquierda)
+    fila_actual = 0;
+    while (fila_actual < total_filas) {
+        int columna_actual = 0;
+        while (columna_actual < total_columnas) {
+            if (!es_piso_en_mascara(es_piso, columna_actual, fila_actual) &&
+                !es_borde_sur[static_cast<size_t>(fila_actual)]
+                             [static_cast<size_t>(columna_actual)]) {
+                int nivel_acantilado = fila_acantilado_norte[static_cast<size_t>(fila_actual)]
+                                                            [static_cast<size_t>(columna_actual)];
+                if (es_piso_en_mascara(es_piso, columna_actual + 1, fila_actual)) {
+                    if (nivel_acantilado > 0) {
+                        pintar_en_capa(
+                            TipoCapa::ESTRUCTURAS,
+                            columna_actual,
+                            fila_actual,
+                            MURO_OESTE_INTERIOR[nivel_acantilado - 1],
+                            PropiedadDeCasilla::BLOQUEA);
+                        pintar_en_capa(
+                            TipoCapa::SUELO,
+                            columna_actual,
+                            fila_actual,
+                            TILE_PISO_RELLENO_BORDE,
+                            PropiedadDeCasilla::BLOQUEA);
+                    } else if (
+                        !es_piso_en_mascara(es_piso, columna_actual + 1, fila_actual + 1) &&
+                        !es_piso_en_mascara(es_piso, columna_actual, fila_actual + 1)) {
+                        pintar_en_capa(
+                            TipoCapa::ESTRUCTURAS,
+                            columna_actual,
+                            fila_actual,
+                            TILE_ESQUINA_OESTE_INFERIOR,
+                            PropiedadDeCasilla::BLOQUEA);
+                    } else {
+                        pintar_en_capa(
+                            TipoCapa::ESTRUCTURAS,
+                            columna_actual,
+                            fila_actual,
+                            MURO_OESTE[fila_actual % 4],
+                            PropiedadDeCasilla::BLOQUEA);
+                        pintar_en_capa(
+                            TipoCapa::SUELO,
+                            columna_actual,
+                            fila_actual,
+                            TILE_PISO_RELLENO_BORDE,
+                            PropiedadDeCasilla::BLOQUEA);
+                    }
+                } else if (es_piso_en_mascara(es_piso, columna_actual - 1, fila_actual)) {
+                    if (nivel_acantilado > 0) {
+                        pintar_en_capa(
+                            TipoCapa::ESTRUCTURAS,
+                            columna_actual,
+                            fila_actual,
+                            MURO_ESTE_INTERIOR[nivel_acantilado - 1],
+                            PropiedadDeCasilla::BLOQUEA);
+                        pintar_en_capa(
+                            TipoCapa::SUELO,
+                            columna_actual,
+                            fila_actual,
+                            TILE_PISO_RELLENO_BORDE,
+                            PropiedadDeCasilla::BLOQUEA);
+                    } else if (
+                        !es_piso_en_mascara(es_piso, columna_actual - 1, fila_actual + 1) &&
+                        !es_piso_en_mascara(es_piso, columna_actual, fila_actual + 1)) {
+                        pintar_en_capa(
+                            TipoCapa::ESTRUCTURAS,
+                            columna_actual,
+                            fila_actual,
+                            TILE_ESQUINA_ESTE_INFERIOR,
+                            PropiedadDeCasilla::BLOQUEA);
+                    } else {
+                        pintar_en_capa(
+                            TipoCapa::ESTRUCTURAS,
+                            columna_actual,
+                            fila_actual,
+                            MURO_ESTE[fila_actual % 6],
+                            PropiedadDeCasilla::BLOQUEA);
+                        pintar_en_capa(
+                            TipoCapa::SUELO,
+                            columna_actual,
+                            fila_actual,
+                            TILE_PISO_RELLENO_BORDE,
+                            PropiedadDeCasilla::BLOQUEA);
+                    }
+                }
+            }
+            columna_actual++;
+        }
+        fila_actual++;
+    }
+
+    // 7. Bordes Sur y esquinas cóncavas (en Front / Estructuras sobre relleno de piso)
+    fila_actual = 0;
+    while (fila_actual < total_filas) {
+        int columna_actual = 0;
+        while (columna_actual < total_columnas) {
+            if (es_borde_sur[static_cast<size_t>(fila_actual)]
+                            [static_cast<size_t>(columna_actual)]) {
+                pintar_en_capa(
+                    TipoCapa::SUELO,
+                    columna_actual,
+                    fila_actual,
+                    TILE_PISO_RELLENO_BORDE,
+                    PropiedadDeCasilla::BLOQUEA);
+                if (es_piso_en_mascara(es_piso, columna_actual + 1, fila_actual) &&
+                    !es_piso_en_mascara(es_piso, columna_actual - 1, fila_actual)) {
+                    pintar_en_capa(
+                        TipoCapa::ESTRUCTURAS,
+                        columna_actual,
+                        fila_actual,
+                        TILE_ESQUINA_CONCAVA_OESTE,
+                        PropiedadDeCasilla::BLOQUEA);
+                } else if (
+                    es_piso_en_mascara(es_piso, columna_actual - 1, fila_actual) &&
+                    !es_piso_en_mascara(es_piso, columna_actual + 1, fila_actual)) {
+                    pintar_en_capa(
+                        TipoCapa::ESTRUCTURAS,
+                        columna_actual,
+                        fila_actual,
+                        TILE_ESQUINA_CONCAVA_ESTE,
+                        PropiedadDeCasilla::BLOQUEA);
+                } else {
+                    bool hay_piso_arriba_izquierda =
+                        es_piso_en_mascara(es_piso, columna_actual - 1, fila_actual - 1);
+                    bool hay_piso_arriba_derecha =
+                        es_piso_en_mascara(es_piso, columna_actual + 1, fila_actual - 1);
+                    uint32_t tile_borde =
+                        (columna_actual % 2 == 0) ? TILE_BORDE_SUR_PAR : TILE_BORDE_SUR_IMPAR;
+                    if (!hay_piso_arriba_izquierda && hay_piso_arriba_derecha) {
+                        tile_borde = TILE_BORDE_SUR_IZQUIERDO;
+                    } else if (!hay_piso_arriba_derecha && hay_piso_arriba_izquierda) {
+                        tile_borde = TILE_BORDE_SUR_DERECHO;
+                    }
+                    pintar_en_capa(
+                        TipoCapa::FRENTE,
+                        columna_actual,
+                        fila_actual,
+                        tile_borde,
+                        PropiedadDeCasilla::NINGUNA);
+                }
+            }
+            columna_actual++;
+        }
+        fila_actual++;
     }
 }

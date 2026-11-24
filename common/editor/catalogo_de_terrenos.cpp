@@ -32,13 +32,10 @@ static constexpr uint32_t TILE_ESQUINA_INTERIOR_SUDOESTE = 707;
 // Caverna (Minas: mine.png, 16 columnas)
 static constexpr uint32_t TILE_PISO_PIEDRA_CAVERNA = 139;
 static constexpr uint32_t TILE_PISO_PIEDRA_OSCURA = 138;
-static constexpr uint32_t TILE_BARRO_CAVERNA = 219;
-static constexpr uint32_t TILE_BARRO_OSCURO = 235;
 static constexpr uint32_t TILE_SENDERO_CAVERNA = 156;
 static constexpr uint32_t TILE_SENDERO_SECUNDARIO = 155;
-static constexpr uint32_t TILE_AGUA_SUBTERRANEA = 277;
-static constexpr uint32_t TILE_MURO_PIEDRA_CAVERNA = 78;
-static constexpr uint32_t TILE_MURO_PIEDRA_LABRADA = 94;
+static constexpr uint32_t TILE_PISO_GUIJARROS_CAVERNA = 141;
+static constexpr uint32_t TILE_BARRO_CAVERNA = 219;
 
 // Metadatos de tileset de exteriores (Granja)
 static constexpr const char* NOMBRE_TILESET_EXTERIORES = "spring_outdoors";
@@ -91,13 +88,10 @@ static constexpr const char* NOMBRE_ESQUINA_INTERIOR = "Esquina Interior (Rotabl
 // Nombres temáticos de terrenos - Caverna
 static constexpr const char* NOMBRE_PISO_PIEDRA = "Piso de Piedra";
 static constexpr const char* NOMBRE_PISO_PIEDRA_OSCURA = "Piso de Piedra Oscura";
-static constexpr const char* NOMBRE_BARRO_SUBTERRANEO = "Barro Mineral";
-static constexpr const char* NOMBRE_BARRO_OSCURO = "Barro Oscuro";
-static constexpr const char* NOMBRE_SENDERO_MINERO = "Sendero Minero";
-static constexpr const char* NOMBRE_SENDERO_SECUNDARIO = "Sendero Rocoso";
-static constexpr const char* NOMBRE_AGUA_SUBTERRANEA = "Agua Subterranea";
-static constexpr const char* NOMBRE_MURO_PIEDRA = "Muro de Roca";
-static constexpr const char* NOMBRE_MURO_PIEDRA_LABRADA = "Muro Roca Labrada";
+static constexpr const char* NOMBRE_SENDERO_MINERO = "Piso Rocoso";
+static constexpr const char* NOMBRE_SENDERO_SECUNDARIO = "Piso Texturizado";
+static constexpr const char* NOMBRE_PISO_GUIJARROS = "Piso con Guijarros";
+static constexpr const char* NOMBRE_BARRO_SUBTERRANEO = "Tierra Subterranea";
 
 static const std::map<SectorActual, std::vector<DefinicionTile>> CATALOGO_POR_SECTOR = {
     {SectorActual::GRANJA,
@@ -129,15 +123,22 @@ static const std::map<SectorActual, std::vector<DefinicionTile>> CATALOGO_POR_SE
           NOMBRE_PISO_PIEDRA_OSCURA,
           TILE_PISO_PIEDRA_OSCURA,
           PropiedadDeCasilla::DECORABLE | PropiedadDeCasilla::ADMITE_MINERAL},
-      DefinicionTile{NOMBRE_BARRO_SUBTERRANEO, TILE_BARRO_CAVERNA, PropiedadDeCasilla::DECORABLE},
-      DefinicionTile{NOMBRE_BARRO_OSCURO, TILE_BARRO_OSCURO, PropiedadDeCasilla::DECORABLE},
-      DefinicionTile{NOMBRE_SENDERO_MINERO, TILE_SENDERO_CAVERNA, PropiedadDeCasilla::DECORABLE},
       DefinicionTile{
-          NOMBRE_SENDERO_SECUNDARIO, TILE_SENDERO_SECUNDARIO, PropiedadDeCasilla::DECORABLE},
-      DefinicionTile{NOMBRE_AGUA_SUBTERRANEA, TILE_AGUA_SUBTERRANEA, PropiedadDeCasilla::BLOQUEA},
-      DefinicionTile{NOMBRE_MURO_PIEDRA, TILE_MURO_PIEDRA_CAVERNA, PropiedadDeCasilla::BLOQUEA},
+          NOMBRE_SENDERO_MINERO,
+          TILE_SENDERO_CAVERNA,
+          PropiedadDeCasilla::DECORABLE | PropiedadDeCasilla::ADMITE_MINERAL},
       DefinicionTile{
-          NOMBRE_MURO_PIEDRA_LABRADA, TILE_MURO_PIEDRA_LABRADA, PropiedadDeCasilla::BLOQUEA}}},
+          NOMBRE_SENDERO_SECUNDARIO,
+          TILE_SENDERO_SECUNDARIO,
+          PropiedadDeCasilla::DECORABLE | PropiedadDeCasilla::ADMITE_MINERAL},
+      DefinicionTile{
+          NOMBRE_PISO_GUIJARROS,
+          TILE_PISO_GUIJARROS_CAVERNA,
+          PropiedadDeCasilla::DECORABLE | PropiedadDeCasilla::ADMITE_MINERAL},
+      DefinicionTile{
+          NOMBRE_BARRO_SUBTERRANEO,
+          TILE_BARRO_CAVERNA,
+          PropiedadDeCasilla::DECORABLE | PropiedadDeCasilla::ADMITE_MINERAL}}},
     {SectorActual::MERCADO,
      {DefinicionTile{"Alfombra de Tienda", TILE_ALFOMBRA_MERCADO, PropiedadDeCasilla::DECORABLE},
       DefinicionTile{"Piso de Madera", TILE_PISO_MERCADO, PropiedadDeCasilla::DECORABLE},

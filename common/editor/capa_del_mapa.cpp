@@ -36,6 +36,17 @@ void CapaDelMapa::redimensionar(
     cuadricula.redimensionar(nuevas_columnas, nuevas_filas, casilla_relleno);
 }
 
+void CapaDelMapa::desplazar_y_redimensionar(
+    int agregar_izquierda, int agregar_arriba, int agregar_derecha, int agregar_abajo,
+    const CasillaDelMapa& casilla_relleno) {
+    cuadricula.desplazar_y_redimensionar(
+        agregar_izquierda,
+        agregar_arriba,
+        agregar_derecha,
+        agregar_abajo,
+        casilla_relleno);
+}
+
 std::vector<uint32_t> CapaDelMapa::exportar_tiles() const {
     return cuadricula.exportar_tiles();
 }

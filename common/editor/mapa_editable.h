@@ -32,6 +32,8 @@ private:
     uint32_t proximo_identificador_de_estampa;
 
     int buscar_indice_de_entidad(uint32_t identificador) const;
+    static bool es_piso_en_mascara(
+        const std::vector<std::vector<bool>>& mascara_piso, int columna, int fila);
 
 public:
     MapaEditable(
@@ -68,6 +70,9 @@ public:
         MINIMO_ALTO_UTIL_GRANJA + ALTO_VALLA_NORTE_CASILLAS + ALTO_VALLA_SUR_CASILLAS;
     static constexpr int MINIMO_COLUMNAS_MERCADO = 15;
     static constexpr int MINIMO_FILAS_MERCADO = 13;
+    static constexpr int MARGEN_MURO_NORTE_CAVERNA = 4;
+    static constexpr int MARGEN_MURO_SUR_CAVERNA = 2;
+    static constexpr int MARGEN_MURO_LATERAL_CAVERNA = 2;
 
     bool columna_ocupada_por_transicion_norte(int columna) const;
     bool columna_ocupada_por_transicion_sur(int columna) const;
@@ -86,6 +91,8 @@ public:
     void estampar(const DefinicionEstampa& estampa, int columna_origen, int fila_origen);
     void generar_muro_perimetral_granja();
     void generar_muro_perimetral_pueblo();
+    void generar_muros_caverna();
+    static bool es_tile_muro_caverna(uint32_t identificador_tile);
     void reconstruir_perimetro_mercado();
     static bool es_tile_perimetro_mercado(uint32_t identificador_tile);
     void calcular_interaccion_puesto(
@@ -116,6 +123,9 @@ public:
     void redimensionar(
         int nuevas_columnas, int nuevas_filas, uint32_t id_tile_relleno,
         uint8_t propiedades_relleno);
+    void expandir(
+        int agregar_izquierda, int agregar_arriba, int agregar_derecha, int agregar_abajo,
+        uint32_t id_tile_relleno, uint8_t propiedades_relleno);
     void vaciar_entidades();
 
     CasillaDelMapa obtener_copia_de_casilla(int columna, int fila) const;

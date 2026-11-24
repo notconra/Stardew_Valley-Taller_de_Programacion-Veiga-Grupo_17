@@ -72,10 +72,16 @@ private:
     void cargar_tilesets_de_sector(SectorActual sector);
     void dibujar_tile_en_lienzo(QPainter& pintor, uint32_t valor_crudo, int columna, int fila);
     void obtener_coordenadas_desde_posicion(const QPoint& posicion, int& columna, int& fila) const;
+    int obtener_margen_visible() const;
+    bool asegurar_espacio_en_caverna(int& columna, int& fila, int ancho, int alto);
+    void borrar_en_casilla(int columna, int fila);
     bool casilla_es_perimetro_protegido(int columna, int fila) const;
     void pintar_casilla_en_posicion(int columna, int fila);
     void dibujar_capa_de_tiles(
         QPainter& pintor, TipoCapa tipo_capa, int cantidad_columnas, int cantidad_filas);
+    void dibujar_visual_entidad(
+        QPainter& pintor, TipoEntidad tipo_entidad, int origen_columna, int origen_fila,
+        const QRect& rectangulo_destino);
     void dibujar_entidad(
         QPainter& pintor, const EntidadDelMapa& entidad, const QRect& rectangulo_entidad,
         bool es_seleccionada);
@@ -125,6 +131,7 @@ public:
 signals:
     void casilla_apuntada(int columna, int fila);
     void mapa_modificado();
+    void mapa_expandido(int columnas_agregadas_izquierda, int filas_agregadas_arriba);
     void entidad_seleccionada_cambio(int identificador_entidad);
     void estampa_rotada(TipoEstampa nueva_estampa);
     void tile_rotado(uint32_t nuevo_id_tile);

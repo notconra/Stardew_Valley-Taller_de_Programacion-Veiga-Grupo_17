@@ -62,16 +62,43 @@ void Cuadricula::redimensionar(
     if (nuevas_columnas <= 0 || nuevas_filas <= 0) {
         return;
     }
-    std::vector<CasillaDelMapa> nueva_matriz(nuevas_columnas * nuevas_filas, casilla_relleno);
+    desplazar_y_redimensionar(
+        0,
+        0,
+        nuevas_columnas - cantidad_de_columnas,
+        nuevas_filas - cantidad_de_filas,
+        casilla_relleno);
+}
+
+void Cuadricula::desplazar_y_redimensionar(
+    int agregar_izquierda, int agregar_arriba, int agregar_derecha, int agregar_abajo,
+    const CasillaDelMapa& casilla_relleno) {
+    int nuevas_columnas = cantidad_de_columnas + agregar_izquierda + agregar_derecha;
+    int nuevas_filas = cantidad_de_filas + agregar_arriba + agregar_abajo;
+    if (nuevas_columnas <= 0 || nuevas_filas <= 0) {
+        return;
+    }
+
+    std::vector<CasillaDelMapa> nueva_matriz(
+        static_cast<size_t>(nuevas_columnas * nuevas_filas),
+        casilla_relleno);
 
     int fila = 0;
-    while (fila < nuevas_filas && fila < cantidad_de_filas) {
-        int columna = 0;
-        while (columna < nuevas_columnas && columna < cantidad_de_columnas) {
-            size_t indice_nuevo = static_cast<size_t>(fila * nuevas_columnas + columna);
-            size_t indice_viejo = static_cast<size_t>(fila * cantidad_de_columnas + columna);
-            nueva_matriz[indice_nuevo] = casillas[indice_viejo];
-            columna++;
+    while (fila < cantidad_de_filas) {
+        int fila_destino = fila + agregar_arriba;
+        if (fila_destino >= 0 && fila_destino < nuevas_filas) {
+            int columna = 0;
+            while (columna < cantidad_de_columnas) {
+                int columna_destino = columna + agregar_izquierda;
+                if (columna_destino >= 0 && columna_destino < nuevas_columnas) {
+                    size_t indice_nuevo =
+                        static_cast<size_t>(fila_destino * nuevas_columnas + columna_destino);
+                    size_t indice_viejo =
+                        static_cast<size_t>(fila * cantidad_de_columnas + columna);
+                    nueva_matriz[indice_nuevo] = casillas[indice_viejo];
+                }
+                columna++;
+            }
         }
         fila++;
     }

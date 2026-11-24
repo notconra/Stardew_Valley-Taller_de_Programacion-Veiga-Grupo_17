@@ -516,17 +516,24 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
 
     size_t indice_nivel = 0;
     while (indice_nivel < cantidad_de_niveles) {
-        auto& nivel = mundo.obtener_nivel_mazmorra(indice_nivel);
+        MapaEditable nivel = mundo.obtener_nivel_mazmorra(indice_nivel);
         std::vector<EntidadDelMapa> escaleras =
             nivel.listar_entidades_por_tipo(TipoEntidad::ESCALERA_NIVEL);
         if (escaleras.empty()) {
             resultado.agregar_error(
                 "El nivel " + std::to_string(indice_nivel + 1) +
                 " de la caverna no tiene escalera de descenso.");
-        } else if (!tiene_acceso_perimetral_transitable(nivel, escaleras[0])) {
-            resultado.agregar_error(
-                "El nivel " + std::to_string(indice_nivel + 1) +
-                " tiene la escalera de descenso bloqueada por obstaculos.");
+        } else {
+            if (escaleras.size() > 1) {
+                resultado.agregar_error(
+                    "El nivel " + std::to_string(indice_nivel + 1) +
+                    " de la caverna debe tener exactamente una escalera de descenso.");
+            }
+            if (!tiene_acceso_perimetral_transitable(nivel, escaleras[0])) {
+                resultado.agregar_error(
+                    "El nivel " + std::to_string(indice_nivel + 1) +
+                    " tiene la escalera de descenso bloqueada por obstaculos.");
+            }
         }
 
         std::vector<EntidadDelMapa> salidas =
@@ -534,13 +541,25 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
         if (salidas.empty()) {
             resultado.agregar_error(
                 "El nivel " + std::to_string(indice_nivel + 1) + " de la caverna no tiene salida.");
-        } else if (!tiene_acceso_perimetral_transitable(nivel, salidas[0])) {
-            resultado.agregar_error(
-                "El nivel " + std::to_string(indice_nivel + 1) +
-                " tiene la salida bloqueada por obstaculos.");
+        } else {
+            if (salidas.size() > 1) {
+                resultado.agregar_error(
+                    "El nivel " + std::to_string(indice_nivel + 1) +
+                    " de la caverna debe tener exactamente una salida.");
+            }
+            if (!tiene_acceso_perimetral_transitable(nivel, salidas[0])) {
+                resultado.agregar_error(
+                    "El nivel " + std::to_string(indice_nivel + 1) +
+                    " tiene la salida bloqueada por obstaculos.");
+            }
         }
 
         if (!escaleras.empty() && !salidas.empty()) {
+            if (!tiene_entrada_de_nivel_libre(nivel, salidas[0], escaleras[0])) {
+                resultado.agregar_error(
+                    "El nivel " + std::to_string(indice_nivel + 1) +
+                    " no tiene una casilla transitable adyacente a la salida para aparecer.");
+            }
             if (!existe_camino_transitable(nivel, salidas[0], escaleras[0])) {
                 resultado.agregar_error(
                     "El nivel " + std::to_string(indice_nivel + 1) +
@@ -552,4 +571,27 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
     }
 
     return resultado;
+}
+
+bool ValidadorDeMundo::tiene_entrada_de_nivel_libre(
+    const MapaEditable& mapa, const EntidadDelMapa& salida, const EntidadDelMapa& escalera) {
+    int columna_salida = 0;
+    int fila_salida = 0;
+    salida.consultar_origen(columna_salida, fila_salida);
+
+    int desplazamientos_columna[4] = {0, 0, -1, 1};
+    int desplazamientos_fila[4] = {-1, 1, 0, 0};
+    int indice_direccion = 0;
+    bool encontrada = false;
+    while (indice_direccion < 4 && !encontrada) {
+        int columna_adyacente = columna_salida + desplazamientos_columna[indice_direccion];
+        int fila_adyacente = fila_salida + desplazamientos_fila[indice_direccion];
+        if (mapa.esta_dentro(columna_adyacente, fila_adyacente) &&
+            mapa.casilla_es_transitable(columna_adyacente, fila_adyacente) &&
+            !escalera.ocupa_casilla(columna_adyacente, fila_adyacente)) {
+            encontrada = true;
+        }
+        indice_direccion++;
+    }
+    return encontrada;
 }

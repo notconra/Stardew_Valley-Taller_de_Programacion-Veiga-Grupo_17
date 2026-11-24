@@ -14,6 +14,7 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QScrollArea>
+#include <QScrollBar>
 #include <QShortcut>
 #include <QSpinBox>
 #include <QStatusBar>
@@ -246,6 +247,22 @@ void VentanaPrincipalEditor::conectar_senales() {
         &LienzoDeEdicion::mapa_modificado,
         this,
         &VentanaPrincipalEditor::ejecutar_validacion);
+    connect(
+        lienzo,
+        &LienzoDeEdicion::mapa_expandido,
+        this,
+        [this](int columnas_izquierda, int filas_arriba) {
+            int paso = lienzo->obtener_tamano_casilla();
+            if (columnas_izquierda > 0 && area_desplazamiento->horizontalScrollBar() != nullptr) {
+                QScrollBar* barra_horizontal = area_desplazamiento->horizontalScrollBar();
+                barra_horizontal->setValue(barra_horizontal->value() + columnas_izquierda * paso);
+            }
+            if (filas_arriba > 0 && area_desplazamiento->verticalScrollBar() != nullptr) {
+                QScrollBar* barra_vertical = area_desplazamiento->verticalScrollBar();
+                barra_vertical->setValue(barra_vertical->value() + filas_arriba * paso);
+            }
+            actualizar_etiqueta_dimensiones();
+        });
     connect(lienzo, &LienzoDeEdicion::entidad_seleccionada_cambio, this, [this](int id) {
         panel_validacion->habilitar_boton_eliminar(id >= 0);
     });
@@ -707,8 +724,7 @@ void VentanaPrincipalEditor::abrir_dialogo_redimensionar() {
                     CatalogoDeTerrenos::obtener_tile_base(SectorActual::MERCADO);
                 propiedades_relleno = PropiedadDeCasilla::DECORABLE;
             } else if (indice_sector >= 3) {
-                propiedades_relleno =
-                    PropiedadDeCasilla::DECORABLE | PropiedadDeCasilla::ADMITE_MINERAL;
+                propiedades_relleno = PropiedadDeCasilla::BLOQUEA;
             }
 
             mapa_actual_sector->redimensionar(
@@ -759,5 +775,12 @@ void VentanaPrincipalEditor::generar_muro_perimetral_granja() {
         lienzo->update();
         ejecutar_validacion();
         statusBar()->showMessage("Perimetro del mercado restaurado con exito.", 3000);
+    } else if (indice_sector >= 3) {
+        mapa_actual_sector->generar_muros_caverna();
+        lienzo->actualizar_tamano_del_lienzo();
+        lienzo->update();
+        actualizar_etiqueta_dimensiones();
+        ejecutar_validacion();
+        statusBar()->showMessage("Muros de mina generados con exito.", 3000);
     }
 }

@@ -42,6 +42,8 @@ private:
     static bool existe_camino_desde_coordenada(
         const MapaEditable& mapa, int columna_inicio, int fila_inicio,
         const EntidadDelMapa& destino);
+    static bool tiene_entrada_de_nivel_libre(
+        const MapaEditable& mapa, const EntidadDelMapa& salida, const EntidadDelMapa& escalera);
 
 public:
     ValidadorDeMundo() = delete;

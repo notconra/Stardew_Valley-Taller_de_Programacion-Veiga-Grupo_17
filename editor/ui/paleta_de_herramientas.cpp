@@ -74,6 +74,7 @@ PaletaDeHerramientas::PaletaDeHerramientas(QWidget* padre)
       estampa_mostrador_activa(TipoEstampa::MERCADO_MOSTRADOR_IZQUIERDO),
       estampa_puesto_mercado_activa(TipoEstampa::MERCADO_PUESTO_IZQUIERDO),
       estampa_estanteria_activa(TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA),
+      estampa_via_caverna_activa(TipoEstampa::CAVERNA_VIA_HORIZONTAL),
       id_tile_borde_activo(CatalogoDeEstampas::TILE_PUEBLO_CAMINO_BORDE_NORTE),
       id_tile_esquina_exterior_activa(
           CatalogoDeEstampas::TILE_PUEBLO_CAMINO_ESQUINA_EXTERIOR_NOROESTE),
@@ -183,6 +184,7 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
     estampa_mostrador_activa = TipoEstampa::MERCADO_MOSTRADOR_IZQUIERDO;
     estampa_puesto_mercado_activa = TipoEstampa::MERCADO_PUESTO_IZQUIERDO;
     estampa_estanteria_activa = TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA;
+    estampa_via_caverna_activa = TipoEstampa::CAVERNA_VIA_HORIZONTAL;
     id_tile_borde_activo = CatalogoDeEstampas::TILE_PUEBLO_CAMINO_BORDE_NORTE;
     id_tile_esquina_exterior_activa =
         CatalogoDeEstampas::TILE_PUEBLO_CAMINO_ESQUINA_EXTERIOR_NOROESTE;
@@ -274,12 +276,15 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
 
     caja_estampas->setVisible(
         !lista_estampas.empty() || sector == SectorActual::GRANJA ||
-        sector == SectorActual::PUEBLO || sector == SectorActual::MERCADO);
+        sector == SectorActual::PUEBLO || sector == SectorActual::MERCADO ||
+        sector == SectorActual::CAVERNA);
     boton_muro_perimetral->setVisible(
         sector == SectorActual::GRANJA || sector == SectorActual::PUEBLO ||
-        sector == SectorActual::MERCADO);
+        sector == SectorActual::MERCADO || sector == SectorActual::CAVERNA);
     if (sector == SectorActual::MERCADO) {
         boton_muro_perimetral->setText("Restaurar Paredes Perimetrales");
+    } else if (sector == SectorActual::CAVERNA) {
+        boton_muro_perimetral->setText("Generar Muros de Mina");
     } else {
         boton_muro_perimetral->setText("Cerrar Perimetro con Vallas");
     }
@@ -311,6 +316,8 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
                 estampa_a_emitir = estampa_puesto_mercado_activa;
             } else if (tipo == TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA) {
                 estampa_a_emitir = estampa_estanteria_activa;
+            } else if (tipo == TipoEstampa::CAVERNA_VIA_HORIZONTAL) {
+                estampa_a_emitir = estampa_via_caverna_activa;
             }
             emit estampa_seleccionada(estampa_a_emitir);
         });
@@ -406,6 +413,18 @@ void PaletaDeHerramientas::sincronizar_rotacion_estampa(TipoEstampa estampa) {
                 QString texto = (estampa == TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA)
                                     ? "Estanteria Comercial (6x3) [R]"
                                     : "Estanteria Comercial (Derecha) [R]";
+                boton->setText(texto);
+            }
+        } else if (
+            estampa == TipoEstampa::CAVERNA_VIA_HORIZONTAL ||
+            estampa == TipoEstampa::CAVERNA_VIA_VERTICAL) {
+            estampa_via_caverna_activa = estampa;
+            if (grupo_estampas->id(boton) ==
+                static_cast<int>(TipoEstampa::CAVERNA_VIA_HORIZONTAL)) {
+                boton->setChecked(true);
+                QString texto = (estampa == TipoEstampa::CAVERNA_VIA_HORIZONTAL)
+                                    ? "Via Minera (Horizontal) [R]"
+                                    : "Via Minera (Vertical) [R]";
                 boton->setText(texto);
             }
         }

@@ -29,6 +29,9 @@ public:
     void borrar(int columna, int fila);
     void redimensionar(
         int nuevas_columnas, int nuevas_filas, const CasillaDelMapa& casilla_relleno);
+    void desplazar_y_redimensionar(
+        int agregar_izquierda, int agregar_arriba, int agregar_derecha, int agregar_abajo,
+        const CasillaDelMapa& casilla_relleno);
     std::vector<uint32_t> exportar_tiles() const;
 };
 
