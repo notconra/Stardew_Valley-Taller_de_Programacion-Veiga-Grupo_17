@@ -33,11 +33,17 @@ constexpr size_t LARGO_MAXIMO_DE_MENSAJE_DE_CHAT = 240;
 
 // Cliente a servidor
 
-struct ActivarMultijugador {};
+struct ActivarMultijugador {
+    bool operator==(const ActivarMultijugador&) const = default;
+};
 
-struct SalirDePartida {};
+struct SalirDePartida {
+    bool operator==(const SalirDePartida&) const = default;
+};
 
-struct GuardarPartida {};
+struct GuardarPartida {
+    bool operator==(const GuardarPartida&) const = default;
+};
 
 // Hacia dónde quiere moverse el jugador, por eje: horizontal -1 (izquierda), 0 o 1 (derecha);
 // vertical -1 (arriba), 0 o 1 (abajo). Es un estado, NO es un paso, osea, el servidor lo sigue
@@ -53,6 +59,7 @@ struct Moverse {
 // Selecciona la ranura activa de la barra de herramientas (0-based, y el servidor valida el rango).
 struct SeleccionarRanuraDeLaBarra {
     uint8_t indice_ranura = 0;
+    bool operator==(const SeleccionarRanuraDeLaBarra&) const = default;
 };
 
 // Usa el ítem de la ranura activa (o de la indicada). El servidor interpreta según el tipo de
@@ -66,17 +73,21 @@ struct UsarItem {
     bool tiene_casilla_objetivo = false;
     uint32_t columna_objetivo = 0;
     uint32_t fila_objetivo = 0;
+    bool operator==(const UsarItem&) const = default;
 };
 
 // El jugador acostado o desmayado confirma que está listo para pasar al día siguiente. Cuando
 // todos los conectados lo dieron, empieza el día siguiente.
-struct DarElOk {};
+struct DarElOk {
+    bool operator==(const DarElOk&) const = default;
+};
 
 // Pregunta qué pasaría si se usara el ítem de la ranura activa sobre esa casilla, para que el
 // cliente sepa qué marcar en el piso. No cambia nada: la respuesta es CasillaConsultada.
 struct ConsultarCasilla {
     uint32_t columna = 0;
     uint32_t fila = 0;
+    bool operator==(const ConsultarCasilla&) const = default;
 };
 
 // Mueve ítems entre ranuras de la barra. Si el destino es el tacho, el ítem se elimina
@@ -85,6 +96,7 @@ struct MoverItemEntreRanuras {
     uint8_t origen = 0;
     uint8_t destino = 0;
     uint16_t cantidad = 0;  // 0 significa mover todo lo posible
+    bool operator==(const MoverItemEntreRanuras&) const = default;
 };
 
 // Mueve un stack entre la barra del jugador y el cofre que tiene abierto.
@@ -97,25 +109,32 @@ struct MoverItemConCofre {
     uint8_t destino = 0;
     uint16_t cantidad = 0;
     bool desde_el_cofre = false;
+    bool operator==(const MoverItemConCofre&) const = default;
 };
 
 // Pide cerrar el cofre que el jugador tiene abierto. Si no tiene ninguno, el servidor lo ignora.
-struct CerrarCofre {};
+struct CerrarCofre {
+    bool operator==(const CerrarCofre&) const = default;
+};
 
 // Solicita el inventario completo (respuesta será ActualizacionInventario).
-struct SolicitarInventario {};
+struct SolicitarInventario {
+    bool operator==(const SolicitarInventario&) const = default;
+};
 
 // Tira al piso parte de una ranura de la barra. El servidor decide dónde cae.
 // cantidad == 0 significa todo el stack.
 struct SoltarItem {
     uint8_t ranura = 0;
     uint16_t cantidad = 0;
+    bool operator==(const SoltarItem&) const = default;
 };
 
 // El texto que escribió el jugador, tal cual. El servidor valida el largo, los
 // espacios y el significado (global, privado o comando).
 struct EnviarMensajeDeChat {
     std::string texto;
+    bool operator==(const EnviarMensajeDeChat&) const = default;
 };
 
 // El servidor recuerda qué puesto tiene abierto cada jugador, así que los comandos de compra y
@@ -123,28 +142,34 @@ struct EnviarMensajeDeChat {
 struct ComprarEnMercado {
     uint16_t indice_item = 0;  // Índice dentro del catálogo del puesto
     uint16_t cantidad = 1;
+    bool operator==(const ComprarEnMercado&) const = default;
 };
 
 // Vender un ítem del inventario al puesto.
 struct VenderEnMercado {
     uint8_t ranura_inventario = 0;
     uint16_t cantidad = 0;  // 0 o cantidad completa según click izquierdo/derecho
+    bool operator==(const VenderEnMercado&) const = default;
 };
 
 // Comprar un animal (específico para Marnie, que no va al inventario).
 struct ComprarAnimalMercado {
     TipoAnimal tipo_animal = TipoAnimal::NINGUNO;
     uint16_t cantidad = 1;
+    bool operator==(const ComprarAnimalMercado&) const = default;
 };
 
 // Vender un animal (específico para Marnie, desde el panel de animales de la granja).
 struct VenderAnimalMercado {
     TipoAnimal tipo_animal = TipoAnimal::NINGUNO;
     uint16_t cantidad = 1;
+    bool operator==(const VenderAnimalMercado&) const = default;
 };
 
 // Cierra la ventana del mercado activa.
-struct CerrarMercado {};
+struct CerrarMercado {
+    bool operator==(const CerrarMercado&) const = default;
+};
 
 // Le regala a otro jugador de la partida (conectado o no) parte de una ranura de la barra.
 // cantidad == 0 regala el stack completo. Las herramientas no se pueden regalar. El regalo queda
@@ -153,21 +178,26 @@ struct EnviarRegalo {
     uint32_t id_destinatario = 0;
     uint8_t ranura = 0;
     uint16_t cantidad = 0;
+    bool operator==(const EnviarRegalo&) const = default;
 };
 
 // Pasa al inventario todos los regalos pendientes que entren. Los que no entran siguen pendientes.
-struct AbrirRegalos {};
+struct AbrirRegalos {
+    bool operator==(const AbrirRegalos&) const = default;
+};
 
 // Dona al lote lo que acepte del ítem de esa ranura del inventario (índice absoluto, como en el
 // cofre). Lo que se dona sale del inventario y queda en el centro.
 struct DonarAlLote {
     TipoLote lote = TipoLote::CULTIVOS;
     uint8_t indice_ranura = 0;
+    bool operator==(const DonarAlLote&) const = default;
 };
 
 // Dona las monedas que pide el lote (el de dinero). El cliente pide confirmación antes.
 struct DonarMonedasAlLote {
     TipoLote lote = TipoLote::DINERO;
+    bool operator==(const DonarMonedasAlLote&) const = default;
 };
 
 // La respuesta "Si" a la pregunta de dormir: acostarse en la cama de esa casilla (la misma que
@@ -175,22 +205,30 @@ struct DonarMonedasAlLote {
 struct Dormir {
     uint32_t columna = 0;
     uint32_t fila = 0;
+    bool operator==(const Dormir&) const = default;
 };
 
 // Levantarse de la cama antes de que pase el día (lo mismo que moverse estando acostado).
-struct Levantarse {};
+struct Levantarse {
+    bool operator==(const Levantarse&) const = default;
+};
 
 // Servidor a cliente
 
 struct MultijugadorActivado {
     std::string codigo_partida;
+    bool operator==(const MultijugadorActivado&) const = default;
 };
 
-struct PartidaAbandonada {};
+struct PartidaAbandonada {
+    bool operator==(const PartidaAbandonada&) const = default;
+};
 
 // La sesión se cerró sola por un error interno del juego, la partida sigue
 // existiendo y el jugador vuelve al lobby.
-struct PartidaCerradaPorError {};
+struct PartidaCerradaPorError {
+    bool operator==(const PartidaCerradaPorError&) const = default;
+};
 
 // Vida y energía máximas de un jugador. Única fuente de verdad compartida entre servidor
 // (Personaje::VIDA_MAXIMA / ENERGIA_MAXIMA las toman de acá) y cliente (para saber a qué escala
@@ -239,6 +277,7 @@ struct EstadoObjetoDelMundo {
     uint32_t columna = 0;
     uint32_t fila = 0;
     TipoObjeto tipo = TipoObjeto::NINGUNO;
+    bool operator==(const EstadoObjetoDelMundo&) const = default;
 };
 
 // Un ítem tirado en el piso de un mapa. "id" es único dentro de su mapa.
@@ -249,6 +288,7 @@ struct EstadoDrop {
     TipoItem tipo = TipoItem::NINGUNO;
     uint16_t cantidad = 0;
     Calidad calidad = Calidad::BASE;
+    bool operator==(const EstadoDrop&) const = default;
 };
 
 // vida le queda (0 si está muerto esperando revivir; el cliente simplemente no lo dibuja en ese
@@ -275,6 +315,7 @@ struct EstadoEnemigo {
     bool frenesi = false;
     // Vampiros: muerto, y ya cayó sangre sobre su cadáver: está por revivir.
     bool sangre = false;
+    bool operator==(const EstadoEnemigo&) const = default;
 };
 
 // Una llama que lanzó una Skull. Su centro viaja en centésimas de casilla (350 = casilla 3 y media)
@@ -296,6 +337,7 @@ struct EstadoTrampa {
     uint32_t columna = 0;
     uint32_t fila = 0;
     bool activa = false;
+    bool operator==(const EstadoTrampa&) const = default;
 };
 
 // Una casilla de tierra tratada con la pala, por columna y fila del mapa.
@@ -385,6 +427,7 @@ struct EstadoJuego {
     std::vector<EstadoNpc> npcs;
     // No viaja en ESTADO_JUEGO: llega con LlamasEnSector en cada tick que haya llamas volando.
     std::vector<EstadoLlama> llamas;
+    bool operator==(const EstadoJuego&) const = default;
 };
 
 // Posición y estado de todos los jugadores del sector del receptor. Se manda cada tick, pero solo
@@ -392,12 +435,14 @@ struct EstadoJuego {
 struct JugadoresEnSector {
     std::string mapa;
     std::vector<EstadoJugador> jugadores;
+    bool operator==(const JugadoresEnSector&) const = default;
 };
 
 // Posición y estado de todos los NPC del sector del receptor.
 struct NpcsEnSector {
     std::string mapa;
     std::vector<EstadoNpc> npcs;
+    bool operator==(const NpcsEnSector&) const = default;
 };
 
 // Todas las llamas que están volando en el sector del receptor. Se manda en cada tick en que cambia
@@ -405,6 +450,7 @@ struct NpcsEnSector {
 struct LlamasEnSector {
     std::string mapa;
     std::vector<EstadoLlama> llamas;
+    bool operator==(const LlamasEnSector&) const = default;
 };
 
 // Un objeto nuevo en el sector del receptor. Si el id ya existía, el cliente lo reemplaza.
@@ -413,16 +459,19 @@ struct ObjetoColocado {
     uint32_t columna = 0;
     uint32_t fila = 0;
     TipoObjeto tipo = TipoObjeto::NINGUNO;
+    bool operator==(const ObjetoColocado&) const = default;
 };
 
 // Un objeto que dejó de existir en el sector del receptor (se picó, se rompió, se retiró).
 struct ObjetoRetirado {
     uint32_t id = 0;
+    bool operator==(const ObjetoRetirado&) const = default;
 };
 
 // Un ítem que apareció en el piso del sector del receptor.
 struct DropAparecido {
     EstadoDrop drop;
+    bool operator==(const DropAparecido&) const = default;
 };
 
 // Un ítem que dejó de estar en el piso. id_jugador == 0 significa que lo perdió el mundo (por
@@ -430,6 +479,7 @@ struct DropAparecido {
 struct DropRetirado {
     uint32_t id = 0;
     uint32_t id_jugador = 0;
+    bool operator==(const DropRetirado&) const = default;
 };
 
 // Un enemigo del sector del receptor que cambió: lo golpearon, murió (vida en 0) o revivió. Si el
@@ -437,11 +487,13 @@ struct DropRetirado {
 // lo agrega; si ya existía, lo reemplaza entero.
 struct EnemigoActualizado {
     EstadoEnemigo enemigo;
+    bool operator==(const EnemigoActualizado&) const = default;
 };
 
 // Una trampa del sector del receptor que se activó o se desactivó.
 struct TrampaActualizada {
     EstadoTrampa trampa;
+    bool operator==(const TrampaActualizada&) const = default;
 };
 // Cómo está el jugador que lo recibe respecto del fin del día, y cuántos ya están listos. Se manda
 // a cada jugador cuando cambia algo (alguien se acuesta, se levanta, se desmaya o da el Ok).
@@ -473,6 +525,7 @@ struct CasillaConsultada {
     uint8_t ancho = 1;
     uint8_t alto = 1;
     MarcaDeCasilla marca = MarcaDeCasilla::NINGUNA;
+    bool operator==(const CasillaConsultada&) const = default;
 };
 
 // La hora del juego. El servidor la manda a todos cada 10 minutos de juego, cuando empieza un día
@@ -501,6 +554,7 @@ struct HoraDelJuego {
 struct TierraCambiada {
     CasillaTratada casilla;
     bool tratada = false;
+    bool operator==(const TierraCambiada&) const = default;
 };
 
 // La barra de un jugador. Las ranuras reales van de 0 a ranuras.size() - 1.
@@ -510,6 +564,7 @@ struct InventarioJugador {
     uint32_t id_jugador = 0;
     uint8_t ranura_activa = 0;
     std::vector<RanuraInventario> ranuras;
+    bool operator==(const InventarioJugador&) const = default;
 };
 
 // Cofre que un jugador tiene abierto. abierto == false significa que se cerró.
@@ -518,16 +573,19 @@ struct CofreJugador {
     uint32_t id_cofre = 0;
     bool abierto = false;
     std::vector<RanuraInventario> ranuras;
+    bool operator==(const CofreJugador&) const = default;
 };
 
 // Actualización de inventario dirigida a un cliente específico (se envía por su cola).
 struct ActualizacionInventario {
     InventarioJugador inventario;
+    bool operator==(const ActualizacionInventario&) const = default;
 };
 
 // Actualización del cofre abierto por un jugador. Si el cofre se cerró, abierto == false.
 struct ActualizacionCofre {
     CofreJugador cofre;
+    bool operator==(const ActualizacionCofre&) const = default;
 };
 
 // Un jugador de la partida, esté conectado o no, para elegir a quién regalarle.
@@ -542,6 +600,7 @@ struct JugadorDeLaPartida {
 // Todos los jugadores de la partida. Se manda a todos cuando alguien entra o se va.
 struct JugadoresDeLaPartida {
     std::vector<JugadorDeLaPartida> jugadores;
+    bool operator==(const JugadoresDeLaPartida&) const = default;
 };
 
 // Un regalo que todavía no se abrió: quién lo mandó y qué es.
@@ -555,6 +614,7 @@ struct RegaloRecibido {
 // Los regalos pendientes del jugador que lo recibe. Se manda al entrar y cada vez que cambian.
 struct RegalosPendientes {
     std::vector<RegaloRecibido> regalos;
+    bool operator==(const RegalosPendientes&) const = default;
 };
 
 // Canal de un mensaje que el servidor manda al cliente. "PRIVADO" avisa que el mensaje era para un
@@ -582,6 +642,7 @@ struct MensajeDeChat {
     static MensajeDeChat del_sistema(const std::string& texto) {
         return MensajeDeChat{CanalDeChat::SISTEMA, REMITENTE_DEL_SISTEMA, std::string(), texto};
     }
+    bool operator==(const MensajeDeChat&) const = default;
 };
 
 // Información detallada de cada ítem/animal en el catálogo del puesto de mercado.
@@ -597,6 +658,7 @@ struct ItemCatalogoInfo {
     bool es_animal() const {
         return tipo_animal != TipoAnimal::NINGUNO;
     }
+    bool operator==(const ItemCatalogoInfo&) const = default;
 };
 
 // Envía la ventana de mercado completa con el catálogo configurado del NPC correspondiente.
@@ -604,28 +666,34 @@ struct ItemCatalogoInfo {
 struct ActualizacionMercado {
     std::string id_npc;
     std::vector<ItemCatalogoInfo> catalogo;
+    bool operator==(const ActualizacionMercado&) const = default;
 };
 
 // Ordena al cliente cerrar la ventana de mercado.
-struct CerrarVentanaMercado {};
+struct CerrarVentanaMercado {
+    bool operator==(const CerrarVentanaMercado&) const = default;
+};
 
 // Cartel genérico para avisar algo al jugador (por ejemplo, que el mercado está cerrado). El
 // cliente lo muestra como un cuadro modal que se cierra con un clic y bloquea el juego mientras
 // esté visible.
 struct AvisoEnPantalla {
     std::string mensaje;
+    bool operator==(const AvisoEnPantalla&) const = default;
 };
 
 // El jugador hace clic derecho sobre un NPC para hablarle. El servidor decide el texto
 // y responde con DialogoNpc.
 struct HablarConNpc {
     std::string id_npc;
+    bool operator==(const HablarConNpc&) const = default;
 };
 
 // Lo que dice un NPC. El cliente lo muestra en un cuadro modal con el fondo dialogo_<id>.png.
 struct DialogoNpc {
     std::string id_npc;
     std::string texto;
+    bool operator==(const DialogoNpc&) const = default;
 };
 
 // Una parte de un lote del centro comunitario y cuánto se lleva aportado. Según "tipo", lo que
@@ -661,13 +729,16 @@ struct LoteDelCentro {
 // Se completaron los cinco lotes del centro comunitario. El cliente felicita al jugador con un
 // cartel y lo deja seguir jugando o volver al lobby. Cada jugador que estaba en la partida lo
 // recibe una vez.
-struct CentroTerminado {};
+struct CentroTerminado {
+    bool operator==(const CentroTerminado&) const = default;
+};
 
 // El jugador hizo clic en una cama libre que tiene al alcance: el cliente le pregunta si quiere
 // dormir. La casilla es la que clickeó, y vuelve en Dormir si dice que sí.
 struct PreguntaDeDormir {
     uint32_t columna = 0;
     uint32_t fila = 0;
+    bool operator==(const PreguntaDeDormir&) const = default;
 };
 
 #endif
