@@ -40,6 +40,7 @@ private:
     uint8_t propiedades_actuales;
     TipoEntidad entidad_a_colocar;
     TipoEstampa estampa_a_colocar;
+    Direccion orientacion_entidad_a_colocar;
 
     QPixmap pixmap_tileset;
     DefinicionTilesetTMX datos_tileset;

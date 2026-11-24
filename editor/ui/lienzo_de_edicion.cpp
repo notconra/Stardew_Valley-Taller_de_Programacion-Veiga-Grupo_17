@@ -55,6 +55,7 @@ LienzoDeEdicion::LienzoDeEdicion(QWidget* padre)
           PropiedadDeCasilla::ADMITE_HIERBA),
       entidad_a_colocar(TipoEntidad::CABANIA),
       estampa_a_colocar(TipoEstampa::ESTANQUE_NATURAL),
+      orientacion_entidad_a_colocar(Direccion::ABAJO),
       pixmap_tileset(QString::fromStdString(
           CatalogoDeTerrenos::obtener_tileset_sector(SectorActual::GRANJA).ruta_imagen)),
       datos_tileset(CatalogoDeTerrenos::obtener_tileset_sector(SectorActual::GRANJA)),
@@ -387,6 +388,111 @@ void LienzoDeEdicion::dibujar_entidad(
     QColor color_base =
         iterador_color != COLORES_ENTIDADES.end() ? iterador_color->second : QColor(100, 100, 100);
 
+    bool es_puesto_comerciante =
+        (tipo_entidad == TipoEntidad::PUESTO_MARNIE || tipo_entidad == TipoEntidad::PUESTO_CLINT ||
+         tipo_entidad == TipoEntidad::PUESTO_PIERRE || tipo_entidad == TipoEntidad::PUESTO_ROBIN);
+    if (es_puesto_comerciante) {
+        auto iterador_visual = mapa_visual_entidades.find(tipo_entidad);
+        if (iterador_visual != mapa_visual_entidades.end() &&
+            iterador_visual->second.pixmap != nullptr &&
+            !iterador_visual->second.pixmap->isNull()) {
+            pintor.drawPixmap(
+                rectangulo_entidad,
+                *iterador_visual->second.pixmap,
+                iterador_visual->second.rectangulo_origen);
+        } else {
+            QColor color_translucido = color_base;
+            color_translucido.setAlpha(ALFA_COLOR_TRANSLUCIDO_ENTIDAD);
+            pintor.fillRect(rectangulo_entidad, color_translucido);
+        }
+
+        pintor.setBrush(Qt::NoBrush);
+        if (es_seleccionada) {
+            pintor.setPen(QPen(QColor(255, 215, 0), GROSOR_BORDE_SELECCIONADO));
+        } else {
+            pintor.setPen(QPen(color_base, GROSOR_BORDE_NORMAL));
+        }
+        pintor.drawRect(rectangulo_entidad);
+
+        // Flecha indicadora de orientación
+        Direccion orientacion = entidad.obtener_orientacion();
+        QPolygon flecha;
+        int centro_x = rectangulo_entidad.center().x();
+        int centro_y = rectangulo_entidad.center().y();
+        int radio_flecha = tamano_casilla_px / 5;
+        if (radio_flecha < 4) {
+            radio_flecha = 4;
+        }
+        if (orientacion == Direccion::ABAJO) {
+            int y_borde = rectangulo_entidad.bottom() - 1;
+            flecha << QPoint(centro_x - radio_flecha, y_borde - radio_flecha)
+                   << QPoint(centro_x + radio_flecha, y_borde - radio_flecha)
+                   << QPoint(centro_x, y_borde);
+        } else if (orientacion == Direccion::ARRIBA) {
+            int y_borde = rectangulo_entidad.top() + 1;
+            flecha << QPoint(centro_x - radio_flecha, y_borde + radio_flecha)
+                   << QPoint(centro_x + radio_flecha, y_borde + radio_flecha)
+                   << QPoint(centro_x, y_borde);
+        } else if (orientacion == Direccion::DERECHA) {
+            int x_borde = rectangulo_entidad.right() - 1;
+            flecha << QPoint(x_borde - radio_flecha, centro_y - radio_flecha)
+                   << QPoint(x_borde - radio_flecha, centro_y + radio_flecha)
+                   << QPoint(x_borde, centro_y);
+        } else {
+            int x_borde = rectangulo_entidad.left() + 1;
+            flecha << QPoint(x_borde + radio_flecha, centro_y - radio_flecha)
+                   << QPoint(x_borde + radio_flecha, centro_y + radio_flecha)
+                   << QPoint(x_borde, centro_y);
+        }
+        pintor.setBrush(QColor(255, 255, 255, 230));
+        pintor.setPen(QPen(Qt::black, 1));
+        pintor.drawPolygon(flecha);
+        pintor.setBrush(Qt::NoBrush);
+
+        // Punto de Venta (una casilla adelante en la dirección de la mirada)
+        if (mapa_actual != nullptr) {
+            int columna_npc = 0;
+            int fila_npc = 0;
+            entidad.consultar_origen(columna_npc, fila_npc);
+            int columna_interaccion = 0;
+            int fila_interaccion = 0;
+            int columna_atencion = 0;
+            int fila_atencion = 0;
+            mapa_actual->calcular_interaccion_puesto(
+                columna_npc,
+                fila_npc,
+                orientacion,
+                columna_interaccion,
+                fila_interaccion,
+                columna_atencion,
+                fila_atencion);
+            QRect rectangulo_punto_venta(
+                columna_interaccion * tamano_casilla_px,
+                fila_interaccion * tamano_casilla_px,
+                tamano_casilla_px,
+                tamano_casilla_px);
+            QColor color_venta = es_seleccionada ? QColor(0, 255, 127) : QColor(0, 206, 209);
+            pintor.setBrush(Qt::NoBrush);
+            pintor.setPen(QPen(color_venta, 2, Qt::DashLine));
+            pintor.drawRect(rectangulo_punto_venta);
+
+            int alto_insignia = tamano_casilla_px > 24 ? 12 : 9;
+            QRect rectangulo_insignia(
+                rectangulo_punto_venta.x(),
+                rectangulo_punto_venta.bottom() - alto_insignia + 1,
+                rectangulo_punto_venta.width(),
+                alto_insignia);
+            pintor.fillRect(rectangulo_insignia, QColor(0, 0, 0, 180));
+            pintor.setPen(color_venta);
+            QFont fuente_venta = pintor.font();
+            fuente_venta.setBold(true);
+            fuente_venta.setPointSize(tamano_casilla_px > 24 ? 6 : 5);
+            pintor.setFont(fuente_venta);
+            pintor.drawText(rectangulo_insignia, Qt::AlignCenter, "Venta");
+        }
+        return;
+    }
+
     QColor color_fondo = color_base;
     color_fondo.setAlpha(ALFA_COLOR_FONDO_ENTIDAD);
     pintor.fillRect(rectangulo_entidad, color_fondo);
@@ -394,28 +500,10 @@ void LienzoDeEdicion::dibujar_entidad(
     auto iterador_visual = mapa_visual_entidades.find(tipo_entidad);
     if (iterador_visual != mapa_visual_entidades.end() &&
         iterador_visual->second.pixmap != nullptr && !iterador_visual->second.pixmap->isNull()) {
-        bool es_puesto_comerciante =
-            (tipo_entidad == TipoEntidad::PUESTO_MARNIE ||
-             tipo_entidad == TipoEntidad::PUESTO_CLINT ||
-             tipo_entidad == TipoEntidad::PUESTO_PIERRE ||
-             tipo_entidad == TipoEntidad::PUESTO_ROBIN);
-        if (es_puesto_comerciante) {
-            int dimension_lado = std::min(rectangulo_entidad.width(), rectangulo_entidad.height());
-            QRect rectangulo_retrato(
-                rectangulo_entidad.x() + (rectangulo_entidad.width() - dimension_lado) / 2,
-                rectangulo_entidad.y() + (rectangulo_entidad.height() - dimension_lado) / 2,
-                dimension_lado,
-                dimension_lado);
-            pintor.drawPixmap(
-                rectangulo_retrato,
-                *iterador_visual->second.pixmap,
-                iterador_visual->second.rectangulo_origen);
-        } else {
-            pintor.drawPixmap(
-                rectangulo_entidad,
-                *iterador_visual->second.pixmap,
-                iterador_visual->second.rectangulo_origen);
-        }
+        pintor.drawPixmap(
+            rectangulo_entidad,
+            *iterador_visual->second.pixmap,
+            iterador_visual->second.rectangulo_origen);
     } else {
         QColor color_translucido = color_base;
         color_translucido.setAlpha(ALFA_COLOR_TRANSLUCIDO_ENTIDAD);
@@ -457,43 +545,7 @@ void LienzoDeEdicion::dibujar_entidad(
         pintor.drawRect(rectangulo_puerta);
     }
 
-    bool es_puesto_comerciante =
-        (tipo_entidad == TipoEntidad::PUESTO_MARNIE || tipo_entidad == TipoEntidad::PUESTO_CLINT ||
-         tipo_entidad == TipoEntidad::PUESTO_PIERRE || tipo_entidad == TipoEntidad::PUESTO_ROBIN);
-    if (es_puesto_comerciante) {
-        int columna_atencion = 0;
-        int fila_atencion = 0;
-        bool tiene_atencion = false;
-        entidad.consultar_punto_de_atencion(columna_atencion, fila_atencion, tiene_atencion);
-        if (tiene_atencion) {
-            QRect rectangulo_atencion(
-                columna_atencion * tamano_casilla_px,
-                fila_atencion * tamano_casilla_px,
-                tamano_casilla_px,
-                tamano_casilla_px);
-            pintor.setPen(QPen(QColor(255, 215, 0), GROSOR_BORDE_PUERTA, Qt::DashLine));
-            pintor.drawRect(rectangulo_atencion);
-            pintor.fillRect(rectangulo_atencion, QColor(255, 215, 0, 45));
-
-            int alto_etiqueta_atencion = tamano_casilla_px > 24 ? 12 : 10;
-            QRect rectangulo_etiqueta_atencion(
-                rectangulo_atencion.x(),
-                rectangulo_atencion.bottom() - alto_etiqueta_atencion,
-                rectangulo_atencion.width(),
-                alto_etiqueta_atencion);
-            pintor.fillRect(rectangulo_etiqueta_atencion, QColor(0, 0, 0, 180));
-            pintor.setPen(QColor(255, 215, 0));
-            QFont fuente_atencion = pintor.font();
-            fuente_atencion.setPointSize(tamano_casilla_px > 24 ? 7 : 6);
-            fuente_atencion.setBold(true);
-            pintor.setFont(fuente_atencion);
-            pintor.drawText(
-                rectangulo_etiqueta_atencion,
-                Qt::AlignCenter,
-                QString::fromUtf8("Atención"));
-        }
-    }
-
+    pintor.setBrush(Qt::NoBrush);
     if (es_seleccionada) {
         pintor.setPen(QPen(QColor(255, 215, 0), GROSOR_BORDE_SELECCIONADO));
     } else {
@@ -681,6 +733,11 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
         }
     } else if (
         modo_actual == ModoEditor::COLOCAR_ENTIDAD && columna_hover >= 0 && fila_hover >= 0) {
+        bool es_puesto_comerciante =
+            (entidad_a_colocar == TipoEntidad::PUESTO_MARNIE ||
+             entidad_a_colocar == TipoEntidad::PUESTO_CLINT ||
+             entidad_a_colocar == TipoEntidad::PUESTO_PIERRE ||
+             entidad_a_colocar == TipoEntidad::PUESTO_ROBIN);
         int ancho_defecto = 1;
         int alto_defecto = 1;
         ConfiguracionEntidadesEditor::consultar_dimensiones_por_defecto(
@@ -699,11 +756,88 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
             fila_hover * tamano_casilla_px,
             ancho_defecto * tamano_casilla_px,
             alto_defecto * tamano_casilla_px);
-        QColor color_fantasma = ubicable ? QColor(0, 255, 0, ALFA_COLOR_FANTASMA)
-                                         : QColor(255, 0, 0, ALFA_COLOR_FANTASMA);
-        pintor.fillRect(rectangulo_fantasma, color_fantasma);
-        pintor.setPen(QPen(ubicable ? QColor(0, 255, 0) : QColor(255, 0, 0), GROSOR_BORDE_NORMAL));
-        pintor.drawRect(rectangulo_fantasma);
+        if (es_puesto_comerciante) {
+            auto iterador_visual = mapa_visual_entidades.find(entidad_a_colocar);
+            if (iterador_visual != mapa_visual_entidades.end() &&
+                iterador_visual->second.pixmap != nullptr &&
+                !iterador_visual->second.pixmap->isNull()) {
+                pintor.save();
+                pintor.setOpacity(ubicable ? 0.65 : 0.40);
+                pintor.drawPixmap(
+                    rectangulo_fantasma,
+                    *iterador_visual->second.pixmap,
+                    iterador_visual->second.rectangulo_origen);
+                pintor.restore();
+            }
+            pintor.setBrush(Qt::NoBrush);
+            pintor.setPen(
+                QPen(ubicable ? QColor(0, 255, 0) : QColor(255, 0, 0), GROSOR_BORDE_NORMAL));
+            pintor.drawRect(rectangulo_fantasma);
+
+            QPolygon flecha;
+            int centro_x = rectangulo_fantasma.center().x();
+            int centro_y = rectangulo_fantasma.center().y();
+            int radio_flecha = tamano_casilla_px / 5;
+            if (radio_flecha < 4) {
+                radio_flecha = 4;
+            }
+            if (orientacion_entidad_a_colocar == Direccion::ABAJO) {
+                int y_borde = rectangulo_fantasma.bottom() - 1;
+                flecha << QPoint(centro_x - radio_flecha, y_borde - radio_flecha)
+                       << QPoint(centro_x + radio_flecha, y_borde - radio_flecha)
+                       << QPoint(centro_x, y_borde);
+            } else if (orientacion_entidad_a_colocar == Direccion::ARRIBA) {
+                int y_borde = rectangulo_fantasma.top() + 1;
+                flecha << QPoint(centro_x - radio_flecha, y_borde + radio_flecha)
+                       << QPoint(centro_x + radio_flecha, y_borde + radio_flecha)
+                       << QPoint(centro_x, y_borde);
+            } else if (orientacion_entidad_a_colocar == Direccion::DERECHA) {
+                int x_borde = rectangulo_fantasma.right() - 1;
+                flecha << QPoint(x_borde - radio_flecha, centro_y - radio_flecha)
+                       << QPoint(x_borde - radio_flecha, centro_y + radio_flecha)
+                       << QPoint(x_borde, centro_y);
+            } else {
+                int x_borde = rectangulo_fantasma.left() + 1;
+                flecha << QPoint(x_borde + radio_flecha, centro_y - radio_flecha)
+                       << QPoint(x_borde + radio_flecha, centro_y + radio_flecha)
+                       << QPoint(x_borde, centro_y);
+            }
+            pintor.setBrush(QColor(255, 255, 255, 230));
+            pintor.setPen(QPen(Qt::black, 1));
+            pintor.drawPolygon(flecha);
+            pintor.setBrush(Qt::NoBrush);
+
+            int columna_inter = 0;
+            int fila_inter = 0;
+            int columna_aten = 0;
+            int fila_aten = 0;
+            mapa_actual->calcular_interaccion_puesto(
+                columna_hover,
+                fila_hover,
+                orientacion_entidad_a_colocar,
+                columna_inter,
+                fila_inter,
+                columna_aten,
+                fila_aten);
+            QRect rectangulo_venta_fantasma(
+                columna_inter * tamano_casilla_px,
+                fila_inter * tamano_casilla_px,
+                tamano_casilla_px,
+                tamano_casilla_px);
+            pintor.setBrush(Qt::NoBrush);
+            pintor.setPen(QPen(
+                ubicable ? QColor(0, 255, 127) : QColor(255, 0, 0),
+                GROSOR_BORDE_NORMAL,
+                Qt::DashLine));
+            pintor.drawRect(rectangulo_venta_fantasma);
+        } else {
+            QColor color_fantasma = ubicable ? QColor(0, 255, 0, ALFA_COLOR_FANTASMA)
+                                             : QColor(255, 0, 0, ALFA_COLOR_FANTASMA);
+            pintor.fillRect(rectangulo_fantasma, color_fantasma);
+            pintor.setPen(
+                QPen(ubicable ? QColor(0, 255, 0) : QColor(255, 0, 0), GROSOR_BORDE_NORMAL));
+            pintor.drawRect(rectangulo_fantasma);
+        }
     } else if (
         modo_actual == ModoEditor::SELECCIONAR_MOVER && arrastrando_entidad &&
         identificador_entidad_seleccionada >= 0) {
@@ -715,6 +849,9 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
             int alto_ent = 0;
             entidad_ptr->consultar_dimensiones(ancho_ent, alto_ent);
             TipoEntidad tipo_ent = entidad_ptr->obtener_tipo();
+            bool es_puesto_comerciante =
+                (tipo_ent == TipoEntidad::PUESTO_MARNIE || tipo_ent == TipoEntidad::PUESTO_CLINT ||
+                 tipo_ent == TipoEntidad::PUESTO_PIERRE || tipo_ent == TipoEntidad::PUESTO_ROBIN);
             bool ubicable = mapa_actual->entidad_puede_ubicarse_en(
                 tipo_ent,
                 columna_arrastre_actual,
@@ -722,17 +859,108 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
                 ancho_ent,
                 alto_ent,
                 id_seleccionada);
+            if (!ubicable && es_puesto_comerciante) {
+                EntidadDelMapa* otro = mapa_actual->buscar_entidad_en_casilla(
+                    columna_arrastre_actual,
+                    fila_arrastre_actual);
+                if (otro != nullptr && otro->obtener_identificador() != id_seleccionada) {
+                    TipoEntidad tipo_otro = otro->obtener_tipo();
+                    if (tipo_otro == TipoEntidad::PUESTO_MARNIE ||
+                        tipo_otro == TipoEntidad::PUESTO_CLINT ||
+                        tipo_otro == TipoEntidad::PUESTO_PIERRE ||
+                        tipo_otro == TipoEntidad::PUESTO_ROBIN) {
+                        ubicable = true;
+                    }
+                }
+            }
             QRect rectangulo_arrastre(
                 columna_arrastre_actual * tamano_casilla_px,
                 fila_arrastre_actual * tamano_casilla_px,
                 ancho_ent * tamano_casilla_px,
                 alto_ent * tamano_casilla_px);
-            QColor color_arrastre = ubicable ? QColor(0, 255, 0, ALFA_COLOR_ARRASTRE)
-                                             : QColor(255, 0, 0, ALFA_COLOR_ARRASTRE);
-            pintor.fillRect(rectangulo_arrastre, color_arrastre);
-            pintor.setPen(
-                QPen(ubicable ? QColor(0, 255, 0) : QColor(255, 0, 0), GROSOR_BORDE_NORMAL));
-            pintor.drawRect(rectangulo_arrastre);
+            if (es_puesto_comerciante) {
+                auto iterador_visual = mapa_visual_entidades.find(tipo_ent);
+                if (iterador_visual != mapa_visual_entidades.end() &&
+                    iterador_visual->second.pixmap != nullptr &&
+                    !iterador_visual->second.pixmap->isNull()) {
+                    pintor.save();
+                    pintor.setOpacity(ubicable ? 0.65 : 0.40);
+                    pintor.drawPixmap(
+                        rectangulo_arrastre,
+                        *iterador_visual->second.pixmap,
+                        iterador_visual->second.rectangulo_origen);
+                    pintor.restore();
+                }
+                pintor.setBrush(Qt::NoBrush);
+                pintor.setPen(
+                    QPen(ubicable ? QColor(0, 255, 0) : QColor(255, 0, 0), GROSOR_BORDE_NORMAL));
+                pintor.drawRect(rectangulo_arrastre);
+
+                Direccion orientacion = entidad_ptr->obtener_orientacion();
+                QPolygon flecha;
+                int centro_x = rectangulo_arrastre.center().x();
+                int centro_y = rectangulo_arrastre.center().y();
+                int radio_flecha = tamano_casilla_px / 5;
+                if (radio_flecha < 4) {
+                    radio_flecha = 4;
+                }
+                if (orientacion == Direccion::ABAJO) {
+                    int y_borde = rectangulo_arrastre.bottom() - 1;
+                    flecha << QPoint(centro_x - radio_flecha, y_borde - radio_flecha)
+                           << QPoint(centro_x + radio_flecha, y_borde - radio_flecha)
+                           << QPoint(centro_x, y_borde);
+                } else if (orientacion == Direccion::ARRIBA) {
+                    int y_borde = rectangulo_arrastre.top() + 1;
+                    flecha << QPoint(centro_x - radio_flecha, y_borde + radio_flecha)
+                           << QPoint(centro_x + radio_flecha, y_borde + radio_flecha)
+                           << QPoint(centro_x, y_borde);
+                } else if (orientacion == Direccion::DERECHA) {
+                    int x_borde = rectangulo_arrastre.right() - 1;
+                    flecha << QPoint(x_borde - radio_flecha, centro_y - radio_flecha)
+                           << QPoint(x_borde - radio_flecha, centro_y + radio_flecha)
+                           << QPoint(x_borde, centro_y);
+                } else {
+                    int x_borde = rectangulo_arrastre.left() + 1;
+                    flecha << QPoint(x_borde + radio_flecha, centro_y - radio_flecha)
+                           << QPoint(x_borde + radio_flecha, centro_y + radio_flecha)
+                           << QPoint(x_borde, centro_y);
+                }
+                pintor.setBrush(QColor(255, 255, 255, 230));
+                pintor.setPen(QPen(Qt::black, 1));
+                pintor.drawPolygon(flecha);
+                pintor.setBrush(Qt::NoBrush);
+
+                int columna_inter = 0;
+                int fila_inter = 0;
+                int columna_aten = 0;
+                int fila_aten = 0;
+                mapa_actual->calcular_interaccion_puesto(
+                    columna_arrastre_actual,
+                    fila_arrastre_actual,
+                    orientacion,
+                    columna_inter,
+                    fila_inter,
+                    columna_aten,
+                    fila_aten);
+                QRect rectangulo_venta_arrastre(
+                    columna_inter * tamano_casilla_px,
+                    fila_inter * tamano_casilla_px,
+                    tamano_casilla_px,
+                    tamano_casilla_px);
+                pintor.setBrush(Qt::NoBrush);
+                pintor.setPen(QPen(
+                    ubicable ? QColor(0, 255, 127) : QColor(255, 0, 0),
+                    GROSOR_BORDE_NORMAL,
+                    Qt::DashLine));
+                pintor.drawRect(rectangulo_venta_arrastre);
+            } else {
+                QColor color_arrastre = ubicable ? QColor(0, 255, 0, ALFA_COLOR_ARRASTRE)
+                                                 : QColor(255, 0, 0, ALFA_COLOR_ARRASTRE);
+                pintor.fillRect(rectangulo_arrastre, color_arrastre);
+                pintor.setPen(
+                    QPen(ubicable ? QColor(0, 255, 0) : QColor(255, 0, 0), GROSOR_BORDE_NORMAL));
+                pintor.drawRect(rectangulo_arrastre);
+            }
         }
     }
 }
@@ -780,7 +1008,8 @@ void LienzoDeEdicion::mousePressEvent(QMouseEvent* evento) {
                     columna,
                     fila,
                     ancho_defecto,
-                    alto_defecto);
+                    alto_defecto,
+                    orientacion_entidad_a_colocar);
                 identificador_entidad_seleccionada = static_cast<int>(nuevo_id);
                 emit entidad_seleccionada_cambio(identificador_entidad_seleccionada);
                 emit mapa_modificado();
@@ -941,6 +1170,59 @@ void LienzoDeEdicion::rotar_elemento_actual() {
             establecer_tile(nuevo_id, propiedades_actuales);
             emit tile_rotado(nuevo_id);
             update();
+        }
+    } else if (modo_actual == ModoEditor::COLOCAR_ENTIDAD) {
+        bool es_puesto_comerciante =
+            (entidad_a_colocar == TipoEntidad::PUESTO_MARNIE ||
+             entidad_a_colocar == TipoEntidad::PUESTO_CLINT ||
+             entidad_a_colocar == TipoEntidad::PUESTO_PIERRE ||
+             entidad_a_colocar == TipoEntidad::PUESTO_ROBIN);
+        if (es_puesto_comerciante) {
+            if (orientacion_entidad_a_colocar == Direccion::ABAJO) {
+                orientacion_entidad_a_colocar = Direccion::DERECHA;
+            } else if (orientacion_entidad_a_colocar == Direccion::DERECHA) {
+                orientacion_entidad_a_colocar = Direccion::ARRIBA;
+            } else if (orientacion_entidad_a_colocar == Direccion::ARRIBA) {
+                orientacion_entidad_a_colocar = Direccion::IZQUIERDA;
+            } else {
+                orientacion_entidad_a_colocar = Direccion::ABAJO;
+            }
+            update();
+        }
+    } else if (
+        modo_actual == ModoEditor::SELECCIONAR_MOVER && identificador_entidad_seleccionada >= 0 &&
+        mapa_actual != nullptr) {
+        uint32_t id_seleccionada = static_cast<uint32_t>(identificador_entidad_seleccionada);
+        EntidadDelMapa* seleccionada =
+            mapa_actual->buscar_entidad_por_identificador(id_seleccionada);
+        if (seleccionada != nullptr) {
+            TipoEntidad tipo_entidad = seleccionada->obtener_tipo();
+            bool es_puesto_comerciante =
+                (tipo_entidad == TipoEntidad::PUESTO_MARNIE ||
+                 tipo_entidad == TipoEntidad::PUESTO_CLINT ||
+                 tipo_entidad == TipoEntidad::PUESTO_PIERRE ||
+                 tipo_entidad == TipoEntidad::PUESTO_ROBIN);
+            if (es_puesto_comerciante) {
+                seleccionada->rotar_orientacion();
+                int origen_columna = 0;
+                int origen_fila = 0;
+                seleccionada->consultar_origen(origen_columna, origen_fila);
+                int columna_interaccion = 0;
+                int fila_interaccion = 0;
+                int columna_atencion = 0;
+                int fila_atencion = 0;
+                mapa_actual->calcular_interaccion_puesto(
+                    origen_columna,
+                    origen_fila,
+                    seleccionada->obtener_orientacion(),
+                    columna_interaccion,
+                    fila_interaccion,
+                    columna_atencion,
+                    fila_atencion);
+                seleccionada->configurar_punto_de_atencion(columna_atencion, fila_atencion);
+                emit mapa_modificado();
+                update();
+            }
         }
     }
 }
