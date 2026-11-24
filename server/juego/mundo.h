@@ -16,11 +16,14 @@
 #include "controladores/controlador_de_enemigos.h"
 #include "controladores/controlador_de_jugador.h"
 #include "controladores/controlador_de_mazmorra.h"
+#include "controladores/controlador_de_mercado.h"
 #include "controladores/controlador_de_regalos.h"
 #include "controladores/controlador_de_trampas.h"
+#include "controladores/controlador_del_centro.h"
 #include "jugadores/personaje.h"
 #include "mapa/mapa.h"
 #include "notificador.h"
+#include "npcs/gestor_de_npcs.h"
 #include "recursos/recursos_de_juego.h"
 #include "sector/gestor_de_sectores.h"
 
@@ -35,19 +38,26 @@ private:
     std::map<uint32_t, Personaje> personajes;
     std::map<uint32_t, DatosJugadorGuardado> datos_jugadores;
     GestorDeSectores sectores;
+    GestorDeNpcs gestor_de_npcs;
 
     ControladorDeJugador controlador_de_jugador;
+    ControladorDelDia controlador_del_dia;
+    ControladorDelCentro controlador_del_centro;
+    ControladorDeMercado controlador_de_mercado;
     ControladorDeAcciones controlador_de_acciones;
     ControladorDeCofres controlador_de_cofres;
     ControladorDeDrops controlador_de_drops;
     ControladorDeMazmorra controlador_de_mazmorra;
     ControladorDeEnemigos controlador_de_enemigos;
     ControladorDeTrampas controlador_de_trampas;
-    ControladorDelDia controlador_del_dia;
     ControladorDeCultivos controlador_de_cultivos;
     ControladorDeRegalos controlador_de_regalos;
 
     void resolver_transicion(Personaje& personaje, const Transicion& transicion);
+
+    // Responde el diálogo del NPC si el jugador está cerca. El texto lo elige el servidor según
+    // el día y la hora.
+    void hablar_con_npc(Personaje& personaje, const HablarConNpc& pedido);
 
     // Si la transición se usa con clic derecho en vez de activarse al pisarla: las que tienen un
     // destino de destinos_con_clic (la puerta de la casa, la escalera para bajar de nivel). El
@@ -107,6 +117,7 @@ public:
     std::vector<DatosAnimalGuardado> obtener_animales_guardados() const;
     std::vector<uint32_t> obtener_ids_vacas_listas_para_ordeniar() const;
     std::vector<DatosCultivoGuardado> obtener_cultivos_guardados() const;
+    DatosCentroGuardado obtener_centro_guardado() const;
     uint32_t obtener_dia() const;
 
     void cambiar_estacion(Estacion estacion);
@@ -117,6 +128,10 @@ public:
     // que guardar la partida; devuelve true una sola vez por día.
     bool tomar_dia_terminado();
 
+    // Si se completó el centro comunitario desde la última vez que se preguntó. También hay que
+    // guardar la partida; devuelve true una sola vez.
+    bool tomar_centro_terminado();
+
     // Comandos de prueba y cheats de animales / tiempo
     bool agregar_vaca_en_granja_cerca(uint32_t id_jugador);
     bool agregar_gallina_en_granja_cerca(uint32_t id_jugador);
@@ -124,6 +139,13 @@ public:
     void avanzar_dia();
     void avanzar_minutos(uint32_t minutos);
     HoraDelJuego hora_actual() const;
+
+    // Centro comunitario. Donan desde el inventario o la billetera de un jugador conectado.
+    // Cheats: completa el lote con esa clave (false si no existe o ya estaba completo) o todos.
+    bool completar_lote_del_centro(const std::string& clave);
+    void completar_todos_los_lotes_del_centro();
+
+    const CentroComunitario& centro_comunitario() const;
 
     Mundo(const Mundo&) = delete;
     Mundo& operator=(const Mundo&) = delete;

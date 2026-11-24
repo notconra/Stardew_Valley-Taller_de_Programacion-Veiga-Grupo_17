@@ -4,6 +4,7 @@
 #include <climits>
 #include <cstddef>
 #include <cstdint>
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -24,6 +25,7 @@ ConfiguracionServidor::ConfiguracionServidor(const std::string& ruta) {
     cargar_mapas(archivo_toml);
     cargar_juego(archivo_toml);
     cargar_mazmorra(archivo_toml);
+    cargar_mercado(archivo_toml);
 }
 
 bool ConfiguracionServidor::existe_mapa(const std::string& id) const {
@@ -410,7 +412,12 @@ void ConfiguracionServidor::cargar_dia(const toml::table& tabla) {
         MAXIMO_DIAS_POR_ESTACION);
 
     dia.probabilidad_de_lluvia = lector_toml::leer_decimal_opcional(
-        tabla, "probabilidad_de_lluvia", seccion, dia.probabilidad_de_lluvia, 0.0, 1.0);
+        tabla,
+        "probabilidad_de_lluvia",
+        seccion,
+        dia.probabilidad_de_lluvia,
+        0.0,
+        1.0);
 }
 
 void ConfiguracionServidor::cargar_mazmorra(const toml::table& archivo_toml) {
@@ -663,6 +670,99 @@ void ConfiguracionServidor::cargar_minerales(const toml::array& lista) {
     }
 }
 
+void ConfiguracionServidor::cargar_mercado(const toml::table& archivo_toml) {
+    const toml::table& tabla = lector_toml::exigir_tabla(archivo_toml, "mercado");
+
+    datos_configuracion.mercado.mapa = lector_toml::leer_texto(tabla, "mapa", "mercado");
+    if (!existe_mapa(datos_configuracion.mercado.mapa)) {
+        throw std::runtime_error(
+            "configuración: el mapa '" + datos_configuracion.mercado.mapa +
+            "' de [mercado] no está definido en [[mapas]]");
+    }
+
+    cargar_precios_de_compra(tabla);
+    cargar_precios_de_venta(tabla);
+
+    const toml::table& animales = lector_toml::exigir_tabla(tabla, "animales");
+    cargar_animal_de_mercado(animales, "vaca", datos_configuracion.mercado.vaca);
+    cargar_animal_de_mercado(animales, "gallina", datos_configuracion.mercado.gallina);
+}
+
+// Si se suma un ítem a un puesto del mercado, hay que sumarlo también acá y en el .toml.
+void ConfiguracionServidor::cargar_precios_de_compra(const toml::table& tabla_mercado) {
+    const std::string seccion = "mercado.precios_de_compra";
+    const toml::table& tabla = lector_toml::exigir_tabla(tabla_mercado, "precios_de_compra");
+    std::map<TipoItem, uint32_t>& precios = datos_configuracion.mercado.precios_de_compra;
+
+    const auto leer = [&](const char* clave, TipoItem tipo) {
+        precios[tipo] = lector_toml::leer_entero_en_rango(tabla, clave, seccion, 1, INT_MAX);
+    };
+    // Semillas (Pierre).
+    leer("SEMILLA_PAPA", TipoItem::SEMILLA_PAPA);
+    leer("SEMILLA_FRUTILLA", TipoItem::SEMILLA_FRUTILLA);
+    leer("SEMILLA_CEBOLLA_DE_VERDEO", TipoItem::SEMILLA_CEBOLLA_DE_VERDEO);
+    leer("SEMILLA_CALABAZA", TipoItem::SEMILLA_CALABAZA);
+
+    // Muebles (Robin).
+    leer("COFRE", TipoItem::COFRE);
+}
+
+void ConfiguracionServidor::cargar_precios_de_venta(const toml::table& tabla_mercado) {
+    const std::string seccion = "mercado.precios_de_venta";
+    const toml::table& tabla = lector_toml::exigir_tabla(tabla_mercado, "precios_de_venta");
+    std::map<TipoItem, uint32_t>& precios = datos_configuracion.mercado.precios_de_venta;
+
+    const auto leer = [&](const char* clave, TipoItem tipo) {
+        precios[tipo] = lector_toml::leer_entero_en_rango(tabla, clave, seccion, 1, INT_MAX);
+    };
+
+    // Minerales (Clint).
+    leer("CARBON", TipoItem::CARBON);
+    leer("LAPISLAZULI", TipoItem::LAPISLAZULI);
+    leer("PLATA", TipoItem::PLATA);
+    leer("ORO", TipoItem::ORO);
+
+    // Cultivos y productos animales (Pierre).
+    leer("PAPA", TipoItem::PAPA);
+    leer("FRUTILLA", TipoItem::FRUTILLA);
+    leer("CEBOLLA_DE_VERDEO", TipoItem::CEBOLLA_DE_VERDEO);
+    leer("CALABAZA", TipoItem::CALABAZA);
+    leer("LECHE", TipoItem::LECHE);
+    leer("HUEVO", TipoItem::HUEVO);
+}
+
+void ConfiguracionServidor::cargar_animal_de_mercado(
+    const toml::table& animales, const std::string& clave, ConfiguracionAnimalServidor& animal) {
+    const std::string seccion = "mercado.animales." + clave;
+    const toml::table& tabla = lector_toml::exigir_tabla(animales, clave);
+
+    animal.precio_de_compra =
+        lector_toml::leer_entero_en_rango(tabla, "precio_de_compra", seccion, 1, INT_MAX);
+    animal.precio_de_venta =
+        lector_toml::leer_entero_en_rango(tabla, "precio_de_venta", seccion, 1, INT_MAX);
+    animal.tope_por_granja = static_cast<uint16_t>(
+        lector_toml::leer_entero_en_rango(tabla, "tope_por_granja", seccion, 1, UINT16_MAX));
+}
+
+void ConfiguracionServidor::cargar_enemigo(
+    const toml::table& tabla, const std::string& seccion, ConfiguracionEnemigoServidor& enemigo) {
+    const auto leer = [&](const char* clave, int& valor, int minimo) {
+        valor = lector_toml::leer_entero_opcional(tabla, clave, seccion, valor, minimo, INT_MAX);
+    };
+    leer("vida", enemigo.vida, 1);
+    leer("danio", enemigo.danio, 0);
+    leer("ticks_entre_ataques", enemigo.ticks_entre_ataques, 1);
+    leer("ticks_para_revivir", enemigo.ticks_para_revivir, 0);
+    leer("ticks_por_casilla", enemigo.ticks_por_casilla, 0);
+    leer("radio_de_vision", enemigo.radio_de_vision, 0);
+    leer("radio_de_deambulo", enemigo.radio_de_deambulo, 0);
+    leer("oro_minimo", enemigo.oro_minimo, 0);
+    leer("oro_maximo", enemigo.oro_maximo, 0);
+    if (enemigo.oro_minimo > enemigo.oro_maximo) {
+        throw std::runtime_error("configuración: [" + seccion + "] tiene oro_minimo > oro_maximo");
+    }
+}
+
 const ConfiguracionRedServidor& ConfiguracionServidor::red() const {
     return datos_configuracion.red;
 }
@@ -687,21 +787,6 @@ const ConfiguracionMazmorraServidor& ConfiguracionServidor::mazmorra() const {
     return datos_configuracion.mazmorra;
 }
 
-void ConfiguracionServidor::cargar_enemigo(
-    const toml::table& tabla, const std::string& seccion, ConfiguracionEnemigoServidor& enemigo) {
-    const auto leer = [&](const char* clave, int& valor, int minimo) {
-        valor = lector_toml::leer_entero_opcional(tabla, clave, seccion, valor, minimo, INT_MAX);
-    };
-    leer("vida", enemigo.vida, 1);
-    leer("danio", enemigo.danio, 0);
-    leer("ticks_entre_ataques", enemigo.ticks_entre_ataques, 1);
-    leer("ticks_para_revivir", enemigo.ticks_para_revivir, 0);
-    leer("ticks_por_casilla", enemigo.ticks_por_casilla, 0);
-    leer("radio_de_vision", enemigo.radio_de_vision, 0);
-    leer("radio_de_deambulo", enemigo.radio_de_deambulo, 0);
-    leer("oro_minimo", enemigo.oro_minimo, 0);
-    leer("oro_maximo", enemigo.oro_maximo, 0);
-    if (enemigo.oro_minimo > enemigo.oro_maximo) {
-        throw std::runtime_error("configuración: [" + seccion + "] tiene oro_minimo > oro_maximo");
-    }
+const ConfiguracionMercadoServidor& ConfiguracionServidor::mercado() const {
+    return datos_configuracion.mercado;
 }

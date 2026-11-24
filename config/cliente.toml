@@ -8,7 +8,9 @@
 mapa_inicial = "FarmHouse2"
 
 [servidor]
-# para tailscale: host = "100.117.194.20"
+# para tailscale (bren): host = "100.117.194.20"
+# para tailscale (conra): host = "100.126.247.61"
+# local: host = "127.0.0.1"
 host = "127.0.0.1"
 puerto = "8081"
 
@@ -195,6 +197,50 @@ columnas = 32
 ruta = "Assets/Maps/walls_and_floors.png"
 firstgid = 4353
 columnas = 16
+
+[[mapas]]
+id = "centro_comunitario"
+ruta = "Assets/Maps/CommunityCenter_Ruins.tmx"
+capas_bajo_los_jugadores = ["Back", "Buildings"]
+capas_sobre_los_jugadores = ["Front"]
+ruta_caminar = "Assets/sfx/caminar_casa.wav"
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/townInterior.png"
+firstgid = 1
+columnas = 32
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/townInterior_2.png"
+firstgid = 2177
+columnas = 32
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/paths.png"
+firstgid = 3489
+columnas = 4
+
+[[mapas]]
+id = "centro_comunitario_arreglado"
+ruta = "Assets/Maps/CommunityCenter_Refurbished.tmx"
+capas_bajo_los_jugadores = ["Back", "Buildings"]
+capas_sobre_los_jugadores = ["Front"]
+ruta_caminar = "Assets/sfx/caminar_casa.wav"
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/townInterior.png"
+firstgid = 1
+columnas = 32
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/townInterior_2.png"
+firstgid = 2177
+columnas = 32
+
+[[mapas.tilesets]]
+ruta = "Assets/Maps/paths.png"
+firstgid = 3489
+columnas = 4
 
 [[mapas]]
 id = "mina_1"
@@ -508,8 +554,8 @@ b = 113
 ruta_ambiente = "Assets/sfx/ambiente.wav"
 ruta_caminar = "Assets/sfx/caminar.wav"
 ruta_accion = "Assets/sfx/pico_aire.wav"
-ruta_comprar = "Assets/sfx/dinero_contador.wav"
-ruta_vender = "Assets/sfx/dinero_contador.wav"
+ruta_comprar = "Assets/sfx/comprar.wav"
+ruta_vender = "Assets/sfx/vender.wav"
 
 [sonido.animales]
 vaca = "Assets/sfx/vaca.wav"

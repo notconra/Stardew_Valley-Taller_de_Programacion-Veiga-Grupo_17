@@ -29,6 +29,10 @@ bool AccionAtacar::ejecutar(ContextoDeAccion& c) {
     if (!resultado.murio) {
         return true;
     }
+    const Enemigo* muerto = c.sector.enemigos.buscar(id_enemigo);
+    if (muerto != nullptr) {
+        centro.al_matar_enemigo(c.personaje, c.sector, *muerto);
+    }
 
     const DefinicionDeEnemigo* definicion = c.recursos.catalogo_de_enemigos.buscar(tipo);
     if (definicion != nullptr && definicion->oro_maximo > 0) {
@@ -45,7 +49,12 @@ bool AccionAtacar::ejecutar(ContextoDeAccion& c) {
     }
     if (definicion != nullptr && Azar::con_probabilidad(definicion->probabilidad_de_plata)) {
         c.sector.soltar(
-            c.notificador, TipoItem::PLATA, 1, Calidad::BASE, posicion.columna, posicion.fila);
+            c.notificador,
+            TipoItem::PLATA,
+            1,
+            Calidad::BASE,
+            posicion.columna,
+            posicion.fila);
     }
     return true;
 }

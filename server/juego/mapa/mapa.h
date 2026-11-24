@@ -12,6 +12,7 @@
 
 class LectorDeMapasTMX;
 struct PuestoTMX;
+struct LoteTMX;
 
 // La capa del TMX que dibuja el piso. De ahí salen las casillas cultivables.
 #define CAPA_DE_PISO "Back"
@@ -42,6 +43,13 @@ struct Puesto {
     int fila_atencion = 0;
 };
 
+// Un lote del centro comunitario: la zona (en píxeles) donde se hace clic para abrirlo y la clave
+// con la que lo identifica el catálogo de lotes.
+struct LoteDelMapa {
+    std::string clave;
+    Rectangulo zona;
+};
+
 // El terreno tal como lo necesita el servidor, qué propiedades tiene cada casilla.
 // Se carga una sola vez y después es de solo lectura. El cliente carga el mismo TMX por su cuenta
 // para dibujarlo. No sabe nada de jugadores ni de cosas colocadas porque eso es de cada partida.
@@ -59,6 +67,9 @@ private:
     // Puestos de venta del mapa (los mostradores).
     std::vector<Puesto> puestos;
 
+    // Lotes del centro comunitario (solo los tiene el mapa del centro).
+    std::vector<LoteDelMapa> lotes;
+
     // Pasos del constructor, en el orden en que se llaman. Todos lanzan std::runtime_error si el
     // TMX no tiene lo que necesitan.
     void leer_tamanio(const LectorDeMapasTMX& lector, const std::string& ruta_tmx);
@@ -71,10 +82,14 @@ private:
     void cargar_transiciones(
         const LectorDeMapasTMX& lector, const ConfiguracionMapaServidor& configuracion);
     void cargar_puestos(const LectorDeMapasTMX& lector, const std::string& ruta_tmx);
+    void cargar_lotes(const LectorDeMapasTMX& lector);
 
     // Valida un puesto leído del TMX y lo agrega. Tiene que llamarse con las colisiones ya
     // cargadas, porque comprueba que la casilla de atención no esté bloqueada.
     void agregar_puesto(const PuestoTMX& puesto_tmx, const std::string& ruta_tmx);
+
+    // El rectángulo (en píxeles) que ocupa esa casilla.
+    Rectangulo rectangulo_de_casilla(int columna, int fila) const;
 
     // Suma "propiedad" a toda casilla no vacía de la capa. Lanza std::runtime_error si la capa
     // no coincide con el tamaño del mapa.
@@ -132,6 +147,12 @@ public:
     // El puesto cuya zona ocupa esa casilla (cualquier superposición cuenta), o nullptr si no hay
     // ninguno o la casilla está fuera del mapa. Es lo que usa el clic derecho sobre un mostrador.
     const Puesto* puesto_en_casilla(int columna, int fila) const;
+
+    // El lote del centro comunitario cuya zona ocupa esa casilla, o nullptr si no hay ninguno.
+    const LoteDelMapa* lote_en_casilla(int columna, int fila) const;
+
+    // Todos los lotes del mapa, para validarlos contra el catálogo al cargar los recursos.
+    const std::vector<LoteDelMapa>& obtener_lotes() const;
 
     // El puesto con ese id, o nullptr si el mapa no lo tiene.
     const Puesto* buscar_puesto(const std::string& id) const;

@@ -65,6 +65,10 @@ bool VistaChat::esta_escribiendo() const {
     return modelo.esta_escribiendo();
 }
 
+bool VistaChat::esta_abierto() const {
+    return modelo.esta_abierto();
+}
+
 ConsumoDeEntradaChat VistaChat::procesar_entrada(
     const EntradaDelUsuario& entrada, int ancho_pantalla, int alto_pantalla) {
     ajustar_envoltura(disponer(ancho_pantalla, alto_pantalla));
@@ -502,9 +506,6 @@ std::vector<PiezaChat> VistaChat::piezas_del_mensaje(const MensajeDeChat& mensaj
             prefijo = "(Sistema): ";
             color_del_prefijo = estilo::SISTEMA;
             color_del_cuerpo = estilo::SISTEMA;
-            break;
-        case CanalDeChat::COMERCIANTE:
-            color_del_prefijo = estilo::COMERCIANTE;
             break;
     }
 

@@ -31,7 +31,16 @@ using ComandoCliente = std::variant<
     EnviarMensajeDeChat,
 
     // Regalos
-    EnviarRegalo, AbrirRegalos>;
+    EnviarRegalo, AbrirRegalos,
+
+    // Mercado
+    ComprarEnMercado, VenderEnMercado, ComprarAnimalMercado, VenderAnimalMercado, CerrarMercado,
+
+    // NPCs
+    HablarConNpc,
+
+    // Centro comunitario
+    DonarAlLote, DonarMonedasAlLote>;
 
 using EventoServidor = std::variant<
     // Error
@@ -45,7 +54,8 @@ using EventoServidor = std::variant<
 
     // - Sector
     EstadoJuego, JugadoresEnSector, ObjetoColocado, ObjetoRetirado, DropAparecido, DropRetirado,
-    EnemigoActualizado, TrampaActualizada, TierraCambiada, AnimalActualizado, VacaOrdeniable,
+    EnemigoActualizado, TrampaActualizada, TierraCambiada, AnimalActualizado, AnimalRetirado,
+    VacaOrdeniable,
 
     // - Tiempo
     HoraDelJuego,
@@ -63,6 +73,18 @@ using EventoServidor = std::variant<
     MensajeDeChat,
 
     // - Regalos
-    JugadoresDeLaPartida, RegalosPendientes>;
+    JugadoresDeLaPartida, RegalosPendientes,
+
+    // - Mercado
+    ActualizacionMercado, CerrarVentanaMercado,
+
+    // - Avisos
+    AvisoEnPantalla,
+
+    // - NPCs
+    NpcsEnSector, DialogoNpc,
+
+    // - Centro comunitario
+    LoteDelCentro, CentroTerminado>;
 
 #endif

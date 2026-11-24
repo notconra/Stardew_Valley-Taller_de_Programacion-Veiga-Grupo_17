@@ -280,7 +280,12 @@ int Sector::soltar(
 }
 
 void Sector::avanzar_dia(Notificador& notificador) {
-    animales.avanzar_dia(drops);
+    std::vector<EstadoDrop> nuevos_drops = animales.avanzar_dia(drops);
+    for (const EstadoDrop& drop : nuevos_drops) {
+        DropAparecido evento;
+        evento.drop = drop;
+        avisar(notificador, evento);
+    }
     std::vector<uint32_t> ids_vacas = animales.obtener_ids_vacas_listas_para_ordeniar();
     for (uint32_t id_vaca : ids_vacas) {
         VacaOrdeniable evento;
@@ -333,6 +338,31 @@ bool Sector::agregar_gallina(Notificador& notificador, uint32_t columna, uint32_
         evento.animal = GestorDeAnimales::estado_de(*gallina);
         avisar(notificador, evento);
     }
+    return true;
+}
+
+bool Sector::agregar_animal(Notificador& notificador, TipoAnimal tipo) {
+    const int columnas = mapa.cantidad_de_columnas();
+    const int filas = mapa.cantidad_de_filas();
+    const std::optional<EstadoAnimal> nuevo =
+        animales.agregar_cerca_de(tipo, columnas / 2, filas / 2, columnas, filas);
+    if (!nuevo.has_value()) {
+        return false;
+    }
+    AnimalActualizado evento;
+    evento.animal = *nuevo;
+    avisar(notificador, evento);
+    return true;
+}
+
+bool Sector::retirar_animal(Notificador& notificador, TipoAnimal tipo) {
+    const std::optional<uint32_t> id = animales.quitar_ultimo(tipo);
+    if (!id.has_value()) {
+        return false;
+    }
+    AnimalRetirado evento;
+    evento.id = *id;
+    avisar(notificador, evento);
     return true;
 }
 

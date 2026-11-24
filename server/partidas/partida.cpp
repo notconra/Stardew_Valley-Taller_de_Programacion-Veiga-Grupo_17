@@ -214,7 +214,7 @@ EntradaExitosaAPartida Partida::reconectar(uint32_t id_cliente) {
             "ya estás conectado a la partida \"" + nombre + "\"");
     }
     jugador->conectado = true;
-    return EntradaExitosaAPartida{codigo, jugador->id_jugador};
+    return EntradaExitosaAPartida{codigo, jugador->id_jugador, multijugador};
 }
 
 EntradaExitosaAPartida Partida::conectar(
@@ -249,7 +249,7 @@ EntradaExitosaAPartida Partida::conectar(
     const uint32_t id_jugador = static_cast<uint32_t>(jugadores.size()) + 1;
     jugadores.push_back(
         Jugador{id_cliente, id_jugador, nombre_jugador, proximo_color_libre(), true, apariencia});
-    return EntradaExitosaAPartida{codigo, id_jugador};
+    return EntradaExitosaAPartida{codigo, id_jugador, multijugador};
 }
 
 void Partida::desconectar(uint32_t id_cliente) {

@@ -6,13 +6,15 @@
 #include <memory>
 #include <vector>
 
-#include "../../../common/mensajes/mensajes.h"
 #include "../acciones/accion.h"
 #include "../jugadores/personaje.h"
 #include "../muebles/camas_ocupadas.h"
 #include "../notificador.h"
 #include "../recursos/recursos_de_juego.h"
 #include "../sector/gestor_de_sectores.h"
+#include "controlador_de_dia.h"
+#include "controlador_de_mercado.h"
+#include "controlador_del_centro.h"
 
 // Comando UsarItem (click con un ítem en mano o con la mano vacía). Resuelve la casilla objetivo,
 // valida que el cliente no pida algo imposible y prueba las acciones del juego en orden. Ejecuta la
@@ -42,7 +44,8 @@ private:
 public:
     ControladorDeAcciones(
         GestorDeSectores& sectores, std::map<uint32_t, Personaje>& personajes,
-        const RecursosDeJuego& recursos, Notificador& notificador,
+        const RecursosDeJuego& recursos, Notificador& notificador, ControladorDeMercado& mercado,
+        const ControladorDelDia& dia, ControladorDelCentro& centro,
         ResolverDeTransicion resolver_transicion);
 
     // Devuelve true si el comando era de este controlador (y lo consumió).

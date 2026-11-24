@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "../../configuracion/configuracion_servidor_datos.h"
+#include "../centro_comunitario/catalogo_lotes.h"
 #include "../cultivos/cultivos.h"
 #include "../enemigos/catalogo_de_enemigos.h"
 #include "../mapa/mapa.h"
@@ -21,10 +22,14 @@ struct RecursosDeJuego {
     std::map<std::string, ConfiguracionMapaServidor> configuraciones_mapas;
     std::string mapa_inicial;
     ConfiguracionJuegoServidor juego;
+    ConfiguracionMercadoServidor mercado;
     CatalogoDeItems catalogo_de_items;
 
     // Los cultivos: cuántas veces se riegan, cuánto tardan y qué semilla y producto tienen.
     CatalogoDeCultivos catalogo_de_cultivos;
+
+    // Los lotes del centro comunitario y lo que pide cada uno.
+    CatalogoDeLotes catalogo_de_lotes;
 
     // Objetos colocables en el mundo (minerales, y a futuro árboles, muebles, drops...).
     // Es distinto de catalogo_de_items: este describe cómo ocupan el mapa y qué dejan al
@@ -46,7 +51,8 @@ struct RecursosDeJuego {
     RecursosDeJuego(
         const std::vector<ConfiguracionMapaServidor>& configuracion_mapas,
         const std::string& id_mapa_inicial, const ConfiguracionJuegoServidor& configuracion_juego,
-        const ConfiguracionMazmorraServidor& configuracion_mazmorra);
+        const ConfiguracionMazmorraServidor& configuracion_mazmorra,
+        const ConfiguracionMercadoServidor& configuracion_mercado = {});
 
 private:
     // Junta las definiciones de todos los módulos que aportan objetos del mundo. Para sumar
@@ -63,6 +69,10 @@ private:
     // ítems registrados en catalogo_de_items (y el colocable, de categoría COLOCABLE), para que un
     // ítem olvidado falle al arrancar y no en plena partida.
     void validar_catalogo_de_objetos() const;
+
+    // Verifica que cada lote marcado en un mapa (capa de interacciones, tipo = "lote") tenga una
+    // clave del catálogo de lotes, para que un nombre mal escrito en el TMX falle al arrancar.
+    void validar_lotes_de_los_mapas() const;
 
     // Arma la geografía de cada mapa que la mazmorra puede usar como nivel.
     void cargar_geografias_de_mazmorra();

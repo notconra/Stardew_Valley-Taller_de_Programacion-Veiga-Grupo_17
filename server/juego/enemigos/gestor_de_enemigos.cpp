@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <vector>
 
 #include "../azar.h"
 
@@ -22,13 +23,15 @@ uint32_t GestorDeEnemigos::ticks_por_paso(
     const Enemigo& enemigo, const DefinicionDeEnemigo& definicion) const {
     if (enemigo.en_frenesi && definicion.habilidad_de_frenesi == HabilidadDeFrenesi::VELOCIDAD) {
         const auto ticks = static_cast<uint32_t>(
-            static_cast<double>(definicion.ticks_por_casilla) / definicion.multiplicador_de_frenesi);
+            static_cast<double>(definicion.ticks_por_casilla) /
+            definicion.multiplicador_de_frenesi);
         return std::max<uint32_t>(1, ticks);
     }
     return definicion.ticks_por_casilla;
 }
 
-int GestorDeEnemigos::danio_de(const Enemigo& enemigo, const DefinicionDeEnemigo& definicion) const {
+int GestorDeEnemigos::danio_de(
+    const Enemigo& enemigo, const DefinicionDeEnemigo& definicion) const {
     if (enemigo.en_frenesi && definicion.habilidad_de_frenesi == HabilidadDeFrenesi::DANIO) {
         return static_cast<int>(definicion.danio * definicion.multiplicador_de_frenesi);
     }
@@ -44,8 +47,8 @@ void GestorDeEnemigos::recalcular_frenesi(int grupo, std::vector<int>& cambiaron
     if (grupo == 0) {
         return;
     }
-    const int muertos = static_cast<int>(std::count_if(
-        enemigos_por_id.begin(), enemigos_por_id.end(), [grupo](const auto& entrada) {
+    const int muertos = static_cast<int>(
+        std::count_if(enemigos_por_id.begin(), enemigos_por_id.end(), [grupo](const auto& entrada) {
             return entrada.second.grupo == grupo && !entrada.second.esta_vivo();
         }));
     // Un vivo está en frenesí si hay algún otro del grupo muerto (y él está vivo, así que no
@@ -117,8 +120,7 @@ void GestorDeEnemigos::perseguir(int id, uint32_t id_jugador) {
     }
 }
 
-int GestorDeEnemigos::poblar_en(
-    const std::vector<Casilla>& casillas, TipoEnemigo tipo, int grupo) {
+int GestorDeEnemigos::poblar_en(const std::vector<Casilla>& casillas, TipoEnemigo tipo, int grupo) {
     const DefinicionDeEnemigo* definicion = catalogo.buscar(tipo);
     if (definicion == nullptr) {
         return 0;
@@ -250,7 +252,10 @@ bool GestorDeEnemigos::deambular(
 
     static constexpr Casilla PASOS[4] = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
     static constexpr Direccion DIRECCIONES[4] = {
-        Direccion::ARRIBA, Direccion::ABAJO, Direccion::IZQUIERDA, Direccion::DERECHA};
+        Direccion::ARRIBA,
+        Direccion::ABAJO,
+        Direccion::IZQUIERDA,
+        Direccion::DERECHA};
     const int elegido = Azar::entero(0, 3);
     const Casilla destino{
         enemigo.posicion.columna + PASOS[elegido].columna,
@@ -274,8 +279,8 @@ const Casilla* GestorDeEnemigos::elegir_objetivo(
     const std::vector<std::pair<uint32_t, Casilla>>& jugadores, int& distancia) const {
     // Si tiene un jugador marcado (la manada que se avecina), va por él sin mirar la visión.
     if (enemigo.jugador_perseguido != 0) {
-        const auto perseguido = std::find_if(
-            jugadores.begin(), jugadores.end(), [&enemigo](const auto& jugador) {
+        const auto perseguido =
+            std::find_if(jugadores.begin(), jugadores.end(), [&enemigo](const auto& jugador) {
                 return jugador.first == enemigo.jugador_perseguido;
             });
         if (perseguido != jugadores.end()) {
@@ -314,9 +319,10 @@ bool GestorDeEnemigos::acercarse(
             enemigo_vivo_en(paso.columna, paso.fila) != nullptr) {
             continue;
         }
-        const bool ocupada_por_jugador = std::any_of(
-            jugadores.begin(), jugadores.end(),
-            [&paso](const auto& jugador) { return jugador.second == paso; });
+        const bool ocupada_por_jugador =
+            std::any_of(jugadores.begin(), jugadores.end(), [&paso](const auto& jugador) {
+                return jugador.second == paso;
+            });
         if (ocupada_por_jugador) {
             continue;
         }
@@ -384,6 +390,28 @@ void GestorDeEnemigos::limpiar() {
 const Enemigo* GestorDeEnemigos::buscar(int id) const {
     auto it = enemigos_por_id.find(id);
     return it == enemigos_por_id.end() ? nullptr : &it->second;
+}
+
+std::vector<const Enemigo*> GestorDeEnemigos::del_grupo(int grupo) const {
+    std::vector<const Enemigo*> miembros;
+    if (grupo == 0) {
+        return miembros;
+    }
+    for (const auto& [id, enemigo] : enemigos_por_id) {
+        if (enemigo.grupo == grupo) {
+            miembros.push_back(&enemigo);
+        }
+    }
+    return miembros;
+}
+
+bool GestorDeEnemigos::hay_de_tipo(TipoEnemigo tipo) const {
+    for (const auto& [id, enemigo] : enemigos_por_id) {
+        if (enemigo.tipo == tipo) {
+            return true;
+        }
+    }
+    return false;
 }
 
 const Enemigo* GestorDeEnemigos::enemigo_vivo_en(int columna, int fila) const {

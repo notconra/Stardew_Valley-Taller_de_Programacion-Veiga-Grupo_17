@@ -17,9 +17,11 @@
 RecursosDeJuego::RecursosDeJuego(
     const std::vector<ConfiguracionMapaServidor>& configuracion_mapas,
     const std::string& id_mapa_inicial, const ConfiguracionJuegoServidor& configuracion_juego,
-    const ConfiguracionMazmorraServidor& configuracion_mazmorra)
+    const ConfiguracionMazmorraServidor& configuracion_mazmorra,
+    const ConfiguracionMercadoServidor& configuracion_mercado)
     : mapa_inicial(id_mapa_inicial),
       juego(configuracion_juego),
+      mercado(configuracion_mercado),
       catalogo_de_objetos(crear_catalogo_de_objetos(configuracion_mazmorra.minerales)),
       catalogo_de_enemigos(crear_catalogo_de_enemigos(configuracion_mazmorra)),
       mazmorra(configuracion_mazmorra) {
@@ -33,6 +35,7 @@ RecursosDeJuego::RecursosDeJuego(
         this->configuraciones_mapas.emplace(configuracion_mapa.id, configuracion_mapa);
     }
     validar_catalogo_de_objetos();
+    validar_lotes_de_los_mapas();
     cargar_geografias_de_mazmorra();
 }
 
@@ -82,6 +85,17 @@ void RecursosDeJuego::validar_catalogo_de_objetos() const {
                 throw std::runtime_error(
                     "objetos del mundo: '" + definicion.clave +
                     "' se coloca con un ítem que no existe o no es de categoría COLOCABLE");
+            }
+        }
+    }
+}
+
+void RecursosDeJuego::validar_lotes_de_los_mapas() const {
+    for (const auto& [id_mapa, mapa] : mapas) {
+        for (const LoteDelMapa& lote : mapa.obtener_lotes()) {
+            if (catalogo_de_lotes.buscar_por_clave(lote.clave) == nullptr) {
+                throw std::runtime_error(
+                    "el mapa " + id_mapa + " tiene un lote desconocido: '" + lote.clave + "'");
             }
         }
     }

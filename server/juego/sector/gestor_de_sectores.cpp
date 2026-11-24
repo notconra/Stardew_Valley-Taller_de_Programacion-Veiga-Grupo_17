@@ -269,6 +269,8 @@ std::vector<EstadoJugador> GestorDeSectores::armar_jugadores(const std::string& 
             estado.accion_actual = personaje->second.accion_actual;
             estado.vida = static_cast<uint8_t>(personaje->second.vida);
             estado.energia = static_cast<uint8_t>(personaje->second.energia);
+            estado.vida_maxima = static_cast<uint8_t>(personaje->second.vida_maxima());
+            estado.energia_maxima = static_cast<uint8_t>(personaje->second.energia_maxima());
             estado.monedas = personaje->second.monedas;
             estado.apariencia = personaje->second.apariencia;
         }
@@ -284,6 +286,7 @@ EstadoJuego GestorDeSectores::armar_instantanea(const std::string& id_mapa) cons
     EstadoJuego estado;
     estado.mapa = id_mapa;
     estado.jugadores = armar_jugadores(id_mapa);
+    estado.npcs = armar_npcs(id_mapa);
     sector.objetos.agregar_a(estado);
     sector.drops.agregar_a(estado);
     sector.enemigos.agregar_a(estado);
@@ -315,5 +318,29 @@ void GestorDeSectores::difundir_jugadores(const std::string& id_mapa) {
 void GestorDeSectores::difundir_jugadores() {
     for (const auto& entrada : sectores) {
         difundir_jugadores(entrada.first);
+    }
+}
+
+std::vector<EstadoNpc> GestorDeSectores::armar_npcs(const std::string& id_mapa) const {
+    return en(id_mapa).npcs;
+}
+
+void GestorDeSectores::difundir_npcs(const std::string& id_mapa) {
+    const std::vector<EstadoNpc>& actuales = sectores.at(id_mapa).npcs;
+    std::vector<EstadoNpc>& ultimos = npcs_enviados[id_mapa];
+    if (actuales == ultimos) {
+        return;
+    }
+
+    NpcsEnSector evento;
+    evento.mapa = id_mapa;
+    evento.npcs = actuales;
+    ultimos = actuales;
+    sectores.at(id_mapa).avisar(notificador, evento);
+}
+
+void GestorDeSectores::difundir_npcs() {
+    for (const auto& entrada : sectores) {
+        difundir_npcs(entrada.first);
     }
 }

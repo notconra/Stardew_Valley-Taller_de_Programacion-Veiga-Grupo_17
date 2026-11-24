@@ -31,7 +31,6 @@ private:
     };
 
     // Para que una manada entera suene como un solo grito y no uno por cada enemigo.
-    static constexpr uint32_t MS_ENTRE_GRITOS_DE_APARICION = 1500;
     mutable uint32_t ultimo_grito_de_aparicion = 0;
 
     static constexpr uint32_t INTERVALO_MINIMO_SONIDO_ANIMAL_MS = 10000;
@@ -54,6 +53,8 @@ private:
     std::map<TipoEnemigo, SonidosCargadosDeEnemigo> sonidos_de_enemigos;
     Mix_Chunk* trampa_activada = nullptr;
     Mix_Chunk* jugador_danio = nullptr;
+    Mix_Chunk* compra = nullptr;
+    Mix_Chunk* venta = nullptr;
     Mix_Chunk* vaca = nullptr;
     Mix_Chunk* gallina = nullptr;
     Mix_Chunk* ordeniar_vaca = nullptr;
@@ -64,6 +65,8 @@ private:
     bool es_de_noche = false;
     Mix_Chunk* lluvia = nullptr;
     int volumen_de_lluvia = 0;  // 0 = no suena
+    int volumen_musica = 100;
+    int volumen_efectos = 100;
 
     void actualizar_ambiente();
 
@@ -105,6 +108,9 @@ public:
     // El jugador propio perdió vida (lo golpeó un enemigo o lo quemó una trampa).
     void reproducir_jugador_danio() const;
 
+    // El jugador compró algo en el mercado / vendió algo en el mercado.
+    void reproducir_compra() const;
+    void reproducir_venta() const;
     void reproducir_dinero() const;
     void reproducir_ordenie_vaca() const;
     void reproducir_interaccion_animal(TipoAnimal tipo);
@@ -117,6 +123,12 @@ public:
     // De noche, en los mapas con el ambiente general (no en las cuevas), el ambiente pasa a ser
     // la música de noche. Si no cambia nada, no reinicia lo que está sonando.
     void cambiar_noche(bool de_noche);
+
+    void fijar_volumen_musica(int porcentaje);
+    int obtener_volumen_musica() const;
+
+    void fijar_volumen_efectos(int porcentaje);
+    int obtener_volumen_efectos() const;
 
     // Mientras llueve suena la lluvia en loop: fuerte afuera, apagada bajo techo, y nada si no
     // llueve o si se está en la mazmorra. Si no cambia nada, no la reinicia.

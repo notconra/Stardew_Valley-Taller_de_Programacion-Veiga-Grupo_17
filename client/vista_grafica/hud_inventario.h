@@ -85,6 +85,15 @@ public:
     void dibujar_vida(SDL_Renderer* renderer, uint8_t vida, uint8_t vida_maxima) const;
     void dibujar_energia(SDL_Renderer* renderer, uint8_t energia, uint8_t energia_maxima) const;
 
+    // Para el mercado, qué ranura está bajo el mouse (como en hover).
+    RanuraApuntada ranura_en_pantalla(
+        const InventarioJugador& inventario, const CofreJugador& cofre, int x, int y) const;
+
+    // Para el mercado, deja en la mano un ítem que ya está en la barra.
+    void agarrar_de_la_barra(
+        const InventarioJugador& inventario, const CofreJugador& cofre, int indice,
+        uint16_t cantidad);
+
 private:
     static constexpr int MARGEN = 8;
     static constexpr int MARGEN_INFERIOR_BARRA = 14;  // deja lugar al fondo de madera de la barra

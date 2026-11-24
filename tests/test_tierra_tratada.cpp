@@ -51,7 +51,8 @@ const RecursosDeJuego& recursos() {
             mapas,
             "granja",
             juego,
-            ConfiguracionMazmorraServidor{});  // sin mazmorra: estas pruebas son de la granja
+            ConfiguracionMazmorraServidor{},
+            configuracion.mercado());  // sin mazmorra: estas pruebas son de la granja
     }();
     return recursos_de_juego;
 }

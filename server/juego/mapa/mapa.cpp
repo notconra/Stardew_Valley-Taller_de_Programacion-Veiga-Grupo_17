@@ -40,6 +40,7 @@ Mapa::Mapa(
     cargar_transiciones(lector, configuracion);
     ajustar_colisiones_de_transiciones(destinos_que_conservan_colision);
     cargar_puestos(lector, configuracion.ruta_tmx);
+    cargar_lotes(lector);
 }
 
 void Mapa::leer_tamanio(const LectorDeMapasTMX& lector, const std::string& ruta_tmx) {
@@ -134,6 +135,12 @@ void Mapa::cargar_transiciones(
 void Mapa::cargar_puestos(const LectorDeMapasTMX& lector, const std::string& ruta_tmx) {
     for (const PuestoTMX& puesto_tmx : lector.cargar_puestos(CAPA_DE_INTERACCIONES)) {
         agregar_puesto(puesto_tmx, ruta_tmx);
+    }
+}
+
+void Mapa::cargar_lotes(const LectorDeMapasTMX& lector) {
+    for (const LoteTMX& lote : lector.cargar_lotes(CAPA_DE_INTERACCIONES)) {
+        lotes.push_back(LoteDelMapa{lote.clave, Rectangulo{lote.x, lote.y, lote.ancho, lote.alto}});
     }
 }
 
@@ -262,16 +269,19 @@ const Transicion* Mapa::transicion_en(const Rectangulo& zona) const {
     return nullptr;
 }
 
-const Transicion* Mapa::transicion_en_casilla(int columna, int fila) const {
-    if (!esta_dentro(columna, fila)) {
-        return nullptr;
-    }
-    const Rectangulo casilla{
+Rectangulo Mapa::rectangulo_de_casilla(int columna, int fila) const {
+    return Rectangulo{
         columna * ancho_de_casilla,
         fila * alto_de_casilla,
         ancho_de_casilla,
         alto_de_casilla};
-    return transicion_en(casilla);
+}
+
+const Transicion* Mapa::transicion_en_casilla(int columna, int fila) const {
+    if (!esta_dentro(columna, fila)) {
+        return nullptr;
+    }
+    return transicion_en(rectangulo_de_casilla(columna, fila));
 }
 
 bool Mapa::cerca_de_una_transicion(int columna, int fila) const {
@@ -291,17 +301,30 @@ const Puesto* Mapa::puesto_en_casilla(int columna, int fila) const {
     if (!esta_dentro(columna, fila)) {
         return nullptr;
     }
-    const Rectangulo casilla{
-        columna * ancho_de_casilla,
-        fila * alto_de_casilla,
-        ancho_de_casilla,
-        alto_de_casilla};
+    const Rectangulo casilla = rectangulo_de_casilla(columna, fila);
     for (const Puesto& puesto : puestos) {
         if (se_superponen(casilla, puesto.zona)) {
             return &puesto;
         }
     }
     return nullptr;
+}
+
+const LoteDelMapa* Mapa::lote_en_casilla(int columna, int fila) const {
+    if (!esta_dentro(columna, fila)) {
+        return nullptr;
+    }
+    const Rectangulo casilla = rectangulo_de_casilla(columna, fila);
+    for (const LoteDelMapa& lote : lotes) {
+        if (se_superponen(casilla, lote.zona)) {
+            return &lote;
+        }
+    }
+    return nullptr;
+}
+
+const std::vector<LoteDelMapa>& Mapa::obtener_lotes() const {
+    return lotes;
 }
 
 const Puesto* Mapa::buscar_puesto(const std::string& id) const {

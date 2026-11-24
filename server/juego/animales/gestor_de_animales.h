@@ -1,7 +1,10 @@
 #ifndef GESTOR_DE_ANIMALES_H
 #define GESTOR_DE_ANIMALES_H
 
+#include <cstdint>
+#include <iterator>
 #include <map>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -15,14 +18,6 @@
 
 class GestorDeAnimales {
 private:
-    static constexpr uint8_t HORA_QUIETOS = 19;
-    static constexpr uint8_t HORA_DORMIR = 20;
-    static constexpr int TICKS_DECISION_MIN = 40;
-    static constexpr int TICKS_DECISION_MAX = 100;
-    static constexpr int PROBABILIDAD_QUIETO = 4;
-    static constexpr int PROBABILIDAD_ACCION_MAX = 10;
-    static constexpr int CANTIDAD_DIRECCIONES = 4;
-
     uint32_t siguiente_id = 1;
     Colisiones& colisiones;
     std::map<uint32_t, Vaca> vacas;
@@ -54,6 +49,42 @@ private:
     Vaca* buscar_vaca_en(uint32_t columna, uint32_t fila);
     Gallina* buscar_gallina_en(uint32_t columna, uint32_t fila);
 
+    // Agrega un animal de esa especie en la casilla indicada si entra en el mapa y está libre. El
+    // id solo se gasta si el animal se agregó.
+    template <typename Especie>
+    std::optional<EstadoAnimal> colocar(
+        std::map<uint32_t, Especie>& animales, const Casilla& casilla, uint8_t variante,
+        int ancho_mapa, int alto_mapa) {
+        const uint32_t id = siguiente_id;
+        Especie animal(
+            id,
+            static_cast<uint32_t>(casilla.columna),
+            static_cast<uint32_t>(casilla.fila),
+            variante);
+        const bool entra = casilla.columna + animal.ancho_en_casillas <= ancho_mapa &&
+                           casilla.fila + animal.alto_en_casillas <= alto_mapa;
+        if (!entra || !puede_ubicarse(animal)) {
+            return std::nullopt;
+        }
+        ++siguiente_id;
+        ocupar_colisiones(animal);
+        animales.emplace(id, animal);
+        return estado_de(animal);
+    }
+
+    // Saca de la granja el animal con el id más alto (el que se agregó último) y devuelve su id.
+    template <typename Animales>
+    std::optional<uint32_t> quitar_el_ultimo_de(Animales& animales) {
+        if (animales.empty()) {
+            return std::nullopt;
+        }
+        const auto ultimo = std::prev(animales.end());
+        const uint32_t id = ultimo->first;
+        liberar_colisiones(ultimo->second);
+        animales.erase(ultimo);
+        return id;
+    }
+
 public:
     explicit GestorDeAnimales(Colisiones& colisiones_mapa);
 
@@ -69,10 +100,19 @@ public:
     // Agrega una gallina asignando una variante específica (para persistencia o tests).
     bool agregar_gallina(uint32_t columna, uint32_t fila, uint8_t variante);
 
+    // Agrega un animal del tipo pedido en la casilla libre más cercana a (columna, fila).
+    // Devuelve su estado, o nullopt si no hay lugar o la granja llegó al límite de ese tipo.
+    std::optional<EstadoAnimal> agregar_cerca_de(
+        TipoAnimal tipo, int columna, int fila, int ancho_mapa, int alto_mapa);
+
+    // Saca de la granja el último animal agregado de ese tipo. Devuelve su id, o nullopt si
+    // no había ninguno.
+    std::optional<uint32_t> quitar_ultimo(TipoAnimal tipo);
+
     // Avanza un día para todos los animales de la granja:
     // - Las vacas acumulan días hacia el ciclo de 2 días de leche.
     // - Las gallinas ponen un huevo en el suelo como Drop de forma automática.
-    void avanzar_dia(Drops& drops);
+    std::vector<EstadoDrop> avanzar_dia(Drops& drops);
 
     // Intenta ordeñar una vaca por su id. Devuelve true si tenía leche y se completó la extracción.
     bool ordeniar_vaca(uint32_t id_vaca);
@@ -109,6 +149,7 @@ public:
     int cantidad_vacas() const;
     int cantidad_gallinas() const;
     int cantidad_total() const;
+    int cantidad_de(TipoAnimal tipo) const;
     int cantidad_vacas_listas_para_ordeniar() const;
     std::vector<uint32_t> obtener_ids_vacas_listas_para_ordeniar() const;
 

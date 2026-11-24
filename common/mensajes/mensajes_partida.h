@@ -11,6 +11,7 @@
 #include "../direccion.h"
 #include "../estacion.h"
 #include "../estado_de_descanso.h"
+#include "../logro_de_pelea.h"
 #include "../modo_uso.h"
 #include "../ranura_inventario.h"
 #include "../tipo_accion.h"
@@ -18,6 +19,7 @@
 #include "../tipo_cultivo.h"
 #include "../tipo_enemigo.h"
 #include "../tipo_item.h"
+#include "../tipo_lote.h"
 #include "../tipo_objeto.h"
 #include "../tipo_trampa.h"
 
@@ -116,6 +118,34 @@ struct EnviarMensajeDeChat {
     std::string texto;
 };
 
+// El servidor recuerda qué puesto tiene abierto cada jugador, así que los comandos de compra y
+// venta no necesitan mandar el id del puesto sino que siempre operan sobre el que está abierto.
+struct ComprarEnMercado {
+    uint16_t indice_item = 0;  // Índice dentro del catálogo del puesto
+    uint16_t cantidad = 1;
+};
+
+// Vender un ítem del inventario al puesto.
+struct VenderEnMercado {
+    uint8_t ranura_inventario = 0;
+    uint16_t cantidad = 0;  // 0 o cantidad completa según click izquierdo/derecho
+};
+
+// Comprar un animal (específico para Marnie, que no va al inventario).
+struct ComprarAnimalMercado {
+    TipoAnimal tipo_animal = TipoAnimal::NINGUNO;
+    uint16_t cantidad = 1;
+};
+
+// Vender un animal (específico para Marnie, desde el panel de animales de la granja).
+struct VenderAnimalMercado {
+    TipoAnimal tipo_animal = TipoAnimal::NINGUNO;
+    uint16_t cantidad = 1;
+};
+
+// Cierra la ventana del mercado activa.
+struct CerrarMercado {};
+
 // Le regala a otro jugador de la partida (conectado o no) parte de una ranura de la barra.
 // cantidad == 0 regala el stack completo. Las herramientas no se pueden regalar. El regalo queda
 // pendiente hasta que el destinatario lo abre (AbrirRegalos).
@@ -127,6 +157,18 @@ struct EnviarRegalo {
 
 // Pasa al inventario todos los regalos pendientes que entren. Los que no entran siguen pendientes.
 struct AbrirRegalos {};
+
+// Dona al lote lo que acepte del ítem de esa ranura del inventario (índice absoluto, como en el
+// cofre). Lo que se dona sale del inventario y queda en el centro.
+struct DonarAlLote {
+    TipoLote lote = TipoLote::CULTIVOS;
+    uint8_t indice_ranura = 0;
+};
+
+// Dona las monedas que pide el lote (el de dinero). El cliente pide confirmación antes.
+struct DonarMonedasAlLote {
+    TipoLote lote = TipoLote::DINERO;
+};
 
 // Servidor a cliente
 
@@ -160,6 +202,9 @@ struct EstadoJugador {
     TipoAccion accion_actual = TipoAccion::NINGUNA;
     uint8_t vida = VIDA_MAXIMA_JUGADOR;
     uint8_t energia = ENERGIA_MAXIMA_JUGADOR;
+    // Los topes de las barras de este jugador: más altos con la mejora del lote de pelea.
+    uint8_t vida_maxima = VIDA_MAXIMA_JUGADOR;
+    uint8_t energia_maxima = ENERGIA_MAXIMA_JUGADOR;
     uint32_t monedas = 0;
     AparienciaPersonaje apariencia;
 
@@ -266,12 +311,34 @@ struct AnimalActualizado {
     bool operator==(const AnimalActualizado&) const = default;
 };
 
+// Un animal que dejó de estar en el sector del receptor (se vendió).
+struct AnimalRetirado {
+    uint32_t id = 0;
+
+    bool operator==(const AnimalRetirado&) const = default;
+};
+
 // Notificación cuando una vaca queda lista para ordeñar o cuando se completa su ordeñe
 struct VacaOrdeniable {
     uint32_t id_vaca = 0;
     bool lista = false;
 
     bool operator==(const VacaOrdeniable&) const = default;
+};
+
+// Posición y estado de un NPC. "x" e "y" son la esquina superior izquierda del sprite en píxeles
+// del mapa, igual que para los jugadores. "ms_por_casilla" es lo que tarda en recorrer una casilla
+// mientras camina.
+struct EstadoNpc {
+    std::string id_npc;
+    std::string mapa;
+    uint32_t x = 0;
+    uint32_t y = 0;
+    Direccion mirando = Direccion::ABAJO;
+    bool camina = false;
+    uint16_t ms_por_casilla = 0;
+
+    bool operator==(const EstadoNpc&) const = default;
 };
 
 // Snapshot completa de UN sector. Se manda una sola vez cuando el jugador entra o cambia de
@@ -286,6 +353,7 @@ struct EstadoJuego {
     std::vector<EstadoTrampa> trampas;
     std::vector<EstadoAnimal> animales;
     std::vector<uint32_t> vacas_para_ordeniar;
+    std::vector<EstadoNpc> npcs;
 };
 
 // Posición y estado de todos los jugadores del sector del receptor. Se manda cada tick, pero solo
@@ -293,6 +361,12 @@ struct EstadoJuego {
 struct JugadoresEnSector {
     std::string mapa;
     std::vector<EstadoJugador> jugadores;
+};
+
+// Posición y estado de todos los NPC del sector del receptor.
+struct NpcsEnSector {
+    std::string mapa;
+    std::vector<EstadoNpc> npcs;
 };
 
 // Un objeto nuevo en el sector del receptor. Si el id ya existía, el cliente lo reemplaza.
@@ -446,17 +520,18 @@ struct RegalosPendientes {
 };
 
 // Canal de un mensaje que el servidor manda al cliente. "PRIVADO" avisa que el mensaje era para un
-// único destinatario, "SISTEMA" son respuestas del propio servidor (errores de envío, comandos
-// desconocidos) y "COMERCIANTE" queda reservado para las respuestas de los NPCs del mercado.
+// único destinatario y "SISTEMA" son respuestas del propio servidor (errores de envío, comandos
+// desconocidos y cheats). El mercado no usa el chat.
 enum class CanalDeChat : uint8_t {
     GLOBAL = 0,
     PRIVADO = 1,
     SISTEMA = 2,
-    COMERCIANTE = 3,
 };
 
-// Un mensaje ya interpretado por el servidor. "remitente" es el nombre del
-// jugador o del NPC que habla, "destinatario" solo tiene valor en los privados. "texto" es el
+#define REMITENTE_DEL_SISTEMA "(Sistema)"
+
+// Un mensaje ya interpretado por el servidor. "remitente" es el nombre del jugador que lo envió
+// (o "(Sistema)" en los avisos), "destinatario" solo tiene valor en los privados. "texto" es el
 // contenido sin el prefijo "@nombre". "color_del_remitente" lo elige el servidor al entrar a la
 // partida y se conserva durante toda la partida.
 struct MensajeDeChat {
@@ -465,6 +540,89 @@ struct MensajeDeChat {
     std::string destinatario;
     std::string texto;
     ColorDeJugador color_del_remitente = ColorDeJugador::AZUL;
+
+    static MensajeDeChat del_sistema(const std::string& texto) {
+        return MensajeDeChat{CanalDeChat::SISTEMA, REMITENTE_DEL_SISTEMA, std::string(), texto};
+    }
 };
+
+// Información detallada de cada ítem/animal en el catálogo del puesto de mercado.
+struct ItemCatalogoInfo {
+    TipoItem tipo_item = TipoItem::NINGUNO;        // Si es un ítem normal
+    TipoAnimal tipo_animal = TipoAnimal::NINGUNO;  // Si es un animal (Marnie)
+    std::string nombre;
+    uint32_t precio = 0;
+    bool se_puede_comprar = true;   // False si no alcanza el dinero o no hay lugar en el inventario
+    uint16_t cantidad_poseida = 0;  // Solo para animales, cuántos tiene el jugador
+    std::string descripcion;        // Información de cuidados o descripción para el hover
+
+    bool es_animal() const {
+        return tipo_animal != TipoAnimal::NINGUNO;
+    }
+};
+
+// Envía la ventana de mercado completa con el catálogo configurado del NPC correspondiente.
+// "id_npc" es lógico, el cliente decide con qué asset mostrarlo.
+struct ActualizacionMercado {
+    std::string id_npc;
+    std::vector<ItemCatalogoInfo> catalogo;
+};
+
+// Ordena al cliente cerrar la ventana de mercado.
+struct CerrarVentanaMercado {};
+
+// Cartel genérico para avisar algo al jugador (por ejemplo, que el mercado está cerrado). El
+// cliente lo muestra como un cuadro modal que se cierra con un clic y bloquea el juego mientras
+// esté visible.
+struct AvisoEnPantalla {
+    std::string mensaje;
+};
+
+// El jugador hace clic derecho sobre un NPC para hablarle. El servidor decide el texto
+// y responde con DialogoNpc.
+struct HablarConNpc {
+    std::string id_npc;
+};
+
+// Lo que dice un NPC. El cliente lo muestra en un cuadro modal con el fondo dialogo_<id>.png.
+struct DialogoNpc {
+    std::string id_npc;
+    std::string texto;
+};
+
+// Una parte de un lote del centro comunitario y cuánto se lleva aportado. Según "tipo", lo que
+// importa es "item" y "calidad_minima" (donar un ítem), "logro" (pelea) o solo "cantidad"
+// (monedas).
+struct RequisitoDeLote {
+    TipoDeRequisito tipo = TipoDeRequisito::ITEM;
+    TipoItem item = TipoItem::NINGUNO;
+    Calidad calidad_minima = Calidad::BASE;
+    LogroDePelea logro = LogroDePelea::ESQUELETOS;
+    uint32_t cantidad = 0;
+    uint32_t aportado = 0;
+
+    bool operator==(const RequisitoDeLote&) const = default;
+};
+
+// El estado de un lote del centro comunitario, con todo lo que hace falta para dibujarlo. Se le
+// manda al que hace clic en el lote con "abrir" en true (abre la ventana), y a todos con "abrir" en
+// false cada vez que el lote cambia (actualiza la ventana de quien lo tenga abierto).
+struct LoteDelCentro {
+    TipoLote lote = TipoLote::CULTIVOS;
+    bool abrir = false;
+    std::string nombre;
+    bool completo = false;
+    std::vector<RequisitoDeLote> requisitos;
+    std::string mapa;
+    uint32_t columna = 0;
+    uint32_t fila = 0;
+
+    bool operator==(const LoteDelCentro&) const = default;
+};
+
+// Se completaron los cinco lotes del centro comunitario. El cliente felicita al jugador con un
+// cartel y lo deja seguir jugando o volver al lobby. Cada jugador que estaba en la partida lo
+// recibe una vez.
+struct CentroTerminado {};
 
 #endif

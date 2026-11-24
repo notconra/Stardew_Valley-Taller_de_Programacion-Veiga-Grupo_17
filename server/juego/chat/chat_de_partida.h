@@ -17,7 +17,6 @@
 struct JugadorEnChat {
     std::string nombre;
     ColorDeJugador color;
-    std::string interlocutor;  // vacío si no está hablando con ningún NPC
 };
 
 // Los jugadores conectados al chat, por id.
@@ -67,22 +66,12 @@ public:
     // jugador no está conectado al chat, lo ignora.
     void recibir(uint32_t id_jugador, const EnviarMensajeDeChat& mensaje);
 
-    // Conversación con un NPC. El mercado la abriría al hacer clic en un comerciante y la cerraría
-    // al terminar la interacción. Los comandos la recibirían en
-    // ContextoDeComandoDeChat::interlocutor. Si el jugador no está conectado, no hacen nada.
-    void iniciar_conversacion(uint32_t id_jugador, const std::string& nombre_interlocutor);
-    void terminar_conversacion(uint32_t id_jugador);
-    std::string interlocutor_de(uint32_t id_jugador) const;
-
     // Suma un comando. Se llama durante la construcción de la sesión, antes de que arranque el
     // hilo. Si lo que escribe el jugador no coincide con ningún comando, recibe un aviso.
     void agregar_comando(std::unique_ptr<ComandoDeChat> comando);
 
     // Implementación de RespuestasDeChat para los comandos.
     void responder_a_jugador(uint32_t id_jugador, const std::string& texto) override;
-    void responder_como_comerciante(
-        uint32_t id_jugador, const std::string& nombre_comerciante,
-        const std::string& texto) override;
 };
 
 #endif

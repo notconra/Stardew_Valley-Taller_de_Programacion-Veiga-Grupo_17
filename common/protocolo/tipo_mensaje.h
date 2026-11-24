@@ -29,8 +29,18 @@ enum class TipoMensaje : uint8_t {
     CONSULTAR_CASILLA = 0x13,
     DAR_EL_OK = 0x14,
     ELIMINAR_PARTIDA = 0x15,
-    ENVIAR_REGALO = 0x16,
-    ABRIR_REGALOS = 0x17,
+    COMPRAR_EN_MERCADO = 0x16,
+    VENDER_EN_MERCADO = 0x17,
+    COMPRAR_ANIMAL_MERCADO = 0x18,
+    VENDER_ANIMAL_MERCADO = 0x19,
+    CERRAR_MERCADO = 0x1A,
+    ENVIAR_REGALO = 0x1B,
+    ABRIR_REGALOS = 0x1C,
+    HABLAR_CON_NPC = 0x1D,
+
+    // Centro comunitario
+    DONAR_AL_LOTE = 0x1E,
+    DONAR_MONEDAS_AL_LOTE = 0x1F,
 
     // Servidor a cliente
     ERROR_SERVIDOR = 0x81,
@@ -69,15 +79,31 @@ enum class TipoMensaje : uint8_t {
     // Una trampa de la mazmorra que se activó o se desactivó
     TRAMPA_ACTUALIZADA = 0x95,
 
+    ACTUALIZACION_MERCADO = 0x96,
+    CERRAR_VENTANA_MERCADO = 0x97,
+    AVISO_EN_PANTALLA = 0x98,
+
     // Regalos: quiénes son los jugadores de la partida y qué regalos tiene sin abrir el receptor
-    JUGADORES_DE_LA_PARTIDA = 0x96,
-    REGALOS_PENDIENTES = 0x97,
+    JUGADORES_DE_LA_PARTIDA = 0x99,
+    REGALOS_PENDIENTES = 0xA0,
 
     // Actualización de estado o posición de un animal
-    ANIMAL_ACTUALIZADO = 0x98,
+    ANIMAL_ACTUALIZADO = 0xA1,
 
     // Cambio en la disponibilidad de leche de una vaca
-    VACA_ORDENIABLE = 0x99,
+    VACA_ORDENIABLE = 0xA2,
+
+    ANIMAL_RETIRADO = 0xA3,
+
+    // NPCs
+    NPCS_EN_SECTOR = 0xA4,
+    DIALOGO_NPC = 0xA5,
+
+    // Estado de un lote del centro comunitario (al abrirlo o cuando cambia)
+    LOTE_DEL_CENTRO = 0xA6,
+
+    // Se completaron todos los lotes del centro comunitario (el cliente muestra el cartel)
+    CENTRO_TERMINADO = 0xA7,
 };
 
 #endif

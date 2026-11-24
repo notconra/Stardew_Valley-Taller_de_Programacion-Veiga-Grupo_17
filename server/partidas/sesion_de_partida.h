@@ -71,9 +71,9 @@ private:
     void procesar_comandos();
     void difundir_cierre();
 
-    // Si en el último tick terminó el día, guarda la partida. Un error al guardar se informa
-    // pero no corta el bucle de juego.
-    void guardar_si_termino_el_dia(bool termino);
+    // Guarda la partida si en el último tick terminó el día o se completó el centro comunitario.
+    // Un error al guardar se informa pero no corta el bucle de juego.
+    void guardar_si_hace_falta(bool hay_que_guardar);
 
     std::vector<DatosJugadorGuardado> datos_de_los_jugadores(
         const std::vector<Jugador>& miembros,
