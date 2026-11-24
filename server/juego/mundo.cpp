@@ -35,8 +35,8 @@ Mundo::Mundo(
       controlador_de_enemigos(sectores, personajes, notificador_de_juego, controlador_del_centro),
       controlador_de_trampas(sectores, personajes, notificador_de_juego),
       controlador_de_cultivos(sectores, notificador_de_juego),
-      controlador_de_regalos(
-          personajes, recursos_de_juego.catalogo_de_items, notificador_de_juego) {
+      controlador_de_regalos(personajes, recursos_de_juego.catalogo_de_items, notificador_de_juego),
+      controlador_de_posiciones(personajes, sectores, notificador_de_juego, ticks_por_segundo) {
     sectores.cargar_mapas_guardados(datos_guardados.mapas);
     sectores.cargar_cultivos_guardados(datos_guardados.cultivos);
     sectores.cargar_cofres_guardados(datos_guardados.cofres);
@@ -159,6 +159,7 @@ void Mundo::conectar(
         sectores.colocar_en_aparicion(personaje, recursos.mapa_inicial);
     }
     controlador_del_dia.despertar_si_volvio_desmayado(personaje);
+    controlador_de_posiciones.al_conectarse(personaje);
 }
 
 void Mundo::desconectar(uint32_t id_jugador) {
@@ -301,6 +302,7 @@ void Mundo::actualizar() {
     controlador_de_cofres.actualizar();
     controlador_de_drops.actualizar();
     controlador_del_centro.actualizar();
+    controlador_de_posiciones.actualizar();
 }
 
 std::optional<DatosJugadorGuardado> Mundo::obtener_datos_jugador(uint32_t id_jugador) const {

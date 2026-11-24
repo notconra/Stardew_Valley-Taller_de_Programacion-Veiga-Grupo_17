@@ -296,6 +296,9 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const NpcsEnSector& e) { enviar_evento_npcs_en_sector(e); },
             [this](const DialogoNpc& e) { enviar_evento_dialogo_npc(e); },
             [this](const LlamasEnSector& e) { enviar_evento_llamas_en_sector(e); },
+            [this](const PosicionesDeLosJugadores& e) {
+                enviar_evento_posiciones_de_los_jugadores(e);
+            },
             [this](const LoteDelCentro& e) { enviar_evento_lote_del_centro(e); },
             [this](const CentroTerminado& e) { enviar_evento_centro_terminado(e); },
             [this](const PreguntaDeDormir& e) { enviar_evento_pregunta_de_dormir(e); },
@@ -725,6 +728,19 @@ void ProtocoloServidor::enviar_evento_dialogo_npc(const DialogoNpc& dialogo) {
     enviar_tipo(TipoMensaje::DIALOGO_NPC);
     enviar_texto(dialogo.id_npc);
     enviar_texto(dialogo.texto);
+}
+
+void ProtocoloServidor::enviar_evento_posiciones_de_los_jugadores(
+    const PosicionesDeLosJugadores& posiciones) {
+    enviar_tipo(TipoMensaje::POSICIONES_DE_LOS_JUGADORES);
+    enviar_largo(posiciones.jugadores.size());
+    for (const PosicionDeJugador& jugador : posiciones.jugadores) {
+        enviar_u32(jugador.id_jugador);
+        enviar_texto(jugador.mapa);
+        enviar_u32(jugador.x);
+        enviar_u32(jugador.y);
+        enviar_u8(jugador.piso_de_mazmorra);
+    }
 }
 
 void ProtocoloServidor::enviar_evento_llamas_en_sector(const LlamasEnSector& llamas) {

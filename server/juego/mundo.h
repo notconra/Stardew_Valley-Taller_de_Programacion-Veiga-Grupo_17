@@ -17,6 +17,7 @@
 #include "controladores/controlador_de_jugador.h"
 #include "controladores/controlador_de_mazmorra.h"
 #include "controladores/controlador_de_mercado.h"
+#include "controladores/controlador_de_posiciones.h"
 #include "controladores/controlador_de_regalos.h"
 #include "controladores/controlador_de_trampas.h"
 #include "controladores/controlador_del_centro.h"
@@ -52,6 +53,7 @@ private:
     ControladorDeTrampas controlador_de_trampas;
     ControladorDeCultivos controlador_de_cultivos;
     ControladorDeRegalos controlador_de_regalos;
+    ControladorDePosiciones controlador_de_posiciones;
 
     void resolver_transicion(Personaje& personaje, const Transicion& transicion);
 

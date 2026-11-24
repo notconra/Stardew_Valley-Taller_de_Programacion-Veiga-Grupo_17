@@ -147,8 +147,8 @@ struct VenderAnimalMercado {
 struct CerrarMercado {};
 
 // Le regala a otro jugador de la partida (conectado o no) parte de una ranura de la barra.
-// cantidad == 0 regala el stack completo. Las herramientas y la cama no se pueden regalar. El regalo queda
-// pendiente hasta que el destinatario lo abre (AbrirRegalos).
+// cantidad == 0 regala el stack completo. Las herramientas y la cama no se pueden regalar. El
+// regalo queda pendiente hasta que el destinatario lo abre (AbrirRegalos).
 struct EnviarRegalo {
     uint32_t id_destinatario = 0;
     uint8_t ranura = 0;
@@ -404,6 +404,27 @@ struct JugadoresEnSector {
 struct NpcsEnSector {
     std::string mapa;
     std::vector<EstadoNpc> npcs;
+};
+
+// Dónde está un jugador conectado, para el mapa general. "x" e "y" son píxeles del mapa en el que
+// está, como en EstadoJugador. "piso_de_mazmorra" es 0 si no está en la mazmorra.
+struct PosicionDeJugador {
+    uint32_t id_jugador = 0;
+    std::string mapa;
+    uint32_t x = 0;
+    uint32_t y = 0;
+    uint8_t piso_de_mazmorra = 0;
+
+    bool operator==(const PosicionDeJugador&) const = default;
+};
+
+// Dónde está cada jugador conectado, esté en el mapa que esté. Se manda a todos unas pocas veces
+// por segundo cuando alguien se movió o cambió de mapa, y al que entra apenas se conecta. Los
+// nombres no viajan acá: el cliente los saca de JugadoresDeLaPartida.
+struct PosicionesDeLosJugadores {
+    std::vector<PosicionDeJugador> jugadores;
+
+    bool operator==(const PosicionesDeLosJugadores&) const = default;
 };
 
 // Todas las llamas que están volando en el sector del receptor. Se manda en cada tick en que cambia

@@ -93,6 +93,9 @@ using EventoServidor = std::variant<
     LoteDelCentro, CentroTerminado,
 
     // - Dormir
-    PreguntaDeDormir>;
+    PreguntaDeDormir,
+
+    // - Mapa general
+    PosicionesDeLosJugadores>;
 
 #endif
