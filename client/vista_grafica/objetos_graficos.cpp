@@ -330,7 +330,7 @@ void ObjetosGraficos::dibujar_capa(
                 aspecto.desplazamiento_x,
             fila_de_arriba * tamano_en_pantalla - cam_y + aspecto.desplazamiento_y,
             aspecto.ancho_en_casillas * tamano_en_pantalla,
-            aspecto.alto_en_casillas * tamano_en_pantalla};
+            static_cast<int>(aspecto.alto_en_casillas * tamano_en_pantalla)};
         if (!esta_en_pantalla(ocupa, ancho_de_pantalla, alto_de_pantalla)) {
             continue;
         }

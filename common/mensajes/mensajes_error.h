@@ -16,6 +16,7 @@ enum class CodigoError : uint8_t {
 struct ErrorServidor {
     CodigoError codigo{};
     std::string detalle;
+    bool operator==(const ErrorServidor&) const = default;
 };
 
 #endif

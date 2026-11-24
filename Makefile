@@ -1,5 +1,8 @@
 PRECOMMIT = python3 -m pre_commit
-JOBS ?= 3
+
+JOBS ?= 2
+
+export CCACHE_SLOPPINESS := pch_defines,time_macros
 
 deps:   ## instala todo lo que necesita el proyecto (pide sudo)
 	sudo apt-get update
