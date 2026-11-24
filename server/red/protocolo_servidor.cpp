@@ -355,7 +355,7 @@ void ProtocoloServidor::enviar_estado_jugador(const EstadoJugador& estado) {
     enviar_booleano(estado.camina);
     enviar_u8(estado.ranura_activa);
     enviar_u8(static_cast<uint8_t>(estado.accion_actual));
-    enviar_u8(static_cast<uint8_t>(estado.item_en_mano));
+    enviar_u16(static_cast<uint16_t>(estado.item_en_mano));
     enviar_u8(static_cast<uint8_t>(estado.calidad_en_mano));
     enviar_u8(estado.numero_de_accion);
     enviar_u8(static_cast<uint8_t>(estado.descanso));
@@ -372,14 +372,14 @@ void ProtocoloServidor::enviar_estado_objeto_del_mundo(const EstadoObjetoDelMund
     enviar_texto(estado.mapa);
     enviar_u32(estado.columna);
     enviar_u32(estado.fila);
-    enviar_u8(static_cast<uint8_t>(estado.tipo));
+    enviar_u16(static_cast<uint16_t>(estado.tipo));
 }
 
 void ProtocoloServidor::enviar_estado_drop(const EstadoDrop& estado) {
     enviar_u32(estado.id);
     enviar_u32(estado.columna);
     enviar_u32(estado.fila);
-    enviar_u8(static_cast<uint8_t>(estado.tipo));
+    enviar_u16(static_cast<uint16_t>(estado.tipo));
     enviar_u16(estado.cantidad);
     enviar_u8(static_cast<uint8_t>(estado.calidad));
 }
@@ -440,7 +440,7 @@ void ProtocoloServidor::enviar_casilla_tratada(const CasillaTratada& casilla) {
 }
 
 void ProtocoloServidor::enviar_ranura_inventario(const RanuraInventario& ranura) {
-    enviar_u8(static_cast<uint8_t>(ranura.tipo));
+    enviar_u16(static_cast<uint16_t>(ranura.tipo));
     enviar_u16(ranura.cantidad);
     enviar_u8(static_cast<uint8_t>(ranura.calidad));
 }
@@ -530,7 +530,7 @@ void ProtocoloServidor::enviar_evento_objeto_colocado(const ObjetoColocado& obje
     enviar_u32(objeto.id);
     enviar_u32(objeto.columna);
     enviar_u32(objeto.fila);
-    enviar_u8(static_cast<uint8_t>(objeto.tipo));
+    enviar_u16(static_cast<uint16_t>(objeto.tipo));
 }
 
 void ProtocoloServidor::enviar_evento_objeto_retirado(const ObjetoRetirado& objeto) {
@@ -630,7 +630,7 @@ void ProtocoloServidor::enviar_evento_mensaje_de_chat(const MensajeDeChat& mensa
 }
 
 void ProtocoloServidor::enviar_item_catalogo_info(const ItemCatalogoInfo& item) {
-    enviar_u8(static_cast<uint8_t>(item.tipo_item));
+    enviar_u16(static_cast<uint16_t>(item.tipo_item));
     enviar_u8(static_cast<uint8_t>(item.tipo_animal));
     enviar_texto(item.nombre);
     enviar_u32(item.precio);
@@ -687,7 +687,7 @@ void ProtocoloServidor::enviar_evento_lote_del_centro(const LoteDelCentro& lote)
     enviar_largo(lote.requisitos.size());
     for (const RequisitoDeLote& requisito : lote.requisitos) {
         enviar_u8(static_cast<uint8_t>(requisito.tipo));
-        enviar_u8(static_cast<uint8_t>(requisito.item));
+        enviar_u16(static_cast<uint16_t>(requisito.item));
         enviar_u8(static_cast<uint8_t>(requisito.calidad_minima));
         enviar_u8(static_cast<uint8_t>(requisito.logro));
         enviar_u32(requisito.cantidad);

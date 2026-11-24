@@ -11,9 +11,8 @@
 #include "../geometria.h"
 #include "../muebles/muebles.h"
 
-// Dónde queda el acostado, en píxeles desde la casilla de arriba a la izquierda de la cama: en el
-// medio de sus dos casillas, con la cabeza sobre la almohada.
-#define ACOSTADO_DESDE_LA_CAMA_X 8
+// Dónde queda el acostado, en píxeles desde la fila de arriba de la cama: con la cabeza sobre la
+// almohada. A lo ancho queda en el medio de la cama.
 #define ACOSTADO_DESDE_LA_CAMA_Y -2
 
 ControladorDelDia::ControladorDelDia(
@@ -71,7 +70,7 @@ void ControladorDelDia::acostar(Personaje& personaje, const Dormir& pedido) {
     Sector& sector = sectores.en(personaje.mapa_actual);
     const Casilla clickeada{static_cast<int>(pedido.columna), static_cast<int>(pedido.fila)};
     const ObjetoDelMundo* cama = sector.objetos.objeto_en(clickeada.columna, clickeada.fila);
-    if (cama == nullptr || cama->tipo != TipoObjeto::CAMA ||
+    if (cama == nullptr || !recursos.catalogo_de_objetos.es_cama(cama->tipo) ||
         camas_ocupadas.esta_ocupada(sector.id, cama->columna, cama->fila)) {
         return;
     }
@@ -81,9 +80,12 @@ void ControladorDelDia::acostar(Personaje& personaje, const Dormir& pedido) {
         distancia_en_casillas(*propia, clickeada) > recursos.juego.acciones.alcance_en_casillas) {
         return;
     }
+    const int ancho_casilla = sector.mapa.ancho_de_casilla_en_pixeles();
+    const int ancho_de_la_cama =
+        recursos.catalogo_de_objetos.buscar(cama->tipo)->ancho_en_casillas * ancho_casilla;
     reubicar(
         personaje,
-        cama->columna * sector.mapa.ancho_de_casilla_en_pixeles() + ACOSTADO_DESDE_LA_CAMA_X,
+        cama->columna * ancho_casilla + (ancho_de_la_cama - ancho_casilla) / 2,
         cama->fila * sector.mapa.alto_de_casilla_en_pixeles() + ACOSTADO_DESDE_LA_CAMA_Y);
     personaje.descanso = EstadoDeDescanso::ACOSTADO;
     personaje.dio_el_ok = false;
@@ -166,20 +168,23 @@ std::optional<Casilla> ControladorDelDia::casilla_al_lado_de_la_cama(
     }
     const Sector& sector = sectores.en(cama.mapa);
     const ObjetoDelMundo* objeto = sector.objetos.objeto_en(cama.columna, cama.fila);
-    if (objeto == nullptr || objeto->tipo != TipoObjeto::CAMA || objeto->columna != cama.columna ||
-        objeto->fila != cama.fila) {
+    if (objeto == nullptr || !recursos.catalogo_de_objetos.es_cama(objeto->tipo) ||
+        objeto->columna != cama.columna || objeto->fila != cama.fila) {
         return std::nullopt;
     }
+    const DefinicionDeObjeto& definicion = *recursos.catalogo_de_objetos.buscar(objeto->tipo);
+    const int ancho = definicion.ancho_en_casillas;
+    const int alto = definicion.alto_en_casillas;
 
     std::vector<Casilla> candidatas;
-    for (int columna = cama.columna; columna < cama.columna + ANCHO_DE_LA_CAMA; ++columna) {
-        candidatas.push_back(Casilla{columna, cama.fila + ALTO_DE_LA_CAMA});
+    for (int columna = cama.columna; columna < cama.columna + ancho; ++columna) {
+        candidatas.push_back(Casilla{columna, cama.fila + alto});
     }
-    for (int fila = cama.fila + ALTO_DE_LA_CAMA - 1; fila >= cama.fila; --fila) {
-        candidatas.push_back(Casilla{cama.columna + ANCHO_DE_LA_CAMA, fila});
+    for (int fila = cama.fila + alto - 1; fila >= cama.fila; --fila) {
+        candidatas.push_back(Casilla{cama.columna + ancho, fila});
         candidatas.push_back(Casilla{cama.columna - 1, fila});
     }
-    for (int columna = cama.columna; columna < cama.columna + ANCHO_DE_LA_CAMA; ++columna) {
+    for (int columna = cama.columna; columna < cama.columna + ancho; ++columna) {
         candidatas.push_back(Casilla{columna, cama.fila - 1});
     }
     std::vector<Casilla> con_jugadores;

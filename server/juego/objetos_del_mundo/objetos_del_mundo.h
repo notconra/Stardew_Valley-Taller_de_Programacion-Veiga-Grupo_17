@@ -62,6 +62,8 @@ struct DefinicionDeObjeto {
     // Los únicos mapas donde el jugador lo puede colocar (la cama, solo en la casa). Vacío: en
     // cualquiera.
     std::vector<std::string> mapas_permitidos;
+    bool se_pisa = false;
+    bool sirve_para_dormir = false;
 };
 
 // Todos los tipos de objeto que existen. Se arma una sola vez al arrancar (RecursosDeJuego) y
@@ -87,6 +89,9 @@ public:
 
     // Todas las definiciones, ordenadas por tipo.
     const std::map<TipoObjeto, DefinicionDeObjeto>& definiciones() const;
+
+    // Si en ese tipo de objeto se puede dormir.
+    bool es_cama(TipoObjeto tipo) const;
 };
 
 // Peso relativo de un tipo de objeto al elegir cuál colocar al azar. No hace falta que los pesos

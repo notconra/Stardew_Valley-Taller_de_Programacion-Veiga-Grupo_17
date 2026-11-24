@@ -6,13 +6,17 @@
 
 #include "puesto_de_mercado.h"
 
-// Robin, la carpintera. Sólo vende muebles y decoración (incluidos los cofres). Su catálogo
-// muestra 7 productos por día y va rotando. No compra nada.
+// Robin, la carpintera. Vende el cofre y los muebles de furniture.png. No compra nada.
+// El cofre está siempre; de los muebles muestra unos pocos por día, elegidos al azar a partir del
+// número de día: los mismos para todos los jugadores y para todo ese día, y otros al día
+// siguiente.
 class PuestoRobin : public PuestoDeMercado {
 private:
-    static constexpr size_t PRODUCTOS_POR_DIA = 7;
+    ProductoEnVenta cofre;
+    std::vector<ProductoEnVenta> muebles;
 
-    void agregar_mueble(TipoItem tipo, const std::string& nombre, const std::string& descripcion);
+    ProductoEnVenta producto(
+        TipoItem tipo, const std::string& nombre, const std::string& descripcion) const;
 
 public:
     explicit PuestoRobin(const ConfiguracionMercadoServidor& config);
