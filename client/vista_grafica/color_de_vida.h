@@ -12,9 +12,9 @@
 inline SDL_Color color_de_vida(double fraccion) {
     fraccion = std::clamp(fraccion, 0.0, 1.0);
 
-    const SDL_Color verde{102,146,61};
+    const SDL_Color verde{102, 146, 61, 255};
     const SDL_Color amarillo{234, 179, 8, 255};
-    const SDL_Color rojo{229,101,46};
+    const SDL_Color rojo{229, 101, 46, 255};
 
     const SDL_Color& desde = fraccion >= 0.5 ? amarillo : rojo;
     const SDL_Color& hasta = fraccion >= 0.5 ? verde : amarillo;
