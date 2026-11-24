@@ -202,18 +202,16 @@ void GestorDeSectores::colocar_en_aparicion(Personaje& personaje, const std::str
     difundir_jugadores(id_mapa);
 }
 
-void GestorDeSectores::establecer_aparicion(const std::string& id_mapa, double x, double y) {
-    auto sector_encontrado = sectores.find(id_mapa);
-    if (sector_encontrado != sectores.end()) {
-        sector_encontrado->second.establecer_aparicion(x, y);
+Casilla GestorDeSectores::casilla_de_llegada(
+    const std::string& destino, const Transicion& transicion) const {
+    const auto sector = sectores.find(destino);
+    if (!transicion.llegada.empty() && sector != sectores.end()) {
+        const Casilla* llegada = sector->second.mapa.buscar_llegada(transicion.llegada);
+        if (llegada != nullptr) {
+            return *llegada;
+        }
     }
-}
-
-void GestorDeSectores::bloquear_casilla(const std::string& id_mapa, int columna, int fila) {
-    auto sector_encontrado = sectores.find(id_mapa);
-    if (sector_encontrado != sectores.end()) {
-        sector_encontrado->second.bloquear_casilla(columna, fila);
-    }
+    return Casilla{transicion.columna_destino, transicion.fila_destino};
 }
 
 void GestorDeSectores::colocar_en(

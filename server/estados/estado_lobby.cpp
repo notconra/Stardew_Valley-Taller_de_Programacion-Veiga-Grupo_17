@@ -34,6 +34,11 @@ EstadoDeConexion::ProximoEstado EstadoLobby::listar_partidas(const ListarPartida
     return nullptr;
 }
 
+EstadoDeConexion::ProximoEstado EstadoLobby::listar_mundos(const ListarMundos&) {
+    encolar(ListaMundos{contexto.administrador.listar_mundos()});
+    return nullptr;
+}
+
 EstadoDeConexion::ProximoEstado EstadoLobby::crear_partida(const CrearPartida& comando) {
     if (comando.nombre_partida.empty()) {
         responder_error(CodigoError::NO_PERMITIDO, "el nombre de la granja no puede estar vacío");

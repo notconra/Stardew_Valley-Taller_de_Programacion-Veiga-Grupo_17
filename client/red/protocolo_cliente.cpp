@@ -13,6 +13,7 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
       receptores_eventos{
           {TipoMensaje::ERROR_SERVIDOR, [this] { return recibir_error_servidor(); }},
           {TipoMensaje::LISTA_PARTIDAS, [this] { return recibir_lista_partidas(); }},
+          {TipoMensaje::LISTA_MUNDOS, [this] { return recibir_lista_mundos(); }},
           {TipoMensaje::PARTIDA_ENTRADA, [this] { return recibir_entrada_exitosa_a_partida(); }},
           {TipoMensaje::MULTIJUGADOR_ACTIVADO, [this] { return recibir_multijugador_activado(); }},
           {TipoMensaje::PARTIDA_ABANDONADA, [this] { return recibir_partida_abandonada(); }},
@@ -46,6 +47,8 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::REGALOS_PENDIENTES, [this] { return recibir_regalos_pendientes(); }},
           {TipoMensaje::NPCS_EN_SECTOR, [this] { return recibir_npcs_en_sector(); }},
           {TipoMensaje::LLAMAS_EN_SECTOR, [this] { return recibir_llamas_en_sector(); }},
+          {TipoMensaje::POSICIONES_DE_LOS_JUGADORES,
+           [this] { return recibir_posiciones_de_los_jugadores(); }},
           {TipoMensaje::DIALOGO_NPC, [this] { return recibir_dialogo_npc(); }},
           {TipoMensaje::LOTE_DEL_CENTRO, [this] { return recibir_lote_del_centro(); }},
           {TipoMensaje::CENTRO_TERMINADO, [this] { return recibir_centro_terminado(); }},
@@ -64,6 +67,7 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const UnirsePartida& m) { enviar_comando_unirse_partida(m); },
             [this](const RetomarPartida& m) { enviar_comando_retomar_partida(m); },
             [this](const EliminarPartida& m) { enviar_comando_eliminar_partida(m); },
+            [this](const ListarMundos& m) { enviar_comando_listar_mundos(m); },
             [this](const ActivarMultijugador& m) { enviar_comando_activar_multijugador(m); },
             [this](const SalirDePartida& m) { enviar_comando_salir_de_partida(m); },
             [this](const GuardarPartida& m) { enviar_comando_guardar_partida(m); },
@@ -129,6 +133,10 @@ void ProtocoloCliente::enviar_comando_retomar_partida(const RetomarPartida& reto
 void ProtocoloCliente::enviar_comando_eliminar_partida(const EliminarPartida& eliminar) {
     enviar_tipo(TipoMensaje::ELIMINAR_PARTIDA);
     enviar_texto(eliminar.codigo_partida);
+}
+
+void ProtocoloCliente::enviar_comando_listar_mundos(const ListarMundos&) {
+    enviar_tipo(TipoMensaje::LISTAR_MUNDOS);
 }
 
 void ProtocoloCliente::enviar_comando_activar_multijugador(const ActivarMultijugador&) {
@@ -327,6 +335,16 @@ ListaPartidas ProtocoloCliente::recibir_lista_partidas() {
     }
 
     return ListaPartidas{partidas};
+}
+
+ListaMundos ProtocoloCliente::recibir_lista_mundos() {
+    uint16_t cantidad = recibir_u16();
+    std::vector<std::string> mundos;
+    mundos.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        mundos.push_back(recibir_texto());
+    }
+    return ListaMundos{mundos};
 }
 
 EntradaExitosaAPartida ProtocoloCliente::recibir_entrada_exitosa_a_partida() {
@@ -609,6 +627,22 @@ NpcsEnSector ProtocoloCliente::recibir_npcs_en_sector() {
         npcs.npcs.push_back(recibir_estado_npc());
     }
     return npcs;
+}
+
+PosicionesDeLosJugadores ProtocoloCliente::recibir_posiciones_de_los_jugadores() {
+    PosicionesDeLosJugadores posiciones;
+    const uint16_t cantidad = recibir_u16();
+    posiciones.jugadores.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        PosicionDeJugador jugador;
+        jugador.id_jugador = recibir_u32();
+        jugador.mapa = recibir_texto();
+        jugador.x = recibir_u32();
+        jugador.y = recibir_u32();
+        jugador.piso_de_mazmorra = recibir_u8();
+        posiciones.jugadores.push_back(jugador);
+    }
+    return posiciones;
 }
 
 LlamasEnSector ProtocoloCliente::recibir_llamas_en_sector() {

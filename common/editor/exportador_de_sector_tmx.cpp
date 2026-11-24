@@ -5,15 +5,21 @@
 #include <string>
 #include <vector>
 
+#include "../llegadas.h"
 #include "capa_del_mapa.h"
 #include "catalogo_de_estampas.h"
 #include "entidad_del_mapa.h"
 #include "tipo_entidad.h"
 
+// "llegada" es el lugar con nombre del mapa destino adonde lleva (vacío si no tiene), y
+// "llegada_propia" el lugar con nombre que se marca delante de esta puerta en el mapa que se
+// exporta, para que lleguen ahí desde el destino (vacío si no hace falta).
 struct DefinicionTransicionTMX {
     const char* mapa_destino;
     int columna_destino;
     int fila_destino;
+    const char* llegada;
+    const char* llegada_propia;
 };
 
 static const std::map<TipoEntidad, const char*> PUESTOS_POR_TIPO = {
@@ -708,19 +714,37 @@ void ExportadorDeSectorTMX::inyectar_tiles_de_salida_caverna(
 
 void ExportadorDeSectorTMX::exportar_entidades() {
     std::map<TipoEntidad, DefinicionTransicionTMX> transiciones_por_tipo = {
-        {TipoEntidad::CABANIA, {DESTINO_CABANIA, COLUMNA_SPAWN_CASA, FILA_SPAWN_CASA}},
-        {TipoEntidad::CENTRO_COMUNITARIO, {DESTINO_CENTRO_COMUNITARIO, 32, 22}},
+        {TipoEntidad::CABANIA,
+         {DESTINO_CABANIA,
+          COLUMNA_SPAWN_CASA,
+          FILA_SPAWN_CASA,
+          LLEGADA_ENTRADA,
+          LLEGADA_PUERTA_DE_LA_CASA}},
+        {TipoEntidad::CENTRO_COMUNITARIO,
+         {DESTINO_CENTRO_COMUNITARIO, 32, 22, LLEGADA_ENTRADA, LLEGADA_PUERTA_DEL_CENTRO}},
         {TipoEntidad::MERCADO,
-         {DESTINO_MERCADO, destinos.columna_destino_mercado, destinos.fila_destino_mercado}},
+         {DESTINO_MERCADO,
+          destinos.columna_destino_mercado,
+          destinos.fila_destino_mercado,
+          LLEGADA_ENTRADA,
+          LLEGADA_PUERTA_DEL_MERCADO}},
         {TipoEntidad::TRANSICION_PUEBLO,
-         {DESTINO_PUEBLO, destinos.columna_destino_pueblo, destinos.fila_destino_pueblo}},
+         {DESTINO_PUEBLO, destinos.columna_destino_pueblo, destinos.fila_destino_pueblo, "", ""}},
         {TipoEntidad::TRANSICION_GRANJA,
-         {DESTINO_GRANJA, destinos.columna_destino_granja, destinos.fila_destino_granja}},
+         {DESTINO_GRANJA, destinos.columna_destino_granja, destinos.fila_destino_granja, "", ""}},
         {TipoEntidad::ENTRADA_CAVERNA,
-         {DESTINO_CAVERNA, destinos.columna_destino_caverna, destinos.fila_destino_caverna}},
+         {DESTINO_CAVERNA,
+          destinos.columna_destino_caverna,
+          destinos.fila_destino_caverna,
+          "",
+          LLEGADA_CUEVA}},
         {TipoEntidad::SALIDA_CAVERNA,
-         {DESTINO_GRANJA, destinos.columna_salida_caverna, destinos.fila_salida_caverna}},
-        {TipoEntidad::ESCALERA_NIVEL, {DESTINO_SIGUIENTE_NIVEL, 0, 0}}};
+         {DESTINO_GRANJA,
+          destinos.columna_salida_caverna,
+          destinos.fila_salida_caverna,
+          LLEGADA_CUEVA,
+          ""}},
+        {TipoEntidad::ESCALERA_NIVEL, {DESTINO_SIGUIENTE_NIVEL, 0, 0, "", ""}}};
 
     std::vector<EntidadDelMapa> entidades = mapa.listar_todas_las_entidades();
     size_t indice = 0;
@@ -811,7 +835,17 @@ void ExportadorDeSectorTMX::exportar_entidades() {
                 alto_pixeles,
                 iterador_transicion->second.mapa_destino,
                 iterador_transicion->second.columna_destino,
-                iterador_transicion->second.fila_destino);
+                iterador_transicion->second.fila_destino,
+                iterador_transicion->second.llegada);
+            // El lugar donde aparece el que sale por esta puerta: la casilla de abajo de la zona.
+            const std::string llegada_propia = iterador_transicion->second.llegada_propia;
+            if (!llegada_propia.empty()) {
+                escritor.agregar_llegada(
+                    CAPA_TRANSICIONES_TMX,
+                    llegada_propia,
+                    posicion_x_pixeles / ANCHO_TILE_PIXELES,
+                    (posicion_y_pixeles + alto_pixeles) / ALTO_TILE_PIXELES);
+            }
         } else {
             auto iterador_puesto = PUESTOS_POR_TIPO.find(tipo);
             if (iterador_puesto != PUESTOS_POR_TIPO.end()) {
@@ -844,7 +878,13 @@ void ExportadorDeSectorTMX::exportar_entidades() {
             10,
             DESTINO_PUEBLO,
             destinos.columna_destino_pueblo,
-            destinos.fila_destino_pueblo);
+            destinos.fila_destino_pueblo,
+            LLEGADA_PUERTA_DEL_MERCADO);
+        escritor.agregar_llegada(
+            CAPA_TRANSICIONES_TMX,
+            LLEGADA_ENTRADA,
+            columna_puerta,
+            fila_puerta - 1);
     }
 }
 

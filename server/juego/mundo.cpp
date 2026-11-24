@@ -14,7 +14,6 @@ Mundo::Mundo(
       sectores(
           recursos_de_juego, ticks_por_segundo, personajes, notificador_de_juego, nombre_mundo),
       gestor_de_npcs(recursos_de_juego, sectores, ticks_por_segundo),
-      tiene_aparicion_personalizada_granja(false),
       controlador_de_jugador(sectores, notificador_de_juego),
       controlador_del_dia(
           recursos_de_juego.juego.dia, ticks_por_segundo, sectores, personajes, recursos_de_juego,
@@ -38,8 +37,8 @@ Mundo::Mundo(
       controlador_de_enemigos(sectores, personajes, notificador_de_juego, controlador_del_centro),
       controlador_de_trampas(sectores, personajes, notificador_de_juego),
       controlador_de_cultivos(sectores, notificador_de_juego),
-      controlador_de_regalos(
-          personajes, recursos_de_juego.catalogo_de_items, notificador_de_juego) {
+      controlador_de_regalos(personajes, recursos_de_juego.catalogo_de_items, notificador_de_juego),
+      controlador_de_posiciones(personajes, sectores, notificador_de_juego, ticks_por_segundo) {
     sectores.cargar_mapas_guardados(datos_guardados.mapas);
     sectores.cargar_cultivos_guardados(datos_guardados.cultivos);
     sectores.cargar_cofres_guardados(datos_guardados.cofres);
@@ -162,17 +161,7 @@ void Mundo::conectar(
         sectores.colocar_en_aparicion(personaje, recursos.mapa_inicial);
     }
     controlador_del_dia.despertar_si_volvio_desmayado(personaje);
-}
-
-void Mundo::establecer_aparicion(const std::string& id_mapa, double x, double y) {
-    if (id_mapa == "granja") {
-        tiene_aparicion_personalizada_granja = true;
-    }
-    sectores.establecer_aparicion(id_mapa, x, y);
-}
-
-void Mundo::bloquear_casilla(const std::string& id_mapa, int columna, int fila) {
-    sectores.bloquear_casilla(id_mapa, columna, fila);
+    controlador_de_posiciones.al_conectarse(personaje);
 }
 
 void Mundo::desconectar(uint32_t id_jugador) {
@@ -253,147 +242,19 @@ void Mundo::resolver_transicion(Personaje& personaje, const Transicion& transici
     }
     // La puerta del pueblo lleva al centro en ruinas, o al arreglado si ya se completaron todos los
     // lotes. Los dos mapas tienen la entrada en el mismo lugar.
-    std::string destino_solicitado = transicion.mapa_destino;
-    if (destino_solicitado == "CommunityCenter") {
-        destino_solicitado = "centro_comunitario";
-    }
-    std::string destino = controlador_del_centro.mapa_para(destino_solicitado);
+    const std::string destino = controlador_del_centro.mapa_para(transicion.mapa_destino);
     if (!sectores.existe(destino)) {
         return;
     }
-    Sector& sector_destino = sectores.en(destino);
-    bool salida_de_casa_a_granja =
-        (personaje.mapa_actual == "FarmHouse" || personaje.mapa_actual == "FarmHouse2") &&
-        destino == "granja";
-
-    bool salida_de_mina_a_granja =
-        destino == "granja" &&
-        (controlador_de_mazmorra.es_nivel_de_mazmorra(personaje.mapa_actual) ||
-         personaje.mapa_actual == "mazmorra" || personaje.mapa_actual == "caverna" ||
-         personaje.mapa_actual.rfind("mina", 0) == 0);
-
-    bool salida_de_centro_a_pueblo = (personaje.mapa_actual == "centro_comunitario" ||
-                                      personaje.mapa_actual == "centro_comunitario_arreglado") &&
-                                     (destino == "Town" || destino == "pueblo");
-
-    bool salida_de_mercado_a_pueblo =
-        personaje.mapa_actual == "mercado" && (destino == "Town" || destino == "pueblo");
-
-    bool destino_invalido = !sector_destino.jugadores.puede_pararse_en_casilla(
-        transicion.columna_destino,
-        transicion.fila_destino);
-
-    if (salida_de_mina_a_granja) {
-        if (!trasladar_a_transicion_opuesta(
-                personaje,
-                sector_destino,
-                destino,
-                {"mazmorra", "caverna"},
-                0,
-                0,
-                true,
-                true)) {
-            sectores.colocar_en_aparicion(personaje, destino);
-        }
-    } else if (salida_de_centro_a_pueblo) {
-        if (!trasladar_a_transicion_opuesta(
-                personaje,
-                sector_destino,
-                destino,
-                {"centro_comunitario", "centro_comunitario_arreglado", "CommunityCenter"},
-                1,
-                0,
-                true,
-                false)) {
-            sectores.colocar_en_aparicion(personaje, destino);
-        }
-    } else if (salida_de_mercado_a_pueblo) {
-        if (!trasladar_a_transicion_opuesta(
-                personaje,
-                sector_destino,
-                destino,
-                {"mercado"},
-                1,
-                0,
-                true,
-                false)) {
-            sectores.colocar_en_aparicion(personaje, destino);
-        }
-    } else if (
-        salida_de_casa_a_granja && (tiene_aparicion_personalizada_granja ||
-                                    sectores.es_mapa_personalizado("granja") || destino_invalido)) {
-        if (!trasladar_a_transicion_opuesta(
-                personaje,
-                sector_destino,
-                destino,
-                {"FarmHouse2"},
-                0,
-                0,
-                false,
-                false)) {
-            sectores.colocar_en_aparicion(personaje, destino);
-        }
-    } else if (destino_invalido) {
-        sectores.colocar_en_aparicion(personaje, destino);
+    // Si la casilla de llegada no sirve (un mapa armado a mano sin la llegada que se nombra y con
+    // una casilla que no le corresponde), aparece en el punto de aparición del destino.
+    const Casilla llegada = sectores.casilla_de_llegada(destino, transicion);
+    if (sectores.en(destino).jugadores.puede_pararse_en_casilla(llegada.columna, llegada.fila)) {
+        sectores.trasladar_a_casilla(personaje, destino, llegada.columna, llegada.fila);
     } else {
-        sectores.trasladar_a_casilla(
-            personaje,
-            destino,
-            transicion.columna_destino,
-            transicion.fila_destino);
+        sectores.colocar_en_aparicion(personaje, destino);
     }
     controlador_de_mercado.al_cambiar_de_mapa(personaje);
-}
-
-bool Mundo::trasladar_a_transicion_opuesta(
-    Personaje& personaje, Sector& sector_destino, const std::string& destino,
-    const std::vector<std::string>& destinos_buscados, int desplazamiento_columna,
-    int desplazamiento_fila, bool usar_borde_inferior, bool incluir_prefijo_mina) {
-    auto transiciones_sector = sector_destino.mapa.obtener_transiciones();
-    size_t indice_transicion = 0;
-    bool trasladada = false;
-    while (indice_transicion < transiciones_sector.size() && !trasladada) {
-        auto entrada_transicion = transiciones_sector[indice_transicion];
-        std::string destino_trans = entrada_transicion.second.mapa_destino;
-        bool coincide = false;
-        size_t indice_buscado = 0;
-        while (indice_buscado < destinos_buscados.size() && !coincide) {
-            if (destino_trans == destinos_buscados[indice_buscado]) {
-                coincide = true;
-            }
-            indice_buscado++;
-        }
-        if (incluir_prefijo_mina && destino_trans.rfind("mina", 0) == 0) {
-            coincide = true;
-        }
-        if (coincide) {
-            int columna_objetivo =
-                static_cast<int>(entrada_transicion.first.x / 16) + desplazamiento_columna;
-            int fila_base =
-                usar_borde_inferior
-                    ? static_cast<int>(
-                          (entrada_transicion.first.y + entrada_transicion.first.alto) / 16)
-                    : static_cast<int>(entrada_transicion.first.y / 16);
-            int fila_objetivo = fila_base + desplazamiento_fila;
-            if (sector_destino.colisiones.esta_libre(columna_objetivo, fila_objetivo) &&
-                sector_destino.jugadores.puede_pararse_en_casilla(
-                    columna_objetivo,
-                    fila_objetivo)) {
-                sectores.trasladar_a_casilla(personaje, destino, columna_objetivo, fila_objetivo);
-                trasladada = true;
-            } else if (
-                sector_destino.colisiones.esta_libre(columna_objetivo, fila_objetivo + 1) &&
-                sector_destino.jugadores.puede_pararse_en_casilla(
-                    columna_objetivo,
-                    fila_objetivo + 1)) {
-                sectores
-                    .trasladar_a_casilla(personaje, destino, columna_objetivo, fila_objetivo + 1);
-                trasladada = true;
-            }
-        }
-        indice_transicion++;
-    }
-    return trasladada;
 }
 
 bool Mundo::requiere_clic(const Transicion& transicion) const {
@@ -446,6 +307,7 @@ void Mundo::actualizar() {
     controlador_de_cofres.actualizar();
     controlador_de_drops.actualizar();
     controlador_del_centro.actualizar();
+    controlador_de_posiciones.actualizar();
 }
 
 std::optional<DatosJugadorGuardado> Mundo::obtener_datos_jugador(uint32_t id_jugador) const {

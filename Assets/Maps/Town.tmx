@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.2-2-geb83ddb9" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="130" height="110" tilewidth="16" tileheight="16" infinite="0" nextlayerid="20" nextobjectid="54">
+<map version="1.10" tiledversion="1.12.2-2-geb83ddb9" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="130" height="110" tilewidth="16" tileheight="16" infinite="0" nextlayerid="20" nextobjectid="72">
  <properties>
   <property name="BrookSounds" value="94 5 5"/>
   <property name="DayTiles" value="AlwaysFront 52 98 907 AlwaysFront 56 98 907 AlwaysFront 24 50 907 AlwaysFront 33 53 907 AlwaysFront 24 58 907 AlwaysFront 27 72 907 AlwaysFront 30 72 907 AlwaysFront 38 65 907 AlwaysFront 27 86 907 AlwaysFront 17 86 907 AlwaysFront 21 64 907 Buildings 92 79 186 Buildings 41 69 560 Buildings 71 67 720"/>
@@ -4295,6 +4295,7 @@
   </object>
   <object id="49" x="688.182" y="880.182" width="32.1818" height="32">
    <properties>
+    <property name="llegada" value="entrada"/>
     <property name="columna_destino" type="int" value="9"/>
     <property name="fila_destino" type="int" value="14"/>
     <property name="mapa_destino" value="mercado"/>
@@ -4302,9 +4303,118 @@
   </object>
   <object id="50" x="832" y="304" width="32" height="16">
    <properties>
+    <property name="llegada" value="entrada"/>
     <property name="columna_destino" type="int" value="32"/>
     <property name="fila_destino" type="int" value="22"/>
     <property name="mapa_destino" value="centro_comunitario"/>
+   </properties>
+  </object>
+  <object id="54" name="puerta_mercado" x="688" y="896" width="16" height="16">
+   <properties>
+    <property name="nombre" value="puerta_mercado"/>
+    <property name="tipo" value="llegada"/>
+   </properties>
+  </object>
+  <object id="55" name="puerta_centro" x="832" y="320" width="16" height="16">
+   <properties>
+    <property name="nombre" value="puerta_centro"/>
+    <property name="tipo" value="llegada"/>
+   </properties>
+  </object>
+  <object id="56" name="pierre_casa" x="672" y="1264" width="16" height="16">
+   <properties>
+    <property name="nombre" value="pierre_casa"/>
+    <property name="tipo" value="llegada"/>
+   </properties>
+  </object>
+  <object id="57" name="pierre_puerta" x="640" y="928" width="16" height="16">
+   <properties>
+    <property name="nombre" value="pierre_puerta"/>
+    <property name="tipo" value="llegada"/>
+   </properties>
+  </object>
+  <object id="58" name="pierre_paseo" x="464" y="432" width="16" height="16">
+   <properties>
+    <property name="nombre" value="pierre_paseo"/>
+    <property name="tipo" value="llegada"/>
+   </properties>
+  </object>
+  <object id="59" name="pierre_noche" x="928" y="1024" width="16" height="16">
+   <properties>
+    <property name="nombre" value="pierre_noche"/>
+    <property name="tipo" value="llegada"/>
+   </properties>
+  </object>
+  <object id="60" name="clint_casa" x="432" y="1552" width="16" height="16">
+   <properties>
+    <property name="nombre" value="clint_casa"/>
+    <property name="tipo" value="llegada"/>
+   </properties>
+  </object>
+  <object id="61" name="clint_puerta" x="672" y="928" width="16" height="16">
+   <properties>
+    <property name="nombre" value="clint_puerta"/>
+    <property name="tipo" value="llegada"/>
+   </properties>
+  </object>
+  <object id="62" name="clint_paseo" x="368" y="416" width="16" height="16">
+   <properties>
+    <property name="nombre" value="clint_paseo"/>
+    <property name="tipo" value="llegada"/>
+   </properties>
+  </object>
+  <object id="63" name="clint_noche" x="1536" y="1296" width="16" height="16">
+   <properties>
+    <property name="nombre" value="clint_noche"/>
+    <property name="tipo" value="llegada"/>
+   </properties>
+  </object>
+  <object id="64" name="marnie_casa" x="720" y="1264" width="16" height="16">
+   <properties>
+    <property name="nombre" value="marnie_casa"/>
+    <property name="tipo" value="llegada"/>
+   </properties>
+  </object>
+  <object id="65" name="marnie_puerta" x="704" y="928" width="16" height="16">
+   <properties>
+    <property name="nombre" value="marnie_puerta"/>
+    <property name="tipo" value="llegada"/>
+   </properties>
+  </object>
+  <object id="66" name="marnie_paseo" x="576" y="1248" width="16" height="16">
+   <properties>
+    <property name="nombre" value="marnie_paseo"/>
+    <property name="tipo" value="llegada"/>
+   </properties>
+  </object>
+  <object id="67" name="marnie_noche" x="320" y="1424" width="16" height="16">
+   <properties>
+    <property name="nombre" value="marnie_noche"/>
+    <property name="tipo" value="llegada"/>
+   </properties>
+  </object>
+  <object id="68" name="robin_casa" x="880" y="1664" width="16" height="16">
+   <properties>
+    <property name="nombre" value="robin_casa"/>
+    <property name="tipo" value="llegada"/>
+   </properties>
+  </object>
+  <object id="69" name="robin_puerta" x="736" y="928" width="16" height="16">
+   <properties>
+    <property name="nombre" value="robin_puerta"/>
+    <property name="tipo" value="llegada"/>
+   </properties>
+  </object>
+  <object id="70" name="robin_paseo" x="784" y="512" width="16" height="16">
+   <properties>
+    <property name="nombre" value="robin_paseo"/>
+    <property name="tipo" value="llegada"/>
+   </properties>
+  </object>
+  <object id="71" name="robin_noche" x="944" y="1392" width="16" height="16">
+   <properties>
+    <property name="nombre" value="robin_noche"/>
+    <property name="tipo" value="llegada"/>
    </properties>
   </object>
  </objectgroup>

@@ -12,6 +12,7 @@
 #include "../configuracion/configuracion_servidor_datos.h"
 #include "../juego/recursos/recursos_de_juego.h"
 #include "../persistencia/indice_partidas.h"
+#include "catalogo_de_mundos.h"
 #include "ingreso_a_partida.h"
 #include "partida.h"
 #include "sesion_de_partida.h"
@@ -50,6 +51,7 @@ private:
         const std::string& codigo_partida, const std::string& nombre_mundo = "");
 
     IndicePartidas indice;
+    CatalogoDeMundos mundos;
 
     static bool comparar_por_ultima_modificacion(
         const InfoPartida& primera_partida, const InfoPartida& segunda_partida);
@@ -69,6 +71,9 @@ public:
     std::vector<InfoPartida> listar(uint32_t id_cliente) const;
 
     void eliminar(const std::string& codigo_partida);
+
+    // Los mundos del editor con los que se puede crear una partida (además del estándar).
+    std::vector<std::string> listar_mundos() const;
 
     // La partida por defecto tiene un sólo jugador y el cliente que la crea
     // entra a ella.

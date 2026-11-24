@@ -41,12 +41,20 @@ TierraGrafica::TierraGrafica(
       escala_de_tiles(configuracion_graficos.escala_de_tiles) {
 }
 
+bool TierraGrafica::cuenta_como_vecina(
+    const std::map<std::pair<int, int>, CasillaTratada>& tierra, int columna, int fila,
+    bool solo_regadas) {
+    const auto encontrada = tierra.find({columna, fila});
+    return encontrada != tierra.end() && (!solo_regadas || encontrada->second.regada);
+}
+
 std::pair<int, int> TierraGrafica::dibujo_segun_vecinas(
-    const std::map<std::pair<int, int>, CasillaTratada>& tierra, int columna, int fila) {
-    const int indice = (tierra.contains({columna, fila - 1}) ? 1 : 0) +
-                       (tierra.contains({columna, fila + 1}) ? 2 : 0) +
-                       (tierra.contains({columna - 1, fila}) ? 4 : 0) +
-                       (tierra.contains({columna + 1, fila}) ? 8 : 0);
+    const std::map<std::pair<int, int>, CasillaTratada>& tierra, int columna, int fila,
+    bool solo_regadas) {
+    const int indice = (cuenta_como_vecina(tierra, columna, fila - 1, solo_regadas) ? 1 : 0) +
+                       (cuenta_como_vecina(tierra, columna, fila + 1, solo_regadas) ? 2 : 0) +
+                       (cuenta_como_vecina(tierra, columna - 1, fila, solo_regadas) ? 4 : 0) +
+                       (cuenta_como_vecina(tierra, columna + 1, fila, solo_regadas) ? 8 : 0);
     return DIBUJO_POR_VECINAS[indice];
 }
 
@@ -69,7 +77,8 @@ void TierraGrafica::dibujar(
             continue;
         }
 
-        const auto [columna_dibujo, fila_dibujo] = dibujo_segun_vecinas(tierra, columna, fila);
+        const auto [columna_dibujo, fila_dibujo] =
+            dibujo_segun_vecinas(tierra, columna, fila, false);
         const SDL_Rect origen{
             columna_dibujo * tamano_de_tile,
             fila_dibujo * tamano_de_tile,
@@ -78,9 +87,11 @@ void TierraGrafica::dibujar(
         const SDL_Rect destino{x, y, tamano_en_pantalla, tamano_en_pantalla};
         SDL_RenderCopy(renderer, textura.ptr(), &origen, &destino);
         if (casilla.regada) {
+            const auto [columna_mojada, fila_mojada] =
+                dibujo_segun_vecinas(tierra, columna, fila, true);
             const SDL_Rect mojada{
-                origen.x + COLUMNAS_HASTA_LA_TIERRA_MOJADA * tamano_de_tile,
-                origen.y,
+                (columna_mojada + COLUMNAS_HASTA_LA_TIERRA_MOJADA) * tamano_de_tile,
+                fila_mojada * tamano_de_tile,
                 tamano_de_tile,
                 tamano_de_tile};
             SDL_RenderCopy(renderer, textura.ptr(), &mojada, &destino);

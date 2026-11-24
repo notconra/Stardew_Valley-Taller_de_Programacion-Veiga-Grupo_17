@@ -48,6 +48,7 @@ enum class TipoMensaje : uint8_t {
 
     // Regalos (sigue)
     RECHAZAR_REGALO = 0x22,
+    LISTAR_MUNDOS = 0x23,
 
     // Servidor a cliente
     ERROR_SERVIDOR = 0x81,
@@ -105,7 +106,7 @@ enum class TipoMensaje : uint8_t {
     // NPCs
     NPCS_EN_SECTOR = 0xA4,
     DIALOGO_NPC = 0xA5,
-    
+
     // Estado de un lote del centro comunitario (al abrirlo o cuando cambia)
     LOTE_DEL_CENTRO = 0xA6,
 
@@ -117,6 +118,12 @@ enum class TipoMensaje : uint8_t {
 
     // Llamas que lanzaron las Skulls, volando por el sector
     LLAMAS_EN_SECTOR = 0xAA,
+
+    // Dónde está cada jugador conectado, para el mapa general
+    POSICIONES_DE_LOS_JUGADORES = 0xAB,
+
+    // Respuesta a LISTAR_MUNDOS: los mundos del editor que tiene el servidor
+    LISTA_MUNDOS = 0xAC,
 };
 
 #endif

@@ -136,16 +136,6 @@ void Sector::agregar_modificaciones_a(std::vector<ModificacionCasilla>& modifica
     tierra.agregar_modificaciones_a(modificaciones);
 }
 
-void Sector::establecer_aparicion(double x, double y) {
-    jugadores.establecer_aparicion(x, y);
-}
-
-void Sector::bloquear_casilla(int columna, int fila) {
-    if (colisiones.esta_libre(columna, fila)) {
-        colisiones.colocar(columna, fila);
-    }
-}
-
 void Sector::cargar_cofre(
     uint32_t columna, uint32_t fila, const std::vector<RanuraInventario>& ranuras) {
     const int id_objeto =

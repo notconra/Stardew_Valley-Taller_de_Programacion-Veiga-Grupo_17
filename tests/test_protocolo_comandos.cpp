@@ -36,6 +36,10 @@ TEST_F(ProtocoloComandosTest, EliminarPartida) {
     verificar_comando(EliminarPartida{"XYZ789"});
 }
 
+TEST_F(ProtocoloComandosTest, ListarMundos) {
+    verificar_comando(ListarMundos{});
+}
+
 TEST_F(ProtocoloComandosTest, ActivarMultijugador) {
     verificar_comando(ActivarMultijugador{});
 }

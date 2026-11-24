@@ -22,6 +22,7 @@
 #include "../../common/modo_uso.h"
 #include "../../common/muebles/catalogo_muebles.h"
 #include "../../common/visitantes.h"
+#include "chat/estilo_del_chat.h"
 #include "entrada_del_usuario.h"
 #include "iconos_de_items.h"
 #include "inicio_de_sdl.h"
@@ -167,9 +168,7 @@ void VistaPartida::limitar_cuadro(uint32_t inicio_del_cuadro) const {
 
 bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     id_jugador = partida.id_jugador;
-    if (!partida.nombre_mundo.empty()) {
-        establecer_mundo(partida.nombre_mundo);
-    }
+    establecer_mundo(partida.nombre_mundo);
     intencion_enviada = Moverse{};
     ultimo_estado_juego = EstadoJuego{};
     ultimo_inventario = InventarioJugador{};
@@ -178,6 +177,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     tierra_tratada.clear();
     hora_del_juego.reset();
     jugadores_de_la_partida = JugadoresDeLaPartida{};
+    posiciones_de_los_jugadores = PosicionesDeLosJugadores{};
     regalos_pendientes = RegalosPendientes{};
     lotes_recibidos.clear();
     lotes_del_centro.clear();
@@ -254,6 +254,10 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     HudMercado hud_mercado(renderizador.ptr(), iconos, efectos, configuracion.chat.ruta_fuente);
     CuadroDeAviso cuadro_de_aviso(renderizador.ptr(), configuracion.chat.ruta_fuente);
     CuadroDeDialogo cuadro_de_dialogo(renderizador.ptr(), configuracion.chat.ruta_fuente);
+    MapaGeneral mapa_general(renderizador.ptr(), configuracion.chat.ruta_fuente);
+    // Con un mundo del editor, el mapa general muestra su granja y su pueblo.
+    mapa_general
+        .usar_mundo(mundo_actual, configuracion_de("granja"), configuracion_de("Town"), graficos);
     std::optional<RelojGrafico> reloj_grafico;
     std::optional<PantallaDeDescanso> pantalla_de_descanso;
     std::optional<PanelDeRegalos> regalos;
@@ -309,6 +313,14 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
                 conexion.enviar_comando(*mensaje);
             }
         }
+        // Tab o M abren y cierran el mapa general. No frena al jugador: se puede caminar con el
+        // mapa abierto.
+        if (entrada.pedidos().alternar_mapa) {
+            mapa_general.alternar();
+        }
+        mapa_general.preparar(
+            renderizador.ptr(),
+            hora_del_juego.has_value() ? hora_del_juego->estacion : Estacion::PRIMAVERA);
 
         if (entrada.pidio_cerrar()) {
             efectos_actuales = nullptr;
@@ -317,7 +329,9 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
         }
         if (!cuadro_de_aviso.esta_visible() && !cuadro_de_dialogo.esta_visible() &&
             entrada.pedidos().salir) {
-            if (pantalla_de_descanso->esta_preguntando()) {
+            if (mapa_general.esta_abierto()) {
+                mapa_general.cerrar();
+            } else if (pantalla_de_descanso->esta_preguntando()) {
                 pantalla_de_descanso->cancelar_la_pregunta();
             } else if (menu->esta_abierto()) {
                 if (!menu->cancelar_confirmacion_si_esta_activa()) {
@@ -529,7 +543,8 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             cuadro_de_aviso,
             cuadro_de_dialogo,
             lluvia,
-            *menu);
+            *menu,
+            mapa_general);
         limitar_cuadro(inicio_del_cuadro);
     }
 }
@@ -1207,6 +1222,7 @@ void VistaPartida::aplicar(
             },
             [&](const MensajeDeChat& e) { chat.recibir(e); },
             [&](const JugadoresDeLaPartida& e) { jugadores_de_la_partida = e; },
+            [&](const PosicionesDeLosJugadores& e) { posiciones_de_los_jugadores = e; },
             [&](const LoteDelCentro& e) { lotes_recibidos.push_back(e); },
             [&](const CentroTerminado&) {
                 if (menu_actual != nullptr) {
@@ -1282,7 +1298,7 @@ void VistaPartida::dibujar(
     const PantallaDeDescanso& pantalla_de_descanso, const PanelDeRegalos& regalos,
     const VentanaDeLote& ventana_de_lote, const MarcasDeLotes& marcas_de_lotes,
     const CuadroDeAviso& cuadro_de_aviso, const CuadroDeDialogo& cuadro_de_dialogo,
-    LluviaGrafica& lluvia, const MenuEnJuego& menu) const {
+    LluviaGrafica& lluvia, const MenuEnJuego& menu, const MapaGeneral& mapa_general) const {
     SDL_Renderer* renderer = renderizador.ptr();
     if (mundo != nullptr) {
         SDL_SetRenderTarget(renderer, mundo);
@@ -1490,6 +1506,23 @@ void VistaPartida::dibujar(
             entrada.raton_y());
     }
     pantalla_de_descanso.dibujar(renderer, descanso, ancho_de_pantalla, alto_de_pantalla);
+    SDL_Rect lugar_del_mapa{0, 0, ancho_de_pantalla, alto_de_pantalla};
+    if (chat.esta_abierto()) {
+        const int margen = estilo_del_chat::MARGEN_DE_PANTALLA;
+        const int ancho_del_chat =
+            std::min(estilo_del_chat::ANCHO_DE_LA_VENTANA, ancho_de_pantalla - 2 * margen);
+        lugar_del_mapa.x = 2 * margen + ancho_del_chat;
+        lugar_del_mapa.w = std::max(0, ancho_de_pantalla - lugar_del_mapa.x);
+    }
+    mapa_general.dibujar(
+        renderer,
+        MapaGeneral::Datos{
+            posiciones_de_los_jugadores,
+            jugadores_de_la_partida,
+            id_jugador,
+            hora_del_juego.has_value() ? hora_del_juego->estacion : Estacion::PRIMAVERA,
+            configuracion.graficos.tamano_de_tile},
+        lugar_del_mapa);
     chat.dibujar(renderer, ancho_de_pantalla, alto_de_pantalla);
     cuadro_de_aviso.dibujar(renderer, ancho_de_pantalla, alto_de_pantalla);
     cuadro_de_dialogo.dibujar(renderer, ancho_de_pantalla, alto_de_pantalla);

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.2-2-geb83ddb9" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="70" height="46" tilewidth="16" tileheight="16" infinite="0" nextlayerid="10" nextobjectid="577">
+<map version="1.10" tiledversion="1.12.2" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="70" height="46" tilewidth="16" tileheight="16" infinite="0" nextlayerid="10" nextobjectid="578">
  <properties>
   <property name="FloorIDs" value="UpperRoom 1, Nursery 31, Hallway_Nursery 31, Kitchen, LivingRoom, Hallway_Bedroom, Bedroom, Southern, Hallway_Corner, Corner, DiningRoom 18, DiningRoomHallway 18, FarUpperRoom MoreFloors:0, ExtendedCorner, ExtendedCornerNook"/>
   <property name="ViewportFollowPlayer" type="bool" value="true"/>
@@ -3079,9 +3079,16 @@
  <objectgroup id="9" name="Transiciones">
   <object id="571" x="432" y="480" width="16" height="16">
    <properties>
+    <property name="llegada" value="puerta_casa"/>
     <property name="columna_destino" type="int" value="65"/>
     <property name="fila_destino" type="int" value="13"/>
     <property name="mapa_destino" value="granja"/>
+   </properties>
+  </object>
+  <object id="577" name="entrada" x="432" y="448" width="16" height="16">
+   <properties>
+    <property name="nombre" value="entrada"/>
+    <property name="tipo" value="llegada"/>
    </properties>
   </object>
  </objectgroup>

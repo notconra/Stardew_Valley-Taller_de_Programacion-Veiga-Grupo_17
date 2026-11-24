@@ -60,7 +60,8 @@ private slots:
     void actualizar_color_ojos();
     void actualizar_color_pelo();
     void actualizar_color_pantalon();
-    void seleccionar_carpeta_mundo();
+    // Le pide al servidor sus mundos del editor y deja elegir uno.
+    void seleccionar_mundo();
     void restablecer_mundo();
 
 private:
@@ -103,7 +104,7 @@ private:
     ColorRGB color_pelo_actual = {193, 90, 33};
     ColorRGB color_pantalon_actual = {45, 60, 140};
     bool es_personaje_femenino = false;
-    QString ruta_mundo_personalizado;
+    QString mundo_personalizado;  // nombre de un mundo del servidor, vacío para el estándar
     std::mt19937 generador_azar{std::random_device{}()};
 
     FondoAnimado fondo_animado;

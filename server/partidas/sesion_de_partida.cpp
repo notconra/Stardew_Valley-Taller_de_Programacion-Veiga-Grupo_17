@@ -1,7 +1,6 @@
 #include "sesion_de_partida.h"
 
 #include <exception>
-#include <filesystem>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -11,8 +10,6 @@
 #include <utility>
 #include <vector>
 
-#include "../../common/editor/cargador_de_mundo_tmx.h"
-#include "../../common/editor/tipo_entidad.h"
 #include "../juego/cheats/comando_animal.h"
 #include "../juego/cheats/comando_avanzar_dia.h"
 #include "../juego/cheats/comando_dinero.h"
@@ -37,31 +34,6 @@ SesionDePartida::SesionDePartida(
       tiempo_inicio_sesion(std::chrono::steady_clock::now()) {
     if (!nombre_mundo.empty() && nombre_mundo != "Mundo Estandar") {
         nombre_mundo_cargado = nombre_mundo;
-        std::string ruta_mundo =
-            std::filesystem::exists(nombre_mundo) ? nombre_mundo : ("mundos/" + nombre_mundo);
-        try {
-            DefinicionDeMundo definicion = CargadorDeMundoTMX::cargar_mundo(ruta_mundo);
-            std::cout << "[Servidor] Mundo personalizado '" << nombre_mundo
-                      << "' cargado para partida " << codigo_de_partida << "\n";
-            std::vector<EntidadDelMapa> cabanias =
-                definicion.obtener_sector_granja().listar_entidades_por_tipo(TipoEntidad::CABANIA);
-            if (!cabanias.empty()) {
-                int columna_casa = 0;
-                int fila_casa = 0;
-                int ancho_casa = 0;
-                int alto_casa = 0;
-                cabanias[0].consultar_origen(columna_casa, fila_casa);
-                cabanias[0].consultar_dimensiones(ancho_casa, alto_casa);
-                double puerta_x = (columna_casa + 5) * 16.0;
-                double puerta_y = (fila_casa + 7) * 16.0;
-                mundo.establecer_aparicion("granja", puerta_x, puerta_y);
-                std::cout << "[Servidor] Posición de spawn configurada en la cabaña del editor: ("
-                          << puerta_x << ", " << puerta_y << ")\n";
-            }
-        } catch (const std::runtime_error& error) {
-            std::cerr << "[Servidor] Error al cargar mundo personalizado '" << nombre_mundo
-                      << "': " << error.what() << "\n";
-        }
     }
     chat.agregar_comando(std::make_unique<ComandoAnimal>(mundo));
     chat.agregar_comando(std::make_unique<ComandoAvanzarDia>(mundo));

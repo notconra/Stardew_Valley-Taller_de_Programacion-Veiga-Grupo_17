@@ -13,15 +13,25 @@
 // Dibuja la tierra tratada de un mapa con la hoja de Stardew (TerrainFeatures/hoeDirt.png). Cada
 // casilla elige su dibujo según qué vecinas también están tratadas, así las parcelas juntas se ven
 // como un solo bloque de tierra y no como cuadraditos sueltos. La tierra regada se dibuja encima
-// con el segundo bloque de la hoja, que es la tierra mojada.
+// con el segundo bloque de la hoja, que es la tierra mojada, y elige su dibujo según qué vecinas
+// también están regadas (como en Stardew): una casilla regada en el medio de tierra seca se ve como
+// una mancha húmeda y no como un cuadrado con bordes rectos.
 class TierraGrafica {
 private:
     Textura textura;
     int tamano_de_tile;
     int escala_de_tiles;
 
+    // Si en esa casilla hay tierra tratada (y regada, si "solo_regadas").
+    static bool cuenta_como_vecina(
+        const std::map<std::pair<int, int>, CasillaTratada>& tierra, int columna, int fila,
+        bool solo_regadas);
+
+    // El dibujo de la casilla según qué vecinas tienen tierra tratada, o tierra regada si
+    // "solo_regadas".
     static std::pair<int, int> dibujo_segun_vecinas(
-        const std::map<std::pair<int, int>, CasillaTratada>& tierra, int columna, int fila);
+        const std::map<std::pair<int, int>, CasillaTratada>& tierra, int columna, int fila,
+        bool solo_regadas);
 
 public:
     // Lanza std::runtime_error si no puede cargar la imagen.

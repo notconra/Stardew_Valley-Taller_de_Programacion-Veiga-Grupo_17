@@ -2,6 +2,7 @@
 #define MAPA_H
 
 #include <cstdint>
+#include <map>
 #include <string>
 #include <utility>
 #include <vector>
@@ -27,11 +28,14 @@ struct LoteTMX;
 // Los bits altos de un id de tile guardan si está espejado o rotado. El id real es el resto.
 #define MASCARA_ID_DE_TILE 0x1FFFFFFF
 
-// A dónde lleva una transición: el mapa destino y la casilla donde aparece el jugador ahí.
+// A dónde lleva una transición: el mapa destino y la casilla donde aparece el jugador ahí. Si tiene
+// llegada (el nombre de un lugar del mapa destino) y el destino tiene ese lugar, se aparece ahí;
+// la casilla queda de respaldo. Así un mismo interior sirve para cualquier granja o pueblo.
 struct Transicion {
     std::string mapa_destino;
     int columna_destino = 0;
     int fila_destino = 0;
+    std::string llegada;
 };
 
 // Un puesto de venta, con su zona (en píxeles) donde se hace clic para comprar, su identificador
@@ -75,6 +79,9 @@ private:
     // Lotes del centro comunitario (solo los tiene el mapa del centro).
     std::vector<LoteDelMapa> lotes;
 
+    // Lugares con nombre del mapa (puertas, la cueva, lugares de los NPC), en casillas.
+    std::map<std::string, Casilla> llegadas;
+
     // Pasos del constructor, en el orden en que se llaman. Todos lanzan std::runtime_error si el
     // TMX no tiene lo que necesitan.
     void leer_tamanio(const LectorDeMapasTMX& lector, const std::string& ruta_tmx);
@@ -85,6 +92,8 @@ private:
     void cargar_tierra_cultivable(
         const LectorDeMapasTMX& lector, const ConfiguracionMapaServidor& configuracion);
     void cargar_transiciones(
+        const LectorDeMapasTMX& lector, const ConfiguracionMapaServidor& configuracion);
+    void cargar_llegadas(
         const LectorDeMapasTMX& lector, const ConfiguracionMapaServidor& configuracion);
     void cargar_puestos(const LectorDeMapasTMX& lector, const std::string& ruta_tmx);
     void cargar_lotes(const LectorDeMapasTMX& lector);
@@ -148,6 +157,9 @@ public:
 
     // Todas las zonas de transición del mapa, para validarlas al cargar los recursos.
     const std::vector<std::pair<Rectangulo, Transicion>>& obtener_transiciones() const;
+
+    // La casilla del lugar con ese nombre, o nullptr si el mapa no lo tiene.
+    const Casilla* buscar_llegada(const std::string& nombre) const;
 
     // El puesto cuya zona ocupa esa casilla (cualquier superposición cuenta), o nullptr si no hay
     // ninguno o la casilla está fuera del mapa. Es lo que usa el clic derecho sobre un mostrador.

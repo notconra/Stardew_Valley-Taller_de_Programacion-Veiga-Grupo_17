@@ -29,6 +29,18 @@ struct TransicionTMX {
     std::string mapa_destino;
     int columna_destino = 0;
     int fila_destino = 0;
+    // Propiedad "llegada" (opcional): el nombre de un lugar del mapa destino. Si el destino lo
+    // tiene, se aparece ahí y no en columna_destino y fila_destino.
+    std::string llegada;
+};
+
+// Un lugar con nombre de un mapa (objeto con tipo = "llegada" y propiedad "nombre" en la capa de
+// transiciones), en píxeles. Es adonde llevan las transiciones de otros mapas que lo nombran, y
+// lo usan también las rutinas de los NPC.
+struct LlegadaTMX {
+    std::string nombre;
+    int x = 0;
+    int y = 0;
 };
 
 // Un puesto de venta tal como está en el TMX (objeto con tipo = "puesto" en la capa de
@@ -138,6 +150,10 @@ public:
     // Si no existe la capa, devuelve un vector vacío. Ignora objetos que no tengan
     // las propiedades necesarias (mapa_destino, columna_destino, fila_destino).
     std::vector<TransicionTMX> cargar_transiciones(const std::string& nombre_capa) const;
+
+    // Devuelve los lugares con nombre de la capa indicada (todo objeto con tipo = "llegada" y la
+    // propiedad nombre). Los objetos de otro tipo se ignoran.
+    std::vector<LlegadaTMX> cargar_llegadas(const std::string& nombre_capa) const;
 
     // Devuelve los puestos de la capa de objetos indicada (todo objeto con la propiedad
     // tipo = "puesto"). Los objetos de otro tipo se ignoran (la capa puede traer otras

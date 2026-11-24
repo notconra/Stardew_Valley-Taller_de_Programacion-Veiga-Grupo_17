@@ -17,6 +17,7 @@
 #include "controladores/controlador_de_jugador.h"
 #include "controladores/controlador_de_mazmorra.h"
 #include "controladores/controlador_de_mercado.h"
+#include "controladores/controlador_de_posiciones.h"
 #include "controladores/controlador_de_regalos.h"
 #include "controladores/controlador_de_trampas.h"
 #include "controladores/controlador_del_centro.h"
@@ -39,7 +40,6 @@ private:
     std::map<uint32_t, DatosJugadorGuardado> datos_jugadores;
     GestorDeSectores sectores;
     GestorDeNpcs gestor_de_npcs;
-    bool tiene_aparicion_personalizada_granja;
 
     ControladorDeJugador controlador_de_jugador;
     ControladorDelDia controlador_del_dia;
@@ -53,12 +53,9 @@ private:
     ControladorDeTrampas controlador_de_trampas;
     ControladorDeCultivos controlador_de_cultivos;
     ControladorDeRegalos controlador_de_regalos;
+    ControladorDePosiciones controlador_de_posiciones;
 
     void resolver_transicion(Personaje& personaje, const Transicion& transicion);
-    bool trasladar_a_transicion_opuesta(
-        Personaje& personaje, Sector& sector_destino, const std::string& destino,
-        const std::vector<std::string>& destinos_buscados, int desplazamiento_columna,
-        int desplazamiento_fila, bool usar_borde_inferior, bool incluir_prefijo_mina);
 
     // Responde el diálogo del NPC si el jugador está cerca. El texto lo elige el servidor según
     // el día y la hora.
@@ -97,8 +94,6 @@ public:
     // vacío deja el que tenía.
     void conectar(
         uint32_t id_jugador, const AparienciaPersonaje& apariencia, const std::string& nombre = "");
-    void establecer_aparicion(const std::string& id_mapa, double x, double y);
-    void bloquear_casilla(const std::string& id_mapa, int columna, int fila);
 
     // El jugador se fue. Su Personaje queda guardado.
     void desconectar(uint32_t id_jugador);

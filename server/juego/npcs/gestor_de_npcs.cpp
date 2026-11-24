@@ -105,6 +105,9 @@ void GestorDeNpcs::empezar_el_dia(NpcEnPartida& npc, int dia_de_la_semana, int m
             }
         }
     }
+    for (Parada& parada : npc.paradas) {
+        ubicar_en_su_lugar(parada);
+    }
     npc.nodos_de_paradas.clear();
     for (const Parada& parada : npc.paradas) {
         npc.nodos_de_paradas.push_back(nodo_de_la_parada(parada));
@@ -130,6 +133,24 @@ void GestorDeNpcs::empezar_el_dia(NpcEnPartida& npc, int dia_de_la_semana, int m
     mover_a(npc, nodo_inicial);
     npc.activo = true;
     reprogramar_paseo(npc);
+}
+
+void GestorDeNpcs::ubicar_en_su_lugar(Parada& parada) const {
+    if (parada.lugar.empty() || !sectores.existe(parada.mapa)) {
+        return;
+    }
+    const Mapa& mapa = sectores.en(parada.mapa).mapa;
+    const Casilla* casilla = mapa.buscar_llegada(parada.lugar);
+    if (casilla == nullptr) {
+        casilla = mapa.buscar_llegada(parada.respaldo);
+    }
+    if (casilla != nullptr) {
+        parada.columna = casilla->columna;
+        parada.fila = casilla->fila;
+    } else {
+        parada.columna = mapa.cantidad_de_columnas() / 2;
+        parada.fila = mapa.cantidad_de_filas() / 2;
+    }
 }
 
 int GestorDeNpcs::nodo_de_la_parada(const Parada& parada) {

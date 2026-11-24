@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.2-2-geb83ddb9" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="80" height="65" tilewidth="16" tileheight="16" infinite="0" nextlayerid="15" nextobjectid="98">
+<map version="1.10" tiledversion="1.12.2" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="80" height="65" tilewidth="16" tileheight="16" infinite="0" nextlayerid="15" nextobjectid="100">
  <properties>
   <property name="AllowGrassSurviveInWinter" value="T"/>
   <property name="Outdoors" value="T"/>
@@ -2049,6 +2049,7 @@
  <objectgroup id="14" name="Transiciones">
   <object id="90" x="1040" y="192.576" width="16" height="38.0909">
    <properties>
+    <property name="llegada" value="entrada"/>
     <property name="columna_destino" type="int" value="27"/>
     <property name="fila_destino" type="int" value="28"/>
     <property name="mapa_destino" value="FarmHouse2"/>
@@ -2080,6 +2081,18 @@
     <property name="columna_destino" type="int" value="0"/>
     <property name="fila_destino" type="int" value="0"/>
     <property name="mapa_destino" value=""/>
+   </properties>
+  </object>
+  <object id="98" name="puerta_casa" x="1040" y="208" width="16" height="16">
+   <properties>
+    <property name="nombre" value="puerta_casa"/>
+    <property name="tipo" value="llegada"/>
+   </properties>
+  </object>
+  <object id="99" name="cueva" x="544" y="112" width="16" height="16">
+   <properties>
+    <property name="nombre" value="cueva"/>
+    <property name="tipo" value="llegada"/>
    </properties>
   </object>
  </objectgroup>

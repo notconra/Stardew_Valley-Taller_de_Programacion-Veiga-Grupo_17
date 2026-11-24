@@ -45,6 +45,11 @@ struct EliminarPartida {
     bool operator==(const EliminarPartida&) const = default;
 };
 
+// Pide los mundos armados con el editor que tiene el servidor, para elegir uno al crear la partida.
+struct ListarMundos {
+    bool operator==(const ListarMundos&) const = default;
+};
+
 // Servidor a cliente
 
 struct InfoPartida {
@@ -64,6 +69,12 @@ struct InfoPartida {
 struct ListaPartidas {
     std::vector<InfoPartida> partidas;
     bool operator==(const ListaPartidas&) const = default;
+};
+
+// Los nombres de los mundos válidos de la carpeta mundos/ del servidor (sin el estándar).
+struct ListaMundos {
+    std::vector<std::string> mundos;
+    bool operator==(const ListaMundos&) const = default;
 };
 
 // Respuesta a CrearPartida y a UnirsePartida, el jugador ya está dentro.

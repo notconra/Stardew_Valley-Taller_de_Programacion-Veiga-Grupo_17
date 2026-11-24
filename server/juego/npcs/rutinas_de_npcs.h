@@ -21,10 +21,15 @@ struct HoraDeReloj {
     int minutos_desde_el_inicio() const;
 };
 
-// Un lugar donde el NPC se queda un rato.
+// Un lugar donde el NPC se queda un rato. En la calle es un lugar con nombre del mapa (un objeto
+// llegada del TMX, por ejemplo "pierre_casa"): si el pueblo no lo tiene (uno armado con el editor),
+// se usa el lugar de respaldo (la puerta del mercado o la del centro comunitario). En el mercado es
+// la casilla de su puesto.
 struct Parada {
     std::string mapa;
-    int columna;  // casilla de los pies del NPC
+    std::string lugar;     // vacío si la parada da la casilla directamente
+    std::string respaldo;  // el lugar que se usa si el mapa no tiene "lugar"
+    int columna;           // casilla de los pies del NPC (la del lugar, si tiene)
     int fila;
     Direccion mirando;  // hacia donde mira cuando esta en su lugar
     HoraDeReloj llega;  // a que hora tiene que estar aca (la primera parada no la usa)
@@ -54,7 +59,7 @@ enum class MomentoDelDia {
 // - Cada parada tiene su hora de llegada. El NPC sale de la parada anterior a su "se_va" y camina
 //   repartiendo el viaje para llegar justo a tiempo.
 // - Las casillas tienen que ser caminables. Si no lo son, el NPC aparece en la caminable mas
-//   cercana.
+//   cercana. Si ni el lugar ni el respaldo existen en el mapa, va al medio del mapa.
 //
 // Si hay una rutina para el dia de hoy se usa esa, si no, la de TODOS_LOS_DIAS.
 class RutinasDeNpcs {

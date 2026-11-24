@@ -22,6 +22,7 @@ private:
     void enviar_comando_unirse_partida(const UnirsePartida& unirse);
     void enviar_comando_retomar_partida(const RetomarPartida& retomar);
     void enviar_comando_eliminar_partida(const EliminarPartida& eliminar);
+    void enviar_comando_listar_mundos(const ListarMundos& listar);
     void enviar_comando_activar_multijugador(const ActivarMultijugador&);
     void enviar_comando_salir_de_partida(const SalirDePartida& salir_de_partida);
     void enviar_comando_guardar_partida(const GuardarPartida& guardar);
@@ -54,6 +55,7 @@ private:
     // Recepción de eventos
     ErrorServidor recibir_error_servidor();
     ListaPartidas recibir_lista_partidas();
+    ListaMundos recibir_lista_mundos();
     EntradaExitosaAPartida recibir_entrada_exitosa_a_partida();
     InfoPartida recibir_info_partida();
     MultijugadorActivado recibir_multijugador_activado();
@@ -71,6 +73,7 @@ private:
     JugadoresEnSector recibir_jugadores_en_sector();
     NpcsEnSector recibir_npcs_en_sector();
     LlamasEnSector recibir_llamas_en_sector();
+    PosicionesDeLosJugadores recibir_posiciones_de_los_jugadores();
     ObjetoColocado recibir_objeto_colocado();
     ObjetoRetirado recibir_objeto_retirado();
     DropAparecido recibir_drop_aparecido();

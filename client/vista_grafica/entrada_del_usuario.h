@@ -25,6 +25,7 @@ public:
         int rueda = 0;                // rueda sin interpretar: positivo hacia arriba
 
         bool alternar_chat = false;       // T (solo cuando no se está escribiendo)
+        bool alternar_mapa = false;       // Tab o M (solo cuando no se está escribiendo)
         bool confirmar_chat = false;      // Enter mientras se escribe
         int caracteres_a_borrar = 0;      // Retroceso mientras se escribe, con sus repeticiones
         bool cancelar_escritura = false;  // ESC mientras se escribe (no sale de la partida)

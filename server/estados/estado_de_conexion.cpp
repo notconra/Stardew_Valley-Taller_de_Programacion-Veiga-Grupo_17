@@ -33,6 +33,10 @@ EstadoDeConexion::ProximoEstado EstadoDeConexion::listar_partidas(const ListarPa
     return rechazar();
 }
 
+EstadoDeConexion::ProximoEstado EstadoDeConexion::listar_mundos(const ListarMundos&) {
+    return rechazar();
+}
+
 EstadoDeConexion::ProximoEstado EstadoDeConexion::crear_partida(const CrearPartida&) {
     return rechazar();
 }

@@ -52,9 +52,15 @@ public:
         const std::string& nombre_capa, const std::vector<uint32_t>& casillas);
     void agregar_objeto(const std::string& nombre_capa_objetos, const ObjetoMapaTMX& objeto);
 
+    // "llegada" es opcional: el lugar con nombre del mapa destino adonde lleva (ver llegadas.h).
     void agregar_transicion(
         const std::string& nombre_capa_objetos, int posicion_x, int posicion_y, int ancho, int alto,
-        const std::string& mapa_destino, int columna_destino, int fila_destino);
+        const std::string& mapa_destino, int columna_destino, int fila_destino,
+        const std::string& llegada = "");
+
+    // Un lugar con nombre del mapa, en la casilla indicada.
+    void agregar_llegada(
+        const std::string& nombre_capa_objetos, const std::string& nombre, int columna, int fila);
 
     void agregar_puesto(
         const std::string& nombre_capa_objetos, int posicion_x, int posicion_y, int ancho, int alto,

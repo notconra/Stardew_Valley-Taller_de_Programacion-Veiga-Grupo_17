@@ -1,8 +1,6 @@
 #include "pantallaprincipal.h"
 
 #include <QDialog>
-#include <QFileDialog>
-#include <QFileInfo>
 #include <QFontDatabase>
 #include <QHeaderView>
 #include <QIcon>
@@ -60,7 +58,8 @@ PantallaPrincipal::PantallaPrincipal(
         ui->btn_seleccionar_carpeta_mundo,
         &QPushButton::clicked,
         this,
-        &PantallaPrincipal::seleccionar_carpeta_mundo);
+        &PantallaPrincipal::seleccionar_mundo);
+    ui->btn_seleccionar_carpeta_mundo->setToolTip("Elegir un mundo del servidor");
     connect(
         ui->btn_restablecer_mundo,
         &QPushButton::clicked,
@@ -294,50 +293,83 @@ bool PantallaPrincipal::procesar_evento_ingreso(const EventoServidor& evento) {
 }
 
 std::string PantallaPrincipal::mundo_seleccionado() const {
-    if (!ruta_mundo_personalizado.isEmpty()) {
-        QFileInfo info_directorio(ruta_mundo_personalizado);
-        QString nombre_carpeta = info_directorio.fileName();
-        if (!nombre_carpeta.isEmpty()) {
-            return nombre_carpeta.toStdString();
-        }
+    if (!mundo_personalizado.isEmpty()) {
+        return mundo_personalizado.toStdString();
     }
     return "Mundo Estandar";
 }
 
-void PantallaPrincipal::seleccionar_carpeta_mundo() {
-    QString directorio_inicial = ".";
-    if (std::filesystem::exists("mundos")) {
-        directorio_inicial = "mundos";
-    }
-
-    QString directorio_elegido = QFileDialog::getExistingDirectory(
-        this,
-        "Seleccionar carpeta de mundo personalizado",
-        directorio_inicial,
-        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
-
-    if (directorio_elegido.isEmpty()) {
+void PantallaPrincipal::seleccionar_mundo() {
+    ListaMundos lista;
+    try {
+        conexion.enviar_comando(ListarMundos{});
+        bool lista_recibida = false;
+        while (!lista_recibida) {
+            EventoServidor evento = conexion.esperar_evento();
+            if (std::holds_alternative<ListaMundos>(evento)) {
+                lista = std::get<ListaMundos>(evento);
+                lista_recibida = true;
+            } else if (std::holds_alternative<ErrorServidor>(evento)) {
+                QMessageBox::warning(
+                    this,
+                    "Error",
+                    describir_error(std::get<ErrorServidor>(evento)));
+                return;
+            }
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error de conexión al listar mundos: " << e.what() << "\n";
+        QMessageBox::critical(this, "Error de conexión", "Se perdió la conexión con el servidor.");
         return;
     }
 
-    ruta_mundo_personalizado = directorio_elegido;
-    QFileInfo info_directorio(directorio_elegido);
-    QString nombre_carpeta = info_directorio.fileName();
-    if (nombre_carpeta.isEmpty()) {
-        nombre_carpeta = "Personalizado";
+    if (lista.mundos.empty()) {
+        QMessageBox::information(
+            this,
+            "Mundos",
+            "El servidor no tiene mundos del editor. Se juega con el Mundo Estándar.");
+        return;
+    }
+    QStringList opciones{"Mundo Estándar"};
+    for (const std::string& mundo : lista.mundos) {
+        opciones.append(QString::fromStdString(mundo));
+    }
+    const int actual = std::max(0, static_cast<int>(opciones.indexOf(mundo_personalizado)));
+    bool elegido = false;
+    const QString mundo = QInputDialog::getItem(
+        this,
+        "Elegir mundo",
+        "Mundo de la partida:",
+        opciones,
+        actual,
+        false,
+        &elegido);
+    if (!elegido) {
+        return;
+    }
+    if (mundo == opciones.front()) {
+        restablecer_mundo();
+        return;
     }
 
-    ui->label_nombre_mundo_seleccionado->setText(nombre_carpeta);
-    ui->label_nombre_mundo_seleccionado->setToolTip(directorio_elegido);
-    ui->btn_seleccionar_carpeta_mundo->setToolTip(directorio_elegido);
+    // El cliente dibuja el mundo con sus propios archivos, como con Assets.
+    if (!std::filesystem::is_directory("mundos/" + mundo.toStdString())) {
+        QMessageBox::warning(
+            this,
+            "Mundos",
+            "No tenés la carpeta mundos/" + mundo +
+                ": la partida se va a jugar con ese mundo pero vas a ver el estándar.");
+    }
+    mundo_personalizado = mundo;
+    ui->label_nombre_mundo_seleccionado->setText(mundo);
+    ui->label_nombre_mundo_seleccionado->setToolTip(mundo);
     ui->btn_restablecer_mundo->setVisible(true);
 }
 
 void PantallaPrincipal::restablecer_mundo() {
-    ruta_mundo_personalizado.clear();
+    mundo_personalizado.clear();
     ui->label_nombre_mundo_seleccionado->setText("Mundo Estándar");
     ui->label_nombre_mundo_seleccionado->setToolTip("");
-    ui->btn_seleccionar_carpeta_mundo->setToolTip("Seleccionar carpeta de mundo personalizado");
     ui->btn_restablecer_mundo->setVisible(false);
 }
 

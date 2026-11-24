@@ -22,6 +22,7 @@ private:
     UnirsePartida recibir_comando_unirse_partida();
     RetomarPartida recibir_comando_retomar_partida();
     EliminarPartida recibir_comando_eliminar_partida();
+    ListarMundos recibir_comando_listar_mundos();
     ActivarMultijugador recibir_comando_activar_multijugador();
     SalirDePartida recibir_comando_salir_de_partida();
     GuardarPartida recibir_comando_guardar_partida();
@@ -62,6 +63,7 @@ private:
     // lobby
     void enviar_info_partida(const InfoPartida& info_partida);
     void enviar_evento_lista_partidas(const ListaPartidas& lista_partidas);
+    void enviar_evento_lista_mundos(const ListaMundos& lista_mundos);
     void enviar_evento_entrada_exitosa_a_partida(const EntradaExitosaAPartida& entrada);
     void enviar_evento_multijugador_activado(const MultijugadorActivado& activado);
     void enviar_evento_partida_abandonada(const PartidaAbandonada& partida_abandonada);
@@ -106,6 +108,7 @@ private:
     void enviar_evento_npcs_en_sector(const NpcsEnSector& npcs);
     void enviar_evento_dialogo_npc(const DialogoNpc& dialogo);
     void enviar_evento_llamas_en_sector(const LlamasEnSector& llamas);
+    void enviar_evento_posiciones_de_los_jugadores(const PosicionesDeLosJugadores& posiciones);
     void enviar_evento_lote_del_centro(const LoteDelCentro& lote);
     void enviar_evento_centro_terminado(const CentroTerminado& m);
     void enviar_evento_pregunta_de_dormir(const PreguntaDeDormir& pregunta);
