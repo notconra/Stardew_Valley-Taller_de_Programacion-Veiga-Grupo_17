@@ -11,7 +11,7 @@
 #include "lector_binario.h"
 
 constexpr std::array<uint8_t, 4> FIRMA_ARCHIVO = {'S', 'V', 'P', 'T'};
-constexpr uint16_t VERSION_ACTUAL = 10;
+constexpr uint16_t VERSION_ACTUAL = 11;
 
 namespace {
 void escribir_ranura(EscritorBinario& escritor, const RanuraInventario& ranura) {
@@ -53,6 +53,7 @@ void SerializadorPartida::serializar(std::ostream& stream, const DatosPartidaGua
 
     escritor.escribir_texto(datos.codigo);
     escritor.escribir_texto(datos.nombre);
+    escritor.escribir_texto(datos.nombre_mundo);
     escritor.escribir_u8(datos.jugadores_maximos);
     escritor.escribir_bool(datos.multijugador);
     escritor.escribir_u32(datos.mundo.dia);
@@ -186,13 +187,16 @@ DatosPartidaGuardada SerializadorPartida::deserializar(std::istream& stream) {
     }
 
     uint16_t version = lector.leer_u16();
-    if (version != VERSION_ACTUAL) {
+    if (version != 10 && version != 11) {
         throw std::runtime_error("Versión de partida no soportada: " + std::to_string(version));
     }
 
     DatosPartidaGuardada datos;
     datos.codigo = lector.leer_texto();
     datos.nombre = lector.leer_texto();
+    if (version >= 11) {
+        datos.nombre_mundo = lector.leer_texto();
+    }
     datos.jugadores_maximos = lector.leer_u8();
     datos.multijugador = lector.leer_bool();
     datos.mundo.dia = lector.leer_u32();

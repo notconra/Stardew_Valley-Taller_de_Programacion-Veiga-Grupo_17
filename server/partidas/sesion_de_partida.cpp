@@ -1,6 +1,7 @@
 #include "sesion_de_partida.h"
 
 #include <exception>
+#include <filesystem>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -28,7 +29,7 @@ SesionDePartida::SesionDePartida(
       periodo_de_tick(1000 / configuracion_partida.ticks_por_segundo),
       mundo(
           recursos, *this, static_cast<uint8_t>(configuracion_partida.ticks_por_segundo),
-          datos_guardados),
+          datos_guardados, nombre_mundo),
       chat(*this),
       comandos(static_cast<unsigned int>(configuracion_partida.capacidad_de_comandos)),
       guardar_al_terminar_el_dia(std::move(guardar)),
@@ -36,7 +37,8 @@ SesionDePartida::SesionDePartida(
       tiempo_inicio_sesion(std::chrono::steady_clock::now()) {
     if (!nombre_mundo.empty() && nombre_mundo != "Mundo Estandar") {
         nombre_mundo_cargado = nombre_mundo;
-        std::string ruta_mundo = "mundos/" + nombre_mundo;
+        std::string ruta_mundo =
+            std::filesystem::exists(nombre_mundo) ? nombre_mundo : ("mundos/" + nombre_mundo);
         try {
             DefinicionDeMundo definicion = CargadorDeMundoTMX::cargar_mundo(ruta_mundo);
             std::cout << "[Servidor] Mundo personalizado '" << nombre_mundo
@@ -50,28 +52,11 @@ SesionDePartida::SesionDePartida(
                 int alto_casa = 0;
                 cabanias[0].consultar_origen(columna_casa, fila_casa);
                 cabanias[0].consultar_dimensiones(ancho_casa, alto_casa);
-                double puerta_x = (columna_casa + static_cast<double>(ancho_casa) / 2.0) * 16.0;
-                double puerta_y = (fila_casa + static_cast<double>(alto_casa)) * 16.0;
+                double puerta_x = (columna_casa + 5) * 16.0;
+                double puerta_y = (fila_casa + 7) * 16.0;
                 mundo.establecer_aparicion("granja", puerta_x, puerta_y);
                 std::cout << "[Servidor] Posición de spawn configurada en la cabaña del editor: ("
                           << puerta_x << ", " << puerta_y << ")\n";
-            }
-
-            MapaEditable granja_editable = definicion.obtener_sector_granja();
-            int columnas_mundo = granja_editable.obtener_cantidad_de_columnas();
-            int filas_mundo = granja_editable.obtener_cantidad_de_filas();
-
-            for (int f = 0; f < 65; ++f) {
-                for (int c = 0; c < 80; ++c) {
-                    if (c >= columnas_mundo || f >= filas_mundo) {
-                        mundo.bloquear_casilla("granja", c, f);
-                    } else {
-                        CasillaDelMapa casilla = granja_editable.obtener_casilla(c, f);
-                        if (casilla.tiene_propiedad(PropiedadDeCasilla::BLOQUEA)) {
-                            mundo.bloquear_casilla("granja", c, f);
-                        }
-                    }
-                }
             }
         } catch (const std::runtime_error& error) {
             std::cerr << "[Servidor] Error al cargar mundo personalizado '" << nombre_mundo
