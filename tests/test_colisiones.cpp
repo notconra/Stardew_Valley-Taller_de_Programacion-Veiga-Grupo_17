@@ -1,10 +1,17 @@
 #include <gtest/gtest.h>
 
+#include <iostream>
+
+#include "../server/configuracion/configuracion_servidor.h"
 #include "../server/configuracion/configuracion_servidor_datos.h"
 #include "../server/juego/colisiones/colisiones.h"
 #include "../server/juego/geometria.h"
 #include "../server/juego/mapa/mapa.h"
-
+#include "../server/juego/mundo.h"
+#include "../server/juego/notificador.h"
+#include "../server/juego/recursos/recursos_de_juego.h"
+#include "../server/juego/sector/gestor_de_sectores.h"
+#include "../server/persistencia/datos_partida_guardada.h"
 // Test para verificar el comportamiento de las colisiones y la ocupación dinámica de casillas
 TEST(ColisionesTest, CasillaLibreYBloqueadaPorObstaculoDinamico) {
     try {

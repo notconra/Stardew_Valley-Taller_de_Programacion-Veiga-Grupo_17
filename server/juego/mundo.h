@@ -39,6 +39,7 @@ private:
     std::map<uint32_t, DatosJugadorGuardado> datos_jugadores;
     GestorDeSectores sectores;
     GestorDeNpcs gestor_de_npcs;
+    bool tiene_aparicion_personalizada_granja;
 
     ControladorDeJugador controlador_de_jugador;
     ControladorDelDia controlador_del_dia;
@@ -83,7 +84,7 @@ private:
 public:
     Mundo(
         const RecursosDeJuego& recursos, Notificador& notificador, uint8_t ticks_por_segundo,
-        const DatosMundoGuardado& datos_guardados = {});
+        const DatosMundoGuardado& datos_guardados = {}, const std::string& nombre_mundo = "");
 
     // El jugador entra a la partida. Si es la primera vez se crea su Personaje con los ítems
     // iniciales, si ya existía (volvió después de desconectarse o restaurado de partida) conserva

@@ -7,11 +7,14 @@
 
 Mundo::Mundo(
     const RecursosDeJuego& recursos_de_juego, Notificador& notificador_de_juego,
-    uint8_t ticks_por_segundo, const DatosMundoGuardado& datos_guardados)
+    uint8_t ticks_por_segundo, const DatosMundoGuardado& datos_guardados,
+    const std::string& nombre_mundo)
     : recursos(recursos_de_juego),
       notificador(notificador_de_juego),
-      sectores(recursos_de_juego, ticks_por_segundo, personajes, notificador_de_juego),
+      sectores(
+          recursos_de_juego, ticks_por_segundo, personajes, notificador_de_juego, nombre_mundo),
       gestor_de_npcs(recursos_de_juego, sectores, ticks_por_segundo),
+      tiene_aparicion_personalizada_granja(false),
       controlador_de_jugador(sectores, notificador_de_juego),
       controlador_del_dia(
           recursos_de_juego.juego.dia, ticks_por_segundo, sectores, personajes, recursos_de_juego,
@@ -165,6 +168,9 @@ void Mundo::conectar(
 }
 
 void Mundo::establecer_aparicion(const std::string& id_mapa, double x, double y) {
+    if (id_mapa == "granja") {
+        tiene_aparicion_personalizada_granja = true;
+    }
     sectores.establecer_aparicion(id_mapa, x, y);
 }
 
@@ -250,15 +256,124 @@ void Mundo::resolver_transicion(Personaje& personaje, const Transicion& transici
     }
     // La puerta del pueblo lleva al centro en ruinas, o al arreglado si ya se completaron todos los
     // lotes. Los dos mapas tienen la entrada en el mismo lugar.
-    const std::string destino = controlador_del_centro.mapa_para(transicion.mapa_destino);
+    std::string destino_solicitado = transicion.mapa_destino;
+    if (destino_solicitado == "CommunityCenter") {
+        destino_solicitado = "centro_comunitario";
+    }
+    std::string destino = controlador_del_centro.mapa_para(destino_solicitado);
     if (!sectores.existe(destino)) {
         return;
     }
-    sectores.trasladar_a_casilla(
-        personaje,
-        destino,
-        transicion.columna_destino,
-        transicion.fila_destino);
+    Sector& sector_destino = sectores.en(destino);
+    bool salida_de_casa_a_granja =
+        (personaje.mapa_actual == "FarmHouse" || personaje.mapa_actual == "FarmHouse2") &&
+        destino == "granja";
+
+    bool salida_de_mina_a_granja =
+        destino == "granja" &&
+        (controlador_de_mazmorra.es_nivel_de_mazmorra(personaje.mapa_actual) ||
+         personaje.mapa_actual == "mazmorra" || personaje.mapa_actual == "caverna" ||
+         personaje.mapa_actual.rfind("mina", 0) == 0);
+
+    bool salida_de_centro_a_pueblo = (personaje.mapa_actual == "centro_comunitario" ||
+                                      personaje.mapa_actual == "centro_comunitario_arreglado") &&
+                                     (destino == "Town" || destino == "pueblo");
+
+    bool salida_de_mercado_a_pueblo =
+        personaje.mapa_actual == "mercado" && (destino == "Town" || destino == "pueblo");
+
+    bool destino_invalido =
+        !sector_destino.colisiones.esta_libre(transicion.columna_destino, transicion.fila_destino);
+
+    if (salida_de_mina_a_granja) {
+        bool colocada_en_cueva = false;
+        auto transiciones_sector = sector_destino.mapa.obtener_transiciones();
+        size_t indice_transicion = 0;
+        while (indice_transicion < transiciones_sector.size() && !colocada_en_cueva) {
+            auto entrada_transicion = transiciones_sector[indice_transicion];
+            std::string destino_trans = entrada_transicion.second.mapa_destino;
+            if (destino_trans == "mazmorra" || destino_trans == "caverna" ||
+                destino_trans.rfind("mina", 0) == 0) {
+                int columna_cueva = static_cast<int>(entrada_transicion.first.x / 16);
+                int fila_cueva = static_cast<int>(
+                    (entrada_transicion.first.y + entrada_transicion.first.alto) / 16);
+                if (sector_destino.colisiones.esta_libre(columna_cueva, fila_cueva)) {
+                    sectores.trasladar_a_casilla(personaje, destino, columna_cueva, fila_cueva);
+                    colocada_en_cueva = true;
+                } else if (sector_destino.colisiones.esta_libre(columna_cueva, fila_cueva + 1)) {
+                    sectores.trasladar_a_casilla(personaje, destino, columna_cueva, fila_cueva + 1);
+                    colocada_en_cueva = true;
+                }
+            }
+            indice_transicion++;
+        }
+        if (!colocada_en_cueva) {
+            sectores.colocar_en_aparicion(personaje, destino);
+        }
+    } else if (salida_de_centro_a_pueblo) {
+        bool colocada_en_centro = false;
+        auto transiciones_sector = sector_destino.mapa.obtener_transiciones();
+        size_t indice_transicion = 0;
+        while (indice_transicion < transiciones_sector.size() && !colocada_en_centro) {
+            auto entrada_transicion = transiciones_sector[indice_transicion];
+            std::string destino_trans = entrada_transicion.second.mapa_destino;
+            if (destino_trans == "centro_comunitario" ||
+                destino_trans == "centro_comunitario_arreglado" ||
+                destino_trans == "CommunityCenter") {
+                int columna_centro = static_cast<int>(entrada_transicion.first.x / 16) + 1;
+                int fila_centro = static_cast<int>(
+                    (entrada_transicion.first.y + entrada_transicion.first.alto) / 16);
+                if (sector_destino.colisiones.esta_libre(columna_centro, fila_centro)) {
+                    sectores.trasladar_a_casilla(personaje, destino, columna_centro, fila_centro);
+                    colocada_en_centro = true;
+                } else if (sector_destino.colisiones.esta_libre(columna_centro, fila_centro + 1)) {
+                    sectores
+                        .trasladar_a_casilla(personaje, destino, columna_centro, fila_centro + 1);
+                    colocada_en_centro = true;
+                }
+            }
+            indice_transicion++;
+        }
+        if (!colocada_en_centro) {
+            sectores.colocar_en_aparicion(personaje, destino);
+        }
+    } else if (salida_de_mercado_a_pueblo) {
+        bool colocada_en_mercado = false;
+        auto transiciones_sector = sector_destino.mapa.obtener_transiciones();
+        size_t indice_transicion = 0;
+        while (indice_transicion < transiciones_sector.size() && !colocada_en_mercado) {
+            auto entrada_transicion = transiciones_sector[indice_transicion];
+            std::string destino_trans = entrada_transicion.second.mapa_destino;
+            if (destino_trans == "mercado") {
+                int columna_mercado = static_cast<int>(entrada_transicion.first.x / 16) + 1;
+                int fila_mercado = static_cast<int>(
+                    (entrada_transicion.first.y + entrada_transicion.first.alto) / 16);
+                if (sector_destino.colisiones.esta_libre(columna_mercado, fila_mercado)) {
+                    sectores.trasladar_a_casilla(personaje, destino, columna_mercado, fila_mercado);
+                    colocada_en_mercado = true;
+                } else if (sector_destino.colisiones.esta_libre(
+                               columna_mercado,
+                               fila_mercado + 1)) {
+                    sectores
+                        .trasladar_a_casilla(personaje, destino, columna_mercado, fila_mercado + 1);
+                    colocada_en_mercado = true;
+                }
+            }
+            indice_transicion++;
+        }
+        if (!colocada_en_mercado) {
+            sectores.colocar_en_aparicion(personaje, destino);
+        }
+    } else if (
+        (salida_de_casa_a_granja && tiene_aparicion_personalizada_granja) || destino_invalido) {
+        sectores.colocar_en_aparicion(personaje, destino);
+    } else {
+        sectores.trasladar_a_casilla(
+            personaje,
+            destino,
+            transicion.columna_destino,
+            transicion.fila_destino);
+    }
     controlador_de_mercado.al_cambiar_de_mapa(personaje);
 }
 

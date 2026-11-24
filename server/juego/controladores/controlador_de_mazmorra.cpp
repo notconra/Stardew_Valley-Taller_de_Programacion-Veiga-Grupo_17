@@ -48,6 +48,11 @@ const std::vector<std::string>& ControladorDeMazmorra::obtener_niveles() const {
     return niveles_de_mazmorra;
 }
 
+bool ControladorDeMazmorra::es_nivel_de_mazmorra(const std::string& id_mapa) const {
+    return std::find(niveles_de_mazmorra.begin(), niveles_de_mazmorra.end(), id_mapa) !=
+           niveles_de_mazmorra.end();
+}
+
 void ControladorDeMazmorra::limpiar_drops_de_niveles() {
     for (const std::string& id_mapa : niveles_de_mazmorra) {
         sectores.en(id_mapa).drops.limpiar();
@@ -132,12 +137,13 @@ void ControladorDeMazmorra::poblar_enemigos(Sector& sector, const Nivel& nivel) 
             continue;
         }
         ocupadas.insert(ocupadas.end(), pareja.begin(), pareja.end());
-        sector.enemigos.poblar_pareja(
-            pareja[0], TipoEnemigo::VAMPIRA, pareja[1], TipoEnemigo::VAMPIRO);
+        sector.enemigos
+            .poblar_pareja(pareja[0], TipoEnemigo::VAMPIRA, pareja[1], TipoEnemigo::VAMPIRO);
     }
 
     const std::vector<Casilla> solos(
-        puntos.begin() + static_cast<std::ptrdiff_t>(usados), puntos.end());
+        puntos.begin() + static_cast<std::ptrdiff_t>(usados),
+        puntos.end());
     sector.enemigos.poblar_en(solos, TipoEnemigo::ESQUELETO);
 }
 
@@ -264,7 +270,8 @@ bool ControladorDeMazmorra::resolver_transicion(
     const std::string& destino = transicion.mapa_destino;
     const bool es_entrada_interna = destino == DESTINO_ENTRADA;
     const bool es_escalera = destino == DESTINO_ESCALERA;
-    const bool es_puerta_de_la_mazmorra = destino == recursos.mazmorra.destino;
+    const bool es_puerta_de_la_mazmorra =
+        (destino == recursos.mazmorra.destino || destino == "caverna" || destino == "mazmorra");
     if (!mazmorra) {
         return es_entrada_interna || es_escalera || es_puerta_de_la_mazmorra;
     }
