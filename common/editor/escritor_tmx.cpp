@@ -37,7 +37,8 @@ void EscritorTMX::agregar_objeto(
 
 void EscritorTMX::agregar_transicion(
     const std::string& nombre_capa_objetos, int posicion_x, int posicion_y, int ancho, int alto,
-    const std::string& mapa_destino, int columna_destino, int fila_destino) {
+    const std::string& mapa_destino, int columna_destino, int fila_destino,
+    const std::string& llegada) {
     ObjetoMapaTMX transicion;
     transicion.nombre = "transicion";
     transicion.tipo = "transicion";
@@ -48,7 +49,24 @@ void EscritorTMX::agregar_transicion(
     transicion.propiedades["mapa_destino"] = mapa_destino;
     transicion.propiedades["columna_destino"] = std::to_string(columna_destino);
     transicion.propiedades["fila_destino"] = std::to_string(fila_destino);
+    if (!llegada.empty()) {
+        transicion.propiedades["llegada"] = llegada;
+    }
     agregar_objeto(nombre_capa_objetos, transicion);
+}
+
+void EscritorTMX::agregar_llegada(
+    const std::string& nombre_capa_objetos, const std::string& nombre, int columna, int fila) {
+    ObjetoMapaTMX llegada;
+    llegada.nombre = nombre;
+    llegada.tipo = "llegada";
+    llegada.posicion_x = columna * ancho_de_casilla;
+    llegada.posicion_y = fila * alto_de_casilla;
+    llegada.ancho = ancho_de_casilla;
+    llegada.alto = alto_de_casilla;
+    llegada.propiedades["tipo"] = "llegada";
+    llegada.propiedades["nombre"] = nombre;
+    agregar_objeto(nombre_capa_objetos, llegada);
 }
 
 void EscritorTMX::agregar_puesto(

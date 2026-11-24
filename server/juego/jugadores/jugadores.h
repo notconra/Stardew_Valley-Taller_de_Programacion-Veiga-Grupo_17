@@ -65,7 +65,7 @@ public:
     // otro mapa por una transición o se restaura una partida guardada.
     void agregar_en(uint32_t id_jugador, double x, double y, Direccion mirando = Direccion::ABAJO);
     void agregar_en_aparicion(uint32_t id_jugador);
-    void establecer_aparicion(double x, double y);
+    // Si alguien puede estar parado en esa casilla (sus pies no chocan con nada).
     bool puede_pararse_en_casilla(int columna, int fila) const;
 
     // Rota la dirección del personaje hacia la casilla del objetivo

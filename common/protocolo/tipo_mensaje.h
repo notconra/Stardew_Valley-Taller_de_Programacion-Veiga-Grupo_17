@@ -48,6 +48,7 @@ enum class TipoMensaje : uint8_t {
 
     // Regalos (sigue)
     RECHAZAR_REGALO = 0x22,
+    LISTAR_MUNDOS = 0x23,
 
     // Servidor a cliente
     ERROR_SERVIDOR = 0x81,
@@ -120,6 +121,9 @@ enum class TipoMensaje : uint8_t {
 
     // Dónde está cada jugador conectado, para el mapa general
     POSICIONES_DE_LOS_JUGADORES = 0xAB,
+
+    // Respuesta a LISTAR_MUNDOS: los mundos del editor que tiene el servidor
+    LISTA_MUNDOS = 0xAC,
 };
 
 #endif

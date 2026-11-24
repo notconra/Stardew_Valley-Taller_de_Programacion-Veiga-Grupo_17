@@ -38,6 +38,7 @@ Mapa::Mapa(
     cargar_capas_opcionales(lector, configuracion);
     cargar_tierra_cultivable(lector, configuracion);
     cargar_transiciones(lector, configuracion);
+    cargar_llegadas(lector, configuracion);
     ajustar_colisiones_de_transiciones(destinos_que_conservan_colision);
     cargar_puestos(lector, configuracion.ruta_tmx);
     cargar_lotes(lector);
@@ -132,8 +133,22 @@ void Mapa::cargar_transiciones(
         const Transicion transicion{
             transicion_tmx.mapa_destino,
             transicion_tmx.columna_destino,
-            transicion_tmx.fila_destino};
+            transicion_tmx.fila_destino,
+            transicion_tmx.llegada};
         transiciones.emplace_back(zona, transicion);
+    }
+}
+
+void Mapa::cargar_llegadas(
+    const LectorDeMapasTMX& lector, const ConfiguracionMapaServidor& configuracion) {
+    for (const LlegadaTMX& llegada : lector.cargar_llegadas(configuracion.capa_transiciones)) {
+        const Casilla casilla{llegada.x / ancho_de_casilla, llegada.y / alto_de_casilla};
+        if (!esta_dentro(casilla.columna, casilla.fila)) {
+            throw std::runtime_error(
+                "la llegada '" + llegada.nombre + "' está fuera del mapa " +
+                configuracion.ruta_tmx);
+        }
+        llegadas[llegada.nombre] = casilla;
     }
 }
 
@@ -304,6 +319,11 @@ bool Mapa::cerca_de_una_transicion(int columna, int fila) const {
 
 const std::vector<std::pair<Rectangulo, Transicion>>& Mapa::obtener_transiciones() const {
     return transiciones;
+}
+
+const Casilla* Mapa::buscar_llegada(const std::string& nombre) const {
+    const auto encontrada = llegadas.find(nombre);
+    return encontrada == llegadas.end() ? nullptr : &encontrada->second;
 }
 
 const Puesto* Mapa::puesto_en_casilla(int columna, int fila) const {

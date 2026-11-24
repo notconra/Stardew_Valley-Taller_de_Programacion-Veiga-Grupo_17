@@ -125,9 +125,19 @@ void AdministradorDePartidas::eliminar(const std::string& codigo_partida) {
         "la partida \"" + codigo_partida + "\" no existe");
 }
 
+std::vector<std::string> AdministradorDePartidas::listar_mundos() const {
+    return mundos.listar();
+}
+
 IngresoAPartida AdministradorDePartidas::crear(
     uint32_t id_cliente, const std::string& nombre_jugador, const std::string& nombre_partida,
     const AparienciaPersonaje& apariencia, const std::string& nombre_mundo) {
+    // Se revisa antes de tomar el mutex: lee los mundos del disco.
+    if (!mundos.es_valido(nombre_mundo)) {
+        throw ErrorDePartida(
+            CodigoError::NO_PERMITIDO,
+            "el mundo \"" + nombre_mundo + "\" no existe o no es valido");
+    }
     EntradaExitosaAPartida entrada;
     ColorDeJugador color_jugador = ColorDeJugador::AZUL;
     std::string codigo;

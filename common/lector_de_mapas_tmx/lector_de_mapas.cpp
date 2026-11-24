@@ -207,9 +207,27 @@ std::vector<TransicionTMX> LectorDeMapasTMX::cargar_transiciones(
         transicion.mapa_destino = objeto.texto_de("mapa_destino");
         transicion.columna_destino = objeto.entero_de("columna_destino");
         transicion.fila_destino = objeto.entero_de("fila_destino");
+        transicion.llegada = objeto.texto_de("llegada");
         transiciones.push_back(transicion);
     }
     return transiciones;
+}
+
+std::vector<LlegadaTMX> LectorDeMapasTMX::cargar_llegadas(const std::string& nombre_capa) const {
+    std::vector<LlegadaTMX> llegadas;
+    tinyxml2::XMLDocument documento;
+    tinyxml2::XMLElement* nodo_mapa = abrir_mapa(documento);
+    if (!nodo_mapa) {
+        return llegadas;
+    }
+
+    for (const ObjetoTMX& objeto : leer_objetos(nodo_mapa, nombre_capa)) {
+        if (objeto.texto_de("tipo") != "llegada" || objeto.texto_de("nombre").empty()) {
+            continue;
+        }
+        llegadas.push_back(LlegadaTMX{objeto.texto_de("nombre"), objeto.x(), objeto.y()});
+    }
+    return llegadas;
 }
 
 std::vector<PuestoTMX> LectorDeMapasTMX::cargar_puestos(const std::string& nombre_capa) const {

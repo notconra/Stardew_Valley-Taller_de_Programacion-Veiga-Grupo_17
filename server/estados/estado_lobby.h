@@ -32,6 +32,7 @@ public:
     ProximoEstado unirse_a_partida(const UnirsePartida& comando) override;
     ProximoEstado retomar_partida(const RetomarPartida& comando) override;
     ProximoEstado eliminar_partida(const EliminarPartida& comando) override;
+    ProximoEstado listar_mundos(const ListarMundos& comando) override;
 
     void al_desconectar() override;
 };

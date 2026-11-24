@@ -77,8 +77,12 @@ public:
 
     // Un jugador que entra al mundo, aparece en el punto de aparición del mapa indicado.
     void colocar_en_aparicion(Personaje& personaje, const std::string& id_mapa);
-    void establecer_aparicion(const std::string& id_mapa, double x, double y);
-    void bloquear_casilla(const std::string& id_mapa, int columna, int fila);
+
+    // La casilla del mapa "destino" adonde lleva la transición: su llegada si el destino tiene ese
+    // lugar, y si no la casilla escrita en la transición. "destino" puede no ser
+    // transicion.mapa_destino (la puerta del centro comunitario lleva al arreglado cuando está
+    // terminado).
+    Casilla casilla_de_llegada(const std::string& destino, const Transicion& transicion) const;
 
     // Coloca al jugador directamente en el mapa y coordenadas indicadas.
     void colocar_en(
