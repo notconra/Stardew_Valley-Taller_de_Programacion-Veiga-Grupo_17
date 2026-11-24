@@ -55,6 +55,8 @@ public:
 
     static MapaEditable crear_sector_mercado_por_defecto();
     static DefinicionDeMundo crear_mundo_por_defecto(const std::string& nombre = "Mundo Nuevo");
+    static const std::vector<std::string>& ids_sectores_mazmorra();
+    static std::string nombre_archivo_caverna(size_t indice_nivel);
 };
 
 #endif  // DEFINICION_DE_MUNDO_H

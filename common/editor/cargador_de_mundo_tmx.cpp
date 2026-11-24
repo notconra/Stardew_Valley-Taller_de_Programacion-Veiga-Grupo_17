@@ -39,14 +39,63 @@ DefinicionDeMundo CargadorDeMundoTMX::cargar_mundo(const std::string& ruta_direc
             ? CargadorDeSectorTMX::cargar_sector(ruta_mercado.string(), SectorActual::MERCADO)
             : DefinicionDeMundo::crear_sector_mercado_por_defecto();
 
-    std::filesystem::path ruta_caverna = ruta / ARCHIVO_CAVERNA;
-    if (!std::filesystem::exists(ruta_caverna)) {
-        throw std::runtime_error(
-            "Falta el archivo de sector obligatorio: " + ruta_caverna.string());
-    }
     std::vector<MapaEditable> niveles_caverna;
-    niveles_caverna.push_back(
-        CargadorDeSectorTMX::cargar_sector(ruta_caverna.string(), SectorActual::CAVERNA));
+    size_t cantidad_niveles = DefinicionDeMundo::ids_sectores_mazmorra().size();
+    size_t indice_nivel = 0;
+    while (indice_nivel < cantidad_niveles) {
+        std::filesystem::path ruta_caverna =
+            ruta / DefinicionDeMundo::nombre_archivo_caverna(indice_nivel);
+        if (!std::filesystem::exists(ruta_caverna)) {
+            throw std::runtime_error(
+                "Falta el archivo de nivel de caverna obligatorio: " + ruta_caverna.string());
+        }
+        niveles_caverna.push_back(
+            CargadorDeSectorTMX::cargar_sector(ruta_caverna.string(), SectorActual::CAVERNA));
+        indice_nivel++;
+    }
 
     return DefinicionDeMundo(nombre_mundo, granja, pueblo, mercado, niveles_caverna);
+}
+
+std::string CargadorDeMundoTMX::resolver_ruta_sector(
+    const std::string& nombre_mundo, const std::string& id_mapa) {
+    if (nombre_mundo.empty() || nombre_mundo == "Mundo Estandar") {
+        return "";
+    }
+
+    std::string archivo_sector;
+    if (id_mapa == "granja") {
+        archivo_sector = ARCHIVO_GRANJA;
+    } else if (id_mapa == "mercado") {
+        archivo_sector = ARCHIVO_MERCADO;
+    } else if (id_mapa == "Town") {
+        archivo_sector = ARCHIVO_PUEBLO;
+    } else {
+        const std::vector<std::string>& ids_mazmorra = DefinicionDeMundo::ids_sectores_mazmorra();
+        size_t indice = 0;
+        while (indice < ids_mazmorra.size() && archivo_sector.empty()) {
+            if (ids_mazmorra[indice] == id_mapa) {
+                archivo_sector = DefinicionDeMundo::nombre_archivo_caverna(indice);
+            } else {
+                indice++;
+            }
+        }
+    }
+
+    if (archivo_sector.empty()) {
+        return "";
+    }
+
+    std::filesystem::path ruta_directa = std::filesystem::path(nombre_mundo) / archivo_sector;
+    if (std::filesystem::exists(ruta_directa)) {
+        return ruta_directa.string();
+    }
+
+    std::filesystem::path ruta_en_mundos =
+        std::filesystem::path("mundos") / nombre_mundo / archivo_sector;
+    if (std::filesystem::exists(ruta_en_mundos)) {
+        return ruta_en_mundos.string();
+    }
+
+    return "";
 }

@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "../../common/editor/cargador_de_mundo_tmx.h"
 #include "../../common/lector_de_mapas_tmx/lector_de_mapas.h"
 
 namespace {
@@ -35,31 +36,10 @@ MapaGrafico::MapaGrafico(
     tilesets = crear_tilesets(configuracion_mapa.tilesets);
     dibujado.configurar(tilesets, configuracion_graficos);
 
-    std::string ruta_mapa = configuracion_mapa.ruta;
-    if (!nombre_mundo.empty() && nombre_mundo != "Mundo Estandar") {
-        std::string archivo_sector;
-        if (configuracion_mapa.id == "granja") {
-            archivo_sector = "granja.tmx";
-        } else if (configuracion_mapa.id == "mercado") {
-            archivo_sector = "mercado.tmx";
-        } else if (configuracion_mapa.id == "Town") {
-            archivo_sector = "pueblo.tmx";
-        }
-
-        if (!archivo_sector.empty()) {
-            std::filesystem::path ruta_directa =
-                std::filesystem::path(nombre_mundo) / archivo_sector;
-            if (std::filesystem::exists(ruta_directa)) {
-                ruta_mapa = ruta_directa.string();
-            } else {
-                std::filesystem::path ruta_en_mundos =
-                    std::filesystem::path("mundos") / nombre_mundo / archivo_sector;
-                if (std::filesystem::exists(ruta_en_mundos)) {
-                    ruta_mapa = ruta_en_mundos.string();
-                }
-            }
-        }
-    }
+    std::string ruta_personalizada =
+        CargadorDeMundoTMX::resolver_ruta_sector(nombre_mundo, configuracion_mapa.id);
+    std::string ruta_mapa =
+        ruta_personalizada.empty() ? configuracion_mapa.ruta : ruta_personalizada;
 
     capas_bajo_los_jugadores = cargar_capas(ruta_mapa, configuracion_mapa.capas_bajo_los_jugadores);
     capas_sobre_los_jugadores =

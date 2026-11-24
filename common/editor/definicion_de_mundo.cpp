@@ -128,11 +128,7 @@ DefinicionDeMundo DefinicionDeMundo::crear_mundo_por_defecto(const std::string& 
 
     std::vector<MapaEditable> niveles(
         CANTIDAD_DE_NIVELES_MAZMORRA,
-        MapaEditable(
-            ANCHO_MAPA_MAZMORRA,
-            ANCHO_MAPA_MAZMORRA,
-            CatalogoDeTerrenos::obtener_tile_base(SectorActual::CAVERNA),
-            PropiedadDeCasilla::DECORABLE));
+        MapaEditable(ANCHO_MAPA_MAZMORRA, ALTO_MAPA_MAZMORRA, 0, PropiedadDeCasilla::BLOQUEA));
 
     // Configuración inicial de la Granja
     granja.ubicar_entidad(TipoEntidad::CABANIA, 6, 5, 9, 9);
@@ -146,13 +142,37 @@ DefinicionDeMundo DefinicionDeMundo::crear_mundo_por_defecto(const std::string& 
     pueblo.ubicar_entidad(TipoEntidad::MERCADO, 19, 3, 10, 10);
     pueblo.generar_muro_perimetral_pueblo();
 
-    // Configuración inicial de los 10 niveles de Mazmorra
+    // Configuración inicial de los 10 niveles de Mazmorra (sala central 17x17 con muros de mina)
+    uint32_t tile_piso_mina = CatalogoDeTerrenos::obtener_tile_base(SectorActual::CAVERNA);
+    uint8_t propiedades_piso_mina =
+        PropiedadDeCasilla::DECORABLE | PropiedadDeCasilla::ADMITE_MINERAL;
     size_t indice_nivel = 0;
     while (indice_nivel < CANTIDAD_DE_NIVELES_MAZMORRA) {
-        niveles[indice_nivel].ubicar_entidad(TipoEntidad::ESCALERA_NIVEL, 20, 20, 1, 1);
-        niveles[indice_nivel].ubicar_entidad(TipoEntidad::SALIDA_CAVERNA, 4, 4, 1, 1);
+        niveles[indice_nivel].pintar_zona(4, 5, 17, 17, tile_piso_mina, propiedades_piso_mina);
+        niveles[indice_nivel].ubicar_entidad(TipoEntidad::SALIDA_CAVERNA, 6, 5, 1, 1);
+        niveles[indice_nivel].ubicar_entidad(TipoEntidad::ESCALERA_NIVEL, 18, 19, 1, 1);
+        niveles[indice_nivel].generar_muros_caverna();
         indice_nivel++;
     }
 
     return DefinicionDeMundo(nombre, granja, pueblo, crear_sector_mercado_por_defecto(), niveles);
+}
+
+const std::vector<std::string>& DefinicionDeMundo::ids_sectores_mazmorra() {
+    static const std::vector<std::string> IDS_SECTORES_MAZMORRA = {
+        "mina_1",
+        "mina_2",
+        "mina_3",
+        "mina_4",
+        "mina_5",
+        "mina_6",
+        "mina_7",
+        "mina_8",
+        "mina_9",
+        "mina_11"};
+    return IDS_SECTORES_MAZMORRA;
+}
+
+std::string DefinicionDeMundo::nombre_archivo_caverna(size_t indice_nivel) {
+    return "caverna_" + std::to_string(indice_nivel + 1) + ".tmx";
 }

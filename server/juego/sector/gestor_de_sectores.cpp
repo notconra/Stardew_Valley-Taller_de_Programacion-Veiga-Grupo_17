@@ -1,10 +1,12 @@
 #include "gestor_de_sectores.h"
 
-#include <filesystem>
 #include <map>
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "../../../common/editor/cargador_de_mundo_tmx.h"
+#include "../../../common/editor/definicion_de_mundo.h"
 
 GestorDeSectores::GestorDeSectores(
     const RecursosDeJuego& recursos, uint8_t ticks_por_segundo,
@@ -12,25 +14,10 @@ GestorDeSectores::GestorDeSectores(
     Notificador& notificador_de_juego, const std::string& nombre_mundo)
     : notificador(notificador_de_juego), personajes(personajes_de_la_partida) {
     if (!nombre_mundo.empty() && nombre_mundo != "Mundo Estandar") {
-        std::map<std::string, std::string> archivos_por_sector = {
-            {"granja", "granja.tmx"},
-            {"mercado", "mercado.tmx"},
-            {"Town", "pueblo.tmx"}};
-
-        for (const auto& [id_mapa, archivo_sector] : archivos_por_sector) {
-            std::filesystem::path ruta_directa =
-                std::filesystem::path(nombre_mundo) / archivo_sector;
-            std::string ruta_tmx_personalizada;
-            if (std::filesystem::exists(ruta_directa)) {
-                ruta_tmx_personalizada = ruta_directa.string();
-            } else {
-                std::filesystem::path ruta_en_mundos =
-                    std::filesystem::path("mundos") / nombre_mundo / archivo_sector;
-                if (std::filesystem::exists(ruta_en_mundos)) {
-                    ruta_tmx_personalizada = ruta_en_mundos.string();
-                }
-            }
-
+        for (const auto& entrada : recursos.mapas) {
+            std::string id_mapa = entrada.first;
+            std::string ruta_tmx_personalizada =
+                CargadorDeMundoTMX::resolver_ruta_sector(nombre_mundo, id_mapa);
             if (!ruta_tmx_personalizada.empty()) {
                 auto configuracion_encontrada = recursos.configuraciones_mapas.find(id_mapa);
                 if (configuracion_encontrada != recursos.configuraciones_mapas.end()) {
@@ -54,6 +41,23 @@ GestorDeSectores::GestorDeSectores(
             (personalizado != mapas_personalizados.end()) ? personalizado->second : entrada.second;
         sectores.try_emplace(id_mapa, id_mapa, mapa_a_usar, recursos, ticks_por_segundo);
     }
+}
+
+bool GestorDeSectores::es_mapa_personalizado(const std::string& id_mapa) const {
+    return mapas_personalizados.find(id_mapa) != mapas_personalizados.end();
+}
+
+bool GestorDeSectores::tiene_mazmorra_personalizada() const {
+    const std::vector<std::string>& ids_mazmorra = DefinicionDeMundo::ids_sectores_mazmorra();
+    size_t indice = 0;
+    bool todos_presentes = !ids_mazmorra.empty();
+    while (indice < ids_mazmorra.size() && todos_presentes) {
+        if (!es_mapa_personalizado(ids_mazmorra[indice])) {
+            todos_presentes = false;
+        }
+        indice++;
+    }
+    return todos_presentes;
 }
 
 void GestorDeSectores::cargar_mapas_guardados(

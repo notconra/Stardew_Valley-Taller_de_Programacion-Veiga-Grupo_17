@@ -64,6 +64,8 @@ public:
     std::vector<DatosCultivoGuardado> obtener_cultivos_guardados() const;
 
     bool existe(const std::string& id_mapa) const;
+    bool es_mapa_personalizado(const std::string& id_mapa) const;
+    bool tiene_mazmorra_personalizada() const;
 
     // Los ids de todos los mapas con sector, para quien necesite recorrerlos todos (por ejemplo,
     // ControladorDeEnemigos). Sin orden garantizado.
