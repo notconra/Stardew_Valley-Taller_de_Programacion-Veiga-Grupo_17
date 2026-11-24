@@ -29,6 +29,7 @@ enum class TipoItem : uint16_t {
     CAMA = 20,
     LECHE = 21,
     HUEVO = 22,
+    ASPERSOR = 23,
 };
 
 #endif
