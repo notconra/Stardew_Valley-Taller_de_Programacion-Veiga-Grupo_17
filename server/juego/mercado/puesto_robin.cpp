@@ -16,7 +16,7 @@ PuestoRobin::PuestoRobin(const ConfiguracionMercadoServidor& config)
       aspersor(producto(
           TipoItem::ASPERSOR,
           "Aspersor",
-          "Cada mañana riega las 4 casillas adyacentes. Se coloca en la granja.")) {
+          "Cada manana riega las 4 casillas adyacentes. Se coloca en la granja.")) {
     catalogo.push_back(cofre);
     catalogo.push_back(aspersor);
     for (const DatosDeMueble* mueble : CatalogoDeMuebles::muebles()) {
