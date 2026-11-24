@@ -10,6 +10,9 @@
 #include "../server/configuracion/configuracion_servidor.h"
 #include "../server/configuracion/configuracion_servidor_datos.h"
 #include "../server/juego/controladores/controlador_de_acciones.h"
+#include "../server/juego/controladores/controlador_de_dia.h"
+#include "../server/juego/controladores/controlador_de_mercado.h"
+#include "../server/juego/controladores/controlador_del_centro.h"
 #include "../server/juego/jugadores/personaje.h"
 #include "../server/juego/muebles/muebles.h"
 #include "../server/juego/notificador.h"
@@ -37,7 +40,8 @@ const RecursosDeJuego& recursos() {
             mapas,
             "granja",
             configuracion.juego(),
-            ConfiguracionMazmorraServidor{});
+            ConfiguracionMazmorraServidor{},
+            configuracion.mercado());
     }();
     return recursos_de_juego;
 }
@@ -65,8 +69,19 @@ protected:
                                    recursos().juego.inventario.cantidad_ranuras_barra)
                                .first->second;
     GestorDeSectores sectores{recursos(), 40, personajes, notificador};
+    ControladorDelDia dia{
+        recursos().juego.dia, 40, sectores, personajes, recursos(), notificador, [](Personaje&) {}};
+    ControladorDelCentro centro{personajes, sectores, recursos(), notificador, dia, {}};
+    ControladorDeMercado mercado{recursos().mercado, sectores, notificador, centro};
     ControladorDeAcciones acciones{
-        sectores, personajes, recursos(), notificador, [](Personaje&, const Transicion&) {}};
+        sectores,
+        personajes,
+        recursos(),
+        notificador,
+        mercado,
+        dia,
+        centro,
+        [](Personaje&, const Transicion&) {}};
 
     // Lleva al jugador al mapa con los pies centrados en (columna, fila).
     void parar_en(const std::string& mapa, int columna, int fila) {
