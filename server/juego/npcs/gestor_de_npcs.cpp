@@ -90,6 +90,21 @@ void GestorDeNpcs::empezar_el_dia(NpcEnPartida& npc, int dia_de_la_semana, int m
     npc.frases = dialogos.sortear_frases_del_dia(npc.id);
 
     npc.paradas = rutinas.paradas_de(npc.id, dia_de_la_semana);
+    if (sectores.existe("mercado")) {
+        Sector& sector_mercado = sectores.en("mercado");
+        auto* puesto = sector_mercado.mapa.buscar_puesto(npc.id);
+        if (puesto != nullptr && puesto->tiene_posicion_npc) {
+            size_t indice_parada = 0;
+            while (indice_parada < npc.paradas.size()) {
+                if (npc.paradas[indice_parada].mapa == "mercado") {
+                    npc.paradas[indice_parada].columna = puesto->columna_npc;
+                    npc.paradas[indice_parada].fila = puesto->fila_npc;
+                    npc.paradas[indice_parada].mirando = puesto->orientacion_npc;
+                }
+                indice_parada++;
+            }
+        }
+    }
     npc.nodos_de_paradas.clear();
     for (const Parada& parada : npc.paradas) {
         npc.nodos_de_paradas.push_back(nodo_de_la_parada(parada));

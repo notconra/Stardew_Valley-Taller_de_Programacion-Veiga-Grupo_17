@@ -166,7 +166,11 @@ void Mapa::agregar_puesto(const PuestoTMX& puesto_tmx, const std::string& ruta_t
         puesto_tmx.id,
         Rectangulo{puesto_tmx.x, puesto_tmx.y, puesto_tmx.ancho, puesto_tmx.alto},
         puesto_tmx.columna_atencion,
-        puesto_tmx.fila_atencion});
+        puesto_tmx.fila_atencion,
+        puesto_tmx.columna_npc,
+        puesto_tmx.fila_npc,
+        puesto_tmx.orientacion_npc,
+        puesto_tmx.tiene_posicion_npc});
 }
 
 void Mapa::marcar(const std::vector<int>& capa, uint8_t propiedad, const std::string& nombre_capa) {

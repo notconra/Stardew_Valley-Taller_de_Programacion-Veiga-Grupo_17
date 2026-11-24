@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 
+#include "../../../common/direccion.h"
 #include "../../configuracion/configuracion_servidor_datos.h"
 #include "../geometria.h"
 #include "propiedad_de_casilla.h"
@@ -41,6 +42,10 @@ struct Puesto {
     Rectangulo zona;
     int columna_atencion = 0;
     int fila_atencion = 0;
+    int columna_npc = 0;
+    int fila_npc = 0;
+    Direccion orientacion_npc = Direccion::ABAJO;
+    bool tiene_posicion_npc = false;
 };
 
 // Un lote del centro comunitario: la zona (en píxeles) donde se hace clic para abrirlo y la clave
