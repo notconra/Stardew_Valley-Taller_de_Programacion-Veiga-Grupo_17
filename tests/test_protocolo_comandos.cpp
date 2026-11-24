@@ -10,9 +10,7 @@
 // exactamente el mismo comando.
 class ProtocoloComandosTest : public ProtocoloEnMemoriaTest {};
 
-// ─────────────────────────────────────────────────────────────
 // Partidas
-// ─────────────────────────────────────────────────────────────
 
 TEST_F(ProtocoloComandosTest, Identificarse) {
     verificar_comando(Identificarse{0x11223344});
@@ -50,9 +48,7 @@ TEST_F(ProtocoloComandosTest, GuardarPartida) {
     verificar_comando(GuardarPartida{});
 }
 
-// ─────────────────────────────────────────────────────────────
 // Movimiento
-// ─────────────────────────────────────────────────────────────
 
 TEST_F(ProtocoloComandosTest, Moverse) {
     verificar_comando(Moverse{-1, 1});
@@ -66,9 +62,7 @@ TEST_F(ProtocoloComandosTest, MoverseConTodosLosEjesValidos) {
     }
 }
 
-// ─────────────────────────────────────────────────────────────
 // Inventario, barra y cofre
-// ─────────────────────────────────────────────────────────────
 
 TEST_F(ProtocoloComandosTest, SeleccionarRanuraDeLaBarra) {
     verificar_comando(SeleccionarRanuraDeLaBarra{7});
@@ -102,9 +96,7 @@ TEST_F(ProtocoloComandosTest, SoltarItem) {
     verificar_comando(SoltarItem{4, 0x0E0F});
 }
 
-// ─────────────────────────────────────────────────────────────
 // Casillas, chat y confirmaciones
-// ─────────────────────────────────────────────────────────────
 
 TEST_F(ProtocoloComandosTest, ConsultarCasilla) {
     verificar_comando(ConsultarCasilla{0x10111213, 0x14151617});
@@ -118,9 +110,7 @@ TEST_F(ProtocoloComandosTest, EnviarMensajeDeChat) {
     verificar_comando(EnviarMensajeDeChat{"Hola a todos"});
 }
 
-// ─────────────────────────────────────────────────────────────
 // Mercado
-// ─────────────────────────────────────────────────────────────
 
 TEST_F(ProtocoloComandosTest, ComprarEnMercado) {
     verificar_comando(ComprarEnMercado{0x1819, 0x1A1B});
@@ -142,9 +132,7 @@ TEST_F(ProtocoloComandosTest, CerrarMercado) {
     verificar_comando(CerrarMercado{});
 }
 
-// ─────────────────────────────────────────────────────────────
 // Regalos, NPCs y centro comunitario
-// ─────────────────────────────────────────────────────────────
 
 TEST_F(ProtocoloComandosTest, EnviarRegalo) {
     verificar_comando(EnviarRegalo{0x22232425, 8, 0x2627});
@@ -178,9 +166,17 @@ TEST_F(ProtocoloComandosTest, DonarMonedasAlLoteConTodosLosLotesValidos) {
     }
 }
 
-// ─────────────────────────────────────────────────────────────
+// Dormir
+
+TEST_F(ProtocoloComandosTest, Dormir) {
+    verificar_comando(Dormir{0x2A2B2C2D, 0x2E2F3031});
+}
+
+TEST_F(ProtocoloComandosTest, Levantarse) {
+    verificar_comando(Levantarse{});
+}
+
 // Varios comandos seguidos y cierre
-// ─────────────────────────────────────────────────────────────
 
 // Los comandos deben llegar completos y en el mismo orden en que se enviaron.
 TEST_F(ProtocoloComandosTest, VariosComandosEnSecuencia) {

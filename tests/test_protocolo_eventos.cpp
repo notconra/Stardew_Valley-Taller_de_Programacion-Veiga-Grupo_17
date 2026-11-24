@@ -64,9 +64,7 @@ EstadoNpc npc_dos() {
 
 }  // namespace
 
-// ─────────────────────────────────────────────────────────────
 // Errores y partidas
-// ─────────────────────────────────────────────────────────────
 
 TEST_F(ProtocoloEventosTest, ErrorServidor) {
     verificar_evento(ErrorServidor{CodigoError::NOMBRE_JUGADOR_REPETIDO, "nombre repetido"});
@@ -130,9 +128,7 @@ TEST_F(ProtocoloEventosTest, JugadoresDeLaPartidaVacio) {
     verificar_evento(JugadoresDeLaPartida{});
 }
 
-// ─────────────────────────────────────────────────────────────
 // Estado del mundo
-// ─────────────────────────────────────────────────────────────
 
 TEST_F(ProtocoloEventosTest, EstadoJuego) {
     const EstadoObjetoDelMundo objeto1{11, "granja", 0x15161718, 0x191A1B1C, TipoObjeto::COFRE};
@@ -226,13 +222,22 @@ TEST_F(ProtocoloEventosTest, NpcsEnSectorVacio) {
     verificar_evento(NpcsEnSector{"pueblo", {}});
 }
 
+TEST_F(ProtocoloEventosTest, LlamasEnSector) {
+    const EstadoLlama azul{0x01020304, false, 0x05060708, 0x090A0B0C};
+    const EstadoLlama verde{0x11121314, true, 0x15161718, 0x191A1B1C};
+
+    verificar_evento(LlamasEnSector{"mazmorra", {azul, verde}});
+}
+
+TEST_F(ProtocoloEventosTest, LlamasEnSectorVacio) {
+    verificar_evento(LlamasEnSector{"mazmorra", {}});
+}
+
 TEST_F(ProtocoloEventosTest, HoraDelJuego) {
     verificar_evento(HoraDelJuego{0xF1F2F3F4, 18, 45, 12, Estacion::OTONO, 0xF5F6, 3, true});
 }
 
-// ─────────────────────────────────────────────────────────────
 // Objetos, drops, enemigos, trampas, tierra y animales
-// ─────────────────────────────────────────────────────────────
 
 TEST_F(ProtocoloEventosTest, ObjetoColocado) {
     verificar_evento(ObjetoColocado{0x11223344, 0x55667788, 0x99AABBCC, TipoObjeto::CAMA});
@@ -311,9 +316,7 @@ TEST_F(ProtocoloEventosTest, VacaOrdeniable) {
     verificar_evento(VacaOrdeniable{0x11223344, true});
 }
 
-// ─────────────────────────────────────────────────────────────
 // Casillas y descanso
-// ─────────────────────────────────────────────────────────────
 
 TEST_F(ProtocoloEventosTest, CasillaConsultada) {
     verificar_evento(CasillaConsultada{0x01020304, 0x05060708, 3, 2, MarcaDeCasilla::VALIDA});
@@ -323,9 +326,11 @@ TEST_F(ProtocoloEventosTest, EstadoDelDescanso) {
     verificar_evento(EstadoDelDescanso{EstadoDeDescanso::ACOSTADO, false, 2, 3, true});
 }
 
-// ─────────────────────────────────────────────────────────────
+TEST_F(ProtocoloEventosTest, PreguntaDeDormir) {
+    verificar_evento(PreguntaDeDormir{0x21222324, 0x25262728});
+}
+
 // Inventario, cofre y chat
-// ─────────────────────────────────────────────────────────────
 
 TEST_F(ProtocoloEventosTest, ActualizacionInventario) {
     const RanuraInventario papa{TipoItem::PAPA, 1, Calidad::PERFECTA};
@@ -347,9 +352,7 @@ TEST_F(ProtocoloEventosTest, MensajeDeChat) {
         MensajeDeChat{CanalDeChat::PRIVADO, "Ana", "Beto", "Hola", ColorDeJugador::VERDE});
 }
 
-// ─────────────────────────────────────────────────────────────
 // Regalos, mercado y avisos
-// ─────────────────────────────────────────────────────────────
 
 TEST_F(ProtocoloEventosTest, RegalosPendientes) {
     const RanuraInventario item{TipoItem::PAPA, 0x9192, Calidad::PERFECTA};
@@ -396,9 +399,7 @@ TEST_F(ProtocoloEventosTest, AvisoEnPantalla) {
     verificar_evento(AvisoEnPantalla{"El mercado está cerrado"});
 }
 
-// ─────────────────────────────────────────────────────────────
 // NPCs y centro comunitario
-// ─────────────────────────────────────────────────────────────
 
 TEST_F(ProtocoloEventosTest, DialogoNpc) {
     verificar_evento(DialogoNpc{"marnie", "Hola, granjero"});
@@ -435,9 +436,7 @@ TEST_F(ProtocoloEventosTest, CentroTerminado) {
     verificar_evento(CentroTerminado{});
 }
 
-// ─────────────────────────────────────────────────────────────
 // Varios eventos seguidos
-// ─────────────────────────────────────────────────────────────
 
 // Los eventos deben llegar completos y en el mismo orden en que se enviaron.
 TEST_F(ProtocoloEventosTest, VariosEventosEnSecuencia) {

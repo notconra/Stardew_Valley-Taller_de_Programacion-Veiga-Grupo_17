@@ -40,6 +40,10 @@ list(FILTER COMMON_FUENTES EXCLUDE REGEX "/protocolo/protocolo\\.cpp$")
 list(FILTER SERVER_FUENTES EXCLUDE REGEX "/red/protocolo_servidor\\.cpp$")
 list(FILTER CLIENT_FUENTES EXCLUDE REGEX "/red/protocolo_cliente\\.cpp$")
 
+set(ENCABEZADOS_PRECOMPILADOS
+    <algorithm> <cstddef> <cstdint> <map> <memory> <optional> <set> <string> <utility> <variant>
+    <vector>)
+
 add_library(lib_protocolo STATIC
     common/protocolo/protocolo.cpp
     client/red/protocolo_cliente.cpp
@@ -48,10 +52,7 @@ target_include_directories(lib_protocolo PUBLIC
     ${PROJECT_SOURCE_DIR}/common
     ${PROJECT_SOURCE_DIR}/client
     ${PROJECT_SOURCE_DIR}/server)
-
-set(ENCABEZADOS_PRECOMPILADOS
-    <algorithm> <cstddef> <cstdint> <map> <memory> <optional> <set> <string> <utility> <variant>
-    <vector>)
+target_precompile_headers(lib_protocolo PRIVATE ${ENCABEZADOS_PRECOMPILADOS})
 
 add_library(lib_common STATIC ${COMMON_FUENTES})
 target_include_directories(lib_common PUBLIC ${PROJECT_SOURCE_DIR}/common)
@@ -90,6 +91,8 @@ if(GTest_FOUND)
   file(GLOB_RECURSE TEST_FUENTES CONFIGURE_DEPENDS tests/*.cpp)
   add_executable(tests EXCLUDE_FROM_ALL ${TEST_FUENTES})
   target_link_libraries(tests PRIVATE GTest::gtest_main lib_protocolo)
+  target_compile_options(tests PRIVATE -g0)
+  target_precompile_headers(tests PRIVATE <gtest/gtest.h> ${ENCABEZADOS_PRECOMPILADOS})
   add_test(NAME tests COMMAND tests)
 else()
   message(WARNING "GoogleTest no esta instalado: no se compilan los tests (sudo apt install libgtest-dev)")
