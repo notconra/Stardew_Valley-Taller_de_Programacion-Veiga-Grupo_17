@@ -46,6 +46,8 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::REGALOS_PENDIENTES, [this] { return recibir_regalos_pendientes(); }},
           {TipoMensaje::NPCS_EN_SECTOR, [this] { return recibir_npcs_en_sector(); }},
           {TipoMensaje::LLAMAS_EN_SECTOR, [this] { return recibir_llamas_en_sector(); }},
+          {TipoMensaje::POSICIONES_DE_LOS_JUGADORES,
+           [this] { return recibir_posiciones_de_los_jugadores(); }},
           {TipoMensaje::DIALOGO_NPC, [this] { return recibir_dialogo_npc(); }},
           {TipoMensaje::LOTE_DEL_CENTRO, [this] { return recibir_lote_del_centro(); }},
           {TipoMensaje::CENTRO_TERMINADO, [this] { return recibir_centro_terminado(); }},
@@ -607,6 +609,22 @@ NpcsEnSector ProtocoloCliente::recibir_npcs_en_sector() {
         npcs.npcs.push_back(recibir_estado_npc());
     }
     return npcs;
+}
+
+PosicionesDeLosJugadores ProtocoloCliente::recibir_posiciones_de_los_jugadores() {
+    PosicionesDeLosJugadores posiciones;
+    const uint16_t cantidad = recibir_u16();
+    posiciones.jugadores.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        PosicionDeJugador jugador;
+        jugador.id_jugador = recibir_u32();
+        jugador.mapa = recibir_texto();
+        jugador.x = recibir_u32();
+        jugador.y = recibir_u32();
+        jugador.piso_de_mazmorra = recibir_u8();
+        posiciones.jugadores.push_back(jugador);
+    }
+    return posiciones;
 }
 
 LlamasEnSector ProtocoloCliente::recibir_llamas_en_sector() {

@@ -29,6 +29,7 @@
 #include "iconos_de_items.h"
 #include "iconos_de_lote.h"
 #include "lluvia_grafica.h"
+#include "mapa_general.h"
 #include "mapa_grafico.h"
 #include "marcador_de_casillas.h"
 #include "marcas_de_lotes.h"
@@ -72,11 +73,14 @@ private:
     CofreJugador ultimo_cofre{};
     std::string mapa_actual;
     std::map<std::string, std::vector<CartelTMX>> carteles_por_mapa;
-    std::optional<DialogoNpc> cartel_pendiente;  // lo deja procesar_clic, lo muestra procesar_entrada
+    std::optional<DialogoNpc>
+        cartel_pendiente;  // lo deja procesar_clic, lo muestra procesar_entrada
     std::map<std::pair<int, int>, CasillaTratada> tierra_tratada;
     std::optional<HoraDelJuego> hora_del_juego;
     EstadoDelDescanso descanso{};
     JugadoresDeLaPartida jugadores_de_la_partida{};
+    // Dónde está cada jugador conectado, para el mapa general.
+    PosicionesDeLosJugadores posiciones_de_los_jugadores{};
     RegalosPendientes regalos_pendientes{};
     std::vector<LoteDelCentro> lotes_recibidos;
     // La cama por la que preguntó el servidor, hasta pasársela a la pantalla de descanso.
@@ -227,7 +231,7 @@ private:
         const PantallaDeDescanso& pantalla_de_descanso, const PanelDeRegalos& regalos,
         const VentanaDeLote& ventana_de_lote, const MarcasDeLotes& marcas_de_lotes,
         const CuadroDeAviso& cuadro_de_aviso, const CuadroDeDialogo& cuadro_de_dialogo,
-        LluviaGrafica& lluvia, const MenuEnJuego& menu) const;
+        LluviaGrafica& lluvia, const MenuEnJuego& menu, const MapaGeneral& mapa_general) const;
 
 public:
     VistaPartida(ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion);

@@ -19,6 +19,8 @@ EntradaDelUsuario::EntradaDelUsuario()
           {SDL_SCANCODE_RETURN, &Pedidos::confirmar},
           {SDL_SCANCODE_KP_ENTER, &Pedidos::confirmar},
           {SDL_SCANCODE_T, &Pedidos::alternar_chat},
+          {SDL_SCANCODE_TAB, &Pedidos::alternar_mapa},
+          {SDL_SCANCODE_M, &Pedidos::alternar_mapa},
       } {
 }
 

@@ -71,6 +71,7 @@ private:
     JugadoresEnSector recibir_jugadores_en_sector();
     NpcsEnSector recibir_npcs_en_sector();
     LlamasEnSector recibir_llamas_en_sector();
+    PosicionesDeLosJugadores recibir_posiciones_de_los_jugadores();
     ObjetoColocado recibir_objeto_colocado();
     ObjetoRetirado recibir_objeto_retirado();
     DropAparecido recibir_drop_aparecido();
