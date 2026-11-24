@@ -26,6 +26,7 @@ class GestorDeSectores {
 private:
     Notificador& notificador;
     const std::map<uint32_t, Personaje>& personajes;
+    std::map<std::string, Mapa> mapas_personalizados;
     std::map<std::string, Sector> sectores;
     std::map<std::string, std::vector<EstadoJugador>> jugadores_enviados;
     std::map<std::string, std::vector<EstadoNpc>> npcs_enviados;
@@ -34,10 +35,12 @@ private:
 
 public:
     // Cada sector usa por referencia el mapa que ya está cargado en "recursos", que tiene que
-    // vivir más que el gestor.
+    // vivir más que el gestor. Si se especifica un nombre de mundo personalizado, carga los mapas
+    // TMX correspondientes en mapas_personalizados.
     GestorDeSectores(
         const RecursosDeJuego& recursos, uint8_t ticks_por_segundo,
-        const std::map<uint32_t, Personaje>& personajes, Notificador& notificador);
+        const std::map<uint32_t, Personaje>& personajes, Notificador& notificador,
+        const std::string& nombre_mundo = "");
 
     GestorDeSectores(const GestorDeSectores&) = delete;
     GestorDeSectores& operator=(const GestorDeSectores&) = delete;

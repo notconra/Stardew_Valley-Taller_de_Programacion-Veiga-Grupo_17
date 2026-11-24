@@ -108,9 +108,14 @@ void Mapa::cargar_tierra_cultivable(
             std::string("falta la capa ") + CAPA_DE_PISO + " para la tierra cultivable de " +
             configuracion.ruta_tmx);
     }
+    std::vector<int> identificadores_cultivables =
+        lector.ids_con_propiedad(configuracion.propiedad_cultivable, VALOR_VERDADERO_TMX);
+    if (identificadores_cultivables.empty()) {
+        identificadores_cultivables.push_back(716);
+    }
     marcar_si_es_alguno(
         piso,
-        lector.ids_con_propiedad(configuracion.propiedad_cultivable, VALOR_VERDADERO_TMX),
+        identificadores_cultivables,
         PropiedadDeCasilla::CULTIVABLE,
         CAPA_DE_PISO);
 }

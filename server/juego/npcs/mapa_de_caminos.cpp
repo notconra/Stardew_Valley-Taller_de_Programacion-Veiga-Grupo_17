@@ -131,7 +131,26 @@ int MapaDeCaminos::nodo_de(const std::string& mapa, int columna, int fila) const
     if (indice_de_mapa_por_id.count(mapa) == 0) {
         return SIN_NODO;
     }
-    return nodo_en(indice_de_mapa_por_id.at(mapa), columna, fila);
+    int indice_mapa = indice_de_mapa_por_id.at(mapa);
+    const MapaMedido& datos_mapa = mapas[indice_mapa];
+    if (datos_mapa.ancho <= 0 || datos_mapa.alto <= 0) {
+        return SIN_NODO;
+    }
+    int columna_acotada = columna;
+    if (columna_acotada < 0) {
+        columna_acotada = 0;
+    } else if (columna_acotada >= datos_mapa.ancho) {
+        columna_acotada = datos_mapa.ancho - 1;
+    }
+
+    int fila_acotada = fila;
+    if (fila_acotada < 0) {
+        fila_acotada = 0;
+    } else if (fila_acotada >= datos_mapa.alto) {
+        fila_acotada = datos_mapa.alto - 1;
+    }
+
+    return nodo_en(indice_mapa, columna_acotada, fila_acotada);
 }
 
 int MapaDeCaminos::nodo_desplazado(int nodo, int columnas, int filas) const {

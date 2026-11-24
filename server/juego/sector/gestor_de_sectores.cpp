@@ -1,5 +1,6 @@
 #include "gestor_de_sectores.h"
 
+#include <filesystem>
 #include <map>
 #include <string>
 #include <utility>
@@ -8,11 +9,50 @@
 GestorDeSectores::GestorDeSectores(
     const RecursosDeJuego& recursos, uint8_t ticks_por_segundo,
     const std::map<uint32_t, Personaje>& personajes_de_la_partida,
-    Notificador& notificador_de_juego)
+    Notificador& notificador_de_juego, const std::string& nombre_mundo)
     : notificador(notificador_de_juego), personajes(personajes_de_la_partida) {
+    if (!nombre_mundo.empty() && nombre_mundo != "Mundo Estandar") {
+        std::map<std::string, std::string> archivos_por_sector = {
+            {"granja", "granja.tmx"},
+            {"mercado", "mercado.tmx"},
+            {"Town", "pueblo.tmx"}};
+
+        for (const auto& [id_mapa, archivo_sector] : archivos_por_sector) {
+            std::filesystem::path ruta_directa =
+                std::filesystem::path(nombre_mundo) / archivo_sector;
+            std::string ruta_tmx_personalizada;
+            if (std::filesystem::exists(ruta_directa)) {
+                ruta_tmx_personalizada = ruta_directa.string();
+            } else {
+                std::filesystem::path ruta_en_mundos =
+                    std::filesystem::path("mundos") / nombre_mundo / archivo_sector;
+                if (std::filesystem::exists(ruta_en_mundos)) {
+                    ruta_tmx_personalizada = ruta_en_mundos.string();
+                }
+            }
+
+            if (!ruta_tmx_personalizada.empty()) {
+                auto configuracion_encontrada = recursos.configuraciones_mapas.find(id_mapa);
+                if (configuracion_encontrada != recursos.configuraciones_mapas.end()) {
+                    ConfiguracionMapaServidor configuracion_personalizada =
+                        configuracion_encontrada->second;
+                    configuracion_personalizada.ruta_tmx = ruta_tmx_personalizada;
+                    mapas_personalizados.emplace(
+                        id_mapa,
+                        Mapa(
+                            configuracion_personalizada,
+                            recursos.juego.transiciones.destinos_con_clic));
+                }
+            }
+        }
+    }
+
     for (const auto& entrada : recursos.mapas) {
         const std::string& id_mapa = entrada.first;
-        sectores.try_emplace(id_mapa, id_mapa, recursos, ticks_por_segundo);
+        auto personalizado = mapas_personalizados.find(id_mapa);
+        const Mapa& mapa_a_usar =
+            (personalizado != mapas_personalizados.end()) ? personalizado->second : entrada.second;
+        sectores.try_emplace(id_mapa, id_mapa, mapa_a_usar, recursos, ticks_por_segundo);
     }
 }
 
@@ -142,6 +182,14 @@ void GestorDeSectores::enviar_instantanea(uint32_t id_jugador, const std::string
 }
 
 void GestorDeSectores::colocar_en_aparicion(Personaje& personaje, const std::string& id_mapa) {
+    if (!personaje.mapa_actual.empty() && personaje.mapa_actual != id_mapa) {
+        auto iterador_previo = sectores.find(personaje.mapa_actual);
+        if (iterador_previo != sectores.end()) {
+            iterador_previo->second.jugadores.quitar(personaje.id_jugador);
+            difundir_jugadores(iterador_previo->second.id);
+        }
+    }
+
     Sector& sector = sectores.at(id_mapa);
     sector.jugadores.agregar_en_aparicion(personaje.id_jugador);
     personaje.mapa_actual = id_mapa;
@@ -166,6 +214,14 @@ void GestorDeSectores::bloquear_casilla(const std::string& id_mapa, int columna,
 
 void GestorDeSectores::colocar_en(
     Personaje& personaje, const std::string& id_mapa, double x, double y, Direccion mirando) {
+    if (!personaje.mapa_actual.empty() && personaje.mapa_actual != id_mapa) {
+        auto iterador_previo = sectores.find(personaje.mapa_actual);
+        if (iterador_previo != sectores.end()) {
+            iterador_previo->second.jugadores.quitar(personaje.id_jugador);
+            difundir_jugadores(iterador_previo->second.id);
+        }
+    }
+
     Sector& sector = sectores.at(id_mapa);
     sector.jugadores.agregar_en(personaje.id_jugador, x, y, mirando);
     personaje.mapa_actual = id_mapa;
