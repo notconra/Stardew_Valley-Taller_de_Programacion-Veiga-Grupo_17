@@ -184,8 +184,10 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
     estampa_puesto_mercado_activa = TipoEstampa::MERCADO_PUESTO_IZQUIERDO;
     estampa_estanteria_activa = TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA;
     id_tile_borde_activo = CatalogoDeEstampas::TILE_PUEBLO_CAMINO_BORDE_NORTE;
-    id_tile_esquina_exterior_activa = 609;
-    id_tile_esquina_interior_activa = 706;
+    id_tile_esquina_exterior_activa =
+        CatalogoDeEstampas::TILE_PUEBLO_CAMINO_ESQUINA_EXTERIOR_NOROESTE;
+    id_tile_esquina_interior_activa =
+        CatalogoDeEstampas::TILE_PUEBLO_CAMINO_ESQUINA_INTERIOR_NOROESTE;
 
     QPixmap pixmap_paredes_suelos;
     if (sector == SectorActual::MERCADO) {
@@ -245,9 +247,11 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
             uint32_t id_a_emitir = id_global;
             if (id_global == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_BORDE_NORTE) {
                 id_a_emitir = id_tile_borde_activo;
-            } else if (id_global == 609) {
+            } else if (
+                id_global == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_ESQUINA_EXTERIOR_NOROESTE) {
                 id_a_emitir = id_tile_esquina_exterior_activa;
-            } else if (id_global == 706) {
+            } else if (
+                id_global == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_ESQUINA_INTERIOR_NOROESTE) {
                 id_a_emitir = id_tile_esquina_interior_activa;
             }
             emit tile_seleccionado(id_a_emitir, prop);
@@ -443,7 +447,11 @@ void PaletaDeHerramientas::sincronizar_rotacion_tile(uint32_t id_tile) {
             }
             boton_borde->setToolTip("Borde de Camino (" + direccion_borde + ") [R]");
         }
-    } else if (id_tile == 609 || id_tile == 611 || id_tile == 675 || id_tile == 673) {
+    } else if (
+        id_tile == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_ESQUINA_EXTERIOR_NOROESTE ||
+        id_tile == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_ESQUINA_EXTERIOR_NORESTE ||
+        id_tile == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_ESQUINA_EXTERIOR_SUDESTE ||
+        id_tile == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_ESQUINA_EXTERIOR_SUDOESTE) {
         id_tile_esquina_exterior_activa = id_tile;
         if (botones_tiles.size() >= 4) {
             QPushButton* boton_esquina = botones_tiles[3];
@@ -464,16 +472,21 @@ void PaletaDeHerramientas::sincronizar_rotacion_tile(uint32_t id_tile) {
                 Qt::KeepAspectRatio,
                 Qt::FastTransformation)));
             QString orientacion = "Noroeste";
-            if (id_tile == 611) {
+            if (id_tile == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_ESQUINA_EXTERIOR_NORESTE) {
                 orientacion = "Noreste";
-            } else if (id_tile == 675) {
+            } else if (id_tile == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_ESQUINA_EXTERIOR_SUDESTE) {
                 orientacion = "Sudeste";
-            } else if (id_tile == 673) {
+            } else if (
+                id_tile == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_ESQUINA_EXTERIOR_SUDOESTE) {
                 orientacion = "Sudoeste";
             }
             boton_esquina->setToolTip("Esquina Exterior (" + orientacion + ") [R]");
         }
-    } else if (id_tile == 706 || id_tile == 705 || id_tile == 739 || id_tile == 707) {
+    } else if (
+        id_tile == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_ESQUINA_INTERIOR_NOROESTE ||
+        id_tile == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_ESQUINA_INTERIOR_NORESTE ||
+        id_tile == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_ESQUINA_INTERIOR_SUDESTE ||
+        id_tile == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_ESQUINA_INTERIOR_SUDOESTE) {
         id_tile_esquina_interior_activa = id_tile;
         if (botones_tiles.size() >= 5) {
             QPushButton* boton_interior = botones_tiles[4];
@@ -494,11 +507,12 @@ void PaletaDeHerramientas::sincronizar_rotacion_tile(uint32_t id_tile) {
                 Qt::KeepAspectRatio,
                 Qt::FastTransformation)));
             QString orientacion = "Noroeste";
-            if (id_tile == 705) {
+            if (id_tile == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_ESQUINA_INTERIOR_NORESTE) {
                 orientacion = "Noreste";
-            } else if (id_tile == 739) {
+            } else if (id_tile == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_ESQUINA_INTERIOR_SUDESTE) {
                 orientacion = "Sudeste";
-            } else if (id_tile == 707) {
+            } else if (
+                id_tile == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_ESQUINA_INTERIOR_SUDOESTE) {
                 orientacion = "Sudoeste";
             }
             boton_interior->setToolTip("Esquina Interior (" + orientacion + ") [R]");

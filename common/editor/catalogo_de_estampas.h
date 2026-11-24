@@ -59,56 +59,56 @@ struct DefinicionEstampa {
 
 class CatalogoDeEstampas {
 public:
-    // Tiles de agua y ribera de estanque (spring_outdoorsTileSheet.png)
-    static constexpr uint32_t TILE_AGUA_ESTANQUE = 1247;
-    static constexpr uint32_t TILE_AGUA_NENUFAR = 1300;
-    static constexpr uint32_t TILE_AGUA_ONDAS = 1273;
-    static constexpr uint32_t TILE_AGUA_ROCA = 1323;
+    // Tiles de agua y ribera de estanque (spring_outdoorsTileSheet.png, firstgid = 129)
+    static constexpr uint32_t TILE_AGUA_ESTANQUE = 1375;
+    static constexpr uint32_t TILE_AGUA_NENUFAR = 1428;
+    static constexpr uint32_t TILE_AGUA_ONDAS = 1401;
+    static constexpr uint32_t TILE_AGUA_ROCA = 1451;
 
-    static constexpr uint32_t TILE_AGUA_PROFUNDA_NOROESTE = 1244;
-    static constexpr uint32_t TILE_AGUA_PROFUNDA_NORTE = 1245;
-    static constexpr uint32_t TILE_AGUA_PROFUNDA_NORESTE = 1246;
-    static constexpr uint32_t TILE_AGUA_PROFUNDA_OESTE = 1269;
-    static constexpr uint32_t TILE_AGUA_PROFUNDA_SOMBRA = 1270;
-    static constexpr uint32_t TILE_AGUA_PROFUNDA_ESTE = 1271;
-    static constexpr uint32_t TILE_AGUA_PROFUNDA_SUR = 1272;
-    static constexpr uint32_t TILE_AGUA_BORDE_ESTE = 1250;
-    static constexpr uint32_t TILE_AGUA_BORDE_SUR = 1249;
-    static constexpr uint32_t TILE_AGUA_FONDO = 1268;
+    static constexpr uint32_t TILE_AGUA_PROFUNDA_NOROESTE = 1372;
+    static constexpr uint32_t TILE_AGUA_PROFUNDA_NORTE = 1373;
+    static constexpr uint32_t TILE_AGUA_PROFUNDA_NORESTE = 1374;
+    static constexpr uint32_t TILE_AGUA_PROFUNDA_OESTE = 1397;
+    static constexpr uint32_t TILE_AGUA_PROFUNDA_SOMBRA = 1398;
+    static constexpr uint32_t TILE_AGUA_PROFUNDA_ESTE = 1399;
+    static constexpr uint32_t TILE_AGUA_PROFUNDA_SUR = 1400;
+    static constexpr uint32_t TILE_AGUA_BORDE_ESTE = 1378;
+    static constexpr uint32_t TILE_AGUA_BORDE_SUR = 1377;
+    static constexpr uint32_t TILE_AGUA_FONDO = 1396;
 
-    static constexpr uint32_t TILE_RIBERA_NOROESTE = 184;
-    static constexpr uint32_t TILE_RIBERA_NORTE = 185;
-    static constexpr uint32_t TILE_RIBERA_NORTE_SALIENTE = 212;
-    static constexpr uint32_t TILE_RIBERA_NORESTE = 186;
-    static constexpr uint32_t TILE_RIBERA_OESTE = 209;
-    static constexpr uint32_t TILE_RIBERA_CURVA = 210;
-    static constexpr uint32_t TILE_RIBERA_ESTE = 211;
-    static constexpr uint32_t TILE_RIBERA_ESTE_VERTICAL = 236;
-    static constexpr uint32_t TILE_RIBERA_SUROESTE = 259;
-    static constexpr uint32_t TILE_RIBERA_SUR = 260;
-    static constexpr uint32_t TILE_RIBERA_SURESTE = 261;
-    static constexpr uint32_t TILE_RIBERA_INTERNA_NORESTE = 285;
-    static constexpr uint32_t TILE_RIBERA_INTERNA_SUROESTE = 309;
-    static constexpr uint32_t TILE_RIBERA_INTERNA_SURESTE = 310;
-    static constexpr uint32_t TILE_DETALLE_TIERRA_AGUA = 1294;
+    static constexpr uint32_t TILE_RIBERA_NOROESTE = 312;
+    static constexpr uint32_t TILE_RIBERA_NORTE = 313;
+    static constexpr uint32_t TILE_RIBERA_NORTE_SALIENTE = 340;
+    static constexpr uint32_t TILE_RIBERA_NORESTE = 314;
+    static constexpr uint32_t TILE_RIBERA_OESTE = 337;
+    static constexpr uint32_t TILE_RIBERA_CURVA = 338;
+    static constexpr uint32_t TILE_RIBERA_ESTE = 339;
+    static constexpr uint32_t TILE_RIBERA_ESTE_VERTICAL = 364;
+    static constexpr uint32_t TILE_RIBERA_SUROESTE = 387;
+    static constexpr uint32_t TILE_RIBERA_SUR = 388;
+    static constexpr uint32_t TILE_RIBERA_SURESTE = 389;
+    static constexpr uint32_t TILE_RIBERA_INTERNA_NORESTE = 413;
+    static constexpr uint32_t TILE_RIBERA_INTERNA_SUROESTE = 437;
+    static constexpr uint32_t TILE_RIBERA_INTERNA_SURESTE = 438;
+    static constexpr uint32_t TILE_DETALLE_TIERRA_AGUA = 1422;
 
     // Tile de pasto verde para el perimetro exterior de la granja (spring_outdoorsTileSheet.png)
-    static constexpr uint32_t TILE_PASTO_PERIMETRAL = 176;
+    static constexpr uint32_t TILE_PASTO_PERIMETRAL = 304;
 
     // Tiles de valla perimetral de madera (spring_outdoorsTileSheet.png)
     // Horizontal (capas Frente y Estructuras):
-    static constexpr uint32_t TILE_VALLA_POSTE_IZQUIERDO_FRENTE = 359;
-    static constexpr uint32_t TILE_VALLA_POSTE_IZQUIERDO_BASE = 384;
-    static constexpr uint32_t TILE_VALLA_POSTE_CENTRAL_FRENTE = 360;
-    static constexpr uint32_t TILE_VALLA_POSTE_CENTRAL_BASE = 385;
-    static constexpr uint32_t TILE_VALLA_POSTE_DERECHO_FRENTE = 361;
-    static constexpr uint32_t TILE_VALLA_POSTE_DERECHO_BASE = 386;
+    static constexpr uint32_t TILE_VALLA_POSTE_IZQUIERDO_FRENTE = 487;
+    static constexpr uint32_t TILE_VALLA_POSTE_IZQUIERDO_BASE = 512;
+    static constexpr uint32_t TILE_VALLA_POSTE_CENTRAL_FRENTE = 488;
+    static constexpr uint32_t TILE_VALLA_POSTE_CENTRAL_BASE = 513;
+    static constexpr uint32_t TILE_VALLA_POSTE_DERECHO_FRENTE = 489;
+    static constexpr uint32_t TILE_VALLA_POSTE_DERECHO_BASE = 514;
 
     // Vertical (capa Estructuras):
-    static constexpr uint32_t TILE_POSTE_VERTICAL_REMATE_SUPERIOR = 362;
-    static constexpr uint32_t TILE_POSTE_VERTICAL_FUSTE_A = 387;
-    static constexpr uint32_t TILE_POSTE_VERTICAL_FUSTE_B = 412;
-    static constexpr uint32_t TILE_POSTE_VERTICAL_BASE_INFERIOR = 437;
+    static constexpr uint32_t TILE_POSTE_VERTICAL_REMATE_SUPERIOR = 490;
+    static constexpr uint32_t TILE_POSTE_VERTICAL_FUSTE_A = 515;
+    static constexpr uint32_t TILE_POSTE_VERTICAL_FUSTE_B = 540;
+    static constexpr uint32_t TILE_POSTE_VERTICAL_BASE_INFERIOR = 565;
 
     // Tiles de caminos de adoquín (spring_town.png, columnas 32, firstgid = 1)
     static constexpr uint32_t TILE_PUEBLO_CAMINO_BORDE_NORTE = 610;
@@ -136,9 +136,9 @@ public:
     static constexpr uint32_t TILE_VALLA_PUEBLO_PUNTA_NOROESTE = 801;
     static constexpr uint32_t TILE_VALLA_PUEBLO_PUNTAS_NORTE = 802;
     static constexpr uint32_t TILE_VALLA_PUEBLO_PUNTA_NORESTE = 803;
-    static constexpr uint32_t TILE_VALLA_PUEBLO_PUNTA_SUDOESTE = 897;
-    static constexpr uint32_t TILE_VALLA_PUEBLO_PUNTAS_SUR = 898;
-    static constexpr uint32_t TILE_VALLA_PUEBLO_PUNTA_SUDESTE = 899;
+    static constexpr uint32_t TILE_VALLA_PUEBLO_PUNTA_SUDOESTE = 801;
+    static constexpr uint32_t TILE_VALLA_PUEBLO_PUNTAS_SUR = 802;
+    static constexpr uint32_t TILE_VALLA_PUEBLO_PUNTA_SUDESTE = 803;
 
     // Base inferior / postes (capa Estructuras, bloquea):
     static constexpr uint32_t TILE_VALLA_PUEBLO_ESQUINA_NOROESTE = 833;
@@ -146,9 +146,9 @@ public:
     static constexpr uint32_t TILE_VALLA_PUEBLO_ESQUINA_NORESTE = 835;
     static constexpr uint32_t TILE_VALLA_PUEBLO_POSTE_OESTE = 865;
     static constexpr uint32_t TILE_VALLA_PUEBLO_POSTE_ESTE = 867;
-    static constexpr uint32_t TILE_VALLA_PUEBLO_ESQUINA_SUDOESTE = 929;
-    static constexpr uint32_t TILE_VALLA_PUEBLO_RIEL_SUR = 930;
-    static constexpr uint32_t TILE_VALLA_PUEBLO_ESQUINA_SUDESTE = 931;
+    static constexpr uint32_t TILE_VALLA_PUEBLO_ESQUINA_SUDOESTE = 833;
+    static constexpr uint32_t TILE_VALLA_PUEBLO_RIEL_SUR = 834;
+    static constexpr uint32_t TILE_VALLA_PUEBLO_ESQUINA_SUDESTE = 835;
 
     static const DefinicionEstampa& obtener_estampa(TipoEstampa tipo);
     static std::vector<DefinicionEstampa> listar_estampas_por_sector(SectorActual sector);

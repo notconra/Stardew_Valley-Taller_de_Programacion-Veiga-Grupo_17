@@ -81,13 +81,22 @@ bool ExportadorDeMundoTMX::exportar_mundo_completo(
 
     // 2. Resolver destinos cruzados enlazados
     DestinosDeTransicion destinos_granja;
-    destinos_granja.columna_destino_pueblo = col_granja_en_pueblo;
+    int columna_aparicion_pueblo = col_granja_en_pueblo;
+    if (col_granja_en_pueblo <= 1) {
+        columna_aparicion_pueblo = 2;
+    }
+    destinos_granja.columna_destino_pueblo = columna_aparicion_pueblo;
     destinos_granja.fila_destino_pueblo = fil_granja_en_pueblo;
     destinos_granja.columna_destino_caverna = col_salida_en_caverna;
     destinos_granja.fila_destino_caverna = fil_salida_en_caverna;
 
     DestinosDeTransicion destinos_pueblo;
-    destinos_pueblo.columna_destino_granja = col_pueblo_en_granja;
+    int columna_aparicion_granja = col_pueblo_en_granja;
+    int ancho_granja = granja.obtener_cantidad_de_columnas();
+    if (col_pueblo_en_granja >= ancho_granja - 2) {
+        columna_aparicion_granja = ancho_granja - 3;
+    }
+    destinos_pueblo.columna_destino_granja = columna_aparicion_granja;
     destinos_pueblo.fila_destino_granja = fil_pueblo_en_granja;
     destinos_pueblo.columna_destino_mercado = 9;
     destinos_pueblo.fila_destino_mercado = 14;

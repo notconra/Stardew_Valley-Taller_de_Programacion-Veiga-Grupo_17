@@ -74,8 +74,24 @@ void ExportadorDeSectorTMX::configurar_tileset() {
         tileset_walls.alto_imagen = 688;
         escritor.agregar_tileset(tileset_walls);
     } else {
-        escritor.agregar_tileset(CatalogoDeTerrenos::obtener_tileset_sector(sector));
         if (sector == SectorActual::GRANJA) {
+            DefinicionTilesetTMX tileset_extra;
+            tileset_extra.nombre = "extra_tiles";
+            tileset_extra.ruta_imagen = "Assets/Maps/spring_outdoorTileSheet_extra.png";
+            tileset_extra.primer_identificador_global = 1;
+            tileset_extra.ancho_tile = ANCHO_TILE_PIXELES;
+            tileset_extra.alto_tile = ALTO_TILE_PIXELES;
+            tileset_extra.cantidad_de_columnas = 8;
+            tileset_extra.cantidad_de_tiles = 64;
+            tileset_extra.ancho_imagen = 128;
+            tileset_extra.alto_imagen = 128;
+            escritor.agregar_tileset(tileset_extra);
+
+            DefinicionTilesetTMX tileset_exteriores =
+                CatalogoDeTerrenos::obtener_tileset_sector(sector);
+            tileset_exteriores.propiedades_de_tiles[587]["Diggable"] = "T";
+            escritor.agregar_tileset(tileset_exteriores);
+
             DefinicionTilesetTMX tileset_casas;
             tileset_casas.nombre = NOMBRE_TILESET_HOUSES;
             tileset_casas.ruta_imagen = RUTA_TILESET_HOUSES;
@@ -99,6 +115,25 @@ void ExportadorDeSectorTMX::configurar_tileset() {
             tileset_caseta_mina.ancho_imagen = ANCHO_IMAGEN_CASETA_MINA;
             tileset_caseta_mina.alto_imagen = ALTO_IMAGEN_CASETA_MINA;
             escritor.agregar_tileset(tileset_caseta_mina);
+        } else if (sector == SectorActual::PUEBLO) {
+            DefinicionTilesetTMX tileset_paisaje;
+            tileset_paisaje.nombre = "Landscape";
+            tileset_paisaje.ruta_imagen = "Assets/Maps/spring_outdoorsTileSheet.png";
+            tileset_paisaje.primer_identificador_global = 1;
+            tileset_paisaje.ancho_tile = ANCHO_TILE_PIXELES;
+            tileset_paisaje.alto_tile = ALTO_TILE_PIXELES;
+            tileset_paisaje.cantidad_de_columnas = 25;
+            tileset_paisaje.cantidad_de_tiles = 1975;
+            tileset_paisaje.ancho_imagen = 400;
+            tileset_paisaje.alto_imagen = 1264;
+            escritor.agregar_tileset(tileset_paisaje);
+
+            DefinicionTilesetTMX tileset_pueblo =
+                CatalogoDeTerrenos::obtener_tileset_sector(sector);
+            tileset_pueblo.primer_identificador_global = FIRST_GID_PUEBLO;
+            escritor.agregar_tileset(tileset_pueblo);
+        } else {
+            escritor.agregar_tileset(CatalogoDeTerrenos::obtener_tileset_sector(sector));
         }
     }
 }
@@ -110,6 +145,49 @@ void ExportadorDeSectorTMX::exportar_capas_de_tiles() {
 
     int total_columnas = mapa.obtener_cantidad_de_columnas();
     int total_filas = mapa.obtener_cantidad_de_filas();
+    size_t total_casillas = static_cast<size_t>(total_columnas * total_filas);
+
+    if (sector == SectorActual::PUEBLO) {
+        size_t indice_pueblo = 0;
+        while (indice_pueblo < total_casillas) {
+            if (tiles_suelo[indice_pueblo] != 0) {
+                uint32_t flags = tiles_suelo[indice_pueblo] & 0xE0000000;
+                uint32_t id_puro = tiles_suelo[indice_pueblo] & 0x1FFFFFFF;
+                tiles_suelo[indice_pueblo] = flags | (id_puro + FIRST_GID_PUEBLO - 1);
+            }
+            if (tiles_estructuras[indice_pueblo] != 0) {
+                uint32_t flags = tiles_estructuras[indice_pueblo] & 0xE0000000;
+                uint32_t id_puro = tiles_estructuras[indice_pueblo] & 0x1FFFFFFF;
+                tiles_estructuras[indice_pueblo] = flags | (id_puro + FIRST_GID_PUEBLO - 1);
+            }
+            if (tiles_frente[indice_pueblo] != 0) {
+                uint32_t flags = tiles_frente[indice_pueblo] & 0xE0000000;
+                uint32_t id_puro = tiles_frente[indice_pueblo] & 0x1FFFFFFF;
+                tiles_frente[indice_pueblo] = flags | (id_puro + FIRST_GID_PUEBLO - 1);
+            }
+            indice_pueblo++;
+        }
+    }
+    std::vector<uint32_t> tiles_colisiones(total_casillas, 0);
+
+    size_t indice_casilla = 0;
+    while (indice_casilla < total_casillas) {
+        int fila = static_cast<int>(indice_casilla / static_cast<size_t>(total_columnas));
+        int columna = static_cast<int>(indice_casilla % static_cast<size_t>(total_columnas));
+
+        CasillaDelMapa casilla_suelo = mapa.obtener_casilla_en_capa(TipoCapa::SUELO, columna, fila);
+        CasillaDelMapa casilla_estructuras =
+            mapa.obtener_casilla_en_capa(TipoCapa::ESTRUCTURAS, columna, fila);
+
+        if (casilla_suelo.tiene_propiedad(PropiedadDeCasilla::BLOQUEA)) {
+            tiles_colisiones[indice_casilla] = 1;
+        } else if (casilla_estructuras.tiene_propiedad(PropiedadDeCasilla::BLOQUEA)) {
+            tiles_colisiones[indice_casilla] = 1;
+        } else if (tiles_estructuras[indice_casilla] != 0) {
+            tiles_colisiones[indice_casilla] = 1;
+        }
+        indice_casilla++;
+    }
 
     std::vector<EntidadDelMapa> entidades = mapa.listar_todas_las_entidades();
     size_t indice_entidad = 0;
@@ -127,7 +205,8 @@ void ExportadorDeSectorTMX::exportar_capas_de_tiles() {
                 total_filas,
                 tiles_suelo,
                 tiles_estructuras,
-                tiles_frente);
+                tiles_frente,
+                tiles_colisiones);
         } else if (tipo == TipoEntidad::ENTRADA_CAVERNA && sector == SectorActual::GRANJA) {
             inyectar_tiles_de_entrada_caverna(
                 origen_columna,
@@ -136,7 +215,8 @@ void ExportadorDeSectorTMX::exportar_capas_de_tiles() {
                 total_filas,
                 tiles_suelo,
                 tiles_estructuras,
-                tiles_frente);
+                tiles_frente,
+                tiles_colisiones);
         } else if (tipo == TipoEntidad::CENTRO_COMUNITARIO && sector == SectorActual::PUEBLO) {
             inyectar_tiles_de_centro_comunitario(
                 origen_columna,
@@ -145,7 +225,8 @@ void ExportadorDeSectorTMX::exportar_capas_de_tiles() {
                 total_filas,
                 tiles_suelo,
                 tiles_estructuras,
-                tiles_frente);
+                tiles_frente,
+                tiles_colisiones);
         } else if (tipo == TipoEntidad::MERCADO && sector == SectorActual::PUEBLO) {
             inyectar_tiles_de_mercado(
                 origen_columna,
@@ -154,7 +235,8 @@ void ExportadorDeSectorTMX::exportar_capas_de_tiles() {
                 total_filas,
                 tiles_suelo,
                 tiles_estructuras,
-                tiles_frente);
+                tiles_frente,
+                tiles_colisiones);
         }
         indice_entidad++;
     }
@@ -345,13 +427,18 @@ void ExportadorDeSectorTMX::exportar_capas_de_tiles() {
         escritor.definir_capa_de_tiles(CAPA_SUELO_TMX, tiles_suelo);
         escritor.definir_capa_de_tiles(CAPA_ESTRUCTURAS_TMX, tiles_estructuras);
         escritor.definir_capa_de_tiles(CAPA_FRENTE_TMX, tiles_frente);
+        size_t total_casillas = static_cast<size_t>(total_columnas * total_filas);
+        std::vector<uint32_t> capa_vacia(total_casillas, 0);
+        escritor.definir_capa_de_tiles("AlwaysFront", capa_vacia);
+        escritor.definir_capa_de_tiles("AlwaysFront2", capa_vacia);
+        escritor.definir_capa_de_tiles("Colisiones", tiles_colisiones);
     }
 }
 
 void ExportadorDeSectorTMX::inyectar_tiles_de_cabania(
     int origen_columna, int origen_fila, int total_columnas, int total_filas,
     std::vector<uint32_t>& tiles_suelo, std::vector<uint32_t>& tiles_estructuras,
-    std::vector<uint32_t>& tiles_frente) {
+    std::vector<uint32_t>& tiles_frente, std::vector<uint32_t>& tiles_colisiones) {
     int fila_local = 0;
     while (fila_local < ALTO_CABANIA_CASILLAS) {
         int columna_local = 0;
@@ -366,20 +453,31 @@ void ExportadorDeSectorTMX::inyectar_tiles_de_cabania(
                     (columna_local + COLUMNA_DESPLAZAMIENTO_SPRITE_CABANIA));
                 uint32_t gid_global = FIRST_GID_HOUSES + id_tile_local;
 
-                if (fila_local <= FILA_LIMITE_TECHO_CABANIA) {
+                bool es_porche =
+                    (fila_local == FILA_PORCHE_CABANIA &&
+                     columna_local >= COLUMNA_INICIO_PORCHE_CABANIA &&
+                     columna_local <= COLUMNA_FIN_PORCHE_CABANIA);
+                bool es_escalones =
+                    (fila_local == FILA_ESCALONES_CABANIA &&
+                     columna_local >= COLUMNA_INICIO_ALFOMBRA_CABANIA &&
+                     columna_local <= COLUMNA_FIN_ALFOMBRA_CABANIA);
+
+                if (fila_local < FILA_LIMITE_TECHO_CABANIA) {
                     tiles_frente[indice_mapa] = gid_global;
-                } else if (
-                    fila_local == FILA_PORCHE_CABANIA &&
-                    columna_local >= COLUMNA_INICIO_PORCHE_CABANIA &&
-                    columna_local <= COLUMNA_FIN_PORCHE_CABANIA) {
+                    if (columna_local <= 3 && fila_local < 3) {
+                        tiles_colisiones[indice_mapa] = 1;
+                    } else {
+                        tiles_colisiones[indice_mapa] = 0;
+                    }
+                } else if (fila_local == FILA_LIMITE_TECHO_CABANIA) {
+                    tiles_frente[indice_mapa] = gid_global;
+                    tiles_colisiones[indice_mapa] = 1;
+                } else if (es_porche || es_escalones) {
                     tiles_suelo[indice_mapa] = gid_global;
-                } else if (
-                    fila_local == FILA_ESCALONES_CABANIA &&
-                    columna_local >= COLUMNA_INICIO_ALFOMBRA_CABANIA &&
-                    columna_local <= COLUMNA_FIN_ALFOMBRA_CABANIA) {
-                    tiles_suelo[indice_mapa] = gid_global;
+                    tiles_colisiones[indice_mapa] = 0;
                 } else {
                     tiles_estructuras[indice_mapa] = gid_global;
+                    tiles_colisiones[indice_mapa] = 1;
                 }
             }
             columna_local++;
@@ -391,7 +489,7 @@ void ExportadorDeSectorTMX::inyectar_tiles_de_cabania(
 void ExportadorDeSectorTMX::inyectar_tiles_de_centro_comunitario(
     int origen_columna, int origen_fila, int total_columnas, int total_filas,
     std::vector<uint32_t>& tiles_suelo, std::vector<uint32_t>& tiles_estructuras,
-    std::vector<uint32_t>& tiles_frente) {
+    std::vector<uint32_t>& tiles_frente, std::vector<uint32_t>& tiles_colisiones) {
     int fila_local = 0;
     while (fila_local < ALTO_CENTRO_COMUNITARIO_CASILLAS) {
         int columna_local = 0;
@@ -406,15 +504,20 @@ void ExportadorDeSectorTMX::inyectar_tiles_de_centro_comunitario(
                     columna_local);
                 uint32_t gid_global = FIRST_GID_PUEBLO + id_tile_local;
 
+                bool es_acceso =
+                    (fila_local == FILA_ACCESO_CENTRO_COMUNITARIO &&
+                     columna_local >= COLUMNA_INICIO_ACCESO_CENTRO_COMUNITARIO &&
+                     columna_local <= COLUMNA_FIN_ACCESO_CENTRO_COMUNITARIO);
+
                 if (fila_local <= FILA_LIMITE_TECHO_CENTRO_COMUNITARIO) {
                     tiles_frente[indice_mapa] = gid_global;
-                } else if (
-                    fila_local == FILA_ACCESO_CENTRO_COMUNITARIO &&
-                    columna_local >= COLUMNA_INICIO_ACCESO_CENTRO_COMUNITARIO &&
-                    columna_local <= COLUMNA_FIN_ACCESO_CENTRO_COMUNITARIO) {
+                    tiles_colisiones[indice_mapa] = 1;
+                } else if (es_acceso) {
                     tiles_suelo[indice_mapa] = gid_global;
+                    tiles_colisiones[indice_mapa] = 0;
                 } else {
                     tiles_estructuras[indice_mapa] = gid_global;
+                    tiles_colisiones[indice_mapa] = 1;
                 }
             }
             columna_local++;
@@ -426,7 +529,7 @@ void ExportadorDeSectorTMX::inyectar_tiles_de_centro_comunitario(
 void ExportadorDeSectorTMX::inyectar_tiles_de_mercado(
     int origen_columna, int origen_fila, int total_columnas, int total_filas,
     std::vector<uint32_t>& tiles_suelo, std::vector<uint32_t>& tiles_estructuras,
-    std::vector<uint32_t>& tiles_frente) {
+    std::vector<uint32_t>& tiles_frente, std::vector<uint32_t>& tiles_colisiones) {
     int fila_local = 0;
     while (fila_local < ALTO_MERCADO_CASILLAS) {
         int columna_local = 0;
@@ -449,15 +552,20 @@ void ExportadorDeSectorTMX::inyectar_tiles_de_mercado(
 
                 if (id_tile_local > 0) {
                     uint32_t gid_global = FIRST_GID_PUEBLO + id_tile_local;
+                    bool es_acceso =
+                        (fila_local == FILA_ACCESO_MERCADO &&
+                         columna_local >= COLUMNA_INICIO_ACCESO_MERCADO &&
+                         columna_local <= COLUMNA_FIN_ACCESO_MERCADO);
+
                     if (fila_local <= FILA_LIMITE_TECHO_MERCADO) {
                         tiles_frente[indice_mapa] = gid_global;
-                    } else if (
-                        fila_local == FILA_ACCESO_MERCADO &&
-                        columna_local >= COLUMNA_INICIO_ACCESO_MERCADO &&
-                        columna_local <= COLUMNA_FIN_ACCESO_MERCADO) {
+                        tiles_colisiones[indice_mapa] = 1;
+                    } else if (es_acceso) {
                         tiles_suelo[indice_mapa] = gid_global;
+                        tiles_colisiones[indice_mapa] = 1;
                     } else {
                         tiles_estructuras[indice_mapa] = gid_global;
+                        tiles_colisiones[indice_mapa] = 1;
                     }
                 }
             }
@@ -470,7 +578,7 @@ void ExportadorDeSectorTMX::inyectar_tiles_de_mercado(
 void ExportadorDeSectorTMX::inyectar_tiles_de_entrada_caverna(
     int origen_columna, int origen_fila, int total_columnas, int total_filas,
     std::vector<uint32_t>& tiles_suelo, std::vector<uint32_t>& tiles_estructuras,
-    std::vector<uint32_t>& tiles_frente) {
+    std::vector<uint32_t>& tiles_frente, std::vector<uint32_t>& tiles_colisiones) {
     int fila_local = 0;
     while (fila_local < ALTO_CASETA_MINA_CASILLAS) {
         int columna_local = 0;
@@ -485,16 +593,22 @@ void ExportadorDeSectorTMX::inyectar_tiles_de_entrada_caverna(
                     (columna_local + COLUMNA_DESPLAZAMIENTO_SPRITE_CASETA_MINA));
                 uint32_t gid_global = FIRST_GID_CASETA_MINA + id_tile_local;
 
-                if (fila_local <= FILA_LIMITE_TECHO_CASETA_MINA) {
+                bool es_porche =
+                    (fila_local == FILA_PORCHE_CASETA_MINA &&
+                     columna_local != COLUMNA_BUZON_CASETA_MINA);
+
+                if (fila_local < FILA_LIMITE_TECHO_CASETA_MINA) {
                     tiles_frente[indice_mapa] = gid_global;
-                } else if (
-                    fila_local == FILA_PORCHE_CASETA_MINA &&
-                    columna_local != COLUMNA_BUZON_CASETA_MINA) {
-                    // Porche y alfombra verde van a la capa suelo para permitir el paso
+                    tiles_colisiones[indice_mapa] = 0;
+                } else if (fila_local == FILA_LIMITE_TECHO_CASETA_MINA) {
+                    tiles_frente[indice_mapa] = gid_global;
+                    tiles_colisiones[indice_mapa] = 1;
+                } else if (es_porche) {
                     tiles_suelo[indice_mapa] = gid_global;
+                    tiles_colisiones[indice_mapa] = 0;
                 } else {
-                    // Muros de piedra, puerta y buzón bloquean en capa Estructuras
                     tiles_estructuras[indice_mapa] = gid_global;
+                    tiles_colisiones[indice_mapa] = 1;
                 }
             }
             columna_local++;
@@ -506,7 +620,7 @@ void ExportadorDeSectorTMX::inyectar_tiles_de_entrada_caverna(
 void ExportadorDeSectorTMX::exportar_entidades() {
     std::map<TipoEntidad, DefinicionTransicionTMX> transiciones_por_tipo = {
         {TipoEntidad::CABANIA, {DESTINO_CABANIA, COLUMNA_SPAWN_CASA, FILA_SPAWN_CASA}},
-        {TipoEntidad::CENTRO_COMUNITARIO, {DESTINO_CENTRO_COMUNITARIO, 15, 20}},
+        {TipoEntidad::CENTRO_COMUNITARIO, {DESTINO_CENTRO_COMUNITARIO, 32, 22}},
         {TipoEntidad::MERCADO,
          {DESTINO_MERCADO, destinos.columna_destino_mercado, destinos.fila_destino_mercado}},
         {TipoEntidad::TRANSICION_PUEBLO,
@@ -548,18 +662,25 @@ void ExportadorDeSectorTMX::exportar_entidades() {
         if (es_puesto_mercado) {
             int columna_interaccion = 0;
             int fila_interaccion = 0;
+            int columna_calculada = 0;
+            int fila_calculada = 0;
             mapa.calcular_interaccion_puesto(
                 columna,
                 fila,
                 entidades[indice].obtener_orientacion(),
                 columna_interaccion,
                 fila_interaccion,
-                columna_atencion,
-                fila_atencion);
+                columna_calculada,
+                fila_calculada);
             posicion_x_pixeles = columna_interaccion * ANCHO_TILE_PIXELES;
             posicion_y_pixeles = fila_interaccion * ALTO_TILE_PIXELES;
             ancho_pixeles = ANCHO_TILE_PIXELES;
             alto_pixeles = ALTO_TILE_PIXELES;
+
+            if (!tiene_atencion) {
+                columna_atencion = columna_calculada;
+                fila_atencion = fila_calculada;
+            }
         } else if (!tiene_atencion) {
             columna_atencion = columna;
             fila_atencion = fila;
@@ -574,21 +695,21 @@ void ExportadorDeSectorTMX::exportar_entidades() {
         } else if (tipo == TipoEntidad::ENTRADA_CAVERNA) {
             // La puerta/alfombra de la caseta de la mina está en columna 2, fila 6
             posicion_x_pixeles = (columna + COLUMNA_PUERTA_CASETA_MINA) * ANCHO_TILE_PIXELES;
-            posicion_y_pixeles = (fila + FILA_PUERTA_CASETA_MINA) * ALTO_TILE_PIXELES;
+            posicion_y_pixeles = (fila + FILA_PUERTA_CASETA_MINA - 1) * ALTO_TILE_PIXELES;
             ancho_pixeles = ANCHO_TILE_PIXELES;
-            alto_pixeles = ALTO_TILE_PIXELES;
+            alto_pixeles = ALTO_TILE_PIXELES * 2;
         } else if (tipo == TipoEntidad::CENTRO_COMUNITARIO) {
             // Las puertas dobles del centro comunitario en sus escalones de entrada
             posicion_x_pixeles = (columna + 5) * ANCHO_TILE_PIXELES;
-            posicion_y_pixeles = (fila + 9) * ALTO_TILE_PIXELES;
+            posicion_y_pixeles = (fila + 8) * ALTO_TILE_PIXELES;
             ancho_pixeles = ANCHO_TILE_PIXELES * 2;
-            alto_pixeles = ALTO_TILE_PIXELES;
+            alto_pixeles = ALTO_TILE_PIXELES * 2;
         } else if (tipo == TipoEntidad::MERCADO) {
             // La puerta del Mercado en sus escalones de entrada
             posicion_x_pixeles = (columna + 5) * ANCHO_TILE_PIXELES;
-            posicion_y_pixeles = (fila + 9) * ALTO_TILE_PIXELES;
+            posicion_y_pixeles = (fila + 8) * ALTO_TILE_PIXELES;
             ancho_pixeles = ANCHO_TILE_PIXELES * 2;
-            alto_pixeles = ALTO_TILE_PIXELES;
+            alto_pixeles = ALTO_TILE_PIXELES * 2;
         }
 
         auto iterador_transicion = transiciones_por_tipo.find(tipo);

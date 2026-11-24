@@ -18,6 +18,7 @@ struct DefinicionTilesetTMX {
     int cantidad_de_tiles;
     int ancho_imagen;
     int alto_imagen;
+    std::map<int, std::map<std::string, std::string>> propiedades_de_tiles;
 };
 
 struct ObjetoMapaTMX {

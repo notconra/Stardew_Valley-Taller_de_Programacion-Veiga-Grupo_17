@@ -104,6 +104,16 @@ bool EscritorTMX::guardar(const std::string& ruta_archivo_destino) const {
                 << "\" columns=\"" << tileset.cantidad_de_columnas << "\">\n";
         archivo << "  <image source=\"" << tileset.ruta_imagen << "\" width=\""
                 << tileset.ancho_imagen << "\" height=\"" << tileset.alto_imagen << "\"/>\n";
+        for (const auto& [identificador_tile, propiedades] : tileset.propiedades_de_tiles) {
+            archivo << "  <tile id=\"" << identificador_tile << "\">\n";
+            archivo << "   <properties>\n";
+            for (const auto& [nombre_propiedad, valor_propiedad] : propiedades) {
+                archivo << "    <property name=\"" << nombre_propiedad << "\" value=\""
+                        << valor_propiedad << "\"/>\n";
+            }
+            archivo << "   </properties>\n";
+            archivo << "  </tile>\n";
+        }
         archivo << " </tileset>\n";
         indice_tileset++;
     }

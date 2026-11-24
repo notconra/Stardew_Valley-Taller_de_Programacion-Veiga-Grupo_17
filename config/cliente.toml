@@ -78,6 +78,11 @@ ruta = "Assets/Buildings/houses.png"
 firstgid = 3224
 columnas = 17
 
+[[mapas.tilesets]]
+ruta = "Assets/Buildings/Stone Cabin.png"
+firstgid = 3683
+columnas = 15
+
 [[mapas]]
 id = "BusStop"
 ruta = "Assets/Maps/BusStop.tmx"

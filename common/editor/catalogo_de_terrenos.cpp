@@ -6,12 +6,12 @@
 
 #include "propiedad_de_casilla.h"
 
-// GIDs de tiles universales (Tileset con primer_identificador_global = 1)
+// GIDs de tiles universales (Tileset con primer_identificador_global = 129 para Granja)
 // Exteriores - Granja (spring_outdoorsTileSheet.png, 25 columnas)
-static constexpr uint32_t TILE_TIERRA_BASE = 588;
-static constexpr uint32_t TILE_PASTO = 176;
-static constexpr uint32_t TILE_CAMINO_MADERA = 1132;
-static constexpr uint32_t TILE_CAMINO_PIEDRA = 1459;
+static constexpr uint32_t TILE_TIERRA_BASE = 716;
+static constexpr uint32_t TILE_PASTO = 304;
+static constexpr uint32_t TILE_CAMINO_MADERA = 1260;
+static constexpr uint32_t TILE_CAMINO_PIEDRA = 1587;
 
 // Pueblo (spring_town.png, 32 columnas)
 static constexpr uint32_t TILE_PASTO_URBANO = 709;
@@ -148,13 +148,14 @@ static const std::map<SectorActual, DefinicionTilesetTMX> TILESETS_POR_SECTOR = 
     {SectorActual::GRANJA,
      {NOMBRE_TILESET_EXTERIORES,
       RUTA_TILESET_EXTERIORES,
-      CatalogoDeTerrenos::PRIMER_GID_POR_DEFECTO,
+      CatalogoDeTerrenos::FIRST_GID_EXTERIORES_GRANJA,
       CatalogoDeTerrenos::ANCHO_TILE_PIXELES,
       CatalogoDeTerrenos::ALTO_TILE_PIXELES,
       COLUMNAS_TILESET_EXTERIORES,
       CANTIDAD_TILES_EXTERIORES,
       ANCHO_IMAGEN_EXTERIORES,
-      ALTO_IMAGEN_EXTERIORES}},
+      ALTO_IMAGEN_EXTERIORES,
+      {}}},
     {SectorActual::PUEBLO,
      {NOMBRE_TILESET_PUEBLO,
       RUTA_TILESET_PUEBLO,
@@ -164,7 +165,8 @@ static const std::map<SectorActual, DefinicionTilesetTMX> TILESETS_POR_SECTOR = 
       COLUMNAS_TILESET_PUEBLO,
       CANTIDAD_TILES_PUEBLO,
       ANCHO_IMAGEN_PUEBLO,
-      ALTO_IMAGEN_PUEBLO}},
+      ALTO_IMAGEN_PUEBLO,
+      {}}},
     {SectorActual::CAVERNA,
      {NOMBRE_TILESET_CAVERNA,
       RUTA_TILESET_CAVERNA,
@@ -174,7 +176,8 @@ static const std::map<SectorActual, DefinicionTilesetTMX> TILESETS_POR_SECTOR = 
       COLUMNAS_TILESET_CAVERNA,
       CANTIDAD_TILES_CAVERNA,
       ANCHO_IMAGEN_CAVERNA,
-      ALTO_IMAGEN_CAVERNA}},
+      ALTO_IMAGEN_CAVERNA,
+      {}}},
     {SectorActual::MERCADO,
      {NOMBRE_TILESET_MERCADO,
       RUTA_TILESET_MERCADO,
@@ -184,7 +187,8 @@ static const std::map<SectorActual, DefinicionTilesetTMX> TILESETS_POR_SECTOR = 
       COLUMNAS_TILESET_MERCADO,
       CANTIDAD_TILES_MERCADO,
       ANCHO_IMAGEN_MERCADO,
-      ALTO_IMAGEN_MERCADO}}};
+      ALTO_IMAGEN_MERCADO,
+      {}}}};
 
 const std::vector<DefinicionTile>& CatalogoDeTerrenos::obtener_catalogo_por_sector(
     SectorActual sector) {

@@ -155,6 +155,9 @@ void VistaPartida::limitar_cuadro(uint32_t inicio_del_cuadro) const {
 
 bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     id_jugador = partida.id_jugador;
+    if (!partida.nombre_mundo.empty()) {
+        establecer_mundo(partida.nombre_mundo);
+    }
     intencion_enviada = Moverse{};
     ultimo_estado_juego = EstadoJuego{};
     ultimo_inventario = InventarioJugador{};
@@ -204,7 +207,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             mapas_cargados.clear();
             estacion_cargada = estacion;
         }
-        std::string mundo_para_mapa = (id_mapa == "granja" ? mundo_actual : "");
+        std::string mundo_para_mapa = mundo_actual;
         return mapas_cargados
             .try_emplace(
                 id_mapa,
@@ -882,6 +885,12 @@ void VistaPartida::aplicar(
                 const uint8_t vida_antes = antes != nullptr ? antes->vida : 0;
                 const bool tenia_monedas = antes != nullptr && estado.mapa == e.mapa;
                 const uint32_t monedas_antes = antes != nullptr ? antes->monedas : 0;
+                if (estado.mapa != e.mapa) {
+                    estado.enemigos.clear();
+                    estado.trampas.clear();
+                    estado.drops.clear();
+                    estado.objetos.clear();
+                }
                 estado.mapa = e.mapa;
                 estado.jugadores = e.jugadores;
                 const EstadoJugador* ahora = jugador_propio();

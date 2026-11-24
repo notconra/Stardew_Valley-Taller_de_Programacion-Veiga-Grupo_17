@@ -21,6 +21,7 @@ public:
     static constexpr int ANCHO_TILE_PIXELES = 16;
     static constexpr int ALTO_TILE_PIXELES = 16;
     static constexpr uint32_t PRIMER_GID_POR_DEFECTO = 1;
+    static constexpr uint32_t FIRST_GID_EXTERIORES_GRANJA = 129;
 
     static const std::vector<DefinicionTile>& obtener_catalogo_por_sector(SectorActual sector);
     static DefinicionTilesetTMX obtener_tileset_sector(SectorActual sector);

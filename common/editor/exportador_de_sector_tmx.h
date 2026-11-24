@@ -13,8 +13,8 @@ struct DestinosDeTransicion {
     int fila_destino_pueblo = 12;
     int columna_destino_granja = 64;
     int fila_destino_granja = 15;
-    int columna_destino_caverna = 5;
-    int fila_destino_caverna = 5;
+    int columna_destino_caverna = 14;
+    int fila_destino_caverna = 17;
     int columna_salida_caverna = 10;
     int fila_salida_caverna = 10;
     int columna_destino_mercado = 9;
@@ -36,13 +36,13 @@ private:
     static constexpr const char* DESTINO_PUEBLO = "Town";
     static constexpr const char* DESTINO_GRANJA = "granja";
     static constexpr const char* DESTINO_CABANIA = "FarmHouse2";
-    static constexpr const char* DESTINO_CENTRO_COMUNITARIO = "CommunityCenter";
+    static constexpr const char* DESTINO_CENTRO_COMUNITARIO = "centro_comunitario";
     static constexpr const char* DESTINO_MERCADO = "mercado";
-    static constexpr const char* DESTINO_CAVERNA = "caverna";
+    static constexpr const char* DESTINO_CAVERNA = "mazmorra";
     static constexpr const char* DESTINO_SIGUIENTE_NIVEL = "siguiente";
 
     static constexpr int COLUMNA_SPAWN_CASA = 27;
-    static constexpr int FILA_SPAWN_CASA = 28;
+    static constexpr int FILA_SPAWN_CASA = 26;
 
     static constexpr int COLUMNA_ENTRADA_MERCADO = 9;
     static constexpr int FILA_ENTRADA_MERCADO = 14;
@@ -123,19 +123,19 @@ private:
     void inyectar_tiles_de_cabania(
         int origen_columna, int origen_fila, int total_columnas, int total_filas,
         std::vector<uint32_t>& tiles_suelo, std::vector<uint32_t>& tiles_estructuras,
-        std::vector<uint32_t>& tiles_frente);
+        std::vector<uint32_t>& tiles_frente, std::vector<uint32_t>& tiles_colisiones);
     void inyectar_tiles_de_centro_comunitario(
         int origen_columna, int origen_fila, int total_columnas, int total_filas,
         std::vector<uint32_t>& tiles_suelo, std::vector<uint32_t>& tiles_estructuras,
-        std::vector<uint32_t>& tiles_frente);
+        std::vector<uint32_t>& tiles_frente, std::vector<uint32_t>& tiles_colisiones);
     void inyectar_tiles_de_mercado(
         int origen_columna, int origen_fila, int total_columnas, int total_filas,
         std::vector<uint32_t>& tiles_suelo, std::vector<uint32_t>& tiles_estructuras,
-        std::vector<uint32_t>& tiles_frente);
+        std::vector<uint32_t>& tiles_frente, std::vector<uint32_t>& tiles_colisiones);
     void inyectar_tiles_de_entrada_caverna(
         int origen_columna, int origen_fila, int total_columnas, int total_filas,
         std::vector<uint32_t>& tiles_suelo, std::vector<uint32_t>& tiles_estructuras,
-        std::vector<uint32_t>& tiles_frente);
+        std::vector<uint32_t>& tiles_frente, std::vector<uint32_t>& tiles_colisiones);
 
 public:
     ExportadorDeSectorTMX(

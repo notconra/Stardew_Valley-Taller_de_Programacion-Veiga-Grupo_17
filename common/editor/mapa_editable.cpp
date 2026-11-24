@@ -1370,9 +1370,12 @@ void MapaEditable::calcular_interaccion_puesto(
     columna_interaccion = columna + distancia_columna;
     fila_interaccion = fila + distancia_fila;
 
-    bool casilla_frente_bloquea = esta_dentro(columna_interaccion, fila_interaccion) &&
-                                  obtener_casilla(columna_interaccion, fila_interaccion)
-                                      .tiene_propiedad(PropiedadDeCasilla::BLOQUEA);
+    bool casilla_frente_bloquea =
+        esta_dentro(columna_interaccion, fila_interaccion) &&
+        (obtener_casilla_en_capa(TipoCapa::ESTRUCTURAS, columna_interaccion, fila_interaccion)
+             .tiene_propiedad(PropiedadDeCasilla::BLOQUEA) ||
+         obtener_casilla_en_capa(TipoCapa::SUELO, columna_interaccion, fila_interaccion)
+             .tiene_propiedad(PropiedadDeCasilla::BLOQUEA));
     if (casilla_frente_bloquea) {
         columna_atencion = columna + 2 * distancia_columna;
         fila_atencion = fila + 2 * distancia_fila;

@@ -37,9 +37,27 @@ MapaGrafico::MapaGrafico(
 
     std::string ruta_mapa = configuracion_mapa.ruta;
     if (!nombre_mundo.empty() && nombre_mundo != "Mundo Estandar") {
-        std::string ruta_personalizada = "mundos/" + nombre_mundo + "/granja.tmx";
-        if (std::filesystem::exists(ruta_personalizada)) {
-            ruta_mapa = ruta_personalizada;
+        std::string archivo_sector;
+        if (configuracion_mapa.id == "granja") {
+            archivo_sector = "granja.tmx";
+        } else if (configuracion_mapa.id == "mercado") {
+            archivo_sector = "mercado.tmx";
+        } else if (configuracion_mapa.id == "Town") {
+            archivo_sector = "pueblo.tmx";
+        }
+
+        if (!archivo_sector.empty()) {
+            std::filesystem::path ruta_directa =
+                std::filesystem::path(nombre_mundo) / archivo_sector;
+            if (std::filesystem::exists(ruta_directa)) {
+                ruta_mapa = ruta_directa.string();
+            } else {
+                std::filesystem::path ruta_en_mundos =
+                    std::filesystem::path("mundos") / nombre_mundo / archivo_sector;
+                if (std::filesystem::exists(ruta_en_mundos)) {
+                    ruta_mapa = ruta_en_mundos.string();
+                }
+            }
         }
     }
 
@@ -80,23 +98,21 @@ std::vector<Tileset> MapaGrafico::crear_tilesets(
 
 std::vector<std::vector<int>> MapaGrafico::cargar_capas(
     const std::string& ruta_mapa, const std::vector<std::string>& nombres) {
-    const LectorDeMapasTMX lector(ruta_mapa);
+    LectorDeMapasTMX lector(ruta_mapa);
 
     std::vector<std::vector<int>> capas;
     capas.reserve(nombres.size());
     for (const std::string& nombre : nombres) {
-        const std::vector<std::uint32_t> cruda = lector.cargar_capa_con_flags(nombre);
-        if (cruda.empty()) {
-            throw std::runtime_error(
-                std::string("no se pudo cargar la capa ") + nombre + " de " + ruta_mapa);
+        std::vector<std::uint32_t> cruda = lector.cargar_capa_con_flags(nombre);
+        if (!cruda.empty()) {
+            // Se conservan los bits de espejado, dibujado los interpreta.
+            std::vector<int> capa;
+            capa.reserve(cruda.size());
+            for (std::uint32_t valor : cruda) {
+                capa.push_back(static_cast<int>(valor));
+            }
+            capas.push_back(std::move(capa));
         }
-        // Se conservan los bits de espejado, dibujado los interpreta.
-        std::vector<int> capa;
-        capa.reserve(cruda.size());
-        for (std::uint32_t valor : cruda) {
-            capa.push_back(static_cast<int>(valor));
-        }
-        capas.push_back(std::move(capa));
     }
     return capas;
 }
