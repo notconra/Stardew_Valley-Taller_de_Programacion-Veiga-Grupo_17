@@ -101,6 +101,8 @@ public:
     bool plantar(Notificador& notificador, const Casilla& casilla, TipoCultivo tipo);
     bool se_puede_plantar(const Casilla& casilla) const;
     bool regar(Notificador& notificador, const Casilla& casilla);
+    // Riega los cultivos de las 4 casillas adyacentes a cada aspersor del sector.
+    void regar_con_aspersores(Notificador& notificador);
     std::optional<Cosecha> cosechar(Notificador& notificador, const Casilla& casilla);
 
     // El tiempo de los cultivos (ver Huerta). Avisan de las casillas que cambiaron.
