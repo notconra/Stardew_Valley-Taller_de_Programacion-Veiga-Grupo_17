@@ -36,7 +36,7 @@ private:
     const Colisiones& colisiones;
     const ConfiguracionMovimientoJugador movimiento;
     const double paso_por_tick;
-    const Posicion aparicion;
+    Posicion aparicion;
     std::map<uint32_t, JugadorEnPartida> jugadores;
 
     bool choca(double x, double y) const;
@@ -65,6 +65,8 @@ public:
     // otro mapa por una transición o se restaura una partida guardada.
     void agregar_en(uint32_t id_jugador, double x, double y, Direccion mirando = Direccion::ABAJO);
     void agregar_en_aparicion(uint32_t id_jugador);
+    void establecer_aparicion(double x, double y);
+    bool puede_pararse_en_casilla(int columna, int fila) const;
 
     // Rota la dirección del personaje hacia la casilla del objetivo
     void mirar_hacia(uint32_t id_jugador, const Casilla& casilla_destino);

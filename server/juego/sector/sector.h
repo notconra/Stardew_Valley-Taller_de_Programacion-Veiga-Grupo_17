@@ -51,10 +51,12 @@ public:
     std::vector<EstadoNpc> npcs;
     int nivel_de_mazmorra = 0;
 
-    // "recursos" tiene que vivir más que el Sector y tener el mapa "id_mapa" cargado.
-    Sector(const std::string& id_mapa, const RecursosDeJuego& recursos, uint8_t ticks_por_segundo)
+    // "recursos" tiene que vivir más que el Sector y tener el mapa cargado.
+    Sector(
+        const std::string& id_mapa, const Mapa& mapa_a_usar, const RecursosDeJuego& recursos,
+        uint8_t ticks_por_segundo)
         : id(id_mapa),
-          mapa(recursos.mapas.at(id_mapa)),
+          mapa(mapa_a_usar),
           tierra(mapa),
           huerta(recursos.catalogo_de_cultivos, recursos.juego.cultivos),
           colisiones(mapa),
@@ -66,6 +68,10 @@ public:
           enemigos(recursos.catalogo_de_enemigos, ticks_por_segundo),
           animales(colisiones) {
         registrar_manejadores_de_modificaciones();
+    }
+
+    Sector(const std::string& id_mapa, const RecursosDeJuego& recursos, uint8_t ticks_por_segundo)
+        : Sector(id_mapa, recursos.mapas.at(id_mapa), recursos, ticks_por_segundo) {
     }
 
     Sector(const Sector&) = delete;
@@ -110,6 +116,8 @@ public:
 
     void cargar_casillas_modificadas(const std::vector<ModificacionCasilla>& modificaciones);
     void agregar_modificaciones_a(std::vector<ModificacionCasilla>& modificaciones) const;
+    void establecer_aparicion(double x, double y);
+    void bloquear_casilla(int columna, int fila);
 
     void cargar_cofre(
         uint32_t columna, uint32_t fila, const std::vector<RanuraInventario>& ranuras);

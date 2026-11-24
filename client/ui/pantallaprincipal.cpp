@@ -1,6 +1,8 @@
 #include "pantallaprincipal.h"
 
 #include <QDialog>
+#include <QFileDialog>
+#include <QFileInfo>
 #include <QFontDatabase>
 #include <QHeaderView>
 #include <QIcon>
@@ -10,6 +12,7 @@
 #include <QTableWidgetItem>
 #include <algorithm>
 #include <cmath>
+#include <filesystem>
 #include <iostream>
 #include <limits>
 #include <memory>
@@ -53,7 +56,17 @@ PantallaPrincipal::PantallaPrincipal(
     ui->setupUi(this);
     configurar_ventana();
     inicializar_selectores_personaje();
-    inicializar_selector_granjas();
+    connect(
+        ui->btn_seleccionar_carpeta_mundo,
+        &QPushButton::clicked,
+        this,
+        &PantallaPrincipal::seleccionar_carpeta_mundo);
+    connect(
+        ui->btn_restablecer_mundo,
+        &QPushButton::clicked,
+        this,
+        &PantallaPrincipal::restablecer_mundo);
+    ui->btn_restablecer_mundo->setVisible(false);
     connect(ui->btn_salir, &QPushButton::clicked, this, &PantallaPrincipal::close);
     connect(
         ui->btn_nueva_partida,
@@ -217,11 +230,11 @@ void PantallaPrincipal::confirmar_personaje() {
         conexion.enviar_comando(
             UnirsePartida{codigo_partida_a_unirse, nombre.toStdString(), apariencia});
     } else {
+        std::string mundo_elegido = mundo_seleccionado();
         std::cout << "Creando personaje: " << nombre.toStdString()
-                  << " | Granja: " << granja.toStdString()
-                  << " | Tipo de mapa: " << mapa_granja_seleccionado << "\n";
+                  << " | Granja: " << granja.toStdString() << " | Mundo: " << mundo_elegido << "\n";
         conexion.enviar_comando(
-            CrearPartida{granja.toStdString(), nombre.toStdString(), apariencia});
+            CrearPartida{granja.toStdString(), nombre.toStdString(), apariencia, mundo_elegido});
     }
 
     try {
@@ -280,57 +293,54 @@ bool PantallaPrincipal::procesar_evento_ingreso(const EventoServidor& evento) {
     return false;
 }
 
+std::string PantallaPrincipal::mundo_seleccionado() const {
+    if (!ruta_mundo_personalizado.isEmpty()) {
+        return ruta_mundo_personalizado.toStdString();
+    }
+    return "Mundo Estandar";
+}
+
+void PantallaPrincipal::seleccionar_carpeta_mundo() {
+    QString directorio_inicial = ".";
+    if (std::filesystem::exists("mundos")) {
+        directorio_inicial = "mundos";
+    }
+
+    QString directorio_elegido = QFileDialog::getExistingDirectory(
+        this,
+        "Seleccionar carpeta de mundo personalizado",
+        directorio_inicial,
+        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+
+    if (directorio_elegido.isEmpty()) {
+        return;
+    }
+
+    ruta_mundo_personalizado = directorio_elegido;
+    QFileInfo info_directorio(directorio_elegido);
+    QString nombre_carpeta = info_directorio.fileName();
+    if (nombre_carpeta.isEmpty()) {
+        nombre_carpeta = "Personalizado";
+    }
+
+    ui->label_nombre_mundo_seleccionado->setText(nombre_carpeta);
+    ui->label_nombre_mundo_seleccionado->setToolTip(directorio_elegido);
+    ui->btn_seleccionar_carpeta_mundo->setToolTip(directorio_elegido);
+    ui->btn_restablecer_mundo->setVisible(true);
+}
+
+void PantallaPrincipal::restablecer_mundo() {
+    ruta_mundo_personalizado.clear();
+    ui->label_nombre_mundo_seleccionado->setText("Mundo Estándar");
+    ui->label_nombre_mundo_seleccionado->setToolTip("");
+    ui->btn_seleccionar_carpeta_mundo->setToolTip("Seleccionar carpeta de mundo personalizado");
+    ui->btn_restablecer_mundo->setVisible(false);
+}
+
 void PantallaPrincipal::configurar_formulario_granja(bool visible) {
     ui->label_3->setVisible(visible);
     ui->input_nombre_granja->setVisible(visible);
-    ui->label_mundo->setVisible(false);
-    ui->combo_mundo->setVisible(false);
     ui->contenedor_lateral_granjas->setVisible(visible);
-}
-
-void PantallaPrincipal::inicializar_selector_granjas() {
-    auto& recursos = RecursosUI::instancia();
-    botones_tipo_granja = {
-        ui->btn_granja_0,
-        ui->btn_granja_1,
-        ui->btn_granja_2,
-        ui->btn_granja_3,
-        ui->btn_granja_4,
-        ui->btn_granja_5,
-        ui->btn_granja_6,
-        ui->btn_granja_7};
-
-    grupo_botones_granja.setExclusive(true);
-    for (int i = 0; i < static_cast<int>(botones_tipo_granja.size()); ++i) {
-        QPushButton* boton = botones_tipo_granja[i];
-        recursos.configurar_boton_granja(boton, i);
-        grupo_botones_granja.addButton(boton, i);
-    }
-
-    connect(
-        &grupo_botones_granja,
-        &QButtonGroup::idClicked,
-        this,
-        &PantallaPrincipal::al_seleccionar_tipo_granja);
-
-    seleccionar_tipo_granja(0);
-}
-
-void PantallaPrincipal::al_seleccionar_tipo_granja(int indice) {
-    seleccionar_tipo_granja(indice);
-}
-
-void PantallaPrincipal::seleccionar_tipo_granja(int indice) {
-    const auto& tipos = RecursosUI::obtener_tipos_granja();
-    if (indice < 0 || indice >= static_cast<int>(tipos.size())) {
-        return;
-    }
-    indice_granja_seleccionada = indice;
-    mapa_granja_seleccionado = tipos[indice].mapa_id.toStdString();
-
-    if (auto* boton = grupo_botones_granja.button(indice)) {
-        boton->setChecked(true);
-    }
 }
 
 void PantallaPrincipal::inicializar_selectores_personaje() {

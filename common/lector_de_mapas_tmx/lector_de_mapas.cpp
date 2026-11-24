@@ -175,6 +175,15 @@ std::vector<std::uint32_t> LectorDeMapasTMX::cargar_capa_con_flags(
     return casillas;
 }
 
+std::vector<ObjetoTMX> LectorDeMapasTMX::cargar_objetos(const std::string& nombre_capa) const {
+    tinyxml2::XMLDocument documento;
+    tinyxml2::XMLElement* nodo_mapa = abrir_mapa(documento);
+    if (!nodo_mapa) {
+        return {};
+    }
+    return leer_objetos(nodo_mapa, nombre_capa);
+}
+
 std::vector<TransicionTMX> LectorDeMapasTMX::cargar_transiciones(
     const std::string& nombre_capa) const {
     std::vector<TransicionTMX> transiciones;
@@ -230,6 +239,20 @@ std::vector<PuestoTMX> LectorDeMapasTMX::cargar_puestos(const std::string& nombr
         puesto.fila_atencion = objeto.entero_de("fila_atencion");
         puesto.tiene_atencion =
             objeto.tiene_propiedad("columna_atencion") && objeto.tiene_propiedad("fila_atencion");
+        puesto.columna_npc = objeto.entero_de("columna_npc");
+        puesto.fila_npc = objeto.entero_de("fila_npc");
+        puesto.tiene_posicion_npc =
+            objeto.tiene_propiedad("columna_npc") && objeto.tiene_propiedad("fila_npc");
+        std::string texto_orientacion = objeto.texto_de("orientacion_npc");
+        if (texto_orientacion == "derecha") {
+            puesto.orientacion_npc = Direccion::DERECHA;
+        } else if (texto_orientacion == "arriba") {
+            puesto.orientacion_npc = Direccion::ARRIBA;
+        } else if (texto_orientacion == "izquierda") {
+            puesto.orientacion_npc = Direccion::IZQUIERDA;
+        } else {
+            puesto.orientacion_npc = Direccion::ABAJO;
+        }
         puestos.push_back(puesto);
     }
     return puestos;

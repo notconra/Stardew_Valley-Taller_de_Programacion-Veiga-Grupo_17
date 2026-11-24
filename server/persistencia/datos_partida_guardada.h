@@ -142,6 +142,7 @@ struct DatosMundoGuardado {
 struct DatosPartidaGuardada {
     std::string codigo;
     std::string nombre;
+    std::string nombre_mundo;
     uint8_t jugadores_maximos = 0;
     bool multijugador = false;
     DatosMundoGuardado mundo;

@@ -85,6 +85,10 @@ VistaPartida::VistaPartida(
       marcador_de_casillas(configuracion_vista.graficos) {
 }
 
+void VistaPartida::establecer_mundo(const std::string& nombre_mundo) {
+    mundo_actual = nombre_mundo;
+}
+
 const ConfiguracionMapa& VistaPartida::configuracion_de(const std::string& id_mapa) const {
     const auto encontrado = std::find_if(
         configuracion.mapas.begin(),
@@ -163,6 +167,9 @@ void VistaPartida::limitar_cuadro(uint32_t inicio_del_cuadro) const {
 
 bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     id_jugador = partida.id_jugador;
+    if (!partida.nombre_mundo.empty()) {
+        establecer_mundo(partida.nombre_mundo);
+    }
     intencion_enviada = Moverse{};
     ultimo_estado_juego = EstadoJuego{};
     ultimo_inventario = InventarioJugador{};
@@ -212,8 +219,15 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             mapas_cargados.clear();
             estacion_cargada = estacion;
         }
+        std::string mundo_para_mapa = mundo_actual;
         return mapas_cargados
-            .try_emplace(id_mapa, renderizador.ptr(), configuracion_de(id_mapa), graficos, estacion)
+            .try_emplace(
+                id_mapa,
+                renderizador.ptr(),
+                configuracion_de(id_mapa),
+                graficos,
+                estacion,
+                mundo_para_mapa)
             .first->second;
     };
 
@@ -889,7 +903,9 @@ void VistaPartida::procesar_clic(
             conexion.enviar_comando(HablarConNpc{id_npc});
             return;
         }
-        if (mostrar_cartel_en(static_cast<int>(casilla->columna), static_cast<int>(casilla->fila))) {
+        if (mostrar_cartel_en(
+                static_cast<int>(casilla->columna),
+                static_cast<int>(casilla->fila))) {
             return;
         }
     }
@@ -1020,6 +1036,12 @@ void VistaPartida::aplicar(
                 const uint8_t vida_antes = antes != nullptr ? antes->vida : 0;
                 const bool tenia_monedas = antes != nullptr && estado.mapa == e.mapa;
                 const uint32_t monedas_antes = antes != nullptr ? antes->monedas : 0;
+                if (estado.mapa != e.mapa) {
+                    estado.enemigos.clear();
+                    estado.trampas.clear();
+                    estado.drops.clear();
+                    estado.objetos.clear();
+                }
                 estado.mapa = e.mapa;
                 estado.jugadores = e.jugadores;
                 seguir_acciones_de_otros();

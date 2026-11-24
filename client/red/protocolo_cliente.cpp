@@ -111,6 +111,7 @@ void ProtocoloCliente::enviar_comando_crear_partida(const CrearPartida& crear) {
     enviar_texto(crear.nombre_partida);
     enviar_texto(crear.nombre_jugador);
     enviar_apariencia(crear.apariencia);
+    enviar_texto(crear.nombre_mundo);
 }
 
 void ProtocoloCliente::enviar_comando_unirse_partida(const UnirsePartida& unirse) {
@@ -332,8 +333,9 @@ EntradaExitosaAPartida ProtocoloCliente::recibir_entrada_exitosa_a_partida() {
     std::string codigo_partida = recibir_texto();
     uint32_t id_jugador = recibir_u32();
     bool multijugador = recibir_booleano();
+    std::string nombre_mundo = recibir_texto();
 
-    return EntradaExitosaAPartida{codigo_partida, id_jugador, multijugador};
+    return EntradaExitosaAPartida{codigo_partida, id_jugador, multijugador, nombre_mundo};
 }
 
 MultijugadorActivado ProtocoloCliente::recibir_multijugador_activado() {

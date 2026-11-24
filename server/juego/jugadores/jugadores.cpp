@@ -218,6 +218,17 @@ void Jugadores::agregar_en_aparicion(uint32_t id_jugador) {
     agregar_en(id_jugador, aparicion.x, aparicion.y);
 }
 
+void Jugadores::establecer_aparicion(double x, double y) {
+    aparicion.x = x;
+    aparicion.y = y;
+}
+
+bool Jugadores::puede_pararse_en_casilla(int columna, int fila) const {
+    double posicion_x = columna * mapa.ancho_de_casilla_en_pixeles();
+    double posicion_y = fila * mapa.alto_de_casilla_en_pixeles();
+    return !choca(posicion_x, posicion_y);
+}
+
 bool Jugadores::hay_alguien_en(const Rectangulo& zona) const {
     for (const auto& [id_jugador, jugador] : jugadores) {
         if (se_superponen(rectangulo_de_pies(jugador.x, jugador.y), zona)) {

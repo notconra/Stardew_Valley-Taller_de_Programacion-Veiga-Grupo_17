@@ -49,6 +49,7 @@ public:
         const std::vector<std::string>& niveles_guardados);
 
     const std::vector<std::string>& obtener_niveles() const;
+    bool es_nivel_de_mazmorra(const std::string& id_mapa) const;
 
     // Se llama cuando un jugador toca una zona de transición. Devuelve true si el controlador se
     // hizo cargo (incluso para ignorarla). Si devuelve false, Mundo hace el viaje común entre

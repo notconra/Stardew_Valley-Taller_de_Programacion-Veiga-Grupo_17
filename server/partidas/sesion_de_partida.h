@@ -64,6 +64,7 @@ private:
     GuardarAlTerminarElDia guardar_al_terminar_el_dia;
     uint32_t segundos_jugados_iniciales = 0;
     std::chrono::steady_clock::time_point tiempo_inicio_sesion;
+    std::string nombre_mundo_cargado;
 
     // Le pasa a Mundo las altas y bajas anotadas desde el tick anterior.
     void aplicar_cambios_de_conexion();
@@ -83,7 +84,8 @@ public:
         const std::string& codigo_partida,
         const ConfiguracionPartidaServidor& configuracion_partida, const RecursosDeJuego& recursos,
         const DatosMundoGuardado& datos_guardados = {},
-        GuardarAlTerminarElDia guardar_al_terminar_el_dia = [] {});
+        GuardarAlTerminarElDia guardar_al_terminar_el_dia = [] {},
+        const std::string& nombre_mundo = "");
 
     bool esta_viva() const;
     std::vector<std::string> obtener_niveles_mazmorra() const;
