@@ -31,7 +31,7 @@ using ComandoCliente = std::variant<
     EnviarMensajeDeChat,
 
     // Regalos
-    EnviarRegalo, AbrirRegalos,
+    EnviarRegalo, AbrirRegalos, RechazarRegalo,
 
     // Mercado
     ComprarEnMercado, VenderEnMercado, ComprarAnimalMercado, VenderAnimalMercado, CerrarMercado,

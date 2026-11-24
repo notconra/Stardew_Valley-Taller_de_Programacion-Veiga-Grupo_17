@@ -172,8 +172,8 @@ struct CerrarMercado {
 };
 
 // Le regala a otro jugador de la partida (conectado o no) parte de una ranura de la barra.
-// cantidad == 0 regala el stack completo. Las herramientas no se pueden regalar. El regalo queda
-// pendiente hasta que el destinatario lo abre (AbrirRegalos).
+// cantidad == 0 regala el stack completo. Las herramientas y la cama no se pueden regalar. El
+// regalo queda pendiente hasta que el destinatario lo abre (AbrirRegalos).
 struct EnviarRegalo {
     uint32_t id_destinatario = 0;
     uint8_t ranura = 0;
@@ -184,6 +184,13 @@ struct EnviarRegalo {
 // Pasa al inventario todos los regalos pendientes que entren. Los que no entran siguen pendientes.
 struct AbrirRegalos {
     bool operator==(const AbrirRegalos&) const = default;
+};
+
+// Rechaza el regalo pendiente número "indice" (en el orden de RegalosPendientes): no pasa al
+// inventario del receptor y vuelve al buzón de quien lo mandó.
+struct RechazarRegalo {
+    uint8_t indice = 0;
+    bool operator==(const RechazarRegalo&) const = default;
 };
 
 // Dona al lote lo que acepte del ítem de esa ranura del inventario (índice absoluto, como en el

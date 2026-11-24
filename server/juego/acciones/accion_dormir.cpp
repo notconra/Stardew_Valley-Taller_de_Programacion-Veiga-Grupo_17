@@ -17,7 +17,7 @@ bool AccionDormir::aplica(const ContextoDeAccion& c) const {
         return false;
     }
     const ObjetoDelMundo* objeto = c.sector.objetos.objeto_en(c.objetivo.columna, c.objetivo.fila);
-    return objeto != nullptr && objeto->tipo == TipoObjeto::CAMA;
+    return objeto != nullptr && c.recursos.catalogo_de_objetos.es_cama(objeto->tipo);
 }
 
 bool AccionDormir::ejecutar(ContextoDeAccion& c) {
@@ -25,7 +25,7 @@ bool AccionDormir::ejecutar(ContextoDeAccion& c) {
         return false;
     }
     const ObjetoDelMundo* cama = c.sector.objetos.objeto_en(c.objetivo.columna, c.objetivo.fila);
-    if (cama == nullptr || cama->tipo != TipoObjeto::CAMA) {
+    if (cama == nullptr || !c.recursos.catalogo_de_objetos.es_cama(cama->tipo)) {
         return false;
     }
     if (camas_ocupadas.esta_ocupada(c.sector.id, cama->columna, cama->fila)) {

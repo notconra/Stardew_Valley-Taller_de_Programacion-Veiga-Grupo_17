@@ -44,6 +44,7 @@ private:
     void enviar_comando_cerrar_mercado(const CerrarMercado& m);
     void enviar_comando_enviar_regalo(const EnviarRegalo& regalo);
     void enviar_comando_abrir_regalos(const AbrirRegalos& abrir);
+    void enviar_comando_rechazar_regalo(const RechazarRegalo& rechazo);
     void enviar_comando_hablar_con_npc(const HablarConNpc& hablar);
     void enviar_comando_donar_al_lote(const DonarAlLote& donar);
     void enviar_comando_donar_monedas_al_lote(const DonarMonedasAlLote& donar);

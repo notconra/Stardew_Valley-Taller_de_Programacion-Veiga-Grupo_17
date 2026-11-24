@@ -21,6 +21,15 @@ void Buzon::vaciar_en(Inventario& inventario) {
     regalos = std::move(no_entraron);
 }
 
+std::optional<RegaloRecibido> Buzon::sacar(size_t indice) {
+    if (indice >= regalos.size()) {
+        return std::nullopt;
+    }
+    RegaloRecibido regalo = std::move(regalos[indice]);
+    regalos.erase(regalos.begin() + static_cast<std::ptrdiff_t>(indice));
+    return regalo;
+}
+
 bool Buzon::vacio() const {
     return regalos.empty();
 }

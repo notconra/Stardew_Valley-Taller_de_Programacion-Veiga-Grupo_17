@@ -1,6 +1,7 @@
 #ifndef BUZON_H
 #define BUZON_H
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -23,6 +24,9 @@ public:
 
     // Pasa al inventario todo lo que entre, en el orden en que llegó. Lo que no entra sigue acá.
     void vaciar_en(Inventario& inventario);
+
+    // Saca el regalo pendiente número "indice" y lo devuelve (nullopt si no existe).
+    std::optional<RegaloRecibido> sacar(size_t indice);
 
     bool vacio() const;
     const std::vector<RegaloRecibido>& pendientes() const;

@@ -87,6 +87,7 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const CerrarMercado& m) { enviar_comando_cerrar_mercado(m); },
             [this](const EnviarRegalo& m) { enviar_comando_enviar_regalo(m); },
             [this](const AbrirRegalos& m) { enviar_comando_abrir_regalos(m); },
+            [this](const RechazarRegalo& m) { enviar_comando_rechazar_regalo(m); },
             [this](const HablarConNpc& m) { enviar_comando_hablar_con_npc(m); },
             [this](const DonarAlLote& m) { enviar_comando_donar_al_lote(m); },
             [this](const DonarMonedasAlLote& m) { enviar_comando_donar_monedas_al_lote(m); },
@@ -235,6 +236,11 @@ void ProtocoloCliente::enviar_comando_abrir_regalos(const AbrirRegalos&) {
     enviar_tipo(TipoMensaje::ABRIR_REGALOS);
 }
 
+void ProtocoloCliente::enviar_comando_rechazar_regalo(const RechazarRegalo& rechazo) {
+    enviar_tipo(TipoMensaje::RECHAZAR_REGALO);
+    enviar_u8(rechazo.indice);
+}
+
 void ProtocoloCliente::enviar_comando_hablar_con_npc(const HablarConNpc& hablar) {
     enviar_tipo(TipoMensaje::HABLAR_CON_NPC);
     enviar_texto(hablar.id_npc);
@@ -354,7 +360,7 @@ EstadoJugador ProtocoloCliente::recibir_estado_jugador() {
     estado.camina = recibir_booleano();
     estado.ranura_activa = recibir_u8();
     estado.accion_actual = static_cast<TipoAccion>(recibir_u8());
-    estado.item_en_mano = static_cast<TipoItem>(recibir_u8());
+    estado.item_en_mano = static_cast<TipoItem>(recibir_u16());
     estado.calidad_en_mano = static_cast<Calidad>(recibir_u8());
     estado.numero_de_accion = recibir_u8();
     estado.descanso = static_cast<EstadoDeDescanso>(recibir_u8());
@@ -373,12 +379,12 @@ EstadoObjetoDelMundo ProtocoloCliente::recibir_estado_objeto_del_mundo() {
     objeto.mapa = recibir_texto();
     objeto.columna = recibir_u32();
     objeto.fila = recibir_u32();
-    objeto.tipo = static_cast<TipoObjeto>(recibir_u8());
+    objeto.tipo = static_cast<TipoObjeto>(recibir_u16());
     return objeto;
 }
 
 RanuraInventario ProtocoloCliente::recibir_ranura_inventario() {
-    uint8_t tipo = recibir_u8();
+    uint16_t tipo = recibir_u16();
     uint16_t cantidad = recibir_u16();
     Calidad calidad = static_cast<Calidad>(recibir_u8());
     return RanuraInventario{static_cast<TipoItem>(tipo), cantidad, calidad};
@@ -433,7 +439,7 @@ EstadoDrop ProtocoloCliente::recibir_estado_drop() {
     estado.id = recibir_u32();
     estado.columna = recibir_u32();
     estado.fila = recibir_u32();
-    estado.tipo = static_cast<TipoItem>(recibir_u8());
+    estado.tipo = static_cast<TipoItem>(recibir_u16());
     estado.cantidad = recibir_u16();
     estado.calidad = static_cast<Calidad>(recibir_u8());
     return estado;
@@ -624,7 +630,7 @@ ObjetoColocado ProtocoloCliente::recibir_objeto_colocado() {
     objeto.id = recibir_u32();
     objeto.columna = recibir_u32();
     objeto.fila = recibir_u32();
-    objeto.tipo = static_cast<TipoObjeto>(recibir_u8());
+    objeto.tipo = static_cast<TipoObjeto>(recibir_u16());
     return objeto;
 }
 
@@ -766,7 +772,7 @@ ColorDeJugador ProtocoloCliente::color_de_jugador_desde(uint8_t valor) const {
 
 ItemCatalogoInfo ProtocoloCliente::recibir_item_catalogo_info() {
     ItemCatalogoInfo info;
-    info.tipo_item = static_cast<TipoItem>(recibir_u8());
+    info.tipo_item = static_cast<TipoItem>(recibir_u16());
     info.tipo_animal = static_cast<TipoAnimal>(recibir_u8());
     info.nombre = recibir_texto();
     info.precio = recibir_u32();
@@ -843,7 +849,7 @@ LoteDelCentro ProtocoloCliente::recibir_lote_del_centro() {
     for (uint16_t i = 0; i < cantidad; ++i) {
         RequisitoDeLote requisito;
         requisito.tipo = static_cast<TipoDeRequisito>(recibir_u8());
-        requisito.item = static_cast<TipoItem>(recibir_u8());
+        requisito.item = static_cast<TipoItem>(recibir_u16());
         requisito.calidad_minima = static_cast<Calidad>(recibir_u8());
         requisito.logro = static_cast<LogroDePelea>(recibir_u8());
         requisito.cantidad = recibir_u32();

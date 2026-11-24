@@ -83,7 +83,8 @@ private:
     void abrir(const Datos& datos);
     bool clic_cierra_el_panel(int x, int y) const;
     bool clic_en_flechas(VentanaDeLista& lista, size_t total, int x, int y) const;
-    std::optional<ComandoCliente> clic_en_recibidos(const Datos& datos, int x, int y);
+    std::optional<ComandoCliente> clic_en_recibidos(
+        const Datos& datos, int x, int y, bool clic_derecho);
     std::optional<ComandoCliente> clic_en_enviar(
         const Datos& datos, int x, int y, bool clic_derecho);
     void elegir_destinatario(const Datos& datos, int x, int y);

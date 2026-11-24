@@ -11,6 +11,8 @@
 #include <utility>
 #include <vector>
 
+#include "../../common/muebles/catalogo_muebles.h"
+
 // La frazada con el pie de la cama, en la hoja de muebles al lado de la cama, y a cuántos píxeles
 // de la imagen desde arriba del dibujo de la cama va.
 #define ORIGEN_DE_LA_FRAZADA \
@@ -133,6 +135,28 @@ std::map<TipoObjeto, AspectoDeObjeto> ObjetosGraficos::crear_aspectos_conocidos(
     cama.casillas_por_encima = 1;
     conocidos.emplace(TipoObjeto::CAMA, cama);
 
+    // Los muebles de Robin, cada uno con su dibujo de furniture.png. Lo que queda por encima de su
+    // pie se dibuja hacia arriba. Las alfombras van debajo de los jugadores y las camas como la
+    // cama inicial (el cuerpo debajo y la cabecera encima). El resto se ordena junto a los
+    // jugadores por su pie, así se puede pasar por detrás de una lámpara o de una biblioteca.
+    for (const DatosDeMueble& mueble : CatalogoDeMuebles::vistas()) {
+        AspectoDeObjeto aspecto{{VarianteDeAspecto{
+            RUTA_HOJA_DE_MUEBLES,
+            SDL_Rect{
+                mueble.columna * LADO_DE_CASILLA_DE_LA_HOJA,
+                mueble.fila * LADO_DE_CASILLA_DE_LA_HOJA,
+                mueble.ancho * LADO_DE_CASILLA_DE_LA_HOJA,
+                mueble.alto * LADO_DE_CASILLA_DE_LA_HOJA},
+            1}}};
+        aspecto.ancho_en_casillas = mueble.ancho;
+        aspecto.alto_en_casillas = mueble.alto;
+        aspecto.casillas_por_encima = mueble.alto - mueble.alto_del_pie;
+        aspecto.espejado = mueble.espejado;
+        aspecto.capa = mueble.tipo == TipoDeMueble::COMUN ? CapaDeObjeto::CON_LOS_JUGADORES
+                                                          : CapaDeObjeto::DEBAJO_DE_LOS_JUGADORES;
+        conocidos.emplace(mueble.objeto, aspecto);
+    }
+
     return conocidos;
 }
 
@@ -172,11 +196,26 @@ void ObjetosGraficos::dibujar_objeto(
 
 void ObjetosGraficos::dibujar_frazada(
     SDL_Renderer* renderer, const EstadoObjetoDelMundo& cama, int cam_x, int cam_y) const {
+    const int tamano_en_pantalla = tamano_de_tile * escala_de_tiles;
+    if (const DatosDeMueble* mueble = CatalogoDeMuebles::buscar(cama.tipo);
+        mueble != nullptr && mueble->tipo == TipoDeMueble::CAMA) {
+        const SDL_Rect origen{
+            mueble->columna_del_frente * LADO_DE_CASILLA_DE_LA_HOJA,
+            mueble->fila_del_frente * LADO_DE_CASILLA_DE_LA_HOJA,
+            mueble->ancho * LADO_DE_CASILLA_DE_LA_HOJA,
+            mueble->alto_del_pie * LADO_DE_CASILLA_DE_LA_HOJA};
+        const SDL_Rect destino{
+            static_cast<int>(cama.columna) * tamano_en_pantalla - cam_x,
+            static_cast<int>(cama.fila) * tamano_en_pantalla - cam_y,
+            mueble->ancho * tamano_en_pantalla,
+            mueble->alto_del_pie * tamano_en_pantalla};
+        SDL_RenderCopy(renderer, texturas.at(RUTA_HOJA_DE_MUEBLES).ptr(), &origen, &destino);
+        return;
+    }
     const auto aspecto = aspectos.find(TipoObjeto::CAMA);
     if (aspecto == aspectos.end()) {
         return;
     }
-    const int tamano_en_pantalla = tamano_de_tile * escala_de_tiles;
     const int arriba_de_la_cama =
         (static_cast<int>(cama.fila) - aspecto->second.casillas_por_encima) * tamano_en_pantalla;
     const SDL_Rect origen ORIGEN_DE_LA_FRAZADA;
@@ -232,10 +271,18 @@ void ObjetosGraficos::dibujar_filas(
         aspecto.ancho_en_casillas * tamano_en_pantalla,
         (ultima_fila - primera_fila) * tamano_en_pantalla};
 
+    const SDL_RendererFlip espejo = aspecto.espejado ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
     // Sin recorte (textura completa) se dibuja entera: solo pasa con casillas_por_encima = 0, que
     // es cuando se pide del principio al final.
     if (variante.origen.w <= 0) {
-        SDL_RenderCopy(renderer, texturas.at(variante.ruta_de_textura).ptr(), nullptr, &destino);
+        SDL_RenderCopyEx(
+            renderer,
+            texturas.at(variante.ruta_de_textura).ptr(),
+            nullptr,
+            &destino,
+            0.0,
+            nullptr,
+            espejo);
         return;
     }
     const int alto_de_fila = variante.origen.h / aspecto.alto_en_casillas;
@@ -244,7 +291,14 @@ void ObjetosGraficos::dibujar_filas(
         variante.origen.y + primera_fila * alto_de_fila,
         variante.origen.w,
         (ultima_fila - primera_fila) * alto_de_fila};
-    SDL_RenderCopy(renderer, texturas.at(variante.ruta_de_textura).ptr(), &origen, &destino);
+    SDL_RenderCopyEx(
+        renderer,
+        texturas.at(variante.ruta_de_textura).ptr(),
+        &origen,
+        &destino,
+        0.0,
+        nullptr,
+        espejo);
 }
 
 void ObjetosGraficos::dibujar_capa(
@@ -282,8 +336,10 @@ void ObjetosGraficos::dibujar_capa(
         }
         // Las filas de arriba (la cabecera de la cama) siempre van sobre los jugadores; el resto,
         // en la capa que diga el aspecto.
+        // Los que van con los jugadores se dibujan enteros, ordenados por su pie (dibujar_objeto).
         const int por_encima = aspecto.casillas_por_encima;
-        if (capa == CapaDeObjeto::SOBRE_LOS_JUGADORES && por_encima > 0) {
+        if (capa == CapaDeObjeto::SOBRE_LOS_JUGADORES && por_encima > 0 &&
+            aspecto.capa != CapaDeObjeto::CON_LOS_JUGADORES) {
             dibujar_filas(renderer, objeto, aspecto, 0, por_encima, cam_x, cam_y);
         }
         if (aspecto.capa == capa && por_encima < aspecto.alto_en_casillas) {
@@ -306,7 +362,8 @@ void ObjetosGraficos::dibujar_con_aspecto(
     const int ancho = aspecto.ancho_en_casillas * tamano_en_pantalla;
     const int alto = static_cast<int>(std::lround(aspecto.alto_en_casillas * tamano_en_pantalla));
 
-    int y = static_cast<int>(objeto.fila) * tamano_en_pantalla - cam_y + aspecto.desplazamiento_y;
+    int y = (static_cast<int>(objeto.fila) - aspecto.casillas_por_encima) * tamano_en_pantalla -
+            cam_y + aspecto.desplazamiento_y;
     if (aspecto.anclar_al_pie) {
         y += tamano_en_pantalla - alto;
     }
@@ -321,9 +378,12 @@ void ObjetosGraficos::dibujar_con_aspecto(
     }
 
     const VarianteDeAspecto& variante = elegir_variante(aspecto, objeto);
-    SDL_RenderCopy(
+    SDL_RenderCopyEx(
         renderer,
         texturas.at(variante.ruta_de_textura).ptr(),
         variante.origen.w > 0 ? &variante.origen : nullptr,
-        &destino);
+        &destino,
+        0.0,
+        nullptr,
+        aspecto.espejado ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE);
 }

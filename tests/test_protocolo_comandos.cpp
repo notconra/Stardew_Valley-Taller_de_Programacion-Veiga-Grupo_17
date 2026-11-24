@@ -142,6 +142,10 @@ TEST_F(ProtocoloComandosTest, AbrirRegalos) {
     verificar_comando(AbrirRegalos{});
 }
 
+TEST_F(ProtocoloComandosTest, RechazarRegalo) {
+    verificar_comando(RechazarRegalo{5});
+}
+
 TEST_F(ProtocoloComandosTest, HablarConNpc) {
     verificar_comando(HablarConNpc{"marnie"});
 }

@@ -59,6 +59,11 @@ const DefinicionDeObjeto* CatalogoDeObjetos::buscar(TipoObjeto tipo) const {
     return encontrado == definiciones_por_tipo.end() ? nullptr : &encontrado->second;
 }
 
+bool CatalogoDeObjetos::es_cama(TipoObjeto tipo) const {
+    const DefinicionDeObjeto* definicion = buscar(tipo);
+    return definicion != nullptr && definicion->sirve_para_dormir;
+}
+
 const DefinicionDeObjeto* CatalogoDeObjetos::buscar_por_clave(const std::string& clave) const {
     for (const auto& entrada : definiciones_por_tipo) {
         if (entrada.second.clave == clave) {
@@ -121,7 +126,9 @@ bool GestorDeObjetos::se_puede_colocar(TipoObjeto tipo, int columna, int fila) c
         return false;
     }
     for (const Casilla& casilla : casillas_ocupadas(*definicion, columna, fila)) {
-        if (!colisiones.esta_libre(casilla.columna, casilla.fila)) {
+        // Una alfombra no choca pero ocupa su casilla: tampoco se le puede poner nada encima.
+        if (!colisiones.esta_libre(casilla.columna, casilla.fila) ||
+            id_por_casilla[indice(casilla.columna, casilla.fila)] != 0) {
             return false;
         }
     }
@@ -132,13 +139,16 @@ int GestorDeObjetos::colocar(TipoObjeto tipo, int columna, int fila) {
     if (!se_puede_colocar(tipo, columna, fila)) {
         return 0;
     }
-    const std::vector<Casilla> casillas = casillas_ocupadas(*catalogo.buscar(tipo), columna, fila);
+    const DefinicionDeObjeto& definicion = *catalogo.buscar(tipo);
+    const std::vector<Casilla> casillas = casillas_ocupadas(definicion, columna, fila);
 
     const int id = siguiente_id++;
     objetos_por_id.emplace(id, ObjetoDelMundo{id, columna, fila, tipo});
     for (const Casilla& casilla : casillas) {
         id_por_casilla[indice(casilla.columna, casilla.fila)] = id;
-        colisiones.colocar(casilla.columna, casilla.fila);
+        if (!definicion.se_pisa) {
+            colisiones.colocar(casilla.columna, casilla.fila);
+        }
     }
     return id;
 }
@@ -175,7 +185,8 @@ int GestorDeObjetos::poblar_al_azar(
         for (int columna = 0; columna < mapa.cantidad_de_columnas(); ++columna) {
             const bool sirve_el_terreno = propiedad_requerida == PropiedadDeCasilla::NINGUNA ||
                                           mapa.tiene(columna, fila, propiedad_requerida);
-            if (sirve_el_terreno && colisiones.esta_libre(columna, fila)) {
+            if (sirve_el_terreno && colisiones.esta_libre(columna, fila) &&
+                id_por_casilla[indice(columna, fila)] == 0) {
                 candidatas.push_back(Casilla{columna, fila});
             }
         }
@@ -278,7 +289,9 @@ bool GestorDeObjetos::retirar(int id) {
     const DefinicionDeObjeto& definicion = *catalogo.buscar(objeto.tipo);
     for (const Casilla& casilla : casillas_ocupadas(definicion, objeto.columna, objeto.fila)) {
         id_por_casilla[indice(casilla.columna, casilla.fila)] = 0;
-        colisiones.eliminar(casilla.columna, casilla.fila);
+        if (!definicion.se_pisa) {
+            colisiones.eliminar(casilla.columna, casilla.fila);
+        }
     }
     objetos_por_id.erase(encontrado);
     return true;

@@ -6,7 +6,7 @@
 // Qué objeto hay colocado en el mapa. Es distinto de TipoItem porque el objeto es lo que se ve y se
 // rompe en el mundo y el ítem es lo que queda en el inventario.
 // Separarlos permite que un objeto se dibuje de una forma y deje un ítem con otra imagen.
-enum class TipoObjeto : uint8_t {
+enum class TipoObjeto : uint16_t {
     NINGUNO = 0,
     PIEDRA = 1,
     CARBON = 2,

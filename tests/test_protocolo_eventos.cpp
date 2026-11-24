@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include "../common/muebles/catalogo_muebles.h"
 #include "protocolo_en_memoria.h"
 
 // Eventos que viajan del servidor al cliente.
@@ -61,6 +62,11 @@ EstadoNpc npc_uno() {
 EstadoNpc npc_dos() {
     return EstadoNpc{"lewis", "pueblo", 0x71727374, 0x75767778, Direccion::DERECHA, false, 0x797A};
 }
+
+// Valores de muebles, no entran en 8 bits, así que detectan si algún campo sigue viajando como
+// un solo byte.
+constexpr TipoItem ITEM_MUEBLE = static_cast<TipoItem>(PRIMER_ITEM_DE_MUEBLE + 1);
+constexpr TipoObjeto OBJETO_MUEBLE = static_cast<TipoObjeto>(PRIMER_OBJETO_DE_MUEBLE + 1);
 
 }  // namespace
 
@@ -316,6 +322,22 @@ TEST_F(ProtocoloEventosTest, VacaOrdeniable) {
     verificar_evento(VacaOrdeniable{0x11223344, true});
 }
 
+TEST_F(ProtocoloEventosTest, ObjetoColocadoConMueble) {
+    verificar_evento(ObjetoColocado{0x11223344, 0x55667788, 0x99AABBCC, OBJETO_MUEBLE});
+}
+
+TEST_F(ProtocoloEventosTest, DropAparecidoConMueble) {
+    verificar_evento(DropAparecido{
+        EstadoDrop{0x21222324, 0x25262728, 0x292A2B2C, ITEM_MUEBLE, 0x2D2E, Calidad::EXCELENTE}});
+}
+
+TEST_F(ProtocoloEventosTest, JugadoresEnSectorConMuebleEnLaMano) {
+    EstadoJugador jugador = jugador_uno();
+    jugador.item_en_mano = ITEM_MUEBLE;
+
+    verificar_evento(JugadoresEnSector{"granja", {jugador}});
+}
+
 // Casillas y descanso
 
 TEST_F(ProtocoloEventosTest, CasillaConsultada) {
@@ -350,6 +372,14 @@ TEST_F(ProtocoloEventosTest, ActualizacionCofre) {
 TEST_F(ProtocoloEventosTest, MensajeDeChat) {
     verificar_evento(
         MensajeDeChat{CanalDeChat::PRIVADO, "Ana", "Beto", "Hola", ColorDeJugador::VERDE});
+}
+
+TEST_F(ProtocoloEventosTest, ActualizacionInventarioConMueble) {
+    const RanuraInventario papa{TipoItem::PAPA, 1, Calidad::PERFECTA};
+    const RanuraInventario silla{ITEM_MUEBLE, 2, Calidad::PERFECTA};
+    const InventarioJugador inventario{0xD1D2D3D4, 2, {papa, silla}};
+
+    verificar_evento(ActualizacionInventario{inventario});
 }
 
 // Regalos, mercado y avisos
@@ -397,6 +427,19 @@ TEST_F(ProtocoloEventosTest, CerrarVentanaMercado) {
 
 TEST_F(ProtocoloEventosTest, AvisoEnPantalla) {
     verificar_evento(AvisoEnPantalla{"El mercado está cerrado"});
+}
+
+TEST_F(ProtocoloEventosTest, ActualizacionMercadoConMueble) {
+    const ItemCatalogoInfo silla{
+        ITEM_MUEBLE,
+        TipoAnimal::NINGUNO,
+        "Silla de nogal",
+        0xB1B2B3B4,
+        true,
+        0xB5B6,
+        "Descripción de Silla de nogal"};
+
+    verificar_evento(ActualizacionMercado{"robin", {silla}});
 }
 
 // NPCs y centro comunitario

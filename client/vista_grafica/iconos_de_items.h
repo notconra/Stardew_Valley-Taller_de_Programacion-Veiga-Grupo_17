@@ -22,7 +22,8 @@ public:
 
     Icono obtener_icono(TipoItem tipo, Calidad calidad = Calidad::BASE) const;
 
-    // Dibuja el ícono escalado dentro de "destino". No dibuja nada si el ítem no tiene imagen.
+    // Dibuja el ícono escalado dentro de "destino". Si el dibujo no es cuadrado (un mueble), lo
+    // achica para que entre sin deformarse, centrado. No dibuja nada si el ítem no tiene imagen.
     void dibujar(
         SDL_Renderer* renderer, TipoItem tipo, Calidad calidad, const SDL_Rect& destino,
         SDL_RendererFlip espejo = SDL_FLIP_NONE, double angulo = 0.0) const;
@@ -34,6 +35,9 @@ private:
 
     // Una imagen entera por ítem (sin hoja de sprites)
     std::unordered_map<TipoItem, Textura> individuales;
+
+    // Los muebles de Robin: cada uno es su dibujo completo en furniture.png.
+    Textura hoja_de_muebles;
 };
 
 #endif

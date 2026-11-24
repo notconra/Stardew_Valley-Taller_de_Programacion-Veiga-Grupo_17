@@ -58,8 +58,8 @@ public:
     EnemigosGraficos(SDL_Renderer* renderer, const ConfiguracionGraficos& graficos);
 
     // cam_x y cam_y son la esquina de la cámara, en píxeles de pantalla. Dibuja los enemigos vivos
-    // o muriendo (un cadáver que ya terminó de caer no se dibuja hasta que reviva) y las llamas que
-    // lanzaron las Skulls.
+    // o muriendo (un cadáver que ya terminó de caer no se dibuja hasta que reviva, salvo la sangre
+    // de los vampiros, que queda en el piso debajo de todos) y las llamas que lanzaron las Skulls.
     void dibujar(SDL_Renderer* renderer, const EstadoJuego& estado, int cam_x, int cam_y) const;
 
 private:
@@ -73,6 +73,7 @@ private:
         uint32_t desde_ms = 0;
         uint32_t ataque_desde_ms = 0;  // 0: no está atacando
         uint32_t muerte_desde_ms = 0;  // 0: no está muriendo
+        uint32_t sangre_desde_ms = 0;  // 0: no hay sangre sobre su cadáver
     };
 
     // Dónde dibujarlo, en casillas (con decimales mientras camina).
@@ -92,6 +93,7 @@ private:
     std::map<TipoEnemigo, Hoja> hojas;
     Textura llama;  // fire_skull.png, teñida de verde para las Skulls verdes
     std::map<std::string, Textura> texturas;  // por ruta
+    Textura textura_de_sangre;
     mutable std::map<uint32_t, Recorrido> recorridos;
     int tamano_de_tile = 16;
     int escala_de_tiles = 1;
@@ -108,6 +110,9 @@ private:
     void dibujar_huesos(SDL_Renderer* renderer, const Hoja& hoja, uint32_t ms_desde_la_muerte,
         int centro_x, int pies_y) const;
 
+    // Charco de sangre sobre el cadáver de un vampiro que está por revivir. Crece al caer.
+    void dibujar_sangre(SDL_Renderer* renderer, const EstadoEnemigo& enemigo, uint32_t ahora,
+        int cam_x, int cam_y) const;
     void dibujar_llamas(SDL_Renderer* renderer, const EstadoJuego& estado, int cam_x, int cam_y) const;
 
     void dibujar_barra_de_vida(SDL_Renderer* renderer, const SDL_Rect& sobre_el_enemigo,

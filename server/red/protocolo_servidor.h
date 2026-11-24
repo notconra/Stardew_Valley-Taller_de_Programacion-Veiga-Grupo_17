@@ -43,6 +43,7 @@ private:
     CerrarMercado recibir_comando_cerrar_mercado();
     EnviarRegalo recibir_comando_enviar_regalo();
     AbrirRegalos recibir_comando_abrir_regalos();
+    RechazarRegalo recibir_comando_rechazar_regalo();
     HablarConNpc recibir_comando_hablar_con_npc();
     DonarAlLote recibir_comando_donar_al_lote();
     DonarMonedasAlLote recibir_comando_donar_monedas_al_lote();

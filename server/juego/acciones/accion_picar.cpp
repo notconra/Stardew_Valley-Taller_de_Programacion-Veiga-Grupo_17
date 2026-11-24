@@ -25,7 +25,10 @@ void AccionPicar::quizas_avecinar_manada_de_orcos(ContextoDeAccion& c) {
     }
     const int tamano = Azar::entero(orcos.tamano_grupo_minimo, orcos.tamano_grupo_maximo);
     c.sector.aparecer_grupo_persiguiendo(
-        c.notificador, c.id_jugador, orcos.distancia_de_aparicion_de_manada, tamano,
+        c.notificador,
+        c.id_jugador,
+        orcos.distancia_de_aparicion_de_manada,
+        tamano,
         TipoEnemigo::ORCO);
 }
 
@@ -40,7 +43,7 @@ bool AccionPicar::ejecutar(ContextoDeAccion& c) {
     const TipoObjeto tipo_objeto = objeto->tipo;
     const int columna = objeto->columna;
     const int fila = objeto->fila;
-    if (tipo_objeto == TipoObjeto::CAMA &&
+    if (c.recursos.catalogo_de_objetos.es_cama(tipo_objeto) &&
         camas_ocupadas.esta_ocupada(c.sector.id, columna, fila)) {
         return false;
     }

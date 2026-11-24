@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "../../common/modo_uso.h"
+#include "../../common/muebles/catalogo_muebles.h"
 #include "../../common/visitantes.h"
 #include "entrada_del_usuario.h"
 #include "iconos_de_items.h"
@@ -31,10 +32,11 @@
 
 // Lo que dura la animación de una acción (picar, cavar, atacar, regar), propia o de otro.
 #define DURACION_DE_UNA_ACCION_MS 475
-// Dónde queda un jugador acostado respecto de la esquina de arriba a la izquierda de su cama (lo
-// mismo que usa el servidor al acostarlo), y cuánto se le permite errar al buscar la cama.
-#define ACOSTADO_DESDE_LA_CAMA_X 8
+// Dónde queda un jugador acostado respecto de la fila de arriba de su cama (lo mismo que usa el
+// servidor al acostarlo; a lo ancho, en el medio), y cuánto se le permite errar al buscarla.
 #define ACOSTADO_DESDE_LA_CAMA_Y -2
+// La cama inicial ocupa dos casillas de ancho; las de Robin dicen su ancho en el catálogo.
+#define ANCHO_DE_LA_CAMA_INICIAL 2
 #define TOLERANCIA_PARA_ENCONTRAR_LA_CAMA 1.0f
 
 namespace {
@@ -582,11 +584,15 @@ bool VistaPartida::se_escucha(const EstadoJugador& otro) const {
 const EstadoObjetoDelMundo* VistaPartida::cama_de(const EstadoJugador& jugador) const {
     const float tamano_de_tile = static_cast<float>(configuracion.graficos.tamano_de_tile);
     for (const EstadoObjetoDelMundo& objeto : ultimo_estado_juego.objetos) {
-        if (objeto.tipo != TipoObjeto::CAMA || objeto.mapa != jugador.mapa) {
+        const DatosDeMueble* mueble = CatalogoDeMuebles::buscar(objeto.tipo);
+        const bool es_cama = objeto.tipo == TipoObjeto::CAMA ||
+                             (mueble != nullptr && mueble->tipo == TipoDeMueble::CAMA);
+        if (!es_cama || objeto.mapa != jugador.mapa) {
             continue;
         }
+        const int ancho = mueble != nullptr ? mueble->ancho : ANCHO_DE_LA_CAMA_INICIAL;
         const float x = static_cast<float>(objeto.columna) * tamano_de_tile +
-                        static_cast<float>(ACOSTADO_DESDE_LA_CAMA_X);
+                        static_cast<float>(ancho - 1) * tamano_de_tile / 2.0f;
         const float y = static_cast<float>(objeto.fila) * tamano_de_tile +
                         static_cast<float>(ACOSTADO_DESDE_LA_CAMA_Y);
         if (std::abs(static_cast<float>(jugador.x) - x) <= TOLERANCIA_PARA_ENCONTRAR_LA_CAMA &&
