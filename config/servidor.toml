@@ -1,0 +1,285 @@
+# Configuración del servidor.
+#
+# Las rutas de los recursos son relativas al directorio desde el que se ejecuta el servidor
+# así que al momento de ejecutar el servidor sería algo como:
+#
+#   ./build/server config/servidor.toml
+mapa_inicial = "FarmHouse2"
+
+# Un mapa por línea. Claves opcionales de cada mapa: capa_colisiones = "Colisiones",
+# capa_respaldo = "Buildings", capa_transiciones = "Transiciones", propiedad_cultivable y
+# capas_opcionales (por ejemplo capas_opcionales = [{ nombre = "Cultivable", propiedad = "CULTIVABLE" }]).
+# Esta clave tiene que estar antes de la primera [sección] del archivo.
+#
+# Los niveles de la mazmorra se registran como mapas comunes y [mazmorra] dice cuáles son.
+# Cada partida elige 10 al azar entre ellos.
+mapas = [
+    { id = "granja", ruta_tmx = "Assets/Maps/Farm.tmx", propiedad_cultivable = "Diggable" },
+    { id = "BusStop", ruta_tmx = "Assets/Maps/BusStop.tmx" },
+    { id = "Bus_Interior", ruta_tmx = "Assets/Maps/Bus_Interior.tmx" },
+    { id = "Town", ruta_tmx = "Assets/Maps/Town.tmx" },
+    { id = "FarmHouse2", ruta_tmx = "Assets/Maps/FarmHouse2.tmx" },
+    { id = "mercado", ruta_tmx = "Assets/Maps/Mercado.tmx" },
+    # El centro comunitario tiene dos mapas con colisiones distintas: en ruinas mientras falten
+    # lotes y arreglado cuando se completan todos. La puerta del pueblo lleva a "centro_comunitario".
+    { id = "centro_comunitario", ruta_tmx = "Assets/Maps/CommunityCenter_Ruins.tmx" },
+    { id = "centro_comunitario_arreglado", ruta_tmx = "Assets/Maps/CommunityCenter_Refurbished.tmx" },
+    { id = "mina_1", ruta_tmx = "Assets/Maps/Mines/1.tmx" },
+    { id = "mina_2", ruta_tmx = "Assets/Maps/Mines/2.tmx" },
+    { id = "mina_3", ruta_tmx = "Assets/Maps/Mines/3.tmx" },
+    { id = "mina_4", ruta_tmx = "Assets/Maps/Mines/4.tmx" },
+    { id = "mina_5", ruta_tmx = "Assets/Maps/Mines/5.tmx" },
+    { id = "mina_6", ruta_tmx = "Assets/Maps/Mines/6.tmx" },
+    { id = "mina_7", ruta_tmx = "Assets/Maps/Mines/7.tmx" },
+    { id = "mina_8", ruta_tmx = "Assets/Maps/Mines/8.tmx" },
+    { id = "mina_9", ruta_tmx = "Assets/Maps/Mines/9.tmx" },
+    { id = "mina_11", ruta_tmx = "Assets/Maps/Mines/11.tmx" },
+    { id = "mina_12", ruta_tmx = "Assets/Maps/Mines/12.tmx" },
+    { id = "mina_13", ruta_tmx = "Assets/Maps/Mines/13.tmx" },
+    { id = "mina_14", ruta_tmx = "Assets/Maps/Mines/14.tmx" },
+    { id = "mina_15", ruta_tmx = "Assets/Maps/Mines/15.tmx" },
+    { id = "mina_16", ruta_tmx = "Assets/Maps/Mines/16.tmx" },
+    { id = "mina_17", ruta_tmx = "Assets/Maps/Mines/17.tmx" },
+    { id = "mina_18", ruta_tmx = "Assets/Maps/Mines/18.tmx" },
+    { id = "mina_19", ruta_tmx = "Assets/Maps/Mines/19.tmx" },
+    { id = "mina_21", ruta_tmx = "Assets/Maps/Mines/21.tmx" },
+    { id = "mina_24", ruta_tmx = "Assets/Maps/Mines/24.tmx" },
+]
+
+[red]
+puerto = "8081"
+
+[partida]
+jugadores_maximos_por_partida = 4
+ticks_por_segundo = 40
+#capacidad_de_comandos = 1024
+
+[juego.transiciones]
+# Destinos que se usan con clic derecho. Todo lo demás (salir de la casa, entrar a la mina,
+# cambiar de mapa) se activa al pisarlo.
+destinos_con_clic = ["FarmHouse2", "siguiente", "mercado", "centro_comunitario"]
+
+[juego.dia]
+# Un día de juego va de las 6 am a las 2 am (20 horas de juego). velocidad elige cuánto dura en
+# tiempo real: "lento" = 20 minutos, "medio" = 14 minutos (lo que pide el enunciado), "rapido" = 7.
+velocidad = "medio"
+# Si está, pisa a la velocidad (en minutos reales, acepta decimales). Útil para probar: con 1.0
+# cada día dura un minuto.
+# duracion_en_minutos = 1.0
+# Días de cada estación. Hay 4 estaciones por año (primavera, verano, otoño, invierno): con 28,
+# Para probar el cambio de estación se puede bajar a 1.
+dias_por_estacion = 28
+probabilidad_de_lluvia = 0.2
+
+[juego.movimiento]
+velocidad = 150.0
+# hitbox_x = 2
+# hitbox_y = 24
+# hitbox_ancho = 12
+# hitbox_alto = 8
+
+[juego.aparicion]
+x = 432
+y = 416
+# paso_de_busqueda = 8
+
+[juego.inventario]
+# cantidad_ranuras_barra = 10
+
+[juego.jugador]
+vida_inicial = 100
+energia_inicial = 100
+
+[juego.acciones]
+# Las duraciones se miden en ticks (con ticks_por_segundo = 40, 8 ticks son 0,2 segundos).
+# alcance_en_casillas = 1
+duracion_picar_en_ticks = 16
+duracion_tratar_tierra_en_ticks = 16
+duracion_atacar_en_ticks = 18
+danio_espada = 25
+energia_por_golpe = 3
+energia_por_picar = 3
+energia_por_tratar_tierra = 3
+energia_por_plantar = 1
+energia_por_regar = 2
+energia_por_cosechar = 1
+energia_por_ordeniar = 2
+
+[juego.cultivos]
+# La calidad de lo cosechado arranca en perfecta y baja un nivel por cada falta (sin pasar de
+# base). Un riego es tardío si se hace en la segunda mitad de su turno, y perdido si no se hace en
+# todo el turno. Cada día que una planta madura espera sin cosechar también suma.
+faltas_por_riego_tardio = 1
+faltas_por_riego_perdido = 2
+faltas_por_dia_sin_cosechar = 1
+# Después la suerte puede subir o bajar la calidad un nivel.
+probabilidad_de_subir_calidad = 0.2
+probabilidad_de_bajar_calidad = 0.1
+
+[juego.drops]
+# radio_de_recogida_en_casillas = 1
+# distancia_de_soltado_en_casillas = 2   # tiene que ser mayor que el radio
+
+[mazmorra]
+destino = "mazmorra"
+mapas = ["mina_1", "mina_2", "mina_3", "mina_4", "mina_5", "mina_6", "mina_7", "mina_8", "mina_9", "mina_11", "mina_12", "mina_13", "mina_14", "mina_15", "mina_16", "mina_17", "mina_18", "mina_19", "mina_21", "mina_24"]
+enemigos_por_nivel = 4
+minerales_por_nivel = 50
+# Probabilidad de que cada nivel tenga un cofre abandonado (entre 0.0 y 1.0).
+probabilidad_de_cofre = 0.90
+
+[mazmorra.enemigos.esqueleto]
+vida = 30
+danio = 5
+ticks_entre_ataques = 70
+ticks_para_revivir = 600
+ticks_por_casilla = 20
+radio_de_vision = 5
+radio_de_deambulo = 3
+oro_minimo = 0
+oro_maximo = 10
+
+[mazmorra.enemigos.orco]
+vida = 40
+danio = 8
+ticks_entre_ataques = 60
+ticks_para_revivir = 0
+ticks_por_casilla = 16
+radio_de_vision = 6
+radio_de_deambulo = 3
+oro_minimo = 0
+oro_maximo = 10
+probabilidad_de_plata_al_morir = 0.20
+grupos_por_nivel = 1
+tamano_grupo_minimo = 3
+tamano_grupo_maximo = 6
+probabilidad_de_manada_por_plata = 0.10
+distancia_de_aparicion_de_manada = 8
+
+[mazmorra.enemigos.vampiros]
+parejas_por_nivel = 1
+multiplicador_de_frenesi = 2.0
+radio_de_sangre = 3
+
+[mazmorra.enemigos.vampiros.vampira]
+vida = 50
+danio = 8
+ticks_entre_ataques = 50
+ticks_para_revivir = 200
+ticks_por_casilla = 10
+radio_de_vision = 7
+radio_de_deambulo = 3
+oro_minimo = 5
+oro_maximo = 15
+
+[mazmorra.enemigos.vampiros.vampiro]
+vida = 70
+danio = 14
+ticks_entre_ataques = 60
+ticks_para_revivir = 200
+ticks_por_casilla = 18
+radio_de_vision = 7
+radio_de_deambulo = 3
+oro_minimo = 5
+oro_maximo = 15
+
+[mazmorra.enemigos.skulls]
+vida = 1
+danio = 6
+ticks_entre_ataques = 80
+ticks_por_casilla = 30
+radio_de_vision = 7
+radio_de_deambulo = 3
+skulls_por_nivel = 1
+probabilidad_verde = 0.4
+velocidad_de_llama = 6.0
+alcance_de_llama = 9
+distancia_de_ataque = 4
+
+# Pinches en el suelo (enunciado: se activan por tiempo). Pasan ticks_inactiva guardados y
+# ticks_activa afuera; a cada jugador parado encima le sacan "danio" una vez por activación.
+[mazmorra.trampas]
+por_nivel = 5
+lanzallamas_por_nivel = 4
+danio = 10
+ticks_inactiva = 90
+ticks_activa = 30
+
+# Minerales (opcional). Si hay al menos un [[mazmorra.minerales]], reemplazan a los por defecto:
+# los que no listemos acá no aparecen en los niveles. "peso" es la frecuencia relativa y
+# "desde_nivel" el primer nivel donde puede aparecer (el enunciado pide el oro desde el 5).
+# "cantidad_minima" y "cantidad_maxima" son el rango de unidades que deja al picarse (inclusive).
+# Claves válidas: PIEDRA, CARBON, LAPISLAZULI, PLATA, ORO.
+
+[[mazmorra.minerales]]
+clave = "PIEDRA"
+golpes_para_picar = 1
+peso = 100
+cantidad_minima = 1
+cantidad_maxima = 3
+
+[[mazmorra.minerales]]
+clave = "CARBON"
+golpes_para_picar = 1
+peso = 25
+cantidad_minima = 1
+cantidad_maxima = 2
+
+[[mazmorra.minerales]]
+clave = "PLATA"
+golpes_para_picar = 3
+peso = 6
+cantidad_minima = 1
+cantidad_maxima = 2
+
+[[mazmorra.minerales]]
+clave = "LAPISLAZULI"
+golpes_para_picar = 2
+peso = 10
+probabilidad_de_no_dejar = 0.15
+cantidad_minima = 1
+cantidad_maxima = 2
+
+[[mazmorra.minerales]]
+clave = "ORO"
+golpes_para_picar = 4
+peso = 1
+cantidad_minima = 1
+cantidad_maxima = 2
+desde_nivel = 5
+
+[mercado]
+mapa = "mercado"
+
+[mercado.precios_de_compra]
+SEMILLA_PAPA = 10
+SEMILLA_FRUTILLA = 15
+SEMILLA_CEBOLLA_DE_VERDEO = 8
+SEMILLA_CALABAZA = 30
+
+COFRE = 100
+ASPERSOR = 100
+MUEBLE_POR_CASILLA = 25
+
+[mercado.precios_de_venta]
+CARBON = 10
+LAPISLAZULI = 40
+PLATA = 50
+ORO = 80
+
+PAPA = 18
+FRUTILLA = 25
+CEBOLLA_DE_VERDEO = 12
+CALABAZA = 50
+LECHE = 30
+HUEVO = 3
+
+[mercado.animales.vaca]
+precio_de_compra = 80
+precio_de_venta = 40
+tope_por_granja = 5
+
+[mercado.animales.gallina]
+precio_de_compra = 20
+precio_de_venta = 10
+tope_por_granja = 10

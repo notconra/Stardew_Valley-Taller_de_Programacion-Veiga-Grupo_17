@@ -1,0 +1,106 @@
+#ifndef PARTIDA_H
+#define PARTIDA_H
+
+#include <cstdint>
+#include <string>
+#include <vector>
+
+#include "../../common/mensajes/mensajes.h"
+#include "../persistencia/datos_partida_guardada.h"
+#include "jugador.h"
+
+// Registro de una partida, quiénes son sus jugadores y quiénes están conectados ahora.
+//
+// Los lugares son de quien los ocupó, un jugador que se desconecta conserva su lugar y solo él
+// puede volver a ocuparlo, aunque la partida quede sin nadie conectado.
+//
+// Por defecto, solo puede entrar quien ya es jugador de ella (su creador). Si se
+// la hace multijugador, también pueden entrar jugadores nuevos mientras queden lugares sin ocupar.
+//
+// Nota: la cantidad de jugadores y de conectados se calculan a partir de la lista de miembros. Hay
+// que revisarlo cuando se haga la persistencia.
+//
+// Lo que ocurre mientras hay jugadores conectados (el bucle de juego y el mundo) asumo q va en otra
+// clase, que se crea al conectarse el primero y se destruye al irse el último, así este registro no
+// cambia.
+class Partida {
+private:
+    std::string codigo;
+    std::string nombre;
+    std::string nombre_mundo;
+    uint8_t jugadores_maximos;
+    bool multijugador;
+    std::vector<Jugador> jugadores;
+    uint32_t dia = 1;
+    uint32_t segundos_jugados = 0;
+
+    Jugador* buscar_jugador(uint32_t id_cliente);
+
+    // Compara nombres sin distinguir mayúsculas ni minúsculas, porque el chat busca privados así.
+    static bool mismo_nombre(const std::string& uno, const std::string& otro);
+
+    // Primer color que ningún jugador de la partida usa.
+    ColorDeJugador proximo_color_libre() const;
+
+public:
+    Partida(
+        const std::string& codigo_de_partida, const std::string& nombre_de_partida,
+        uint8_t maximo_de_jugadores, uint32_t id_cliente_creador,
+        const std::string& nombre_jugador_creador, const AparienciaPersonaje& apariencia_creador,
+        const std::string& nombre_mundo_partida = "");
+
+    Partida(
+        const std::string& codigo_de_partida, const std::string& nombre_de_partida,
+        uint8_t maximo_de_jugadores, bool es_multijugador,
+        const std::vector<Jugador>& lista_jugadores, uint32_t dia_partida = 1,
+        uint32_t segundos_partida = 0, const std::string& nombre_mundo_partida = "");
+
+    const std::string& obtener_nombre() const;
+    const std::string& obtener_nombre_mundo() const;
+    const std::vector<Jugador>& obtener_jugadores() const;
+    const AparienciaPersonaje& obtener_apariencia_jugador(uint32_t id_cliente) const;
+    DatosPartidaGuardada generar_datos_guardado(const DatosMundoGuardado& datos_mundo) const;
+    void actualizar_dia(uint32_t nuevo_dia);
+    void actualizar_segundos_jugados(uint32_t nuevos_segundos);
+    void actualizar_monedas_jugadores(const std::vector<DatosJugadorGuardado>& datos_jugadores);
+    uint32_t obtener_dia() const;
+    uint32_t obtener_segundos_jugados() const;
+
+    // Devuelve true si el cliente tiene lugar en la partida, esté conectado o no.
+    bool es_miembro(uint32_t id_cliente) const;
+
+    // Jugadores que tienen lugar en la partida, estén o no conectados.
+    uint8_t cantidad_de_jugadores() const;
+
+    // Nombre con el que se muestra al jugador. Devuelve una cadena vacía si no es miembro.
+    std::string nombre_de_jugador(uint32_t id_cliente) const;
+
+    // Color asignado al jugador dentro de esta partida. Devuelve AZUL si no es miembro.
+    ColorDeJugador color_de_jugador(uint32_t id_cliente) const;
+
+    // Jugadores que tienen lugar y están conectados ahora.
+    uint8_t cantidad_de_conectados() const;
+
+    // jugadores_totales es cantidad_de_jugadores(), los lugares ocupados.
+    InfoPartida info(uint32_t id_cliente) const;
+
+    // Permite que entren jugadores nuevos. Lanza ErrorDePartida si el cliente no es jugador de la
+    // partida.
+    void hacer_multijugador(uint32_t id_cliente);
+
+    // Vuelve a conectar a un jugador existente de la partida.
+    // Lanza ErrorDePartida si el cliente no es jugador o si ya está conectado.
+    EntradaExitosaAPartida reconectar(uint32_t id_cliente);
+
+    // Si el cliente ya es jugador de la partida vuelve a su lugar, si no, intenta ocupar uno nuevo.
+    // Lanza ErrorDePartida si ya está conectado, si la partida no es multijugador o si no quedan
+    // lugares.
+    EntradaExitosaAPartida conectar(
+        uint32_t id_cliente, const std::string& nombre_jugador,
+        const AparienciaPersonaje& apariencia);
+
+    // No hace nada si el cliente no es jugador de la partida.
+    void desconectar(uint32_t id_cliente);
+};
+
+#endif

@@ -1,0 +1,417 @@
+#include "controlador_de_dia.h"
+
+#include <map>
+#include <string>
+#include <utility>
+#include <variant>
+#include <vector>
+
+#include "../../../common/tipo_objeto.h"
+#include "../azar.h"
+#include "../geometria.h"
+#include "../muebles/muebles.h"
+
+// Dónde queda el acostado, en píxeles desde la fila de arriba de la cama: con la cabeza sobre la
+// almohada. A lo ancho queda en el medio de la cama.
+#define ACOSTADO_DESDE_LA_CAMA_Y -2
+
+ControladorDelDia::ControladorDelDia(
+    const ConfiguracionDiaServidor& configuracion, uint8_t ticks_por_segundo,
+    GestorDeSectores& sectores_de_la_partida,
+    std::map<uint32_t, Personaje>& personajes_de_la_partida,
+    const RecursosDeJuego& recursos_de_juego, Notificador& notificador_de_juego,
+    SacarDeLaMazmorra sacar)
+    : reloj(configuracion.duracion_en_minutos, ticks_por_segundo, configuracion.dias_por_estacion),
+      sectores(sectores_de_la_partida),
+      personajes(personajes_de_la_partida),
+      recursos(recursos_de_juego),
+      notificador(notificador_de_juego),
+      sacar_de_la_mazmorra(std::move(sacar)),
+      camas_ocupadas(personajes_de_la_partida),
+      probabilidad_de_lluvia(configuracion.probabilidad_de_lluvia) {
+}
+
+bool ControladorDelDia::atender(Personaje& personaje, const ComandoCliente& comando) {
+    if (const Dormir* pedido = std::get_if<Dormir>(&comando)) {
+        acostar(personaje, *pedido);
+        return true;
+    }
+    if (std::holds_alternative<Levantarse>(comando)) {
+        if (puede_levantarse(personaje)) {
+            levantar(personaje);
+        }
+        return true;
+    }
+    if (std::holds_alternative<DarElOk>(comando)) {
+        if (personaje.descanso != EstadoDeDescanso::DESPIERTO) {
+            personaje.dio_el_ok = true;
+        }
+        return true;
+    }
+    if (personaje.descanso == EstadoDeDescanso::DESPIERTO) {
+        return false;
+    }
+    if (const Moverse* pedido = std::get_if<Moverse>(&comando)) {
+        const bool quiere_moverse = pedido->horizontal != 0 || pedido->vertical != 0;
+        if (quiere_moverse && puede_levantarse(personaje)) {
+            levantar(personaje);
+            return false;
+        }
+        return true;
+    }
+    return std::holds_alternative<UsarItem>(comando);
+}
+
+void ControladorDelDia::acostar(Personaje& personaje, const Dormir& pedido) {
+    if (personaje.descanso != EstadoDeDescanso::DESPIERTO ||
+        !sectores.existe(personaje.mapa_actual)) {
+        return;
+    }
+    Sector& sector = sectores.en(personaje.mapa_actual);
+    const Casilla clickeada{static_cast<int>(pedido.columna), static_cast<int>(pedido.fila)};
+    const ObjetoDelMundo* cama = sector.objetos.objeto_en(clickeada.columna, clickeada.fila);
+    if (cama == nullptr || !recursos.catalogo_de_objetos.es_cama(cama->tipo) ||
+        camas_ocupadas.esta_ocupada(sector.id, cama->columna, cama->fila)) {
+        return;
+    }
+    const std::optional<Casilla> propia =
+        sector.jugadores.casilla_del_jugador(personaje.id_jugador);
+    if (!propia.has_value() ||
+        distancia_en_casillas(*propia, clickeada) > recursos.juego.acciones.alcance_en_casillas) {
+        return;
+    }
+    const int ancho_casilla = sector.mapa.ancho_de_casilla_en_pixeles();
+    const int ancho_de_la_cama =
+        recursos.catalogo_de_objetos.buscar(cama->tipo)->ancho_en_casillas * ancho_casilla;
+    reubicar(
+        personaje,
+        cama->columna * ancho_casilla + (ancho_de_la_cama - ancho_casilla) / 2,
+        cama->fila * sector.mapa.alto_de_casilla_en_pixeles() + ACOSTADO_DESDE_LA_CAMA_Y);
+    personaje.descanso = EstadoDeDescanso::ACOSTADO;
+    personaje.dio_el_ok = false;
+    personaje.ultima_cama = UbicacionDeCama{sector.id, cama->columna, cama->fila};
+}
+
+void ControladorDelDia::levantar(Personaje& personaje) {
+    personaje.descanso = EstadoDeDescanso::DESPIERTO;
+    if (!personaje.ultima_cama.has_value()) {
+        return;
+    }
+    const std::optional<Casilla> al_lado =
+        casilla_al_lado_de_la_cama(*personaje.ultima_cama, personaje.id_jugador);
+    if (al_lado.has_value()) {
+        parar_en(personaje, personaje.ultima_cama->mapa, *al_lado);
+    }
+}
+
+void ControladorDelDia::reubicar(Personaje& personaje, double x, double y) {
+    Jugadores& jugadores = sectores.en(personaje.mapa_actual).jugadores;
+    jugadores.quitar(personaje.id_jugador);
+    jugadores.agregar_en(personaje.id_jugador, x, y, Direccion::ABAJO);
+}
+
+void ControladorDelDia::avisar_el_desmayo(const Personaje& personaje) {
+    const std::string causa = personaje.vida <= 0 ? "vida" : "energia";
+    notificador.a_todos(
+        MensajeDeChat::del_sistema(personaje.nombre + " se desmayo: se quedo sin " + causa + "."));
+}
+
+void ControladorDelDia::desmayar_persona(Personaje& personaje) {
+    personaje.descanso = EstadoDeDescanso::DESMAYADO;
+    personaje.dio_el_ok = false;
+}
+
+void ControladorDelDia::desmayar() {
+    for (auto& [id_jugador, personaje] : personajes) {
+        if (!personaje.conectado || personaje.descanso != EstadoDeDescanso::DESPIERTO) {
+            continue;
+        }
+        // A las 2 am se desmayan todos a la vez y no se avisa; sin vida o sin energía, sí.
+        if (personaje.vida <= 0 || personaje.energia <= 0) {
+            avisar_el_desmayo(personaje);
+            desmayar_persona(personaje);
+        } else if (reloj.termino_el_dia()) {
+            desmayar_persona(personaje);
+        }
+    }
+}
+
+void ControladorDelDia::frenar_a_los_que_descansan() {
+    for (auto& [id_jugador, personaje] : personajes) {
+        if (!personaje.conectado || personaje.descanso == EstadoDeDescanso::DESPIERTO) {
+            continue;
+        }
+        if (sectores.existe(personaje.mapa_actual)) {
+            sectores.en(personaje.mapa_actual).jugadores.moverse(id_jugador, 0, 0);
+        }
+    }
+}
+
+bool ControladorDelDia::todos_listos() const {
+    int conectados = 0;
+    for (const auto& [id_jugador, personaje] : personajes) {
+        if (!personaje.conectado) {
+            continue;
+        }
+        ++conectados;
+        if (personaje.descanso == EstadoDeDescanso::DESPIERTO || !personaje.dio_el_ok) {
+            return false;
+        }
+    }
+    return conectados > 0;
+}
+
+std::optional<Casilla> ControladorDelDia::casilla_al_lado_de_la_cama(
+    const UbicacionDeCama& cama, uint32_t id_que_despierta) const {
+    if (!sectores.existe(cama.mapa)) {
+        return std::nullopt;
+    }
+    const Sector& sector = sectores.en(cama.mapa);
+    const ObjetoDelMundo* objeto = sector.objetos.objeto_en(cama.columna, cama.fila);
+    if (objeto == nullptr || !recursos.catalogo_de_objetos.es_cama(objeto->tipo) ||
+        objeto->columna != cama.columna || objeto->fila != cama.fila) {
+        return std::nullopt;
+    }
+    const DefinicionDeObjeto& definicion = *recursos.catalogo_de_objetos.buscar(objeto->tipo);
+    const int ancho = definicion.ancho_en_casillas;
+    const int alto = definicion.alto_en_casillas;
+
+    std::vector<Casilla> candidatas;
+    for (int columna = cama.columna; columna < cama.columna + ancho; ++columna) {
+        candidatas.push_back(Casilla{columna, cama.fila + alto});
+    }
+    for (int fila = cama.fila + alto - 1; fila >= cama.fila; --fila) {
+        candidatas.push_back(Casilla{cama.columna + ancho, fila});
+        candidatas.push_back(Casilla{cama.columna - 1, fila});
+    }
+    for (int columna = cama.columna; columna < cama.columna + ancho; ++columna) {
+        candidatas.push_back(Casilla{columna, cama.fila - 1});
+    }
+    std::vector<Casilla> con_jugadores;
+    for (uint32_t id_jugador : sector.jugadores.ids()) {
+        if (id_jugador == id_que_despierta) {
+            continue;
+        }
+        const std::optional<Casilla> casilla = sector.jugadores.casilla_del_jugador(id_jugador);
+        if (casilla.has_value()) {
+            con_jugadores.push_back(*casilla);
+        }
+    }
+    std::optional<Casilla> libre_pero_con_alguien;
+    for (const Casilla& candidata : candidatas) {
+        if (!sector.colisiones.esta_libre(candidata.columna, candidata.fila) ||
+            sector.mapa.transicion_en_casilla(candidata.columna, candidata.fila) != nullptr) {
+            continue;
+        }
+        bool hay_alguien = false;
+        for (const Casilla& ocupada : con_jugadores) {
+            hay_alguien = hay_alguien ||
+                          (ocupada.columna == candidata.columna && ocupada.fila == candidata.fila);
+        }
+        if (!hay_alguien) {
+            return candidata;
+        }
+        if (!libre_pero_con_alguien.has_value()) {
+            libre_pero_con_alguien = candidata;
+        }
+    }
+    return libre_pero_con_alguien;
+}
+
+std::optional<Casilla> ControladorDelDia::casilla_de_la_entrada_de_la_casa() const {
+    for (const auto& [id_mapa, mapa] : recursos.mapas) {
+        for (const auto& [zona, transicion] : mapa.obtener_transiciones()) {
+            if (transicion.mapa_destino == MAPA_DE_LA_CASA) {
+                return Casilla{transicion.columna_destino, transicion.fila_destino};
+            }
+        }
+    }
+    return std::nullopt;
+}
+
+void ControladorDelDia::parar_en(
+    Personaje& personaje, const std::string& id_mapa, const Casilla& casilla) {
+    const Mapa& mapa = sectores.en(id_mapa).mapa;
+    const ConfiguracionMovimientoJugador& cuerpo = recursos.juego.movimiento;
+    const int ancho = mapa.ancho_de_casilla_en_pixeles();
+    const int alto = mapa.alto_de_casilla_en_pixeles();
+    const double x = casilla.columna * ancho + (ancho - cuerpo.hitbox_ancho) / 2 - cuerpo.hitbox_x;
+    const double y = (casilla.fila + 1) * alto - cuerpo.hitbox_y - cuerpo.hitbox_alto;
+    sectores.trasladar(personaje, id_mapa, x, y);
+}
+
+void ControladorDelDia::despertar(Personaje& personaje) {
+    const bool durmio_en_la_cama = personaje.descanso == EstadoDeDescanso::ACOSTADO;
+    personaje.vida = durmio_en_la_cama ? personaje.vida_maxima() : personaje.vida_maxima() / 2;
+    personaje.energia =
+        durmio_en_la_cama ? personaje.energia_maxima() : personaje.energia_maxima() / 2;
+    personaje.descanso = EstadoDeDescanso::DESPIERTO;
+    personaje.dio_el_ok = false;
+    llevar_a_la_casa(personaje);
+}
+
+void ControladorDelDia::llevar_a_la_casa(Personaje& personaje) {
+    sacar_de_la_mazmorra(personaje);
+
+    if (personaje.ultima_cama.has_value()) {
+        const std::optional<Casilla> al_lado =
+            casilla_al_lado_de_la_cama(*personaje.ultima_cama, personaje.id_jugador);
+        if (al_lado.has_value()) {
+            parar_en(personaje, personaje.ultima_cama->mapa, *al_lado);
+            return;
+        }
+        personaje.ultima_cama.reset();
+    }
+    const std::optional<Casilla> entrada = casilla_de_la_entrada_de_la_casa();
+    if (entrada.has_value() && sectores.existe(MAPA_DE_LA_CASA)) {
+        parar_en(personaje, MAPA_DE_LA_CASA, *entrada);
+        return;
+    }
+    sectores.quitar(personaje);
+    sectores.colocar_en_aparicion(personaje, recursos.mapa_inicial);
+}
+
+void ControladorDelDia::terminar_el_dia() {
+    for (auto& [id_jugador, personaje] : personajes) {
+        if (personaje.conectado) {
+            despertar(personaje);
+        }
+    }
+    sectores.avanzar_dia();
+    notificador.a_todos(hora());
+}
+
+bool ControladorDelDia::puede_levantarse(const Personaje& personaje) const {
+    return personaje.descanso == EstadoDeDescanso::ACOSTADO && !personaje.dio_el_ok &&
+           !reloj.termino_el_dia();
+}
+
+EstadoDelDescanso ControladorDelDia::descanso_de(const Personaje& personaje) const {
+    EstadoDelDescanso estado;
+    estado.estado = personaje.descanso;
+    estado.dio_el_ok = personaje.dio_el_ok;
+    estado.puede_levantarse = puede_levantarse(personaje);
+    if (personaje.descanso == EstadoDeDescanso::DESPIERTO) {
+        return estado;
+    }
+    for (const auto& [id_jugador, otro] : personajes) {
+        if (!otro.conectado) {
+            continue;
+        }
+        ++estado.jugadores;
+        if (otro.descanso != EstadoDeDescanso::DESPIERTO && otro.dio_el_ok) {
+            ++estado.listos;
+        }
+    }
+    return estado;
+}
+
+void ControladorDelDia::avisar_descansos() {
+    for (const auto& [id_jugador, personaje] : personajes) {
+        if (!personaje.conectado) {
+            continue;
+        }
+        const EstadoDelDescanso estado = descanso_de(personaje);
+        auto enviado = descansos_enviados.find(id_jugador);
+        if (enviado != descansos_enviados.end() && enviado->second == estado) {
+            continue;
+        }
+        descansos_enviados[id_jugador] = estado;
+        notificador.a_jugador(id_jugador, estado);
+    }
+}
+
+void ControladorDelDia::actualizar() {
+    const CambioDelReloj cambio = reloj.avanzar();
+    desmayar();
+    frenar_a_los_que_descansan();
+
+    if (todos_listos()) {
+        reloj.empezar_dia_siguiente();
+        sortear_lluvia();
+        terminar_el_dia();
+        dia_terminado = true;
+    } else if (cambio != CambioDelReloj::NINGUNO) {
+        notificador.a_todos(hora());
+    }
+    avisar_descansos();
+}
+
+void ControladorDelDia::al_conectarse(const Personaje& personaje) {
+    notificador.a_jugador(personaje.id_jugador, hora());
+    const EstadoDelDescanso estado = descanso_de(personaje);
+    descansos_enviados[personaje.id_jugador] = estado;
+    notificador.a_jugador(personaje.id_jugador, estado);
+}
+
+void ControladorDelDia::al_desconectarse(Personaje& personaje) {
+    if (personaje.descanso == EstadoDeDescanso::ACOSTADO) {
+        levantar(personaje);
+    }
+    personaje.descanso = EstadoDeDescanso::DESPIERTO;
+    personaje.dio_el_ok = false;
+    descansos_enviados.erase(personaje.id_jugador);
+}
+
+bool ControladorDelDia::despertar_si_volvio_desmayado(Personaje& personaje) {
+    if (!personaje.esta_inconsciente() && personaje.energia > 0) {
+        return false;
+    }
+    despertar(personaje);
+    return true;
+}
+
+void ControladorDelDia::cambiar_estacion(Estacion estacion) {
+    reloj.cambiar_estacion(estacion);
+    notificador.a_todos(hora());
+}
+
+void ControladorDelDia::sortear_lluvia() {
+    const HoraDelJuego hoy = reloj.hora();
+    const bool puede_llover = hoy.dia_de_la_estacion != 1 && hoy.estacion != Estacion::INVIERNO;
+    lloviendo = puede_llover && Azar::con_probabilidad(probabilidad_de_lluvia);
+}
+
+void ControladorDelDia::cambiar_lluvia(bool llueve) {
+    lloviendo = llueve;
+    notificador.a_todos(hora());
+}
+
+bool ControladorDelDia::esta_lloviendo() const {
+    return lloviendo;
+}
+
+HoraDelJuego ControladorDelDia::hora() const {
+    HoraDelJuego hora_del_juego = reloj.hora();
+    hora_del_juego.lloviendo = lloviendo;
+    return hora_del_juego;
+}
+
+void ControladorDelDia::continuar_en_el_dia(uint32_t dia) {
+    reloj.continuar_en_el_dia(dia);
+}
+
+void ControladorDelDia::avanzar_dia() {
+    reloj.empezar_dia_siguiente();
+    for (auto& [id_jugador, personaje] : personajes) {
+        if (personaje.conectado) {
+            personaje.vida = personaje.vida_maxima();
+            personaje.energia = personaje.energia_maxima();
+            personaje.descanso = EstadoDeDescanso::DESPIERTO;
+            personaje.dio_el_ok = false;
+        }
+    }
+    sectores.avanzar_dia();
+    notificador.a_todos(reloj.hora());
+}
+
+void ControladorDelDia::avanzar_minutos(uint32_t minutos) {
+    reloj.avanzar_minutos(minutos);
+    notificador.a_todos(reloj.hora());
+}
+
+bool ControladorDelDia::tomar_dia_terminado() {
+    const bool terminado = dia_terminado;
+    dia_terminado = false;
+    return terminado;
+}

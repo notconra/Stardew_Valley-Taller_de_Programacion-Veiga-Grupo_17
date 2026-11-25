@@ -1,0 +1,935 @@
+#include "protocolo_cliente.h"
+
+#include <sys/socket.h>  // solo para SHUT_RDWR
+
+#include <string>
+#include <vector>
+
+#include "../../common/direccion.h"
+#include "../../common/visitantes.h"
+
+ProtocoloCliente::ProtocoloCliente(ISocket& socket)
+    : Protocolo(socket),
+      receptores_eventos{
+          {TipoMensaje::ERROR_SERVIDOR, [this] { return recibir_error_servidor(); }},
+          {TipoMensaje::LISTA_PARTIDAS, [this] { return recibir_lista_partidas(); }},
+          {TipoMensaje::LISTA_MUNDOS, [this] { return recibir_lista_mundos(); }},
+          {TipoMensaje::CODIGO_PARTIDA_DISPONIBLE,
+           [this] { return recibir_codigo_partida_disponible(); }},
+          {TipoMensaje::PARTIDA_ENTRADA, [this] { return recibir_entrada_exitosa_a_partida(); }},
+          {TipoMensaje::MULTIJUGADOR_ACTIVADO, [this] { return recibir_multijugador_activado(); }},
+          {TipoMensaje::PARTIDA_ABANDONADA, [this] { return recibir_partida_abandonada(); }},
+          {TipoMensaje::PARTIDA_CERRADA_POR_ERROR,
+           [this] { return recibir_partida_cerrada_por_error(); }},
+          {TipoMensaje::ESTADO_JUEGO, [this] { return recibir_estado_juego(); }},
+          {TipoMensaje::JUGADORES_EN_SECTOR, [this] { return recibir_jugadores_en_sector(); }},
+          {TipoMensaje::OBJETO_COLOCADO, [this] { return recibir_objeto_colocado(); }},
+          {TipoMensaje::OBJETO_RETIRADO, [this] { return recibir_objeto_retirado(); }},
+          {TipoMensaje::ANIMAL_RETIRADO, [this] { return recibir_animal_retirado(); }},
+          {TipoMensaje::DROP_APARECIDO, [this] { return recibir_drop_aparecido(); }},
+          {TipoMensaje::DROP_RETIRADO, [this] { return recibir_drop_retirado(); }},
+          {TipoMensaje::ENEMIGO_ACTUALIZADO, [this] { return recibir_enemigo_actualizado(); }},
+          {TipoMensaje::TRAMPA_ACTUALIZADA, [this] { return recibir_trampa_actualizada(); }},
+          {TipoMensaje::ANIMAL_ACTUALIZADO, [this] { return recibir_animal_actualizado(); }},
+          {TipoMensaje::VACA_ORDENIABLE, [this] { return recibir_vaca_ordeniable(); }},
+          {TipoMensaje::TIERRA_CAMBIADA, [this] { return recibir_tierra_cambiada(); }},
+          {TipoMensaje::HORA_DEL_JUEGO, [this] { return recibir_hora_del_juego(); }},
+          {TipoMensaje::CASILLA_CONSULTADA, [this] { return recibir_casilla_consultada(); }},
+          {TipoMensaje::ESTADO_DEL_DESCANSO, [this] { return recibir_estado_del_descanso(); }},
+          {TipoMensaje::ACTUALIZACION_INVENTARIO,
+           [this] { return recibir_actualizacion_inventario(); }},
+          {TipoMensaje::ACTUALIZACION_COFRE, [this] { return recibir_actualizacion_cofre(); }},
+          {TipoMensaje::MENSAJE_DE_CHAT, [this] { return recibir_mensaje_de_chat(); }},
+          {TipoMensaje::ACTUALIZACION_MERCADO, [this] { return recibir_actualizacion_mercado(); }},
+          {TipoMensaje::CERRAR_VENTANA_MERCADO,
+           [this] { return recibir_cerrar_ventana_mercado(); }},
+          {TipoMensaje::AVISO_EN_PANTALLA, [this] { return recibir_aviso_en_pantalla(); }},
+          {TipoMensaje::JUGADORES_DE_LA_PARTIDA,
+           [this] { return recibir_jugadores_de_la_partida(); }},
+          {TipoMensaje::REGALOS_PENDIENTES, [this] { return recibir_regalos_pendientes(); }},
+          {TipoMensaje::NPCS_EN_SECTOR, [this] { return recibir_npcs_en_sector(); }},
+          {TipoMensaje::LLAMAS_EN_SECTOR, [this] { return recibir_llamas_en_sector(); }},
+          {TipoMensaje::POSICIONES_DE_LOS_JUGADORES,
+           [this] { return recibir_posiciones_de_los_jugadores(); }},
+          {TipoMensaje::DIALOGO_NPC, [this] { return recibir_dialogo_npc(); }},
+          {TipoMensaje::LOTE_DEL_CENTRO, [this] { return recibir_lote_del_centro(); }},
+          {TipoMensaje::CENTRO_TERMINADO, [this] { return recibir_centro_terminado(); }},
+          {TipoMensaje::PREGUNTA_DE_DORMIR, [this] { return recibir_pregunta_de_dormir(); }},
+          {TipoMensaje::RESUMEN_ANIMALES_GRANJA,
+           [this] { return recibir_resumen_animales_granja(); }},
+      } {
+}
+
+// Envío de comandos
+
+void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
+    std::visit(
+        ManejadoresPorTipo{
+            [this](const Identificarse& m) { enviar_comando_identificarse(m); },
+            [this](const ListarPartidas& m) { enviar_comando_listar_partidas(m); },
+            [this](const CrearPartida& m) { enviar_comando_crear_partida(m); },
+            [this](const UnirsePartida& m) { enviar_comando_unirse_partida(m); },
+            [this](const RetomarPartida& m) { enviar_comando_retomar_partida(m); },
+            [this](const EliminarPartida& m) { enviar_comando_eliminar_partida(m); },
+            [this](const ListarMundos& m) { enviar_comando_listar_mundos(m); },
+            [this](const VerificarCodigoPartida& m) { enviar_comando_verificar_codigo_partida(m); },
+            [this](const ActivarMultijugador& m) { enviar_comando_activar_multijugador(m); },
+            [this](const SalirDePartida& m) { enviar_comando_salir_de_partida(m); },
+            [this](const Moverse& m) { enviar_comando_moverse(m); },
+            [this](const SeleccionarRanuraDeLaBarra& m) {
+                enviar_comando_seleccionar_ranura_de_la_barra(m);
+            },
+            [this](const UsarItem& m) { enviar_comando_usar_item(m); },
+            [this](const MoverItemEntreRanuras& m) { enviar_comando_mover_item_entre_ranuras(m); },
+            [this](const MoverItemConCofre& m) { enviar_comando_mover_item_con_cofre(m); },
+            [this](const CerrarCofre& m) { enviar_comando_cerrar_cofre(m); },
+            [this](const SolicitarInventario& m) { enviar_comando_solicitar_inventario(m); },
+            [this](const SoltarItem& m) { enviar_comando_soltar_item(m); },
+            [this](const ConsultarCasilla& m) { enviar_comando_consultar_casilla(m); },
+            [this](const DarElOk& m) { enviar_comando_dar_el_ok(m); },
+            [this](const EnviarMensajeDeChat& m) { enviar_comando_enviar_mensaje_de_chat(m); },
+            [this](const ComprarEnMercado& m) { enviar_comando_comprar_en_mercado(m); },
+            [this](const VenderEnMercado& m) { enviar_comando_vender_en_mercado(m); },
+            [this](const ComprarAnimalMercado& m) { enviar_comando_comprar_animal_mercado(m); },
+            [this](const VenderAnimalMercado& m) { enviar_comando_vender_animal_mercado(m); },
+            [this](const CerrarMercado& m) { enviar_comando_cerrar_mercado(m); },
+            [this](const EnviarRegalo& m) { enviar_comando_enviar_regalo(m); },
+            [this](const AbrirRegalos& m) { enviar_comando_abrir_regalos(m); },
+            [this](const RechazarRegalo& m) { enviar_comando_rechazar_regalo(m); },
+            [this](const HablarConNpc& m) { enviar_comando_hablar_con_npc(m); },
+            [this](const DonarAlLote& m) { enviar_comando_donar_al_lote(m); },
+            [this](const DonarMonedasAlLote& m) { enviar_comando_donar_monedas_al_lote(m); },
+            [this](const Dormir& m) { enviar_comando_dormir(m); },
+            [this](const Levantarse& m) { enviar_comando_levantarse(m); },
+        },
+        comando);
+}
+
+void ProtocoloCliente::enviar_comando_identificarse(const Identificarse& identificarse) {
+    enviar_tipo(TipoMensaje::IDENTIFICARSE);
+    enviar_u32(identificarse.id_cliente);
+}
+
+void ProtocoloCliente::enviar_comando_listar_partidas(const ListarPartidas&) {
+    enviar_tipo(TipoMensaje::LISTAR_PARTIDAS);
+}
+
+void ProtocoloCliente::enviar_comando_crear_partida(const CrearPartida& crear) {
+    enviar_tipo(TipoMensaje::CREAR_PARTIDA);
+    enviar_texto(crear.nombre_partida);
+    enviar_texto(crear.nombre_jugador);
+    enviar_apariencia(crear.apariencia);
+    enviar_texto(crear.nombre_mundo);
+}
+
+void ProtocoloCliente::enviar_comando_unirse_partida(const UnirsePartida& unirse) {
+    enviar_tipo(TipoMensaje::UNIRSE_PARTIDA);
+    enviar_texto(unirse.codigo_partida);
+    enviar_texto(unirse.nombre_jugador);
+    enviar_apariencia(unirse.apariencia);
+}
+
+void ProtocoloCliente::enviar_comando_retomar_partida(const RetomarPartida& retomar) {
+    enviar_tipo(TipoMensaje::RETOMAR_PARTIDA);
+    enviar_texto(retomar.codigo_partida);
+}
+
+void ProtocoloCliente::enviar_comando_eliminar_partida(const EliminarPartida& eliminar) {
+    enviar_tipo(TipoMensaje::ELIMINAR_PARTIDA);
+    enviar_texto(eliminar.codigo_partida);
+}
+
+void ProtocoloCliente::enviar_comando_listar_mundos(const ListarMundos&) {
+    enviar_tipo(TipoMensaje::LISTAR_MUNDOS);
+}
+
+void ProtocoloCliente::enviar_comando_verificar_codigo_partida(
+    const VerificarCodigoPartida& verificar) {
+    enviar_tipo(TipoMensaje::VERIFICAR_CODIGO_PARTIDA);
+    enviar_texto(verificar.codigo_partida);
+}
+
+void ProtocoloCliente::enviar_comando_activar_multijugador(const ActivarMultijugador&) {
+    enviar_tipo(TipoMensaje::ACTIVAR_MULTIJUGADOR);
+}
+
+void ProtocoloCliente::enviar_comando_salir_de_partida(const SalirDePartida&) {
+    enviar_tipo(TipoMensaje::SALIR_DE_PARTIDA);
+}
+
+void ProtocoloCliente::enviar_comando_moverse(const Moverse& moverse) {
+    enviar_tipo(TipoMensaje::MOVERSE);
+    enviar_i8(moverse.horizontal);
+    enviar_i8(moverse.vertical);
+}
+
+void ProtocoloCliente::enviar_comando_seleccionar_ranura_de_la_barra(
+    const SeleccionarRanuraDeLaBarra& seleccionar) {
+    enviar_tipo(TipoMensaje::SELECCIONAR_RANURA_DE_LA_BARRA);
+    enviar_u8(seleccionar.indice_ranura);
+}
+
+void ProtocoloCliente::enviar_comando_usar_item(const UsarItem& usar) {
+    enviar_tipo(TipoMensaje::USAR_ITEM);
+    enviar_u8(static_cast<uint8_t>(usar.modo));
+    enviar_u8(usar.indice_ranura);
+    enviar_booleano(usar.tiene_casilla_objetivo);
+    enviar_u32(usar.columna_objetivo);
+    enviar_u32(usar.fila_objetivo);
+}
+
+void ProtocoloCliente::enviar_comando_mover_item_entre_ranuras(const MoverItemEntreRanuras& mover) {
+    enviar_tipo(TipoMensaje::MOVER_ITEM_ENTRE_RANURAS);
+    enviar_u8(mover.origen);
+    enviar_u8(mover.destino);
+    enviar_u16(mover.cantidad);
+}
+
+void ProtocoloCliente::enviar_comando_mover_item_con_cofre(const MoverItemConCofre& mover) {
+    enviar_tipo(TipoMensaje::MOVER_ITEM_CON_COFRE);
+    enviar_u8(mover.origen);
+    enviar_u8(mover.destino);
+    enviar_u16(mover.cantidad);
+    enviar_booleano(mover.desde_el_cofre);
+}
+
+void ProtocoloCliente::enviar_comando_cerrar_cofre(const CerrarCofre&) {
+    enviar_tipo(TipoMensaje::CERRAR_COFRE);
+}
+
+void ProtocoloCliente::enviar_comando_solicitar_inventario(const SolicitarInventario&) {
+    enviar_tipo(TipoMensaje::SOLICITAR_INVENTARIO);
+}
+
+void ProtocoloCliente::enviar_comando_soltar_item(const SoltarItem& soltar) {
+    enviar_tipo(TipoMensaje::SOLTAR_ITEM);
+    enviar_u8(soltar.ranura);
+    enviar_u16(soltar.cantidad);
+}
+
+void ProtocoloCliente::enviar_comando_enviar_mensaje_de_chat(const EnviarMensajeDeChat& mensaje) {
+    enviar_tipo(TipoMensaje::ENVIAR_MENSAJE_DE_CHAT);
+    enviar_texto(mensaje.texto);
+}
+
+void ProtocoloCliente::enviar_comando_comprar_en_mercado(const ComprarEnMercado& m) {
+    enviar_tipo(TipoMensaje::COMPRAR_EN_MERCADO);
+    enviar_u16(m.indice_item);
+    enviar_u16(m.cantidad);
+}
+
+void ProtocoloCliente::enviar_comando_vender_en_mercado(const VenderEnMercado& m) {
+    enviar_tipo(TipoMensaje::VENDER_EN_MERCADO);
+    enviar_u8(m.ranura_inventario);
+    enviar_u16(m.cantidad);
+}
+
+void ProtocoloCliente::enviar_comando_comprar_animal_mercado(const ComprarAnimalMercado& m) {
+    enviar_tipo(TipoMensaje::COMPRAR_ANIMAL_MERCADO);
+    enviar_u8(static_cast<uint8_t>(m.tipo_animal));
+    enviar_u16(m.cantidad);
+}
+
+void ProtocoloCliente::enviar_comando_vender_animal_mercado(const VenderAnimalMercado& m) {
+    enviar_tipo(TipoMensaje::VENDER_ANIMAL_MERCADO);
+    enviar_u8(static_cast<uint8_t>(m.tipo_animal));
+    enviar_u16(m.cantidad);
+}
+
+void ProtocoloCliente::enviar_comando_cerrar_mercado(const CerrarMercado&) {
+    enviar_tipo(TipoMensaje::CERRAR_MERCADO);
+}
+
+void ProtocoloCliente::enviar_comando_enviar_regalo(const EnviarRegalo& regalo) {
+    enviar_tipo(TipoMensaje::ENVIAR_REGALO);
+    enviar_u32(regalo.id_destinatario);
+    enviar_u8(regalo.ranura);
+    enviar_u16(regalo.cantidad);
+}
+
+void ProtocoloCliente::enviar_comando_abrir_regalos(const AbrirRegalos&) {
+    enviar_tipo(TipoMensaje::ABRIR_REGALOS);
+}
+
+void ProtocoloCliente::enviar_comando_rechazar_regalo(const RechazarRegalo& rechazo) {
+    enviar_tipo(TipoMensaje::RECHAZAR_REGALO);
+    enviar_u8(rechazo.indice);
+}
+
+void ProtocoloCliente::enviar_comando_hablar_con_npc(const HablarConNpc& hablar) {
+    enviar_tipo(TipoMensaje::HABLAR_CON_NPC);
+    enviar_texto(hablar.id_npc);
+}
+
+void ProtocoloCliente::enviar_comando_donar_al_lote(const DonarAlLote& donar) {
+    enviar_tipo(TipoMensaje::DONAR_AL_LOTE);
+    enviar_u8(static_cast<uint8_t>(donar.lote));
+    enviar_u8(donar.indice_ranura);
+}
+
+void ProtocoloCliente::enviar_comando_donar_monedas_al_lote(const DonarMonedasAlLote& donar) {
+    enviar_tipo(TipoMensaje::DONAR_MONEDAS_AL_LOTE);
+    enviar_u8(static_cast<uint8_t>(donar.lote));
+}
+
+void ProtocoloCliente::enviar_comando_dormir(const Dormir& dormir) {
+    enviar_tipo(TipoMensaje::DORMIR);
+    enviar_u32(dormir.columna);
+    enviar_u32(dormir.fila);
+}
+
+void ProtocoloCliente::enviar_comando_levantarse(const Levantarse&) {
+    enviar_tipo(TipoMensaje::LEVANTARSE);
+}
+
+// Recepción de eventos
+
+bool ProtocoloCliente::recibir_evento(EventoServidor& evento) {
+    TipoMensaje tipo{};
+    if (!intentar_recibir_tipo(tipo)) {
+        return false;
+    }
+
+    auto lector = receptores_eventos.find(tipo);
+    if (lector == receptores_eventos.end()) {
+        throw ErrorProtocolo(
+            "tipo de mensaje inesperado: " + std::to_string(static_cast<int>(tipo)));
+    }
+
+    evento = lector->second();
+    return true;
+}
+
+ErrorServidor ProtocoloCliente::recibir_error_servidor() {
+    CodigoError codigo = codigo_error_desde(recibir_u8());
+    std::string detalles = recibir_texto();
+
+    return ErrorServidor{codigo, detalles};
+}
+
+InfoPartida ProtocoloCliente::recibir_info_partida() {
+    std::string codigo_partida = recibir_texto();
+    std::string nombre_partida = recibir_texto();
+    std::string nombre_personaje = recibir_texto();
+    AparienciaPersonaje apariencia = recibir_apariencia();
+    bool multijugador = recibir_booleano();
+    uint8_t jugadores_conectados = recibir_u8();
+    uint8_t jugadores_totales = recibir_u8();
+    uint8_t jugadores_maximos = recibir_u8();
+    uint32_t dia = recibir_u32();
+    uint32_t segundos_jugados = recibir_u32();
+    uint32_t monedas = recibir_u32();
+
+    return InfoPartida{
+        codigo_partida,
+        nombre_partida,
+        nombre_personaje,
+        apariencia,
+        multijugador,
+        jugadores_conectados,
+        jugadores_totales,
+        jugadores_maximos,
+        dia,
+        segundos_jugados,
+        monedas};
+}
+
+ListaPartidas ProtocoloCliente::recibir_lista_partidas() {
+    uint16_t cantidad = recibir_u16();
+    std::vector<InfoPartida> partidas;
+    partidas.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        partidas.push_back(recibir_info_partida());
+    }
+
+    return ListaPartidas{partidas};
+}
+
+ListaMundos ProtocoloCliente::recibir_lista_mundos() {
+    uint16_t cantidad = recibir_u16();
+    std::vector<std::string> mundos;
+    mundos.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        mundos.push_back(recibir_texto());
+    }
+    return ListaMundos{mundos};
+}
+
+CodigoPartidaDisponible ProtocoloCliente::recibir_codigo_partida_disponible() {
+    return CodigoPartidaDisponible{};
+}
+
+EntradaExitosaAPartida ProtocoloCliente::recibir_entrada_exitosa_a_partida() {
+    std::string codigo_partida = recibir_texto();
+    uint32_t id_jugador = recibir_u32();
+    bool multijugador = recibir_booleano();
+    std::string nombre_mundo = recibir_texto();
+
+    return EntradaExitosaAPartida{codigo_partida, id_jugador, multijugador, nombre_mundo};
+}
+
+MultijugadorActivado ProtocoloCliente::recibir_multijugador_activado() {
+    std::string codigo_partida = recibir_texto();
+
+    return MultijugadorActivado{codigo_partida};
+}
+
+PartidaAbandonada ProtocoloCliente::recibir_partida_abandonada() {
+    return PartidaAbandonada{};
+}
+
+PartidaCerradaPorError ProtocoloCliente::recibir_partida_cerrada_por_error() {
+    return PartidaCerradaPorError{};
+}
+
+EstadoJugador ProtocoloCliente::recibir_estado_jugador() {
+    EstadoJugador estado;
+    estado.id_jugador = recibir_u32();
+    estado.mapa = recibir_texto();
+    estado.x = recibir_u32();
+    estado.y = recibir_u32();
+    estado.mirando = direccion_desde(recibir_u8());
+    estado.camina = recibir_booleano();
+    estado.ranura_activa = recibir_u8();
+    estado.accion_actual = static_cast<TipoAccion>(recibir_u8());
+    estado.item_en_mano = static_cast<TipoItem>(recibir_u16());
+    estado.calidad_en_mano = static_cast<Calidad>(recibir_u8());
+    estado.numero_de_accion = recibir_u8();
+    estado.descanso = static_cast<EstadoDeDescanso>(recibir_u8());
+    estado.vida = recibir_u16();
+    estado.energia = recibir_u16();
+    estado.vida_maxima = recibir_u16();
+    estado.energia_maxima = recibir_u16();
+    estado.con_mejora_de_pelea = recibir_booleano();
+    estado.monedas = recibir_u32();
+    estado.apariencia = recibir_apariencia();
+    return estado;
+}
+
+EstadoObjetoDelMundo ProtocoloCliente::recibir_estado_objeto_del_mundo() {
+    EstadoObjetoDelMundo objeto;
+    objeto.id = recibir_u32();
+    objeto.mapa = recibir_texto();
+    objeto.columna = recibir_u32();
+    objeto.fila = recibir_u32();
+    objeto.tipo = static_cast<TipoObjeto>(recibir_u16());
+    return objeto;
+}
+
+RanuraInventario ProtocoloCliente::recibir_ranura_inventario() {
+    uint16_t tipo = recibir_u16();
+    uint16_t cantidad = recibir_u16();
+    Calidad calidad = static_cast<Calidad>(recibir_u8());
+    return RanuraInventario{static_cast<TipoItem>(tipo), cantidad, calidad};
+}
+
+std::vector<RanuraInventario> ProtocoloCliente::recibir_ranuras() {
+    uint16_t cantidad = recibir_u16();
+    std::vector<RanuraInventario> ranuras;
+    ranuras.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        ranuras.push_back(recibir_ranura_inventario());
+    }
+    return ranuras;
+}
+
+InventarioJugador ProtocoloCliente::recibir_inventario_jugador() {
+    InventarioJugador inventario;
+    inventario.id_jugador = recibir_u32();
+    inventario.ranura_activa = recibir_u8();
+    inventario.ranuras = recibir_ranuras();
+    return inventario;
+}
+
+CofreJugador ProtocoloCliente::recibir_cofre_jugador() {
+    CofreJugador cofre;
+    cofre.id_cofre = recibir_u32();
+    cofre.abierto = recibir_booleano();
+    cofre.ranuras = recibir_ranuras();
+    return cofre;
+}
+
+ActualizacionInventario ProtocoloCliente::recibir_actualizacion_inventario() {
+    return ActualizacionInventario{recibir_inventario_jugador()};
+}
+
+ActualizacionCofre ProtocoloCliente::recibir_actualizacion_cofre() {
+    return ActualizacionCofre{recibir_cofre_jugador()};
+}
+
+MensajeDeChat ProtocoloCliente::recibir_mensaje_de_chat() {
+    MensajeDeChat mensaje;
+    mensaje.canal = canal_de_chat_desde(recibir_u8());
+    mensaje.remitente = recibir_texto();
+    mensaje.destinatario = recibir_texto();
+    mensaje.texto = recibir_texto();
+    mensaje.color_del_remitente = color_de_jugador_desde(recibir_u8());
+    return mensaje;
+}
+
+EstadoDrop ProtocoloCliente::recibir_estado_drop() {
+    EstadoDrop estado;
+    estado.id = recibir_u32();
+    estado.columna = recibir_u32();
+    estado.fila = recibir_u32();
+    estado.tipo = static_cast<TipoItem>(recibir_u16());
+    estado.cantidad = recibir_u16();
+    estado.calidad = static_cast<Calidad>(recibir_u8());
+    return estado;
+}
+
+EstadoEnemigo ProtocoloCliente::recibir_estado_enemigo() {
+    EstadoEnemigo estado;
+    estado.id = recibir_u32();
+    estado.tipo = static_cast<TipoEnemigo>(recibir_u8());
+    estado.columna = recibir_u32();
+    estado.fila = recibir_u32();
+    estado.vida = recibir_u16();
+    estado.vida_maxima = recibir_u16();
+    estado.atacando = recibir_booleano();
+    estado.muriendo = recibir_booleano();
+    estado.mirando = direccion_desde(recibir_u8());
+    estado.ms_por_casilla = recibir_u16();
+    estado.frenesi = recibir_booleano();
+    estado.sangre = recibir_booleano();
+    return estado;
+}
+EstadoTrampa ProtocoloCliente::recibir_estado_trampa() {
+    EstadoTrampa estado;
+    estado.id = recibir_u32();
+    estado.tipo = static_cast<TipoTrampa>(recibir_u8());
+    estado.columna = recibir_u32();
+    estado.fila = recibir_u32();
+    estado.activa = recibir_booleano();
+    return estado;
+}
+
+EstadoAnimal ProtocoloCliente::recibir_estado_animal() {
+    EstadoAnimal estado;
+    estado.id = recibir_u32();
+    estado.tipo = static_cast<TipoAnimal>(recibir_u8());
+    estado.variante = recibir_u8();
+    estado.columna = recibir_u32();
+    estado.fila = recibir_u32();
+    estado.mirando = static_cast<Direccion>(recibir_u8());
+    estado.caminando = recibir_booleano();
+    estado.durmiendo = recibir_booleano();
+    return estado;
+}
+
+EstadoNpc ProtocoloCliente::recibir_estado_npc() {
+    EstadoNpc estado;
+    estado.id_npc = recibir_texto();
+    estado.mapa = recibir_texto();
+    estado.x = recibir_u32();
+    estado.y = recibir_u32();
+    estado.mirando = direccion_desde(recibir_u8());
+    estado.camina = recibir_booleano();
+    estado.ms_por_casilla = recibir_u16();
+    return estado;
+}
+
+AnimalActualizado ProtocoloCliente::recibir_animal_actualizado() {
+    return AnimalActualizado{recibir_estado_animal()};
+}
+
+VacaOrdeniable ProtocoloCliente::recibir_vaca_ordeniable() {
+    uint32_t id_vaca = recibir_u32();
+    bool lista = recibir_booleano();
+    return VacaOrdeniable{id_vaca, lista};
+}
+
+CasillaTratada ProtocoloCliente::recibir_casilla_tratada() {
+    CasillaTratada casilla;
+    casilla.columna = recibir_u32();
+    casilla.fila = recibir_u32();
+    const uint8_t cultivo = recibir_u8();
+    if (cultivo > static_cast<uint8_t>(TipoCultivo::CALABAZA)) {
+        throw ErrorProtocolo("cultivo desconocido");
+    }
+    casilla.cultivo = static_cast<TipoCultivo>(cultivo);
+    casilla.etapa = recibir_u8();
+    if (casilla.etapa > ETAPA_DE_CULTIVO_MAXIMA) {
+        throw ErrorProtocolo("etapa de cultivo inválida");
+    }
+    casilla.madura = recibir_booleano();
+    casilla.regada = recibir_booleano();
+    casilla.pide_agua = recibir_booleano();
+    casilla.ya_dio_fruto = recibir_booleano();
+    return casilla;
+}
+
+EstadoJuego ProtocoloCliente::recibir_estado_juego() {
+    EstadoJuego estado_juego;
+    estado_juego.mapa = recibir_texto();
+
+    uint16_t cantidad_de_jugadores = recibir_u16();
+    estado_juego.jugadores.reserve(cantidad_de_jugadores);
+    for (uint16_t i = 0; i < cantidad_de_jugadores; ++i) {
+        estado_juego.jugadores.push_back(recibir_estado_jugador());
+    }
+
+    uint16_t cantidad_de_objetos = recibir_u16();
+    estado_juego.objetos.reserve(cantidad_de_objetos);
+    for (uint16_t i = 0; i < cantidad_de_objetos; ++i) {
+        estado_juego.objetos.push_back(recibir_estado_objeto_del_mundo());
+    }
+
+    uint16_t cantidad_de_drops = recibir_u16();
+    estado_juego.drops.reserve(cantidad_de_drops);
+    for (uint16_t i = 0; i < cantidad_de_drops; ++i) {
+        estado_juego.drops.push_back(recibir_estado_drop());
+    }
+
+    uint16_t cantidad_de_enemigos = recibir_u16();
+    estado_juego.enemigos.reserve(cantidad_de_enemigos);
+    for (uint16_t i = 0; i < cantidad_de_enemigos; ++i) {
+        estado_juego.enemigos.push_back(recibir_estado_enemigo());
+    }
+
+    uint16_t cantidad_de_tierra = recibir_u16();
+    estado_juego.tierra.reserve(cantidad_de_tierra);
+    for (uint16_t i = 0; i < cantidad_de_tierra; ++i) {
+        estado_juego.tierra.push_back(recibir_casilla_tratada());
+    }
+
+    uint16_t cantidad_de_trampas = recibir_u16();
+    estado_juego.trampas.reserve(cantidad_de_trampas);
+    for (uint16_t i = 0; i < cantidad_de_trampas; ++i) {
+        estado_juego.trampas.push_back(recibir_estado_trampa());
+    }
+
+    uint16_t cantidad_de_animales = recibir_u16();
+    estado_juego.animales.reserve(cantidad_de_animales);
+    for (uint16_t i = 0; i < cantidad_de_animales; ++i) {
+        estado_juego.animales.push_back(recibir_estado_animal());
+    }
+
+    uint16_t cantidad_de_vacas = recibir_u16();
+    estado_juego.vacas_para_ordeniar.reserve(cantidad_de_vacas);
+    for (uint16_t i = 0; i < cantidad_de_vacas; ++i) {
+        estado_juego.vacas_para_ordeniar.push_back(recibir_u32());
+    }
+
+    uint16_t cantidad_de_npcs = recibir_u16();
+    estado_juego.npcs.reserve(cantidad_de_npcs);
+    for (uint16_t i = 0; i < cantidad_de_npcs; ++i) {
+        estado_juego.npcs.push_back(recibir_estado_npc());
+    }
+    estado_juego.nivel_de_mazmorra = recibir_u8();
+
+    return estado_juego;
+}
+
+JugadoresEnSector ProtocoloCliente::recibir_jugadores_en_sector() {
+    JugadoresEnSector jugadores;
+    jugadores.mapa = recibir_texto();
+    uint16_t cantidad = recibir_u16();
+    jugadores.jugadores.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        jugadores.jugadores.push_back(recibir_estado_jugador());
+    }
+    return jugadores;
+}
+
+NpcsEnSector ProtocoloCliente::recibir_npcs_en_sector() {
+    NpcsEnSector npcs;
+    npcs.mapa = recibir_texto();
+    uint16_t cantidad = recibir_u16();
+    npcs.npcs.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        npcs.npcs.push_back(recibir_estado_npc());
+    }
+    return npcs;
+}
+
+PosicionesDeLosJugadores ProtocoloCliente::recibir_posiciones_de_los_jugadores() {
+    PosicionesDeLosJugadores posiciones;
+    const uint16_t cantidad = recibir_u16();
+    posiciones.jugadores.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        PosicionDeJugador jugador;
+        jugador.id_jugador = recibir_u32();
+        jugador.mapa = recibir_texto();
+        jugador.x = recibir_u32();
+        jugador.y = recibir_u32();
+        jugador.piso_de_mazmorra = recibir_u8();
+        posiciones.jugadores.push_back(jugador);
+    }
+    return posiciones;
+}
+
+LlamasEnSector ProtocoloCliente::recibir_llamas_en_sector() {
+    LlamasEnSector llamas;
+    llamas.mapa = recibir_texto();
+    uint16_t cantidad = recibir_u16();
+    llamas.llamas.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        EstadoLlama llama;
+        llama.id = recibir_u32();
+        llama.verde = recibir_booleano();
+        llama.x_centesimas = recibir_u32();
+        llama.y_centesimas = recibir_u32();
+        llamas.llamas.push_back(llama);
+    }
+    return llamas;
+}
+
+ObjetoColocado ProtocoloCliente::recibir_objeto_colocado() {
+    ObjetoColocado objeto;
+    objeto.id = recibir_u32();
+    objeto.columna = recibir_u32();
+    objeto.fila = recibir_u32();
+    objeto.tipo = static_cast<TipoObjeto>(recibir_u16());
+    return objeto;
+}
+
+ObjetoRetirado ProtocoloCliente::recibir_objeto_retirado() {
+    ObjetoRetirado objeto;
+    objeto.id = recibir_u32();
+    return objeto;
+}
+
+AnimalRetirado ProtocoloCliente::recibir_animal_retirado() {
+    AnimalRetirado animal;
+    animal.id = recibir_u32();
+    return animal;
+}
+
+DropAparecido ProtocoloCliente::recibir_drop_aparecido() {
+    DropAparecido aparece;
+    aparece.drop = recibir_estado_drop();
+    return aparece;
+}
+
+DropRetirado ProtocoloCliente::recibir_drop_retirado() {
+    DropRetirado retirado;
+    retirado.id = recibir_u32();
+    retirado.id_jugador = recibir_u32();
+    return retirado;
+}
+
+EnemigoActualizado ProtocoloCliente::recibir_enemigo_actualizado() {
+    EnemigoActualizado actualizado;
+    actualizado.enemigo = recibir_estado_enemigo();
+    return actualizado;
+}
+
+TrampaActualizada ProtocoloCliente::recibir_trampa_actualizada() {
+    TrampaActualizada actualizada;
+    actualizada.trampa = recibir_estado_trampa();
+    return actualizada;
+}
+
+TierraCambiada ProtocoloCliente::recibir_tierra_cambiada() {
+    TierraCambiada tierra;
+    tierra.casilla = recibir_casilla_tratada();
+    tierra.tratada = recibir_booleano();
+    return tierra;
+}
+
+void ProtocoloCliente::enviar_comando_consultar_casilla(const ConsultarCasilla& consultar) {
+    enviar_tipo(TipoMensaje::CONSULTAR_CASILLA);
+    enviar_u32(consultar.columna);
+    enviar_u32(consultar.fila);
+}
+
+void ProtocoloCliente::enviar_comando_dar_el_ok(const DarElOk&) {
+    enviar_tipo(TipoMensaje::DAR_EL_OK);
+}
+
+EstadoDelDescanso ProtocoloCliente::recibir_estado_del_descanso() {
+    EstadoDelDescanso descanso;
+    const uint8_t estado = recibir_u8();
+    if (estado > static_cast<uint8_t>(EstadoDeDescanso::DESMAYADO)) {
+        throw ErrorProtocolo("estado de descanso desconocido");
+    }
+    descanso.estado = static_cast<EstadoDeDescanso>(estado);
+    descanso.dio_el_ok = recibir_booleano();
+    descanso.listos = recibir_u8();
+    descanso.jugadores = recibir_u8();
+    descanso.puede_levantarse = recibir_booleano();
+    return descanso;
+}
+
+CasillaConsultada ProtocoloCliente::recibir_casilla_consultada() {
+    CasillaConsultada consultada;
+    consultada.columna = recibir_u32();
+    consultada.fila = recibir_u32();
+    consultada.ancho = recibir_u8();
+    consultada.alto = recibir_u8();
+    const uint8_t marca = recibir_u8();
+    if (marca > static_cast<uint8_t>(MarcaDeCasilla::INVALIDA)) {
+        throw ErrorProtocolo("marca de casilla desconocida");
+    }
+    consultada.marca = static_cast<MarcaDeCasilla>(marca);
+    return consultada;
+}
+
+HoraDelJuego ProtocoloCliente::recibir_hora_del_juego() {
+    HoraDelJuego hora;
+    hora.dia = recibir_u32();
+    hora.hora = recibir_u8();
+    hora.minuto = recibir_u8();
+    hora.dia_de_la_estacion = recibir_u8();
+    const uint8_t estacion = recibir_u8();
+    if (estacion > static_cast<uint8_t>(Estacion::INVIERNO)) {
+        throw ErrorProtocolo("estación desconocida");
+    }
+    hora.estacion = static_cast<Estacion>(estacion);
+    hora.anio = recibir_u16();
+    hora.dia_de_la_semana = recibir_u8();
+    if (hora.dia_de_la_semana > DIA_DE_LA_SEMANA_MAXIMO) {
+        throw ErrorProtocolo("día de la semana desconocido");
+    }
+    hora.lloviendo = recibir_booleano();
+    return hora;
+}
+
+void ProtocoloCliente::cerrar() {
+    socket.shutdown(SHUT_RDWR);
+}
+// Auxiliares
+
+CodigoError ProtocoloCliente::codigo_error_desde(uint8_t valor) const {
+    if (valor < static_cast<uint8_t>(CodigoError::NOMBRE_JUGADOR_REPETIDO) ||
+        valor > static_cast<uint8_t>(CodigoError::PARTIDA_CERRADA)) {
+        throw ErrorProtocolo("código de error desconocido en el protocolo");
+    }
+    return static_cast<CodigoError>(valor);
+}
+
+Direccion ProtocoloCliente::direccion_desde(uint8_t valor) const {
+    if (valor > static_cast<uint8_t>(Direccion::DERECHA)) {
+        throw ErrorProtocolo("dirección desconocida en el protocolo");
+    }
+    return static_cast<Direccion>(valor);
+}
+
+CanalDeChat ProtocoloCliente::canal_de_chat_desde(uint8_t valor) const {
+    if (valor > static_cast<uint8_t>(CanalDeChat::SISTEMA)) {
+        throw ErrorProtocolo("canal de chat desconocido en el protocolo");
+    }
+    return static_cast<CanalDeChat>(valor);
+}
+
+ColorDeJugador ProtocoloCliente::color_de_jugador_desde(uint8_t valor) const {
+    if (valor >= CANTIDAD_DE_COLORES_DE_JUGADOR) {
+        throw ErrorProtocolo("color de jugador desconocido en el protocolo");
+    }
+    return static_cast<ColorDeJugador>(valor);
+}
+
+ItemCatalogoInfo ProtocoloCliente::recibir_item_catalogo_info() {
+    ItemCatalogoInfo info;
+    info.tipo_item = static_cast<TipoItem>(recibir_u16());
+    info.tipo_animal = static_cast<TipoAnimal>(recibir_u8());
+    info.nombre = recibir_texto();
+    info.precio = recibir_u32();
+    info.se_puede_comprar = recibir_booleano();
+    info.cantidad_poseida = recibir_u16();
+    info.descripcion = recibir_texto();
+    return info;
+}
+
+ActualizacionMercado ProtocoloCliente::recibir_actualizacion_mercado() {
+    ActualizacionMercado actualizacion;
+    actualizacion.id_npc = recibir_texto();
+
+    uint16_t cantidad = recibir_u16();
+    actualizacion.catalogo.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        actualizacion.catalogo.push_back(recibir_item_catalogo_info());
+    }
+    return actualizacion;
+}
+
+CerrarVentanaMercado ProtocoloCliente::recibir_cerrar_ventana_mercado() {
+    return CerrarVentanaMercado{};
+}
+
+AvisoEnPantalla ProtocoloCliente::recibir_aviso_en_pantalla() {
+    return AvisoEnPantalla{recibir_texto()};
+}
+
+DialogoNpc ProtocoloCliente::recibir_dialogo_npc() {
+    DialogoNpc dialogo;
+    dialogo.id_npc = recibir_texto();
+    dialogo.texto = recibir_texto();
+    return dialogo;
+}
+
+JugadoresDeLaPartida ProtocoloCliente::recibir_jugadores_de_la_partida() {
+    JugadoresDeLaPartida jugadores;
+    const uint16_t cantidad = recibir_u16();
+    jugadores.jugadores.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        JugadorDeLaPartida jugador;
+        jugador.id_jugador = recibir_u32();
+        jugador.nombre = recibir_texto();
+        jugador.conectado = recibir_booleano();
+        jugadores.jugadores.push_back(jugador);
+    }
+    return jugadores;
+}
+
+CentroTerminado ProtocoloCliente::recibir_centro_terminado() {
+    return CentroTerminado{};
+}
+
+PreguntaDeDormir ProtocoloCliente::recibir_pregunta_de_dormir() {
+    PreguntaDeDormir pregunta;
+    pregunta.columna = recibir_u32();
+    pregunta.fila = recibir_u32();
+    return pregunta;
+}
+
+LoteDelCentro ProtocoloCliente::recibir_lote_del_centro() {
+    LoteDelCentro lote;
+    const uint8_t tipo = recibir_u8();
+    if (tipo >= CANTIDAD_DE_LOTES) {
+        throw ErrorProtocolo("lote desconocido");
+    }
+    lote.lote = static_cast<TipoLote>(tipo);
+    lote.abrir = recibir_booleano();
+    lote.nombre = recibir_texto();
+    lote.completo = recibir_booleano();
+    const uint16_t cantidad = recibir_u16();
+    lote.requisitos.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        RequisitoDeLote requisito;
+        requisito.tipo = static_cast<TipoDeRequisito>(recibir_u8());
+        requisito.item = static_cast<TipoItem>(recibir_u16());
+        requisito.calidad_minima = static_cast<Calidad>(recibir_u8());
+        requisito.logro = static_cast<LogroDePelea>(recibir_u8());
+        requisito.cantidad = recibir_u32();
+        requisito.aportado = recibir_u32();
+        lote.requisitos.push_back(requisito);
+    }
+    lote.mapa = recibir_texto();
+    lote.columna = recibir_u32();
+    lote.fila = recibir_u32();
+    return lote;
+}
+
+RegalosPendientes ProtocoloCliente::recibir_regalos_pendientes() {
+    RegalosPendientes pendientes;
+    const uint16_t cantidad = recibir_u16();
+    pendientes.regalos.reserve(cantidad);
+    for (uint16_t i = 0; i < cantidad; ++i) {
+        RegaloRecibido regalo;
+        regalo.remitente = recibir_texto();
+        regalo.item = recibir_ranura_inventario();
+        pendientes.regalos.push_back(regalo);
+    }
+    return pendientes;
+}
+
+ResumenAnimalesGranja ProtocoloCliente::recibir_resumen_animales_granja() {
+    ResumenAnimalesGranja resumen;
+    resumen.cantidad_de_vacas = recibir_u16();
+    resumen.cantidad_de_gallinas = recibir_u16();
+    resumen.vacas_para_ordeniar = recibir_u16();
+    resumen.huevos_para_recolectar = recibir_u16();
+    return resumen;
+}

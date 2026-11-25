@@ -1,0 +1,282 @@
+#include "partida.h"
+
+#include <cctype>
+#include <string>
+#include <vector>
+
+#include "error_de_partida.h"
+
+Partida::Partida(
+    const std::string& codigo_de_partida, const std::string& nombre_de_partida,
+    uint8_t maximo_de_jugadores, uint32_t id_cliente_creador,
+    const std::string& nombre_jugador_creador, const AparienciaPersonaje& apariencia_creador,
+    const std::string& nombre_mundo_partida)
+    : codigo(codigo_de_partida),
+      nombre(nombre_de_partida),
+      nombre_mundo(nombre_mundo_partida),
+      jugadores_maximos(maximo_de_jugadores),
+      multijugador(false),
+      dia(1),
+      segundos_jugados(0) {
+    jugadores.push_back(Jugador{
+        id_cliente_creador,
+        1,
+        nombre_jugador_creador,
+        proximo_color_libre(),
+        false,
+        apariencia_creador});
+}
+
+Partida::Partida(
+    const std::string& codigo_de_partida, const std::string& nombre_de_partida,
+    uint8_t maximo_de_jugadores, bool es_multijugador, const std::vector<Jugador>& lista_jugadores,
+    uint32_t dia_partida, uint32_t segundos_partida, const std::string& nombre_mundo_partida)
+    : codigo(codigo_de_partida),
+      nombre(nombre_de_partida),
+      nombre_mundo(nombre_mundo_partida),
+      jugadores_maximos(maximo_de_jugadores),
+      multijugador(es_multijugador),
+      jugadores(lista_jugadores),
+      dia(dia_partida),
+      segundos_jugados(segundos_partida) {
+}
+
+Jugador* Partida::buscar_jugador(uint32_t id_cliente) {
+    for (Jugador& jugador : jugadores) {
+        if (jugador.id_cliente == id_cliente) {
+            return &jugador;
+        }
+    }
+    return nullptr;
+}
+
+bool Partida::mismo_nombre(const std::string& uno, const std::string& otro) {
+    if (uno.size() != otro.size()) {
+        return false;
+    }
+    for (size_t i = 0; i < uno.size(); ++i) {
+        if (std::tolower(static_cast<unsigned char>(uno[i])) !=
+            std::tolower(static_cast<unsigned char>(otro[i]))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+ColorDeJugador Partida::proximo_color_libre() const {
+    const int cantidad_de_colores = static_cast<int>(CANTIDAD_DE_COLORES_DE_JUGADOR);
+    for (int i = 0; i < cantidad_de_colores; ++i) {
+        const ColorDeJugador candidato = static_cast<ColorDeJugador>(i);
+        bool en_uso = false;
+        for (const Jugador& jugador : jugadores) {
+            if (jugador.color == candidato) {
+                en_uso = true;
+            }
+        }
+        if (!en_uso) {
+            return candidato;
+        }
+    }
+    return static_cast<ColorDeJugador>(static_cast<int>(jugadores.size()) % cantidad_de_colores);
+}
+
+const std::string& Partida::obtener_nombre() const {
+    return nombre;
+}
+
+const std::string& Partida::obtener_nombre_mundo() const {
+    return nombre_mundo;
+}
+
+const std::vector<Jugador>& Partida::obtener_jugadores() const {
+    return jugadores;
+}
+
+const AparienciaPersonaje& Partida::obtener_apariencia_jugador(uint32_t id_cliente) const {
+    for (const Jugador& jugador : jugadores) {
+        if (jugador.id_cliente == id_cliente) {
+            return jugador.apariencia;
+        }
+    }
+    throw ErrorDePartida(
+        CodigoError::NO_PERMITIDO,
+        "no sos miembro de la partida \"" + nombre + "\"");
+}
+
+DatosPartidaGuardada Partida::generar_datos_guardado(const DatosMundoGuardado& datos_mundo) const {
+    DatosPartidaGuardada datos;
+    datos.codigo = codigo;
+    datos.nombre = nombre;
+    datos.nombre_mundo = nombre_mundo;
+    datos.jugadores_maximos = jugadores_maximos;
+    datos.multijugador = multijugador;
+    datos.mundo = datos_mundo;
+    return datos;
+}
+
+void Partida::actualizar_dia(uint32_t nuevo_dia) {
+    if (nuevo_dia > 0) {
+        dia = nuevo_dia;
+    }
+}
+
+void Partida::actualizar_segundos_jugados(uint32_t nuevos_segundos) {
+    segundos_jugados = nuevos_segundos;
+}
+
+uint32_t Partida::obtener_dia() const {
+    return dia;
+}
+
+uint32_t Partida::obtener_segundos_jugados() const {
+    return segundos_jugados;
+}
+
+bool Partida::es_miembro(uint32_t id_cliente) const {
+    for (const Jugador& jugador : jugadores) {
+        if (jugador.id_cliente == id_cliente) {
+            return true;
+        }
+    }
+    return false;
+}
+
+uint8_t Partida::cantidad_de_jugadores() const {
+    return static_cast<uint8_t>(jugadores.size());  // nunca supera jugadores_maximos
+}
+
+std::string Partida::nombre_de_jugador(uint32_t id_cliente) const {
+    for (const Jugador& jugador : jugadores) {
+        if (jugador.id_cliente == id_cliente) {
+            return jugador.nombre_jugador;
+        }
+    }
+    return std::string();
+}
+
+ColorDeJugador Partida::color_de_jugador(uint32_t id_cliente) const {
+    for (const Jugador& jugador : jugadores) {
+        if (jugador.id_cliente == id_cliente) {
+            return jugador.color;
+        }
+    }
+    return ColorDeJugador::AZUL;
+}
+
+uint8_t Partida::cantidad_de_conectados() const {
+    uint8_t conectados = 0;
+    for (const Jugador& jugador : jugadores) {
+        if (jugador.conectado) {
+            ++conectados;
+        }
+    }
+    return conectados;
+}
+
+InfoPartida Partida::info(uint32_t id_cliente) const {
+    std::string nombre_personaje;
+    AparienciaPersonaje apariencia;
+    uint32_t monedas = 0;
+    size_t indice = 0;
+    bool encontrado = false;
+    while (indice < jugadores.size() && !encontrado) {
+        if (jugadores[indice].id_cliente == id_cliente) {
+            nombre_personaje = jugadores[indice].nombre_jugador;
+            apariencia = jugadores[indice].apariencia;
+            monedas = jugadores[indice].monedas;
+            encontrado = true;
+        }
+        ++indice;
+    }
+
+    return InfoPartida{
+        codigo,
+        nombre,
+        nombre_personaje,
+        apariencia,
+        multijugador,
+        cantidad_de_conectados(),
+        cantidad_de_jugadores(),
+        jugadores_maximos,
+        dia,
+        segundos_jugados,
+        monedas};
+}
+
+void Partida::actualizar_monedas_jugadores(
+    const std::vector<DatosJugadorGuardado>& datos_jugadores) {
+    for (const DatosJugadorGuardado& datos_jugador : datos_jugadores) {
+        for (Jugador& jugador : jugadores) {
+            if (jugador.id_jugador == datos_jugador.id_jugador) {
+                jugador.monedas = datos_jugador.monedas;
+            }
+        }
+    }
+}
+
+void Partida::hacer_multijugador(uint32_t id_cliente) {
+    if (!es_miembro(id_cliente)) {
+        throw ErrorDePartida(
+            CodigoError::NO_PERMITIDO,
+            "solo un jugador de la partida puede hacerla multijugador");
+    }
+    multijugador = true;
+}
+
+EntradaExitosaAPartida Partida::reconectar(uint32_t id_cliente) {
+    Jugador* jugador = buscar_jugador(id_cliente);
+    if (jugador == nullptr) {
+        throw ErrorDePartida(
+            CodigoError::NO_PERMITIDO,
+            "no sos miembro de la partida \"" + nombre + "\"");
+    }
+    if (jugador->conectado) {
+        throw ErrorDePartida(
+            CodigoError::NO_PERMITIDO,
+            "ya estás conectado a la partida \"" + nombre + "\"");
+    }
+    jugador->conectado = true;
+    return EntradaExitosaAPartida{codigo, jugador->id_jugador, multijugador, nombre_mundo};
+}
+
+EntradaExitosaAPartida Partida::conectar(
+    uint32_t id_cliente, const std::string& nombre_jugador, const AparienciaPersonaje& apariencia) {
+    Jugador* jugador = buscar_jugador(id_cliente);
+    if (jugador != nullptr) {
+        return reconectar(id_cliente);
+    }
+
+    // un jugador nuevo solo entra a una partida multijugador y mientras queden lugares sin ocupar.
+    if (!multijugador) {
+        throw ErrorDePartida(
+            CodigoError::NO_PERMITIDO,
+            "la partida \"" + nombre + "\" no es multijugador");
+    }
+    if (jugadores.size() >= jugadores_maximos) {
+        throw ErrorDePartida(
+            CodigoError::PARTIDA_LLENA,
+            "la partida \"" + nombre + "\" está llena");
+    }
+
+    // El chat privado busca por nombre, así que dentro de una partida no puede haber dos iguales.
+    for (const Jugador& existente : jugadores) {
+        if (mismo_nombre(existente.nombre_jugador, nombre_jugador)) {
+            throw ErrorDePartida(
+                CodigoError::NOMBRE_JUGADOR_REPETIDO,
+                "ya hay un jugador llamado \"" + nombre_jugador + "\" en la partida \"" + nombre +
+                    "\"");
+        }
+    }
+
+    const uint32_t id_jugador = static_cast<uint32_t>(jugadores.size()) + 1;
+    jugadores.push_back(
+        Jugador{id_cliente, id_jugador, nombre_jugador, proximo_color_libre(), true, apariencia});
+    return EntradaExitosaAPartida{codigo, id_jugador, multijugador, nombre_mundo};
+}
+
+void Partida::desconectar(uint32_t id_cliente) {
+    Jugador* jugador = buscar_jugador(id_cliente);
+    if (jugador != nullptr) {
+        jugador->conectado = false;
+    }
+}

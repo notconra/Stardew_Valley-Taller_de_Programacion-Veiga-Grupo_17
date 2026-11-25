@@ -1,0 +1,113 @@
+#ifndef ADMINISTRADOR_DE_PARTIDAS_H
+#define ADMINISTRADOR_DE_PARTIDAS_H
+
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <vector>
+
+#include "../../common/mensajes/mensajes.h"
+#include "../configuracion/configuracion_servidor_datos.h"
+#include "../juego/recursos/recursos_de_juego.h"
+#include "../persistencia/indice_partidas.h"
+#include "catalogo_de_mundos.h"
+#include "ingreso_a_partida.h"
+#include "partida.h"
+#include "sesion_de_partida.h"
+
+// Monitor con las partidas del servidor. Es lo único que comparten los hilos de
+// todos los clientes, por eso todas sus operaciones toman el mutex.
+//
+// Las partidas existen mientras el servidor esté encendido, aunque no quede
+// nadie conectado: sus jugadores conservan el lugar. Cuando exista la
+// persistencia, acá se cargan y se guardan.
+//
+// Las sesiones (el bucle de juego de cada partida) existen solo mientras hay
+// jugadores conectados, se crean cuando se conecta el primero y se destruyen
+// cuando se va el último. Como arrancar una sesión crea un hilo y destruirla lo
+// espera, eso se hace SIEMPRE fuera del mutex global, adentro solo se agrega o
+// se retira el unique_ptr.
+//
+// crear(), unirse() y retomar() lanzan ErrorDePartida si no se puede.
+class AdministradorDePartidas {
+private:
+    const ConfiguracionPartidaServidor configuracion;
+    const RecursosDeJuego& recursos;  // solo se los pasa a las sesiones
+    mutable std::mutex mutex;
+    std::map<std::string, Partida> partidas;  // código de la partida -> partida
+
+    // código de la partida -> su sesión.
+    std::map<std::string, std::unique_ptr<SesionDePartida>> sesiones;
+    uint32_t proximo_numero_de_partida;
+
+    // Lanza ErrorDePartida si no existe.
+    Partida& buscar_partida(const std::string& codigo_partida);
+
+    // Arranca una sesión nueva. Se llama sin el mutex tomado. La sesión guarda la partida sola
+    // cada vez que termina un día.
+    std::unique_ptr<SesionDePartida> crear_sesion(
+        const std::string& codigo_partida, const std::string& nombre_mundo = "");
+
+    IndicePartidas indice;
+    CatalogoDeMundos mundos;
+
+    static bool comparar_por_ultima_modificacion(
+        const InfoPartida& primera_partida, const InfoPartida& segunda_partida);
+
+    void cargar_partidas_guardadas();
+    void cargar_partida(const std::string& ruta_archivo);
+    std::optional<DatosPartidaGuardada> cargar_datos_guardados(
+        const std::string& codigo_partida) const;
+
+public:
+    AdministradorDePartidas(
+        const ConfiguracionPartidaServidor& configuracion_partida,
+        const RecursosDeJuego& recursos_de_juego);
+
+    // Sólo muestra las partidas en las que el cliente es jugador, nunca se
+    // muestran las de los demás.
+    std::vector<InfoPartida> listar(uint32_t id_cliente) const;
+
+    void eliminar(const std::string& codigo_partida);
+
+    // Los mundos del editor con los que se puede crear una partida (además del estándar).
+    std::vector<std::string> listar_mundos() const;
+
+    void verificar_disponibilidad(const std::string& codigo_partida) const;
+
+    // La partida por defecto tiene un sólo jugador y el cliente que la crea
+    // entra a ella.
+    IngresoAPartida crear(
+        uint32_t id_cliente, const std::string& nombre_jugador, const std::string& nombre_partida,
+        const AparienciaPersonaje& apariencia, const std::string& nombre_mundo = "");
+
+    IngresoAPartida unirse(
+        uint32_t id_cliente, const std::string& nombre_jugador, const std::string& codigo_partida,
+        const AparienciaPersonaje& apariencia);
+
+    IngresoAPartida retomar(uint32_t id_cliente, const std::string& codigo_partida);
+
+    // Permite que se unan jugadores nuevos, sólo lo puede pedir un jugador de
+    // la partida.
+    void hacer_multijugador(const std::string& codigo_partida, uint32_t id_cliente);
+
+    // El cliente tiene que haber llamado antes a salir() de la sesión. Si ya no
+    // queda nadie conectado, la sesión hay que destruirla con
+    // limpiar_sesion_si_vacia().
+    void salir(const std::string& codigo_partida, uint32_t id_cliente);
+
+    // Destruye la sesión de la partida si ya no le queda ningún jugador
+    // conectado. Si el bucle de juego murió, el que borra es el último jugador
+    // que se va.
+    void limpiar_sesion_si_vacia(const std::string& codigo_partida);
+
+    // Guarda el estado actual de la partida indicada en disco (.dat) y actualiza el índice (.idx).
+    void guardar_partida(const std::string& codigo_partida);
+
+    AdministradorDePartidas(const AdministradorDePartidas&) = delete;
+    AdministradorDePartidas& operator=(const AdministradorDePartidas&) = delete;
+};
+
+#endif

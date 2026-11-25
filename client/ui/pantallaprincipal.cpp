@@ -1,0 +1,1141 @@
+#include "pantallaprincipal.h"
+
+#include <QDialog>
+#include <QFontDatabase>
+#include <QHeaderView>
+#include <QIcon>
+#include <QListWidget>
+#include <QPainter>
+#include <QTableWidgetItem>
+#include <algorithm>
+#include <cmath>
+#include <filesystem>
+#include <iostream>
+#include <limits>
+#include <memory>
+#include <random>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
+#include "recursos_ui.h"
+#include "ui_pantallaprincipal.h"
+
+constexpr const char* RUTA_CUERPO_MASCULINO = "Assets/Characters/Farmer/farmer_base.png";
+constexpr const char* RUTA_CUERPO_FEMENINO = "Assets/Characters/Farmer/farmer_girl_base.png";
+constexpr const char* RUTA_FUENTE_STARDEW = "Assets/Fonts/stardew-valley.ttf/stardew-valley.ttf";
+constexpr const char* RUTA_FUENTE_DIALOGO = "Assets/fuentes/Stardew_Valley_Dialogue.ttf";
+
+constexpr int CANTIDAD_PIELES = 24;
+constexpr int CANTIDAD_PEINADOS = 56;
+constexpr int CANTIDAD_REMERAS = 112;
+constexpr int CANTIDAD_SOMBREROS = 122;
+constexpr int CANTIDAD_TIPOS_PANTALON = 16;
+
+constexpr int MAX_MATIZ_HSV = 359;
+constexpr int MAX_CANAL_COLOR = 255;
+constexpr int MAX_VALOR_SLIDER_HSV = 100;
+
+constexpr size_t MAX_PARTIDAS_VISIBLES_SIN_SCROLL = 4;
+constexpr int PASO_SCROLL_POR_TARJETA = 108;
+
+PantallaPrincipal::PantallaPrincipal(
+    ConexionConServidor& conexion, EntradaExitosaAPartida& partida_actual,
+    ConfiguracionJugador& configuracion_jugador, QWidget* parent)
+    : QMainWindow(parent),
+      ui(new Ui::PantallaPrincipal),
+      conexion(conexion),
+      partida_actual(partida_actual),
+      configuracion_jugador(configuracion_jugador) {
+    QFontDatabase::addApplicationFont(RUTA_FUENTE_STARDEW);
+    QFontDatabase::addApplicationFont(RUTA_FUENTE_DIALOGO);
+    ui->setupUi(this);
+    configurar_ventana();
+    inicializar_selectores_personaje();
+    connect(
+        ui->btn_seleccionar_carpeta_mundo,
+        &QPushButton::clicked,
+        this,
+        &PantallaPrincipal::seleccionar_mundo);
+    ui->btn_seleccionar_carpeta_mundo->setToolTip("Elegir un mundo del servidor");
+    connect(
+        ui->btn_restablecer_mundo,
+        &QPushButton::clicked,
+        this,
+        &PantallaPrincipal::restablecer_mundo);
+    ui->btn_restablecer_mundo->setVisible(false);
+    connect(ui->btn_salir, &QPushButton::clicked, this, &PantallaPrincipal::close);
+    connect(
+        ui->btn_nueva_partida,
+        &QPushButton::clicked,
+        this,
+        &PantallaPrincipal::preparar_nueva_partida);
+    connect(
+        ui->btn_retomar_partida,
+        &QPushButton::clicked,
+        this,
+        &PantallaPrincipal::preparar_retomar_partida);
+    connect(
+        ui->btn_unirse_codigo,
+        &QPushButton::clicked,
+        this,
+        &PantallaPrincipal::preparar_unirse_partida);
+    connect(
+        ui->btn_confirmar_personaje,
+        &QPushButton::clicked,
+        this,
+        &PantallaPrincipal::confirmar_personaje);
+}
+
+PantallaPrincipal::~PantallaPrincipal() {
+    delete ui;
+}
+
+void PantallaPrincipal::configurar_ventana() {
+    qApp->setStyleSheet(this->styleSheet());
+    this->setMinimumSize(800, 600);
+    this->resize(1024, 768);
+    this->setMaximumSize(16777215, 16777215);
+    this->setWindowTitle("Stardew Valley");
+
+    ui->centralwidget->setMaximumSize(16777215, 16777215);
+    ui->stackedWidget->setMaximumSize(16777215, 16777215);
+
+    logo_original.load("Assets/LooseSprites/logo.png");
+
+    if (!logo_original.isNull()) {
+        this->setWindowIcon(QIcon(logo_original));
+        logo_escalado =
+            logo_original.scaled(660, 363, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        ui->label_logo->setPixmap(logo_escalado);
+        ui->label_logo->setAlignment(Qt::AlignCenter);
+    }
+
+    botones_menu.configurar(
+        ui->btn_nueva_partida,
+        ui->btn_retomar_partida,
+        ui->btn_unirse_codigo,
+        ui->btn_salir);
+
+    ui->marco_madera_retomar->setFixedSize(880, 452);
+    ui->layout_tarjetas_partidas->setAlignment(Qt::AlignTop);
+    ui->label_sin_partidas->setVisible(false);
+    ui->scrollbar_partidas->setFixedSize(24, 452);
+    ui->scrollbar_partidas->setVisible(false);
+    ui->scrollbar_partidas->setSingleStep(PASO_SCROLL_POR_TARJETA);
+
+    connect(
+        ui->scrollbar_partidas,
+        &QScrollBar::valueChanged,
+        ui->scroll_area_partidas->verticalScrollBar(),
+        &QScrollBar::setValue);
+    connect(
+        ui->scroll_area_partidas->verticalScrollBar(),
+        &QScrollBar::valueChanged,
+        ui->scrollbar_partidas,
+        &QScrollBar::setValue);
+    connect(
+        ui->scroll_area_partidas->verticalScrollBar(),
+        &QScrollBar::rangeChanged,
+        this,
+        [this](int min, int max) {
+            ui->scrollbar_partidas->setRange(min, max);
+            ui->scrollbar_partidas->setPageStep(
+                ui->scroll_area_partidas->verticalScrollBar()->pageStep());
+            ui->scrollbar_partidas->setVisible(
+                tarjetas_partidas.size() > MAX_PARTIDAS_VISIBLES_SIN_SCROLL && max > min);
+        });
+
+    ui->stackedWidget->setCurrentIndex(0);
+
+    temporizador_animacion = new QTimer(this);
+    connect(
+        temporizador_animacion,
+        &QTimer::timeout,
+        this,
+        &PantallaPrincipal::actualizar_animacion);
+    temporizador_animacion->start(33);
+}
+
+void PantallaPrincipal::actualizar_animacion() {
+    tiempo_animacion += 0.05f;
+    fondo_animado.actualizar(this->width());
+
+    if (ui->stackedWidget->currentIndex() == 0) {
+        int desplazamiento_vertical = static_cast<int>(std::sin(tiempo_animacion) * 5.0f);
+        ui->label_logo
+            ->setContentsMargins(0, 10 + desplazamiento_vertical, 0, 10 - desplazamiento_vertical);
+        update();
+    }
+}
+
+void PantallaPrincipal::paintEvent(QPaintEvent* evento) {
+    QPainter pintor(this);
+    fondo_animado.dibujar(pintor, rect(), ui->stackedWidget->currentIndex() == 0);
+    QMainWindow::paintEvent(evento);
+}
+
+void PantallaPrincipal::volver_al_menu() {
+    if (ui->stackedWidget->currentIndex() == 0) {
+        return;
+    }
+    es_modo_unirse = false;
+    codigo_partida_a_unirse.clear();
+    ui->stackedWidget->setCurrentIndex(0);
+}
+
+void PantallaPrincipal::keyPressEvent(QKeyEvent* evento) {
+    if (evento->key() == Qt::Key_Escape && ui->stackedWidget->currentIndex() != 0) {
+        volver_al_menu();
+        evento->accept();
+        return;
+    }
+    QMainWindow::keyPressEvent(evento);
+}
+
+void PantallaPrincipal::confirmar_personaje() {
+    QString nombre = ui->input_nombre->text().trimmed();
+    QString cosa_favorita = ui->input_cosa_fav->text().trimmed();
+    QString granja = ui->input_nombre_granja->text().trimmed();
+
+    if (nombre.isEmpty() || cosa_favorita.isEmpty() || (!es_modo_unirse && granja.isEmpty())) {
+        mostrar_mensaje_stardew(
+            "Tenes que completar todos los campos obligatorios para continuar.");
+        return;
+    }
+
+    configuracion_jugador = obtener_configuracion_actual();
+
+    ui->btn_confirmar_personaje->setEnabled(false);
+
+    AparienciaPersonaje apariencia;
+    apariencia.es_femenino = es_personaje_femenino;
+    apariencia.indice_piel = static_cast<uint8_t>(indice_piel_seleccionada);
+    apariencia.color_ojos = color_ojos_actual;
+    apariencia.indice_pelo = static_cast<uint8_t>(indice_pelo_seleccionado);
+    apariencia.color_pelo = color_pelo_actual;
+    apariencia.indice_remera = static_cast<uint8_t>(indice_remera_seleccionado);
+    apariencia.indice_pantalon = static_cast<uint8_t>(indice_tipo_pantalon_seleccionado);
+    apariencia.color_pantalon = color_pantalon_actual;
+    apariencia.indice_sombrero = static_cast<int16_t>(indice_sombrero_seleccionado);
+
+    if (es_modo_unirse) {
+        std::cout << "Uniéndose a partida " << codigo_partida_a_unirse
+                  << " con personaje: " << nombre.toStdString() << "\n";
+        conexion.enviar_comando(
+            UnirsePartida{codigo_partida_a_unirse, nombre.toStdString(), apariencia});
+    } else {
+        std::string mundo_elegido = mundo_seleccionado();
+        std::cout << "Creando personaje: " << nombre.toStdString()
+                  << " | Granja: " << granja.toStdString() << " | Mundo: " << mundo_elegido << "\n";
+        conexion.enviar_comando(
+            CrearPartida{granja.toStdString(), nombre.toStdString(), apariencia, mundo_elegido});
+    }
+
+    try {
+        while (!procesar_evento_ingreso(conexion.esperar_evento())) {
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error de conexión: " << e.what() << "\n";
+        mostrar_mensaje_stardew(QString::fromStdString(e.what()));
+        ui->btn_confirmar_personaje->setEnabled(true);
+    }
+}
+
+QString PantallaPrincipal::describir_error(const ErrorServidor& error) const {
+    static const std::unordered_map<CodigoError, QString> MENSAJES_ERROR = {
+        {CodigoError::PARTIDA_INEXISTENTE, "El código de partida no existe o es inválido."},
+        {CodigoError::PARTIDA_LLENA, "La partida está llena (máximo de jugadores alcanzado)."},
+        {CodigoError::NOMBRE_JUGADOR_REPETIDO,
+         "Ya existe un jugador con ese nombre en la partida."},
+        {CodigoError::NOMBRE_PARTIDA_REPETIDO, "Ya existe una partida con ese nombre."},
+        {CodigoError::PARTIDA_CERRADA, "La partida ya no está disponible."}};
+
+    auto it = MENSAJES_ERROR.find(error.codigo);
+    if (it != MENSAJES_ERROR.end()) {
+        return it->second;
+    }
+
+    if (error.codigo == CodigoError::NO_PERMITIDO) {
+        if (!error.detalle.empty()) {
+            return QString("Operación no permitida: %1").arg(QString::fromStdString(error.detalle));
+        }
+        return "Operación no permitida.";
+    }
+
+    return error.detalle.empty() ? "Error desconocido del servidor."
+                                 : QString::fromStdString(error.detalle);
+}
+
+bool PantallaPrincipal::procesar_evento_ingreso(const EventoServidor& evento) {
+    if (std::holds_alternative<EntradaExitosaAPartida>(evento)) {
+        const auto& entrada = std::get<EntradaExitosaAPartida>(evento);
+        std::cout << (es_modo_unirse ? "Unido a la partida! Código: " : "Partida creada! Código: ")
+                  << entrada.codigo_partida << " | ID Jugador: " << entrada.id_jugador << "\n";
+        this->partida_actual = entrada;
+        this->close();
+        return true;
+    }
+
+    if (std::holds_alternative<ErrorServidor>(evento)) {
+        const auto& error = std::get<ErrorServidor>(evento);
+        std::cerr << "Error del servidor: " << error.detalle << "\n";
+        mostrar_mensaje_stardew(describir_error(error));
+        ui->btn_confirmar_personaje->setEnabled(true);
+        return true;
+    }
+
+    return false;
+}
+
+std::string PantallaPrincipal::mundo_seleccionado() const {
+    if (!mundo_personalizado.isEmpty()) {
+        return mundo_personalizado.toStdString();
+    }
+    return "Mundo Estandar";
+}
+
+void PantallaPrincipal::seleccionar_mundo() {
+    ListaMundos lista;
+    try {
+        conexion.enviar_comando(ListarMundos{});
+        bool lista_recibida = false;
+        while (!lista_recibida) {
+            EventoServidor evento = conexion.esperar_evento();
+            if (std::holds_alternative<ListaMundos>(evento)) {
+                lista = std::get<ListaMundos>(evento);
+                lista_recibida = true;
+            } else if (std::holds_alternative<ErrorServidor>(evento)) {
+                mostrar_mensaje_stardew(describir_error(std::get<ErrorServidor>(evento)));
+                return;
+            }
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error de conexión al listar mundos: " << e.what() << "\n";
+        mostrar_mensaje_stardew("Se perdio la conexion con el servidor.");
+        return;
+    }
+
+    if (lista.mundos.empty()) {
+        mostrar_mensaje_stardew(
+            "El servidor no tiene mundos del editor. Se juega con el Mundo Estandar.");
+        return;
+    }
+    QStringList opciones{"Mundo Estandar"};
+    for (const std::string& mundo_servidor : lista.mundos) {
+        opciones.append(QString::fromStdString(mundo_servidor));
+    }
+    int actual = std::max(0, static_cast<int>(opciones.indexOf(mundo_personalizado)));
+
+    QDialog dialogo(this);
+    dialogo.setObjectName("dialogo_modal_stardew");
+    dialogo.setWindowFlags(Qt::FramelessWindowHint | Qt::Dialog);
+    dialogo.setAttribute(Qt::WA_TranslucentBackground, true);
+    dialogo.setStyleSheet(styleSheet());
+
+    QVBoxLayout layout_dialogo(&dialogo);
+    layout_dialogo.setContentsMargins(0, 0, 0, 0);
+
+    QFrame marco(&dialogo);
+    marco.setObjectName("marco_dialogo_stardew");
+
+    QVBoxLayout layout_interior(&marco);
+    layout_interior.setContentsMargins(28, 28, 28, 24);
+    layout_interior.setSpacing(16);
+
+    QLabel label_titulo(&marco);
+    label_titulo.setObjectName("label_texto_dialogo");
+    label_titulo.setAlignment(Qt::AlignCenter);
+    label_titulo.setText("Elegir mundo de la partida:");
+    layout_interior.addWidget(&label_titulo);
+
+    QListWidget lista_mundos(&marco);
+    lista_mundos.setMinimumWidth(280);
+    lista_mundos.setMaximumHeight(200);
+    lista_mundos.setStyleSheet(
+        "QListWidget { background-color: #f7cf8e; border: 2px solid #8e4c19; "
+        "border-radius: 4px; color: #3d1d08; font-family: \"Stardew Valley\", \"Ubuntu\", "
+        "sans-serif; font-size: 18px; padding: 4px; }"
+        "QListWidget::item { padding: 6px 10px; }"
+        "QListWidget::item:selected { background-color: #c87b33; color: #fff8eb; }"
+        "QScrollBar:vertical { border: 2px solid #8e4c19; background-color: #e6b375; "
+        "width: 22px; margin: 26px 0px 26px 0px; border-radius: 4px; }"
+        "QScrollBar::handle:vertical { background-color: #ba6328; border: 2px solid #5c2900; "
+        "border-radius: 4px; min-height: 28px; }"
+        "QScrollBar::handle:vertical:hover { background-color: #d87e38; }"
+        "QScrollBar::sub-line:vertical { border: none; background: transparent; height: 24px; "
+        "subcontrol-position: top; subcontrol-origin: margin; }"
+        "QScrollBar::add-line:vertical { border: none; background: transparent; height: 24px; "
+        "subcontrol-position: bottom; subcontrol-origin: margin; }"
+        "QScrollBar::up-arrow:vertical { "
+        "image: url(\"Assets/LooseSprites/scrollbar_flecha_arriba.png\"); "
+        "width: 18px; height: 20px; }"
+        "QScrollBar::down-arrow:vertical { "
+        "image: url(\"Assets/LooseSprites/scrollbar_flecha_abajo.png\"); "
+        "width: 18px; height: 20px; }"
+        "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: none; }");
+    for (const QString& opcion : opciones) {
+        lista_mundos.addItem(normalizar_texto_stardew(opcion));
+    }
+    lista_mundos.setCurrentRow(actual);
+    connect(&lista_mundos, &QListWidget::itemDoubleClicked, &dialogo, &QDialog::accept);
+    layout_interior.addWidget(&lista_mundos);
+
+    QHBoxLayout layout_botones;
+    layout_botones.setSpacing(32);
+    layout_botones.setAlignment(Qt::AlignCenter);
+
+    QPushButton btn_cancelar(&marco);
+    btn_cancelar.setObjectName("btn_dialogo_cancelar");
+    btn_cancelar.setProperty("class", "btn_dialogo_accion");
+    RecursosUI::instancia().configurar_boton_cancelar(&btn_cancelar);
+    btn_cancelar.setFixedSize(64, 64);
+    btn_cancelar.setToolTip("Cancelar");
+    connect(&btn_cancelar, &QPushButton::clicked, &dialogo, &QDialog::reject);
+    layout_botones.addWidget(&btn_cancelar);
+
+    QPushButton btn_ok(&marco);
+    btn_ok.setObjectName("btn_dialogo_ok");
+    btn_ok.setProperty("class", "btn_dialogo_accion");
+    RecursosUI::instancia().configurar_boton_ok(&btn_ok);
+    btn_ok.setFixedSize(64, 64);
+    btn_ok.setToolTip("Aceptar");
+    connect(&btn_ok, &QPushButton::clicked, &dialogo, &QDialog::accept);
+    layout_botones.addWidget(&btn_ok);
+
+    layout_interior.addLayout(&layout_botones);
+    layout_dialogo.addWidget(&marco);
+
+    dialogo.adjustSize();
+    if (dialogo.exec() != QDialog::Accepted) {
+        return;
+    }
+
+    int indice_elegido = lista_mundos.currentRow();
+    if (indice_elegido < 0 || indice_elegido >= opciones.size()) {
+        return;
+    }
+    QString mundo = opciones.at(indice_elegido);
+    if (mundo == opciones.front()) {
+        restablecer_mundo();
+        return;
+    }
+
+    // El cliente dibuja el mundo con sus propios archivos, como con Assets.
+    if (!std::filesystem::is_directory("mundos/" + mundo.toStdString())) {
+        mostrar_mensaje_stardew(
+            "No tenes la carpeta mundos/" + mundo +
+            ": la partida se va a jugar con ese mundo pero vas a ver el estandar.");
+    }
+    mundo_personalizado = mundo;
+    ui->label_nombre_mundo_seleccionado->setText(normalizar_texto_stardew(mundo));
+    ui->label_nombre_mundo_seleccionado->setToolTip(mundo);
+    ui->btn_restablecer_mundo->setVisible(true);
+}
+
+void PantallaPrincipal::restablecer_mundo() {
+    mundo_personalizado.clear();
+    ui->label_nombre_mundo_seleccionado->setText("Mundo Estandar");
+    ui->label_nombre_mundo_seleccionado->setToolTip("");
+    ui->btn_restablecer_mundo->setVisible(false);
+}
+
+void PantallaPrincipal::configurar_formulario_granja(bool visible) {
+    ui->label_3->setVisible(visible);
+    ui->input_nombre_granja->setVisible(visible);
+    ui->contenedor_lateral_granjas->setVisible(visible);
+}
+
+void PantallaPrincipal::inicializar_selectores_personaje() {
+    RecursosUI& recursos = RecursosUI::instancia();
+    recursos.configurar_boton_dado(ui->btn_randomizar);
+    recursos.configurar_boton_ok(ui->btn_confirmar_personaje);
+    recursos.configurar_boton_masculino(ui->btn_genero_masculino);
+    recursos.configurar_boton_femenino(ui->btn_genero_femenino);
+
+    const std::vector<QPushButton*> flechas_anteriores = {
+        ui->btn_piel_anterior,
+        ui->btn_sombrero_anterior,
+        ui->btn_pelo_anterior,
+        ui->btn_remera_anterior,
+        ui->btn_pantalon_anterior,
+    };
+    for (QPushButton* boton : flechas_anteriores) {
+        recursos.configurar_boton_flecha_izquierda(boton);
+    }
+
+    const std::vector<QPushButton*> flechas_siguientes = {
+        ui->btn_piel_siguiente,
+        ui->btn_sombrero_siguiente,
+        ui->btn_pelo_siguiente,
+        ui->btn_remera_siguiente,
+        ui->btn_pantalon_siguiente,
+    };
+    for (QPushButton* boton : flechas_siguientes) {
+        recursos.configurar_boton_flecha_derecha(boton);
+    }
+
+    connect(
+        ui->btn_randomizar,
+        &QPushButton::clicked,
+        this,
+        &PantallaPrincipal::randomizar_personaje);
+
+    es_personaje_femenino = (configuracion_jugador.ruta_cuerpo == RUTA_CUERPO_FEMENINO);
+    configuracion_jugador.offset_y_remera =
+        es_personaje_femenino ? OFFSET_Y_REMERA_FEMENINO : OFFSET_Y_REMERA_MASCULINO;
+    configuracion_jugador.offset_y_pelo =
+        es_personaje_femenino ? OFFSET_Y_PELO_FEMENINO : OFFSET_Y_PELO_MASCULINO;
+    configuracion_jugador.offset_y_sombrero =
+        es_personaje_femenino ? OFFSET_Y_SOMBRERO_FEMENINO : OFFSET_Y_SOMBRERO_MASCULINO;
+    indice_piel_seleccionada = (configuracion_jugador.indice_piel >= 0 &&
+                                configuracion_jugador.indice_piel < CANTIDAD_PIELES)
+                                   ? configuracion_jugador.indice_piel
+                                   : 0;
+    indice_pelo_seleccionado = configuracion_jugador.indice_pelo;
+    indice_remera_seleccionado = configuracion_jugador.indice_remera;
+    indice_tipo_pantalon_seleccionado =
+        (configuracion_jugador.indice_pantalon >= 0)
+            ? (configuracion_jugador.indice_pantalon % CANTIDAD_TIPOS_PANTALON)
+            : 0;
+    indice_sombrero_seleccionado = configuracion_jugador.indice_sombrero;
+    if (indice_sombrero_seleccionado < -1 || indice_sombrero_seleccionado >= CANTIDAD_SOMBREROS) {
+        indice_sombrero_seleccionado = -1;
+    }
+
+    color_ojos_actual = configuracion_jugador.color_ojos;
+    color_pelo_actual = configuracion_jugador.color_pelo;
+    color_pantalon_actual = configuracion_jugador.color_pantalon;
+
+    connect(
+        ui->slider_ojos_h,
+        &QSlider::valueChanged,
+        this,
+        &PantallaPrincipal::actualizar_color_ojos);
+    connect(
+        ui->slider_ojos_s,
+        &QSlider::valueChanged,
+        this,
+        &PantallaPrincipal::actualizar_color_ojos);
+    connect(
+        ui->slider_ojos_v,
+        &QSlider::valueChanged,
+        this,
+        &PantallaPrincipal::actualizar_color_ojos);
+
+    connect(
+        ui->slider_pelo_h,
+        &QSlider::valueChanged,
+        this,
+        &PantallaPrincipal::actualizar_color_pelo);
+    connect(
+        ui->slider_pelo_s,
+        &QSlider::valueChanged,
+        this,
+        &PantallaPrincipal::actualizar_color_pelo);
+    connect(
+        ui->slider_pelo_v,
+        &QSlider::valueChanged,
+        this,
+        &PantallaPrincipal::actualizar_color_pelo);
+
+    connect(
+        ui->slider_pantalon_h,
+        &QSlider::valueChanged,
+        this,
+        &PantallaPrincipal::actualizar_color_pantalon);
+    connect(
+        ui->slider_pantalon_s,
+        &QSlider::valueChanged,
+        this,
+        &PantallaPrincipal::actualizar_color_pantalon);
+    connect(
+        ui->slider_pantalon_v,
+        &QSlider::valueChanged,
+        this,
+        &PantallaPrincipal::actualizar_color_pantalon);
+
+    sincronizar_sliders_desde_colores();
+
+    connect(ui->btn_genero_masculino, &QPushButton::clicked, this, [this]() {
+        es_personaje_femenino = false;
+        actualizar_previsualizacion_personaje();
+    });
+    connect(ui->btn_genero_femenino, &QPushButton::clicked, this, [this]() {
+        es_personaje_femenino = true;
+        actualizar_previsualizacion_personaje();
+    });
+
+    connect(ui->btn_piel_anterior, &QPushButton::clicked, this, [this]() {
+        indice_piel_seleccionada =
+            (indice_piel_seleccionada - 1 + CANTIDAD_PIELES) % CANTIDAD_PIELES;
+        actualizar_previsualizacion_personaje();
+    });
+    connect(ui->btn_piel_siguiente, &QPushButton::clicked, this, [this]() {
+        indice_piel_seleccionada = (indice_piel_seleccionada + 1) % CANTIDAD_PIELES;
+        actualizar_previsualizacion_personaje();
+    });
+
+    connect(ui->btn_sombrero_anterior, &QPushButton::clicked, this, [this]() {
+        if (indice_sombrero_seleccionado <= -1) {
+            indice_sombrero_seleccionado = CANTIDAD_SOMBREROS - 1;
+        } else {
+            indice_sombrero_seleccionado--;
+        }
+        actualizar_previsualizacion_personaje();
+    });
+    connect(ui->btn_sombrero_siguiente, &QPushButton::clicked, this, [this]() {
+        if (indice_sombrero_seleccionado >= CANTIDAD_SOMBREROS - 1) {
+            indice_sombrero_seleccionado = -1;
+        } else {
+            indice_sombrero_seleccionado++;
+        }
+        actualizar_previsualizacion_personaje();
+    });
+
+    connect(ui->btn_pelo_anterior, &QPushButton::clicked, this, [this]() {
+        indice_pelo_seleccionado =
+            (indice_pelo_seleccionado - 1 + CANTIDAD_PEINADOS) % CANTIDAD_PEINADOS;
+        actualizar_previsualizacion_personaje();
+    });
+    connect(ui->btn_pelo_siguiente, &QPushButton::clicked, this, [this]() {
+        indice_pelo_seleccionado = (indice_pelo_seleccionado + 1) % CANTIDAD_PEINADOS;
+        actualizar_previsualizacion_personaje();
+    });
+
+    connect(ui->btn_remera_anterior, &QPushButton::clicked, this, [this]() {
+        indice_remera_seleccionado =
+            (indice_remera_seleccionado - 1 + CANTIDAD_REMERAS) % CANTIDAD_REMERAS;
+        actualizar_previsualizacion_personaje();
+    });
+    connect(ui->btn_remera_siguiente, &QPushButton::clicked, this, [this]() {
+        indice_remera_seleccionado = (indice_remera_seleccionado + 1) % CANTIDAD_REMERAS;
+        actualizar_previsualizacion_personaje();
+    });
+
+    connect(ui->btn_pantalon_anterior, &QPushButton::clicked, this, [this]() {
+        indice_tipo_pantalon_seleccionado =
+            (indice_tipo_pantalon_seleccionado - 1 + CANTIDAD_TIPOS_PANTALON) %
+            CANTIDAD_TIPOS_PANTALON;
+        actualizar_previsualizacion_personaje();
+    });
+    connect(ui->btn_pantalon_siguiente, &QPushButton::clicked, this, [this]() {
+        indice_tipo_pantalon_seleccionado =
+            (indice_tipo_pantalon_seleccionado + 1) % CANTIDAD_TIPOS_PANTALON;
+        actualizar_previsualizacion_personaje();
+    });
+
+    actualizar_previsualizacion_personaje();
+}
+
+ColorRGB PantallaPrincipal::convertir_hsv_a_rgb(
+    int matiz_porcentaje, int saturacion_porcentaje, int luminosidad_porcentaje) const {
+    int matiz_grados = matiz_porcentaje * MAX_MATIZ_HSV / MAX_VALOR_SLIDER_HSV;
+    int saturacion_hsv = saturacion_porcentaje * MAX_CANAL_COLOR / MAX_VALOR_SLIDER_HSV;
+    int luminosidad_hsv = luminosidad_porcentaje * MAX_CANAL_COLOR / MAX_VALOR_SLIDER_HSV;
+    QColor color = QColor::fromHsv(matiz_grados, saturacion_hsv, luminosidad_hsv);
+    return {
+        static_cast<uint8_t>(color.red()),
+        static_cast<uint8_t>(color.green()),
+        static_cast<uint8_t>(color.blue())};
+}
+
+ColorRGB PantallaPrincipal::leer_color_desde_sliders(
+    const QSlider* slider_matiz, const QSlider* slider_saturacion,
+    const QSlider* slider_luminosidad, QLabel* etiqueta_matiz, QLabel* etiqueta_saturacion,
+    QLabel* etiqueta_luminosidad) {
+    int matiz = slider_matiz->value();
+    int saturacion = slider_saturacion->value();
+    int luminosidad = slider_luminosidad->value();
+
+    etiqueta_matiz->setText(QString::number(matiz));
+    etiqueta_saturacion->setText(QString::number(saturacion));
+    etiqueta_luminosidad->setText(QString::number(luminosidad));
+
+    return convertir_hsv_a_rgb(matiz, saturacion, luminosidad);
+}
+
+void PantallaPrincipal::actualizar_color_ojos() {
+    color_ojos_actual = leer_color_desde_sliders(
+        ui->slider_ojos_h,
+        ui->slider_ojos_s,
+        ui->slider_ojos_v,
+        ui->label_ojos_h_valor,
+        ui->label_ojos_s_valor,
+        ui->label_ojos_v_valor);
+    actualizar_previsualizacion_personaje();
+}
+
+void PantallaPrincipal::actualizar_color_pelo() {
+    color_pelo_actual = leer_color_desde_sliders(
+        ui->slider_pelo_h,
+        ui->slider_pelo_s,
+        ui->slider_pelo_v,
+        ui->label_pelo_h_valor,
+        ui->label_pelo_s_valor,
+        ui->label_pelo_v_valor);
+    actualizar_previsualizacion_personaje();
+}
+
+void PantallaPrincipal::actualizar_color_pantalon() {
+    color_pantalon_actual = leer_color_desde_sliders(
+        ui->slider_pantalon_h,
+        ui->slider_pantalon_s,
+        ui->slider_pantalon_v,
+        ui->label_pantalon_h_valor,
+        ui->label_pantalon_s_valor,
+        ui->label_pantalon_v_valor);
+    actualizar_previsualizacion_personaje();
+}
+
+void PantallaPrincipal::sincronizar_canal_slider(
+    QSlider* slider, QLabel* etiqueta_valor, int valor) {
+    slider->blockSignals(true);
+    slider->setValue(valor);
+    slider->blockSignals(false);
+    etiqueta_valor->setText(QString::number(valor));
+}
+
+void PantallaPrincipal::sincronizar_sliders_desde_colores() {
+    auto sincronizar_grupo = [this](
+                                 const ColorRGB& color_rgb,
+                                 QSlider* slider_matiz,
+                                 QLabel* etiqueta_matiz,
+                                 QSlider* slider_saturacion,
+                                 QLabel* etiqueta_saturacion,
+                                 QSlider* slider_luminosidad,
+                                 QLabel* etiqueta_luminosidad) {
+        QColor color(color_rgb.rojo, color_rgb.verde, color_rgb.azul);
+        int matiz_grados = color.hsvHue();
+        int porcentaje_matiz = (matiz_grados < 0)
+                                   ? 0
+                                   : std::clamp(
+                                         matiz_grados * MAX_VALOR_SLIDER_HSV / MAX_MATIZ_HSV,
+                                         0,
+                                         MAX_VALOR_SLIDER_HSV);
+        int porcentaje_saturacion = std::clamp(
+            color.hsvSaturation() * MAX_VALOR_SLIDER_HSV / MAX_CANAL_COLOR,
+            0,
+            MAX_VALOR_SLIDER_HSV);
+        int porcentaje_luminosidad = std::clamp(
+            color.value() * MAX_VALOR_SLIDER_HSV / MAX_CANAL_COLOR,
+            0,
+            MAX_VALOR_SLIDER_HSV);
+
+        sincronizar_canal_slider(slider_matiz, etiqueta_matiz, porcentaje_matiz);
+        sincronizar_canal_slider(slider_saturacion, etiqueta_saturacion, porcentaje_saturacion);
+        sincronizar_canal_slider(slider_luminosidad, etiqueta_luminosidad, porcentaje_luminosidad);
+    };
+
+    sincronizar_grupo(
+        color_ojos_actual,
+        ui->slider_ojos_h,
+        ui->label_ojos_h_valor,
+        ui->slider_ojos_s,
+        ui->label_ojos_s_valor,
+        ui->slider_ojos_v,
+        ui->label_ojos_v_valor);
+
+    sincronizar_grupo(
+        color_pelo_actual,
+        ui->slider_pelo_h,
+        ui->label_pelo_h_valor,
+        ui->slider_pelo_s,
+        ui->label_pelo_s_valor,
+        ui->slider_pelo_v,
+        ui->label_pelo_v_valor);
+
+    sincronizar_grupo(
+        color_pantalon_actual,
+        ui->slider_pantalon_h,
+        ui->label_pantalon_h_valor,
+        ui->slider_pantalon_s,
+        ui->label_pantalon_s_valor,
+        ui->slider_pantalon_v,
+        ui->label_pantalon_v_valor);
+}
+
+ConfiguracionJugador PantallaPrincipal::obtener_configuracion_actual() const {
+    ConfiguracionJugador jugador = configuracion_jugador;
+    jugador.ruta_cuerpo = es_personaje_femenino ? RUTA_CUERPO_FEMENINO : RUTA_CUERPO_MASCULINO;
+    if (jugador.ruta_pantalon.empty()) {
+        jugador.ruta_pantalon = "Assets/Characters/Farmer/pants.png";
+    }
+    if (jugador.ruta_pelo.empty()) {
+        jugador.ruta_pelo = "Assets/Characters/Farmer/hairstyles.png";
+    }
+    if (jugador.ruta_sombrero.empty()) {
+        jugador.ruta_sombrero = "Assets/Characters/Farmer/hats.png";
+    }
+    if (jugador.ruta_remera.empty()) {
+        jugador.ruta_remera = "Assets/Characters/Farmer/shirts.png";
+    }
+    jugador.offset_y_remera =
+        es_personaje_femenino ? OFFSET_Y_REMERA_FEMENINO : OFFSET_Y_REMERA_MASCULINO;
+    jugador.offset_y_pelo =
+        es_personaje_femenino ? OFFSET_Y_PELO_FEMENINO : OFFSET_Y_PELO_MASCULINO;
+    jugador.offset_y_sombrero =
+        es_personaje_femenino ? OFFSET_Y_SOMBRERO_FEMENINO : OFFSET_Y_SOMBRERO_MASCULINO;
+    jugador.indice_pelo = indice_pelo_seleccionado;
+    jugador.color_ojos = color_ojos_actual;
+    jugador.color_pelo = color_pelo_actual;
+    jugador.indice_remera = indice_remera_seleccionado;
+    jugador.color_pantalon = color_pantalon_actual;
+    jugador.indice_pantalon = indice_tipo_pantalon_seleccionado;
+    jugador.indice_sombrero = indice_sombrero_seleccionado;
+    jugador.indice_piel = indice_piel_seleccionada;
+    return jugador;
+}
+
+void PantallaPrincipal::actualizar_previsualizacion_personaje() {
+    ui->label_piel_valor->setText(QString::number(indice_piel_seleccionada + 1));
+    ui->label_sombrero_valor->setText(
+        indice_sombrero_seleccionado < 0 ? "Ninguno"
+                                         : QString::number(indice_sombrero_seleccionado + 1));
+    ui->label_pelo_valor->setText(QString::number(indice_pelo_seleccionado + 1));
+    ui->label_remera_valor->setText(QString::number(indice_remera_seleccionado + 1));
+    ui->label_pantalon_valor->setText(QString::number(indice_tipo_pantalon_seleccionado + 1));
+
+    ui->btn_genero_masculino->setChecked(!es_personaje_femenino);
+    ui->btn_genero_femenino->setChecked(es_personaje_femenino);
+
+    ConfiguracionJugador temp = obtener_configuracion_actual();
+    QPixmap sprite = compositor_personaje.componer(temp, 4, true);
+    ui->label_previsualizacion_personaje->setPixmap(sprite);
+}
+
+void PantallaPrincipal::preparar_nueva_partida() {
+    es_modo_unirse = false;
+    codigo_partida_a_unirse.clear();
+    configurar_formulario_granja(true);
+    ui->btn_confirmar_personaje->setEnabled(true);
+    ui->stackedWidget->setCurrentIndex(1);
+}
+
+void PantallaPrincipal::preparar_retomar_partida() {
+    conexion.enviar_comando(ListarPartidas{});
+    vaciar_tarjetas_partidas();
+
+    try {
+        bool lista_recibida = false;
+        while (!lista_recibida) {
+            EventoServidor evento = conexion.esperar_evento();
+            if (std::holds_alternative<ListaPartidas>(evento)) {
+                llenar_lista_partidas(std::get<ListaPartidas>(evento));
+                lista_recibida = true;
+            } else if (std::holds_alternative<ErrorServidor>(evento)) {
+                const auto& error = std::get<ErrorServidor>(evento);
+                std::cerr << "Error del servidor al listar partidas: " << error.detalle << "\n";
+                mostrar_mensaje_stardew(describir_error(error));
+                return;
+            }
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error de conexión al listar partidas: " << e.what() << "\n";
+        mostrar_mensaje_stardew("Se perdio la conexion con el servidor.");
+        return;
+    }
+
+    ui->stackedWidget->setCurrentIndex(2);
+}
+
+void PantallaPrincipal::vaciar_tarjetas_partidas() {
+    codigo_partida_seleccionada.clear();
+    tarjetas_partidas.clear();
+    ui->scrollbar_partidas->setVisible(false);
+}
+
+void PantallaPrincipal::llenar_lista_partidas(const ListaPartidas& lista) {
+    vaciar_tarjetas_partidas();
+
+    if (lista.partidas.empty()) {
+        ui->label_sin_partidas->setVisible(true);
+        ui->scroll_area_partidas->setVisible(false);
+        ui->scrollbar_partidas->setVisible(false);
+        return;
+    }
+
+    ui->label_sin_partidas->setVisible(false);
+    ui->scroll_area_partidas->setVisible(true);
+
+    for (int i = 0; i < static_cast<int>(lista.partidas.size()); ++i) {
+        const auto& partida = lista.partidas[i];
+        int numero_slot = i + 1;
+
+        auto tarjeta = std::make_unique<TarjetaPartida>(
+            partida,
+            numero_slot,
+            compositor_personaje,
+            ui->contenido_scroll_partidas);
+
+        connect(
+            tarjeta.get(),
+            &TarjetaPartida::partidaSeleccionada,
+            this,
+            &PantallaPrincipal::seleccionar_partida);
+        connect(
+            tarjeta.get(),
+            &TarjetaPartida::partidaDobleClic,
+            this,
+            &PantallaPrincipal::ejecutar_partida);
+        connect(
+            tarjeta.get(),
+            &TarjetaPartida::partidaEliminarSolicitada,
+            this,
+            &PantallaPrincipal::eliminar_partida);
+
+        ui->layout_tarjetas_partidas->addWidget(tarjeta.get());
+        tarjetas_partidas.push_back(std::move(tarjeta));
+    }
+
+    ui->scrollbar_partidas->setVisible(tarjetas_partidas.size() > MAX_PARTIDAS_VISIBLES_SIN_SCROLL);
+}
+
+void PantallaPrincipal::seleccionar_partida(const QString& codigo_partida) {
+    codigo_partida_seleccionada = codigo_partida.toStdString();
+    actualizar_seleccion_tarjetas();
+}
+
+void PantallaPrincipal::actualizar_seleccion_tarjetas() {
+    for (const auto& tarjeta : tarjetas_partidas) {
+        tarjeta->establecer_seleccionada(
+            tarjeta->obtener_codigo_partida() == codigo_partida_seleccionada);
+    }
+}
+
+void PantallaPrincipal::ejecutar_partida(const QString& codigo_partida) {
+    std::string codigo = codigo_partida.trimmed().toStdString();
+    if (codigo.empty()) {
+        return;
+    }
+
+    es_modo_unirse = true;
+
+    try {
+        conexion.enviar_comando(RetomarPartida{codigo});
+
+        bool procesado = false;
+        while (!procesado) {
+            EventoServidor evento = conexion.esperar_evento();
+            procesado = procesar_evento_ingreso(evento);
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error al retomar la partida: " << e.what() << "\n";
+        mostrar_mensaje_stardew("Se perdio la conexion con el servidor.");
+    }
+}
+
+void PantallaPrincipal::eliminar_partida(const QString& codigo_partida) {
+    std::string codigo = codigo_partida.trimmed().toStdString();
+    if (codigo.empty()) {
+        return;
+    }
+
+    try {
+        conexion.enviar_comando(EliminarPartida{codigo});
+
+        bool procesado = false;
+        while (!procesado) {
+            EventoServidor evento = conexion.esperar_evento();
+            if (std::holds_alternative<ListaPartidas>(evento)) {
+                llenar_lista_partidas(std::get<ListaPartidas>(evento));
+                procesado = true;
+            } else if (std::holds_alternative<ErrorServidor>(evento)) {
+                const auto& error = std::get<ErrorServidor>(evento);
+                std::cerr << "Error del servidor al eliminar partida: " << error.detalle << "\n";
+                mostrar_mensaje_stardew(describir_error(error));
+                procesado = true;
+            }
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error de conexión al eliminar la partida: " << e.what() << "\n";
+        mostrar_mensaje_stardew("Se perdio la conexion con el servidor.");
+    }
+}
+
+QString PantallaPrincipal::normalizar_texto_stardew(const QString& texto) {
+    QString resultado = texto;
+    resultado.replace(QStringLiteral("á"), QStringLiteral("a"));
+    resultado.replace(QStringLiteral("é"), QStringLiteral("e"));
+    resultado.replace(QStringLiteral("í"), QStringLiteral("i"));
+    resultado.replace(QStringLiteral("ó"), QStringLiteral("o"));
+    resultado.replace(QStringLiteral("ú"), QStringLiteral("u"));
+    resultado.replace(QStringLiteral("ü"), QStringLiteral("u"));
+    resultado.replace(QStringLiteral("ñ"), QStringLiteral("n"));
+    resultado.replace(QStringLiteral("Á"), QStringLiteral("A"));
+    resultado.replace(QStringLiteral("É"), QStringLiteral("E"));
+    resultado.replace(QStringLiteral("Í"), QStringLiteral("I"));
+    resultado.replace(QStringLiteral("Ó"), QStringLiteral("O"));
+    resultado.replace(QStringLiteral("Ú"), QStringLiteral("U"));
+    resultado.replace(QStringLiteral("Ü"), QStringLiteral("U"));
+    resultado.replace(QStringLiteral("Ñ"), QStringLiteral("N"));
+    return resultado;
+}
+
+void PantallaPrincipal::mostrar_mensaje_stardew(const QString& mensaje) {
+    QDialog dialogo(this);
+    dialogo.setObjectName("dialogo_modal_stardew");
+    dialogo.setWindowFlags(Qt::FramelessWindowHint | Qt::Dialog);
+    dialogo.setAttribute(Qt::WA_TranslucentBackground, true);
+    dialogo.setStyleSheet(styleSheet());
+
+    QVBoxLayout layout_dialogo(&dialogo);
+    layout_dialogo.setContentsMargins(0, 0, 0, 0);
+
+    QFrame marco(&dialogo);
+    marco.setObjectName("marco_dialogo_stardew");
+
+    QVBoxLayout layout_interior(&marco);
+    layout_interior.setContentsMargins(28, 28, 28, 24);
+    layout_interior.setSpacing(18);
+
+    QLabel label_mensaje(&marco);
+    label_mensaje.setObjectName("label_texto_dialogo");
+    label_mensaje.setAlignment(Qt::AlignCenter);
+    label_mensaje.setWordWrap(true);
+    label_mensaje.setMinimumWidth(340);
+    label_mensaje.setMaximumWidth(460);
+    label_mensaje.setText(normalizar_texto_stardew(mensaje));
+    layout_interior.addWidget(&label_mensaje);
+
+    QPushButton btn_ok(&marco);
+    btn_ok.setObjectName("btn_dialogo_ok");
+    btn_ok.setProperty("class", "btn_dialogo_accion");
+    RecursosUI::instancia().configurar_boton_ok(&btn_ok);
+    btn_ok.setFixedSize(64, 64);
+    btn_ok.setToolTip("OK");
+    connect(&btn_ok, &QPushButton::clicked, &dialogo, &QDialog::accept);
+    layout_interior.addWidget(&btn_ok, 0, Qt::AlignCenter);
+
+    layout_dialogo.addWidget(&marco);
+    dialogo.adjustSize();
+    dialogo.exec();
+}
+
+void PantallaPrincipal::preparar_unirse_partida() {
+    QDialog dialogo(this);
+    dialogo.setObjectName("dialogo_modal_stardew");
+    dialogo.setWindowFlags(Qt::FramelessWindowHint | Qt::Dialog);
+    dialogo.setAttribute(Qt::WA_TranslucentBackground, true);
+    dialogo.setStyleSheet(styleSheet());
+
+    QVBoxLayout layout_dialogo(&dialogo);
+    layout_dialogo.setContentsMargins(0, 0, 0, 0);
+
+    QFrame marco(&dialogo);
+    marco.setObjectName("marco_dialogo_stardew");
+
+    QVBoxLayout layout_interior(&marco);
+    layout_interior.setContentsMargins(28, 28, 28, 24);
+    layout_interior.setSpacing(18);
+
+    QLabel label_titulo(&marco);
+    label_titulo.setObjectName("label_texto_dialogo");
+    label_titulo.setAlignment(Qt::AlignCenter);
+    label_titulo.setText("Ingresa el codigo de invitacion:");
+    layout_interior.addWidget(&label_titulo);
+
+    QLineEdit input_codigo(&marco);
+    input_codigo.setObjectName("input_codigo_invitacion");
+    input_codigo.setAlignment(Qt::AlignCenter);
+    input_codigo.setMaxLength(16);
+    input_codigo.setPlaceholderText("ej: P0");
+    connect(&input_codigo, &QLineEdit::returnPressed, &dialogo, &QDialog::accept);
+    layout_interior.addWidget(&input_codigo, 0, Qt::AlignCenter);
+
+    QHBoxLayout layout_botones;
+    layout_botones.setSpacing(32);
+    layout_botones.setAlignment(Qt::AlignCenter);
+
+    QPushButton btn_cancelar(&marco);
+    btn_cancelar.setObjectName("btn_dialogo_cancelar");
+    btn_cancelar.setProperty("class", "btn_dialogo_accion");
+    RecursosUI::instancia().configurar_boton_cancelar(&btn_cancelar);
+    btn_cancelar.setFixedSize(64, 64);
+    btn_cancelar.setToolTip("Cancelar");
+    connect(&btn_cancelar, &QPushButton::clicked, &dialogo, &QDialog::reject);
+    layout_botones.addWidget(&btn_cancelar);
+
+    QPushButton btn_ok(&marco);
+    btn_ok.setObjectName("btn_dialogo_ok");
+    btn_ok.setProperty("class", "btn_dialogo_accion");
+    RecursosUI::instancia().configurar_boton_ok(&btn_ok);
+    btn_ok.setFixedSize(64, 64);
+    btn_ok.setToolTip("Unirse");
+    connect(&btn_ok, &QPushButton::clicked, &dialogo, &QDialog::accept);
+    layout_botones.addWidget(&btn_ok);
+
+    layout_interior.addLayout(&layout_botones);
+    layout_dialogo.addWidget(&marco);
+
+    dialogo.adjustSize();
+    if (dialogo.exec() != QDialog::Accepted) {
+        return;
+    }
+
+    QString codigo = input_codigo.text().trimmed();
+    if (codigo.isEmpty()) {
+        return;
+    }
+
+    try {
+        conexion.enviar_comando(VerificarCodigoPartida{codigo.toStdString()});
+        bool verificado = false;
+        while (!verificado) {
+            EventoServidor evento = conexion.esperar_evento();
+            if (std::holds_alternative<CodigoPartidaDisponible>(evento)) {
+                verificado = true;
+            } else if (std::holds_alternative<ErrorServidor>(evento)) {
+                mostrar_mensaje_stardew(describir_error(std::get<ErrorServidor>(evento)));
+                return;
+            }
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error de conexion al verificar codigo: " << e.what() << "\n";
+        mostrar_mensaje_stardew("Se perdio la conexion con el servidor.");
+        return;
+    }
+
+    es_modo_unirse = true;
+    codigo_partida_a_unirse = codigo.toStdString();
+    configurar_formulario_granja(false);
+    ui->btn_confirmar_personaje->setEnabled(true);
+    ui->stackedWidget->setCurrentIndex(1);
+}
+
+void PantallaPrincipal::randomizar_personaje() {
+    std::uniform_int_distribution<int> dist_genero(0, 1);
+    std::uniform_int_distribution<int> dist_piel(0, CANTIDAD_PIELES - 1);
+    std::uniform_int_distribution<int> dist_pelo(0, CANTIDAD_PEINADOS - 1);
+    std::uniform_int_distribution<int> dist_remera(0, CANTIDAD_REMERAS - 1);
+    std::uniform_int_distribution<int> dist_pantalon(0, CANTIDAD_TIPOS_PANTALON - 1);
+    std::uniform_int_distribution<int> dist_sombrero(-1, CANTIDAD_SOMBREROS - 1);
+    std::uniform_int_distribution<int> dist_matiz(0, MAX_VALOR_SLIDER_HSV);
+    std::uniform_int_distribution<int> dist_saturacion(20, MAX_VALOR_SLIDER_HSV);
+    std::uniform_int_distribution<int> dist_luminosidad(20, MAX_VALOR_SLIDER_HSV);
+
+    es_personaje_femenino = (dist_genero(generador_azar) == 1);
+    ui->btn_genero_masculino->setChecked(!es_personaje_femenino);
+    ui->btn_genero_femenino->setChecked(es_personaje_femenino);
+
+    indice_piel_seleccionada = dist_piel(generador_azar);
+    indice_pelo_seleccionado = dist_pelo(generador_azar);
+    indice_remera_seleccionado = dist_remera(generador_azar);
+    indice_tipo_pantalon_seleccionado = dist_pantalon(generador_azar);
+    indice_sombrero_seleccionado = dist_sombrero(generador_azar);
+
+    auto color_aleatorio_hsv = [&]() -> ColorRGB {
+        int matiz = dist_matiz(generador_azar);
+        int saturacion = dist_saturacion(generador_azar);
+        int luminosidad = dist_luminosidad(generador_azar);
+        return convertir_hsv_a_rgb(matiz, saturacion, luminosidad);
+    };
+
+    color_ojos_actual = color_aleatorio_hsv();
+    color_pelo_actual = color_aleatorio_hsv();
+    color_pantalon_actual = color_aleatorio_hsv();
+
+    sincronizar_sliders_desde_colores();
+    actualizar_previsualizacion_personaje();
+}

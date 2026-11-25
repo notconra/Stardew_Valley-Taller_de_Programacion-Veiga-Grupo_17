@@ -1,0 +1,120 @@
+#ifndef PANTALLAPRINCIPAL_H
+#define PANTALLAPRINCIPAL_H
+
+#include <QButtonGroup>
+#include <QKeyEvent>
+#include <QLabel>
+#include <QMainWindow>
+#include <QPaintEvent>
+#include <QPixmap>
+#include <QSlider>
+#include <QTimer>
+#include <memory>
+#include <random>
+#include <string>
+#include <vector>
+
+#include "../configuracion/configuracion_cliente_datos.h"
+#include "../red/conexion_con_servidor.h"
+#include "botones_menu.h"
+#include "compositor_personaje.h"
+#include "fondo_animado.h"
+#include "tarjeta_partida.h"
+
+namespace Ui {
+class PantallaPrincipal;
+}
+
+struct OpcionColor {
+    const char* nombre;
+    ColorRGB rgb;
+};
+
+class PantallaPrincipal : public QMainWindow {
+    Q_OBJECT
+
+public:
+    PantallaPrincipal(
+        ConexionConServidor& conexion, EntradaExitosaAPartida& partida_actual,
+        ConfiguracionJugador& configuracion_jugador, QWidget* parent = nullptr);
+    ~PantallaPrincipal();
+
+    std::string mundo_seleccionado() const;
+
+protected:
+    void paintEvent(QPaintEvent* evento) override;
+    void keyPressEvent(QKeyEvent* evento) override;
+
+private slots:
+    void preparar_nueva_partida();
+    void preparar_retomar_partida();
+    void preparar_unirse_partida();
+
+    void volver_al_menu();
+    void confirmar_personaje();
+    void seleccionar_partida(const QString& codigo_partida);
+    void ejecutar_partida(const QString& codigo_partida);
+    void eliminar_partida(const QString& codigo_partida);
+    void actualizar_animacion();
+    void randomizar_personaje();
+    void actualizar_color_ojos();
+    void actualizar_color_pelo();
+    void actualizar_color_pantalon();
+    // Le pide al servidor sus mundos del editor y deja elegir uno.
+    void seleccionar_mundo();
+    void restablecer_mundo();
+
+private:
+    Ui::PantallaPrincipal* ui;
+    void configurar_ventana();
+    void vaciar_tarjetas_partidas();
+    void actualizar_seleccion_tarjetas();
+    void configurar_formulario_granja(bool visible);
+    void inicializar_selectores_personaje();
+    void sincronizar_sliders_desde_colores();
+    void sincronizar_canal_slider(QSlider* slider, QLabel* etiqueta_valor, int valor);
+    ColorRGB convertir_hsv_a_rgb(
+        int matiz_porcentaje, int saturacion_porcentaje, int luminosidad_porcentaje) const;
+    ColorRGB leer_color_desde_sliders(
+        const QSlider* slider_matiz, const QSlider* slider_saturacion,
+        const QSlider* slider_luminosidad, QLabel* etiqueta_matiz, QLabel* etiqueta_saturacion,
+        QLabel* etiqueta_luminosidad);
+    void actualizar_previsualizacion_personaje();
+    int encontrar_indice_color_cercano(
+        const ColorRGB& color, const OpcionColor* opciones, int cantidad) const;
+    ConfiguracionJugador obtener_configuracion_actual() const;
+    void llenar_lista_partidas(const ListaPartidas& lista);
+    bool procesar_evento_ingreso(const EventoServidor& evento);
+    QString describir_error(const ErrorServidor& error) const;
+    void mostrar_mensaje_stardew(const QString& mensaje);
+    static QString normalizar_texto_stardew(const QString& texto);
+
+    ConexionConServidor& conexion;
+    EntradaExitosaAPartida& partida_actual;
+    bool es_modo_unirse = false;
+    std::string codigo_partida_a_unirse;
+    std::string codigo_partida_seleccionada;
+    std::vector<std::unique_ptr<TarjetaPartida>> tarjetas_partidas;
+    ConfiguracionJugador& configuracion_jugador;
+    CompositorPersonaje compositor_personaje;
+    int indice_piel_seleccionada = 0;
+    int indice_pelo_seleccionado = 0;
+    int indice_remera_seleccionado = 0;
+    int indice_tipo_pantalon_seleccionado = 0;
+    int indice_sombrero_seleccionado = -1;
+    ColorRGB color_ojos_actual = {104, 43, 15};
+    ColorRGB color_pelo_actual = {193, 90, 33};
+    ColorRGB color_pantalon_actual = {45, 60, 140};
+    bool es_personaje_femenino = false;
+    QString mundo_personalizado;  // nombre de un mundo del servidor, vacío para el estándar
+    std::mt19937 generador_azar{std::random_device{}()};
+
+    FondoAnimado fondo_animado;
+    BotonesMenu botones_menu;
+    QPixmap logo_original;
+    QPixmap logo_escalado;
+    QTimer* temporizador_animacion = nullptr;
+    float tiempo_animacion = 0.0f;
+};
+
+#endif  // PANTALLAPRINCIPAL_H

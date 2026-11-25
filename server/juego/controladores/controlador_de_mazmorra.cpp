@@ -1,0 +1,395 @@
+#include "controlador_de_mazmorra.h"
+
+#include <algorithm>
+#include <cstdint>
+#include <random>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "../../../common/editor/definicion_de_mundo.h"
+#include "../../../common/tipo_enemigo.h"
+#include "../../../common/tipo_item.h"
+#include "../../../common/tipo_objeto.h"
+#include "../azar.h"
+#include "./../mazmorra/cargador_mazmorra.h"
+#include "./../mazmorra/minerales.h"
+
+ControladorDeMazmorra::ControladorDeMazmorra(
+    const RecursosDeJuego& recursos, GestorDeSectores& sectores,
+    const std::vector<std::string>& niveles_guardados)
+    : recursos(recursos), sectores(sectores) {
+    if (recursos.mazmorra.mapas.empty()) {
+        return;
+    }
+
+    std::random_device dispositivo;
+    std::mt19937 generador(dispositivo());
+    generador_de_cofres.seed(dispositivo());
+    if (sectores.tiene_mazmorra_personalizada()) {
+        bool guardados_validos = !niveles_guardados.empty();
+        size_t indice_nivel = 0;
+        while (indice_nivel < niveles_guardados.size() && guardados_validos) {
+            if (!sectores.es_mapa_personalizado(niveles_guardados[indice_nivel])) {
+                guardados_validos = false;
+            }
+            indice_nivel++;
+        }
+        niveles_de_mazmorra =
+            guardados_validos ? niveles_guardados : DefinicionDeMundo::ids_sectores_mazmorra();
+    } else if (!niveles_guardados.empty()) {
+        niveles_de_mazmorra = niveles_guardados;
+    } else {
+        niveles_de_mazmorra = CargadorMazmorra::elegir_niveles(recursos.mazmorra.mapas, generador);
+    }
+
+    std::vector<GeografiaNivel> geografias;
+    geografias.reserve(niveles_de_mazmorra.size());
+    for (const std::string& id_mapa : niveles_de_mazmorra) {
+        if (sectores.es_mapa_personalizado(id_mapa)) {
+            geografias.push_back(
+                CargadorMazmorra::crear_geografia(id_mapa, sectores.en(id_mapa).mapa));
+        } else {
+            geografias.push_back(recursos.geografias_de_mazmorra.at(id_mapa));
+        }
+    }
+    mazmorra.emplace(
+        std::move(geografias),
+        recursos.mazmorra.enemigos_por_nivel,
+        recursos.mazmorra.minerales_por_nivel,
+        recursos.mazmorra.probabilidad_de_cofre,
+        std::move(generador));
+}
+
+const std::vector<std::string>& ControladorDeMazmorra::obtener_niveles() const {
+    return niveles_de_mazmorra;
+}
+
+bool ControladorDeMazmorra::es_nivel_de_mazmorra(const std::string& id_mapa) const {
+    return std::find(niveles_de_mazmorra.begin(), niveles_de_mazmorra.end(), id_mapa) !=
+           niveles_de_mazmorra.end();
+}
+
+void ControladorDeMazmorra::limpiar_drops_de_niveles() {
+    for (const std::string& id_mapa : niveles_de_mazmorra) {
+        sectores.en(id_mapa).drops.limpiar();
+    }
+}
+
+void ControladorDeMazmorra::retirar_cofres_de_nivel(Sector& sector) {
+    // La mazmorra se repuebla solo cuando quedó vacía. Sus cofres son contenido procedural, así que
+    // se retiran todos (incluidos los que haya dejado un jugador) para no duplicarlos al sortear
+    // los nuevos.
+    const std::vector<ObjetoDelMundo> cofres =
+        sector.objetos.obtener_objetos_de_tipo(TipoObjeto::COFRE);
+    for (const ObjetoDelMundo& cofre : cofres) {
+        sector.cofres.retirar_contenido(cofre.id);
+        sector.objetos.retirar(cofre.id);
+    }
+}
+
+void ControladorDeMazmorra::colocar_cofre(Sector& sector, Casilla casilla) {
+    const int id_cofre = sector.objetos.colocar(TipoObjeto::COFRE, casilla.columna, casilla.fila);
+    if (id_cofre == 0) {
+        return;
+    }
+
+    std::uniform_int_distribution<int> sorteo_de_oro(
+        recursos.mazmorra.oro_minimo_en_cofre,
+        recursos.mazmorra.oro_maximo_en_cofre);
+    const int oro = sorteo_de_oro(generador_de_cofres);
+    if (oro > 0) {
+        sector.cofres.contenido(id_cofre).agregar_item(TipoItem::ORO, static_cast<uint16_t>(oro));
+    }
+}
+
+void ControladorDeMazmorra::poblar_niveles() {
+    limpiar_drops_de_niveles();
+
+    for (size_t i = 0; i < niveles_de_mazmorra.size(); ++i) {
+        const int numero_de_nivel = static_cast<int>(i) + 1;
+        Sector& sector = sectores.en(niveles_de_mazmorra.at(i));
+        sector.nivel_de_mazmorra = numero_de_nivel;
+
+        retirar_cofres_de_nivel(sector);
+        sector.objetos.retirar_objetos_naturales();
+        sector.objetos.poblar_en(
+            mazmorra->nivel(numero_de_nivel).obtener_celdas_de_objetos(),
+            Minerales::pesos(numero_de_nivel, recursos.mazmorra.minerales));
+
+        for (const Casilla& casilla : mazmorra->nivel(numero_de_nivel).obtener_celdas_de_cofres()) {
+            colocar_cofre(sector, casilla);
+        }
+
+        poblar_enemigos(sector, mazmorra->nivel(numero_de_nivel));
+        poblar_trampas(sector, mazmorra->nivel(numero_de_nivel));
+    }
+}
+
+void ControladorDeMazmorra::poblar_enemigos(Sector& sector, const Nivel& nivel) {
+    sector.enemigos.limpiar();
+    const std::vector<Casilla>& puntos = nivel.obtener_enemigos();
+    const ConfiguracionOrcosServidor& orcos = recursos.mazmorra.orco;
+    const size_t grupos =
+        std::min(puntos.size(), static_cast<size_t>(std::max(0, orcos.grupos_por_nivel)));
+
+    std::vector<Casilla> ocupadas(puntos.begin(), puntos.end());
+    for (size_t i = 0; i < grupos; ++i) {
+        const int tamano = Azar::entero(orcos.tamano_grupo_minimo, orcos.tamano_grupo_maximo);
+        const std::vector<Casilla> grupo =
+            casillas_para_grupo(sector, nivel, puntos[i], tamano, ocupadas);
+        ocupadas.insert(ocupadas.end(), grupo.begin(), grupo.end());
+        sector.enemigos.poblar_grupo_en(grupo, TipoEnemigo::ORCO);
+    }
+
+    size_t usados = grupos;
+    const size_t parejas = std::min(
+        puntos.size() - usados,
+        static_cast<size_t>(std::max(0, recursos.mazmorra.vampiros.parejas_por_nivel)));
+    for (size_t i = 0; i < parejas; ++i, ++usados) {
+        const std::vector<Casilla> pareja =
+            casillas_para_grupo(sector, nivel, puntos[usados], 2, ocupadas);
+        if (pareja.size() < 2) {
+            continue;
+        }
+        ocupadas.insert(ocupadas.end(), pareja.begin(), pareja.end());
+        sector.enemigos
+            .poblar_pareja(pareja[0], TipoEnemigo::VAMPIRA, pareja[1], TipoEnemigo::VAMPIRO);
+    }
+
+    // Skulls: solas y a lo sumo una por nivel (cuarto). Cada una sale azul o verde.
+    const ConfiguracionSkullsServidor& skulls = recursos.mazmorra.skulls;
+    const size_t cantidad_de_skulls = std::min(
+        puntos.size() - usados,
+        static_cast<size_t>(std::clamp(skulls.skulls_por_nivel, 0, 1)));
+    for (size_t i = 0; i < cantidad_de_skulls; ++i, ++usados) {
+        const TipoEnemigo tipo = Azar::con_probabilidad(skulls.probabilidad_verde)
+                                     ? TipoEnemigo::SKULL_VERDE
+                                     : TipoEnemigo::SKULL_AZUL;
+        sector.enemigos.poblar_en({puntos[usados]}, tipo);
+    }
+
+    const std::vector<Casilla> solos(
+        puntos.begin() + static_cast<std::ptrdiff_t>(usados),
+        puntos.end());
+    sector.enemigos.poblar_en(solos, TipoEnemigo::ESQUELETO);
+}
+
+namespace {
+
+bool contiene(const std::vector<Casilla>& casillas, const Casilla& casilla) {
+    return std::find(casillas.begin(), casillas.end(), casilla) != casillas.end();
+}
+
+bool hay_pared_arriba(const GeografiaNivel& geografia, const Casilla& casilla) {
+    const int fila = casilla.fila - 1;
+    if (fila < 0 || casilla.columna < 0 || casilla.columna >= geografia.ancho) {
+        return false;
+    }
+    return !geografia.transitable[static_cast<size_t>(fila) * geografia.ancho + casilla.columna];
+}
+
+}  // namespace
+
+void ControladorDeMazmorra::poblar_trampas(Sector& sector, const Nivel& nivel) {
+    // Para no caer sobre unos pinches al bajar la escalera.
+    constexpr int DISTANCIA_MINIMA_A_LA_ENTRADA = 3;
+
+    const ConfiguracionTrampasServidor& config = recursos.mazmorra.trampas;
+    sector.trampas.limpiar();
+    sector.trampas.configurar(config);
+
+    const GeografiaNivel& geografia = nivel.obtener_geografia();
+    std::vector<Casilla> pisos;
+    for (const Casilla& casilla : Nivel::alcanzables(geografia, geografia.entrada)) {
+        if (distancia_en_casillas(casilla, geografia.entrada) >= DISTANCIA_MINIMA_A_LA_ENTRADA &&
+            !geografia.escalera.contiene(casilla) && !geografia.salida.contiene(casilla) &&
+            !contiene(nivel.obtener_enemigos(), casilla) &&
+            !contiene(nivel.obtener_celdas_de_objetos(), casilla)) {
+            pisos.push_back(casilla);
+        }
+    }
+
+    std::shuffle(pisos.begin(), pisos.end(), Azar::motor());
+    const size_t cantidad =
+        std::min(pisos.size(), static_cast<size_t>(std::max(0, config.por_nivel)));
+    const int ciclo = sector.trampas.duracion_del_ciclo();
+    for (size_t i = 0; i < cantidad; ++i) {
+        sector.trampas.agregar(pisos[i], Azar::entero(0, ciclo - 1));
+    }
+
+    // Los lanzallamas van en casillas libres que tienen una pared justo arriba.
+    int lanzallamas = 0;
+    for (size_t i = cantidad; i < pisos.size() && lanzallamas < config.lanzallamas_por_nivel; ++i) {
+        if (hay_pared_arriba(geografia, pisos[i])) {
+            sector.trampas.agregar(pisos[i], Azar::entero(0, ciclo - 1), TipoTrampa::LANZALLAMAS);
+            ++lanzallamas;
+        }
+    }
+}
+
+std::vector<Casilla> ControladorDeMazmorra::casillas_para_grupo(
+    const Sector& sector, const Nivel& nivel, const Casilla& centro, int cantidad,
+    const std::vector<Casilla>& ocupadas) const {
+    const GeografiaNivel& geografia = nivel.obtener_geografia();
+    const auto prohibida = [&](const Casilla& casilla) {
+        return casilla == geografia.entrada || geografia.escalera.contiene(casilla) ||
+               geografia.salida.contiene(casilla) ||
+               std::find(ocupadas.begin(), ocupadas.end(), casilla) != ocupadas.end();
+    };
+
+    std::vector<Casilla> grupo{centro};
+    std::vector<Casilla> visitadas{centro};
+    for (size_t i = 0; i < visitadas.size() && static_cast<int>(grupo.size()) < cantidad; ++i) {
+        const Casilla actual = visitadas[i];
+        const Casilla vecinas[] = {
+            {actual.columna + 1, actual.fila},
+            {actual.columna - 1, actual.fila},
+            {actual.columna, actual.fila + 1},
+            {actual.columna, actual.fila - 1}};
+        for (const Casilla& vecina : vecinas) {
+            if (static_cast<int>(grupo.size()) >= cantidad) {
+                break;
+            }
+            if (std::find(visitadas.begin(), visitadas.end(), vecina) != visitadas.end() ||
+                !sector.mapa.esta_dentro(vecina.columna, vecina.fila) ||
+                !sector.colisiones.esta_libre(vecina.columna, vecina.fila)) {
+                continue;
+            }
+            visitadas.push_back(vecina);
+            if (!prohibida(vecina)) {
+                grupo.push_back(vecina);
+            }
+        }
+    }
+    return grupo;
+}
+
+void ControladorDeMazmorra::llevar_al_nivel_actual(Personaje& personaje) {
+    const uint32_t id_jugador = personaje.id_jugador;
+    const std::string& id_nivel = niveles_de_mazmorra.at(mazmorra->numero_de_nivel(id_jugador) - 1);
+    const Casilla entrada =
+        mazmorra->nivel_actual_del_jugador(id_jugador).obtener_geografia().entrada;
+    const Sector& destino = sectores.en(id_nivel);
+
+    const ConfiguracionMovimientoJugador& movimiento = recursos.juego.movimiento;
+    const int ancho = destino.mapa.ancho_de_casilla_en_pixeles();
+    const int alto = destino.mapa.alto_de_casilla_en_pixeles();
+    const double x =
+        entrada.columna * ancho + (ancho - movimiento.hitbox_ancho) / 2.0 - movimiento.hitbox_x;
+    const double y = (entrada.fila + 1) * alto - movimiento.hitbox_y - movimiento.hitbox_alto;
+
+    sectores.trasladar(personaje, id_nivel, x, y);
+}
+
+void ControladorDeMazmorra::entrar(Personaje& personaje) {
+    if (mazmorra->esta_adentro(personaje.id_jugador)) {
+        return;
+    }
+    const bool estaba_vacia = mazmorra->esta_vacia();
+    mazmorra->entrar(personaje.id_jugador);
+    if (estaba_vacia) {
+        poblar_niveles();
+    }
+    llevar_al_nivel_actual(personaje);
+}
+
+void ControladorDeMazmorra::bajar(Personaje& personaje) {
+    if (!mazmorra->esta_adentro(personaje.id_jugador)) {
+        return;
+    }
+    if (mazmorra->bajar(personaje.id_jugador)) {
+        llevar_al_nivel_actual(personaje);
+        return;
+    }
+
+    std::string mapa_origen = personaje.mapa_actual;
+    std::optional<Transicion> salida;
+    if (sectores.existe(mapa_origen)) {
+        const std::vector<std::pair<Rectangulo, Transicion>>& transiciones =
+            sectores.en(mapa_origen).mapa.obtener_transiciones();
+        size_t indice = 0;
+        while (indice < transiciones.size() && !salida.has_value()) {
+            const Transicion& candidata = transiciones[indice].second;
+            if (candidata.mapa_destino != DESTINO_ESCALERA &&
+                candidata.mapa_destino != DESTINO_ENTRADA) {
+                salida = candidata;
+            }
+            indice++;
+        }
+    }
+
+    salir_de_la_mazmorra(personaje);
+    if (!salida.has_value() || !sectores.existe(salida->mapa_destino)) {
+        return;
+    }
+    Casilla llegada = sectores.casilla_de_llegada(salida->mapa_destino, *salida);
+    if (sectores.en(salida->mapa_destino)
+            .jugadores.puede_pararse_en_casilla(llegada.columna, llegada.fila)) {
+        sectores
+            .trasladar_a_casilla(personaje, salida->mapa_destino, llegada.columna, llegada.fila);
+    } else {
+        sectores.colocar_en_aparicion(personaje, salida->mapa_destino);
+    }
+}
+
+void ControladorDeMazmorra::salir_de_la_mazmorra(Personaje& personaje) {
+    if (!mazmorra || !mazmorra->esta_adentro(personaje.id_jugador)) {
+        return;
+    }
+    mazmorra->salir(personaje.id_jugador);
+    if (mazmorra->esta_vacia()) {
+        limpiar_drops_de_niveles();
+    }
+}
+
+bool ControladorDeMazmorra::resolver_transicion(
+    Personaje& personaje, const Transicion& transicion) {
+    const std::string& destino = transicion.mapa_destino;
+    const bool es_entrada_interna = destino == DESTINO_ENTRADA;
+    const bool es_escalera = destino == DESTINO_ESCALERA;
+    const bool es_puerta_de_la_mazmorra =
+        (destino == recursos.mazmorra.destino || destino == "caverna" || destino == "mazmorra");
+    if (!mazmorra) {
+        return es_entrada_interna || es_escalera || es_puerta_de_la_mazmorra;
+    }
+    if (es_entrada_interna) {
+        return true;
+    }
+    if (es_escalera) {
+        bajar(personaje);
+        return true;
+    }
+    if (es_puerta_de_la_mazmorra) {
+        entrar(personaje);
+        return true;
+    }
+    salir_de_la_mazmorra(personaje);
+    return false;
+}
+
+void ControladorDeMazmorra::al_desconectarse(Personaje& personaje) {
+    salir_de_la_mazmorra(personaje);
+}
+
+bool ControladorDeMazmorra::ir_a_nivel(
+    Personaje& personaje, int numero_nivel, std::string& mensaje) {
+    if (!mazmorra) {
+        mensaje = "No hay mazmorra disponible.";
+        return false;
+    }
+    if (numero_nivel < 1 || numero_nivel > CANTIDAD_NIVELES) {
+        mensaje = "El nivel debe estar entre 1 y " + std::to_string(CANTIDAD_NIVELES) + ".";
+        return false;
+    }
+    if (!mazmorra->esta_adentro(personaje.id_jugador)) {
+        entrar(personaje);
+    }
+    if (!mazmorra->ir_a_nivel(personaje.id_jugador, static_cast<size_t>(numero_nivel))) {
+        mensaje = "No se pudo ir al nivel " + std::to_string(numero_nivel) + ".";
+        return false;
+    }
+    llevar_al_nivel_actual(personaje);
+    mensaje = "Teletransportado al nivel " + std::to_string(numero_nivel) + " de la mazmorra.";
+    return true;
+}

@@ -1,0 +1,415 @@
+#include "gestor_de_sectores.h"
+
+#include <algorithm>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "../../../common/editor/cargador_de_mundo_tmx.h"
+#include "../../../common/editor/definicion_de_mundo.h"
+
+GestorDeSectores::GestorDeSectores(
+    const RecursosDeJuego& recursos, uint8_t ticks_por_segundo,
+    const std::map<uint32_t, Personaje>& personajes_de_la_partida,
+    Notificador& notificador_de_juego, const std::string& nombre_mundo)
+    : notificador(notificador_de_juego), personajes(personajes_de_la_partida) {
+    if (!nombre_mundo.empty() && nombre_mundo != "Mundo Estandar") {
+        for (const auto& entrada : recursos.mapas) {
+            std::string id_mapa = entrada.first;
+            std::string ruta_tmx_personalizada =
+                CargadorDeMundoTMX::resolver_ruta_sector(nombre_mundo, id_mapa);
+            if (!ruta_tmx_personalizada.empty()) {
+                auto configuracion_encontrada = recursos.configuraciones_mapas.find(id_mapa);
+                if (configuracion_encontrada != recursos.configuraciones_mapas.end()) {
+                    ConfiguracionMapaServidor configuracion_personalizada =
+                        configuracion_encontrada->second;
+                    configuracion_personalizada.ruta_tmx = ruta_tmx_personalizada;
+                    mapas_personalizados.emplace(
+                        id_mapa,
+                        Mapa(
+                            configuracion_personalizada,
+                            recursos.juego.transiciones.destinos_con_clic));
+                }
+            }
+        }
+    }
+
+    for (const auto& entrada : recursos.mapas) {
+        const std::string& id_mapa = entrada.first;
+        auto personalizado = mapas_personalizados.find(id_mapa);
+        const Mapa& mapa_a_usar =
+            (personalizado != mapas_personalizados.end()) ? personalizado->second : entrada.second;
+        sectores.try_emplace(id_mapa, id_mapa, mapa_a_usar, recursos, ticks_por_segundo);
+    }
+}
+
+bool GestorDeSectores::es_mapa_personalizado(const std::string& id_mapa) const {
+    return mapas_personalizados.find(id_mapa) != mapas_personalizados.end();
+}
+
+bool GestorDeSectores::tiene_mazmorra_personalizada() const {
+    const std::vector<std::string>& ids_mazmorra = DefinicionDeMundo::ids_sectores_mazmorra();
+    size_t indice = 0;
+    bool todos_presentes = !ids_mazmorra.empty();
+    while (indice < ids_mazmorra.size() && todos_presentes) {
+        if (!es_mapa_personalizado(ids_mazmorra[indice])) {
+            todos_presentes = false;
+        }
+        indice++;
+    }
+    return todos_presentes;
+}
+
+void GestorDeSectores::cargar_mapas_guardados(
+    const std::vector<DatosMapaGuardado>& mapas_guardados) {
+    for (const auto& mapa_guardado : mapas_guardados) {
+        auto sector_encontrado = sectores.find(mapa_guardado.id_mapa);
+        if (sector_encontrado != sectores.end()) {
+            Sector& sector = sector_encontrado->second;
+            sector.cargar_casillas_modificadas(mapa_guardado.casillas_modificadas);
+        }
+    }
+}
+
+std::vector<DatosMapaGuardado> GestorDeSectores::obtener_mapas_guardados() const {
+    std::vector<DatosMapaGuardado> mapas;
+    for (const auto& [id_mapa, sector] : sectores) {
+        DatosMapaGuardado& mapa = mapas.emplace_back();
+        mapa.id_mapa = id_mapa;
+        sector.agregar_modificaciones_a(mapa.casillas_modificadas);
+        if (mapa.casillas_modificadas.empty()) {
+            mapas.pop_back();
+        }
+    }
+    return mapas;
+}
+
+void GestorDeSectores::cargar_cofres_guardados(
+    const std::vector<DatosCofreGuardado>& cofres_guardados) {
+    for (const auto& cofre_guardado : cofres_guardados) {
+        auto sector_encontrado = sectores.find(cofre_guardado.id_mapa);
+        if (sector_encontrado != sectores.end()) {
+            Sector& sector = sector_encontrado->second;
+            sector.cargar_cofre(
+                cofre_guardado.columna,
+                cofre_guardado.fila,
+                cofre_guardado.inventario);
+        }
+    }
+}
+
+std::vector<DatosCofreGuardado> GestorDeSectores::obtener_cofres_guardados() const {
+    std::vector<DatosCofreGuardado> cofres;
+    for (const auto& [id_mapa, sector] : sectores) {
+        sector.agregar_cofres_guardados_a(cofres);
+    }
+    return cofres;
+}
+
+void GestorDeSectores::cargar_muebles_guardados(
+    const std::vector<DatosMuebleGuardado>& muebles_guardados) {
+    for (const auto& mueble : muebles_guardados) {
+        auto sector_encontrado = sectores.find(mueble.id_mapa);
+        if (sector_encontrado != sectores.end()) {
+            sector_encontrado->second.cargar_mueble(mueble.tipo, mueble.columna, mueble.fila);
+        }
+    }
+}
+
+std::vector<DatosMuebleGuardado> GestorDeSectores::obtener_muebles_guardados() const {
+    std::vector<DatosMuebleGuardado> muebles;
+    for (const auto& [id_mapa, sector] : sectores) {
+        sector.agregar_muebles_guardados_a(muebles);
+    }
+    return muebles;
+}
+
+void GestorDeSectores::cargar_animales_guardados(
+    const std::vector<DatosAnimalGuardado>& animales_guardados,
+    const std::vector<uint32_t>& vacas_para_ordeniar) {
+    auto sector_granja = sectores.find("granja");
+    if (sector_granja != sectores.end()) {
+        sector_granja->second.cargar_animales_guardados(animales_guardados, vacas_para_ordeniar);
+    }
+}
+
+std::vector<DatosAnimalGuardado> GestorDeSectores::obtener_animales_guardados() const {
+    std::vector<DatosAnimalGuardado> animales;
+    auto sector_granja = sectores.find("granja");
+    if (sector_granja != sectores.end()) {
+        sector_granja->second.agregar_animales_guardados_a(animales);
+    }
+    return animales;
+}
+
+void GestorDeSectores::cargar_cultivos_guardados(
+    const std::vector<DatosCultivoGuardado>& cultivos_guardados) {
+    for (const auto& cultivo : cultivos_guardados) {
+        auto sector_encontrado = sectores.find(cultivo.id_mapa);
+        if (sector_encontrado != sectores.end()) {
+            sector_encontrado->second.cargar_cultivo(cultivo);
+        }
+    }
+}
+
+std::vector<DatosCultivoGuardado> GestorDeSectores::obtener_cultivos_guardados() const {
+    std::vector<DatosCultivoGuardado> cultivos;
+    for (const auto& [id_mapa, sector] : sectores) {
+        sector.agregar_cultivos_guardados_a(cultivos);
+    }
+    return cultivos;
+}
+
+bool GestorDeSectores::existe(const std::string& id_mapa) const {
+    return sectores.contains(id_mapa);
+}
+
+std::vector<std::string> GestorDeSectores::ids_de_sectores() const {
+    std::vector<std::string> ids;
+    ids.reserve(sectores.size());
+    for (const auto& [id_mapa, sector] : sectores) {
+        ids.push_back(id_mapa);
+    }
+    return ids;
+}
+
+Sector& GestorDeSectores::en(const std::string& id_mapa) {
+    return sectores.at(id_mapa);
+}
+
+const Sector& GestorDeSectores::en(const std::string& id_mapa) const {
+    return sectores.at(id_mapa);
+}
+
+void GestorDeSectores::enviar_instantanea(uint32_t id_jugador, const std::string& id_mapa) {
+    notificador.a_jugador(id_jugador, armar_instantanea(id_mapa));
+}
+
+void GestorDeSectores::colocar_en_aparicion(Personaje& personaje, const std::string& id_mapa) {
+    if (!personaje.mapa_actual.empty() && personaje.mapa_actual != id_mapa) {
+        auto iterador_previo = sectores.find(personaje.mapa_actual);
+        if (iterador_previo != sectores.end()) {
+            iterador_previo->second.jugadores.quitar(personaje.id_jugador);
+            difundir_jugadores(iterador_previo->second.id);
+        }
+    }
+
+    Sector& sector = sectores.at(id_mapa);
+    sector.jugadores.agregar_en_aparicion(personaje.id_jugador);
+    personaje.mapa_actual = id_mapa;
+
+    enviar_instantanea(personaje.id_jugador, id_mapa);
+    difundir_jugadores(id_mapa);
+}
+
+Casilla GestorDeSectores::casilla_de_llegada(
+    const std::string& destino, const Transicion& transicion) const {
+    const auto sector = sectores.find(destino);
+    if (!transicion.llegada.empty() && sector != sectores.end()) {
+        const Casilla* llegada = sector->second.mapa.buscar_llegada(transicion.llegada);
+        if (llegada != nullptr) {
+            return *llegada;
+        }
+    }
+    return Casilla{transicion.columna_destino, transicion.fila_destino};
+}
+
+void GestorDeSectores::colocar_en(
+    Personaje& personaje, const std::string& id_mapa, double x, double y, Direccion mirando) {
+    if (!personaje.mapa_actual.empty() && personaje.mapa_actual != id_mapa) {
+        auto iterador_previo = sectores.find(personaje.mapa_actual);
+        if (iterador_previo != sectores.end()) {
+            iterador_previo->second.jugadores.quitar(personaje.id_jugador);
+            difundir_jugadores(iterador_previo->second.id);
+        }
+    }
+
+    Sector& sector = sectores.at(id_mapa);
+    sector.jugadores.agregar_en(personaje.id_jugador, x, y, mirando);
+    personaje.mapa_actual = id_mapa;
+
+    enviar_instantanea(personaje.id_jugador, id_mapa);
+    difundir_jugadores(id_mapa);
+}
+
+void GestorDeSectores::trasladar(
+    Personaje& personaje, const std::string& destino, double x, double y) {
+    Sector& sector_destino = sectores.at(destino);
+    Sector& sector_origen = sectores.at(personaje.mapa_actual);
+
+    sector_origen.jugadores.quitar(personaje.id_jugador);
+    sector_destino.jugadores.agregar_en(personaje.id_jugador, x, y);
+    personaje.mapa_actual = destino;
+
+    enviar_instantanea(personaje.id_jugador, destino);
+    if (sector_origen.id != destino) {
+        difundir_jugadores(sector_origen.id);
+    }
+    difundir_jugadores(destino);
+}
+
+void GestorDeSectores::trasladar_a_casilla(
+    Personaje& personaje, const std::string& destino, int columna, int fila) {
+    const Sector& sector_destino = sectores.at(destino);
+    const double x = columna * sector_destino.mapa.ancho_de_casilla_en_pixeles();
+    const double y = fila * sector_destino.mapa.alto_de_casilla_en_pixeles();
+    trasladar(personaje, destino, x, y);
+}
+
+void GestorDeSectores::quitar(const Personaje& personaje) {
+    auto encontrado = sectores.find(personaje.mapa_actual);
+    if (encontrado == sectores.end()) {
+        return;
+    }
+    encontrado->second.jugadores.quitar(personaje.id_jugador);
+    difundir_jugadores(encontrado->first);
+}
+
+void GestorDeSectores::actualizar(const HoraDelJuego& hora) {
+    for (auto& entrada : sectores) {
+        Sector& sector = entrada.second;
+        sector.jugadores.actualizar();
+        sector.actualizar(hora, notificador);
+
+        for (int id_enemigo : sector.enemigos.actualizar()) {
+            const Enemigo* enemigo = sector.enemigos.buscar(id_enemigo);
+            if (enemigo != nullptr) {
+                EnemigoActualizado evento;
+                evento.enemigo = GestorDeEnemigos::estado_de(*enemigo);
+                sector.avisar(notificador, evento);
+            }
+        }
+    }
+}
+
+void GestorDeSectores::avanzar_dia() {
+    for (auto& entrada : sectores) {
+        entrada.second.avanzar_dia(notificador);
+    }
+}
+
+std::vector<JugadorEnTransicion> GestorDeSectores::jugadores_en_transicion() const {
+    std::vector<JugadorEnTransicion> resultado;
+    for (const auto& entrada : sectores) {
+        for (const auto& par : entrada.second.jugadores.en_transicion()) {
+            JugadorEnTransicion en_transicion;
+            en_transicion.id_jugador = par.first;
+            en_transicion.transicion = *par.second;
+            resultado.push_back(en_transicion);
+        }
+    }
+    return resultado;
+}
+
+std::vector<EstadoJugador> GestorDeSectores::armar_jugadores(const std::string& id_mapa) const {
+    const Sector& sector = en(id_mapa);
+    const std::vector<uint32_t> ids = sector.jugadores.ids();
+
+    std::vector<EstadoJugador> resultado;
+    resultado.reserve(ids.size());
+    for (uint32_t id_jugador : ids) {
+        const JugadorEnPartida* cuerpo = sector.jugadores.buscar(id_jugador);
+        if (cuerpo == nullptr) {
+            continue;
+        }
+
+        EstadoJugador estado;
+        estado.id_jugador = id_jugador;
+        estado.mapa = id_mapa;
+        estado.x = static_cast<uint32_t>(cuerpo->x);
+        estado.y = static_cast<uint32_t>(cuerpo->y);
+        estado.mirando = cuerpo->mirando;
+        estado.camina = cuerpo->camina;
+
+        const auto personaje = personajes.find(id_jugador);
+        if (personaje != personajes.end()) {
+            estado.ranura_activa = personaje->second.ranura_activa;
+            estado.accion_actual = personaje->second.accion_actual;
+            const RanuraInventario en_mano =
+                personaje->second.inventario.ranura(personaje->second.ranura_activa);
+            estado.item_en_mano = en_mano.tipo;
+            estado.calidad_en_mano = en_mano.calidad;
+            estado.numero_de_accion = personaje->second.numero_de_accion;
+            estado.descanso = personaje->second.descanso;
+            estado.vida = static_cast<uint16_t>(std::max(personaje->second.vida, 0));
+            estado.energia = static_cast<uint16_t>(std::max(personaje->second.energia, 0));
+            estado.vida_maxima =
+                static_cast<uint16_t>(std::max(personaje->second.vida_maxima(), 0));
+            estado.energia_maxima =
+                static_cast<uint16_t>(std::max(personaje->second.energia_maxima(), 0));
+            estado.con_mejora_de_pelea = personaje->second.tiene_mejora_de_pelea;
+            estado.monedas = personaje->second.monedas;
+            estado.apariencia = personaje->second.apariencia;
+        }
+
+        resultado.push_back(estado);
+    }
+    return resultado;
+}
+
+EstadoJuego GestorDeSectores::armar_instantanea(const std::string& id_mapa) const {
+    const Sector& sector = en(id_mapa);
+
+    EstadoJuego estado;
+    estado.mapa = id_mapa;
+    estado.nivel_de_mazmorra = static_cast<uint8_t>(std::max(sector.nivel_de_mazmorra, 0));
+    estado.jugadores = armar_jugadores(id_mapa);
+    estado.npcs = armar_npcs(id_mapa);
+    sector.objetos.agregar_a(estado);
+    sector.drops.agregar_a(estado);
+    sector.enemigos.agregar_a(estado);
+    sector.trampas.agregar_a(estado);
+    sector.tierra.agregar_a(estado.tierra);
+    sector.animales.agregar_a(estado);
+    sector.huerta.completar(estado.tierra);
+    return estado;
+}
+
+void GestorDeSectores::difundir_jugadores(const std::string& id_mapa) {
+    std::vector<EstadoJugador> actuales = armar_jugadores(id_mapa);
+    std::vector<EstadoJugador>& ultimos = jugadores_enviados[id_mapa];
+    if (actuales.empty()) {
+        ultimos.clear();
+        return;
+    }
+    if (actuales == ultimos) {
+        return;
+    }
+
+    JugadoresEnSector evento;
+    evento.mapa = id_mapa;
+    evento.jugadores = actuales;
+    ultimos = std::move(actuales);
+    sectores.at(id_mapa).avisar(notificador, evento);
+}
+
+void GestorDeSectores::difundir_jugadores() {
+    for (const auto& entrada : sectores) {
+        difundir_jugadores(entrada.first);
+    }
+}
+
+std::vector<EstadoNpc> GestorDeSectores::armar_npcs(const std::string& id_mapa) const {
+    return en(id_mapa).npcs;
+}
+
+void GestorDeSectores::difundir_npcs(const std::string& id_mapa) {
+    const std::vector<EstadoNpc>& actuales = sectores.at(id_mapa).npcs;
+    std::vector<EstadoNpc>& ultimos = npcs_enviados[id_mapa];
+    if (actuales == ultimos) {
+        return;
+    }
+
+    NpcsEnSector evento;
+    evento.mapa = id_mapa;
+    evento.npcs = actuales;
+    ultimos = actuales;
+    sectores.at(id_mapa).avisar(notificador, evento);
+}
+
+void GestorDeSectores::difundir_npcs() {
+    for (const auto& entrada : sectores) {
+        difundir_npcs(entrada.first);
+    }
+}

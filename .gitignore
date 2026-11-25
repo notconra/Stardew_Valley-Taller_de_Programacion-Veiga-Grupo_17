@@ -1,0 +1,7 @@
+build/
+.qtcreator/
+*.autosave
+*.dat
+*.idx
+/partidas/
+/mundos/

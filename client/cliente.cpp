@@ -1,0 +1,64 @@
+#include "cliente.h"
+
+#include <QApplication>
+#include <QFontDatabase>
+#include <QIcon>
+#include <iostream>
+#include <string>
+
+#include "ui/pantallaprincipal.h"
+
+constexpr const char* RUTA_ICONO_VENTANA = "Assets/LooseSprites/logo.png";
+constexpr const char* RUTA_FUENTE_STARDEW = "Assets/Fonts/stardew-valley.ttf/stardew-valley.ttf";
+constexpr const char* RUTA_FUENTE_DIALOGO = "Assets/fuentes/Stardew_Valley_Dialogue.ttf";
+
+Cliente::Cliente(const ConfiguracionCliente& configuracion_cliente)
+    : configuracion(configuracion_cliente),
+      conexion(configuracion.servidor().host, configuracion.servidor().puerto),
+      vista_sdl(conexion, configuracion.vista()),
+      id_cliente(configuracion.id_cliente()) {
+}
+
+void Cliente::ejecutar() {
+    conexion.enviar_comando(Identificarse{id_cliente});
+
+    EstadoDelJuego estado = EstadoDelJuego::LOBBY;
+    while (estado != EstadoDelJuego::SALIR) {
+        if (estado == EstadoDelJuego::LOBBY) {
+            estado = ejecutar_lobby();
+        } else {
+            estado = ejecutar_partida();
+        }
+    }
+}
+
+EstadoDelJuego Cliente::ejecutar_lobby() {
+    partida_actual = {};
+    int argc = 1;
+    char nombre_app[] = "StardewValley";
+    char* argv[] = {nombre_app, nullptr};
+    QApplication app(argc, argv);
+    app.setWindowIcon(QIcon(RUTA_ICONO_VENTANA));
+    QFontDatabase::addApplicationFont(RUTA_FUENTE_STARDEW);
+    QFontDatabase::addApplicationFont(RUTA_FUENTE_DIALOGO);
+
+    PantallaPrincipal ventana_lobby(conexion, partida_actual, configuracion.jugador());
+    ventana_lobby.showMaximized();
+
+    app.exec();
+
+    mundo_actual = ventana_lobby.mundo_seleccionado();
+
+    // Esto es por si se cerró el lobby para dar paso a SDL
+    if (!partida_actual.codigo_partida.empty()) {
+        return EstadoDelJuego::PARTIDA;
+    }
+
+    return EstadoDelJuego::SALIR;
+}
+
+EstadoDelJuego Cliente::ejecutar_partida() {
+    vista_sdl.establecer_mundo(mundo_actual);
+    bool volver_al_lobby = vista_sdl.ejecutar(partida_actual);
+    return volver_al_lobby ? EstadoDelJuego::LOBBY : EstadoDelJuego::SALIR;
+}
