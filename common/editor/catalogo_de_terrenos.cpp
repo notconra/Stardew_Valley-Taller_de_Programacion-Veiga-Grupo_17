@@ -70,7 +70,6 @@ static constexpr int ANCHO_IMAGEN_MERCADO = 512;
 static constexpr int ALTO_IMAGEN_MERCADO = 1088;
 static constexpr uint32_t TILE_ALFOMBRA_MERCADO = 263;
 static constexpr uint32_t TILE_PISO_MERCADO = 4705;
-static constexpr uint32_t TILE_PARED_MERCADO = 22;
 
 // Nombres temáticos de terrenos - Granja
 static constexpr const char* NOMBRE_TIERRA_BASE = "Tierra de Granja";
@@ -141,9 +140,7 @@ static const std::map<SectorActual, std::vector<DefinicionTile>> CATALOGO_POR_SE
           PropiedadDeCasilla::DECORABLE | PropiedadDeCasilla::ADMITE_MINERAL}}},
     {SectorActual::MERCADO,
      {DefinicionTile{"Alfombra de Tienda", TILE_ALFOMBRA_MERCADO, PropiedadDeCasilla::DECORABLE},
-      DefinicionTile{"Piso de Madera", TILE_PISO_MERCADO, PropiedadDeCasilla::DECORABLE},
-      DefinicionTile{"Pared de Mercado", TILE_PARED_MERCADO, PropiedadDeCasilla::BLOQUEA},
-      DefinicionTile{"Pared de Madera", 113, PropiedadDeCasilla::BLOQUEA}}}};
+      DefinicionTile{"Piso de Madera", TILE_PISO_MERCADO, PropiedadDeCasilla::DECORABLE}}}};
 
 static const std::map<SectorActual, DefinicionTilesetTMX> TILESETS_POR_SECTOR = {
     {SectorActual::GRANJA,

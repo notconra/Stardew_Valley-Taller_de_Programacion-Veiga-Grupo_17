@@ -2,6 +2,7 @@
 #define VENTANA_PRINCIPAL_EDITOR_H
 
 #include <QComboBox>
+#include <QDockWidget>
 #include <QLabel>
 #include <QMainWindow>
 #include <QScrollArea>
@@ -22,9 +23,10 @@ private:
     LienzoDeEdicion* lienzo;
     PaletaDeHerramientas* paleta;
     PanelDeValidacion* panel_validacion;
+    QDockWidget* dock_paleta;
+    QDockWidget* dock_validacion;
     QScrollArea* area_desplazamiento;
     QComboBox* combo_sectores;
-    QComboBox* combo_capas;
     QLabel* etiqueta_coordenadas;
     QLabel* etiqueta_nombre_mundo;
     QLabel* etiqueta_dimensiones;
@@ -37,6 +39,7 @@ private:
     void actualizar_sector_en_pantalla();
     void actualizar_etiqueta_dimensiones();
     void actualizar_etiqueta_nombre_mundo();
+    void ajustar_ancho_paneles();
     bool validar_antes_de_guardar();
     MapaEditable* obtener_mapa_activo();
 
@@ -46,7 +49,6 @@ private slots:
     void guardar_mundo();
     void guardar_mundo_como();
     void cambiar_sector(int indice);
-    void cambiar_capa(int indice);
     void aumentar_zoom();
     void disminuir_zoom();
     void actualizar_coordenadas(int columna, int fila);

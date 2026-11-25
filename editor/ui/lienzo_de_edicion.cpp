@@ -48,7 +48,6 @@ LienzoDeEdicion::LienzoDeEdicion(QWidget* padre)
     : QWidget(padre),
       mapa_actual(nullptr),
       sector_actual(SectorActual::GRANJA),
-      capa_activa(TipoCapa::SUELO),
       tamano_casilla_px(28),
       modo_actual(ModoEditor::TERRENO),
       id_tile_actual(CatalogoDeTerrenos::obtener_tile_base(SectorActual::GRANJA)),
@@ -229,15 +228,6 @@ void LienzoDeEdicion::establecer_estampa_a_colocar(TipoEstampa nueva_estampa) {
 
 void LienzoDeEdicion::establecer_entidad_a_colocar(TipoEntidad nueva_entidad) {
     entidad_a_colocar = nueva_entidad;
-}
-
-void LienzoDeEdicion::establecer_capa_activa(TipoCapa nueva_capa) {
-    capa_activa = nueva_capa;
-    update();
-}
-
-TipoCapa LienzoDeEdicion::obtener_capa_activa() const {
-    return capa_activa;
 }
 
 void LienzoDeEdicion::deseleccionar_entidad() {
@@ -434,7 +424,8 @@ void LienzoDeEdicion::pintar_casilla_en_posicion(int columna, int fila) {
     if (mapa_actual->casilla_pertenece_a_estanque(columna, fila)) {
         return;
     }
-    mapa_actual->pintar_en_capa(capa_activa, columna, fila, id_tile_actual, propiedades_actuales);
+    mapa_actual
+        ->pintar_en_capa(TipoCapa::SUELO, columna, fila, id_tile_actual, propiedades_actuales);
     emit mapa_modificado();
     update();
 }

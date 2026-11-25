@@ -31,6 +31,7 @@
 #include "validador_de_mundo.h"
 
 static constexpr int DURACION_MENSAJE_ESTADO_MS = 2000;
+static constexpr int MARGEN_ANCHO_PANEL_PX = 16;
 
 VentanaPrincipalEditor::VentanaPrincipalEditor(QWidget* padre)
     : QMainWindow(padre),
@@ -39,6 +40,8 @@ VentanaPrincipalEditor::VentanaPrincipalEditor(QWidget* padre)
       lienzo(nullptr),
       paleta(nullptr),
       panel_validacion(nullptr),
+      dock_paleta(nullptr),
+      dock_validacion(nullptr),
       area_desplazamiento(nullptr),
       combo_sectores(nullptr),
       etiqueta_coordenadas(nullptr),
@@ -68,14 +71,14 @@ void VentanaPrincipalEditor::inicializar_interfaz() {
     setCentralWidget(area_desplazamiento);
 
     // Dock lateral izquierdo: Paleta de Herramientas
-    QDockWidget* dock_paleta = new QDockWidget("Paleta de Herramientas", this);
+    dock_paleta = new QDockWidget("Paleta de Herramientas", this);
     dock_paleta->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
     paleta = new PaletaDeHerramientas(dock_paleta);
     dock_paleta->setWidget(paleta);
     addDockWidget(Qt::LeftDockWidgetArea, dock_paleta);
 
     // Dock lateral derecho: Panel de Validación
-    QDockWidget* dock_validacion = new QDockWidget("Panel de Validacion", this);
+    dock_validacion = new QDockWidget("Panel de Validacion", this);
     dock_validacion->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
     panel_validacion = new PanelDeValidacion(dock_validacion);
     dock_validacion->setWidget(panel_validacion);
@@ -159,19 +162,6 @@ void VentanaPrincipalEditor::inicializar_barra_de_herramientas() {
         this,
         &VentanaPrincipalEditor::cambiar_sector);
     barra->addWidget(combo_sectores);
-
-    barra->addSeparator();
-
-    combo_capas = new QComboBox(barra);
-    combo_capas->addItem("Capa: Suelo (Back)");
-    combo_capas->addItem("Capa: Estructuras (Buildings)");
-    combo_capas->addItem("Capa: Techos (Front)");
-    connect(
-        combo_capas,
-        QOverload<int>::of(&QComboBox::currentIndexChanged),
-        this,
-        &VentanaPrincipalEditor::cambiar_capa);
-    barra->addWidget(combo_capas);
 
     barra->addSeparator();
 
@@ -337,6 +327,23 @@ void VentanaPrincipalEditor::actualizar_sector_en_pantalla() {
         panel_validacion->actualizar_sector(SectorActual::CAVERNA);
     }
     actualizar_etiqueta_dimensiones();
+    ajustar_ancho_paneles();
+}
+
+void VentanaPrincipalEditor::ajustar_ancho_paneles() {
+    if (paleta == nullptr || panel_validacion == nullptr || dock_paleta == nullptr ||
+        dock_validacion == nullptr) {
+        return;
+    }
+    if (paleta->layout() != nullptr) {
+        paleta->layout()->activate();
+    }
+    if (panel_validacion->layout() != nullptr) {
+        panel_validacion->layout()->activate();
+    }
+    int ancho_paleta = paleta->sizeHint().width() + MARGEN_ANCHO_PANEL_PX;
+    int ancho_validacion = panel_validacion->sizeHint().width() + MARGEN_ANCHO_PANEL_PX;
+    resizeDocks({dock_paleta, dock_validacion}, {ancho_paleta, ancho_validacion}, Qt::Horizontal);
 }
 
 void VentanaPrincipalEditor::nuevo_mundo() {
@@ -456,13 +463,6 @@ bool VentanaPrincipalEditor::validar_antes_de_guardar() {
 void VentanaPrincipalEditor::cambiar_sector(int indice) {
     (void)indice;
     actualizar_sector_en_pantalla();
-}
-
-void VentanaPrincipalEditor::cambiar_capa(int indice) {
-    lienzo->establecer_capa_activa(static_cast<TipoCapa>(indice));
-    statusBar()->showMessage(
-        QString("Editando %1").arg(combo_capas->currentText()),
-        DURACION_MENSAJE_ESTADO_MS);
 }
 
 void VentanaPrincipalEditor::aumentar_zoom() {

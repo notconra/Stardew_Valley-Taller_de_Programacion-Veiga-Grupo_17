@@ -33,7 +33,6 @@ class LienzoDeEdicion : public QWidget {
 private:
     MapaEditable* mapa_actual;
     SectorActual sector_actual;
-    TipoCapa capa_activa;
     int tamano_casilla_px;
     ModoEditor modo_actual;
     uint32_t id_tile_actual;
@@ -117,8 +116,6 @@ public:
     void establecer_tile(uint32_t nuevo_id_tile, uint8_t nuevas_propiedades);
     void establecer_estampa_a_colocar(TipoEstampa nueva_estampa);
     void establecer_entidad_a_colocar(TipoEntidad nueva_entidad);
-    void establecer_capa_activa(TipoCapa nueva_capa);
-    TipoCapa obtener_capa_activa() const;
 
     void deseleccionar_entidad();
     bool eliminar_entidad_seleccionada();
