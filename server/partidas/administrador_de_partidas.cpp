@@ -190,6 +190,21 @@ IngresoAPartida AdministradorDePartidas::crear(
     return IngresoAPartida{entrada, nombre_jugador, color_jugador, *sesion_creada, apariencia};
 }
 
+void AdministradorDePartidas::verificar_disponibilidad(const std::string& codigo_partida) const {
+    std::lock_guard<std::mutex> lock(mutex);
+    if (partidas.find(codigo_partida) == partidas.end()) {
+        throw ErrorDePartida(
+            CodigoError::PARTIDA_INEXISTENTE,
+            "no existe la partida \"" + codigo_partida + "\"");
+    }
+    const auto existente = sesiones.find(codigo_partida);
+    if (existente != sesiones.end() && !existente->second->esta_viva()) {
+        throw ErrorDePartida(
+            CodigoError::PARTIDA_CERRADA,
+            "la partida " + codigo_partida + " se cerró por un error interno");
+    }
+}
+
 IngresoAPartida AdministradorDePartidas::unirse(
     uint32_t id_cliente, const std::string& nombre_jugador, const std::string& codigo_partida,
     const AparienciaPersonaje& apariencia) {

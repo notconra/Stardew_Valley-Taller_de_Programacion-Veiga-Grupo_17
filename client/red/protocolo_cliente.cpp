@@ -14,6 +14,8 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::ERROR_SERVIDOR, [this] { return recibir_error_servidor(); }},
           {TipoMensaje::LISTA_PARTIDAS, [this] { return recibir_lista_partidas(); }},
           {TipoMensaje::LISTA_MUNDOS, [this] { return recibir_lista_mundos(); }},
+          {TipoMensaje::CODIGO_PARTIDA_DISPONIBLE,
+           [this] { return recibir_codigo_partida_disponible(); }},
           {TipoMensaje::PARTIDA_ENTRADA, [this] { return recibir_entrada_exitosa_a_partida(); }},
           {TipoMensaje::MULTIJUGADOR_ACTIVADO, [this] { return recibir_multijugador_activado(); }},
           {TipoMensaje::PARTIDA_ABANDONADA, [this] { return recibir_partida_abandonada(); }},
@@ -68,6 +70,7 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const RetomarPartida& m) { enviar_comando_retomar_partida(m); },
             [this](const EliminarPartida& m) { enviar_comando_eliminar_partida(m); },
             [this](const ListarMundos& m) { enviar_comando_listar_mundos(m); },
+            [this](const VerificarCodigoPartida& m) { enviar_comando_verificar_codigo_partida(m); },
             [this](const ActivarMultijugador& m) { enviar_comando_activar_multijugador(m); },
             [this](const SalirDePartida& m) { enviar_comando_salir_de_partida(m); },
             [this](const GuardarPartida& m) { enviar_comando_guardar_partida(m); },
@@ -137,6 +140,12 @@ void ProtocoloCliente::enviar_comando_eliminar_partida(const EliminarPartida& el
 
 void ProtocoloCliente::enviar_comando_listar_mundos(const ListarMundos&) {
     enviar_tipo(TipoMensaje::LISTAR_MUNDOS);
+}
+
+void ProtocoloCliente::enviar_comando_verificar_codigo_partida(
+    const VerificarCodigoPartida& verificar) {
+    enviar_tipo(TipoMensaje::VERIFICAR_CODIGO_PARTIDA);
+    enviar_texto(verificar.codigo_partida);
 }
 
 void ProtocoloCliente::enviar_comando_activar_multijugador(const ActivarMultijugador&) {
@@ -345,6 +354,10 @@ ListaMundos ProtocoloCliente::recibir_lista_mundos() {
         mundos.push_back(recibir_texto());
     }
     return ListaMundos{mundos};
+}
+
+CodigoPartidaDisponible ProtocoloCliente::recibir_codigo_partida_disponible() {
+    return CodigoPartidaDisponible{};
 }
 
 EntradaExitosaAPartida ProtocoloCliente::recibir_entrada_exitosa_a_partida() {
