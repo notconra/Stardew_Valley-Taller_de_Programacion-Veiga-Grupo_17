@@ -115,6 +115,10 @@ TEST_F(ProtocoloEventosTest, ListaMundosVacia) {
     verificar_evento(ListaMundos{});
 }
 
+TEST_F(ProtocoloEventosTest, CodigoPartidaDisponible) {
+    verificar_evento(CodigoPartidaDisponible{});
+}
+
 TEST_F(ProtocoloEventosTest, EntradaExitosaAPartida) {
     verificar_evento(EntradaExitosaAPartida{"ABC123", 0x11223344, true});
 }
