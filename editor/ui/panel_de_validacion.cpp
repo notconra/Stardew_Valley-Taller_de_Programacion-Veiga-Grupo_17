@@ -88,6 +88,10 @@ PanelDeValidacion::PanelDeValidacion(QWidget* padre)
     QGroupBox* grupo_errores = new QGroupBox("Observaciones y Errores", this);
     QVBoxLayout* layout_errores = new QVBoxLayout(grupo_errores);
     lista_errores = new QListWidget(grupo_errores);
+    lista_errores->setWordWrap(true);
+    lista_errores->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    lista_errores->setTextElideMode(Qt::ElideNone);
+    lista_errores->setSpacing(4);
     layout_errores->addWidget(lista_errores);
     layout_principal->addWidget(grupo_errores);
 

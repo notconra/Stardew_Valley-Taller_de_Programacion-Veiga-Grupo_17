@@ -34,7 +34,7 @@ int main(int cantidad_argumentos, char* argumentos[]) {
     aplicacion.setStyleSheet(estilo);
 
     VentanaPrincipalEditor ventana;
-    ventana.show();
+    ventana.showMaximized();
 
     return aplicacion.exec();
 }
