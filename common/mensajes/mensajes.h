@@ -19,7 +19,7 @@ using ComandoCliente = std::variant<
     ListarMundos,
 
     // Partida
-    ActivarMultijugador, SalirDePartida, Moverse, GuardarPartida,
+    ActivarMultijugador, SalirDePartida, Moverse,
 
     // Inventario y acciones
     SeleccionarRanuraDeLaBarra, UsarItem, MoverItemEntreRanuras, MoverItemConCofre, CerrarCofre,

@@ -11,12 +11,17 @@
 #include <vector>
 
 #include "../juego/cheats/comando_animal.h"
+#include "../juego/cheats/comando_animales.h"
 #include "../juego/cheats/comando_avanzar_dia.h"
 #include "../juego/cheats/comando_dinero.h"
+#include "../juego/cheats/comando_energia.h"
 #include "../juego/cheats/comando_estacion.h"
 #include "../juego/cheats/comando_lluvia.h"
 #include "../juego/cheats/comando_lote.h"
+#include "../juego/cheats/comando_nivel.h"
+#include "../juego/cheats/comando_regar.h"
 #include "../juego/cheats/comando_semillas.h"
+#include "../juego/cheats/comando_vida.h"
 
 SesionDePartida::SesionDePartida(
     const std::string& codigo_de_partida, const ConfiguracionPartidaServidor& configuracion_partida,
@@ -36,12 +41,17 @@ SesionDePartida::SesionDePartida(
         nombre_mundo_cargado = nombre_mundo;
     }
     chat.agregar_comando(std::make_unique<ComandoAnimal>(mundo));
+    chat.agregar_comando(std::make_unique<ComandoAnimales>(mundo));
     chat.agregar_comando(std::make_unique<ComandoAvanzarDia>(mundo));
     chat.agregar_comando(std::make_unique<ComandoSemillas>(mundo, recursos.catalogo_de_cultivos));
     chat.agregar_comando(std::make_unique<ComandoDinero>(mundo));
+    chat.agregar_comando(std::make_unique<ComandoEnergia>(mundo));
     chat.agregar_comando(std::make_unique<ComandoEstacion>(mundo));
     chat.agregar_comando(std::make_unique<ComandoLluvia>(mundo));
     chat.agregar_comando(std::make_unique<ComandoLote>(mundo));
+    chat.agregar_comando(std::make_unique<ComandoNivel>(mundo));
+    chat.agregar_comando(std::make_unique<ComandoRegar>(mundo));
+    chat.agregar_comando(std::make_unique<ComandoVida>(mundo));
     try {
         start();
     } catch (...) {

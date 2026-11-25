@@ -19,7 +19,6 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::ACTIVAR_MULTIJUGADOR,
            [this] { return recibir_comando_activar_multijugador(); }},
           {TipoMensaje::SALIR_DE_PARTIDA, [this] { return recibir_comando_salir_de_partida(); }},
-          {TipoMensaje::GUARDAR_PARTIDA, [this] { return recibir_comando_guardar_partida(); }},
           {TipoMensaje::MOVERSE, [this] { return recibir_comando_moverse(); }},
           {TipoMensaje::SELECCIONAR_RANURA_DE_LA_BARRA,
            [this] { return recibir_comando_seleccionar_ranura_de_la_barra(); }},
@@ -123,10 +122,6 @@ ActivarMultijugador ProtocoloServidor::recibir_comando_activar_multijugador() {
 
 SalirDePartida ProtocoloServidor::recibir_comando_salir_de_partida() {
     return SalirDePartida{};
-}
-
-GuardarPartida ProtocoloServidor::recibir_comando_guardar_partida() {
-    return GuardarPartida{};
 }
 
 Moverse ProtocoloServidor::recibir_comando_moverse() {
@@ -383,10 +378,10 @@ void ProtocoloServidor::enviar_estado_jugador(const EstadoJugador& estado) {
     enviar_u8(static_cast<uint8_t>(estado.calidad_en_mano));
     enviar_u8(estado.numero_de_accion);
     enviar_u8(static_cast<uint8_t>(estado.descanso));
-    enviar_u8(estado.vida);
-    enviar_u8(estado.energia);
-    enviar_u8(estado.vida_maxima);
-    enviar_u8(estado.energia_maxima);
+    enviar_u16(estado.vida);
+    enviar_u16(estado.energia);
+    enviar_u16(estado.vida_maxima);
+    enviar_u16(estado.energia_maxima);
     enviar_booleano(estado.con_mejora_de_pelea);
     enviar_u32(estado.monedas);
     enviar_apariencia(estado.apariencia);

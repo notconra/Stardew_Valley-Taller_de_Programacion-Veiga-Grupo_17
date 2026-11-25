@@ -58,7 +58,8 @@ struct ConfiguracionInventarioServidor {
 };
 
 // Vida y energía con las que arranca cada jugador (y a las que vuelve al dormir en su cama). Con el
-// premio del lote de pelea suben un 25%, y el protocolo las manda en un byte: por eso el tope es 200.
+// premio del lote de pelea suben un 25%, y el protocolo las manda en un byte: por eso el tope es
+// 200.
 struct ConfiguracionJugadorServidor {
     int vida_inicial = 100;
     int energia_inicial = 100;
@@ -79,10 +80,11 @@ struct ConfiguracionAccionesServidor {
     // trata la tierra con la pala o se vuelve a tierra común con el pico.
     int energia_por_picar = 3;
     int energia_por_tratar_tierra = 3;
-    // Energía que gasta plantar una semilla, regar una planta y cosecharla.
+    // Energía que gasta plantar una semilla, regar una planta, cosecharla y ordeñar una vaca.
     int energia_por_plantar = 1;
     int energia_por_regar = 2;
     int energia_por_cosechar = 1;
+    int energia_por_ordeniar = 2;
 };
 
 // Cómo se calcula la calidad de lo que se cosecha. Cada riego tardío (en la segunda mitad de su

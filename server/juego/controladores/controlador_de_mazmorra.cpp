@@ -338,3 +338,25 @@ bool ControladorDeMazmorra::resolver_transicion(
 void ControladorDeMazmorra::al_desconectarse(Personaje& personaje) {
     salir_de_la_mazmorra(personaje);
 }
+
+bool ControladorDeMazmorra::ir_a_nivel(
+    Personaje& personaje, int numero_nivel, std::string& mensaje) {
+    if (!mazmorra) {
+        mensaje = "No hay mazmorra disponible.";
+        return false;
+    }
+    if (numero_nivel < 1 || numero_nivel > CANTIDAD_NIVELES) {
+        mensaje = "El nivel debe estar entre 1 y " + std::to_string(CANTIDAD_NIVELES) + ".";
+        return false;
+    }
+    if (!mazmorra->esta_adentro(personaje.id_jugador)) {
+        entrar(personaje);
+    }
+    if (!mazmorra->ir_a_nivel(personaje.id_jugador, static_cast<size_t>(numero_nivel))) {
+        mensaje = "No se pudo ir al nivel " + std::to_string(numero_nivel) + ".";
+        return false;
+    }
+    llevar_al_nivel_actual(personaje);
+    mensaje = "Teletransportado al nivel " + std::to_string(numero_nivel) + " de la mazmorra.";
+    return true;
+}

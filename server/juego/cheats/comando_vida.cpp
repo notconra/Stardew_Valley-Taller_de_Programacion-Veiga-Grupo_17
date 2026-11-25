@@ -1,0 +1,69 @@
+#include "comando_vida.h"
+
+#include <cctype>
+#include <cstddef>
+#include <string>
+
+#include "../mundo.h"
+
+ComandoVida::ComandoVida(Mundo& mundo_partida) : mundo(mundo_partida) {
+}
+
+bool ComandoVida::reconoce(const std::string& palabra_clave) const {
+    return palabra_clave == "vida";
+}
+
+bool ComandoVida::parsear_cantidad_no_negativa(const std::string& texto, int& resultado) const {
+    if (texto.empty()) {
+        return false;
+    }
+    bool todos_digitos = true;
+    std::size_t indice = 0;
+    while (indice < texto.size() && todos_digitos) {
+        if (!std::isdigit(static_cast<unsigned char>(texto[indice]))) {
+            todos_digitos = false;
+        }
+        indice++;
+    }
+    if (!todos_digitos) {
+        return false;
+    }
+    try {
+        unsigned long long valor = std::stoull(texto);
+        if (valor > static_cast<unsigned long long>(MAXIMO_VIDA)) {
+            return false;
+        }
+        resultado = static_cast<int>(valor);
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+void ComandoVida::ejecutar(const ContextoDeComandoDeChat& contexto) {
+    if (contexto.argumentos.empty()) {
+        contexto.respuestas.responder_a_jugador(
+            contexto.id_jugador,
+            "Uso: /vida <cantidad> (entre 0 y 65535)");
+        return;
+    }
+
+    int cantidad = 0;
+    if (!parsear_cantidad_no_negativa(contexto.argumentos[0], cantidad)) {
+        contexto.respuestas.responder_a_jugador(
+            contexto.id_jugador,
+            "La cantidad debe ser un numero entero entre 0 y 65535.");
+        return;
+    }
+
+    if (!mundo.fijar_vida(contexto.id_jugador, cantidad)) {
+        contexto.respuestas.responder_a_jugador(
+            contexto.id_jugador,
+            "No se pudo modificar la vida.");
+        return;
+    }
+
+    contexto.respuestas.responder_a_jugador(
+        contexto.id_jugador,
+        "Vida fijada en " + std::to_string(cantidad) + ".");
+}

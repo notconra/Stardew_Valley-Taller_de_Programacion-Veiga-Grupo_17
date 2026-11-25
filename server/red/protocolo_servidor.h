@@ -25,7 +25,6 @@ private:
     ListarMundos recibir_comando_listar_mundos();
     ActivarMultijugador recibir_comando_activar_multijugador();
     SalirDePartida recibir_comando_salir_de_partida();
-    GuardarPartida recibir_comando_guardar_partida();
     Moverse recibir_comando_moverse();
     SeleccionarRanuraDeLaBarra recibir_comando_seleccionar_ranura_de_la_barra();
     UsarItem recibir_comando_usar_item();

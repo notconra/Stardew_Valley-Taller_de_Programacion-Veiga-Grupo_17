@@ -35,6 +35,16 @@ std::vector<int> Drops::ids_cerca_de(const Casilla& centro, int radio_en_casilla
     return resultado;
 }
 
+std::vector<int> Drops::ids_de_tipo(TipoItem tipo) const {
+    std::vector<int> resultado;
+    for (const auto& entrada : drops) {
+        if (entrada.second.tipo == tipo) {
+            resultado.push_back(entrada.first);
+        }
+    }
+    return resultado;
+}
+
 bool Drops::recoger(int id, Inventario& destino) {
     const Drop* drop = buscar(id);
     if (drop == nullptr || !destino.puede_agregar(drop->tipo, drop->cantidad, drop->calidad)) {

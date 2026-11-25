@@ -22,6 +22,7 @@ bool AccionOrdeniarVaca::ejecutar(ContextoDeAccion& c) {
     if (!c.sector.ordeniar_vaca(c.notificador, col, fila)) {
         return false;
     }
+    c.personaje.gastar_energia(c.recursos.juego.acciones.energia_por_ordeniar);
     uint16_t sobrante = c.personaje.inventario.agregar_item(TipoItem::LECHE, 1, Calidad::BASE);
     if (sobrante > 0) {
         c.sector.soltar(

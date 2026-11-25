@@ -54,8 +54,6 @@ constexpr char AYUDA_DE_TECLAS[] =
     "  clic afuera       con un stack agarrado de la barra, lo tira al piso\n"
     "  clic der. (cama)  acostarse a dormir\n"
     "  Enter             dar el OK para pasar al día siguiente (acostado o desmayado)\n"
-    "  F5                (cheat) guardar la partida ya; normalmente se guarda sola al dar todos el "
-    "OK\n"
     "  T / botón del chat abrir o cerrar el chat\n"
     "  clic en el chat   casilla de abajo: escribir. Enter envía, ESC o clic afuera sueltan\n"
     "  rueda sobre chat  recorrer los mensajes (el personaje puede seguir caminando)\n"
@@ -747,11 +745,6 @@ void VistaPartida::procesar_entrada(
 
     if (cuadro_de_aviso.procesar_entrada(entrada) || cuadro_de_dialogo.procesar_entrada(entrada)) {
         return;
-    }
-
-    if (pedidos.guardar) {
-        conexion.enviar_comando(GuardarPartida{});
-        std::cout << "[partida] guardando partida en el servidor..." << std::endl;
     }
 
     if (!consumo_del_chat.rueda) {
@@ -1486,10 +1479,16 @@ void VistaPartida::dibujar(
     hud.dibujar(renderer, ultimo_inventario, ultimo_cofre, entrada.raton_x(), entrada.raton_y());
     if (const EstadoJugador* propio = jugador_propio(); propio != nullptr) {
         hud.dibujar_energia(
-            renderer, propio->energia, propio->energia_maxima, propio->con_mejora_de_pelea);
+            renderer,
+            propio->energia,
+            propio->energia_maxima,
+            propio->con_mejora_de_pelea);
         if (mapa_actual_es_mazmorra() || propio->vida < propio->vida_maxima) {
             hud.dibujar_vida(
-                renderer, propio->vida, propio->vida_maxima, propio->con_mejora_de_pelea);
+                renderer,
+                propio->vida,
+                propio->vida_maxima,
+                propio->con_mejora_de_pelea);
         }
         reloj_grafico.dibujar_dinero(renderer, propio->monedas, ancho_de_pantalla);
     }

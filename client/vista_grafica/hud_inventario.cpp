@@ -632,7 +632,7 @@ void HudInventario::dibujar(
 }
 
 void HudInventario::dibujar_vida(
-    SDL_Renderer* renderer, uint8_t vida, uint8_t vida_maxima, bool mejorado) const {
+    SDL_Renderer* renderer, uint16_t vida, uint16_t vida_maxima, bool mejorado) const {
     if (vida_maxima == 0 || !marco_de_vida.has_value() || !marco_de_energia.has_value()) {
         return;
     }
@@ -646,11 +646,16 @@ void HudInventario::dibujar_vida(
 
     const double fraccion = std::clamp(static_cast<double>(vida) / vida_maxima, 0.0, 1.0);
     dibujar_gauge_elegido(
-        renderer, marco_de_vida, marco_de_vida_mejorado, mejorado, fraccion, borde_derecho);
+        renderer,
+        marco_de_vida,
+        marco_de_vida_mejorado,
+        mejorado,
+        fraccion,
+        borde_derecho);
 }
 
 void HudInventario::dibujar_energia(
-    SDL_Renderer* renderer, uint8_t energia, uint8_t energia_maxima, bool mejorado) const {
+    SDL_Renderer* renderer, uint16_t energia, uint16_t energia_maxima, bool mejorado) const {
     if (energia_maxima == 0 || !marco_de_energia.has_value()) {
         return;
     }

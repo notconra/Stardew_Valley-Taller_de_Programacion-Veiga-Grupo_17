@@ -103,6 +103,7 @@ energia_por_tratar_tierra = 3
 energia_por_plantar = 1
 energia_por_regar = 2
 energia_por_cosechar = 1
+energia_por_ordeniar = 2
 
 [juego.cultivos]
 # La calidad de lo cosechado arranca en perfecta y baja un nivel por cada falta (sin pasar de

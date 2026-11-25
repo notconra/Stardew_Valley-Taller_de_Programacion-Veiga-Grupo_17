@@ -58,6 +58,9 @@ public:
 
     // Se llama justo antes de sacar al jugador de la partida.
     void al_desconectarse(Personaje& personaje);
+
+    // Teletransporta al jugador al nivel indicado (1..10). Si no estaba adentro, entra primero.
+    bool ir_a_nivel(Personaje& personaje, int numero_nivel, std::string& mensaje);
 };
 
 #endif

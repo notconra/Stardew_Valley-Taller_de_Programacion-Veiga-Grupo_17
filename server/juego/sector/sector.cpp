@@ -5,8 +5,8 @@
 #include <optional>
 #include <vector>
 
-#include "../azar.h"
 #include "../aspersores/aspersores.h"
+#include "../azar.h"
 #include "../muebles/muebles.h"
 
 const ObjetoDelMundo* Sector::objeto_al_frente(uint32_t id_jugador) const {
@@ -315,6 +315,29 @@ bool Sector::ordeniar_vaca(Notificador& notificador, uint32_t columna, uint32_t 
     VacaOrdeniable evento;
     evento.id_vaca = id_vaca;
     evento.lista = false;
+    avisar(notificador, evento);
+    return true;
+}
+
+bool Sector::ordeniar_vaca_por_id(Notificador& notificador, uint32_t id_vaca) {
+    if (!animales.ordeniar_vaca(id_vaca)) {
+        return false;
+    }
+    VacaOrdeniable evento;
+    evento.id_vaca = id_vaca;
+    evento.lista = false;
+    avisar(notificador, evento);
+    return true;
+}
+
+bool Sector::recoger_drop(
+    Notificador& notificador, uint32_t id_jugador, int id_drop, Inventario& destino) {
+    if (!drops.recoger(id_drop, destino)) {
+        return false;
+    }
+    DropRetirado evento;
+    evento.id = static_cast<uint32_t>(id_drop);
+    evento.id_jugador = id_jugador;
     avisar(notificador, evento);
     return true;
 }

@@ -53,6 +53,11 @@ public:
     bool bajar(IdJugador jugador);
 
     /*
+     * Teletransporta al jugador que ya está dentro de la mazmorra al nivel indicado (1..10).
+     */
+    bool ir_a_nivel(IdJugador jugador, size_t numero);
+
+    /*
      * El jugador usa la puerta de salida y vuelve al pueblo.
      * No verifica la posición: el gameloop la llama cuando detecta por colisión que el jugador esta
      * en la puerta de salida.

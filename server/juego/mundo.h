@@ -134,10 +134,15 @@ public:
     // guardar la partida; devuelve true una sola vez.
     bool tomar_centro_terminado();
 
-    // Comandos de prueba y cheats de animales / tiempo
+    // Comandos de prueba y cheats de animales / tiempo / jugador / mazmorra / cultivos
     bool agregar_vaca_en_granja_cerca(uint32_t id_jugador);
     bool agregar_gallina_en_granja_cerca(uint32_t id_jugador);
     std::string estado_animales_granja() const;
+    std::string cuidar_todos_los_animales(uint32_t id_jugador);
+    void regar_todos_los_cultivos();
+    bool fijar_vida(uint32_t id_jugador, int cantidad);
+    bool fijar_energia(uint32_t id_jugador, int cantidad);
+    bool ir_a_nivel_mazmorra(uint32_t id_jugador, int numero_nivel, std::string& mensaje);
     void avanzar_dia();
     void avanzar_minutos(uint32_t minutos);
     HoraDelJuego hora_actual() const;

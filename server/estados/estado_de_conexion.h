@@ -48,7 +48,6 @@ public:
     virtual ProximoEstado listar_mundos(const ListarMundos& comando);
     virtual ProximoEstado activar_multijugador(const ActivarMultijugador& comando);
     virtual ProximoEstado salir_de_partida(const SalirDePartida& comando);
-    virtual ProximoEstado guardar_partida(const GuardarPartida& comando);
     virtual ProximoEstado comando_de_juego(const ComandoCliente& comando);
 
     // Limpieza cuando la conexión se corta.

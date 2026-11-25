@@ -25,7 +25,6 @@ private:
     void enviar_comando_listar_mundos(const ListarMundos& listar);
     void enviar_comando_activar_multijugador(const ActivarMultijugador&);
     void enviar_comando_salir_de_partida(const SalirDePartida& salir_de_partida);
-    void enviar_comando_guardar_partida(const GuardarPartida& guardar);
     void enviar_comando_moverse(const Moverse& moverse);
     void enviar_comando_seleccionar_ranura_de_la_barra(
         const SeleccionarRanuraDeLaBarra& seleccionar);
