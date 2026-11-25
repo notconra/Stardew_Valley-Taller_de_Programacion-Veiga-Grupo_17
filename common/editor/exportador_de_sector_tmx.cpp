@@ -712,6 +712,27 @@ void ExportadorDeSectorTMX::inyectar_tiles_de_salida_caverna(
     }
 }
 
+void ExportadorDeSectorTMX::casilla_delante_de_la_puerta(
+    int posicion_x, int posicion_y, int ancho, int alto, int& columna, int& fila) const {
+    const int primera_columna = posicion_x / ANCHO_TILE_PIXELES;
+    const int primera_fila = posicion_y / ALTO_TILE_PIXELES;
+    const int columnas = ancho / ANCHO_TILE_PIXELES;
+    const int filas = alto / ALTO_TILE_PIXELES;
+    columna = primera_columna;
+    fila = (posicion_y + alto) / ALTO_TILE_PIXELES;
+    if (primera_columna <= 0) {
+        columna = primera_columna + columnas;
+        fila = primera_fila;
+    } else if (primera_columna + columnas >= mapa.obtener_cantidad_de_columnas()) {
+        columna = primera_columna - 1;
+        fila = primera_fila;
+    } else if (primera_fila <= 0) {
+        fila = primera_fila + filas;
+    } else if (primera_fila + filas >= mapa.obtener_cantidad_de_filas()) {
+        fila = primera_fila - 1;
+    }
+}
+
 void ExportadorDeSectorTMX::exportar_entidades() {
     std::map<TipoEntidad, DefinicionTransicionTMX> transiciones_por_tipo = {
         {TipoEntidad::CABANIA,
@@ -729,9 +750,17 @@ void ExportadorDeSectorTMX::exportar_entidades() {
           LLEGADA_ENTRADA,
           LLEGADA_PUERTA_DEL_MERCADO}},
         {TipoEntidad::TRANSICION_PUEBLO,
-         {DESTINO_PUEBLO, destinos.columna_destino_pueblo, destinos.fila_destino_pueblo, "", ""}},
+         {DESTINO_PUEBLO,
+          destinos.columna_destino_pueblo,
+          destinos.fila_destino_pueblo,
+          LLEGADA_DESDE_LA_GRANJA,
+          LLEGADA_DESDE_EL_PUEBLO}},
         {TipoEntidad::TRANSICION_GRANJA,
-         {DESTINO_GRANJA, destinos.columna_destino_granja, destinos.fila_destino_granja, "", ""}},
+         {DESTINO_GRANJA,
+          destinos.columna_destino_granja,
+          destinos.fila_destino_granja,
+          LLEGADA_DESDE_EL_PUEBLO,
+          LLEGADA_DESDE_LA_GRANJA}},
         {TipoEntidad::ENTRADA_CAVERNA,
          {DESTINO_CAVERNA,
           destinos.columna_destino_caverna,
@@ -837,14 +866,23 @@ void ExportadorDeSectorTMX::exportar_entidades() {
                 iterador_transicion->second.columna_destino,
                 iterador_transicion->second.fila_destino,
                 iterador_transicion->second.llegada);
-            // El lugar donde aparece el que sale por esta puerta: la casilla de abajo de la zona.
+            // El lugar donde aparece el que llega por esta puerta desde el otro mapa.
             const std::string llegada_propia = iterador_transicion->second.llegada_propia;
             if (!llegada_propia.empty()) {
+                int columna_llegada = 0;
+                int fila_llegada = 0;
+                casilla_delante_de_la_puerta(
+                    posicion_x_pixeles,
+                    posicion_y_pixeles,
+                    ancho_pixeles,
+                    alto_pixeles,
+                    columna_llegada,
+                    fila_llegada);
                 escritor.agregar_llegada(
                     CAPA_TRANSICIONES_TMX,
                     llegada_propia,
-                    posicion_x_pixeles / ANCHO_TILE_PIXELES,
-                    (posicion_y_pixeles + alto_pixeles) / ALTO_TILE_PIXELES);
+                    columna_llegada,
+                    fila_llegada);
             }
         } else {
             auto iterador_puesto = PUESTOS_POR_TIPO.find(tipo);

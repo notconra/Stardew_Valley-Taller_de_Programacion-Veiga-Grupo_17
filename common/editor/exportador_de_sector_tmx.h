@@ -128,6 +128,12 @@ private:
     void configurar_tileset();
     void exportar_capas_de_tiles();
     void exportar_entidades();
+
+    // La casilla donde aparece el que sale por esa puerta (en píxeles del mapa). Por defecto es la
+    // de abajo de la zona. Si la puerta está en un borde del mapa (el camino entre la granja y el
+    // pueblo), es la de al lado del lado de adentro, para no aparecer encima de la puerta.
+    void casilla_delante_de_la_puerta(
+        int posicion_x, int posicion_y, int ancho, int alto, int& columna, int& fila) const;
     void inyectar_tiles_de_cabania(
         int origen_columna, int origen_fila, int total_columnas, int total_filas,
         std::vector<uint32_t>& tiles_suelo, std::vector<uint32_t>& tiles_estructuras,

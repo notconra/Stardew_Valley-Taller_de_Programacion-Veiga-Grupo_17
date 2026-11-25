@@ -14,6 +14,11 @@
 #define LLEGADA_PUERTA_DEL_MERCADO "puerta_mercado"
 #define LLEGADA_PUERTA_DEL_CENTRO "puerta_centro"
 
+// Al lado del camino entre la granja y el pueblo, del lado de adentro: en la granja, donde aparece
+// el que viene del pueblo, y en el pueblo, donde aparece el que viene de la granja.
+#define LLEGADA_DESDE_EL_PUEBLO "desde_pueblo"
+#define LLEGADA_DESDE_LA_GRANJA "desde_granja"
+
 // En un interior: donde aparece el que entra.
 #define LLEGADA_ENTRADA "entrada"
 
