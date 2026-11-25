@@ -1,6 +1,7 @@
 #include <QApplication>
 #include <QFile>
 #include <QString>
+#include <QTimer>
 
 #include "ui/ventana_principal_editor.h"
 
@@ -16,7 +17,8 @@ int main(int cantidad_argumentos, char* argumentos[]) {
     }
 
     VentanaPrincipalEditor ventana;
-    ventana.showMaximized();
+    ventana.show();
+    QTimer::singleShot(50, &ventana, &QWidget::showMaximized);
 
     return aplicacion.exec();
 }

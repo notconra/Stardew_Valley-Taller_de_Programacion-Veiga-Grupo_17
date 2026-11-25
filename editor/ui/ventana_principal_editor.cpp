@@ -3,10 +3,10 @@
 #include <QAction>
 #include <QComboBox>
 #include <QDialog>
-#include <QDialogButtonBox>
 #include <QDockWidget>
 #include <QFileDialog>
 #include <QFormLayout>
+#include <QHBoxLayout>
 #include <QInputDialog>
 #include <QLabel>
 #include <QMenu>
@@ -33,6 +33,7 @@
 static constexpr int DURACION_MENSAJE_ESTADO_MS = 2000;
 static constexpr int MARGEN_ANCHO_PANEL_PX = 16;
 static constexpr size_t MAXIMO_HISTORIAL_DESHACER = 20;
+static constexpr int TAMANO_CASILLA_BASE_ZOOM_PX = 28;
 
 VentanaPrincipalEditor::VentanaPrincipalEditor(QWidget* padre)
     : QMainWindow(padre),
@@ -53,9 +54,10 @@ VentanaPrincipalEditor::VentanaPrincipalEditor(QWidget* padre)
       combo_sectores(nullptr),
       etiqueta_coordenadas(nullptr),
       etiqueta_nombre_mundo(nullptr),
-      etiqueta_dimensiones(nullptr) {
+      etiqueta_dimensiones(nullptr),
+      etiqueta_zoom(nullptr) {
     setWindowTitle("Stardew Valley - Editor de Mapas y Mundos");
-    resize(1280, 800);
+    setMinimumSize(960, 600);
 
     inicializar_interfaz();
     inicializar_menu();
@@ -198,11 +200,16 @@ void VentanaPrincipalEditor::inicializar_barra_de_herramientas() {
 
     barra->addSeparator();
 
-    QPushButton* boton_zoom_menos = new QPushButton(" Zoom - ", barra);
+    QPushButton* boton_zoom_menos = new QPushButton(" - ", barra);
     connect(boton_zoom_menos, &QPushButton::clicked, this, &VentanaPrincipalEditor::disminuir_zoom);
     barra->addWidget(boton_zoom_menos);
 
-    QPushButton* boton_zoom_mas = new QPushButton(" Zoom + ", barra);
+    etiqueta_zoom = new QLabel("100%", barra);
+    etiqueta_zoom->setAlignment(Qt::AlignCenter);
+    etiqueta_zoom->setMinimumWidth(44);
+    barra->addWidget(etiqueta_zoom);
+
+    QPushButton* boton_zoom_mas = new QPushButton(" + ", barra);
     connect(boton_zoom_mas, &QPushButton::clicked, this, &VentanaPrincipalEditor::aumentar_zoom);
     barra->addWidget(boton_zoom_mas);
 
@@ -269,11 +276,10 @@ void VentanaPrincipalEditor::conectar_senales() {
         panel_validacion->habilitar_boton_eliminar(id >= 0);
     });
 
-    connect(
-        paleta,
-        &PaletaDeHerramientas::modo_cambiado,
-        lienzo,
-        &LienzoDeEdicion::establecer_modo);
+    connect(paleta, &PaletaDeHerramientas::modo_cambiado, this, [this](ModoEditor modo) {
+        lienzo->establecer_modo(modo);
+        panel_validacion->desmarcar_entidades();
+    });
     connect(
         paleta,
         &PaletaDeHerramientas::tile_seleccionado,
@@ -289,11 +295,11 @@ void VentanaPrincipalEditor::conectar_senales() {
         &PaletaDeHerramientas::generar_perimetro_solicitado,
         this,
         &VentanaPrincipalEditor::generar_muro_perimetral_granja);
-    connect(
-        panel_validacion,
-        &PanelDeValidacion::entidad_cambiada,
-        lienzo,
-        &LienzoDeEdicion::establecer_entidad_a_colocar);
+    connect(panel_validacion, &PanelDeValidacion::entidad_cambiada, this, [this](TipoEntidad tipo) {
+        lienzo->establecer_entidad_a_colocar(tipo);
+        lienzo->establecer_modo(ModoEditor::COLOCAR_ENTIDAD);
+        paleta->desmarcar_todo();
+    });
     connect(
         panel_validacion,
         &PanelDeValidacion::eliminar_solicitado,
@@ -440,18 +446,16 @@ void VentanaPrincipalEditor::guardar_mundo_como() {
         return;
     }
     std::filesystem::create_directories("mundos");
-    bool aceptado = false;
     QString nombre_sugerido = QString::fromStdString(mundo_actual.obtener_nombre());
-    QString nombre_carpeta = QInputDialog::getText(
-        this,
-        "Guardar Mundo TMX",
-        "Nombre de la carpeta del mundo (dentro de mundos/):",
-        QLineEdit::Normal,
-        nombre_sugerido,
-        &aceptado);
+    QInputDialog dialogo(this);
+    dialogo.setWindowTitle("Guardar Mundo TMX");
+    dialogo.setLabelText("Nombre de la carpeta del mundo (dentro de mundos/):");
+    dialogo.setTextValue(nombre_sugerido);
+    dialogo.setOkButtonText("Aceptar");
+    dialogo.setCancelButtonText("Cancelar");
 
-    if (aceptado && !nombre_carpeta.trimmed().isEmpty()) {
-        std::string nombre_carpeta_limpio = nombre_carpeta.trimmed().toStdString();
+    if (dialogo.exec() == QDialog::Accepted && !dialogo.textValue().trimmed().isEmpty()) {
+        std::string nombre_carpeta_limpio = dialogo.textValue().trimmed().toStdString();
         std::filesystem::path ruta_destino =
             std::filesystem::path("mundos") / nombre_carpeta_limpio;
         ruta_archivo_actual = ruta_destino.string();
@@ -586,11 +590,20 @@ void VentanaPrincipalEditor::cambiar_sector(int indice) {
 void VentanaPrincipalEditor::aumentar_zoom() {
     int tamano = lienzo->obtener_tamano_casilla();
     lienzo->establecer_tamano_casilla(tamano + 4);
+    actualizar_etiqueta_zoom();
 }
 
 void VentanaPrincipalEditor::disminuir_zoom() {
     int tamano = lienzo->obtener_tamano_casilla();
     lienzo->establecer_tamano_casilla(tamano - 4);
+    actualizar_etiqueta_zoom();
+}
+
+void VentanaPrincipalEditor::actualizar_etiqueta_zoom() {
+    if (etiqueta_zoom != nullptr && lienzo != nullptr) {
+        int porcentaje = (lienzo->obtener_tamano_casilla() * 100) / TAMANO_CASILLA_BASE_ZOOM_PX;
+        etiqueta_zoom->setText(QString("%1%").arg(porcentaje));
+    }
 }
 
 void VentanaPrincipalEditor::actualizar_coordenadas(int columna, int fila) {
@@ -699,23 +712,21 @@ void VentanaPrincipalEditor::abrir_dialogo_redimensionar() {
     QSpinBox* spin_columnas = new QSpinBox(&dialogo);
     spin_columnas->setRange(minimo_columnas, es_sector_granja ? 78 : 80);
     spin_columnas->setValue(ancho_util_actual);
-    spin_columnas->setSuffix(" casillas");
-    layout_formulario->addRow(
-        es_sector_granja ? "Ancho Util (Columnas):" : "Ancho (Columnas):",
-        spin_columnas);
 
     QSpinBox* spin_filas = new QSpinBox(&dialogo);
     spin_filas->setRange(minimo_filas, es_sector_granja ? 77 : 80);
     spin_filas->setValue(alto_util_actual);
-    spin_filas->setSuffix(" casillas");
-    layout_formulario->addRow(
-        es_sector_granja ? "Alto Util (Filas):" : "Alto (Filas):",
-        spin_filas);
+
+    QHBoxLayout* layout_tamano = new QHBoxLayout();
+    layout_tamano->addWidget(spin_columnas);
+    layout_tamano->addWidget(new QLabel("x", &dialogo));
+    layout_tamano->addWidget(spin_filas);
+    layout_formulario->addRow(es_sector_granja ? "Tamaño útil:" : "Tamaño:", layout_tamano);
 
     layout_dialogo->addLayout(layout_formulario);
 
-    QLabel* etiqueta_total = new QLabel(&dialogo);
     if (es_sector_granja) {
+        QLabel* etiqueta_total = new QLabel(&dialogo);
         auto actualizar_etiqueta_total = [spin_columnas, spin_filas, etiqueta_total]() {
             int ancho_util = spin_columnas->value();
             int alto_util = spin_filas->value();
@@ -726,7 +737,7 @@ void VentanaPrincipalEditor::abrir_dialogo_redimensionar() {
             etiqueta_total->setText(
                 QString(
                     "<div style='background-color: #2D3139; padding: 8px; border-radius: 4px;'>"
-                    "<b>Tamano total con vallas perimetrales:</b> %1 x %2 casillas<br>"
+                    "<b>Tamaño total con vallas perimetrales:</b> %1 x %2<br>"
                     "<small style='color: #88C0D0;'>(+2 columnas para vallas laterales este/oeste, "
                     "+2 filas para valla norte, +1 fila para base de valla sur)</small></div>")
                     .arg(total_columnas)
@@ -747,16 +758,22 @@ void VentanaPrincipalEditor::abrir_dialogo_redimensionar() {
     }
 
     QLabel* etiqueta_aviso = new QLabel(
-        "<small style='color: #AAAAAA;'>Nota: El limite inferior garantiza que todas las "
+        "<small style='color: #AAAAAA;'>Nota: El límite inferior garantiza que todas las "
         "estructuras obligatorias y entidades ubicadas quepan sin solaparse ni recortarse.</small>",
         &dialogo);
+    etiqueta_aviso->setWordWrap(true);
     layout_dialogo->addWidget(etiqueta_aviso);
 
-    QDialogButtonBox* botones_dialogo =
-        new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialogo);
-    connect(botones_dialogo, &QDialogButtonBox::accepted, &dialogo, &QDialog::accept);
-    connect(botones_dialogo, &QDialogButtonBox::rejected, &dialogo, &QDialog::reject);
-    layout_dialogo->addWidget(botones_dialogo);
+    QHBoxLayout* layout_botones = new QHBoxLayout();
+    layout_botones->addStretch();
+    QPushButton* boton_cancelar = new QPushButton("Cancelar", &dialogo);
+    QPushButton* boton_aceptar = new QPushButton("Aceptar", &dialogo);
+    boton_aceptar->setDefault(true);
+    connect(boton_cancelar, &QPushButton::clicked, &dialogo, &QDialog::reject);
+    connect(boton_aceptar, &QPushButton::clicked, &dialogo, &QDialog::accept);
+    layout_botones->addWidget(boton_cancelar);
+    layout_botones->addWidget(boton_aceptar);
+    layout_dialogo->addLayout(layout_botones);
 
     if (dialogo.exec() == QDialog::Accepted) {
         int nuevas_columnas = spin_columnas->value();

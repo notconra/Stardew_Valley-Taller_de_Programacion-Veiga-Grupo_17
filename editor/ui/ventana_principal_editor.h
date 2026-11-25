@@ -39,6 +39,7 @@ private:
     QLabel* etiqueta_coordenadas;
     QLabel* etiqueta_nombre_mundo;
     QLabel* etiqueta_dimensiones;
+    QLabel* etiqueta_zoom;
 
     void inicializar_interfaz();
     void inicializar_menu();
@@ -48,6 +49,7 @@ private:
     void actualizar_sector_en_pantalla();
     void actualizar_etiqueta_dimensiones();
     void actualizar_etiqueta_nombre_mundo();
+    void actualizar_etiqueta_zoom();
     void ajustar_ancho_paneles();
     void marcar_cambios_sin_guardar();
     void registrar_estado_en_historial();
