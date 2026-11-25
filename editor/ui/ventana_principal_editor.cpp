@@ -453,16 +453,22 @@ bool VentanaPrincipalEditor::confirmar_descartar_cambios_si_es_necesario() {
     if (!hay_cambios_sin_guardar) {
         return true;
     }
-    QMessageBox::StandardButton respuesta = QMessageBox::question(
-        this,
-        "Cambios sin guardar",
-        "Hay cambios sin guardar en el mundo actual. ¿Querés guardarlos antes de continuar?",
-        QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
-        QMessageBox::Save);
-    if (respuesta == QMessageBox::Cancel) {
+    QMessageBox dialogo(this);
+    dialogo.setIcon(QMessageBox::Question);
+    dialogo.setWindowTitle("Cambios sin guardar");
+    dialogo.setText(
+        "Hay cambios sin guardar en el mundo actual. ¿Querés guardarlos antes de continuar?");
+    QPushButton* boton_guardar = dialogo.addButton("Guardar", QMessageBox::AcceptRole);
+    QPushButton* boton_descartar = dialogo.addButton("Descartar", QMessageBox::DestructiveRole);
+    QPushButton* boton_cancelar = dialogo.addButton("Cancelar", QMessageBox::RejectRole);
+    dialogo.setDefaultButton(boton_guardar);
+    dialogo.exec();
+
+    QAbstractButton* boton_presionado = dialogo.clickedButton();
+    if (boton_presionado == nullptr || boton_presionado == boton_cancelar) {
         return false;
     }
-    if (respuesta == QMessageBox::Discard) {
+    if (boton_presionado == boton_descartar) {
         return true;
     }
     guardar_mundo();
