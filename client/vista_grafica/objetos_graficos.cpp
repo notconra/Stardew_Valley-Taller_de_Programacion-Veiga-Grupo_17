@@ -129,6 +129,11 @@ std::map<TipoObjeto, AspectoDeObjeto> ObjetosGraficos::crear_aspectos_conocidos(
     aspecto_cofre.capa = CapaDeObjeto::CON_LOS_JUGADORES;
     conocidos.emplace(TipoObjeto::COFRE, aspecto_cofre);
 
+    // Aspersor: sprite de 16x16 escalado a una casilla.
+    conocidos.emplace(
+        TipoObjeto::ASPERSOR,
+        AspectoDeObjeto{{textura_completa(RUTA_ASSET_ASPERSOR)}});
+
     AspectoDeObjeto cama{{VarianteDeAspecto{RUTA_ASSET_MUEBLES, SDL_Rect{112, 144, 32, 64}, 1}}};
     cama.ancho_en_casillas = 2;
     cama.alto_en_casillas = 4;

@@ -29,6 +29,7 @@ EstadoJugador jugador_uno() {
         70,
         110,
         120,
+        true,
         0x0D0E0F10,
         apariencia_de_prueba()};
 }
@@ -51,6 +52,7 @@ EstadoJugador jugador_dos() {
         70,
         110,
         120,
+        false,
         0x0D0E0F10,
         apariencia_de_prueba()};
 }

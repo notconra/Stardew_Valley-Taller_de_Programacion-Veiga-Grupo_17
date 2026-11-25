@@ -21,6 +21,7 @@ enum class TipoObjeto : uint16_t {
     MACETA = 11,
     ALFOMBRA = 12,
     CUADRO = 13,
+    ASPERSOR = 14,
 };
 
 #endif

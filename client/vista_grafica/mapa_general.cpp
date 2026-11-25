@@ -130,16 +130,26 @@ void MapaGeneral::usar_mundo(
         return;
     }
 
-    // La granja a la izquierda y el pueblo a la derecha, centrados a lo alto.
     const int ancho_granja = tamanio_granja.ancho_en_casillas * tamanio_granja.ancho_de_casilla;
     const int alto_granja = tamanio_granja.alto_en_casillas * tamanio_granja.alto_de_casilla;
     const int ancho_pueblo = tamanio_pueblo.ancho_en_casillas * tamanio_pueblo.ancho_de_casilla;
     const int alto_pueblo = tamanio_pueblo.alto_en_casillas * tamanio_pueblo.alto_de_casilla;
     ancho_del_plano = ancho_granja + SEPARACION_DE_LOS_MAPAS + ancho_pueblo;
     alto_del_plano = std::max(alto_granja, alto_pueblo);
-    const SDL_Rect en_la_granja{0, (alto_del_plano - alto_granja) / 2, ancho_granja, alto_granja};
+    bool pueblo_a_la_izquierda = false;
+    for (const TransicionTMX& transicion :
+         lector_granja.cargar_transiciones(CAPA_DE_TRANSICIONES)) {
+        if (transicion.mapa_destino == "Town") {
+            pueblo_a_la_izquierda = transicion.x + transicion.ancho / 2 < ancho_granja / 2;
+        }
+    }
+    const SDL_Rect en_la_granja{
+        pueblo_a_la_izquierda ? ancho_pueblo + SEPARACION_DE_LOS_MAPAS : 0,
+        (alto_del_plano - alto_granja) / 2,
+        ancho_granja,
+        alto_granja};
     const SDL_Rect en_el_pueblo{
-        ancho_granja + SEPARACION_DE_LOS_MAPAS,
+        pueblo_a_la_izquierda ? 0 : ancho_granja + SEPARACION_DE_LOS_MAPAS,
         (alto_del_plano - alto_pueblo) / 2,
         ancho_pueblo,
         alto_pueblo};

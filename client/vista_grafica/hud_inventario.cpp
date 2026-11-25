@@ -59,6 +59,9 @@ constexpr int ANCHO_NATIVO_GAUGE = 36;
 constexpr int ALTO_NATIVO_GAUGE = 165;
 constexpr int SEPARACION_ENTRE_GAUGES = 4;
 constexpr SDL_Rect VENTANA_NATIVA_GAUGE{8, 38, 20, 121};
+// El marco mejorado es el mismo con 30 filas más en el medio (~25% más de relleno).
+constexpr int ALTO_NATIVO_GAUGE_MEJORADO = 195;
+constexpr SDL_Rect VENTANA_NATIVA_GAUGE_MEJORADO{8, 38, 20, 151};
 
 int escala_del_marco(int tamano_de_ranura) {
     return std::max(2, tamano_de_ranura / 12);
@@ -173,6 +176,8 @@ HudInventario::HudInventario(SDL_Renderer* renderer, const IconosDeItems& iconos
     cargar_textura(tacho, RUTA_ASSET_TACHO, renderer);
     cargar_textura(marco_de_vida, RUTA_ASSET_VIDA, renderer);
     cargar_textura(marco_de_energia, RUTA_ASSET_ENERGIA, renderer);
+    cargar_textura(marco_de_vida_mejorado, RUTA_ASSET_VIDA_MEJORADA, renderer);
+    cargar_textura(marco_de_energia_mejorado, RUTA_ASSET_ENERGIA_MEJORADA, renderer);
     cargar_textura(fondo_barra, RUTA_ASSET_FONDO_BARRA, renderer);
     cargar_textura(casilla, RUTA_ASSET_CASILLA, renderer);
     cargar_textura(casilla_seleccionada, RUTA_ASSET_CASILLA_SELECCIONADA, renderer);
@@ -626,50 +631,70 @@ void HudInventario::dibujar(
     dibujar_item_levantado(renderer, disposicion, inventario, cofre, raton_x, raton_y);
 }
 
-void HudInventario::dibujar_vida(SDL_Renderer* renderer, uint8_t vida, uint8_t vida_maxima) const {
+void HudInventario::dibujar_vida(
+    SDL_Renderer* renderer, uint8_t vida, uint8_t vida_maxima, bool mejorado) const {
     if (vida_maxima == 0 || !marco_de_vida.has_value() || !marco_de_energia.has_value()) {
         return;
     }
     // La vida va a la izquierda de la energía. Se calcula a partir del ancho de la energía (y no
     // al revés) porque la energía es la que está siempre en un lugar fijo: la vida no siempre
     // aparece (en la mazmorra o cuando le falta), así que no puede ser la referencia de posición de
-    // la otra.
+    // la otra. Los dos marcos tienen el mismo ancho, así que el mejorado no cambia la posición.
     const int alto = alto_del_gauge(alto_ventana);
     const int ancho_energia = alto * ANCHO_NATIVO_GAUGE / ALTO_NATIVO_GAUGE;
     const int borde_derecho = ancho_ventana - MARGEN - ancho_energia - SEPARACION_ENTRE_GAUGES;
 
     const double fraccion = std::clamp(static_cast<double>(vida) / vida_maxima, 0.0, 1.0);
-    dibujar_gauge(
-        renderer,
-        *marco_de_vida,
-        ANCHO_NATIVO_GAUGE,
-        ALTO_NATIVO_GAUGE,
-        VENTANA_NATIVA_GAUGE,
-        fraccion,
-        borde_derecho);
+    dibujar_gauge_elegido(
+        renderer, marco_de_vida, marco_de_vida_mejorado, mejorado, fraccion, borde_derecho);
 }
 
 void HudInventario::dibujar_energia(
-    SDL_Renderer* renderer, uint8_t energia, uint8_t energia_maxima) const {
+    SDL_Renderer* renderer, uint8_t energia, uint8_t energia_maxima, bool mejorado) const {
     if (energia_maxima == 0 || !marco_de_energia.has_value()) {
         return;
     }
     const double fraccion = std::clamp(static_cast<double>(energia) / energia_maxima, 0.0, 1.0);
-    dibujar_gauge(
+    dibujar_gauge_elegido(
         renderer,
-        *marco_de_energia,
-        ANCHO_NATIVO_GAUGE,
-        ALTO_NATIVO_GAUGE,
-        VENTANA_NATIVA_GAUGE,
+        marco_de_energia,
+        marco_de_energia_mejorado,
+        mejorado,
         fraccion,
         ancho_ventana - MARGEN);
+}
+
+void HudInventario::dibujar_gauge_elegido(
+    SDL_Renderer* renderer, const std::optional<Textura>& normal,
+    const std::optional<Textura>& mejorado, bool usar_mejorado, double fraccion,
+    int borde_derecho) const {
+    if (usar_mejorado && mejorado.has_value()) {
+        dibujar_gauge(
+            renderer,
+            *mejorado,
+            ANCHO_NATIVO_GAUGE,
+            ALTO_NATIVO_GAUGE_MEJORADO,
+            VENTANA_NATIVA_GAUGE_MEJORADO,
+            fraccion,
+            borde_derecho);
+    } else if (normal.has_value()) {
+        dibujar_gauge(
+            renderer,
+            *normal,
+            ANCHO_NATIVO_GAUGE,
+            ALTO_NATIVO_GAUGE,
+            VENTANA_NATIVA_GAUGE,
+            fraccion,
+            borde_derecho);
+    }
 }
 
 int HudInventario::dibujar_gauge(
     SDL_Renderer* renderer, const Textura& marco, int ancho_nativo, int alto_nativo,
     const SDL_Rect& ventana_nativa, double fraccion, int borde_derecho_en_pantalla) const {
     fraccion = std::clamp(fraccion, 0.0, 1.0);
-    const int alto = alto_del_gauge(alto_ventana);
+    // La escala sale del marco normal, así el mejorado se ve del mismo ancho pero más alto.
+    const int alto = alto_del_gauge(alto_ventana) * alto_nativo / ALTO_NATIVO_GAUGE;
     const int ancho = alto * ancho_nativo / alto_nativo;
     const SDL_Rect destino{
         borde_derecho_en_pantalla - ancho,

@@ -403,6 +403,7 @@ EstadoJugador ProtocoloCliente::recibir_estado_jugador() {
     estado.energia = recibir_u8();
     estado.vida_maxima = recibir_u8();
     estado.energia_maxima = recibir_u8();
+    estado.con_mejora_de_pelea = recibir_booleano();
     estado.monedas = recibir_u32();
     estado.apariencia = recibir_apariencia();
     return estado;

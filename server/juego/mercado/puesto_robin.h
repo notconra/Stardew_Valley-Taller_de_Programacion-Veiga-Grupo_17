@@ -13,6 +13,7 @@
 class PuestoRobin : public PuestoDeMercado {
 private:
     ProductoEnVenta cofre;
+    ProductoEnVenta aspersor;
     std::vector<ProductoEnVenta> muebles;
 
     ProductoEnVenta producto(

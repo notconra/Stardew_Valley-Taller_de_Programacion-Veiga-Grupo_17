@@ -133,6 +133,9 @@ void ConfiguracionServidor::cargar_juego(const toml::table& archivo_toml) {
     if (const toml::table* tabla = (*juego)["inventario"].as_table()) {
         cargar_inventario(*tabla);
     }
+    if (const toml::table* tabla = (*juego)["jugador"].as_table()) {
+        cargar_jugador(*tabla);
+    }
     if (const toml::table* tabla = (*juego)["acciones"].as_table()) {
         cargar_acciones(*tabla);
     }
@@ -216,6 +219,15 @@ void ConfiguracionServidor::cargar_inventario(const toml::table& tabla) {
         inventario.cantidad_ranuras_barra,
         1,
         UINT8_MAX));
+}
+
+void ConfiguracionServidor::cargar_jugador(const toml::table& tabla) {
+    ConfiguracionJugadorServidor& jugador = datos_configuracion.juego.jugador;
+
+    jugador.vida_inicial = static_cast<int>(lector_toml::leer_entero_opcional(
+        tabla, "vida_inicial", "juego.jugador", jugador.vida_inicial, 1, 200));
+    jugador.energia_inicial = static_cast<int>(lector_toml::leer_entero_opcional(
+        tabla, "energia_inicial", "juego.jugador", jugador.energia_inicial, 1, 200));
 }
 
 void ConfiguracionServidor::cargar_acciones(const toml::table& tabla) {
@@ -729,6 +741,7 @@ void ConfiguracionServidor::cargar_precios_de_compra(const toml::table& tabla_me
     leer("SEMILLA_CALABAZA", TipoItem::SEMILLA_CALABAZA);
 
     leer("COFRE", TipoItem::COFRE);
+    leer("ASPERSOR", TipoItem::ASPERSOR);
     const uint32_t por_casilla = static_cast<uint32_t>(
         lector_toml::leer_entero_en_rango(tabla, "MUEBLE_POR_CASILLA", seccion, 1, INT_MAX));
     for (const DatosDeMueble* mueble : CatalogoDeMuebles::muebles()) {

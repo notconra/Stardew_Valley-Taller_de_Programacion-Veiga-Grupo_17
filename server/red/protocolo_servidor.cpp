@@ -402,6 +402,7 @@ void ProtocoloServidor::enviar_estado_jugador(const EstadoJugador& estado) {
     enviar_u8(estado.energia);
     enviar_u8(estado.vida_maxima);
     enviar_u8(estado.energia_maxima);
+    enviar_booleano(estado.con_mejora_de_pelea);
     enviar_u32(estado.monedas);
     enviar_apariencia(estado.apariencia);
 }

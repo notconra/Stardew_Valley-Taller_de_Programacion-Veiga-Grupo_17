@@ -17,7 +17,9 @@ int ControladorDeCultivos::minutos_desde_el_inicio(const HoraDelJuego& hora) con
 }
 
 void ControladorDeCultivos::actualizar(const HoraDelJuego& hora) {
+    bool empezo_el_dia = false;
     if (dia_actual.has_value() && hora.dia != *dia_actual) {
+        empezo_el_dia = true;
         for (const std::string& id_mapa : sectores.ids_de_sectores()) {
             sectores.en(id_mapa).terminar_el_dia_de_los_cultivos(notificador);
         }
@@ -35,6 +37,10 @@ void ControladorDeCultivos::actualizar(const HoraDelJuego& hora) {
     for (const std::string& id_mapa : sectores.ids_de_sectores()) {
         Sector& sector = sectores.en(id_mapa);
         sector.avanzar_cultivos(notificador, minuto);
+        // A la mañana, ya abierto el primer turno de riego, los aspersores riegan.
+        if (empezo_el_dia) {
+            sector.regar_con_aspersores(notificador);
+        }
         if (hora.lloviendo) {
             sector.llover_sobre_los_cultivos(notificador);
         }

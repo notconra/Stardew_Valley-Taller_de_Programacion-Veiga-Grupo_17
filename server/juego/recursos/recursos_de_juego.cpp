@@ -1,3 +1,4 @@
+#include "../aspersores/aspersores.h"
 #include "recursos_de_juego.h"
 
 #include <stdexcept>
@@ -45,6 +46,8 @@ CatalogoDeObjetos RecursosDeJuego::crear_catalogo_de_objetos(
     std::vector<DefinicionDeObjeto> definiciones = Minerales::definiciones(minerales);
     const std::vector<DefinicionDeObjeto> cofres = GestorDeCofres::definiciones();
     definiciones.insert(definiciones.end(), cofres.begin(), cofres.end());
+    const std::vector<DefinicionDeObjeto> aspersores = Aspersores::definiciones();
+    definiciones.insert(definiciones.end(), aspersores.begin(), aspersores.end());
     const std::vector<DefinicionDeObjeto> muebles = Muebles::definiciones();
     definiciones.insert(definiciones.end(), muebles.begin(), muebles.end());
 

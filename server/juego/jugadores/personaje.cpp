@@ -14,11 +14,15 @@ uint32_t Personaje::sortear_monedas_iniciales() {
 
 Personaje::Personaje(
     uint32_t id, const std::string& mapa_inicial, const CatalogoDeItems& catalogo,
-    uint8_t cantidad_ranuras_barra)
+    uint8_t cantidad_ranuras_barra, int vida_inicial, int energia_inicial)
     : id_jugador(id),
       mapa_actual(mapa_inicial),
       inventario(catalogo, cantidad_ranuras_barra),
       ranura_activa(0),
+      vida_base(vida_inicial),
+      vida(vida_inicial),
+      energia_base(energia_inicial),
+      energia(energia_inicial),
       monedas(sortear_monedas_iniciales()) {
     // Al crearse (solo la primera vez que el jugador entra) recibe las herramientas que el
     // catálogo marque con cantidad inicial y su cama, que pone él donde quiera de la casa. Nada
@@ -87,13 +91,13 @@ double Personaje::multiplicador_de_velocidad() const {
 }
 
 int Personaje::vida_maxima() const {
-    return tiene_mejora_de_pelea ? VIDA_MAXIMA * PORCENTAJE_CON_LA_MEJORA_DE_PELEA / 100
-                                 : VIDA_MAXIMA;
+    return tiene_mejora_de_pelea ? vida_base * PORCENTAJE_CON_LA_MEJORA_DE_PELEA / 100
+                                 : vida_base;
 }
 
 int Personaje::energia_maxima() const {
-    return tiene_mejora_de_pelea ? ENERGIA_MAXIMA * PORCENTAJE_CON_LA_MEJORA_DE_PELEA / 100
-                                 : ENERGIA_MAXIMA;
+    return tiene_mejora_de_pelea ? energia_base * PORCENTAJE_CON_LA_MEJORA_DE_PELEA / 100
+                                 : energia_base;
 }
 
 bool Personaje::puede_ser_lastimado() const {

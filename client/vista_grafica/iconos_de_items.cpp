@@ -33,6 +33,7 @@ const RutaDeItem RUTAS_INDIVIDUALES[] = {
     {TipoItem::PLATA, "Assets/items/plata.png"},
     {TipoItem::ORO, "Assets/items/oro.png"},
     {TipoItem::COFRE, "Assets/items/cofre.png"},
+    {TipoItem::ASPERSOR, "Assets/items/aspersor.png"},
     {TipoItem::CAMA, "Assets/items/cama.png"},
     {TipoItem::LECHE, "Assets/items/leche.png"},
     {TipoItem::HUEVO, "Assets/items/huevo.png"},
