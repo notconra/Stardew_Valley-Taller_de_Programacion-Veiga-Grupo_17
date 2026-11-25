@@ -26,7 +26,6 @@ private:
     VerificarCodigoPartida recibir_comando_verificar_codigo_partida();
     ActivarMultijugador recibir_comando_activar_multijugador();
     SalirDePartida recibir_comando_salir_de_partida();
-    GuardarPartida recibir_comando_guardar_partida();
     Moverse recibir_comando_moverse();
     SeleccionarRanuraDeLaBarra recibir_comando_seleccionar_ranura_de_la_barra();
     UsarItem recibir_comando_usar_item();
@@ -114,6 +113,7 @@ private:
     void enviar_evento_lote_del_centro(const LoteDelCentro& lote);
     void enviar_evento_centro_terminado(const CentroTerminado& m);
     void enviar_evento_pregunta_de_dormir(const PreguntaDeDormir& pregunta);
+    void enviar_evento_resumen_animales_granja(const ResumenAnimalesGranja& resumen);
 
 public:
     explicit ProtocoloServidor(ISocket& socket_conectado);

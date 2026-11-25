@@ -26,7 +26,6 @@ private:
     void enviar_comando_verificar_codigo_partida(const VerificarCodigoPartida& verificar);
     void enviar_comando_activar_multijugador(const ActivarMultijugador&);
     void enviar_comando_salir_de_partida(const SalirDePartida& salir_de_partida);
-    void enviar_comando_guardar_partida(const GuardarPartida& guardar);
     void enviar_comando_moverse(const Moverse& moverse);
     void enviar_comando_seleccionar_ranura_de_la_barra(
         const SeleccionarRanuraDeLaBarra& seleccionar);
@@ -104,6 +103,7 @@ private:
     RegalosPendientes recibir_regalos_pendientes();
     DialogoNpc recibir_dialogo_npc();
     LoteDelCentro recibir_lote_del_centro();
+    ResumenAnimalesGranja recibir_resumen_animales_granja();
     CentroTerminado recibir_centro_terminado();
     PreguntaDeDormir recibir_pregunta_de_dormir();
 

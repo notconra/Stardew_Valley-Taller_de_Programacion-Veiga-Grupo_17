@@ -87,9 +87,9 @@ public:
     // mazmorra, así que quien llama decide si corresponde).
     // Con "mejorado" (lote de pelea completo) se usa el marco largo.
     void dibujar_vida(
-        SDL_Renderer* renderer, uint8_t vida, uint8_t vida_maxima, bool mejorado) const;
+        SDL_Renderer* renderer, uint16_t vida, uint16_t vida_maxima, bool mejorado) const;
     void dibujar_energia(
-        SDL_Renderer* renderer, uint8_t energia, uint8_t energia_maxima, bool mejorado) const;
+        SDL_Renderer* renderer, uint16_t energia, uint16_t energia_maxima, bool mejorado) const;
 
     // Para el mercado, qué ranura está bajo el mouse (como en hover).
     RanuraApuntada ranura_en_pantalla(

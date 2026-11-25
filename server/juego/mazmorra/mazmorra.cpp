@@ -65,6 +65,14 @@ bool Mazmorra::bajar(IdJugador jugador) {
     return true;
 }
 
+bool Mazmorra::ir_a_nivel(IdJugador jugador, size_t numero) {
+    if (numero < 1 || numero > static_cast<size_t>(CANTIDAD_NIVELES) || !esta_adentro(jugador)) {
+        return false;
+    }
+    nivel_de_jugador[jugador] = numero - 1;
+    return true;
+}
+
 void Mazmorra::salir(IdJugador jugador) {
     indice_de(jugador);
     nivel_de_jugador.erase(jugador);

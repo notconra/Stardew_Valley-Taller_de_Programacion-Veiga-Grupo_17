@@ -136,8 +136,8 @@ void Mundo::conectar(
                              recursos.mapa_inicial,
                              recursos.catalogo_de_items,
                              recursos.juego.inventario.cantidad_ranuras_barra,
-            recursos.juego.jugador.vida_inicial,
-            recursos.juego.jugador.energia_inicial)
+                             recursos.juego.jugador.vida_inicial,
+                             recursos.juego.jugador.energia_inicial)
                          .first;
         encontrado->second.apariencia = apariencia;
     }
@@ -166,6 +166,9 @@ void Mundo::conectar(
     }
     controlador_del_dia.despertar_si_volvio_desmayado(personaje);
     controlador_de_posiciones.al_conectarse(personaje);
+    ResumenAnimalesGranja resumen = calcular_resumen_animales();
+    ultimo_resumen_animales = resumen;
+    notificador.a_jugador(id_jugador, resumen);
 }
 
 void Mundo::desconectar(uint32_t id_jugador) {
@@ -312,6 +315,30 @@ void Mundo::actualizar() {
     controlador_de_drops.actualizar();
     controlador_del_centro.actualizar();
     controlador_de_posiciones.actualizar();
+    difundir_resumen_animales_si_cambio();
+}
+
+ResumenAnimalesGranja Mundo::calcular_resumen_animales() const {
+    ResumenAnimalesGranja resumen;
+    if (!sectores.existe("granja")) {
+        return resumen;
+    }
+    const Sector& granja = sectores.en("granja");
+    resumen.cantidad_de_vacas = static_cast<uint16_t>(granja.animales.cantidad_vacas());
+    resumen.cantidad_de_gallinas = static_cast<uint16_t>(granja.animales.cantidad_gallinas());
+    resumen.vacas_para_ordeniar =
+        static_cast<uint16_t>(granja.animales.cantidad_vacas_listas_para_ordeniar());
+    resumen.huevos_para_recolectar =
+        static_cast<uint16_t>(granja.drops.cantidad_de_tipo(TipoItem::HUEVO));
+    return resumen;
+}
+
+void Mundo::difundir_resumen_animales_si_cambio() {
+    ResumenAnimalesGranja actual = calcular_resumen_animales();
+    if (!ultimo_resumen_animales.has_value() || *ultimo_resumen_animales != actual) {
+        ultimo_resumen_animales = actual;
+        notificador.a_todos(actual);
+    }
 }
 
 std::optional<DatosJugadorGuardado> Mundo::obtener_datos_jugador(uint32_t id_jugador) const {
@@ -503,6 +530,99 @@ std::string Mundo::estado_animales_granja() const {
     int total_gallinas = granja.animales.cantidad_gallinas();
     return "Granja: " + std::to_string(total_vacas) + " vacas (" + std::to_string(vacas_listas) +
            " listas para ordeniar), " + std::to_string(total_gallinas) + " gallinas.";
+}
+
+std::string Mundo::cuidar_todos_los_animales(uint32_t id_jugador) {
+    auto encontrado = personajes.find(id_jugador);
+    if (encontrado == personajes.end() || !encontrado->second.conectado) {
+        return "No se encontro al jugador conectado.";
+    }
+    if (!sectores.existe("granja")) {
+        return "No existe el sector granja.";
+    }
+    Personaje& personaje = encontrado->second;
+    Sector& granja = sectores.en("granja");
+
+    std::vector<uint32_t> vacas_listas = granja.animales.obtener_ids_vacas_listas_para_ordeniar();
+    std::vector<int> huevos_en_piso = granja.drops.ids_de_tipo(TipoItem::HUEVO);
+
+    int leches_guardadas = 0;
+    int huevos_guardados = 0;
+    bool inventario_lleno = false;
+
+    size_t indice_vaca = 0;
+    while (indice_vaca < vacas_listas.size() && !inventario_lleno) {
+        if (!personaje.inventario.puede_agregar(TipoItem::LECHE, 1, Calidad::BASE)) {
+            inventario_lleno = true;
+        } else if (granja.ordeniar_vaca_por_id(notificador, vacas_listas[indice_vaca])) {
+            personaje.inventario.agregar_item(TipoItem::LECHE, 1, Calidad::BASE);
+            leches_guardadas++;
+        }
+        indice_vaca++;
+    }
+
+    size_t indice_huevo = 0;
+    while (indice_huevo < huevos_en_piso.size() && !inventario_lleno) {
+        if (granja.recoger_drop(
+                notificador,
+                id_jugador,
+                huevos_en_piso[indice_huevo],
+                personaje.inventario)) {
+            huevos_guardados++;
+        } else {
+            inventario_lleno = true;
+        }
+        indice_huevo++;
+    }
+
+    if (leches_guardadas > 0 || huevos_guardados > 0) {
+        notificador.a_jugador(id_jugador, personaje.actualizacion_de_inventario());
+    }
+
+    int vacas_pendientes = static_cast<int>(vacas_listas.size()) - leches_guardadas;
+    int huevos_pendientes = static_cast<int>(huevos_en_piso.size()) - huevos_guardados;
+    std::string resumen = "Animales cuidados: " + std::to_string(leches_guardadas) + " leches y " +
+                          std::to_string(huevos_guardados) + " huevos guardados en el inventario.";
+    if (vacas_pendientes > 0 || huevos_pendientes > 0) {
+        resumen += " Inventario lleno: quedaron " + std::to_string(vacas_pendientes) +
+                   " vacas sin ordeniar y " + std::to_string(huevos_pendientes) +
+                   " huevos en el piso.";
+    }
+    return resumen;
+}
+
+void Mundo::regar_todos_los_cultivos() {
+    for (const std::string& id_mapa : sectores.ids_de_sectores()) {
+        sectores.en(id_mapa).llover_sobre_los_cultivos(notificador);
+    }
+}
+
+bool Mundo::fijar_vida(uint32_t id_jugador, int cantidad) {
+    auto encontrado = personajes.find(id_jugador);
+    if (encontrado == personajes.end() || !encontrado->second.conectado) {
+        return false;
+    }
+    encontrado->second.vida = cantidad;
+    return true;
+}
+
+bool Mundo::fijar_energia(uint32_t id_jugador, int cantidad) {
+    auto encontrado = personajes.find(id_jugador);
+    if (encontrado == personajes.end() || !encontrado->second.conectado) {
+        return false;
+    }
+    encontrado->second.energia = cantidad;
+    ajustar_velocidad_por_energia();
+    return true;
+}
+
+bool Mundo::ir_a_nivel_mazmorra(uint32_t id_jugador, int numero_nivel, std::string& mensaje) {
+    auto encontrado = personajes.find(id_jugador);
+    if (encontrado == personajes.end() || !encontrado->second.conectado) {
+        mensaje = "No se encontro al jugador conectado.";
+        return false;
+    }
+    return controlador_de_mazmorra.ir_a_nivel(encontrado->second, numero_nivel, mensaje);
 }
 
 void Mundo::avanzar_dia() {

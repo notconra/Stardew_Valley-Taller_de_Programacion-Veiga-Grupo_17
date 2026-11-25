@@ -41,10 +41,6 @@ struct SalirDePartida {
     bool operator==(const SalirDePartida&) const = default;
 };
 
-struct GuardarPartida {
-    bool operator==(const GuardarPartida&) const = default;
-};
-
 // Hacia dónde quiere moverse el jugador, por eje: horizontal -1 (izquierda), 0 o 1 (derecha);
 // vertical -1 (arriba), 0 o 1 (abajo). Es un estado, NO es un paso, osea, el servidor lo sigue
 // aplicando en cada tick hasta que llegue otro Moverse que actualice el estado. {0, 0} es "quedarse
@@ -263,11 +259,11 @@ struct EstadoJugador {
     uint8_t numero_de_accion = 0;
     // Acostado en una cama o desmayado, para que los demás lo vean así.
     EstadoDeDescanso descanso = EstadoDeDescanso::DESPIERTO;
-    uint8_t vida = VIDA_MAXIMA_JUGADOR;
-    uint8_t energia = ENERGIA_MAXIMA_JUGADOR;
+    uint16_t vida = VIDA_MAXIMA_JUGADOR;
+    uint16_t energia = ENERGIA_MAXIMA_JUGADOR;
     // Los topes de las barras de este jugador: más altos con la mejora del lote de pelea.
-    uint8_t vida_maxima = VIDA_MAXIMA_JUGADOR;
-    uint8_t energia_maxima = ENERGIA_MAXIMA_JUGADOR;
+    uint16_t vida_maxima = VIDA_MAXIMA_JUGADOR;
+    uint16_t energia_maxima = ENERGIA_MAXIMA_JUGADOR;
     // Ya completó el lote de pelea: el HUD dibuja los gauges más largos.
     bool con_mejora_de_pelea = false;
     uint32_t monedas = 0;
@@ -436,6 +432,7 @@ struct EstadoJuego {
     std::vector<EstadoNpc> npcs;
     // No viaja en ESTADO_JUEGO: llega con LlamasEnSector en cada tick que haya llamas volando.
     std::vector<EstadoLlama> llamas;
+    uint8_t nivel_de_mazmorra = 0;
     bool operator==(const EstadoJuego&) const = default;
 };
 
@@ -769,6 +766,16 @@ struct PreguntaDeDormir {
     uint32_t columna = 0;
     uint32_t fila = 0;
     bool operator==(const PreguntaDeDormir&) const = default;
+};
+
+// Resumen global de los animales de la granja y huevos en el piso, para mostrarlo en el menú
+// in-game desde cualquier mapa.
+struct ResumenAnimalesGranja {
+    uint16_t cantidad_de_vacas = 0;
+    uint16_t cantidad_de_gallinas = 0;
+    uint16_t vacas_para_ordeniar = 0;
+    uint16_t huevos_para_recolectar = 0;
+    bool operator==(const ResumenAnimalesGranja&) const = default;
 };
 
 #endif

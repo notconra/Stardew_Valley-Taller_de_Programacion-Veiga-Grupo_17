@@ -225,9 +225,19 @@ void ConfiguracionServidor::cargar_jugador(const toml::table& tabla) {
     ConfiguracionJugadorServidor& jugador = datos_configuracion.juego.jugador;
 
     jugador.vida_inicial = static_cast<int>(lector_toml::leer_entero_opcional(
-        tabla, "vida_inicial", "juego.jugador", jugador.vida_inicial, 1, 200));
+        tabla,
+        "vida_inicial",
+        "juego.jugador",
+        jugador.vida_inicial,
+        1,
+        200));
     jugador.energia_inicial = static_cast<int>(lector_toml::leer_entero_opcional(
-        tabla, "energia_inicial", "juego.jugador", jugador.energia_inicial, 1, 200));
+        tabla,
+        "energia_inicial",
+        "juego.jugador",
+        jugador.energia_inicial,
+        1,
+        200));
 }
 
 void ConfiguracionServidor::cargar_acciones(const toml::table& tabla) {
@@ -309,6 +319,13 @@ void ConfiguracionServidor::cargar_acciones(const toml::table& tabla) {
         "energia_por_cosechar",
         seccion,
         acciones.energia_por_cosechar,
+        0,
+        INT_MAX);
+    acciones.energia_por_ordeniar = lector_toml::leer_entero_opcional(
+        tabla,
+        "energia_por_ordeniar",
+        seccion,
+        acciones.energia_por_ordeniar,
         0,
         INT_MAX);
 }
@@ -575,16 +592,39 @@ void ConfiguracionServidor::cargar_mazmorra(const toml::table& archivo_toml) {
             ConfiguracionSkullsServidor& config = mazmorra.skulls;
             cargar_enemigo(*skulls, seccion_skulls, config.combate);
             config.skulls_por_nivel = lector_toml::leer_entero_opcional(
-                *skulls, "skulls_por_nivel", seccion_skulls, config.skulls_por_nivel, 0, 1);
+                *skulls,
+                "skulls_por_nivel",
+                seccion_skulls,
+                config.skulls_por_nivel,
+                0,
+                1);
             config.probabilidad_verde = lector_toml::leer_decimal_opcional(
-                *skulls, "probabilidad_verde", seccion_skulls, config.probabilidad_verde, 0.0, 1.0);
+                *skulls,
+                "probabilidad_verde",
+                seccion_skulls,
+                config.probabilidad_verde,
+                0.0,
+                1.0);
             config.velocidad_de_llama = lector_toml::leer_decimal_opcional(
-                *skulls, "velocidad_de_llama", seccion_skulls, config.velocidad_de_llama, 0.5,
+                *skulls,
+                "velocidad_de_llama",
+                seccion_skulls,
+                config.velocidad_de_llama,
+                0.5,
                 20.0);
             config.alcance_de_llama = lector_toml::leer_entero_opcional(
-                *skulls, "alcance_de_llama", seccion_skulls, config.alcance_de_llama, 1, 100);
+                *skulls,
+                "alcance_de_llama",
+                seccion_skulls,
+                config.alcance_de_llama,
+                1,
+                100);
             config.distancia_de_ataque = lector_toml::leer_entero_opcional(
-                *skulls, "distancia_de_ataque", seccion_skulls, config.distancia_de_ataque, 1,
+                *skulls,
+                "distancia_de_ataque",
+                seccion_skulls,
+                config.distancia_de_ataque,
+                1,
                 100);
         }
     }

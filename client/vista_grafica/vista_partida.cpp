@@ -54,8 +54,6 @@ constexpr char AYUDA_DE_TECLAS[] =
     "  clic afuera       con un stack agarrado de la barra, lo tira al piso\n"
     "  clic der. (cama)  acostarse a dormir\n"
     "  Enter             dar el OK para pasar al día siguiente (acostado o desmayado)\n"
-    "  F5                (cheat) guardar la partida ya; normalmente se guarda sola al dar todos el "
-    "OK\n"
     "  T / botón del chat abrir o cerrar el chat\n"
     "  clic en el chat   casilla de abajo: escribir. Enter envía, ESC o clic afuera sueltan\n"
     "  rueda sobre chat  recorrer los mensajes (el personaje puede seguir caminando)\n"
@@ -178,6 +176,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     hora_del_juego.reset();
     jugadores_de_la_partida = JugadoresDeLaPartida{};
     posiciones_de_los_jugadores = PosicionesDeLosJugadores{};
+    resumen_animales_granja = ResumenAnimalesGranja{};
     regalos_pendientes = RegalosPendientes{};
     lotes_recibidos.clear();
     lotes_del_centro.clear();
@@ -259,6 +258,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     mapa_general
         .usar_mundo(mundo_actual, configuracion_de("granja"), configuracion_de("Town"), graficos);
     std::optional<RelojGrafico> reloj_grafico;
+    IndicadorDeNivel indicador_de_nivel(renderizador.ptr(), configuracion.chat.ruta_fuente);
     std::optional<PantallaDeDescanso> pantalla_de_descanso;
     std::optional<PanelDeRegalos> regalos;
     reloj_grafico.emplace(renderizador.ptr(), configuracion.chat.ruta_fuente, alto_de_pantalla);
@@ -536,6 +536,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             entrada,
             chat,
             *reloj_grafico,
+            indicador_de_nivel,
             *pantalla_de_descanso,
             *regalos,
             *ventana_de_lote,
@@ -709,32 +710,12 @@ PanelDeRegalos::Datos VistaPartida::datos_de_regalos() const {
         ultimo_inventario};
 }
 
-uint32_t VistaPartida::contar_huevos_en_la_granja() const {
-    if (mapa_actual != "granja") {
-        return 0;
-    }
-
-    uint32_t huevos = 0;
-    for (const EstadoDrop& drop : ultimo_estado_juego.drops) {
-        if (drop.tipo == TipoItem::HUEVO) {
-            huevos += drop.cantidad;
-        }
-    }
-    return huevos;
-}
-
 MenuEnJuego::DatosAnimales VistaPartida::datos_de_animales() const {
     MenuEnJuego::DatosAnimales datos;
-    for (const EstadoAnimal& animal : ultimo_estado_juego.animales) {
-        if (animal.tipo == TipoAnimal::VACA) {
-            datos.cantidad_de_vacas += 1;
-        } else if (animal.tipo == TipoAnimal::GALLINA) {
-            datos.cantidad_de_gallinas += 1;
-        }
-    }
-
-    datos.vacas_para_ordeniar = ultimo_estado_juego.vacas_para_ordeniar.size();
-    datos.huevos_para_recolectar = contar_huevos_en_la_granja();
+    datos.cantidad_de_vacas = resumen_animales_granja.cantidad_de_vacas;
+    datos.cantidad_de_gallinas = resumen_animales_granja.cantidad_de_gallinas;
+    datos.vacas_para_ordeniar = resumen_animales_granja.vacas_para_ordeniar;
+    datos.huevos_para_recolectar = resumen_animales_granja.huevos_para_recolectar;
     return datos;
 }
 
@@ -747,11 +728,6 @@ void VistaPartida::procesar_entrada(
 
     if (cuadro_de_aviso.procesar_entrada(entrada) || cuadro_de_dialogo.procesar_entrada(entrada)) {
         return;
-    }
-
-    if (pedidos.guardar) {
-        conexion.enviar_comando(GuardarPartida{});
-        std::cout << "[partida] guardando partida en el servidor..." << std::endl;
     }
 
     if (!consumo_del_chat.rueda) {
@@ -1223,6 +1199,7 @@ void VistaPartida::aplicar(
             [&](const MensajeDeChat& e) { chat.recibir(e); },
             [&](const JugadoresDeLaPartida& e) { jugadores_de_la_partida = e; },
             [&](const PosicionesDeLosJugadores& e) { posiciones_de_los_jugadores = e; },
+            [&](const ResumenAnimalesGranja& e) { resumen_animales_granja = e; },
             [&](const LoteDelCentro& e) { lotes_recibidos.push_back(e); },
             [&](const CentroTerminado&) {
                 if (menu_actual != nullptr) {
@@ -1295,10 +1272,11 @@ void VistaPartida::dibujar(
     const CultivosGraficos& cultivos, const EfectoDeRiego& efecto_de_riego, const Camara& camara,
     const HudInventario& hud, const HudMercado& hud_mercado, const VisionMazmorra& vision_mazmorra,
     const EntradaDelUsuario& entrada, const VistaChat& chat, RelojGrafico& reloj_grafico,
-    const PantallaDeDescanso& pantalla_de_descanso, const PanelDeRegalos& regalos,
-    const VentanaDeLote& ventana_de_lote, const MarcasDeLotes& marcas_de_lotes,
-    const CuadroDeAviso& cuadro_de_aviso, const CuadroDeDialogo& cuadro_de_dialogo,
-    LluviaGrafica& lluvia, const MenuEnJuego& menu, const MapaGeneral& mapa_general) const {
+    const IndicadorDeNivel& indicador_de_nivel, const PantallaDeDescanso& pantalla_de_descanso,
+    const PanelDeRegalos& regalos, const VentanaDeLote& ventana_de_lote,
+    const MarcasDeLotes& marcas_de_lotes, const CuadroDeAviso& cuadro_de_aviso,
+    const CuadroDeDialogo& cuadro_de_dialogo, LluviaGrafica& lluvia, const MenuEnJuego& menu,
+    const MapaGeneral& mapa_general) const {
     SDL_Renderer* renderer = renderizador.ptr();
     if (mundo != nullptr) {
         SDL_SetRenderTarget(renderer, mundo);
@@ -1486,16 +1464,25 @@ void VistaPartida::dibujar(
     hud.dibujar(renderer, ultimo_inventario, ultimo_cofre, entrada.raton_x(), entrada.raton_y());
     if (const EstadoJugador* propio = jugador_propio(); propio != nullptr) {
         hud.dibujar_energia(
-            renderer, propio->energia, propio->energia_maxima, propio->con_mejora_de_pelea);
+            renderer,
+            propio->energia,
+            propio->energia_maxima,
+            propio->con_mejora_de_pelea);
         if (mapa_actual_es_mazmorra() || propio->vida < propio->vida_maxima) {
             hud.dibujar_vida(
-                renderer, propio->vida, propio->vida_maxima, propio->con_mejora_de_pelea);
+                renderer,
+                propio->vida,
+                propio->vida_maxima,
+                propio->con_mejora_de_pelea);
         }
         reloj_grafico.dibujar_dinero(renderer, propio->monedas, ancho_de_pantalla);
     }
 
     if (hora_del_juego.has_value()) {
         reloj_grafico.dibujar(renderer, *hora_del_juego, ancho_de_pantalla);
+    }
+    if (mapa_actual_es_mazmorra() && ultimo_estado_juego.nivel_de_mazmorra > 0) {
+        indicador_de_nivel.dibujar(renderer, ultimo_estado_juego.nivel_de_mazmorra);
     }
 
     regalos.dibujar(renderer, datos_de_regalos());

@@ -21,7 +21,6 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::ACTIVAR_MULTIJUGADOR,
            [this] { return recibir_comando_activar_multijugador(); }},
           {TipoMensaje::SALIR_DE_PARTIDA, [this] { return recibir_comando_salir_de_partida(); }},
-          {TipoMensaje::GUARDAR_PARTIDA, [this] { return recibir_comando_guardar_partida(); }},
           {TipoMensaje::MOVERSE, [this] { return recibir_comando_moverse(); }},
           {TipoMensaje::SELECCIONAR_RANURA_DE_LA_BARRA,
            [this] { return recibir_comando_seleccionar_ranura_de_la_barra(); }},
@@ -130,10 +129,6 @@ ActivarMultijugador ProtocoloServidor::recibir_comando_activar_multijugador() {
 
 SalirDePartida ProtocoloServidor::recibir_comando_salir_de_partida() {
     return SalirDePartida{};
-}
-
-GuardarPartida ProtocoloServidor::recibir_comando_guardar_partida() {
-    return GuardarPartida{};
 }
 
 Moverse ProtocoloServidor::recibir_comando_moverse() {
@@ -318,6 +313,7 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             },
             [this](const LoteDelCentro& e) { enviar_evento_lote_del_centro(e); },
             [this](const CentroTerminado& e) { enviar_evento_centro_terminado(e); },
+            [this](const ResumenAnimalesGranja& e) { enviar_evento_resumen_animales_granja(e); },
             [this](const PreguntaDeDormir& e) { enviar_evento_pregunta_de_dormir(e); },
         },
         evento);
@@ -398,10 +394,10 @@ void ProtocoloServidor::enviar_estado_jugador(const EstadoJugador& estado) {
     enviar_u8(static_cast<uint8_t>(estado.calidad_en_mano));
     enviar_u8(estado.numero_de_accion);
     enviar_u8(static_cast<uint8_t>(estado.descanso));
-    enviar_u8(estado.vida);
-    enviar_u8(estado.energia);
-    enviar_u8(estado.vida_maxima);
-    enviar_u8(estado.energia_maxima);
+    enviar_u16(estado.vida);
+    enviar_u16(estado.energia);
+    enviar_u16(estado.vida_maxima);
+    enviar_u16(estado.energia_maxima);
     enviar_booleano(estado.con_mejora_de_pelea);
     enviar_u32(estado.monedas);
     enviar_apariencia(estado.apariencia);
@@ -554,6 +550,7 @@ void ProtocoloServidor::enviar_estado_juego(const EstadoJuego& estado_juego) {
     for (const EstadoNpc& estado : estado_juego.npcs) {
         enviar_estado_npc(estado);
     }
+    enviar_u8(estado_juego.nivel_de_mazmorra);
 }
 
 void ProtocoloServidor::enviar_evento_jugadores_en_sector(const JugadoresEnSector& jugadores) {
@@ -785,4 +782,13 @@ void ProtocoloServidor::enviar_evento_llamas_en_sector(const LlamasEnSector& lla
         enviar_u32(llama.x_centesimas);
         enviar_u32(llama.y_centesimas);
     }
+}
+
+void ProtocoloServidor::enviar_evento_resumen_animales_granja(
+    const ResumenAnimalesGranja& resumen) {
+    enviar_tipo(TipoMensaje::RESUMEN_ANIMALES_GRANJA);
+    enviar_u16(resumen.cantidad_de_vacas);
+    enviar_u16(resumen.cantidad_de_gallinas);
+    enviar_u16(resumen.vacas_para_ordeniar);
+    enviar_u16(resumen.huevos_para_recolectar);
 }

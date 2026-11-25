@@ -55,6 +55,8 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::LOTE_DEL_CENTRO, [this] { return recibir_lote_del_centro(); }},
           {TipoMensaje::CENTRO_TERMINADO, [this] { return recibir_centro_terminado(); }},
           {TipoMensaje::PREGUNTA_DE_DORMIR, [this] { return recibir_pregunta_de_dormir(); }},
+          {TipoMensaje::RESUMEN_ANIMALES_GRANJA,
+           [this] { return recibir_resumen_animales_granja(); }},
       } {
 }
 
@@ -73,7 +75,6 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const VerificarCodigoPartida& m) { enviar_comando_verificar_codigo_partida(m); },
             [this](const ActivarMultijugador& m) { enviar_comando_activar_multijugador(m); },
             [this](const SalirDePartida& m) { enviar_comando_salir_de_partida(m); },
-            [this](const GuardarPartida& m) { enviar_comando_guardar_partida(m); },
             [this](const Moverse& m) { enviar_comando_moverse(m); },
             [this](const SeleccionarRanuraDeLaBarra& m) {
                 enviar_comando_seleccionar_ranura_de_la_barra(m);
@@ -154,10 +155,6 @@ void ProtocoloCliente::enviar_comando_activar_multijugador(const ActivarMultijug
 
 void ProtocoloCliente::enviar_comando_salir_de_partida(const SalirDePartida&) {
     enviar_tipo(TipoMensaje::SALIR_DE_PARTIDA);
-}
-
-void ProtocoloCliente::enviar_comando_guardar_partida(const GuardarPartida&) {
-    enviar_tipo(TipoMensaje::GUARDAR_PARTIDA);
 }
 
 void ProtocoloCliente::enviar_comando_moverse(const Moverse& moverse) {
@@ -399,10 +396,10 @@ EstadoJugador ProtocoloCliente::recibir_estado_jugador() {
     estado.calidad_en_mano = static_cast<Calidad>(recibir_u8());
     estado.numero_de_accion = recibir_u8();
     estado.descanso = static_cast<EstadoDeDescanso>(recibir_u8());
-    estado.vida = recibir_u8();
-    estado.energia = recibir_u8();
-    estado.vida_maxima = recibir_u8();
-    estado.energia_maxima = recibir_u8();
+    estado.vida = recibir_u16();
+    estado.energia = recibir_u16();
+    estado.vida_maxima = recibir_u16();
+    estado.energia_maxima = recibir_u16();
     estado.con_mejora_de_pelea = recibir_booleano();
     estado.monedas = recibir_u32();
     estado.apariencia = recibir_apariencia();
@@ -619,6 +616,7 @@ EstadoJuego ProtocoloCliente::recibir_estado_juego() {
     for (uint16_t i = 0; i < cantidad_de_npcs; ++i) {
         estado_juego.npcs.push_back(recibir_estado_npc());
     }
+    estado_juego.nivel_de_mazmorra = recibir_u8();
 
     return estado_juego;
 }
@@ -925,4 +923,13 @@ RegalosPendientes ProtocoloCliente::recibir_regalos_pendientes() {
         pendientes.regalos.push_back(regalo);
     }
     return pendientes;
+}
+
+ResumenAnimalesGranja ProtocoloCliente::recibir_resumen_animales_granja() {
+    ResumenAnimalesGranja resumen;
+    resumen.cantidad_de_vacas = recibir_u16();
+    resumen.cantidad_de_gallinas = recibir_u16();
+    resumen.vacas_para_ordeniar = recibir_u16();
+    resumen.huevos_para_recolectar = recibir_u16();
+    return resumen;
 }

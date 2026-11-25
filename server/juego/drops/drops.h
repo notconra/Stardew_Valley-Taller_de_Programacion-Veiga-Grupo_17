@@ -41,6 +41,12 @@ public:
     // desde la casilla indicada.
     std::vector<int> ids_cerca_de(const Casilla& centro, int radio_en_casillas) const;
 
+    // Todos los ids de drops de un tipo de ítem específico.
+    std::vector<int> ids_de_tipo(TipoItem tipo) const;
+
+    // Suma total de unidades tiradas de un tipo de ítem específico.
+    uint32_t cantidad_de_tipo(TipoItem tipo) const;
+
     // Le ofrece el drop a un inventario. Si no entra completo no toca nada y devuelve false, el
     // drop entero queda en el piso para que lo recoja otro jugador con espacio.
     bool recoger(int id, Inventario& destino);

@@ -24,7 +24,6 @@ enum class TipoMensaje : uint8_t {
     SOLICITAR_INVENTARIO = 0x0E,
     SOLTAR_ITEM = 0x0F,
     ENVIAR_MENSAJE_DE_CHAT = 0x10,
-    GUARDAR_PARTIDA = 0x11,
     CERRAR_COFRE = 0x12,
     CONSULTAR_CASILLA = 0x13,
     DAR_EL_OK = 0x14,
@@ -128,6 +127,9 @@ enum class TipoMensaje : uint8_t {
 
     // Respuesta a VERIFICAR_CODIGO_PARTIDA cuando la partida existe y acepta ingreso
     CODIGO_PARTIDA_DISPONIBLE = 0xAD,
+
+    // Resumen de animales y huevos en la granja (visible desde cualquier mapa)
+    RESUMEN_ANIMALES_GRANJA = 0xAE,
 };
 
 #endif

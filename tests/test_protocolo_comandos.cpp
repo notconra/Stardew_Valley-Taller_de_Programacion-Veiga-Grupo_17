@@ -52,10 +52,6 @@ TEST_F(ProtocoloComandosTest, SalirDePartida) {
     verificar_comando(SalirDePartida{});
 }
 
-TEST_F(ProtocoloComandosTest, GuardarPartida) {
-    verificar_comando(GuardarPartida{});
-}
-
 // Movimiento
 
 TEST_F(ProtocoloComandosTest, Moverse) {

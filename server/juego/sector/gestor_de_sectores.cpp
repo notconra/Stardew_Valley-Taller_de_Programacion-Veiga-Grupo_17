@@ -1,5 +1,6 @@
 #include "gestor_de_sectores.h"
 
+#include <algorithm>
 #include <map>
 #include <string>
 #include <utility>
@@ -331,10 +332,12 @@ std::vector<EstadoJugador> GestorDeSectores::armar_jugadores(const std::string& 
             estado.calidad_en_mano = en_mano.calidad;
             estado.numero_de_accion = personaje->second.numero_de_accion;
             estado.descanso = personaje->second.descanso;
-            estado.vida = static_cast<uint8_t>(personaje->second.vida);
-            estado.energia = static_cast<uint8_t>(personaje->second.energia);
-            estado.vida_maxima = static_cast<uint8_t>(personaje->second.vida_maxima());
-            estado.energia_maxima = static_cast<uint8_t>(personaje->second.energia_maxima());
+            estado.vida = static_cast<uint16_t>(std::max(personaje->second.vida, 0));
+            estado.energia = static_cast<uint16_t>(std::max(personaje->second.energia, 0));
+            estado.vida_maxima =
+                static_cast<uint16_t>(std::max(personaje->second.vida_maxima(), 0));
+            estado.energia_maxima =
+                static_cast<uint16_t>(std::max(personaje->second.energia_maxima(), 0));
             estado.con_mejora_de_pelea = personaje->second.tiene_mejora_de_pelea;
             estado.monedas = personaje->second.monedas;
             estado.apariencia = personaje->second.apariencia;
@@ -350,6 +353,7 @@ EstadoJuego GestorDeSectores::armar_instantanea(const std::string& id_mapa) cons
 
     EstadoJuego estado;
     estado.mapa = id_mapa;
+    estado.nivel_de_mazmorra = static_cast<uint8_t>(std::max(sector.nivel_de_mazmorra, 0));
     estado.jugadores = armar_jugadores(id_mapa);
     estado.npcs = armar_npcs(id_mapa);
     sector.objetos.agregar_a(estado);

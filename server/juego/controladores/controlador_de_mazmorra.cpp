@@ -295,8 +295,41 @@ void ControladorDeMazmorra::entrar(Personaje& personaje) {
 }
 
 void ControladorDeMazmorra::bajar(Personaje& personaje) {
-    if (mazmorra->esta_adentro(personaje.id_jugador) && mazmorra->bajar(personaje.id_jugador)) {
+    if (!mazmorra->esta_adentro(personaje.id_jugador)) {
+        return;
+    }
+    if (mazmorra->bajar(personaje.id_jugador)) {
         llevar_al_nivel_actual(personaje);
+        return;
+    }
+
+    std::string mapa_origen = personaje.mapa_actual;
+    std::optional<Transicion> salida;
+    if (sectores.existe(mapa_origen)) {
+        const std::vector<std::pair<Rectangulo, Transicion>>& transiciones =
+            sectores.en(mapa_origen).mapa.obtener_transiciones();
+        size_t indice = 0;
+        while (indice < transiciones.size() && !salida.has_value()) {
+            const Transicion& candidata = transiciones[indice].second;
+            if (candidata.mapa_destino != DESTINO_ESCALERA &&
+                candidata.mapa_destino != DESTINO_ENTRADA) {
+                salida = candidata;
+            }
+            indice++;
+        }
+    }
+
+    salir_de_la_mazmorra(personaje);
+    if (!salida.has_value() || !sectores.existe(salida->mapa_destino)) {
+        return;
+    }
+    Casilla llegada = sectores.casilla_de_llegada(salida->mapa_destino, *salida);
+    if (sectores.en(salida->mapa_destino)
+            .jugadores.puede_pararse_en_casilla(llegada.columna, llegada.fila)) {
+        sectores
+            .trasladar_a_casilla(personaje, salida->mapa_destino, llegada.columna, llegada.fila);
+    } else {
+        sectores.colocar_en_aparicion(personaje, salida->mapa_destino);
     }
 }
 
@@ -337,4 +370,26 @@ bool ControladorDeMazmorra::resolver_transicion(
 
 void ControladorDeMazmorra::al_desconectarse(Personaje& personaje) {
     salir_de_la_mazmorra(personaje);
+}
+
+bool ControladorDeMazmorra::ir_a_nivel(
+    Personaje& personaje, int numero_nivel, std::string& mensaje) {
+    if (!mazmorra) {
+        mensaje = "No hay mazmorra disponible.";
+        return false;
+    }
+    if (numero_nivel < 1 || numero_nivel > CANTIDAD_NIVELES) {
+        mensaje = "El nivel debe estar entre 1 y " + std::to_string(CANTIDAD_NIVELES) + ".";
+        return false;
+    }
+    if (!mazmorra->esta_adentro(personaje.id_jugador)) {
+        entrar(personaje);
+    }
+    if (!mazmorra->ir_a_nivel(personaje.id_jugador, static_cast<size_t>(numero_nivel))) {
+        mensaje = "No se pudo ir al nivel " + std::to_string(numero_nivel) + ".";
+        return false;
+    }
+    llevar_al_nivel_actual(personaje);
+    mensaje = "Teletransportado al nivel " + std::to_string(numero_nivel) + " de la mazmorra.";
+    return true;
 }

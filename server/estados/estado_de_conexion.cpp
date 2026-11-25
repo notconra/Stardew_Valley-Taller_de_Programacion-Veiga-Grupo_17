@@ -66,10 +66,6 @@ EstadoDeConexion::ProximoEstado EstadoDeConexion::salir_de_partida(const SalirDe
     return rechazar();
 }
 
-EstadoDeConexion::ProximoEstado EstadoDeConexion::guardar_partida(const GuardarPartida&) {
-    return rechazar();
-}
-
 EstadoDeConexion::ProximoEstado EstadoDeConexion::comando_de_juego(const ComandoCliente&) {
     return rechazar();
 }

@@ -171,6 +171,9 @@ public:
     // Interacciones y ciclo con animales
     bool vaca_lista_en(uint32_t columna, uint32_t fila) const;
     bool ordeniar_vaca(Notificador& notificador, uint32_t columna, uint32_t fila);
+    bool ordeniar_vaca_por_id(Notificador& notificador, uint32_t id_vaca);
+    bool recoger_drop(
+        Notificador& notificador, uint32_t id_jugador, int id_drop, Inventario& destino);
     bool agregar_vaca(Notificador& notificador, uint32_t columna, uint32_t fila);
     bool agregar_gallina(Notificador& notificador, uint32_t columna, uint32_t fila);
 
