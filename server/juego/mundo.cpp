@@ -166,6 +166,9 @@ void Mundo::conectar(
     }
     controlador_del_dia.despertar_si_volvio_desmayado(personaje);
     controlador_de_posiciones.al_conectarse(personaje);
+    ResumenAnimalesGranja resumen = calcular_resumen_animales();
+    ultimo_resumen_animales = resumen;
+    notificador.a_jugador(id_jugador, resumen);
 }
 
 void Mundo::desconectar(uint32_t id_jugador) {
@@ -312,6 +315,30 @@ void Mundo::actualizar() {
     controlador_de_drops.actualizar();
     controlador_del_centro.actualizar();
     controlador_de_posiciones.actualizar();
+    difundir_resumen_animales_si_cambio();
+}
+
+ResumenAnimalesGranja Mundo::calcular_resumen_animales() const {
+    ResumenAnimalesGranja resumen;
+    if (!sectores.existe("granja")) {
+        return resumen;
+    }
+    const Sector& granja = sectores.en("granja");
+    resumen.cantidad_de_vacas = static_cast<uint16_t>(granja.animales.cantidad_vacas());
+    resumen.cantidad_de_gallinas = static_cast<uint16_t>(granja.animales.cantidad_gallinas());
+    resumen.vacas_para_ordeniar =
+        static_cast<uint16_t>(granja.animales.cantidad_vacas_listas_para_ordeniar());
+    resumen.huevos_para_recolectar =
+        static_cast<uint16_t>(granja.drops.cantidad_de_tipo(TipoItem::HUEVO));
+    return resumen;
+}
+
+void Mundo::difundir_resumen_animales_si_cambio() {
+    ResumenAnimalesGranja actual = calcular_resumen_animales();
+    if (!ultimo_resumen_animales.has_value() || *ultimo_resumen_animales != actual) {
+        ultimo_resumen_animales = actual;
+        notificador.a_todos(actual);
+    }
 }
 
 std::optional<DatosJugadorGuardado> Mundo::obtener_datos_jugador(uint32_t id_jugador) const {

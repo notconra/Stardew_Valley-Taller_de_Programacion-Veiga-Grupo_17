@@ -97,6 +97,9 @@ using EventoServidor = std::variant<
     PreguntaDeDormir,
 
     // - Mapa general
-    PosicionesDeLosJugadores>;
+    PosicionesDeLosJugadores,
+
+    // - Animales
+    ResumenAnimalesGranja>;
 
 #endif

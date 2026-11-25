@@ -127,6 +127,9 @@ enum class TipoMensaje : uint8_t {
 
     // Respuesta a VERIFICAR_CODIGO_PARTIDA cuando la partida existe y acepta ingreso
     CODIGO_PARTIDA_DISPONIBLE = 0xAD,
+
+    // Resumen de animales y huevos en la granja (visible desde cualquier mapa)
+    RESUMEN_ANIMALES_GRANJA = 0xAE,
 };
 
 #endif

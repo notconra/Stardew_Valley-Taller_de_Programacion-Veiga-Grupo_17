@@ -55,6 +55,8 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::LOTE_DEL_CENTRO, [this] { return recibir_lote_del_centro(); }},
           {TipoMensaje::CENTRO_TERMINADO, [this] { return recibir_centro_terminado(); }},
           {TipoMensaje::PREGUNTA_DE_DORMIR, [this] { return recibir_pregunta_de_dormir(); }},
+          {TipoMensaje::RESUMEN_ANIMALES_GRANJA,
+           [this] { return recibir_resumen_animales_granja(); }},
       } {
 }
 
@@ -921,4 +923,13 @@ RegalosPendientes ProtocoloCliente::recibir_regalos_pendientes() {
         pendientes.regalos.push_back(regalo);
     }
     return pendientes;
+}
+
+ResumenAnimalesGranja ProtocoloCliente::recibir_resumen_animales_granja() {
+    ResumenAnimalesGranja resumen;
+    resumen.cantidad_de_vacas = recibir_u16();
+    resumen.cantidad_de_gallinas = recibir_u16();
+    resumen.vacas_para_ordeniar = recibir_u16();
+    resumen.huevos_para_recolectar = recibir_u16();
+    return resumen;
 }

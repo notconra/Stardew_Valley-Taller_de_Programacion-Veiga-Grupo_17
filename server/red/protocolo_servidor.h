@@ -113,6 +113,7 @@ private:
     void enviar_evento_lote_del_centro(const LoteDelCentro& lote);
     void enviar_evento_centro_terminado(const CentroTerminado& m);
     void enviar_evento_pregunta_de_dormir(const PreguntaDeDormir& pregunta);
+    void enviar_evento_resumen_animales_granja(const ResumenAnimalesGranja& resumen);
 
 public:
     explicit ProtocoloServidor(ISocket& socket_conectado);

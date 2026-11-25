@@ -768,4 +768,14 @@ struct PreguntaDeDormir {
     bool operator==(const PreguntaDeDormir&) const = default;
 };
 
+// Resumen global de los animales de la granja y huevos en el piso, para mostrarlo en el menú
+// in-game desde cualquier mapa.
+struct ResumenAnimalesGranja {
+    uint16_t cantidad_de_vacas = 0;
+    uint16_t cantidad_de_gallinas = 0;
+    uint16_t vacas_para_ordeniar = 0;
+    uint16_t huevos_para_recolectar = 0;
+    bool operator==(const ResumenAnimalesGranja&) const = default;
+};
+
 #endif

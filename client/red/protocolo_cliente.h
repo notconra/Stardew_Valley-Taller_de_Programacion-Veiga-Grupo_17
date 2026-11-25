@@ -103,6 +103,7 @@ private:
     RegalosPendientes recibir_regalos_pendientes();
     DialogoNpc recibir_dialogo_npc();
     LoteDelCentro recibir_lote_del_centro();
+    ResumenAnimalesGranja recibir_resumen_animales_granja();
     CentroTerminado recibir_centro_terminado();
     PreguntaDeDormir recibir_pregunta_de_dormir();
 

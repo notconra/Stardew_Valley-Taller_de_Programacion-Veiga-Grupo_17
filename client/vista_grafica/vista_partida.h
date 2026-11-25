@@ -83,6 +83,7 @@ private:
     JugadoresDeLaPartida jugadores_de_la_partida{};
     // Dónde está cada jugador conectado, para el mapa general.
     PosicionesDeLosJugadores posiciones_de_los_jugadores{};
+    ResumenAnimalesGranja resumen_animales_granja{};
     RegalosPendientes regalos_pendientes{};
     std::vector<LoteDelCentro> lotes_recibidos;
     // La cama por la que preguntó el servidor, hasta pasársela a la pantalla de descanso.
@@ -92,7 +93,6 @@ private:
     std::map<TipoLote, LoteDelCentro> lotes_del_centro;
 
     PanelDeRegalos::Datos datos_de_regalos() const;
-    uint32_t contar_huevos_en_la_granja() const;
     MenuEnJuego::DatosAnimales datos_de_animales() const;
 
     // Lo último que se le preguntó al servidor (ConsultarCasilla) sobre la casilla del mouse, y su

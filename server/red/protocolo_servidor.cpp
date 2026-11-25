@@ -313,6 +313,7 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             },
             [this](const LoteDelCentro& e) { enviar_evento_lote_del_centro(e); },
             [this](const CentroTerminado& e) { enviar_evento_centro_terminado(e); },
+            [this](const ResumenAnimalesGranja& e) { enviar_evento_resumen_animales_granja(e); },
             [this](const PreguntaDeDormir& e) { enviar_evento_pregunta_de_dormir(e); },
         },
         evento);
@@ -781,4 +782,13 @@ void ProtocoloServidor::enviar_evento_llamas_en_sector(const LlamasEnSector& lla
         enviar_u32(llama.x_centesimas);
         enviar_u32(llama.y_centesimas);
     }
+}
+
+void ProtocoloServidor::enviar_evento_resumen_animales_granja(
+    const ResumenAnimalesGranja& resumen) {
+    enviar_tipo(TipoMensaje::RESUMEN_ANIMALES_GRANJA);
+    enviar_u16(resumen.cantidad_de_vacas);
+    enviar_u16(resumen.cantidad_de_gallinas);
+    enviar_u16(resumen.vacas_para_ordeniar);
+    enviar_u16(resumen.huevos_para_recolectar);
 }

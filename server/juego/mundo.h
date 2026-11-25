@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -54,6 +55,10 @@ private:
     ControladorDeCultivos controlador_de_cultivos;
     ControladorDeRegalos controlador_de_regalos;
     ControladorDePosiciones controlador_de_posiciones;
+    std::optional<ResumenAnimalesGranja> ultimo_resumen_animales;
+
+    ResumenAnimalesGranja calcular_resumen_animales() const;
+    void difundir_resumen_animales_si_cambio();
 
     void resolver_transicion(Personaje& personaje, const Transicion& transicion);
 

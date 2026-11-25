@@ -476,6 +476,10 @@ TEST_F(ProtocoloEventosTest, DialogoNpc) {
     verificar_evento(DialogoNpc{"marnie", "Hola, granjero"});
 }
 
+TEST_F(ProtocoloEventosTest, ResumenAnimalesGranja) {
+    verificar_evento(ResumenAnimalesGranja{3, 7, 2, 5});
+}
+
 TEST_F(ProtocoloEventosTest, LoteDelCentro) {
     const RequisitoDeLote requisito1{
         TipoDeRequisito::ITEM,

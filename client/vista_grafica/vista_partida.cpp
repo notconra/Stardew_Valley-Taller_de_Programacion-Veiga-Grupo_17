@@ -176,6 +176,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     hora_del_juego.reset();
     jugadores_de_la_partida = JugadoresDeLaPartida{};
     posiciones_de_los_jugadores = PosicionesDeLosJugadores{};
+    resumen_animales_granja = ResumenAnimalesGranja{};
     regalos_pendientes = RegalosPendientes{};
     lotes_recibidos.clear();
     lotes_del_centro.clear();
@@ -709,32 +710,12 @@ PanelDeRegalos::Datos VistaPartida::datos_de_regalos() const {
         ultimo_inventario};
 }
 
-uint32_t VistaPartida::contar_huevos_en_la_granja() const {
-    if (mapa_actual != "granja") {
-        return 0;
-    }
-
-    uint32_t huevos = 0;
-    for (const EstadoDrop& drop : ultimo_estado_juego.drops) {
-        if (drop.tipo == TipoItem::HUEVO) {
-            huevos += drop.cantidad;
-        }
-    }
-    return huevos;
-}
-
 MenuEnJuego::DatosAnimales VistaPartida::datos_de_animales() const {
     MenuEnJuego::DatosAnimales datos;
-    for (const EstadoAnimal& animal : ultimo_estado_juego.animales) {
-        if (animal.tipo == TipoAnimal::VACA) {
-            datos.cantidad_de_vacas += 1;
-        } else if (animal.tipo == TipoAnimal::GALLINA) {
-            datos.cantidad_de_gallinas += 1;
-        }
-    }
-
-    datos.vacas_para_ordeniar = ultimo_estado_juego.vacas_para_ordeniar.size();
-    datos.huevos_para_recolectar = contar_huevos_en_la_granja();
+    datos.cantidad_de_vacas = resumen_animales_granja.cantidad_de_vacas;
+    datos.cantidad_de_gallinas = resumen_animales_granja.cantidad_de_gallinas;
+    datos.vacas_para_ordeniar = resumen_animales_granja.vacas_para_ordeniar;
+    datos.huevos_para_recolectar = resumen_animales_granja.huevos_para_recolectar;
     return datos;
 }
 
@@ -1218,6 +1199,7 @@ void VistaPartida::aplicar(
             [&](const MensajeDeChat& e) { chat.recibir(e); },
             [&](const JugadoresDeLaPartida& e) { jugadores_de_la_partida = e; },
             [&](const PosicionesDeLosJugadores& e) { posiciones_de_los_jugadores = e; },
+            [&](const ResumenAnimalesGranja& e) { resumen_animales_granja = e; },
             [&](const LoteDelCentro& e) { lotes_recibidos.push_back(e); },
             [&](const CentroTerminado&) {
                 if (menu_actual != nullptr) {
