@@ -64,10 +64,10 @@ void VentanaPrincipalEditor::inicializar_interfaz() {
     lienzo = new LienzoDeEdicion(this);
 
     area_desplazamiento = new QScrollArea(this);
+    area_desplazamiento->setObjectName("area_desplazamiento");
     area_desplazamiento->setWidget(lienzo);
     area_desplazamiento->setWidgetResizable(false);
     area_desplazamiento->setAlignment(Qt::AlignCenter);
-    area_desplazamiento->setStyleSheet("background-color: #222222;");
     setCentralWidget(area_desplazamiento);
 
     // Dock lateral izquierdo: Paleta de Herramientas
@@ -78,7 +78,7 @@ void VentanaPrincipalEditor::inicializar_interfaz() {
     addDockWidget(Qt::LeftDockWidgetArea, dock_paleta);
 
     // Dock lateral derecho: Panel de Validación
-    dock_validacion = new QDockWidget("Panel de Validacion", this);
+    dock_validacion = new QDockWidget("Panel de Validación", this);
     dock_validacion->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
     panel_validacion = new PanelDeValidacion(dock_validacion);
     dock_validacion->setWidget(panel_validacion);
@@ -138,7 +138,7 @@ void VentanaPrincipalEditor::inicializar_barra_de_herramientas() {
     barra->setMovable(false);
 
     etiqueta_nombre_mundo = new QLabel(barra);
-    etiqueta_nombre_mundo->setStyleSheet("padding: 0 10px; font-size: 13px;");
+    etiqueta_nombre_mundo->setObjectName("etiqueta_nombre_mundo");
     actualizar_etiqueta_nombre_mundo();
     barra->addWidget(etiqueta_nombre_mundo);
 
@@ -166,14 +166,11 @@ void VentanaPrincipalEditor::inicializar_barra_de_herramientas() {
     barra->addSeparator();
 
     etiqueta_dimensiones = new QLabel(" Dimensiones: <b>35 x 35</b> ", barra);
-    etiqueta_dimensiones->setStyleSheet("padding: 0 8px; font-size: 13px;");
+    etiqueta_dimensiones->setObjectName("etiqueta_dimensiones");
     barra->addWidget(etiqueta_dimensiones);
 
-    QPushButton* boton_redimensionar = new QPushButton("Cambiar Tamano...", barra);
-    boton_redimensionar->setStyleSheet(
-        "QPushButton { background-color: #3C5A78; color: white; font-weight: bold; padding: 4px "
-        "10px; border-radius: 4px; }"
-        "QPushButton:hover { background-color: #4C7298; }");
+    QPushButton* boton_redimensionar = new QPushButton("Cambiar Tamaño...", barra);
+    boton_redimensionar->setObjectName("boton_redimensionar");
     connect(
         boton_redimensionar,
         &QPushButton::clicked,
@@ -194,10 +191,7 @@ void VentanaPrincipalEditor::inicializar_barra_de_herramientas() {
     barra->addSeparator();
 
     QPushButton* boton_guardar_rapido = new QPushButton("Guardar", barra);
-    boton_guardar_rapido->setStyleSheet(
-        "QPushButton { background-color: #2E6B38; color: white; font-weight: bold; padding: 4px "
-        "10px; border-radius: 4px; }"
-        "QPushButton:hover { background-color: #3B8C4A; }");
+    boton_guardar_rapido->setObjectName("boton_guardar_rapido");
     connect(
         boton_guardar_rapido,
         &QPushButton::clicked,
@@ -282,6 +276,11 @@ void VentanaPrincipalEditor::conectar_senales() {
         &PanelDeValidacion::eliminar_solicitado,
         lienzo,
         &LienzoDeEdicion::eliminar_entidad_seleccionada);
+    connect(
+        panel_validacion,
+        &PanelDeValidacion::sector_solicitado,
+        combo_sectores,
+        &QComboBox::setCurrentIndex);
 
     QShortcut* atajo_rotar = new QShortcut(QKeySequence(Qt::Key_R), this);
     connect(atajo_rotar, &QShortcut::activated, lienzo, &LienzoDeEdicion::rotar_elemento_actual);
@@ -452,11 +451,11 @@ bool VentanaPrincipalEditor::validar_antes_de_guardar() {
     if (resultado.es_valido) {
         return true;
     }
-    QString detalle_errores = "No se puede guardar un mundo invalido.\n\nErrores encontrados:";
-    for (const std::string& error : resultado.errores) {
-        detalle_errores += QString("\n- %1").arg(QString::fromStdString(error));
+    QString detalle_errores = "No se puede guardar un mundo inválido.\n\nErrores encontrados:";
+    for (const ErrorValidacion& error : resultado.errores) {
+        detalle_errores += QString("\n- %1").arg(QString::fromStdString(error.mensaje));
     }
-    QMessageBox::warning(this, "Mundo Invalido", detalle_errores);
+    QMessageBox::warning(this, "Mundo Inválido", detalle_errores);
     return false;
 }
 
@@ -767,23 +766,23 @@ void VentanaPrincipalEditor::generar_muro_perimetral_granja() {
         mapa_actual_sector->generar_muro_perimetral_granja();
         lienzo->update();
         ejecutar_validacion();
-        statusBar()->showMessage("Perimetro de muros de troncos generado con exito.", 3000);
+        statusBar()->showMessage("Perímetro de muros de troncos generado con éxito.", 3000);
     } else if (indice_sector == 1) {
         mapa_actual_sector->generar_muro_perimetral_pueblo();
         lienzo->update();
         ejecutar_validacion();
-        statusBar()->showMessage("Perimetro de vallas urbanas generado con exito.", 3000);
+        statusBar()->showMessage("Perímetro de vallas urbanas generado con éxito.", 3000);
     } else if (indice_sector == 2) {
         mapa_actual_sector->reconstruir_perimetro_mercado();
         lienzo->update();
         ejecutar_validacion();
-        statusBar()->showMessage("Perimetro del mercado restaurado con exito.", 3000);
+        statusBar()->showMessage("Perímetro del mercado restaurado con éxito.", 3000);
     } else if (indice_sector >= 3) {
         mapa_actual_sector->generar_muros_caverna();
         lienzo->actualizar_tamano_del_lienzo();
         lienzo->update();
         actualizar_etiqueta_dimensiones();
         ejecutar_validacion();
-        statusBar()->showMessage("Muros de mina generados con exito.", 3000);
+        statusBar()->showMessage("Muros de mina generados con éxito.", 3000);
     }
 }

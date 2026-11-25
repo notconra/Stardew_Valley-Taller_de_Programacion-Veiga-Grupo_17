@@ -43,6 +43,7 @@ public:
 signals:
     void entidad_cambiada(TipoEntidad entidad);
     void eliminar_solicitado();
+    void sector_solicitado(int indice_sector);
 };
 
 #endif  // PANEL_DE_VALIDACION_H

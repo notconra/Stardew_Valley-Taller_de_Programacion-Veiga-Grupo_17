@@ -6,12 +6,17 @@
 
 #include "definicion_de_mundo.h"
 
+struct ErrorValidacion {
+    std::string mensaje;
+    int indice_sector;
+};
+
 struct ResultadoValidacion {
     bool es_valido;
-    std::vector<std::string> errores;
+    std::vector<ErrorValidacion> errores;
 
     ResultadoValidacion();
-    void agregar_error(const std::string& error);
+    void agregar_error(const std::string& error, int indice_sector = -1);
 };
 
 class ValidadorDeMundo {
