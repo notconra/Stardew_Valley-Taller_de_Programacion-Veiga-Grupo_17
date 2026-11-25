@@ -93,6 +93,7 @@ public:
     void generar_muro_perimetral_pueblo();
     void generar_muros_caverna();
     static bool es_tile_muro_caverna(uint32_t identificador_tile);
+    static uint32_t tile_acantilado_norte_caverna(int distancia_desde_piso, int columna);
     void reconstruir_perimetro_mercado();
     static bool es_tile_perimetro_mercado(uint32_t identificador_tile);
     void calcular_interaccion_puesto(

@@ -1835,6 +1835,22 @@ bool MapaEditable::es_tile_muro_caverna(uint32_t identificador_tile) {
     return encontrado;
 }
 
+uint32_t MapaEditable::tile_acantilado_norte_caverna(int distancia_desde_piso, int columna) {
+    static constexpr uint32_t ACANTILADO_NORTE[4][4] = {
+        {74, 75, 76, 77},
+        {90, 91, 92, 93},
+        {106, 107, 108, 109},
+        {122, 123, 124, 125}};
+    int indice_fila = 4 - distancia_desde_piso;
+    if (indice_fila < 0) {
+        indice_fila = 0;
+    } else if (indice_fila > 3) {
+        indice_fila = 3;
+    }
+    int indice_columna = ((columna % 4) + 4) % 4;
+    return ACANTILADO_NORTE[indice_fila][indice_columna];
+}
+
 bool MapaEditable::es_piso_en_mascara(
     const std::vector<std::vector<bool>>& mascara_piso, int columna, int fila) {
     if (fila < 0 || static_cast<size_t>(fila) >= mascara_piso.size()) {
@@ -1849,11 +1865,6 @@ bool MapaEditable::es_piso_en_mascara(
 
 void MapaEditable::generar_muros_caverna() {
     static constexpr uint32_t TILE_PISO_RELLENO_BORDE = 139;
-    static constexpr uint32_t ACANTILADO_NORTE[4][4] = {
-        {74, 75, 76, 77},
-        {90, 91, 92, 93},
-        {106, 107, 108, 109},
-        {122, 123, 124, 125}};
     static constexpr uint32_t TAPA_IZQUIERDA_ACANTILADO[4] = {69, 85, 101, 117};
     static constexpr uint32_t TAPA_DERECHA_ACANTILADO[4] = {112, 128, 144, 160};
     static constexpr uint32_t MURO_OESTE[4] = {133, 149, 165, 181};
@@ -2059,7 +2070,7 @@ void MapaEditable::generar_muros_caverna() {
                             TipoCapa::ESTRUCTURAS,
                             columna_actual,
                             fila_destino,
-                            ACANTILADO_NORTE[indice_fila_acantilado][columna_actual % 4],
+                            tile_acantilado_norte_caverna(distancia, columna_actual),
                             PropiedadDeCasilla::BLOQUEA);
                         if (distancia == 1) {
                             pintar_en_capa(

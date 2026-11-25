@@ -171,8 +171,13 @@ void CargadorDeSectorTMX::cargar_suelo_caverna(
 
                     uint8_t propiedades_suelo =
                         PropiedadDeCasilla::DECORABLE | PropiedadDeCasilla::ADMITE_MINERAL;
+                    bool es_tramo_escalera_salida =
+                        (id_estructura == TILE_SALIDA_CAVERNA_TRAMO_1 ||
+                         id_estructura == TILE_SALIDA_CAVERNA_TRAMO_2 ||
+                         id_estructura == TILE_SALIDA_CAVERNA_TRAMO_3);
                     if (valor_colision != 0 &&
-                        (id_estructura == 0 || MapaEditable::es_tile_muro_caverna(id_estructura))) {
+                        (id_estructura == 0 || MapaEditable::es_tile_muro_caverna(id_estructura) ||
+                         es_tramo_escalera_salida)) {
                         propiedades_suelo = PropiedadDeCasilla::BLOQUEA;
                     }
                     mapa.pintar_en_capa(
@@ -586,6 +591,35 @@ MapaEditable CargadorDeSectorTMX::cargar_sector(
             int columna_salida = transicion.x / ANCHO_TILE_PIXELES;
             int fila_salida = transicion.y / ALTO_TILE_PIXELES;
             mapa.ubicar_entidad(TipoEntidad::SALIDA_CAVERNA, columna_salida, fila_salida, 1, 1);
+
+            int distancia = 1;
+            bool continuar_subiendo = true;
+            while (distancia <= 4 && continuar_subiendo) {
+                int fila_muro = fila_salida - distancia;
+                if (!mapa.esta_dentro(columna_salida, fila_muro)) {
+                    continuar_subiendo = false;
+                } else {
+                    CasillaDelMapa suelo_muro =
+                        mapa.obtener_casilla_en_capa(TipoCapa::SUELO, columna_salida, fila_muro);
+                    uint32_t estructura_muro = mapa.obtener_casilla_en_capa(
+                                                       TipoCapa::ESTRUCTURAS,
+                                                       columna_salida,
+                                                       fila_muro)
+                                                   .obtener_id_tile();
+                    if (suelo_muro.tiene_propiedad(PropiedadDeCasilla::BLOQUEA) &&
+                        estructura_muro == 0) {
+                        mapa.pintar_en_capa(
+                            TipoCapa::ESTRUCTURAS,
+                            columna_salida,
+                            fila_muro,
+                            MapaEditable::tile_acantilado_norte_caverna(distancia, columna_salida),
+                            PropiedadDeCasilla::BLOQUEA);
+                        distancia++;
+                    } else {
+                        continuar_subiendo = false;
+                    }
+                }
+            }
         } else {
             auto iterador_destino = DESTINOS_A_ENTIDADES.find(transicion.mapa_destino);
             if (iterador_destino != DESTINOS_A_ENTIDADES.end()) {
