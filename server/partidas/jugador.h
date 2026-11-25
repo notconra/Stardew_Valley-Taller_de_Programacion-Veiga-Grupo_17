@@ -4,8 +4,8 @@
 #include <cstdint>
 #include <string>
 
-#include "../../common/color_de_jugador.h"
 #include "../../common/apariencia_personaje.h"
+#include "../../common/color_de_jugador.h"
 
 // Un jugador que tiene lugar en una partida, esté conectado o no.
 struct Jugador {
@@ -24,6 +24,7 @@ struct Jugador {
 
     bool conectado;
     AparienciaPersonaje apariencia;
+    uint32_t monedas = 0;
 };
 
 #endif

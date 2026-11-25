@@ -25,36 +25,10 @@ static constexpr int ESPACIADO_MODOS_PX = 4;
 static constexpr int ESPACIADO_TILES_PX = 4;
 static constexpr int ESPACIADO_ESTAMPAS_PX = 4;
 
-static constexpr const char* ESTILO_BOTON_MODO =
-    "QPushButton { background-color: #383838; color: #EEEEEE; font-weight: bold; padding: 6px; "
-    "border-radius: 4px; border: 1px solid #555555; }"
-    "QPushButton:hover { background-color: #4A4A4A; }"
-    "QPushButton:checked { background-color: #2E6B38; color: white; border: 1px solid #4CAF50; }";
-
-static constexpr const char* ESTILO_BOTON_TILE_CUADRO =
-    "QPushButton { background-color: #2D2D2D; border: 1px solid #444444; border-radius: 4px; "
-    "padding: 2px; }"
-    "QPushButton:hover { background-color: #3D3D3D; border: 1px solid #888888; }"
-    "QPushButton:checked { background-color: #2E6B38; border: 2px solid #55FF55; }";
-
-static constexpr const char* ESTILO_BOTON_ESTAMPA =
-    "QPushButton { background-color: #2B3D4F; color: white; font-weight: bold; padding: 5px 8px; "
-    "border-radius: 4px; border: 1px solid #3A536B; text-align: left; font-size: 11px; }"
-    "QPushButton:hover { background-color: #385068; }"
-    "QPushButton:checked { background-color: #1E6B9B; border: 2px solid #00D2FF; }";
-
-static constexpr const char* ESTILO_BOTON_PERIMETRO =
-    "QPushButton { background-color: #5A3A1A; color: white; font-weight: bold; padding: 6px; "
-    "border-radius: 4px; border: 1px solid #7A4F23; font-size: 11px; }"
-    "QPushButton:hover { background-color: #7A4F23; }";
-
 PaletaDeHerramientas::PaletaDeHerramientas(QWidget* padre)
     : QWidget(padre),
       layout_principal(nullptr),
       grupo_modos(nullptr),
-      boton_modo_terreno(nullptr),
-      boton_modo_estampa(nullptr),
-      boton_modo_colocar(nullptr),
       boton_modo_mover(nullptr),
       boton_modo_borrar(nullptr),
       grupo_tiles(nullptr),
@@ -88,28 +62,21 @@ PaletaDeHerramientas::PaletaDeHerramientas(QWidget* padre)
         MARGEN_LAYOUT_PX);
     layout_principal->setSpacing(ESPACIADO_LAYOUT_PX);
 
-    // 1. Grupo de Modos de Edición
-    QGroupBox* caja_modos = new QGroupBox("Modo de Edicion", this);
+    // 1. Grupo de Herramientas (Mover / Borrar)
+    QGroupBox* caja_modos = new QGroupBox("Herramientas", this);
     QVBoxLayout* layout_modos = new QVBoxLayout(caja_modos);
     layout_modos->setSpacing(ESPACIADO_MODOS_PX);
     grupo_modos = new QButtonGroup(this);
 
-    boton_modo_terreno = crear_boton_modo("Pintar Superficie", ModoEditor::TERRENO);
-    boton_modo_estampa = crear_boton_modo("Estampar Bloque", ModoEditor::ESTAMPAR);
-    boton_modo_colocar = crear_boton_modo("Colocar Entidad", ModoEditor::COLOCAR_ENTIDAD);
-    boton_modo_mover = crear_boton_modo("Mover Entidad", ModoEditor::SELECCIONAR_MOVER);
-    boton_modo_borrar = crear_boton_modo("Borrar Entidad", ModoEditor::BORRAR);
+    boton_modo_mover = crear_boton_modo("Mover / Seleccionar", ModoEditor::SELECCIONAR_MOVER);
+    boton_modo_borrar = crear_boton_modo("Borrar", ModoEditor::BORRAR);
 
-    boton_modo_terreno->setChecked(true);
-    layout_modos->addWidget(boton_modo_terreno);
-    layout_modos->addWidget(boton_modo_estampa);
-    layout_modos->addWidget(boton_modo_colocar);
     layout_modos->addWidget(boton_modo_mover);
     layout_modos->addWidget(boton_modo_borrar);
     layout_principal->addWidget(caja_modos);
 
     // 2. Grupo de Superficies del Sector (Tiles continuos)
-    QGroupBox* caja_tiles = new QGroupBox("Superficies (Tiles)", this);
+    QGroupBox* caja_tiles = new QGroupBox("Superficies", this);
     layout_tiles = new QGridLayout(caja_tiles);
     layout_tiles->setContentsMargins(0, ESPACIADO_TILES_PX, 0, ESPACIADO_TILES_PX);
     layout_tiles->setSpacing(ESPACIADO_TILES_PX);
@@ -118,14 +85,14 @@ PaletaDeHerramientas::PaletaDeHerramientas(QWidget* padre)
     layout_principal->addWidget(caja_tiles);
 
     // 3. Grupo de Estampas y Bloques Prefabricados
-    caja_estampas = new QGroupBox("Bloques y Estanques", this);
+    caja_estampas = new QGroupBox("Estampas", this);
     layout_estampas = new QVBoxLayout(caja_estampas);
     layout_estampas->setSpacing(ESPACIADO_ESTAMPAS_PX);
 
     grupo_estampas = new QButtonGroup(this);
 
-    boton_muro_perimetral = new QPushButton("Cerrar Perimetro con Vallas", caja_estampas);
-    boton_muro_perimetral->setStyleSheet(ESTILO_BOTON_PERIMETRO);
+    boton_muro_perimetral = new QPushButton("Cerrar Perímetro con Vallas", caja_estampas);
+    boton_muro_perimetral->setObjectName("boton_muro_perimetral");
     connect(
         boton_muro_perimetral,
         &QPushButton::clicked,
@@ -142,10 +109,34 @@ PaletaDeHerramientas::PaletaDeHerramientas(QWidget* padre)
 QPushButton* PaletaDeHerramientas::crear_boton_modo(const QString& texto, ModoEditor modo) {
     QPushButton* boton = new QPushButton(texto, this);
     boton->setCheckable(true);
-    boton->setStyleSheet(ESTILO_BOTON_MODO);
+    boton->setProperty("rol", "modo");
     grupo_modos->addButton(boton, static_cast<int>(modo));
-    connect(boton, &QPushButton::clicked, this, [this, modo]() { emit modo_cambiado(modo); });
+    connect(boton, &QPushButton::clicked, this, [this, modo]() {
+        desmarcar_grupo(grupo_tiles);
+        desmarcar_grupo(grupo_estampas);
+        emit modo_cambiado(modo);
+    });
     return boton;
+}
+
+void PaletaDeHerramientas::desmarcar_grupo(QButtonGroup* grupo) {
+    if (grupo == nullptr) {
+        return;
+    }
+    QAbstractButton* boton_marcado = grupo->checkedButton();
+    if (boton_marcado == nullptr) {
+        return;
+    }
+    bool era_exclusivo = grupo->exclusive();
+    grupo->setExclusive(false);
+    boton_marcado->setChecked(false);
+    grupo->setExclusive(era_exclusivo);
+}
+
+void PaletaDeHerramientas::desmarcar_todo() {
+    desmarcar_grupo(grupo_modos);
+    desmarcar_grupo(grupo_tiles);
+    desmarcar_grupo(grupo_estampas);
 }
 
 void PaletaDeHerramientas::limpiar_botones_de_tiles() {
@@ -226,7 +217,7 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
         QPushButton* boton = new QPushButton(this);
         boton->setFixedSize(TAMANO_BOTON_TILE_PX, TAMANO_BOTON_TILE_PX);
         boton->setCheckable(true);
-        boton->setStyleSheet(ESTILO_BOTON_TILE_CUADRO);
+        boton->setProperty("rol", "tile");
         boton->setToolTip(QString::fromStdString(definicion.nombre));
         boton->setIcon(QIcon(sprite_recortado.scaled(
             TAMANO_ICONO_TILE_PX,
@@ -244,7 +235,8 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
         uint32_t id_global = definicion.identificador_tile_global;
         uint8_t prop = definicion.propiedades;
         connect(boton, &QPushButton::clicked, this, [this, id_global, prop]() {
-            boton_modo_terreno->setChecked(true);
+            desmarcar_grupo(grupo_modos);
+            desmarcar_grupo(grupo_estampas);
             emit modo_cambiado(ModoEditor::TERRENO);
             uint32_t id_a_emitir = id_global;
             if (id_global == CatalogoDeEstampas::TILE_PUEBLO_CAMINO_BORDE_NORTE) {
@@ -264,7 +256,10 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
     }
 
     if (!botones_tiles.empty() && !catalogo_tiles.empty()) {
+        desmarcar_grupo(grupo_modos);
+        desmarcar_grupo(grupo_estampas);
         botones_tiles[0]->setChecked(true);
+        emit modo_cambiado(ModoEditor::TERRENO);
         emit tile_seleccionado(
             catalogo_tiles[0].identificador_tile_global,
             catalogo_tiles[0].propiedades);
@@ -285,8 +280,10 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
         boton_muro_perimetral->setText("Restaurar Paredes Perimetrales");
     } else if (sector == SectorActual::CAVERNA) {
         boton_muro_perimetral->setText("Generar Muros de Mina");
+    } else if (sector == SectorActual::GRANJA) {
+        boton_muro_perimetral->setText("Generar Muros Exteriores");
     } else {
-        boton_muro_perimetral->setText("Cerrar Perimetro con Vallas");
+        boton_muro_perimetral->setText("Cerrar Perímetro con Vallas");
     }
 
     size_t indice_estampa = 0;
@@ -296,12 +293,13 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
         QPushButton* boton_estampa =
             new QPushButton(QString::fromStdString(estampa.nombre), caja_estampas);
         boton_estampa->setCheckable(true);
-        boton_estampa->setStyleSheet(ESTILO_BOTON_ESTAMPA);
+        boton_estampa->setProperty("rol", "estampa");
         grupo_estampas->addButton(boton_estampa, static_cast<int>(tipo));
         layout_estampas->insertWidget(static_cast<int>(indice_estampa), boton_estampa);
 
         connect(boton_estampa, &QPushButton::clicked, this, [this, tipo]() {
-            boton_modo_estampa->setChecked(true);
+            desmarcar_grupo(grupo_modos);
+            desmarcar_grupo(grupo_tiles);
             emit modo_cambiado(ModoEditor::ESTAMPAR);
             TipoEstampa estampa_a_emitir = tipo;
             if (tipo == TipoEstampa::CAMINO_RECTO_HORIZONTAL) {
@@ -387,7 +385,7 @@ void PaletaDeHerramientas::sincronizar_rotacion_estampa(TipoEstampa estampa) {
                 static_cast<int>(TipoEstampa::MERCADO_MOSTRADOR_IZQUIERDO)) {
                 boton->setChecked(true);
                 QString texto = (estampa == TipoEstampa::MERCADO_MOSTRADOR_IZQUIERDO)
-                                    ? "Mostrador Principal (6x2) [R]"
+                                    ? "Mostrador Principal [R]"
                                     : "Mostrador Principal (Derecha) [R]";
                 boton->setText(texto);
             }
@@ -399,8 +397,8 @@ void PaletaDeHerramientas::sincronizar_rotacion_estampa(TipoEstampa estampa) {
                 static_cast<int>(TipoEstampa::MERCADO_PUESTO_IZQUIERDO)) {
                 boton->setChecked(true);
                 QString texto = (estampa == TipoEstampa::MERCADO_PUESTO_IZQUIERDO)
-                                    ? "Puesto de Atencion (3x4) [R]"
-                                    : "Puesto de Atencion (Derecha) [R]";
+                                    ? "Puesto de Atención [R]"
+                                    : "Puesto de Atención (Derecha) [R]";
                 boton->setText(texto);
             }
         } else if (
@@ -411,8 +409,8 @@ void PaletaDeHerramientas::sincronizar_rotacion_estampa(TipoEstampa estampa) {
                 static_cast<int>(TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA)) {
                 boton->setChecked(true);
                 QString texto = (estampa == TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA)
-                                    ? "Estanteria Comercial (6x3) [R]"
-                                    : "Estanteria Comercial (Derecha) [R]";
+                                    ? "Estantería Comercial [R]"
+                                    : "Estantería Comercial (Derecha) [R]";
                 boton->setText(texto);
             }
         } else if (

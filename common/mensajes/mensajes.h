@@ -16,7 +16,7 @@
 using ComandoCliente = std::variant<
     // Lobby
     Identificarse, ListarPartidas, CrearPartida, UnirsePartida, RetomarPartida, EliminarPartida,
-    ListarMundos,
+    ListarMundos, VerificarCodigoPartida,
 
     // Partida
     ActivarMultijugador, SalirDePartida, Moverse, GuardarPartida,
@@ -51,7 +51,7 @@ using EventoServidor = std::variant<
     ErrorServidor,
 
     // Lobby
-    ListaPartidas, EntradaExitosaAPartida, ListaMundos,
+    ListaPartidas, EntradaExitosaAPartida, ListaMundos, CodigoPartidaDisponible,
 
     // Partida
     MultijugadorActivado, PartidaAbandonada, PartidaCerradaPorError,

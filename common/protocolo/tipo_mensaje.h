@@ -49,6 +49,7 @@ enum class TipoMensaje : uint8_t {
     // Regalos (sigue)
     RECHAZAR_REGALO = 0x22,
     LISTAR_MUNDOS = 0x23,
+    VERIFICAR_CODIGO_PARTIDA = 0x24,
 
     // Servidor a cliente
     ERROR_SERVIDOR = 0x81,
@@ -124,6 +125,9 @@ enum class TipoMensaje : uint8_t {
 
     // Respuesta a LISTAR_MUNDOS: los mundos del editor que tiene el servidor
     LISTA_MUNDOS = 0xAC,
+
+    // Respuesta a VERIFICAR_CODIGO_PARTIDA cuando la partida existe y acepta ingreso
+    CODIGO_PARTIDA_DISPONIBLE = 0xAD,
 };
 
 #endif

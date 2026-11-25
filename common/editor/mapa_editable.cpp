@@ -168,9 +168,39 @@ void MapaEditable::quitar_propiedad_de_casilla(int columna, int fila, uint8_t pr
 
 uint32_t MapaEditable::ubicar_entidad(
     TipoEntidad tipo, int columna, int fila, int ancho, int alto, Direccion orientacion) {
+    int columna_final = columna;
+    int fila_final = fila;
+    int ancho_final = ancho;
+    int alto_final = alto;
+    if (es_transicion_de_borde(tipo)) {
+        int columna_ajustada = 0;
+        int fila_ajustada = 0;
+        int ancho_ajustado = 0;
+        int alto_ajustado = 0;
+        if (ajustar_posicion_transicion_borde(
+                columna,
+                fila,
+                columna_ajustada,
+                fila_ajustada,
+                ancho_ajustado,
+                alto_ajustado)) {
+            columna_final = columna_ajustada;
+            fila_final = fila_ajustada;
+            ancho_final = ancho_ajustado;
+            alto_final = alto_ajustado;
+        }
+    }
+
     uint32_t nuevo_identificador = proximo_identificador_de_entidad;
     proximo_identificador_de_entidad++;
-    entidades.emplace_back(nuevo_identificador, tipo, columna, fila, ancho, alto, orientacion);
+    entidades.emplace_back(
+        nuevo_identificador,
+        tipo,
+        columna_final,
+        fila_final,
+        ancho_final,
+        alto_final,
+        orientacion);
     bool es_puesto_mercado =
         (tipo == TipoEntidad::PUESTO_MARNIE || tipo == TipoEntidad::PUESTO_CLINT ||
          tipo == TipoEntidad::PUESTO_PIERRE || tipo == TipoEntidad::PUESTO_ROBIN);
@@ -180,8 +210,8 @@ uint32_t MapaEditable::ubicar_entidad(
         int columna_atencion = 0;
         int fila_atencion = 0;
         calcular_interaccion_puesto(
-            columna,
-            fila,
+            columna_final,
+            fila_final,
             orientacion,
             columna_interaccion,
             fila_interaccion,
@@ -204,22 +234,75 @@ void MapaEditable::cargar_entidad(const EntidadDelMapa& entidad) {
     }
 }
 
+bool MapaEditable::es_transicion_de_borde(TipoEntidad tipo) {
+    return tipo == TipoEntidad::TRANSICION_PUEBLO || tipo == TipoEntidad::TRANSICION_GRANJA;
+}
+
+bool MapaEditable::ajustar_posicion_transicion_borde(
+    int columna_entrada, int fila_entrada, int& columna_salida, int& fila_salida, int& ancho_salida,
+    int& alto_salida) const {
+    if (cantidad_de_columnas < 4 || cantidad_de_filas < 6) {
+        return false;
+    }
+    if ((columna_entrada == 0 || columna_entrada == cantidad_de_columnas - 1) &&
+        fila_entrada >= ALTO_VALLA_NORTE_CASILLAS && fila_entrada <= cantidad_de_filas - 4) {
+        columna_salida = columna_entrada;
+        fila_salida = fila_entrada;
+        ancho_salida = 1;
+        alto_salida = 2;
+        return true;
+    }
+    if (((fila_entrada >= 0 && fila_entrada <= 1) ||
+         (fila_entrada >= cantidad_de_filas - 2 && fila_entrada <= cantidad_de_filas - 1)) &&
+        columna_entrada >= 1 && columna_entrada <= cantidad_de_columnas - 3) {
+        columna_salida = columna_entrada;
+        fila_salida = (fila_entrada <= 1) ? 0 : (cantidad_de_filas - 1);
+        ancho_salida = 2;
+        alto_salida = 1;
+        return true;
+    }
+    return false;
+}
+
 bool MapaEditable::entidad_puede_ubicarse_en(
     TipoEntidad tipo, int columna, int fila, int ancho, int alto,
     uint32_t identificador_a_ignorar) const {
-    bool dentro_horizontal = (columna >= 0) && (columna + ancho <= cantidad_de_columnas);
-    bool dentro_vertical = (fila >= 0) && (fila + alto <= cantidad_de_filas);
+    bool es_entidad_perimetral = es_transicion_de_borde(tipo);
+    bool es_entrada_caverna_norte = (tipo == TipoEntidad::ENTRADA_CAVERNA);
+    int columna_objetivo = columna;
+    int fila_objetivo = fila;
+    int ancho_objetivo = ancho;
+    int alto_objetivo = alto;
+    if (es_entidad_perimetral) {
+        if (!ajustar_posicion_transicion_borde(
+                columna,
+                fila,
+                columna_objetivo,
+                fila_objetivo,
+                ancho_objetivo,
+                alto_objetivo)) {
+            return false;
+        }
+    } else if (es_entrada_caverna_norte) {
+        if (fila_objetivo != 0 || columna_objetivo < 1 ||
+            columna_objetivo + ancho_objetivo > cantidad_de_columnas - 1) {
+            return false;
+        }
+    }
+
+    bool dentro_horizontal =
+        (columna_objetivo >= 0) && (columna_objetivo + ancho_objetivo <= cantidad_de_columnas);
+    bool dentro_vertical =
+        (fila_objetivo >= 0) && (fila_objetivo + alto_objetivo <= cantidad_de_filas);
     if (!dentro_horizontal || !dentro_vertical) {
         return false;
     }
 
-    bool es_entidad_perimetral =
-        (tipo == TipoEntidad::TRANSICION_PUEBLO || tipo == TipoEntidad::TRANSICION_GRANJA);
     bool es_puesto_mercado =
         (tipo == TipoEntidad::PUESTO_MARNIE || tipo == TipoEntidad::PUESTO_CLINT ||
          tipo == TipoEntidad::PUESTO_PIERRE || tipo == TipoEntidad::PUESTO_ROBIN);
     bool es_entidad_unica =
-        (es_puesto_mercado || tipo == TipoEntidad::CABANIA ||
+        (es_puesto_mercado || es_entidad_perimetral || tipo == TipoEntidad::CABANIA ||
          tipo == TipoEntidad::ENTRADA_CAVERNA || tipo == TipoEntidad::CENTRO_COMUNITARIO ||
          tipo == TipoEntidad::MERCADO || tipo == TipoEntidad::ESCALERA_NIVEL ||
          tipo == TipoEntidad::SALIDA_CAVERNA);
@@ -241,10 +324,10 @@ bool MapaEditable::entidad_puede_ubicarse_en(
     }
 
     bool casillas_validas = true;
-    int fila_actual = fila;
-    while (fila_actual < fila + alto && casillas_validas) {
-        int columna_actual = columna;
-        while (columna_actual < columna + ancho && casillas_validas) {
+    int fila_actual = fila_objetivo;
+    while (fila_actual < fila_objetivo + alto_objetivo && casillas_validas) {
+        int columna_actual = columna_objetivo;
+        while (columna_actual < columna_objetivo + ancho_objetivo && casillas_validas) {
             int columna_puerta = cantidad_de_columnas / 2;
             bool es_pasillo_puerta_mercado =
                 (cantidad_de_columnas < 30 && columna_actual == columna_puerta &&
@@ -252,7 +335,7 @@ bool MapaEditable::entidad_puede_ubicarse_en(
             if (es_pasillo_puerta_mercado) {
                 casillas_validas = false;
             } else if (
-                !es_entidad_perimetral && !es_puesto_mercado &&
+                !es_entidad_perimetral && !es_entrada_caverna_norte && !es_puesto_mercado &&
                 !casilla_es_transitable(columna_actual, fila_actual)) {
                 casillas_validas = false;
             } else {
@@ -267,7 +350,8 @@ bool MapaEditable::entidad_puede_ubicarse_en(
         return false;
     }
 
-    EntidadDelMapa entidad_temporal(0, tipo, columna, fila, ancho, alto);
+    EntidadDelMapa
+        entidad_temporal(0, tipo, columna_objetivo, fila_objetivo, ancho_objetivo, alto_objetivo);
     bool hay_superposicion = false;
     size_t indice = 0;
     while (indice < entidades.size() && !hay_superposicion) {
@@ -349,10 +433,37 @@ bool MapaEditable::deslizar_entidad(uint32_t identificador, int nueva_columna, i
         return true;
     }
 
-    if (!entidad_puede_ubicarse_en(tipo, nueva_columna, nueva_fila, ancho, alto, identificador)) {
+    int columna_final = nueva_columna;
+    int fila_final = nueva_fila;
+    int ancho_final = ancho;
+    int alto_final = alto;
+    if (es_transicion_de_borde(tipo)) {
+        if (!ajustar_posicion_transicion_borde(
+                nueva_columna,
+                nueva_fila,
+                columna_final,
+                fila_final,
+                ancho_final,
+                alto_final)) {
+            return false;
+        }
+    } else if (tipo == TipoEntidad::ENTRADA_CAVERNA) {
+        fila_final = 0;
+    }
+
+    if (!entidad_puede_ubicarse_en(
+            tipo,
+            columna_final,
+            fila_final,
+            ancho_final,
+            alto_final,
+            identificador)) {
         return false;
     }
-    entidades[posicion].trasladar_a(nueva_columna, nueva_fila);
+    entidades[posicion].trasladar_a(columna_final, fila_final);
+    if (es_transicion_de_borde(tipo)) {
+        entidades[posicion].redimensionar(ancho_final, alto_final);
+    }
     if (es_puesto_mercado) {
         int columna_interaccion = 0;
         int fila_interaccion = 0;
@@ -461,6 +572,8 @@ void MapaEditable::expandir(
         return;
     }
 
+    int ancho_anterior = cantidad_de_columnas;
+    int alto_anterior = cantidad_de_filas;
     cantidad_de_columnas = nuevas_columnas;
     cantidad_de_filas = nuevas_filas;
 
@@ -491,9 +604,21 @@ void MapaEditable::expandir(
     while (indice < entidades.size()) {
         int columna_origen = 0;
         int fila_origen = 0;
+        int ancho_entidad = 0;
+        int alto_entidad = 0;
         entidades[indice].consultar_origen(columna_origen, fila_origen);
+        entidades[indice].consultar_dimensiones(ancho_entidad, alto_entidad);
         int nueva_columna = columna_origen + agregar_izquierda;
         int nueva_fila = fila_origen + agregar_arriba;
+        if (agregar_izquierda == 0 && agregar_arriba == 0 &&
+            es_transicion_de_borde(entidades[indice].obtener_tipo())) {
+            if (columna_origen == ancho_anterior - 1 && ancho_entidad == 1) {
+                nueva_columna = nuevas_columnas - 1;
+            }
+            if (fila_origen == alto_anterior - 1 && alto_entidad == 1) {
+                nueva_fila = nuevas_filas - 1;
+            }
+        }
         entidades[indice].trasladar_a(nueva_columna, nueva_fila);
         if (entidades[indice].esta_contenida_en_rectangulo(0, 0, nuevas_columnas, nuevas_filas)) {
             entidades_conservadas.push_back(entidades[indice]);
@@ -943,266 +1068,210 @@ int MapaEditable::obtener_fila_maxima_ocupada() const {
     return fila_maxima;
 }
 
+void MapaEditable::pintar_borde_lateral_granja(
+    int columna, int fila_lateral, uint32_t tile_a, uint32_t tile_b, uint32_t tile_paso_lateral) {
+    if (tile_paso_lateral != 0) {
+        pintar_en_capa(
+            TipoCapa::SUELO,
+            columna,
+            fila_lateral,
+            tile_paso_lateral,
+            PropiedadDeCasilla::DECORABLE);
+        borrar_en_capa(TipoCapa::ESTRUCTURAS, columna, fila_lateral);
+        borrar_en_capa(TipoCapa::FRENTE, columna, fila_lateral);
+        return;
+    }
+    uint32_t tile_lateral = (fila_lateral % 2 == 0) ? tile_a : tile_b;
+    pintar_en_capa(
+        TipoCapa::SUELO,
+        columna,
+        fila_lateral,
+        CatalogoDeEstampas::TILE_PASTO_OSCURO_PERIMETRAL,
+        PropiedadDeCasilla::DECORABLE);
+    pintar_en_capa(
+        TipoCapa::ESTRUCTURAS,
+        columna,
+        fila_lateral,
+        tile_lateral,
+        PropiedadDeCasilla::BLOQUEA);
+    borrar_en_capa(TipoCapa::FRENTE, columna, fila_lateral);
+}
+
 void MapaEditable::generar_muro_perimetral_granja() {
     uint8_t propiedad_bloqueo = PropiedadDeCasilla::BLOQUEA;
-    uint8_t propiedad_frente = PropiedadDeCasilla::NINGUNA;
     uint8_t propiedad_suelo_pasto = PropiedadDeCasilla::DECORABLE;
-    uint32_t tile_pasto = CatalogoDeEstampas::TILE_PASTO_PERIMETRAL;
-    uint32_t tile_tierra = CatalogoDeTerrenos::obtener_tile_base(SectorActual::GRANJA);
-    uint8_t propiedad_tierra = PropiedadDeCasilla::CULTIVABLE | PropiedadDeCasilla::DECORABLE |
-                               PropiedadDeCasilla::ADMITE_HIERBA;
+    uint32_t tile_pasto = CatalogoDeEstampas::TILE_PASTO_OSCURO_PERIMETRAL;
+    uint32_t tile_paso_madera = CatalogoDeEstampas::TILE_PASO_MADERA_GRANJA;
 
-    // Pintar el suelo perimetral con pasto verde:
-    // Norte: 2 filas (filas 0 y 1)
-    // Sur: 1 fila (solo la fila de abajo de todo, cantidad_de_filas - 1; la fila cantidad_de_filas
-    // - 2 lleva tierra) Oeste y Este: 1 columna lateral (columna 0 y columna cantidad_de_columnas -
-    // 1)
-    if (cantidad_de_filas >= (ALTO_VALLA_NORTE_CASILLAS + ALTO_VALLA_SUR_CASILLAS) &&
-        cantidad_de_columnas >= (ANCHO_VALLA_OESTE_CASILLAS + ANCHO_VALLA_ESTE_CASILLAS)) {
-        int columna_pasto = 0;
-        while (columna_pasto < cantidad_de_columnas) {
-            pintar_en_capa(TipoCapa::SUELO, columna_pasto, 0, tile_pasto, propiedad_suelo_pasto);
-            pintar_en_capa(TipoCapa::SUELO, columna_pasto, 1, tile_pasto, propiedad_suelo_pasto);
-            pintar_en_capa(
-                TipoCapa::SUELO,
-                columna_pasto,
-                cantidad_de_filas - 1,
-                tile_pasto,
-                propiedad_suelo_pasto);
-            columna_pasto++;
-        }
-
-        // Fila cantidad_de_filas - 2: lleva tierra fértil en las columnas interiores
-        int columna_tierra_sur = 1;
-        while (columna_tierra_sur < cantidad_de_columnas - 1) {
-            pintar_en_capa(
-                TipoCapa::SUELO,
-                columna_tierra_sur,
-                cantidad_de_filas - 2,
-                tile_tierra,
-                propiedad_tierra);
-            columna_tierra_sur++;
-        }
-
-        // Columnas laterales 0 y cantidad_de_columnas - 1
-        int fila_pasto = 2;
-        int fila_pasto_limite = cantidad_de_filas - 1;
-        while (fila_pasto < fila_pasto_limite) {
-            pintar_en_capa(TipoCapa::SUELO, 0, fila_pasto, tile_pasto, propiedad_suelo_pasto);
-            pintar_en_capa(
-                TipoCapa::SUELO,
-                cantidad_de_columnas - 1,
-                fila_pasto,
-                tile_pasto,
-                propiedad_suelo_pasto);
-            fila_pasto++;
-        }
+    if (cantidad_de_filas < (ALTO_VALLA_NORTE_CASILLAS + ALTO_VALLA_SUR_CASILLAS) ||
+        cantidad_de_columnas < (ANCHO_VALLA_OESTE_CASILLAS + ANCHO_VALLA_ESTE_CASILLAS)) {
+        return;
     }
 
-    // 1. Borde Norte (Fila 0 Frente / Remate, Fila 1 Estructuras / Base)
-    if (cantidad_de_filas >= ALTO_VALLA_HORIZONTAL_CASILLAS) {
-        // Esquina Noroeste (Columna 0):
-        if (!columna_ocupada_por_transicion_norte(0) && !fila_ocupada_por_transicion_oeste(0)) {
-            pintar_en_capa(
-                TipoCapa::ESTRUCTURAS,
-                0,
-                0,
-                CatalogoDeEstampas::TILE_POSTE_VERTICAL_REMATE_SUPERIOR,
-                propiedad_bloqueo);
-            pintar_en_capa(
-                TipoCapa::ESTRUCTURAS,
-                0,
-                1,
-                CatalogoDeEstampas::TILE_POSTE_VERTICAL_FUSTE_A,
-                propiedad_bloqueo);
-            borrar_en_capa(TipoCapa::FRENTE, 0, 0);
-            borrar_en_capa(TipoCapa::FRENTE, 0, 1);
-        }
+    // 1. Muro de Acantilado Norte (4 filas: 0..3) con esquinas redondeadas
+    uint32_t tiles_acantilado_izq[4] = {
+        CatalogoDeEstampas::TILE_ACANTILADO_NORTE_IZQ_0,
+        CatalogoDeEstampas::TILE_ACANTILADO_NORTE_IZQ_1,
+        CatalogoDeEstampas::TILE_ACANTILADO_NORTE_IZQ_2,
+        CatalogoDeEstampas::TILE_ACANTILADO_NORTE_IZQ_3};
+    uint32_t tiles_acantilado_centro[4] = {
+        CatalogoDeEstampas::TILE_ACANTILADO_NORTE_FILA_0,
+        CatalogoDeEstampas::TILE_ACANTILADO_NORTE_FILA_1,
+        CatalogoDeEstampas::TILE_ACANTILADO_NORTE_FILA_2,
+        CatalogoDeEstampas::TILE_ACANTILADO_NORTE_FILA_3};
+    uint32_t tiles_acantilado_der[4] = {
+        CatalogoDeEstampas::TILE_ACANTILADO_NORTE_DER_0,
+        CatalogoDeEstampas::TILE_ACANTILADO_NORTE_DER_1,
+        CatalogoDeEstampas::TILE_ACANTILADO_NORTE_DER_2,
+        CatalogoDeEstampas::TILE_ACANTILADO_NORTE_DER_3};
 
-        // Esquina Noreste (Columna cantidad_de_columnas - 1):
-        int columna_noreste = cantidad_de_columnas - 1;
-        if (!columna_ocupada_por_transicion_norte(columna_noreste) &&
-            !fila_ocupada_por_transicion_este(0)) {
-            pintar_en_capa(
-                TipoCapa::ESTRUCTURAS,
-                columna_noreste,
-                0,
-                CatalogoDeEstampas::TILE_POSTE_VERTICAL_REMATE_SUPERIOR,
-                propiedad_bloqueo);
-            pintar_en_capa(
-                TipoCapa::ESTRUCTURAS,
-                columna_noreste,
-                1,
-                CatalogoDeEstampas::TILE_POSTE_VERTICAL_FUSTE_A,
-                propiedad_bloqueo);
-            borrar_en_capa(TipoCapa::FRENTE, columna_noreste, 0);
-            borrar_en_capa(TipoCapa::FRENTE, columna_noreste, 1);
-        }
-
-        // Vallas Horizontales Norte (desde columna 1 hasta cantidad_de_columnas - 2):
-        int columna_norte = 1;
-        while (columna_norte < cantidad_de_columnas - 1) {
-            if (columna_ocupada_por_transicion_norte(columna_norte)) {
-                borrar_en_capa(TipoCapa::FRENTE, columna_norte, 0);
-                borrar_en_capa(TipoCapa::FRENTE, columna_norte, 1);
-                borrar_en_capa(TipoCapa::ESTRUCTURAS, columna_norte, 0);
-                borrar_en_capa(TipoCapa::ESTRUCTURAS, columna_norte, 1);
+    int columna_norte = 0;
+    while (columna_norte < cantidad_de_columnas) {
+        bool abierta_por_transicion = columna_ocupada_por_transicion_norte(columna_norte);
+        int fila_norte = 0;
+        while (fila_norte < ALTO_VALLA_NORTE_CASILLAS) {
+            if (abierta_por_transicion) {
+                pintar_en_capa(
+                    TipoCapa::SUELO,
+                    columna_norte,
+                    fila_norte,
+                    tile_paso_madera,
+                    propiedad_suelo_pasto);
+                borrar_en_capa(TipoCapa::ESTRUCTURAS, columna_norte, fila_norte);
+                borrar_en_capa(TipoCapa::FRENTE, columna_norte, fila_norte);
             } else {
-                uint32_t tile_frente = 0;
-                uint32_t tile_base = 0;
-                if (columna_norte == 1) {
-                    tile_frente = CatalogoDeEstampas::TILE_VALLA_POSTE_IZQUIERDO_FRENTE;
-                    tile_base = CatalogoDeEstampas::TILE_VALLA_POSTE_IZQUIERDO_BASE;
-                } else if (columna_norte == cantidad_de_columnas - 2) {
-                    tile_frente = CatalogoDeEstampas::TILE_VALLA_POSTE_DERECHO_FRENTE;
-                    tile_base = CatalogoDeEstampas::TILE_VALLA_POSTE_DERECHO_BASE;
-                } else {
-                    bool es_par = (columna_norte % 2 == 0);
-                    tile_frente = es_par ? CatalogoDeEstampas::TILE_VALLA_POSTE_CENTRAL_FRENTE
-                                         : CatalogoDeEstampas::TILE_VALLA_POSTE_IZQUIERDO_FRENTE;
-                    tile_base = es_par ? CatalogoDeEstampas::TILE_VALLA_POSTE_CENTRAL_BASE
-                                       : CatalogoDeEstampas::TILE_VALLA_POSTE_IZQUIERDO_BASE;
+                uint32_t tile_muro = tiles_acantilado_centro[fila_norte];
+                if (columna_norte == 0) {
+                    tile_muro = tiles_acantilado_izq[fila_norte];
+                } else if (columna_norte == cantidad_de_columnas - 1) {
+                    tile_muro = tiles_acantilado_der[fila_norte];
                 }
-                pintar_en_capa(TipoCapa::FRENTE, columna_norte, 0, tile_frente, propiedad_frente);
+                pintar_en_capa(
+                    TipoCapa::SUELO,
+                    columna_norte,
+                    fila_norte,
+                    tile_pasto,
+                    propiedad_suelo_pasto);
                 pintar_en_capa(
                     TipoCapa::ESTRUCTURAS,
                     columna_norte,
-                    1,
-                    tile_base,
+                    fila_norte,
+                    tile_muro,
                     propiedad_bloqueo);
-                borrar_en_capa(TipoCapa::ESTRUCTURAS, columna_norte, 0);
-                borrar_en_capa(TipoCapa::FRENTE, columna_norte, 1);
+                borrar_en_capa(TipoCapa::FRENTE, columna_norte, fila_norte);
             }
-            columna_norte++;
+            fila_norte++;
         }
+        columna_norte++;
     }
 
-    // 2. Borde Sur (Fila cantidad_de_filas - 2 Frente, Fila cantidad_de_filas - 1 Estructuras)
-    if (cantidad_de_filas >= 2 * ALTO_VALLA_HORIZONTAL_CASILLAS) {
-        int fila_frente_sur = cantidad_de_filas - 2;
-        int fila_base_sur = cantidad_de_filas - 1;
-
-        // Esquina Suroeste (Columna 0):
-        if (!columna_ocupada_por_transicion_sur(0) &&
-            !fila_ocupada_por_transicion_oeste(fila_base_sur)) {
+    // 2. Borde Sur (1 fila: cantidad_de_filas - 1)
+    int fila_sur = cantidad_de_filas - 1;
+    int columna_sur = 0;
+    while (columna_sur < cantidad_de_columnas) {
+        bool abierta_por_transicion =
+            columna_ocupada_por_transicion_sur(columna_sur) ||
+            (columna_sur == 0 && fila_ocupada_por_transicion_oeste(fila_sur)) ||
+            (columna_sur == cantidad_de_columnas - 1 && fila_ocupada_por_transicion_este(fila_sur));
+        if (abierta_por_transicion) {
             pintar_en_capa(
-                TipoCapa::ESTRUCTURAS,
-                0,
-                fila_frente_sur,
-                CatalogoDeEstampas::TILE_POSTE_VERTICAL_FUSTE_A,
-                propiedad_bloqueo);
-            pintar_en_capa(
-                TipoCapa::ESTRUCTURAS,
-                0,
-                fila_base_sur,
-                CatalogoDeEstampas::TILE_POSTE_VERTICAL_BASE_INFERIOR,
-                propiedad_bloqueo);
-            borrar_en_capa(TipoCapa::FRENTE, 0, fila_frente_sur);
-            borrar_en_capa(TipoCapa::FRENTE, 0, fila_base_sur);
-        }
-
-        // Esquina Sureste (Columna cantidad_de_columnas - 1):
-        int columna_sureste = cantidad_de_columnas - 1;
-        if (!columna_ocupada_por_transicion_sur(columna_sureste) &&
-            !fila_ocupada_por_transicion_este(fila_base_sur)) {
-            pintar_en_capa(
-                TipoCapa::ESTRUCTURAS,
-                columna_sureste,
-                fila_frente_sur,
-                CatalogoDeEstampas::TILE_POSTE_VERTICAL_FUSTE_A,
-                propiedad_bloqueo);
-            pintar_en_capa(
-                TipoCapa::ESTRUCTURAS,
-                columna_sureste,
-                fila_base_sur,
-                CatalogoDeEstampas::TILE_POSTE_VERTICAL_BASE_INFERIOR,
-                propiedad_bloqueo);
-            borrar_en_capa(TipoCapa::FRENTE, columna_sureste, fila_frente_sur);
-            borrar_en_capa(TipoCapa::FRENTE, columna_sureste, fila_base_sur);
-        }
-
-        // Vallas Horizontales Sur (desde columna 1 hasta cantidad_de_columnas - 2):
-        int columna_sur = 1;
-        while (columna_sur < cantidad_de_columnas - 1) {
-            if (columna_ocupada_por_transicion_sur(columna_sur)) {
-                borrar_en_capa(TipoCapa::FRENTE, columna_sur, fila_frente_sur);
-                borrar_en_capa(TipoCapa::FRENTE, columna_sur, fila_base_sur);
-                borrar_en_capa(TipoCapa::ESTRUCTURAS, columna_sur, fila_frente_sur);
-                borrar_en_capa(TipoCapa::ESTRUCTURAS, columna_sur, fila_base_sur);
-            } else {
-                uint32_t tile_frente = 0;
-                uint32_t tile_base = 0;
-                if (columna_sur == 1) {
-                    tile_frente = CatalogoDeEstampas::TILE_VALLA_POSTE_IZQUIERDO_FRENTE;
-                    tile_base = CatalogoDeEstampas::TILE_VALLA_POSTE_IZQUIERDO_BASE;
-                } else if (columna_sur == cantidad_de_columnas - 2) {
-                    tile_frente = CatalogoDeEstampas::TILE_VALLA_POSTE_DERECHO_FRENTE;
-                    tile_base = CatalogoDeEstampas::TILE_VALLA_POSTE_DERECHO_BASE;
-                } else {
-                    bool es_par = (columna_sur % 2 == 0);
-                    tile_frente = es_par ? CatalogoDeEstampas::TILE_VALLA_POSTE_CENTRAL_FRENTE
-                                         : CatalogoDeEstampas::TILE_VALLA_POSTE_IZQUIERDO_FRENTE;
-                    tile_base = es_par ? CatalogoDeEstampas::TILE_VALLA_POSTE_CENTRAL_BASE
-                                       : CatalogoDeEstampas::TILE_VALLA_POSTE_IZQUIERDO_BASE;
-                }
-                pintar_en_capa(
-                    TipoCapa::FRENTE,
-                    columna_sur,
-                    fila_frente_sur,
-                    tile_frente,
-                    propiedad_frente);
-                pintar_en_capa(
-                    TipoCapa::ESTRUCTURAS,
-                    columna_sur,
-                    fila_base_sur,
-                    tile_base,
-                    propiedad_bloqueo);
-                borrar_en_capa(TipoCapa::ESTRUCTURAS, columna_sur, fila_frente_sur);
-                borrar_en_capa(TipoCapa::FRENTE, columna_sur, fila_base_sur);
+                TipoCapa::SUELO,
+                columna_sur,
+                fila_sur,
+                tile_paso_madera,
+                propiedad_suelo_pasto);
+            borrar_en_capa(TipoCapa::ESTRUCTURAS, columna_sur, fila_sur);
+            borrar_en_capa(TipoCapa::FRENTE, columna_sur, fila_sur);
+        } else {
+            uint32_t tile_borde_sur = CatalogoDeEstampas::TILE_BORDE_SUR_BORDE_GRANJA;
+            if (columna_sur == 0) {
+                tile_borde_sur = CatalogoDeEstampas::TILE_BORDE_SUR_ESQUINA_IZQ;
+            } else if (columna_sur == cantidad_de_columnas - 1) {
+                tile_borde_sur = CatalogoDeEstampas::TILE_BORDE_SUR_ESQUINA_DER;
             }
-            columna_sur++;
-        }
-    }
-
-    // 3. Borde Lateral Oeste (Columna 0, Filas intermedias 2 hasta cantidad_de_filas - 3):
-    int fila_oeste = 2;
-    int fila_limite_oeste = cantidad_de_filas - 2;
-    while (fila_oeste < fila_limite_oeste) {
-        if (fila_ocupada_por_transicion_oeste(fila_oeste)) {
-            borrar_en_capa(TipoCapa::ESTRUCTURAS, 0, fila_oeste);
-            borrar_en_capa(TipoCapa::FRENTE, 0, fila_oeste);
-        } else {
-            bool es_par = (fila_oeste % 2 == 0);
-            uint32_t tile_fuste = es_par ? CatalogoDeEstampas::TILE_POSTE_VERTICAL_FUSTE_A
-                                         : CatalogoDeEstampas::TILE_POSTE_VERTICAL_FUSTE_B;
-            pintar_en_capa(TipoCapa::ESTRUCTURAS, 0, fila_oeste, tile_fuste, propiedad_bloqueo);
-            borrar_en_capa(TipoCapa::FRENTE, 0, fila_oeste);
-        }
-        fila_oeste++;
-    }
-
-    // 4. Borde Lateral Este (Columna cantidad_de_columnas - 1, Filas intermedias 2 hasta
-    // cantidad_de_filas - 3):
-    int columna_este = cantidad_de_columnas - 1;
-    int fila_este = 2;
-    int fila_limite_este = cantidad_de_filas - 2;
-    while (fila_este < fila_limite_este) {
-        if (fila_ocupada_por_transicion_este(fila_este)) {
-            borrar_en_capa(TipoCapa::ESTRUCTURAS, columna_este, fila_este);
-            borrar_en_capa(TipoCapa::FRENTE, columna_este, fila_este);
-        } else {
-            bool es_par = (fila_este % 2 == 0);
-            uint32_t tile_fuste = es_par ? CatalogoDeEstampas::TILE_POSTE_VERTICAL_FUSTE_A
-                                         : CatalogoDeEstampas::TILE_POSTE_VERTICAL_FUSTE_B;
+            pintar_en_capa(
+                TipoCapa::SUELO,
+                columna_sur,
+                fila_sur,
+                CatalogoDeEstampas::TILE_BORDE_SUR_TIERRA_GRANJA,
+                propiedad_suelo_pasto);
             pintar_en_capa(
                 TipoCapa::ESTRUCTURAS,
-                columna_este,
-                fila_este,
-                tile_fuste,
+                columna_sur,
+                fila_sur,
+                tile_borde_sur,
                 propiedad_bloqueo);
-            borrar_en_capa(TipoCapa::FRENTE, columna_este, fila_este);
+            borrar_en_capa(TipoCapa::FRENTE, columna_sur, fila_sur);
         }
-        fila_este++;
+        columna_sur++;
+    }
+
+    // 3. Bordes Laterales Oeste y Este
+    int fila_lateral = 0;
+    while (fila_lateral < fila_sur) {
+        uint32_t tile_paso_oeste = fila_ocupada_por_transicion_oeste(fila_lateral)
+                                       ? CatalogoDeEstampas::TILE_PASO_TIERRA_GRANJA
+                                       : 0;
+        uint32_t tile_paso_este = fila_ocupada_por_transicion_este(fila_lateral)
+                                      ? CatalogoDeEstampas::TILE_PASO_TIERRA_GRANJA
+                                      : 0;
+        uint32_t tile_oeste_a = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_A;
+        uint32_t tile_oeste_b = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_B;
+        if (tile_paso_oeste == 0) {
+            if (fila_lateral == 0) {
+                tile_oeste_a = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_INICIO;
+                tile_oeste_b = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_INICIO;
+            } else if (
+                fila_lateral + 1 < fila_sur &&
+                fila_ocupada_por_transicion_oeste(fila_lateral + 1)) {
+                tile_oeste_a = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_ROCA;
+                tile_oeste_b = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_ROCA;
+            } else if (
+                fila_lateral + 2 < fila_sur &&
+                fila_ocupada_por_transicion_oeste(fila_lateral + 2)) {
+                tile_oeste_a = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_PARED;
+                tile_oeste_b = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_PARED;
+            } else if (
+                fila_lateral + 3 < fila_sur &&
+                fila_ocupada_por_transicion_oeste(fila_lateral + 3)) {
+                tile_oeste_a = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_FIN;
+                tile_oeste_b = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_FIN;
+            } else if (fila_lateral > 0 && fila_ocupada_por_transicion_oeste(fila_lateral - 1)) {
+                tile_oeste_a = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_INICIO;
+                tile_oeste_b = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_INICIO;
+            }
+        }
+        uint32_t tile_este_a = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_A;
+        uint32_t tile_este_b = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_B;
+        if (tile_paso_este == 0) {
+            if (fila_lateral == 0) {
+                tile_este_a = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_INICIO;
+                tile_este_b = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_INICIO;
+            } else if (
+                fila_lateral + 1 < fila_sur && fila_ocupada_por_transicion_este(fila_lateral + 1)) {
+                tile_este_a = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_ROCA;
+                tile_este_b = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_ROCA;
+            } else if (
+                fila_lateral + 2 < fila_sur && fila_ocupada_por_transicion_este(fila_lateral + 2)) {
+                tile_este_a = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_PARED;
+                tile_este_b = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_PARED;
+            } else if (
+                fila_lateral + 3 < fila_sur && fila_ocupada_por_transicion_este(fila_lateral + 3)) {
+                tile_este_a = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_FIN;
+                tile_este_b = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_FIN;
+            } else if (fila_lateral > 0 && fila_ocupada_por_transicion_este(fila_lateral - 1)) {
+                tile_este_a = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_INICIO;
+                tile_este_b = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_INICIO;
+            }
+        }
+        pintar_borde_lateral_granja(0, fila_lateral, tile_oeste_a, tile_oeste_b, tile_paso_oeste);
+        pintar_borde_lateral_granja(
+            cantidad_de_columnas - 1,
+            fila_lateral,
+            tile_este_a,
+            tile_este_b,
+            tile_paso_este);
+        fila_lateral++;
     }
 }
 
@@ -1466,7 +1535,7 @@ void MapaEditable::reconstruir_perimetro_mercado() {
             if (!es_perimetro_norte && !es_lateral && !es_perimetro_sur) {
                 uint32_t identificador_suelo =
                     obtener_casilla_en_capa(TipoCapa::SUELO, columna, fila).obtener_id_tile();
-                if (es_tile_perimetro_mercado(identificador_suelo)) {
+                if (identificador_suelo == 0 || es_tile_perimetro_mercado(identificador_suelo)) {
                     pintar_en_capa(
                         TipoCapa::SUELO,
                         columna,
@@ -1505,23 +1574,36 @@ void MapaEditable::reconstruir_perimetro_mercado() {
 
     // 1. Pared norte:
     // Fila 0: Bloques superiores de piedra
+    pintar_en_capa(TipoCapa::SUELO, 0, 0, 0, PropiedadDeCasilla::BLOQUEA);
     pintar_en_capa(TipoCapa::ESTRUCTURAS, 0, 0, 2186, PropiedadDeCasilla::BLOQUEA);
+    borrar_en_capa(TipoCapa::FRENTE, 0, 0);
+    pintar_en_capa(TipoCapa::SUELO, cantidad_de_columnas - 1, 0, 0, PropiedadDeCasilla::BLOQUEA);
     pintar_en_capa(
         TipoCapa::ESTRUCTURAS,
         cantidad_de_columnas - 1,
         0,
         2188,
         PropiedadDeCasilla::BLOQUEA);
+    borrar_en_capa(TipoCapa::FRENTE, cantidad_de_columnas - 1, 0);
     int columna_norte = 1;
     while (columna_norte < cantidad_de_columnas - 1) {
+        pintar_en_capa(TipoCapa::SUELO, columna_norte, 0, 0, PropiedadDeCasilla::BLOQUEA);
         pintar_en_capa(TipoCapa::ESTRUCTURAS, columna_norte, 0, 2179, PropiedadDeCasilla::BLOQUEA);
+        borrar_en_capa(TipoCapa::FRENTE, columna_norte, 0);
         columna_norte++;
     }
 
     // Filas 1 y 2: Pared norte (piedra original)
     int fila_norte = 1;
     while (fila_norte <= 2) {
+        pintar_en_capa(TipoCapa::SUELO, 0, fila_norte, 0, PropiedadDeCasilla::BLOQUEA);
         pintar_en_capa(TipoCapa::ESTRUCTURAS, 0, fila_norte, 2241, PropiedadDeCasilla::BLOQUEA);
+        pintar_en_capa(
+            TipoCapa::SUELO,
+            cantidad_de_columnas - 1,
+            fila_norte,
+            0,
+            PropiedadDeCasilla::BLOQUEA);
         pintar_en_capa(
             TipoCapa::ESTRUCTURAS,
             cantidad_de_columnas - 1,
@@ -1542,7 +1624,9 @@ void MapaEditable::reconstruir_perimetro_mercado() {
     }
 
     // Fila 3: Zocalo inferior de madera de la pared norte
+    pintar_en_capa(TipoCapa::SUELO, 0, 3, 0, PropiedadDeCasilla::BLOQUEA);
     pintar_en_capa(TipoCapa::ESTRUCTURAS, 0, 3, 2241, PropiedadDeCasilla::BLOQUEA);
+    pintar_en_capa(TipoCapa::SUELO, cantidad_de_columnas - 1, 3, 0, PropiedadDeCasilla::BLOQUEA);
     pintar_en_capa(
         TipoCapa::ESTRUCTURAS,
         cantidad_de_columnas - 1,
@@ -1559,7 +1643,14 @@ void MapaEditable::reconstruir_perimetro_mercado() {
     // 2. Paredes laterales (oeste y este) desde fila 4 hasta fila zócalo - 1
     int fila_lateral = 4;
     while (fila_lateral < cantidad_de_filas - 2) {
+        pintar_en_capa(TipoCapa::SUELO, 0, fila_lateral, 0, PropiedadDeCasilla::BLOQUEA);
         pintar_en_capa(TipoCapa::ESTRUCTURAS, 0, fila_lateral, 2241, PropiedadDeCasilla::BLOQUEA);
+        pintar_en_capa(
+            TipoCapa::SUELO,
+            cantidad_de_columnas - 1,
+            fila_lateral,
+            0,
+            PropiedadDeCasilla::BLOQUEA);
         pintar_en_capa(
             TipoCapa::ESTRUCTURAS,
             cantidad_de_columnas - 1,
@@ -1625,6 +1716,12 @@ void MapaEditable::reconstruir_perimetro_mercado() {
 
             if (columna_sur == 0 || columna_sur == cantidad_de_columnas - 1) {
                 pintar_en_capa(
+                    TipoCapa::SUELO,
+                    columna_sur,
+                    fila_zocalo,
+                    0,
+                    PropiedadDeCasilla::BLOQUEA);
+                pintar_en_capa(
                     TipoCapa::ESTRUCTURAS,
                     columna_sur,
                     fila_zocalo,
@@ -1650,6 +1747,12 @@ void MapaEditable::reconstruir_perimetro_mercado() {
                 }
             }
             pintar_en_capa(
+                TipoCapa::SUELO,
+                columna_sur,
+                fila_inferior,
+                0,
+                PropiedadDeCasilla::BLOQUEA);
+            pintar_en_capa(
                 TipoCapa::ESTRUCTURAS,
                 columna_sur,
                 fila_inferior,
@@ -1663,19 +1766,6 @@ void MapaEditable::reconstruir_perimetro_mercado() {
             borrar_en_capa(TipoCapa::FRENTE, columna_sur, fila_inferior);
         }
         columna_sur++;
-    }
-
-    int columna_palmera_derecha = cantidad_de_columnas - 3;
-    if (capas.at(TipoCapa::ESTRUCTURAS).consultar_casilla(1, 4).obtener_id_tile() == 0) {
-        estampar(CatalogoDeEstampas::obtener_estampa(TipoEstampa::MERCADO_PALMERA_IZQUIERDA), 1, 2);
-    }
-    if (columna_palmera_derecha >= 1 && capas.at(TipoCapa::ESTRUCTURAS)
-                                                .consultar_casilla(columna_palmera_derecha + 1, 4)
-                                                .obtener_id_tile() == 0) {
-        estampar(
-            CatalogoDeEstampas::obtener_estampa(TipoEstampa::MERCADO_PALMERA_DERECHA),
-            columna_palmera_derecha,
-            2);
     }
 }
 
@@ -1697,6 +1787,22 @@ bool MapaEditable::es_tile_muro_caverna(uint32_t identificador_tile) {
     return encontrado;
 }
 
+uint32_t MapaEditable::tile_acantilado_norte_caverna(int distancia_desde_piso, int columna) {
+    static constexpr uint32_t ACANTILADO_NORTE[4][4] = {
+        {74, 75, 76, 77},
+        {90, 91, 92, 93},
+        {106, 107, 108, 109},
+        {122, 123, 124, 125}};
+    int indice_fila = 4 - distancia_desde_piso;
+    if (indice_fila < 0) {
+        indice_fila = 0;
+    } else if (indice_fila > 3) {
+        indice_fila = 3;
+    }
+    int indice_columna = ((columna % 4) + 4) % 4;
+    return ACANTILADO_NORTE[indice_fila][indice_columna];
+}
+
 bool MapaEditable::es_piso_en_mascara(
     const std::vector<std::vector<bool>>& mascara_piso, int columna, int fila) {
     if (fila < 0 || static_cast<size_t>(fila) >= mascara_piso.size()) {
@@ -1711,11 +1817,6 @@ bool MapaEditable::es_piso_en_mascara(
 
 void MapaEditable::generar_muros_caverna() {
     static constexpr uint32_t TILE_PISO_RELLENO_BORDE = 139;
-    static constexpr uint32_t ACANTILADO_NORTE[4][4] = {
-        {74, 75, 76, 77},
-        {90, 91, 92, 93},
-        {106, 107, 108, 109},
-        {122, 123, 124, 125}};
     static constexpr uint32_t TAPA_IZQUIERDA_ACANTILADO[4] = {69, 85, 101, 117};
     static constexpr uint32_t TAPA_DERECHA_ACANTILADO[4] = {112, 128, 144, 160};
     static constexpr uint32_t MURO_OESTE[4] = {133, 149, 165, 181};
@@ -1921,7 +2022,7 @@ void MapaEditable::generar_muros_caverna() {
                             TipoCapa::ESTRUCTURAS,
                             columna_actual,
                             fila_destino,
-                            ACANTILADO_NORTE[indice_fila_acantilado][columna_actual % 4],
+                            tile_acantilado_norte_caverna(distancia, columna_actual),
                             PropiedadDeCasilla::BLOQUEA);
                         if (distancia == 1) {
                             pintar_en_capa(

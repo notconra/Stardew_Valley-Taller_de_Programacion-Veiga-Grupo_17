@@ -9,7 +9,7 @@
 
 static const DefinicionEstampa ESTAMPA_ESTANQUE_NATURAL = {
     TipoEstampa::ESTANQUE_NATURAL,
-    "Estanque Natural (6x6)",
+    "Estanque",
     6,
     6,
     {// Capa de Suelo (Agua profunda sombreada, nenúfares y rocas del este de Farm.tmx)
@@ -350,7 +350,7 @@ static const DefinicionEstampa ESTAMPA_ESTANQUE_NATURAL = {
 
 static const DefinicionEstampa ESTAMPA_CAMINO_RECTO_HORIZONTAL = {
     TipoEstampa::CAMINO_RECTO_HORIZONTAL,
-    "Camino Recto (3x3) [R]",
+    "Camino Recto [R]",
     3,
     3,
     {CasillaEstampa{0, 0, 610, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
@@ -365,7 +365,7 @@ static const DefinicionEstampa ESTAMPA_CAMINO_RECTO_HORIZONTAL = {
 
 static const DefinicionEstampa ESTAMPA_CAMINO_RECTO_VERTICAL = {
     TipoEstampa::CAMINO_RECTO_VERTICAL,
-    "Camino Vertical (3x3)",
+    "Camino Vertical",
     3,
     3,
     {CasillaEstampa{0, 0, 641, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
@@ -380,7 +380,7 @@ static const DefinicionEstampa ESTAMPA_CAMINO_RECTO_VERTICAL = {
 
 static const DefinicionEstampa ESTAMPA_CAMINO_UNION_T_NORTE = {
     TipoEstampa::CAMINO_UNION_T_NORTE,
-    "Union T (3x3) [R]",
+    "Unión T [R]",
     3,
     3,
     {CasillaEstampa{0, 0, 706, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
@@ -395,7 +395,7 @@ static const DefinicionEstampa ESTAMPA_CAMINO_UNION_T_NORTE = {
 
 static const DefinicionEstampa ESTAMPA_CAMINO_UNION_T_SUR = {
     TipoEstampa::CAMINO_UNION_T_SUR,
-    "Union T-Sur (3x3)",
+    "Unión T-Sur",
     3,
     3,
     {CasillaEstampa{0, 0, 610, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
@@ -410,7 +410,7 @@ static const DefinicionEstampa ESTAMPA_CAMINO_UNION_T_SUR = {
 
 static const DefinicionEstampa ESTAMPA_CAMINO_UNION_T_OESTE = {
     TipoEstampa::CAMINO_UNION_T_OESTE,
-    "Union T-Oeste (3x3)",
+    "Unión T-Oeste",
     3,
     3,
     {CasillaEstampa{0, 0, 706, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
@@ -425,7 +425,7 @@ static const DefinicionEstampa ESTAMPA_CAMINO_UNION_T_OESTE = {
 
 static const DefinicionEstampa ESTAMPA_CAMINO_UNION_T_ESTE = {
     TipoEstampa::CAMINO_UNION_T_ESTE,
-    "Union T-Este (3x3)",
+    "Unión T-Este",
     3,
     3,
     {CasillaEstampa{0, 0, 641, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
@@ -440,7 +440,7 @@ static const DefinicionEstampa ESTAMPA_CAMINO_UNION_T_ESTE = {
 
 static const DefinicionEstampa ESTAMPA_CAMINO_CRUZ = {
     TipoEstampa::CAMINO_CRUZ,
-    "Cruce de Caminos (3x3)",
+    "Cruce de Caminos",
     3,
     3,
     {CasillaEstampa{0, 0, 706, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
@@ -455,7 +455,7 @@ static const DefinicionEstampa ESTAMPA_CAMINO_CRUZ = {
 
 static const DefinicionEstampa ESTAMPA_CAMINO_ESQUINA_NOROESTE = {
     TipoEstampa::CAMINO_ESQUINA_NOROESTE,
-    "Esquina (3x3) [R]",
+    "Esquina [R]",
     3,
     3,
     {CasillaEstampa{0, 0, 609, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
@@ -470,7 +470,7 @@ static const DefinicionEstampa ESTAMPA_CAMINO_ESQUINA_NOROESTE = {
 
 static const DefinicionEstampa ESTAMPA_CAMINO_ESQUINA_NORESTE = {
     TipoEstampa::CAMINO_ESQUINA_NORESTE,
-    "Esquina Noreste (3x3)",
+    "Esquina Noreste",
     3,
     3,
     {CasillaEstampa{0, 0, 610, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
@@ -485,7 +485,7 @@ static const DefinicionEstampa ESTAMPA_CAMINO_ESQUINA_NORESTE = {
 
 static const DefinicionEstampa ESTAMPA_CAMINO_ESQUINA_SUDOESTE = {
     TipoEstampa::CAMINO_ESQUINA_SUDOESTE,
-    "Esquina Sudoeste (3x3)",
+    "Esquina Sudoeste",
     3,
     3,
     {CasillaEstampa{0, 0, 641, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
@@ -500,7 +500,7 @@ static const DefinicionEstampa ESTAMPA_CAMINO_ESQUINA_SUDOESTE = {
 
 static const DefinicionEstampa ESTAMPA_CAMINO_ESQUINA_SUDESTE = {
     TipoEstampa::CAMINO_ESQUINA_SUDESTE,
-    "Esquina Sudeste (3x3)",
+    "Esquina Sudeste",
     3,
     3,
     {CasillaEstampa{0, 0, 706, TipoCapa::SUELO, PropiedadDeCasilla::NINGUNA},
@@ -515,7 +515,7 @@ static const DefinicionEstampa ESTAMPA_CAMINO_ESQUINA_SUDESTE = {
 
 static const DefinicionEstampa ESTAMPA_FAROLA_URBANA = {
     TipoEstampa::FAROLA_URBANA,
-    "Farola Urbana (1x4)",
+    "Farol",
     1,
     4,
     {CasillaEstampa{
@@ -545,7 +545,7 @@ static const DefinicionEstampa ESTAMPA_FAROLA_URBANA = {
 
 static const DefinicionEstampa ESTAMPA_LOCAL_DE_PIERRE = {
     TipoEstampa::LOCAL_DE_PIERRE,
-    "Local de Pierre (10x10)",
+    "Local de Pierre",
     10,
     10,
     {CasillaEstampa{0, 0, 346, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
@@ -648,7 +648,7 @@ static const DefinicionEstampa ESTAMPA_LOCAL_DE_PIERRE = {
 
 static const DefinicionEstampa ESTAMPA_CASA_CELESTE = {
     TipoEstampa::CASA_CELESTE,
-    "Casa Celeste (8x11)",
+    "Casa Celeste",
     8,
     11,
     {CasillaEstampa{2, 0, 11, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
@@ -727,7 +727,7 @@ static const DefinicionEstampa ESTAMPA_CASA_CELESTE = {
 
 static const DefinicionEstampa ESTAMPA_TRAILER_PAM = {
     TipoEstampa::TRAILER_PAM,
-    "Trailer de Pam (8x4)",
+    "Casa Rodante",
     8,
     4,
     {CasillaEstampa{0, 0, 655, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
@@ -765,7 +765,7 @@ static const DefinicionEstampa ESTAMPA_TRAILER_PAM = {
 
 static const DefinicionEstampa ESTAMPA_MERCADO_MESA_FRUTAS = {
     TipoEstampa::MERCADO_MESA_FRUTAS,
-    "Mesa de Frutas (5x3)",
+    "Mesa de Frutas",
     5,
     3,
     {CasillaEstampa{0, 0, 1871u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
@@ -786,7 +786,7 @@ static const DefinicionEstampa ESTAMPA_MERCADO_MESA_FRUTAS = {
 
 static const DefinicionEstampa ESTAMPA_MERCADO_MOSTRADOR_IZQUIERDO = {
     TipoEstampa::MERCADO_MOSTRADOR_IZQUIERDO,
-    "Mostrador Principal (6x4) [R]",
+    "Mostrador Principal [R]",
     6,
     4,
     {CasillaEstampa{5, 0, 921u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
@@ -806,7 +806,7 @@ static const DefinicionEstampa ESTAMPA_MERCADO_MOSTRADOR_IZQUIERDO = {
 
 static const DefinicionEstampa ESTAMPA_MERCADO_MOSTRADOR_DERECHO = {
     TipoEstampa::MERCADO_MOSTRADOR_DERECHO,
-    "Mostrador Derecho (6x4) [R]",
+    "Mostrador Derecho [R]",
     6,
     4,
     {CasillaEstampa{0, 0, 921u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
@@ -826,7 +826,7 @@ static const DefinicionEstampa ESTAMPA_MERCADO_MOSTRADOR_DERECHO = {
 
 static const DefinicionEstampa ESTAMPA_MERCADO_PUESTO_IZQUIERDO = {
     TipoEstampa::MERCADO_PUESTO_IZQUIERDO,
-    "Puesto de Atencion (3x4) [R]",
+    "Puesto de Atención [R]",
     3,
     4,
     {CasillaEstampa{0, 0, 2005u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
@@ -842,7 +842,7 @@ static const DefinicionEstampa ESTAMPA_MERCADO_PUESTO_IZQUIERDO = {
 
 static const DefinicionEstampa ESTAMPA_MERCADO_PUESTO_DERECHO = {
     TipoEstampa::MERCADO_PUESTO_DERECHO,
-    "Puesto Derecho (3x4) [R]",
+    "Puesto Derecho [R]",
     3,
     4,
     {CasillaEstampa{0, 0, 2147485655u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
@@ -858,7 +858,7 @@ static const DefinicionEstampa ESTAMPA_MERCADO_PUESTO_DERECHO = {
 
 static const DefinicionEstampa ESTAMPA_MERCADO_ESTANTERIA_IZQUIERDA = {
     TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA,
-    "Estanteria Comercial (6x3) [R]",
+    "Estantería Comercial [R]",
     6,
     3,
     {CasillaEstampa{0, 0, 2147484608u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
@@ -882,7 +882,7 @@ static const DefinicionEstampa ESTAMPA_MERCADO_ESTANTERIA_IZQUIERDA = {
 
 static const DefinicionEstampa ESTAMPA_MERCADO_ESTANTERIA_DERECHA = {
     TipoEstampa::MERCADO_ESTANTERIA_DERECHA,
-    "Estanteria Derecha (6x3) [R]",
+    "Estantería Derecha [R]",
     6,
     3,
     {CasillaEstampa{0, 0, 955u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
@@ -906,35 +906,15 @@ static const DefinicionEstampa ESTAMPA_MERCADO_ESTANTERIA_DERECHA = {
 
 static const DefinicionEstampa ESTAMPA_MERCADO_PLANTA_MACETA = {
     TipoEstampa::MERCADO_PLANTA_MACETA,
-    "Planta en Maceta (1x2)",
+    "Planta en Maceta",
     1,
     2,
     {CasillaEstampa{0, 0, 332u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
      CasillaEstampa{0, 1, 364u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA}}};
 
-static const DefinicionEstampa ESTAMPA_MERCADO_PALMERA_IZQUIERDA = {
-    TipoEstampa::MERCADO_PALMERA_IZQUIERDA,
-    "Palmera Decorativa (2x3) [R]",
-    2,
-    3,
-    {CasillaEstampa{0, 0, 2147483985u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
-     CasillaEstampa{1, 0, 2147483984u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
-     CasillaEstampa{0, 1, 2147484017u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
-     CasillaEstampa{0, 2, 2147484049u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA}}};
-
-static const DefinicionEstampa ESTAMPA_MERCADO_PALMERA_DERECHA = {
-    TipoEstampa::MERCADO_PALMERA_DERECHA,
-    "Palmera Decorativa Derecha (2x3) [R]",
-    2,
-    3,
-    {CasillaEstampa{0, 0, 336u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
-     CasillaEstampa{1, 0, 337u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
-     CasillaEstampa{1, 1, 369u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
-     CasillaEstampa{1, 2, 401u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA}}};
-
 static const DefinicionEstampa ESTAMPA_CAVERNA_POZO_AGUA = {
     TipoEstampa::CAVERNA_POZO_AGUA,
-    "Pozo de Agua (3x2)",
+    "Pozo de Agua",
     3,
     2,
     {CasillaEstampa{0, 0, 263u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
@@ -946,7 +926,7 @@ static const DefinicionEstampa ESTAMPA_CAVERNA_POZO_AGUA = {
 
 static const DefinicionEstampa ESTAMPA_CAVERNA_PUENTE_MADERA = {
     TipoEstampa::CAVERNA_PUENTE_MADERA,
-    "Puente de Madera (3x3)",
+    "Tablas de Madera",
     3,
     3,
     {CasillaEstampa{0, 0, 241u, TipoCapa::SUELO, PropiedadDeCasilla::DECORABLE},
@@ -961,7 +941,7 @@ static const DefinicionEstampa ESTAMPA_CAVERNA_PUENTE_MADERA = {
 
 static const DefinicionEstampa ESTAMPA_CAVERNA_ZONA_ADOQUIN = {
     TipoEstampa::CAVERNA_ZONA_ADOQUIN,
-    "Zona Adoquinada (3x3)",
+    "Zona de Adoquines",
     3,
     3,
     {CasillaEstampa{
@@ -1021,7 +1001,7 @@ static const DefinicionEstampa ESTAMPA_CAVERNA_ZONA_ADOQUIN = {
 
 static const DefinicionEstampa ESTAMPA_CAVERNA_PARCHE_TIERRA = {
     TipoEstampa::CAVERNA_PARCHE_TIERRA,
-    "Parche de Tierra (3x3)",
+    "Parche de Tierra",
     3,
     3,
     {CasillaEstampa{
@@ -1097,27 +1077,9 @@ static const DefinicionEstampa ESTAMPA_CAVERNA_VIA_VERTICAL = {
      CasillaEstampa{0, 1, 210u, TipoCapa::SUELO, PropiedadDeCasilla::DECORABLE},
      CasillaEstampa{0, 2, 210u, TipoCapa::SUELO, PropiedadDeCasilla::DECORABLE}}};
 
-static const DefinicionEstampa ESTAMPA_CAVERNA_ANDAMIO_MINERO = {
-    TipoEstampa::CAVERNA_ANDAMIO_MINERO,
-    "Andamio Minero (3x4)",
-    3,
-    4,
-    {CasillaEstampa{0, 0, 5u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
-     CasillaEstampa{1, 0, 6u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
-     CasillaEstampa{2, 0, 7u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
-     CasillaEstampa{0, 1, 21u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
-     CasillaEstampa{1, 1, 22u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
-     CasillaEstampa{2, 1, 23u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
-     CasillaEstampa{0, 2, 37u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
-     CasillaEstampa{1, 2, 38u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
-     CasillaEstampa{2, 2, 39u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
-     CasillaEstampa{0, 3, 53u, TipoCapa::FRENTE, PropiedadDeCasilla::BLOQUEA},
-     CasillaEstampa{1, 3, 54u, TipoCapa::FRENTE, PropiedadDeCasilla::BLOQUEA},
-     CasillaEstampa{2, 3, 55u, TipoCapa::FRENTE, PropiedadDeCasilla::BLOQUEA}}};
-
 static const DefinicionEstampa ESTAMPA_CAVERNA_CARTEL_PELIGRO = {
     TipoEstampa::CAVERNA_CARTEL_PELIGRO,
-    "Cartel de Peligro (1x2)",
+    "Cartel de Peligro",
     1,
     2,
     {CasillaEstampa{0, 0, 17u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
@@ -1125,7 +1087,7 @@ static const DefinicionEstampa ESTAMPA_CAVERNA_CARTEL_PELIGRO = {
 
 static const DefinicionEstampa ESTAMPA_CAVERNA_VAGONETA_CARBON = {
     TipoEstampa::CAVERNA_VAGONETA_CARBON,
-    "Vagoneta de Carbon (2x2)",
+    "Carrito de Carbón",
     2,
     2,
     {CasillaEstampa{0, 0, 179u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
@@ -1135,7 +1097,7 @@ static const DefinicionEstampa ESTAMPA_CAVERNA_VAGONETA_CARBON = {
 
 static const DefinicionEstampa ESTAMPA_CAVERNA_MESA_Y_BARRIL = {
     TipoEstampa::CAVERNA_MESA_Y_BARRIL,
-    "Mesa y Barril (2x1)",
+    "Mesa y Barril",
     2,
     1,
     {CasillaEstampa{0, 0, 239u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA},
@@ -1166,15 +1128,12 @@ static const std::map<TipoEstampa, DefinicionEstampa> MAPA_ESTAMPAS = {
     {TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA, ESTAMPA_MERCADO_ESTANTERIA_IZQUIERDA},
     {TipoEstampa::MERCADO_ESTANTERIA_DERECHA, ESTAMPA_MERCADO_ESTANTERIA_DERECHA},
     {TipoEstampa::MERCADO_PLANTA_MACETA, ESTAMPA_MERCADO_PLANTA_MACETA},
-    {TipoEstampa::MERCADO_PALMERA_IZQUIERDA, ESTAMPA_MERCADO_PALMERA_IZQUIERDA},
-    {TipoEstampa::MERCADO_PALMERA_DERECHA, ESTAMPA_MERCADO_PALMERA_DERECHA},
     {TipoEstampa::CAVERNA_POZO_AGUA, ESTAMPA_CAVERNA_POZO_AGUA},
     {TipoEstampa::CAVERNA_PUENTE_MADERA, ESTAMPA_CAVERNA_PUENTE_MADERA},
     {TipoEstampa::CAVERNA_ZONA_ADOQUIN, ESTAMPA_CAVERNA_ZONA_ADOQUIN},
     {TipoEstampa::CAVERNA_PARCHE_TIERRA, ESTAMPA_CAVERNA_PARCHE_TIERRA},
     {TipoEstampa::CAVERNA_VIA_HORIZONTAL, ESTAMPA_CAVERNA_VIA_HORIZONTAL},
     {TipoEstampa::CAVERNA_VIA_VERTICAL, ESTAMPA_CAVERNA_VIA_VERTICAL},
-    {TipoEstampa::CAVERNA_ANDAMIO_MINERO, ESTAMPA_CAVERNA_ANDAMIO_MINERO},
     {TipoEstampa::CAVERNA_CARTEL_PELIGRO, ESTAMPA_CAVERNA_CARTEL_PELIGRO},
     {TipoEstampa::CAVERNA_VAGONETA_CARBON, ESTAMPA_CAVERNA_VAGONETA_CARBON},
     {TipoEstampa::CAVERNA_MESA_Y_BARRIL, ESTAMPA_CAVERNA_MESA_Y_BARRIL}};
@@ -1195,7 +1154,6 @@ static const std::map<SectorActual, std::vector<DefinicionEstampa>> ESTAMPAS_POR
       ESTAMPA_CAVERNA_ZONA_ADOQUIN,
       ESTAMPA_CAVERNA_PARCHE_TIERRA,
       ESTAMPA_CAVERNA_VIA_HORIZONTAL,
-      ESTAMPA_CAVERNA_ANDAMIO_MINERO,
       ESTAMPA_CAVERNA_CARTEL_PELIGRO,
       ESTAMPA_CAVERNA_VAGONETA_CARBON,
       ESTAMPA_CAVERNA_MESA_Y_BARRIL}},
@@ -1272,12 +1230,6 @@ TipoEstampa CatalogoDeEstampas::rotar_estampa(TipoEstampa tipo) {
     if (tipo == TipoEstampa::MERCADO_ESTANTERIA_DERECHA) {
         return TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA;
     }
-    if (tipo == TipoEstampa::MERCADO_PALMERA_IZQUIERDA) {
-        return TipoEstampa::MERCADO_PALMERA_DERECHA;
-    }
-    if (tipo == TipoEstampa::MERCADO_PALMERA_DERECHA) {
-        return TipoEstampa::MERCADO_PALMERA_IZQUIERDA;
-    }
     if (tipo == TipoEstampa::CAVERNA_VIA_HORIZONTAL) {
         return TipoEstampa::CAVERNA_VIA_VERTICAL;
     }
@@ -1302,9 +1254,7 @@ bool CatalogoDeEstampas::es_estampa_decorativa(TipoEstampa tipo) {
         tipo == TipoEstampa::MERCADO_PUESTO_DERECHO ||
         tipo == TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA ||
         tipo == TipoEstampa::MERCADO_ESTANTERIA_DERECHA ||
-        tipo == TipoEstampa::MERCADO_PLANTA_MACETA ||
-        tipo == TipoEstampa::MERCADO_PALMERA_IZQUIERDA ||
-        tipo == TipoEstampa::MERCADO_PALMERA_DERECHA || tipo == TipoEstampa::CAVERNA_POZO_AGUA ||
+        tipo == TipoEstampa::MERCADO_PLANTA_MACETA || tipo == TipoEstampa::CAVERNA_POZO_AGUA ||
         tipo == TipoEstampa::CAVERNA_ANDAMIO_MINERO ||
         tipo == TipoEstampa::CAVERNA_CARTEL_PELIGRO ||
         tipo == TipoEstampa::CAVERNA_VAGONETA_CARBON ||
@@ -1312,4 +1262,36 @@ bool CatalogoDeEstampas::es_estampa_decorativa(TipoEstampa tipo) {
         return true;
     }
     return false;
+}
+
+uint32_t CatalogoDeEstampas::obtener_tile_suelo_cueva(int fila_local, int columna_local) {
+    static constexpr int ANCHO_CUEVA = 3;
+    static constexpr int ALTO_CUEVA = 4;
+    static constexpr uint32_t TILES_SUELO_CUEVA[ALTO_CUEVA][ANCHO_CUEVA] = {
+        {TILE_PASTO_PERIMETRAL, TILE_PASTO_PERIMETRAL, TILE_PASTO_PERIMETRAL},
+        {TILE_CUEVA_INTERIOR_OSCURO, TILE_CUEVA_INTERIOR_OSCURO, TILE_CUEVA_INTERIOR_OSCURO},
+        {TILE_CUEVA_INTERIOR_OSCURO, TILE_CUEVA_SUELO_UMBRAL, TILE_CUEVA_INTERIOR_OSCURO},
+        {TILE_CUEVA_TIERRA_SALIDA, TILE_CUEVA_TIERRA_SALIDA, TILE_CUEVA_TIERRA_SALIDA}};
+    if (fila_local < 0 || fila_local >= ALTO_CUEVA || columna_local < 0 ||
+        columna_local >= ANCHO_CUEVA) {
+        return 0;
+    }
+    return TILES_SUELO_CUEVA[fila_local][columna_local];
+}
+
+uint32_t CatalogoDeEstampas::obtener_tile_estructuras_cueva(int fila_local, int columna_local) {
+    static constexpr int ANCHO_CUEVA = 3;
+    static constexpr int ALTO_CUEVA = 4;
+    static constexpr uint32_t TILES_ESTRUCTURAS_CUEVA[ALTO_CUEVA][ANCHO_CUEVA] = {
+        {TILE_CUEVA_BORDE_SUPERIOR_IZQ,
+         TILE_CUEVA_BORDE_SUPERIOR_MED,
+         TILE_CUEVA_BORDE_SUPERIOR_DER},
+        {TILE_CUEVA_PARED_MED_IZQ, TILE_CUEVA_ARCO_SUPERIOR, TILE_CUEVA_PARED_MED_DER},
+        {TILE_CUEVA_PARED_INF_IZQ, 0, TILE_CUEVA_PARED_INF_DER},
+        {TILE_CUEVA_BASE_IZQ, 0, TILE_CUEVA_BASE_DER}};
+    if (fila_local < 0 || fila_local >= ALTO_CUEVA || columna_local < 0 ||
+        columna_local >= ANCHO_CUEVA) {
+        return 0;
+    }
+    return TILES_ESTRUCTURAS_CUEVA[fila_local][columna_local];
 }

@@ -16,6 +16,7 @@ constexpr RecursosUI::RegionSprite REGION_DADO = {381, 361, 10, 10};
 constexpr RecursosUI::RegionSprite REGION_BOTON_OK = {128, 256, 64, 64};
 constexpr RecursosUI::RegionSprite REGION_BOTON_CANCELAR = {192, 256, 64, 64};
 constexpr RecursosUI::RegionSprite REGION_RELOJ = {434, 475, 9, 9};
+constexpr RecursosUI::RegionSprite REGION_MONEDA = {193, 373, 9, 9};
 constexpr RecursosUI::RegionSprite REGION_GENERO_MASCULINO = {128, 192, 16, 16};
 constexpr RecursosUI::RegionSprite REGION_GENERO_FEMENINO = {144, 192, 16, 16};
 constexpr RecursosUI::RegionSprite REGION_FLECHA_IZQUIERDA = {352, 495, 12, 11};
@@ -37,6 +38,7 @@ constexpr int TAMANIO_ICONO_DADO = 30;
 constexpr int TAMANIO_BOTON_OK = 64;
 constexpr int TAMANIO_BOTON_ELIMINAR = 20;
 constexpr int TAMANIO_ICONO_RELOJ = 20;
+constexpr int TAMANIO_ICONO_MONEDA = 20;
 constexpr int TAMANIO_ICONO_GENERO = 34;
 constexpr int ANCHO_BOTON_FLECHA = 36;
 constexpr int ALTO_BOTON_FLECHA = 33;
@@ -119,6 +121,11 @@ RecursosUI::RecursosUI() {
             REGION_RELOJ,
             TAMANIO_ICONO_RELOJ,
             TAMANIO_ICONO_RELOJ);
+        sprite_moneda = recortar_y_escalar(
+            hoja_cursors,
+            REGION_MONEDA,
+            TAMANIO_ICONO_MONEDA,
+            TAMANIO_ICONO_MONEDA);
         sprite_masculino = recortar_y_escalar(
             hoja_cursors,
             REGION_GENERO_MASCULINO,
@@ -188,6 +195,10 @@ QPixmap RecursosUI::boton_eliminar_hover() const {
 
 QPixmap RecursosUI::icono_reloj() const {
     return sprite_reloj;
+}
+
+QPixmap RecursosUI::icono_moneda() const {
+    return sprite_moneda;
 }
 
 QPixmap RecursosUI::icono_masculino() const {

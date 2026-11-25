@@ -39,6 +39,21 @@ EstadoDeConexion::ProximoEstado EstadoLobby::listar_mundos(const ListarMundos&) 
     return nullptr;
 }
 
+EstadoDeConexion::ProximoEstado EstadoLobby::verificar_codigo_partida(
+    const VerificarCodigoPartida& comando) {
+    if (comando.codigo_partida.empty()) {
+        responder_error(CodigoError::NO_PERMITIDO, "el codigo de la partida no puede estar vacio");
+        return nullptr;
+    }
+    try {
+        contexto.administrador.verificar_disponibilidad(comando.codigo_partida);
+        encolar(CodigoPartidaDisponible{});
+    } catch (const ErrorDePartida& error) {
+        responder_error(error.codigo(), error.what());
+    }
+    return nullptr;
+}
+
 EstadoDeConexion::ProximoEstado EstadoLobby::crear_partida(const CrearPartida& comando) {
     if (comando.nombre_partida.empty()) {
         responder_error(CodigoError::NO_PERMITIDO, "el nombre de la granja no puede estar vacío");

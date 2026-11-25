@@ -33,7 +33,6 @@ class LienzoDeEdicion : public QWidget {
 private:
     MapaEditable* mapa_actual;
     SectorActual sector_actual;
-    TipoCapa capa_activa;
     int tamano_casilla_px;
     ModoEditor modo_actual;
     uint32_t id_tile_actual;
@@ -67,6 +66,7 @@ private:
     int columna_hover;
     int fila_hover;
     bool mouse_presionado;
+    bool trazo_terreno_activo;
 
     void inicializar_catalogo_visual_entidades();
     void cargar_tilesets_de_sector(SectorActual sector);
@@ -117,8 +117,6 @@ public:
     void establecer_tile(uint32_t nuevo_id_tile, uint8_t nuevas_propiedades);
     void establecer_estampa_a_colocar(TipoEstampa nueva_estampa);
     void establecer_entidad_a_colocar(TipoEntidad nueva_entidad);
-    void establecer_capa_activa(TipoCapa nueva_capa);
-    TipoCapa obtener_capa_activa() const;
 
     void deseleccionar_entidad();
     bool eliminar_entidad_seleccionada();
@@ -127,10 +125,12 @@ public:
     void rotar_elemento_actual();
     TipoEstampa obtener_estampa_a_colocar() const;
     uint32_t obtener_id_tile_actual() const;
+    bool esta_pintando_con_mouse() const;
 
 signals:
     void casilla_apuntada(int columna, int fila);
     void mapa_modificado();
+    void trazo_finalizado();
     void mapa_expandido(int columnas_agregadas_izquierda, int filas_agregadas_arriba);
     void entidad_seleccionada_cambio(int identificador_entidad);
     void estampa_rotada(TipoEstampa nueva_estampa);

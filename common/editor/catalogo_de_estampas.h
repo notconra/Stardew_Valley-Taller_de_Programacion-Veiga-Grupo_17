@@ -37,19 +37,17 @@ enum class TipoEstampa : uint8_t {
     MERCADO_ESTANTERIA_IZQUIERDA = 22,
     MERCADO_ESTANTERIA_DERECHA = 23,
     MERCADO_PLANTA_MACETA = 24,
-    MERCADO_PALMERA_IZQUIERDA = 25,
-    MERCADO_PALMERA_DERECHA = 26,
     // Estampas y Decoración de la Mina (Caverna)
-    CAVERNA_POZO_AGUA = 27,
-    CAVERNA_PUENTE_MADERA = 28,
-    CAVERNA_ZONA_ADOQUIN = 29,
-    CAVERNA_PARCHE_TIERRA = 30,
-    CAVERNA_VIA_HORIZONTAL = 31,
-    CAVERNA_VIA_VERTICAL = 32,
-    CAVERNA_ANDAMIO_MINERO = 33,
-    CAVERNA_CARTEL_PELIGRO = 34,
-    CAVERNA_VAGONETA_CARBON = 35,
-    CAVERNA_MESA_Y_BARRIL = 36
+    CAVERNA_POZO_AGUA = 25,
+    CAVERNA_PUENTE_MADERA = 26,
+    CAVERNA_ZONA_ADOQUIN = 27,
+    CAVERNA_PARCHE_TIERRA = 28,
+    CAVERNA_VIA_HORIZONTAL = 29,
+    CAVERNA_VIA_VERTICAL = 30,
+    CAVERNA_ANDAMIO_MINERO = 31,
+    CAVERNA_CARTEL_PELIGRO = 32,
+    CAVERNA_VAGONETA_CARBON = 33,
+    CAVERNA_MESA_Y_BARRIL = 34
 };
 
 struct CasillaEstampa {
@@ -105,6 +103,54 @@ public:
 
     // Tile de pasto verde para el perimetro exterior de la granja (spring_outdoorsTileSheet.png)
     static constexpr uint32_t TILE_PASTO_PERIMETRAL = 304;
+    static constexpr uint32_t TILE_PASTO_OSCURO_PERIMETRAL = 481;
+    static constexpr uint32_t TILE_BORDE_SUR_TIERRA_GRANJA = 716;
+    static constexpr uint32_t TILE_BORDE_SUR_ESQUINA_IZQ = 541;
+    static constexpr uint32_t TILE_BORDE_SUR_BORDE_GRANJA = 542;
+    static constexpr uint32_t TILE_BORDE_SUR_ESQUINA_DER = 544;
+    static constexpr uint32_t TILE_PASO_MADERA_GRANJA = 467;
+    static constexpr uint32_t TILE_PASO_TIERRA_GRANJA = 716;
+    static constexpr uint32_t TILE_ACANTILADO_OESTE_FIN = 573;
+    static constexpr uint32_t TILE_ACANTILADO_OESTE_PARED = 598;
+    static constexpr uint32_t TILE_ACANTILADO_OESTE_ROCA = 673;
+    static constexpr uint32_t TILE_ACANTILADO_OESTE_INICIO = 518;
+    static constexpr uint32_t TILE_ACANTILADO_ESTE_FIN = 570;
+    static constexpr uint32_t TILE_ACANTILADO_ESTE_PARED = 595;
+    static constexpr uint32_t TILE_ACANTILADO_ESTE_ROCA = 670;
+    static constexpr uint32_t TILE_ACANTILADO_ESTE_INICIO = 519;
+
+    // Tiles de acantilado perimetral para la granja (spring_outdoorsTileSheet.png)
+    static constexpr uint32_t TILE_ACANTILADO_NORTE_IZQ_0 = 596;
+    static constexpr uint32_t TILE_ACANTILADO_NORTE_IZQ_1 = 621;
+    static constexpr uint32_t TILE_ACANTILADO_NORTE_IZQ_2 = 646;
+    static constexpr uint32_t TILE_ACANTILADO_NORTE_IZQ_3 = 671;
+    static constexpr uint32_t TILE_ACANTILADO_NORTE_FILA_0 = 597;
+    static constexpr uint32_t TILE_ACANTILADO_NORTE_FILA_1 = 622;
+    static constexpr uint32_t TILE_ACANTILADO_NORTE_FILA_2 = 647;
+    static constexpr uint32_t TILE_ACANTILADO_NORTE_FILA_3 = 672;
+    static constexpr uint32_t TILE_ACANTILADO_NORTE_DER_0 = 598;
+    static constexpr uint32_t TILE_ACANTILADO_NORTE_DER_1 = 623;
+    static constexpr uint32_t TILE_ACANTILADO_NORTE_DER_2 = 648;
+    static constexpr uint32_t TILE_ACANTILADO_NORTE_DER_3 = 673;
+    static constexpr uint32_t TILE_ACANTILADO_OESTE_A = 523;
+    static constexpr uint32_t TILE_ACANTILADO_OESTE_B = 548;
+    static constexpr uint32_t TILE_ACANTILADO_ESTE_A = 520;
+    static constexpr uint32_t TILE_ACANTILADO_ESTE_B = 545;
+
+    // Tiles de entrada de cueva normal en acantilado norte (3x4, spring_outdoorsTileSheet.png)
+    static constexpr uint32_t TILE_CUEVA_INTERIOR_OSCURO = 346;
+    static constexpr uint32_t TILE_CUEVA_SUELO_UMBRAL = 638;
+    static constexpr uint32_t TILE_CUEVA_TIERRA_SALIDA = 589;
+    static constexpr uint32_t TILE_CUEVA_BORDE_SUPERIOR_IZQ = 1762;
+    static constexpr uint32_t TILE_CUEVA_BORDE_SUPERIOR_MED = 1763;
+    static constexpr uint32_t TILE_CUEVA_BORDE_SUPERIOR_DER = 1764;
+    static constexpr uint32_t TILE_CUEVA_PARED_MED_IZQ = 1787;
+    static constexpr uint32_t TILE_CUEVA_ARCO_SUPERIOR = 1788;
+    static constexpr uint32_t TILE_CUEVA_PARED_MED_DER = 1789;
+    static constexpr uint32_t TILE_CUEVA_PARED_INF_IZQ = 1812;
+    static constexpr uint32_t TILE_CUEVA_PARED_INF_DER = 1814;
+    static constexpr uint32_t TILE_CUEVA_BASE_IZQ = 1837;
+    static constexpr uint32_t TILE_CUEVA_BASE_DER = 1839;
 
     // Tiles de valla perimetral de madera (spring_outdoorsTileSheet.png)
     // Horizontal (capas Frente y Estructuras):
@@ -166,6 +212,8 @@ public:
     static TipoEstampa rotar_estampa(TipoEstampa tipo);
     static bool es_tile_de_estanque(uint32_t identificador_tile);
     static bool es_estampa_decorativa(TipoEstampa tipo);
+    static uint32_t obtener_tile_suelo_cueva(int fila_local, int columna_local);
+    static uint32_t obtener_tile_estructuras_cueva(int fila_local, int columna_local);
 };
 
 #endif  // CATALOGO_DE_ESTAMPAS_H
