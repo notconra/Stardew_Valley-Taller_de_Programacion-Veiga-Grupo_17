@@ -14,10 +14,6 @@ void ResultadoValidacion::agregar_error(const std::string& error) {
     errores.push_back(error);
 }
 
-void ResultadoValidacion::agregar_advertencia(const std::string& advertencia) {
-    advertencias.push_back(advertencia);
-}
-
 bool ValidadorDeMundo::tiene_acceso_perimetral_transitable(
     const MapaEditable& mapa, const EntidadDelMapa& entidad) {
     int columna_origen = 0;

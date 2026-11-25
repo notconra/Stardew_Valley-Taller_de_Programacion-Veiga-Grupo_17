@@ -9,11 +9,9 @@
 struct ResultadoValidacion {
     bool es_valido;
     std::vector<std::string> errores;
-    std::vector<std::string> advertencias;
 
     ResultadoValidacion();
     void agregar_error(const std::string& error);
-    void agregar_advertencia(const std::string& advertencia);
 };
 
 class ValidadorDeMundo {
