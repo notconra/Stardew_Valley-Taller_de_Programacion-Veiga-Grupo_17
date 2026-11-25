@@ -62,6 +62,7 @@ public:
     DatosPartidaGuardada generar_datos_guardado(const DatosMundoGuardado& datos_mundo) const;
     void actualizar_dia(uint32_t nuevo_dia);
     void actualizar_segundos_jugados(uint32_t nuevos_segundos);
+    void actualizar_monedas_jugadores(const std::vector<DatosJugadorGuardado>& datos_jugadores);
     uint32_t obtener_dia() const;
     uint32_t obtener_segundos_jugados() const;
 

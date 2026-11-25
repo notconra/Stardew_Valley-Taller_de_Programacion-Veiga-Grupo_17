@@ -417,7 +417,8 @@ void AdministradorDePartidas::cargar_partida(const std::string& ruta_archivo) {
             jugador_guardado.nombre_jugador,
             ColorDeJugador::AZUL,
             false,
-            jugador_guardado.apariencia});
+            jugador_guardado.apariencia,
+            jugador_guardado.monedas});
     }
 
     partidas.emplace(
@@ -490,6 +491,7 @@ void AdministradorDePartidas::guardar_partida(const std::string& codigo_partida)
 
     partida.actualizar_dia(datos_mundo.dia);
     partida.actualizar_segundos_jugados(datos_mundo.segundos_jugados);
+    partida.actualizar_monedas_jugadores(datos_mundo.jugadores);
 
     std::filesystem::create_directories("partidas");
     SerializadorPartida::guardar_en_archivo(

@@ -68,6 +68,7 @@ struct InfoPartida {
     uint8_t jugadores_maximos = 0;
     uint32_t dia = 1;
     uint32_t segundos_jugados = 0;
+    uint32_t monedas = 0;
     bool operator==(const InfoPartida&) const = default;
 };
 

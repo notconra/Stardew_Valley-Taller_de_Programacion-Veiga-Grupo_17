@@ -87,7 +87,8 @@ TEST_F(ProtocoloEventosTest, ListaPartidas) {
         4,
         5,
         0xA1A2A3A4,
-        0xA5A6A7A8};
+        0xA5A6A7A8,
+        0x01020304};
     const InfoPartida info2{
         "XYZ789",
         "El pueblo",
@@ -98,7 +99,8 @@ TEST_F(ProtocoloEventosTest, ListaPartidas) {
         4,
         5,
         0xA1A2A3A4,
-        0xA5A6A7A8};
+        0xA5A6A7A8,
+        0x05060708};
 
     verificar_evento(ListaPartidas{{info1, info2}});
 }

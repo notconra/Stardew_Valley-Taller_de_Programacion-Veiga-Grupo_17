@@ -65,6 +65,8 @@ private:
     QLabel label_nombre_granja;
     QPushButton btn_eliminar;
     QHBoxLayout layout_tiempo_jugado;
+    QLabel label_icono_moneda;
+    QLabel label_monedas;
     QLabel label_icono_reloj;
     QLabel label_tiempo_jugado;
 };
