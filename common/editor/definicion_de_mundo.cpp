@@ -97,18 +97,22 @@ void DefinicionDeMundo::establecer_niveles_mazmorra(const std::vector<MapaEditab
 }
 
 MapaEditable DefinicionDeMundo::crear_sector_mercado_por_defecto() {
-    if (std::filesystem::exists("Assets/Maps/Mercado.tmx")) {
-        MapaEditable mercado =
-            CargadorDeSectorTMX::cargar_sector("Assets/Maps/Mercado.tmx", SectorActual::MERCADO);
-        mercado.vaciar_entidades();
-        return mercado;
-    }
     MapaEditable mercado(
         19,
         17,
         CatalogoDeTerrenos::obtener_tile_base(SectorActual::MERCADO),
         PropiedadDeCasilla::DECORABLE);
-    mercado.reconstruir_perimetro_mercado();
+    if (std::filesystem::exists("Assets/Maps/Mercado.tmx")) {
+        mercado =
+            CargadorDeSectorTMX::cargar_sector("Assets/Maps/Mercado.tmx", SectorActual::MERCADO);
+        mercado.vaciar_entidades();
+    } else {
+        mercado.reconstruir_perimetro_mercado();
+    }
+    mercado.ubicar_entidad(TipoEntidad::PUESTO_ROBIN, 3, 6, 1, 1, Direccion::ABAJO);
+    mercado.ubicar_entidad(TipoEntidad::PUESTO_MARNIE, 15, 6, 1, 1, Direccion::ABAJO);
+    mercado.ubicar_entidad(TipoEntidad::PUESTO_PIERRE, 2, 10, 1, 1, Direccion::DERECHA);
+    mercado.ubicar_entidad(TipoEntidad::PUESTO_CLINT, 16, 10, 1, 1, Direccion::IZQUIERDA);
     return mercado;
 }
 
@@ -131,13 +135,13 @@ DefinicionDeMundo DefinicionDeMundo::crear_mundo_por_defecto(const std::string& 
         MapaEditable(ANCHO_MAPA_MAZMORRA, ALTO_MAPA_MAZMORRA, 0, PropiedadDeCasilla::BLOQUEA));
 
     // Configuración inicial de la Granja
-    granja.ubicar_entidad(TipoEntidad::CABANIA, 6, 5, 9, 9);
-    granja.ubicar_entidad(TipoEntidad::ENTRADA_CAVERNA, 20, 5, 5, 7);
-    granja.ubicar_entidad(TipoEntidad::TRANSICION_PUEBLO, 32, 16, 2, 2);
+    granja.ubicar_entidad(TipoEntidad::CABANIA, 6, 6, 9, 9);
+    granja.ubicar_entidad(TipoEntidad::ENTRADA_CAVERNA, 20, 0, 3, 4);
+    granja.ubicar_entidad(TipoEntidad::TRANSICION_PUEBLO, COLUMNAS_MAPA_GRANJA - 1, 16, 1, 2);
     granja.generar_muro_perimetral_granja();
 
     // Configuración inicial del Pueblo (Centro Comunitario y Mercado obligatorio, sin puestos)
-    pueblo.ubicar_entidad(TipoEntidad::TRANSICION_GRANJA, 0, 16, 2, 2);
+    pueblo.ubicar_entidad(TipoEntidad::TRANSICION_GRANJA, 0, 16, 1, 2);
     pueblo.ubicar_entidad(TipoEntidad::CENTRO_COMUNITARIO, 4, 3, 12, 10);
     pueblo.ubicar_entidad(TipoEntidad::MERCADO, 19, 3, 10, 10);
     pueblo.generar_muro_perimetral_pueblo();

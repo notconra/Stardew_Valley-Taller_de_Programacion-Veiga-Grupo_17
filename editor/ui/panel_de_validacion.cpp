@@ -8,6 +8,7 @@
 #include <QListWidget>
 #include <QPushButton>
 #include <QString>
+#include <QStyle>
 #include <QVBoxLayout>
 #include <map>
 #include <string>
@@ -17,16 +18,6 @@
 #include "tipo_entidad.h"
 #include "validador_de_mundo.h"
 
-static constexpr const char* ESTILO_BOTON_ENTIDAD =
-    "QPushButton { text-align: left; padding: 6px 10px; font-size: 13px; border-radius: 4px; }"
-    "QPushButton:checked { background-color: #4A6E82; color: white; font-weight: bold; }";
-
-static constexpr const char* ESTILO_BOTON_ELIMINAR =
-    "QPushButton { background-color: #B22222; color: white; font-weight: bold; padding: 6px; "
-    "border-radius: 4px; }"
-    "QPushButton:hover { background-color: #DC143C; }"
-    "QPushButton:disabled { background-color: #555555; color: #888888; }";
-
 struct ConfiguracionBotonEntidad {
     TipoEntidad entidad;
     const char* texto;
@@ -34,21 +25,21 @@ struct ConfiguracionBotonEntidad {
 
 static const std::map<SectorActual, std::vector<ConfiguracionBotonEntidad>> ENTIDADES_POR_SECTOR = {
     {SectorActual::GRANJA,
-     {{TipoEntidad::CABANIA, "Cabania del Jugador (9x9)"},
-      {TipoEntidad::ENTRADA_CAVERNA, "Entrada Mina (5x7)"},
-      {TipoEntidad::TRANSICION_PUEBLO, "Salida a Pueblo (2x2)"}}},
+     {{TipoEntidad::CABANIA, "Cabaña del Jugador"},
+      {TipoEntidad::ENTRADA_CAVERNA, "Entrada Mina"},
+      {TipoEntidad::TRANSICION_PUEBLO, "Salida al Pueblo"}}},
     {SectorActual::PUEBLO,
-     {{TipoEntidad::CENTRO_COMUNITARIO, "Centro Comunitario (12x10)"},
-      {TipoEntidad::MERCADO, "Mercado (10x10)"},
-      {TipoEntidad::TRANSICION_GRANJA, "Salida a Granja (2x2)"}}},
+     {{TipoEntidad::CENTRO_COMUNITARIO, "Centro Comunitario"},
+      {TipoEntidad::MERCADO, "Mercado"},
+      {TipoEntidad::TRANSICION_GRANJA, "Salida a Granja"}}},
     {SectorActual::MERCADO,
-     {{TipoEntidad::PUESTO_MARNIE, "Puesto Marnie (1x1)"},
-      {TipoEntidad::PUESTO_CLINT, "Puesto Clint (1x1)"},
-      {TipoEntidad::PUESTO_PIERRE, "Puesto Pierre (1x1)"},
-      {TipoEntidad::PUESTO_ROBIN, "Puesto Robin (1x1)"}}},
+     {{TipoEntidad::PUESTO_MARNIE, "Puesto Marnie"},
+      {TipoEntidad::PUESTO_CLINT, "Puesto Clint"},
+      {TipoEntidad::PUESTO_PIERRE, "Puesto Pierre"},
+      {TipoEntidad::PUESTO_ROBIN, "Puesto Robin"}}},
     {SectorActual::CAVERNA,
-     {{TipoEntidad::ESCALERA_NIVEL, "Escalera Mazmorra (1x1)"},
-      {TipoEntidad::SALIDA_CAVERNA, "Salida Caverna (1x1)"}}}};
+     {{TipoEntidad::ESCALERA_NIVEL, "Escalera Mazmorra"},
+      {TipoEntidad::SALIDA_CAVERNA, "Salida Caverna"}}}};
 
 PanelDeValidacion::PanelDeValidacion(QWidget* padre)
     : QWidget(padre),
@@ -60,8 +51,7 @@ PanelDeValidacion::PanelDeValidacion(QWidget* padre)
       boton_eliminar_entidad(nullptr),
       etiqueta_titulo(nullptr),
       etiqueta_estado_general(nullptr),
-      lista_errores(nullptr),
-      boton_revalidar(nullptr) {
+      lista_errores(nullptr) {
     layout_principal = new QVBoxLayout(this);
     layout_principal->setContentsMargins(8, 8, 8, 8);
     layout_principal->setSpacing(8);
@@ -70,7 +60,7 @@ PanelDeValidacion::PanelDeValidacion(QWidget* padre)
     inicializar_seccion_entidades();
 
     // 2. Título de Validación
-    etiqueta_titulo = new QLabel("Validacion del Mundo", this);
+    etiqueta_titulo = new QLabel("Validación del Mundo", this);
     QFont fuente_titulo = etiqueta_titulo->font();
     fuente_titulo.setBold(true);
     fuente_titulo.setPointSize(12);
@@ -78,32 +68,34 @@ PanelDeValidacion::PanelDeValidacion(QWidget* padre)
     layout_principal->addWidget(etiqueta_titulo);
 
     // 3. Etiqueta de Estado General (Válido / Inválido)
-    etiqueta_estado_general = new QLabel("Pendiente de validacion", this);
+    etiqueta_estado_general = new QLabel("Pendiente de validación", this);
+    etiqueta_estado_general->setObjectName("etiqueta_estado_general");
     etiqueta_estado_general->setAlignment(Qt::AlignCenter);
-    etiqueta_estado_general->setStyleSheet(
-        "background-color: #333333; color: white; padding: 8px; border-radius: 4px; font-weight: "
-        "bold;");
     layout_principal->addWidget(etiqueta_estado_general);
 
     // 4. Lista de Observaciones y Errores
     QGroupBox* grupo_errores = new QGroupBox("Observaciones y Errores", this);
     QVBoxLayout* layout_errores = new QVBoxLayout(grupo_errores);
     lista_errores = new QListWidget(grupo_errores);
+    lista_errores->setWordWrap(true);
+    lista_errores->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    lista_errores->setTextElideMode(Qt::ElideNone);
+    lista_errores->setSpacing(4);
+    connect(lista_errores, &QListWidget::itemDoubleClicked, this, [this](QListWidgetItem* item) {
+        if (item == nullptr) {
+            return;
+        }
+        QVariant dato = item->data(Qt::UserRole);
+        if (!dato.isValid()) {
+            return;
+        }
+        int indice_sector = dato.toInt();
+        if (indice_sector >= 0) {
+            emit sector_solicitado(indice_sector);
+        }
+    });
     layout_errores->addWidget(lista_errores);
     layout_principal->addWidget(grupo_errores);
-
-    // 5. Botón de Revalidar Mundo
-    boton_revalidar = new QPushButton("Revalidar Mundo", this);
-    boton_revalidar->setStyleSheet(
-        "QPushButton { background-color: #2E6B38; color: white; font-weight: bold; padding: 8px; "
-        "border-radius: 4px; }"
-        "QPushButton:hover { background-color: #3B8C4A; }");
-    connect(
-        boton_revalidar,
-        &QPushButton::clicked,
-        this,
-        &PanelDeValidacion::validacion_solicitada);
-    layout_principal->addWidget(boton_revalidar);
 
     actualizar_sector(SectorActual::GRANJA);
 }
@@ -116,7 +108,7 @@ void PanelDeValidacion::inicializar_seccion_entidades() {
     grupo_entidades = new QButtonGroup(this);
 
     boton_eliminar_entidad = new QPushButton("Eliminar Seleccionada", caja_entidades);
-    boton_eliminar_entidad->setStyleSheet(ESTILO_BOTON_ELIMINAR);
+    boton_eliminar_entidad->setObjectName("boton_eliminar_entidad");
     boton_eliminar_entidad->setEnabled(false);
     connect(
         boton_eliminar_entidad,
@@ -155,7 +147,7 @@ void PanelDeValidacion::actualizar_sector(SectorActual sector) {
         QString texto_boton = QString::fromUtf8(lista_configs[indice_config].texto);
         QPushButton* boton = new QPushButton(texto_boton, caja_entidades);
         boton->setCheckable(true);
-        boton->setStyleSheet(ESTILO_BOTON_ENTIDAD);
+        boton->setProperty("rol", "entidad");
         grupo_entidades->addButton(boton, static_cast<int>(tipo_entidad));
         connect(boton, &QPushButton::clicked, this, [this, tipo_entidad]() {
             emit entidad_cambiada(tipo_entidad);
@@ -164,11 +156,20 @@ void PanelDeValidacion::actualizar_sector(SectorActual sector) {
         botones_entidades_actuales.push_back(boton);
         indice_config++;
     }
+}
 
-    if (!botones_entidades_actuales.empty()) {
-        botones_entidades_actuales[0]->setChecked(true);
-        emit entidad_cambiada(lista_configs[0].entidad);
+void PanelDeValidacion::desmarcar_entidades() {
+    if (grupo_entidades == nullptr) {
+        return;
     }
+    QAbstractButton* boton_marcado = grupo_entidades->checkedButton();
+    if (boton_marcado == nullptr) {
+        return;
+    }
+    bool era_exclusivo = grupo_entidades->exclusive();
+    grupo_entidades->setExclusive(false);
+    boton_marcado->setChecked(false);
+    grupo_entidades->setExclusive(era_exclusivo);
 }
 
 void PanelDeValidacion::habilitar_boton_eliminar(bool habilitado) {
@@ -181,26 +182,29 @@ void PanelDeValidacion::actualizar_resultado(const ResultadoValidacion& resultad
     lista_errores->clear();
 
     if (resultado.es_valido) {
-        etiqueta_estado_general->setText("MUNDO VALIDO Y COMPLETO");
-        etiqueta_estado_general->setStyleSheet(
-            "background-color: #2E6B38; color: white; padding: 8px; border-radius: 4px; "
-            "font-weight: bold;");
+        etiqueta_estado_general->setText("MUNDO VÁLIDO Y COMPLETO");
+        etiqueta_estado_general->setProperty("estado", "valido");
+        etiqueta_estado_general->style()->unpolish(etiqueta_estado_general);
+        etiqueta_estado_general->style()->polish(etiqueta_estado_general);
         lista_errores->addItem("Todos los requisitos fueron verificados correctamente.");
         if (lista_errores->count() > 0) {
             lista_errores->item(0)->setForeground(QColor(100, 255, 100));
         }
     } else {
-        etiqueta_estado_general->setText("MUNDO INVALIDO (TIENE ERRORES)");
-        etiqueta_estado_general->setStyleSheet(
-            "background-color: #8B0000; color: white; padding: 8px; border-radius: 4px; "
-            "font-weight: bold;");
+        etiqueta_estado_general->setText("MUNDO INVÁLIDO (TIENE ERRORES)");
+        etiqueta_estado_general->setProperty("estado", "invalido");
+        etiqueta_estado_general->style()->unpolish(etiqueta_estado_general);
+        etiqueta_estado_general->style()->polish(etiqueta_estado_general);
         size_t indice_error = 0;
         while (indice_error < resultado.errores.size()) {
-            lista_errores->addItem(QString::fromStdString(resultado.errores[indice_error]));
-            int fila_item = static_cast<int>(indice_error);
-            if (lista_errores->item(fila_item) != nullptr) {
-                lista_errores->item(fila_item)->setForeground(QColor(255, 120, 120));
+            QListWidgetItem* item = new QListWidgetItem(
+                QString::fromStdString(resultado.errores[indice_error].mensaje));
+            item->setForeground(QColor(255, 120, 120));
+            item->setData(Qt::UserRole, resultado.errores[indice_error].indice_sector);
+            if (resultado.errores[indice_error].indice_sector >= 0) {
+                item->setToolTip("Doble clic para ir al sector");
             }
+            lista_errores->addItem(item);
             indice_error++;
         }
     }

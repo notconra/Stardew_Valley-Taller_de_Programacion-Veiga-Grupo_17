@@ -48,7 +48,6 @@ LienzoDeEdicion::LienzoDeEdicion(QWidget* padre)
     : QWidget(padre),
       mapa_actual(nullptr),
       sector_actual(SectorActual::GRANJA),
-      capa_activa(TipoCapa::SUELO),
       tamano_casilla_px(28),
       modo_actual(ModoEditor::TERRENO),
       id_tile_actual(CatalogoDeTerrenos::obtener_tile_base(SectorActual::GRANJA)),
@@ -78,7 +77,8 @@ LienzoDeEdicion::LienzoDeEdicion(QWidget* padre)
       fila_arrastre_actual(0),
       columna_hover(-1),
       fila_hover(-1),
-      mouse_presionado(false) {
+      mouse_presionado(false),
+      trazo_terreno_activo(false) {
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
     cargar_tilesets_de_sector(SectorActual::GRANJA);
@@ -231,15 +231,6 @@ void LienzoDeEdicion::establecer_entidad_a_colocar(TipoEntidad nueva_entidad) {
     entidad_a_colocar = nueva_entidad;
 }
 
-void LienzoDeEdicion::establecer_capa_activa(TipoCapa nueva_capa) {
-    capa_activa = nueva_capa;
-    update();
-}
-
-TipoCapa LienzoDeEdicion::obtener_capa_activa() const {
-    return capa_activa;
-}
-
 void LienzoDeEdicion::deseleccionar_entidad() {
     identificador_entidad_seleccionada = -1;
     arrastrando_entidad = false;
@@ -352,16 +343,19 @@ void LienzoDeEdicion::borrar_en_casilla(int columna, int fila) {
     if (mapa_actual == nullptr || !mapa_actual->esta_dentro(columna, fila)) {
         return;
     }
-    if (casilla_es_perimetro_protegido(columna, fila)) {
-        return;
-    }
     EntidadDelMapa* entidad_tocada = mapa_actual->buscar_entidad_en_casilla(columna, fila);
     if (entidad_tocada != nullptr) {
         mapa_actual->retirar_entidad(entidad_tocada->obtener_identificador());
         identificador_entidad_seleccionada = -1;
         emit entidad_seleccionada_cambio(-1);
-    } else if (
-        mapa_actual->buscar_estampa_en_casilla(columna, fila) != nullptr ||
+        emit mapa_modificado();
+        update();
+        return;
+    }
+    if (casilla_es_perimetro_protegido(columna, fila)) {
+        return;
+    }
+    if (mapa_actual->buscar_estampa_en_casilla(columna, fila) != nullptr ||
         mapa_actual->casilla_pertenece_a_estanque(columna, fila)) {
         uint32_t tile_base = CatalogoDeTerrenos::obtener_tile_base(sector_actual);
         uint8_t prop_base =
@@ -404,8 +398,8 @@ bool LienzoDeEdicion::casilla_es_perimetro_protegido(int columna, int fila) cons
         }
         return false;
     } else if (sector_actual == SectorActual::GRANJA) {
-        if (columna == 0 || columna >= cantidad_columnas - 1 || fila <= 1 ||
-            fila >= cantidad_filas - 1) {
+        if (columna == 0 || columna >= cantidad_columnas - 1 ||
+            fila < MapaEditable::ALTO_VALLA_NORTE_CASILLAS || fila >= cantidad_filas - 1) {
             return true;
         }
     } else if (sector_actual == SectorActual::PUEBLO) {
@@ -431,9 +425,15 @@ void LienzoDeEdicion::pintar_casilla_en_posicion(int columna, int fila) {
     if (mapa_actual->casilla_pertenece_a_estanque(columna, fila)) {
         return;
     }
-    mapa_actual->pintar_en_capa(capa_activa, columna, fila, id_tile_actual, propiedades_actuales);
+    mapa_actual
+        ->pintar_en_capa(TipoCapa::SUELO, columna, fila, id_tile_actual, propiedades_actuales);
+    trazo_terreno_activo = true;
     emit mapa_modificado();
     update();
+}
+
+bool LienzoDeEdicion::esta_pintando_con_mouse() const {
+    return mouse_presionado && modo_actual == ModoEditor::TERRENO;
 }
 
 void LienzoDeEdicion::dibujar_capa_de_tiles(
@@ -491,6 +491,28 @@ void LienzoDeEdicion::inicializar_catalogo_visual_entidades() {
 void LienzoDeEdicion::dibujar_visual_entidad(
     QPainter& pintor, TipoEntidad tipo_entidad, int origen_columna, int origen_fila,
     const QRect& rectangulo_destino) {
+    if (tipo_entidad == TipoEntidad::ENTRADA_CAVERNA) {
+        int fila_local = 0;
+        while (fila_local < 4) {
+            int columna_local = 0;
+            while (columna_local < 3) {
+                dibujar_tile_en_lienzo(
+                    pintor,
+                    CatalogoDeEstampas::obtener_tile_suelo_cueva(fila_local, columna_local),
+                    origen_columna + columna_local,
+                    origen_fila + fila_local);
+                dibujar_tile_en_lienzo(
+                    pintor,
+                    CatalogoDeEstampas::obtener_tile_estructuras_cueva(fila_local, columna_local),
+                    origen_columna + columna_local,
+                    origen_fila + fila_local);
+                columna_local++;
+            }
+            fila_local++;
+        }
+        return;
+    }
+
     if (tipo_entidad == TipoEntidad::SALIDA_CAVERNA && !pixmap_caverna_entidades.isNull()) {
         pintor.drawPixmap(rectangulo_destino, pixmap_caverna_entidades, QRect(48, 112, 16, 16));
         int altura_escalera = 0;
@@ -661,10 +683,11 @@ void LienzoDeEdicion::dibujar_entidad(
         return;
     }
 
-    bool es_entidad_caverna =
+    bool es_entidad_tile_compuesta =
         (tipo_entidad == TipoEntidad::ESCALERA_NIVEL ||
-         tipo_entidad == TipoEntidad::SALIDA_CAVERNA);
-    if (es_entidad_caverna) {
+         tipo_entidad == TipoEntidad::SALIDA_CAVERNA ||
+         tipo_entidad == TipoEntidad::ENTRADA_CAVERNA);
+    if (es_entidad_tile_compuesta) {
         int origen_columna = 0;
         int origen_fila = 0;
         entidad.consultar_origen(origen_columna, origen_fila);
@@ -982,16 +1005,35 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
             entidad_a_colocar,
             ancho_defecto,
             alto_defecto);
+        int columna_fantasma = columna_hover;
+        int fila_fantasma = fila_hover;
+        if (MapaEditable::es_transicion_de_borde(entidad_a_colocar)) {
+            mapa_actual->ajustar_posicion_transicion_borde(
+                columna_hover,
+                fila_hover,
+                columna_fantasma,
+                fila_fantasma,
+                ancho_defecto,
+                alto_defecto);
+        } else if (entidad_a_colocar == TipoEntidad::ENTRADA_CAVERNA) {
+            int cantidad_columnas = mapa_actual->obtener_cantidad_de_columnas();
+            fila_fantasma = 0;
+            if (columna_fantasma < 1) {
+                columna_fantasma = 1;
+            } else if (columna_fantasma + ancho_defecto > cantidad_columnas - 1) {
+                columna_fantasma = cantidad_columnas - 1 - ancho_defecto;
+            }
+        }
         bool ubicable = mapa_actual->entidad_puede_ubicarse_en(
             entidad_a_colocar,
-            columna_hover,
-            fila_hover,
+            columna_fantasma,
+            fila_fantasma,
             ancho_defecto,
             alto_defecto,
             0);
         QRect rectangulo_fantasma(
-            columna_hover * tamano_casilla_px,
-            fila_hover * tamano_casilla_px,
+            columna_fantasma * tamano_casilla_px,
+            fila_fantasma * tamano_casilla_px,
             ancho_defecto * tamano_casilla_px,
             alto_defecto * tamano_casilla_px);
         if (es_puesto_comerciante) {
@@ -1109,10 +1151,21 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
             bool es_puesto_comerciante =
                 (tipo_ent == TipoEntidad::PUESTO_MARNIE || tipo_ent == TipoEntidad::PUESTO_CLINT ||
                  tipo_ent == TipoEntidad::PUESTO_PIERRE || tipo_ent == TipoEntidad::PUESTO_ROBIN);
+            int columna_arrastre_mostrada = columna_arrastre_actual;
+            int fila_arrastre_mostrada = fila_arrastre_actual;
+            if (MapaEditable::es_transicion_de_borde(tipo_ent)) {
+                mapa_actual->ajustar_posicion_transicion_borde(
+                    columna_arrastre_actual,
+                    fila_arrastre_actual,
+                    columna_arrastre_mostrada,
+                    fila_arrastre_mostrada,
+                    ancho_ent,
+                    alto_ent);
+            }
             bool ubicable = mapa_actual->entidad_puede_ubicarse_en(
                 tipo_ent,
-                columna_arrastre_actual,
-                fila_arrastre_actual,
+                columna_arrastre_mostrada,
+                fila_arrastre_mostrada,
                 ancho_ent,
                 alto_ent,
                 id_seleccionada);
@@ -1131,8 +1184,8 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
                 }
             }
             QRect rectangulo_arrastre(
-                columna_arrastre_actual * tamano_casilla_px,
-                fila_arrastre_actual * tamano_casilla_px,
+                columna_arrastre_mostrada * tamano_casilla_px,
+                fila_arrastre_mostrada * tamano_casilla_px,
                 ancho_ent * tamano_casilla_px,
                 alto_ent * tamano_casilla_px);
             if (es_puesto_comerciante) {
@@ -1257,8 +1310,8 @@ void LienzoDeEdicion::mousePressEvent(QMouseEvent* evento) {
     }
 
     if (evento->button() == Qt::LeftButton) {
-        mouse_presionado = true;
         if (modo_actual == ModoEditor::TERRENO) {
+            mouse_presionado = true;
             pintar_casilla_en_posicion(columna, fila);
         } else if (modo_actual == ModoEditor::ESTAMPAR) {
             DefinicionEstampa definicion_estampa =
@@ -1290,18 +1343,40 @@ void LienzoDeEdicion::mousePressEvent(QMouseEvent* evento) {
                 entidad_a_colocar,
                 ancho_defecto,
                 alto_defecto);
-            asegurar_espacio_en_caverna(columna, fila, ancho_defecto, alto_defecto);
-            if (mapa_actual->entidad_puede_ubicarse_en(
-                    entidad_a_colocar,
+            int columna_colocacion = columna;
+            int fila_colocacion = fila;
+            if (MapaEditable::es_transicion_de_borde(entidad_a_colocar)) {
+                mapa_actual->ajustar_posicion_transicion_borde(
                     columna,
                     fila,
+                    columna_colocacion,
+                    fila_colocacion,
+                    ancho_defecto,
+                    alto_defecto);
+            } else if (entidad_a_colocar == TipoEntidad::ENTRADA_CAVERNA) {
+                fila_colocacion = 0;
+                if (columna_colocacion < 1) {
+                    columna_colocacion = 1;
+                } else if (columna_colocacion + ancho_defecto > cantidad_columnas - 1) {
+                    columna_colocacion = cantidad_columnas - 1 - ancho_defecto;
+                }
+            }
+            asegurar_espacio_en_caverna(
+                columna_colocacion,
+                fila_colocacion,
+                ancho_defecto,
+                alto_defecto);
+            if (mapa_actual->entidad_puede_ubicarse_en(
+                    entidad_a_colocar,
+                    columna_colocacion,
+                    fila_colocacion,
                     ancho_defecto,
                     alto_defecto,
                     0)) {
                 uint32_t nuevo_id = mapa_actual->ubicar_entidad(
                     entidad_a_colocar,
-                    columna,
-                    fila,
+                    columna_colocacion,
+                    fila_colocacion,
                     ancho_defecto,
                     alto_defecto,
                     orientacion_entidad_a_colocar);
@@ -1359,6 +1434,10 @@ void LienzoDeEdicion::mouseMoveEvent(QMouseEvent* evento) {
 void LienzoDeEdicion::mouseReleaseEvent(QMouseEvent* evento) {
     if (evento->button() == Qt::LeftButton) {
         mouse_presionado = false;
+        if (trazo_terreno_activo) {
+            trazo_terreno_activo = false;
+            emit trazo_finalizado();
+        }
         if (arrastrando_entidad && identificador_entidad_seleccionada >= 0 &&
             mapa_actual != nullptr) {
             uint32_t id_seleccionada = static_cast<uint32_t>(identificador_entidad_seleccionada);

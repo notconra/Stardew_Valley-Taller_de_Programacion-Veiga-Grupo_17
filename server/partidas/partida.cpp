@@ -176,12 +176,14 @@ uint8_t Partida::cantidad_de_conectados() const {
 InfoPartida Partida::info(uint32_t id_cliente) const {
     std::string nombre_personaje;
     AparienciaPersonaje apariencia;
+    uint32_t monedas = 0;
     size_t indice = 0;
     bool encontrado = false;
     while (indice < jugadores.size() && !encontrado) {
         if (jugadores[indice].id_cliente == id_cliente) {
             nombre_personaje = jugadores[indice].nombre_jugador;
             apariencia = jugadores[indice].apariencia;
+            monedas = jugadores[indice].monedas;
             encontrado = true;
         }
         ++indice;
@@ -197,7 +199,19 @@ InfoPartida Partida::info(uint32_t id_cliente) const {
         cantidad_de_jugadores(),
         jugadores_maximos,
         dia,
-        segundos_jugados};
+        segundos_jugados,
+        monedas};
+}
+
+void Partida::actualizar_monedas_jugadores(
+    const std::vector<DatosJugadorGuardado>& datos_jugadores) {
+    for (const DatosJugadorGuardado& datos_jugador : datos_jugadores) {
+        for (Jugador& jugador : jugadores) {
+            if (jugador.id_jugador == datos_jugador.id_jugador) {
+                jugador.monedas = datos_jugador.monedas;
+            }
+        }
+    }
 }
 
 void Partida::hacer_multijugador(uint32_t id_cliente) {

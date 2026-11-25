@@ -4,8 +4,7 @@
 #include <QFontDatabase>
 #include <QHeaderView>
 #include <QIcon>
-#include <QInputDialog>
-#include <QMessageBox>
+#include <QListWidget>
 #include <QPainter>
 #include <QTableWidgetItem>
 #include <algorithm>
@@ -201,10 +200,8 @@ void PantallaPrincipal::confirmar_personaje() {
     QString granja = ui->input_nombre_granja->text().trimmed();
 
     if (nombre.isEmpty() || cosa_favorita.isEmpty() || (!es_modo_unirse && granja.isEmpty())) {
-        QMessageBox::warning(
-            this,
-            "Campos incompletos",
-            "Tenés que completar todos los campos obligatorios para continuar.");
+        mostrar_mensaje_stardew(
+            "Tenes que completar todos los campos obligatorios para continuar.");
         return;
     }
 
@@ -241,7 +238,7 @@ void PantallaPrincipal::confirmar_personaje() {
         }
     } catch (const std::exception& e) {
         std::cerr << "Error de conexión: " << e.what() << "\n";
-        QMessageBox::critical(this, "Error de conexión", QString::fromStdString(e.what()));
+        mostrar_mensaje_stardew(QString::fromStdString(e.what()));
         ui->btn_confirmar_personaje->setEnabled(true);
     }
 }
@@ -284,7 +281,7 @@ bool PantallaPrincipal::procesar_evento_ingreso(const EventoServidor& evento) {
     if (std::holds_alternative<ErrorServidor>(evento)) {
         const auto& error = std::get<ErrorServidor>(evento);
         std::cerr << "Error del servidor: " << error.detalle << "\n";
-        QMessageBox::warning(this, "Error", describir_error(error));
+        mostrar_mensaje_stardew(describir_error(error));
         ui->btn_confirmar_personaje->setEnabled(true);
         return true;
     }
@@ -310,43 +307,116 @@ void PantallaPrincipal::seleccionar_mundo() {
                 lista = std::get<ListaMundos>(evento);
                 lista_recibida = true;
             } else if (std::holds_alternative<ErrorServidor>(evento)) {
-                QMessageBox::warning(
-                    this,
-                    "Error",
-                    describir_error(std::get<ErrorServidor>(evento)));
+                mostrar_mensaje_stardew(describir_error(std::get<ErrorServidor>(evento)));
                 return;
             }
         }
     } catch (const std::exception& e) {
         std::cerr << "Error de conexión al listar mundos: " << e.what() << "\n";
-        QMessageBox::critical(this, "Error de conexión", "Se perdió la conexión con el servidor.");
+        mostrar_mensaje_stardew("Se perdio la conexion con el servidor.");
         return;
     }
 
     if (lista.mundos.empty()) {
-        QMessageBox::information(
-            this,
-            "Mundos",
-            "El servidor no tiene mundos del editor. Se juega con el Mundo Estándar.");
+        mostrar_mensaje_stardew(
+            "El servidor no tiene mundos del editor. Se juega con el Mundo Estandar.");
         return;
     }
-    QStringList opciones{"Mundo Estándar"};
-    for (const std::string& mundo : lista.mundos) {
-        opciones.append(QString::fromStdString(mundo));
+    QStringList opciones{"Mundo Estandar"};
+    for (const std::string& mundo_servidor : lista.mundos) {
+        opciones.append(QString::fromStdString(mundo_servidor));
     }
-    const int actual = std::max(0, static_cast<int>(opciones.indexOf(mundo_personalizado)));
-    bool elegido = false;
-    const QString mundo = QInputDialog::getItem(
-        this,
-        "Elegir mundo",
-        "Mundo de la partida:",
-        opciones,
-        actual,
-        false,
-        &elegido);
-    if (!elegido) {
+    int actual = std::max(0, static_cast<int>(opciones.indexOf(mundo_personalizado)));
+
+    QDialog dialogo(this);
+    dialogo.setObjectName("dialogo_modal_stardew");
+    dialogo.setWindowFlags(Qt::FramelessWindowHint | Qt::Dialog);
+    dialogo.setAttribute(Qt::WA_TranslucentBackground, true);
+    dialogo.setStyleSheet(styleSheet());
+
+    QVBoxLayout layout_dialogo(&dialogo);
+    layout_dialogo.setContentsMargins(0, 0, 0, 0);
+
+    QFrame marco(&dialogo);
+    marco.setObjectName("marco_dialogo_stardew");
+
+    QVBoxLayout layout_interior(&marco);
+    layout_interior.setContentsMargins(28, 28, 28, 24);
+    layout_interior.setSpacing(16);
+
+    QLabel label_titulo(&marco);
+    label_titulo.setObjectName("label_texto_dialogo");
+    label_titulo.setAlignment(Qt::AlignCenter);
+    label_titulo.setText("Elegir mundo de la partida:");
+    layout_interior.addWidget(&label_titulo);
+
+    QListWidget lista_mundos(&marco);
+    lista_mundos.setMinimumWidth(280);
+    lista_mundos.setMaximumHeight(200);
+    lista_mundos.setStyleSheet(
+        "QListWidget { background-color: #f7cf8e; border: 2px solid #8e4c19; "
+        "border-radius: 4px; color: #3d1d08; font-family: \"Stardew Valley\", \"Ubuntu\", "
+        "sans-serif; font-size: 18px; padding: 4px; }"
+        "QListWidget::item { padding: 6px 10px; }"
+        "QListWidget::item:selected { background-color: #c87b33; color: #fff8eb; }"
+        "QScrollBar:vertical { border: 2px solid #8e4c19; background-color: #e6b375; "
+        "width: 22px; margin: 26px 0px 26px 0px; border-radius: 4px; }"
+        "QScrollBar::handle:vertical { background-color: #ba6328; border: 2px solid #5c2900; "
+        "border-radius: 4px; min-height: 28px; }"
+        "QScrollBar::handle:vertical:hover { background-color: #d87e38; }"
+        "QScrollBar::sub-line:vertical { border: none; background: transparent; height: 24px; "
+        "subcontrol-position: top; subcontrol-origin: margin; }"
+        "QScrollBar::add-line:vertical { border: none; background: transparent; height: 24px; "
+        "subcontrol-position: bottom; subcontrol-origin: margin; }"
+        "QScrollBar::up-arrow:vertical { "
+        "image: url(\"Assets/LooseSprites/scrollbar_flecha_arriba.png\"); "
+        "width: 18px; height: 20px; }"
+        "QScrollBar::down-arrow:vertical { "
+        "image: url(\"Assets/LooseSprites/scrollbar_flecha_abajo.png\"); "
+        "width: 18px; height: 20px; }"
+        "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: none; }");
+    for (const QString& opcion : opciones) {
+        lista_mundos.addItem(normalizar_texto_stardew(opcion));
+    }
+    lista_mundos.setCurrentRow(actual);
+    connect(&lista_mundos, &QListWidget::itemDoubleClicked, &dialogo, &QDialog::accept);
+    layout_interior.addWidget(&lista_mundos);
+
+    QHBoxLayout layout_botones;
+    layout_botones.setSpacing(32);
+    layout_botones.setAlignment(Qt::AlignCenter);
+
+    QPushButton btn_cancelar(&marco);
+    btn_cancelar.setObjectName("btn_dialogo_cancelar");
+    btn_cancelar.setProperty("class", "btn_dialogo_accion");
+    RecursosUI::instancia().configurar_boton_cancelar(&btn_cancelar);
+    btn_cancelar.setFixedSize(64, 64);
+    btn_cancelar.setToolTip("Cancelar");
+    connect(&btn_cancelar, &QPushButton::clicked, &dialogo, &QDialog::reject);
+    layout_botones.addWidget(&btn_cancelar);
+
+    QPushButton btn_ok(&marco);
+    btn_ok.setObjectName("btn_dialogo_ok");
+    btn_ok.setProperty("class", "btn_dialogo_accion");
+    RecursosUI::instancia().configurar_boton_ok(&btn_ok);
+    btn_ok.setFixedSize(64, 64);
+    btn_ok.setToolTip("Aceptar");
+    connect(&btn_ok, &QPushButton::clicked, &dialogo, &QDialog::accept);
+    layout_botones.addWidget(&btn_ok);
+
+    layout_interior.addLayout(&layout_botones);
+    layout_dialogo.addWidget(&marco);
+
+    dialogo.adjustSize();
+    if (dialogo.exec() != QDialog::Accepted) {
         return;
     }
+
+    int indice_elegido = lista_mundos.currentRow();
+    if (indice_elegido < 0 || indice_elegido >= opciones.size()) {
+        return;
+    }
+    QString mundo = opciones.at(indice_elegido);
     if (mundo == opciones.front()) {
         restablecer_mundo();
         return;
@@ -354,21 +424,19 @@ void PantallaPrincipal::seleccionar_mundo() {
 
     // El cliente dibuja el mundo con sus propios archivos, como con Assets.
     if (!std::filesystem::is_directory("mundos/" + mundo.toStdString())) {
-        QMessageBox::warning(
-            this,
-            "Mundos",
-            "No tenés la carpeta mundos/" + mundo +
-                ": la partida se va a jugar con ese mundo pero vas a ver el estándar.");
+        mostrar_mensaje_stardew(
+            "No tenes la carpeta mundos/" + mundo +
+            ": la partida se va a jugar con ese mundo pero vas a ver el estandar.");
     }
     mundo_personalizado = mundo;
-    ui->label_nombre_mundo_seleccionado->setText(mundo);
+    ui->label_nombre_mundo_seleccionado->setText(normalizar_texto_stardew(mundo));
     ui->label_nombre_mundo_seleccionado->setToolTip(mundo);
     ui->btn_restablecer_mundo->setVisible(true);
 }
 
 void PantallaPrincipal::restablecer_mundo() {
     mundo_personalizado.clear();
-    ui->label_nombre_mundo_seleccionado->setText("Mundo Estándar");
+    ui->label_nombre_mundo_seleccionado->setText("Mundo Estandar");
     ui->label_nombre_mundo_seleccionado->setToolTip("");
     ui->btn_restablecer_mundo->setVisible(false);
 }
@@ -759,13 +827,13 @@ void PantallaPrincipal::preparar_retomar_partida() {
             } else if (std::holds_alternative<ErrorServidor>(evento)) {
                 const auto& error = std::get<ErrorServidor>(evento);
                 std::cerr << "Error del servidor al listar partidas: " << error.detalle << "\n";
-                QMessageBox::warning(this, "Error", describir_error(error));
+                mostrar_mensaje_stardew(describir_error(error));
                 return;
             }
         }
     } catch (const std::exception& e) {
         std::cerr << "Error de conexión al listar partidas: " << e.what() << "\n";
-        QMessageBox::critical(this, "Error de conexión", "Se perdió la conexión con el servidor.");
+        mostrar_mensaje_stardew("Se perdio la conexion con el servidor.");
         return;
     }
 
@@ -854,7 +922,7 @@ void PantallaPrincipal::ejecutar_partida(const QString& codigo_partida) {
         }
     } catch (const std::exception& e) {
         std::cerr << "Error al retomar la partida: " << e.what() << "\n";
-        QMessageBox::critical(this, "Error de conexión", "Se perdió la conexión con el servidor.");
+        mostrar_mensaje_stardew("Se perdio la conexion con el servidor.");
     }
 }
 
@@ -876,14 +944,73 @@ void PantallaPrincipal::eliminar_partida(const QString& codigo_partida) {
             } else if (std::holds_alternative<ErrorServidor>(evento)) {
                 const auto& error = std::get<ErrorServidor>(evento);
                 std::cerr << "Error del servidor al eliminar partida: " << error.detalle << "\n";
-                QMessageBox::warning(this, "Error", describir_error(error));
+                mostrar_mensaje_stardew(describir_error(error));
                 procesado = true;
             }
         }
     } catch (const std::exception& e) {
         std::cerr << "Error de conexión al eliminar la partida: " << e.what() << "\n";
-        QMessageBox::critical(this, "Error de conexión", "Se perdió la conexión con el servidor.");
+        mostrar_mensaje_stardew("Se perdio la conexion con el servidor.");
     }
+}
+
+QString PantallaPrincipal::normalizar_texto_stardew(const QString& texto) {
+    QString resultado = texto;
+    resultado.replace(QStringLiteral("á"), QStringLiteral("a"));
+    resultado.replace(QStringLiteral("é"), QStringLiteral("e"));
+    resultado.replace(QStringLiteral("í"), QStringLiteral("i"));
+    resultado.replace(QStringLiteral("ó"), QStringLiteral("o"));
+    resultado.replace(QStringLiteral("ú"), QStringLiteral("u"));
+    resultado.replace(QStringLiteral("ü"), QStringLiteral("u"));
+    resultado.replace(QStringLiteral("ñ"), QStringLiteral("n"));
+    resultado.replace(QStringLiteral("Á"), QStringLiteral("A"));
+    resultado.replace(QStringLiteral("É"), QStringLiteral("E"));
+    resultado.replace(QStringLiteral("Í"), QStringLiteral("I"));
+    resultado.replace(QStringLiteral("Ó"), QStringLiteral("O"));
+    resultado.replace(QStringLiteral("Ú"), QStringLiteral("U"));
+    resultado.replace(QStringLiteral("Ü"), QStringLiteral("U"));
+    resultado.replace(QStringLiteral("Ñ"), QStringLiteral("N"));
+    return resultado;
+}
+
+void PantallaPrincipal::mostrar_mensaje_stardew(const QString& mensaje) {
+    QDialog dialogo(this);
+    dialogo.setObjectName("dialogo_modal_stardew");
+    dialogo.setWindowFlags(Qt::FramelessWindowHint | Qt::Dialog);
+    dialogo.setAttribute(Qt::WA_TranslucentBackground, true);
+    dialogo.setStyleSheet(styleSheet());
+
+    QVBoxLayout layout_dialogo(&dialogo);
+    layout_dialogo.setContentsMargins(0, 0, 0, 0);
+
+    QFrame marco(&dialogo);
+    marco.setObjectName("marco_dialogo_stardew");
+
+    QVBoxLayout layout_interior(&marco);
+    layout_interior.setContentsMargins(28, 28, 28, 24);
+    layout_interior.setSpacing(18);
+
+    QLabel label_mensaje(&marco);
+    label_mensaje.setObjectName("label_texto_dialogo");
+    label_mensaje.setAlignment(Qt::AlignCenter);
+    label_mensaje.setWordWrap(true);
+    label_mensaje.setMinimumWidth(340);
+    label_mensaje.setMaximumWidth(460);
+    label_mensaje.setText(normalizar_texto_stardew(mensaje));
+    layout_interior.addWidget(&label_mensaje);
+
+    QPushButton btn_ok(&marco);
+    btn_ok.setObjectName("btn_dialogo_ok");
+    btn_ok.setProperty("class", "btn_dialogo_accion");
+    RecursosUI::instancia().configurar_boton_ok(&btn_ok);
+    btn_ok.setFixedSize(64, 64);
+    btn_ok.setToolTip("OK");
+    connect(&btn_ok, &QPushButton::clicked, &dialogo, &QDialog::accept);
+    layout_interior.addWidget(&btn_ok, 0, Qt::AlignCenter);
+
+    layout_dialogo.addWidget(&marco);
+    dialogo.adjustSize();
+    dialogo.exec();
 }
 
 void PantallaPrincipal::preparar_unirse_partida() {
@@ -925,7 +1052,7 @@ void PantallaPrincipal::preparar_unirse_partida() {
     btn_cancelar.setObjectName("btn_dialogo_cancelar");
     btn_cancelar.setProperty("class", "btn_dialogo_accion");
     RecursosUI::instancia().configurar_boton_cancelar(&btn_cancelar);
-    btn_cancelar.setFixedSize(52, 52);
+    btn_cancelar.setFixedSize(64, 64);
     btn_cancelar.setToolTip("Cancelar");
     connect(&btn_cancelar, &QPushButton::clicked, &dialogo, &QDialog::reject);
     layout_botones.addWidget(&btn_cancelar);
@@ -934,7 +1061,7 @@ void PantallaPrincipal::preparar_unirse_partida() {
     btn_ok.setObjectName("btn_dialogo_ok");
     btn_ok.setProperty("class", "btn_dialogo_accion");
     RecursosUI::instancia().configurar_boton_ok(&btn_ok);
-    btn_ok.setFixedSize(52, 52);
+    btn_ok.setFixedSize(64, 64);
     btn_ok.setToolTip("Unirse");
     connect(&btn_ok, &QPushButton::clicked, &dialogo, &QDialog::accept);
     layout_botones.addWidget(&btn_ok);
@@ -949,6 +1076,24 @@ void PantallaPrincipal::preparar_unirse_partida() {
 
     QString codigo = input_codigo.text().trimmed();
     if (codigo.isEmpty()) {
+        return;
+    }
+
+    try {
+        conexion.enviar_comando(VerificarCodigoPartida{codigo.toStdString()});
+        bool verificado = false;
+        while (!verificado) {
+            EventoServidor evento = conexion.esperar_evento();
+            if (std::holds_alternative<CodigoPartidaDisponible>(evento)) {
+                verificado = true;
+            } else if (std::holds_alternative<ErrorServidor>(evento)) {
+                mostrar_mensaje_stardew(describir_error(std::get<ErrorServidor>(evento)));
+                return;
+            }
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error de conexion al verificar codigo: " << e.what() << "\n";
+        mostrar_mensaje_stardew("Se perdio la conexion con el servidor.");
         return;
     }
 

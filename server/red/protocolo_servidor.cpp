@@ -16,6 +16,8 @@ ProtocoloServidor::ProtocoloServidor(ISocket& socket)
           {TipoMensaje::RETOMAR_PARTIDA, [this] { return recibir_comando_retomar_partida(); }},
           {TipoMensaje::ELIMINAR_PARTIDA, [this] { return recibir_comando_eliminar_partida(); }},
           {TipoMensaje::LISTAR_MUNDOS, [this] { return recibir_comando_listar_mundos(); }},
+          {TipoMensaje::VERIFICAR_CODIGO_PARTIDA,
+           [this] { return recibir_comando_verificar_codigo_partida(); }},
           {TipoMensaje::ACTIVAR_MULTIJUGADOR,
            [this] { return recibir_comando_activar_multijugador(); }},
           {TipoMensaje::SALIR_DE_PARTIDA, [this] { return recibir_comando_salir_de_partida(); }},
@@ -115,6 +117,11 @@ EliminarPartida ProtocoloServidor::recibir_comando_eliminar_partida() {
 
 ListarMundos ProtocoloServidor::recibir_comando_listar_mundos() {
     return ListarMundos{};
+}
+
+VerificarCodigoPartida ProtocoloServidor::recibir_comando_verificar_codigo_partida() {
+    std::string codigo_partida = recibir_texto();
+    return VerificarCodigoPartida{codigo_partida};
 }
 
 ActivarMultijugador ProtocoloServidor::recibir_comando_activar_multijugador() {
@@ -273,6 +280,9 @@ void ProtocoloServidor::enviar_evento(const EventoServidor& evento) {
             [this](const ErrorServidor& e) { enviar_evento_error_servidor(e); },
             [this](const ListaPartidas& e) { enviar_evento_lista_partidas(e); },
             [this](const ListaMundos& e) { enviar_evento_lista_mundos(e); },
+            [this](const CodigoPartidaDisponible& e) {
+                enviar_evento_codigo_partida_disponible(e);
+            },
             [this](const EntradaExitosaAPartida& e) { enviar_evento_entrada_exitosa_a_partida(e); },
             [this](const MultijugadorActivado& e) { enviar_evento_multijugador_activado(e); },
             [this](const PartidaAbandonada& e) { enviar_evento_partida_abandonada(e); },
@@ -330,6 +340,7 @@ void ProtocoloServidor::enviar_info_partida(const InfoPartida& info_partida) {
     enviar_u8(info_partida.jugadores_maximos);
     enviar_u32(info_partida.dia);
     enviar_u32(info_partida.segundos_jugados);
+    enviar_u32(info_partida.monedas);
 }
 
 void ProtocoloServidor::enviar_evento_lista_partidas(const ListaPartidas& lista_partidas) {
@@ -346,6 +357,10 @@ void ProtocoloServidor::enviar_evento_lista_mundos(const ListaMundos& lista_mund
     for (const std::string& mundo : lista_mundos.mundos) {
         enviar_texto(mundo);
     }
+}
+
+void ProtocoloServidor::enviar_evento_codigo_partida_disponible(const CodigoPartidaDisponible&) {
+    enviar_tipo(TipoMensaje::CODIGO_PARTIDA_DISPONIBLE);
 }
 
 void ProtocoloServidor::enviar_evento_entrada_exitosa_a_partida(

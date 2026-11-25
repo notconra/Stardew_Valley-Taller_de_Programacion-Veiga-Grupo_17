@@ -10,8 +10,7 @@
 // Exteriores - Granja (spring_outdoorsTileSheet.png, 25 columnas)
 static constexpr uint32_t TILE_TIERRA_BASE = 716;
 static constexpr uint32_t TILE_PASTO = 304;
-static constexpr uint32_t TILE_CAMINO_MADERA = 1260;
-static constexpr uint32_t TILE_CAMINO_PIEDRA = 1587;
+static constexpr uint32_t TILE_PASTO_CON_FLORES = 280;
 
 // Pueblo (spring_town.png, 32 columnas)
 static constexpr uint32_t TILE_PASTO_URBANO = 709;
@@ -70,17 +69,15 @@ static constexpr int ANCHO_IMAGEN_MERCADO = 512;
 static constexpr int ALTO_IMAGEN_MERCADO = 1088;
 static constexpr uint32_t TILE_ALFOMBRA_MERCADO = 263;
 static constexpr uint32_t TILE_PISO_MERCADO = 4705;
-static constexpr uint32_t TILE_PARED_MERCADO = 22;
 
 // Nombres temáticos de terrenos - Granja
 static constexpr const char* NOMBRE_TIERRA_BASE = "Tierra de Granja";
 static constexpr const char* NOMBRE_PASTO = "Pasto Natural";
-static constexpr const char* NOMBRE_CAMINO_MADERA = "Sendero de Madera";
-static constexpr const char* NOMBRE_CAMINO_PIEDRA = "Sendero de Piedra";
+static constexpr const char* NOMBRE_PASTO_CON_FLORES = "Pasto con Flores";
 
 // Nombres temáticos de terrenos - Pueblo
 static constexpr const char* NOMBRE_PASTO_URBANO = "Pasto Urbano";
-static constexpr const char* NOMBRE_ADOQUIN_CALLE_1 = "Adoquin de Pueblo (Baldosa)";
+static constexpr const char* NOMBRE_ADOQUIN_CALLE_1 = "Adoquín de Pueblo (Baldosa)";
 static constexpr const char* NOMBRE_BORDE_CAMINO = "Borde de Camino (Rotable [R])";
 static constexpr const char* NOMBRE_ESQUINA_EXTERIOR = "Esquina Exterior (Rotable [R])";
 static constexpr const char* NOMBRE_ESQUINA_INTERIOR = "Esquina Interior (Rotable [R])";
@@ -91,7 +88,7 @@ static constexpr const char* NOMBRE_PISO_PIEDRA_OSCURA = "Piso de Piedra Oscura"
 static constexpr const char* NOMBRE_SENDERO_MINERO = "Piso Rocoso";
 static constexpr const char* NOMBRE_SENDERO_SECUNDARIO = "Piso Texturizado";
 static constexpr const char* NOMBRE_PISO_GUIJARROS = "Piso con Guijarros";
-static constexpr const char* NOMBRE_BARRO_SUBTERRANEO = "Tierra Subterranea";
+static constexpr const char* NOMBRE_BARRO_SUBTERRANEO = "Tierra Subterránea";
 
 static const std::map<SectorActual, std::vector<DefinicionTile>> CATALOGO_POR_SECTOR = {
     {SectorActual::GRANJA,
@@ -104,8 +101,8 @@ static const std::map<SectorActual, std::vector<DefinicionTile>> CATALOGO_POR_SE
           NOMBRE_PASTO,
           TILE_PASTO,
           PropiedadDeCasilla::DECORABLE | PropiedadDeCasilla::ADMITE_HIERBA},
-      DefinicionTile{NOMBRE_CAMINO_MADERA, TILE_CAMINO_MADERA, PropiedadDeCasilla::DECORABLE},
-      DefinicionTile{NOMBRE_CAMINO_PIEDRA, TILE_CAMINO_PIEDRA, PropiedadDeCasilla::DECORABLE}}},
+      DefinicionTile{
+          NOMBRE_PASTO_CON_FLORES, TILE_PASTO_CON_FLORES, PropiedadDeCasilla::DECORABLE}}},
     {SectorActual::PUEBLO,
      {DefinicionTile{NOMBRE_PASTO_URBANO, TILE_PASTO_URBANO, PropiedadDeCasilla::DECORABLE},
       DefinicionTile{NOMBRE_ADOQUIN_CALLE_1, TILE_ADOQUIN_CALLE_1, PropiedadDeCasilla::DECORABLE},
@@ -141,9 +138,7 @@ static const std::map<SectorActual, std::vector<DefinicionTile>> CATALOGO_POR_SE
           PropiedadDeCasilla::DECORABLE | PropiedadDeCasilla::ADMITE_MINERAL}}},
     {SectorActual::MERCADO,
      {DefinicionTile{"Alfombra de Tienda", TILE_ALFOMBRA_MERCADO, PropiedadDeCasilla::DECORABLE},
-      DefinicionTile{"Piso de Madera", TILE_PISO_MERCADO, PropiedadDeCasilla::DECORABLE},
-      DefinicionTile{"Pared de Mercado", TILE_PARED_MERCADO, PropiedadDeCasilla::BLOQUEA},
-      DefinicionTile{"Pared de Madera", 113, PropiedadDeCasilla::BLOQUEA}}}};
+      DefinicionTile{"Piso de Madera", TILE_PISO_MERCADO, PropiedadDeCasilla::DECORABLE}}}};
 
 static const std::map<SectorActual, DefinicionTilesetTMX> TILESETS_POR_SECTOR = {
     {SectorActual::GRANJA,

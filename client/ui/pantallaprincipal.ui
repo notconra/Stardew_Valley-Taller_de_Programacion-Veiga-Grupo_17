@@ -269,9 +269,8 @@ QLabel[class="label_nombre_mundo"] {
     font-size: 18px;
     font-weight: normal;
     color: #4c2207;
-    background-color: rgba(255, 248, 235, 190);
-    border: 2px solid #8e4c19;
-    border-radius: 4px;
+    background-color: transparent;
+    border: none;
     padding: 4px 10px;
     min-width: 155px;
 }
@@ -609,9 +608,9 @@ QDialog#dialogo_modal_stardew {
 }
 
 QFrame#marco_dialogo_stardew {
-    border-image: url("Assets/LooseSprites/menu_box_retomar.png") 12 12 12 12 repeat;
-    border-width: 16px;
-    background-color: #ffd284;
+    border-image: url("Assets/LooseSprites/menu_box.png") 12 12 12 12 repeat;
+    border-width: 12px;
+    background-color: transparent;
 }
 
 QLabel#label_texto_dialogo {
@@ -1803,7 +1802,7 @@ QPushButton.btn_dialogo_accion:pressed {
                 </sizepolicy>
                </property>
                <property name="text">
-                <string>Mundo Estándar</string>
+                <string>Mundo Estandar</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -1822,7 +1821,7 @@ QPushButton.btn_dialogo_accion:pressed {
                 <cursorShape>PointingHandCursor</cursorShape>
                </property>
                <property name="text">
-                <string>Usar Estándar</string>
+                <string>Usar Estandar</string>
                </property>
                <property name="class" stdset="0">
                 <string>btn_restablecer_mundo</string>

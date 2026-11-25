@@ -28,6 +28,18 @@ static const std::map<TipoEntidad, const char*> PUESTOS_POR_TIPO = {
     {TipoEntidad::PUESTO_PIERRE, "pierre"},
     {TipoEntidad::PUESTO_ROBIN, "robin"}};
 
+uint32_t ExportadorDeSectorTMX::traducir_tile_pueblo_para_exportar(uint32_t valor_crudo) {
+    if (valor_crudo == 0) {
+        return 0;
+    }
+    uint32_t banderas = valor_crudo & 0xE0000000;
+    uint32_t identificador_puro = valor_crudo & 0x1FFFFFFF;
+    if (identificador_puro == CatalogoDeTerrenos::obtener_tile_base(SectorActual::PUEBLO)) {
+        return banderas | GID_PASTO_LANDSCAPE_PUEBLO;
+    }
+    return banderas | (identificador_puro + FIRST_GID_PUEBLO - 1);
+}
+
 ExportadorDeSectorTMX::ExportadorDeSectorTMX(
     SectorActual sector_actual, const MapaEditable& mapa_sector,
     const DestinosDeTransicion& destinos_transicion)
@@ -156,21 +168,12 @@ void ExportadorDeSectorTMX::exportar_capas_de_tiles() {
     if (sector == SectorActual::PUEBLO) {
         size_t indice_pueblo = 0;
         while (indice_pueblo < total_casillas) {
-            if (tiles_suelo[indice_pueblo] != 0) {
-                uint32_t flags = tiles_suelo[indice_pueblo] & 0xE0000000;
-                uint32_t id_puro = tiles_suelo[indice_pueblo] & 0x1FFFFFFF;
-                tiles_suelo[indice_pueblo] = flags | (id_puro + FIRST_GID_PUEBLO - 1);
-            }
-            if (tiles_estructuras[indice_pueblo] != 0) {
-                uint32_t flags = tiles_estructuras[indice_pueblo] & 0xE0000000;
-                uint32_t id_puro = tiles_estructuras[indice_pueblo] & 0x1FFFFFFF;
-                tiles_estructuras[indice_pueblo] = flags | (id_puro + FIRST_GID_PUEBLO - 1);
-            }
-            if (tiles_frente[indice_pueblo] != 0) {
-                uint32_t flags = tiles_frente[indice_pueblo] & 0xE0000000;
-                uint32_t id_puro = tiles_frente[indice_pueblo] & 0x1FFFFFFF;
-                tiles_frente[indice_pueblo] = flags | (id_puro + FIRST_GID_PUEBLO - 1);
-            }
+            tiles_suelo[indice_pueblo] =
+                traducir_tile_pueblo_para_exportar(tiles_suelo[indice_pueblo]);
+            tiles_estructuras[indice_pueblo] =
+                traducir_tile_pueblo_para_exportar(tiles_estructuras[indice_pueblo]);
+            tiles_frente[indice_pueblo] =
+                traducir_tile_pueblo_para_exportar(tiles_frente[indice_pueblo]);
             indice_pueblo++;
         }
     }
@@ -502,11 +505,7 @@ void ExportadorDeSectorTMX::inyectar_tiles_de_cabania(
 
                 if (fila_local < FILA_LIMITE_TECHO_CABANIA) {
                     tiles_frente[indice_mapa] = gid_global;
-                    if (columna_local <= 3 && fila_local < 3) {
-                        tiles_colisiones[indice_mapa] = 1;
-                    } else {
-                        tiles_colisiones[indice_mapa] = 0;
-                    }
+                    tiles_colisiones[indice_mapa] = 0;
                 } else if (fila_local == FILA_LIMITE_TECHO_CABANIA) {
                     tiles_frente[indice_mapa] = gid_global;
                     tiles_colisiones[indice_mapa] = 1;
@@ -547,7 +546,10 @@ void ExportadorDeSectorTMX::inyectar_tiles_de_centro_comunitario(
                      columna_local >= COLUMNA_INICIO_ACCESO_CENTRO_COMUNITARIO &&
                      columna_local <= COLUMNA_FIN_ACCESO_CENTRO_COMUNITARIO);
 
-                if (fila_local <= FILA_LIMITE_TECHO_CENTRO_COMUNITARIO) {
+                if (fila_local < FILA_LIMITE_TECHO_CENTRO_COMUNITARIO) {
+                    tiles_frente[indice_mapa] = gid_global;
+                    tiles_colisiones[indice_mapa] = 0;
+                } else if (fila_local == FILA_LIMITE_TECHO_CENTRO_COMUNITARIO) {
                     tiles_frente[indice_mapa] = gid_global;
                     tiles_colisiones[indice_mapa] = 1;
                 } else if (es_acceso) {
@@ -595,7 +597,10 @@ void ExportadorDeSectorTMX::inyectar_tiles_de_mercado(
                          columna_local >= COLUMNA_INICIO_ACCESO_MERCADO &&
                          columna_local <= COLUMNA_FIN_ACCESO_MERCADO);
 
-                    if (fila_local <= FILA_LIMITE_TECHO_MERCADO) {
+                    if (fila_local < FILA_LIMITE_TECHO_MERCADO) {
+                        tiles_frente[indice_mapa] = gid_global;
+                        tiles_colisiones[indice_mapa] = 0;
+                    } else if (fila_local == FILA_LIMITE_TECHO_MERCADO) {
                         tiles_frente[indice_mapa] = gid_global;
                         tiles_colisiones[indice_mapa] = 1;
                     } else if (es_acceso) {
@@ -617,37 +622,25 @@ void ExportadorDeSectorTMX::inyectar_tiles_de_entrada_caverna(
     int origen_columna, int origen_fila, int total_columnas, int total_filas,
     std::vector<uint32_t>& tiles_suelo, std::vector<uint32_t>& tiles_estructuras,
     std::vector<uint32_t>& tiles_frente, std::vector<uint32_t>& tiles_colisiones) {
+    (void)tiles_frente;
+    static constexpr int ANCHO_CUEVA = 3;
+    static constexpr int ALTO_CUEVA = 4;
+
     int fila_local = 0;
-    while (fila_local < ALTO_CASETA_MINA_CASILLAS) {
+    while (fila_local < ALTO_CUEVA) {
         int columna_local = 0;
-        while (columna_local < ANCHO_CASETA_MINA_CASILLAS) {
+        while (columna_local < ANCHO_CUEVA) {
             int columna_mapa = origen_columna + columna_local;
             int fila_mapa = origen_fila + fila_local;
             if (columna_mapa >= 0 && columna_mapa < total_columnas && fila_mapa >= 0 &&
                 fila_mapa < total_filas) {
                 size_t indice_mapa = static_cast<size_t>(fila_mapa * total_columnas + columna_mapa);
-                uint32_t id_tile_local = static_cast<uint32_t>(
-                    fila_local * COLUMNAS_TILESET_CASETA_MINA +
-                    (columna_local + COLUMNA_DESPLAZAMIENTO_SPRITE_CASETA_MINA));
-                uint32_t gid_global = FIRST_GID_CASETA_MINA + id_tile_local;
-
-                bool es_porche =
-                    (fila_local == FILA_PORCHE_CASETA_MINA &&
-                     columna_local != COLUMNA_BUZON_CASETA_MINA);
-
-                if (fila_local < FILA_LIMITE_TECHO_CASETA_MINA) {
-                    tiles_frente[indice_mapa] = gid_global;
-                    tiles_colisiones[indice_mapa] = 0;
-                } else if (fila_local == FILA_LIMITE_TECHO_CASETA_MINA) {
-                    tiles_frente[indice_mapa] = gid_global;
-                    tiles_colisiones[indice_mapa] = 1;
-                } else if (es_porche) {
-                    tiles_suelo[indice_mapa] = gid_global;
-                    tiles_colisiones[indice_mapa] = 0;
-                } else {
-                    tiles_estructuras[indice_mapa] = gid_global;
-                    tiles_colisiones[indice_mapa] = 1;
-                }
+                tiles_suelo[indice_mapa] =
+                    CatalogoDeEstampas::obtener_tile_suelo_cueva(fila_local, columna_local);
+                tiles_estructuras[indice_mapa] =
+                    CatalogoDeEstampas::obtener_tile_estructuras_cueva(fila_local, columna_local);
+                bool es_boca_transitable = (columna_local == 1 && fila_local >= 2);
+                tiles_colisiones[indice_mapa] = es_boca_transitable ? 0 : 1;
             }
             columna_local++;
         }
@@ -829,15 +822,15 @@ void ExportadorDeSectorTMX::exportar_entidades() {
         }
 
         if (tipo == TipoEntidad::CABANIA) {
-            // La puerta de la cabaña está en la alfombra de bienvenida (fila 7)
+            // La puerta y el felpudo de la cabaña están en filas 6 y 7
             posicion_x_pixeles = (columna + 5) * ANCHO_TILE_PIXELES;
-            posicion_y_pixeles = (fila + 7) * ALTO_TILE_PIXELES;
+            posicion_y_pixeles = (fila + 6) * ALTO_TILE_PIXELES;
             ancho_pixeles = ANCHO_TILE_PIXELES;
-            alto_pixeles = ALTO_TILE_PIXELES;
+            alto_pixeles = ALTO_TILE_PIXELES * 2;
         } else if (tipo == TipoEntidad::ENTRADA_CAVERNA) {
-            // La puerta/alfombra de la caseta de la mina está en columna 2, fila 6
-            posicion_x_pixeles = (columna + COLUMNA_PUERTA_CASETA_MINA) * ANCHO_TILE_PIXELES;
-            posicion_y_pixeles = (fila + FILA_PUERTA_CASETA_MINA - 1) * ALTO_TILE_PIXELES;
+            // La boca de la cueva (3x4 en acantilado norte) está en columna + 1, filas 2 y 3
+            posicion_x_pixeles = (columna + 1) * ANCHO_TILE_PIXELES;
+            posicion_y_pixeles = (fila + 2) * ALTO_TILE_PIXELES;
             ancho_pixeles = ANCHO_TILE_PIXELES;
             alto_pixeles = ALTO_TILE_PIXELES * 2;
         } else if (tipo == TipoEntidad::CENTRO_COMUNITARIO) {
@@ -922,7 +915,7 @@ void ExportadorDeSectorTMX::exportar_entidades() {
             CAPA_TRANSICIONES_TMX,
             LLEGADA_ENTRADA,
             columna_puerta,
-            fila_puerta - 1);
+            fila_puerta - 2);
     }
 }
 

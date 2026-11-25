@@ -9,13 +9,9 @@
 ResultadoValidacion::ResultadoValidacion() : es_valido(true) {
 }
 
-void ResultadoValidacion::agregar_error(const std::string& error) {
+void ResultadoValidacion::agregar_error(const std::string& error, int indice_sector) {
     es_valido = false;
-    errores.push_back(error);
-}
-
-void ResultadoValidacion::agregar_advertencia(const std::string& advertencia) {
-    advertencias.push_back(advertencia);
+    errores.push_back(ErrorValidacion{error, indice_sector});
 }
 
 bool ValidadorDeMundo::tiene_acceso_perimetral_transitable(
@@ -170,6 +166,50 @@ bool ValidadorDeMundo::casilla_puerta_mercado_transitable(
     return transitable_izquierda || transitable_derecha;
 }
 
+bool ValidadorDeMundo::calcular_casilla_llegada_borde(
+    const MapaEditable& mapa, const EntidadDelMapa& transicion, int& columna_llegada,
+    int& fila_llegada) {
+    int columna = 0;
+    int fila = 0;
+    int ancho = 0;
+    int alto = 0;
+    transicion.consultar_origen(columna, fila);
+    transicion.consultar_dimensiones(ancho, alto);
+
+    int total_columnas = mapa.obtener_cantidad_de_columnas();
+    int total_filas = mapa.obtener_cantidad_de_filas();
+
+    bool es_borde_oeste =
+        (columna == 0 && ancho == 1 && alto == 2 && fila >= 2 && fila <= total_filas - 4);
+    bool es_borde_este =
+        (columna == total_columnas - 1 && ancho == 1 && alto == 2 && fila >= 2 &&
+         fila <= total_filas - 4);
+    bool es_borde_norte =
+        (fila == 0 && ancho == 2 && alto == 1 && columna >= 1 && columna <= total_columnas - 3);
+    bool es_borde_sur =
+        (fila == total_filas - 1 && ancho == 2 && alto == 1 && columna >= 1 &&
+         columna <= total_columnas - 3);
+
+    if (es_borde_oeste) {
+        columna_llegada = 1;
+        fila_llegada = fila + 1;
+    } else if (es_borde_este) {
+        columna_llegada = total_columnas - 2;
+        fila_llegada = fila + 1;
+    } else if (es_borde_norte) {
+        columna_llegada = columna;
+        fila_llegada = 2;
+    } else if (es_borde_sur) {
+        columna_llegada = columna;
+        fila_llegada = total_filas - 2;
+    } else {
+        return false;
+    }
+
+    return mapa.esta_dentro(columna_llegada, fila_llegada) &&
+           mapa.casilla_es_transitable(columna_llegada, fila_llegada);
+}
+
 bool ValidadorDeMundo::existe_camino_transitable(
     const MapaEditable& mapa, const EntidadDelMapa& entidad_a, const EntidadDelMapa& entidad_b) {
     if (!tiene_acceso_perimetral_transitable(mapa, entidad_a) ||
@@ -306,7 +346,7 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
     ResultadoValidacion resultado;
 
     if (mundo.obtener_nombre().empty()) {
-        resultado.agregar_error("El nombre del mundo no puede estar vacio.");
+        resultado.agregar_error("El nombre del mundo no puede estar vacío.");
     }
 
     // 1. Validar Sector Granja
@@ -314,60 +354,78 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
     if (granja.obtener_cantidad_de_columnas() < MapaEditable::MINIMO_COLUMNAS_TOTALES_GRANJA ||
         granja.obtener_cantidad_de_filas() < MapaEditable::MINIMO_FILAS_TOTALES_GRANJA) {
         resultado.agregar_error(
-            "La granja es demasiado chica. Las dimensiones minimas con perimetro son 16x13 "
+            "La granja es demasiado chica. Las dimensiones mínimas con perímetro son 16x13 "
             "casillas "
-            "para poder albergar la cabania y la caseta de la mina sin solapamientos.");
+            "para poder albergar la cabaña y la caseta de la mina sin solapamientos.",
+            0);
     }
 
     std::vector<EntidadDelMapa> cabanias = granja.listar_entidades_por_tipo(TipoEntidad::CABANIA);
     if (cabanias.empty()) {
-        resultado.agregar_error("Falta la cabania del jugador en la granja.");
+        resultado.agregar_error("Falta la cabaña del jugador en la granja.", 0);
     } else {
         if (!casilla_puerta_cabania_transitable(granja, cabanias[0])) {
             resultado.agregar_error(
-                "La puerta de entrada de la cabania esta bloqueada por agua u obstaculos.");
+                "La puerta de entrada de la cabaña está bloqueada por agua u obstáculos.",
+                0);
         } else if (!tiene_acceso_perimetral_transitable(granja, cabanias[0])) {
             resultado.agregar_error(
-                "La cabania esta totalmente rodeada por obstaculos/agua: no se puede acceder a "
-                "ella.");
+                "La cabaña está totalmente rodeada por obstáculos: no se puede acceder a "
+                "ella.",
+                0);
         }
     }
 
     std::vector<EntidadDelMapa> entradas_caverna =
         granja.listar_entidades_por_tipo(TipoEntidad::ENTRADA_CAVERNA);
     if (entradas_caverna.empty()) {
-        resultado.agregar_error("Falta la entrada a la caverna en la granja.");
+        resultado.agregar_error("Falta la entrada a la caverna en la granja.", 0);
     } else {
         if (!casilla_puerta_entrada_caverna_transitable(granja, entradas_caverna[0])) {
             resultado.agregar_error(
-                "La puerta de entrada a la caverna esta bloqueada por agua u obstaculos.");
+                "La puerta de entrada a la caverna está bloqueada por obstáculos.",
+                0);
         } else if (!tiene_acceso_perimetral_transitable(granja, entradas_caverna[0])) {
             resultado.agregar_error(
-                "La entrada a la caverna esta totalmente bloqueada por obstaculos.");
+                "La entrada a la caverna está totalmente bloqueada por obstáculos.",
+                0);
         }
     }
 
     if (!cabanias.empty() && !entradas_caverna.empty()) {
         if (!existe_camino_transitable(granja, cabanias[0], entradas_caverna[0])) {
             resultado.agregar_error(
-                "No existe un camino transitable entre la cabania y la entrada a la caverna "
-                "(aislada por agua o muros).");
+                "No existe un camino transitable entre la cabaña y la entrada a la caverna.",
+                0);
         }
     }
 
     std::vector<EntidadDelMapa> salidas_pueblo =
         granja.listar_entidades_por_tipo(TipoEntidad::TRANSICION_PUEBLO);
     if (salidas_pueblo.empty()) {
-        resultado.agregar_error("Falta la salida hacia el pueblo en la granja.");
+        resultado.agregar_error("Falta la salida hacia el pueblo en la granja.", 0);
+    } else if (salidas_pueblo.size() > 1) {
+        resultado.agregar_error("Solo puede haber una salida hacia el pueblo en la granja.", 0);
     } else {
-        if (!tiene_acceso_perimetral_transitable(granja, salidas_pueblo[0])) {
+        int columna_acceso_pueblo = 0;
+        int fila_acceso_pueblo = 0;
+        if (!calcular_casilla_llegada_borde(
+                granja,
+                salidas_pueblo[0],
+                columna_acceso_pueblo,
+                fila_acceso_pueblo)) {
             resultado.agregar_error(
-                "La salida hacia el pueblo esta totalmente bloqueada por obstaculos.");
+                "La salida hacia el pueblo debe ubicarse en un borde válido.",
+                0);
         } else if (
-            !cabanias.empty() &&
-            !existe_camino_transitable(granja, cabanias[0], salidas_pueblo[0])) {
+            !cabanias.empty() && !existe_camino_desde_coordenada(
+                                     granja,
+                                     columna_acceso_pueblo,
+                                     fila_acceso_pueblo,
+                                     cabanias[0])) {
             resultado.agregar_error(
-                "No existe un camino transitable entre la cabania y la salida hacia el pueblo.");
+                "No existe un camino transitable entre la cabaña y la salida hacia el pueblo.",
+                0);
         }
     }
 
@@ -376,50 +434,71 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
     std::vector<EntidadDelMapa> centros_comunitarios =
         pueblo.listar_entidades_por_tipo(TipoEntidad::CENTRO_COMUNITARIO);
     if (centros_comunitarios.empty()) {
-        resultado.agregar_error("Falta el Centro Comunitario en el pueblo.");
+        resultado.agregar_error("Falta el Centro Comunitario en el pueblo.", 1);
     } else {
         if (!casilla_puerta_centro_comunitario_transitable(pueblo, centros_comunitarios[0])) {
             resultado.agregar_error(
-                "La puerta de entrada del Centro Comunitario esta bloqueada por agua u "
-                "obstaculos.");
+                "La puerta de entrada del Centro Comunitario está bloqueada por obstáculos.",
+                1);
         } else if (!tiene_acceso_perimetral_transitable(pueblo, centros_comunitarios[0])) {
             resultado.agregar_error(
-                "El Centro Comunitario esta totalmente bloqueado por obstaculos.");
+                "El Centro Comunitario está totalmente bloqueado por obstáculos.",
+                1);
         }
     }
 
     std::vector<EntidadDelMapa> mercados = pueblo.listar_entidades_por_tipo(TipoEntidad::MERCADO);
     if (mercados.empty()) {
-        resultado.agregar_error("Falta el Mercado en el pueblo.");
+        resultado.agregar_error("Falta el Mercado en el pueblo.", 1);
     } else {
         if (!casilla_puerta_mercado_transitable(pueblo, mercados[0])) {
             resultado.agregar_error(
-                "La puerta de entrada del Mercado esta bloqueada por agua u obstaculos.");
+                "La puerta de entrada del Mercado está bloqueada por obstáculos.",
+                1);
         } else if (!tiene_acceso_perimetral_transitable(pueblo, mercados[0])) {
-            resultado.agregar_error("El Mercado esta totalmente bloqueado por obstaculos.");
+            resultado.agregar_error("El Mercado está totalmente bloqueado por obstáculos.", 1);
         }
     }
 
     std::vector<EntidadDelMapa> salidas_granja =
         pueblo.listar_entidades_por_tipo(TipoEntidad::TRANSICION_GRANJA);
     if (salidas_granja.empty()) {
-        resultado.agregar_error("Falta la salida hacia la granja en el pueblo.");
-    } else if (!tiene_acceso_perimetral_transitable(pueblo, salidas_granja[0])) {
-        resultado.agregar_error(
-            "La salida hacia la granja esta totalmente bloqueada por obstaculos.");
-    }
-
-    if (!salidas_granja.empty()) {
-        if (!centros_comunitarios.empty() &&
-            !existe_camino_transitable(pueblo, salidas_granja[0], centros_comunitarios[0])) {
+        resultado.agregar_error("Falta la salida hacia la granja en el pueblo.", 1);
+    } else if (salidas_granja.size() > 1) {
+        resultado.agregar_error("Solo puede haber una salida hacia la granja en el pueblo.", 1);
+    } else {
+        int columna_acceso_granja = 0;
+        int fila_acceso_granja = 0;
+        if (!calcular_casilla_llegada_borde(
+                pueblo,
+                salidas_granja[0],
+                columna_acceso_granja,
+                fila_acceso_granja)) {
             resultado.agregar_error(
-                "No existe un camino transitable entre la salida hacia la granja y el Centro "
-                "Comunitario.");
-        }
-        if (!mercados.empty() &&
-            !existe_camino_transitable(pueblo, salidas_granja[0], mercados[0])) {
-            resultado.agregar_error(
-                "No existe un camino transitable entre la salida hacia la granja y el Mercado.");
+                "La salida hacia la granja debe ubicarse en un borde válido y con su casilla "
+                "frente al portón libre.",
+                1);
+        } else {
+            if (!centros_comunitarios.empty() && !existe_camino_desde_coordenada(
+                                                     pueblo,
+                                                     columna_acceso_granja,
+                                                     fila_acceso_granja,
+                                                     centros_comunitarios[0])) {
+                resultado.agregar_error(
+                    "No existe un camino transitable entre la salida hacia la granja y el Centro "
+                    "Comunitario.",
+                    1);
+            }
+            if (!mercados.empty() && !existe_camino_desde_coordenada(
+                                         pueblo,
+                                         columna_acceso_granja,
+                                         fila_acceso_granja,
+                                         mercados[0])) {
+                resultado.agregar_error(
+                    "No existe un camino transitable entre la salida hacia la granja y el "
+                    "Mercado.",
+                    1);
+            }
         }
     }
 
@@ -428,41 +507,41 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
     std::vector<EntidadDelMapa> puestos_marnie =
         mercado.listar_entidades_por_tipo(TipoEntidad::PUESTO_MARNIE);
     if (puestos_marnie.empty()) {
-        resultado.agregar_error("Falta el puesto de Marnie en el mercado.");
+        resultado.agregar_error("Falta el puesto de Marnie en el mercado.", 2);
     } else if (puestos_marnie.size() > 1) {
-        resultado.agregar_error("Solo puede haber un puesto de Marnie en el mercado.");
+        resultado.agregar_error("Solo puede haber un puesto de Marnie en el mercado.", 2);
     } else if (!tiene_acceso_perimetral_transitable(mercado, puestos_marnie[0])) {
-        resultado.agregar_error("El puesto de Marnie esta totalmente bloqueado por obstaculos.");
+        resultado.agregar_error("El puesto de Marnie está totalmente bloqueado por obstáculos.", 2);
     }
 
     std::vector<EntidadDelMapa> puestos_clint =
         mercado.listar_entidades_por_tipo(TipoEntidad::PUESTO_CLINT);
     if (puestos_clint.empty()) {
-        resultado.agregar_error("Falta el puesto de Clint en el mercado.");
+        resultado.agregar_error("Falta el puesto de Clint en el mercado.", 2);
     } else if (puestos_clint.size() > 1) {
-        resultado.agregar_error("Solo puede haber un puesto de Clint en el mercado.");
+        resultado.agregar_error("Solo puede haber un puesto de Clint en el mercado.", 2);
     } else if (!tiene_acceso_perimetral_transitable(mercado, puestos_clint[0])) {
-        resultado.agregar_error("El puesto de Clint esta totalmente bloqueado por obstaculos.");
+        resultado.agregar_error("El puesto de Clint está totalmente bloqueado por obstáculos.", 2);
     }
 
     std::vector<EntidadDelMapa> puestos_pierre =
         mercado.listar_entidades_por_tipo(TipoEntidad::PUESTO_PIERRE);
     if (puestos_pierre.empty()) {
-        resultado.agregar_error("Falta el puesto de Pierre en el mercado.");
+        resultado.agregar_error("Falta el puesto de Pierre en el mercado.", 2);
     } else if (puestos_pierre.size() > 1) {
-        resultado.agregar_error("Solo puede haber un puesto de Pierre en el mercado.");
+        resultado.agregar_error("Solo puede haber un puesto de Pierre en el mercado.", 2);
     } else if (!tiene_acceso_perimetral_transitable(mercado, puestos_pierre[0])) {
-        resultado.agregar_error("El puesto de Pierre esta totalmente bloqueado por obstaculos.");
+        resultado.agregar_error("El puesto de Pierre está totalmente bloqueado por obstáculos.", 2);
     }
 
     std::vector<EntidadDelMapa> puestos_robin =
         mercado.listar_entidades_por_tipo(TipoEntidad::PUESTO_ROBIN);
     if (puestos_robin.empty()) {
-        resultado.agregar_error("Falta el puesto de Robin en el mercado.");
+        resultado.agregar_error("Falta el puesto de Robin en el mercado.", 2);
     } else if (puestos_robin.size() > 1) {
-        resultado.agregar_error("Solo puede haber un puesto de Robin en el mercado.");
+        resultado.agregar_error("Solo puede haber un puesto de Robin en el mercado.", 2);
     } else if (!tiene_acceso_perimetral_transitable(mercado, puestos_robin[0])) {
-        resultado.agregar_error("El puesto de Robin esta totalmente bloqueado por obstaculos.");
+        resultado.agregar_error("El puesto de Robin está totalmente bloqueado por obstáculos.", 2);
     }
 
     int columna_salida_mercado = mercado.obtener_cantidad_de_columnas() / 2;
@@ -470,7 +549,8 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
 
     if (!mercado.casilla_es_transitable(columna_salida_mercado, fila_salida_mercado)) {
         resultado.agregar_error(
-            "La salida hacia el pueblo en el mercado (puerta sur) esta bloqueada por obstaculos.");
+            "La salida hacia el pueblo en el mercado está bloqueada por obstáculos.",
+            2);
     } else {
         if (!puestos_marnie.empty() && !existe_camino_desde_coordenada(
                                            mercado,
@@ -478,7 +558,8 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
                                            fila_salida_mercado,
                                            puestos_marnie[0])) {
             resultado.agregar_error(
-                "No existe un camino transitable entre la salida al pueblo y el puesto de Marnie.");
+                "No existe un camino transitable entre la salida al pueblo y el puesto de Marnie.",
+                2);
         }
         if (!puestos_clint.empty() && !existe_camino_desde_coordenada(
                                           mercado,
@@ -486,7 +567,8 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
                                           fila_salida_mercado,
                                           puestos_clint[0])) {
             resultado.agregar_error(
-                "No existe un camino transitable entre la salida al pueblo y el puesto de Clint.");
+                "No existe un camino transitable entre la salida al pueblo y el puesto de Clint.",
+                2);
         }
         if (!puestos_pierre.empty() && !existe_camino_desde_coordenada(
                                            mercado,
@@ -494,7 +576,8 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
                                            fila_salida_mercado,
                                            puestos_pierre[0])) {
             resultado.agregar_error(
-                "No existe un camino transitable entre la salida al pueblo y el puesto de Pierre.");
+                "No existe un camino transitable entre la salida al pueblo y el puesto de Pierre.",
+                2);
         }
         if (!puestos_robin.empty() && !existe_camino_desde_coordenada(
                                           mercado,
@@ -502,7 +585,8 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
                                           fila_salida_mercado,
                                           puestos_robin[0])) {
             resultado.agregar_error(
-                "No existe un camino transitable entre la salida al pueblo y el puesto de Robin.");
+                "No existe un camino transitable entre la salida al pueblo y el puesto de Robin.",
+                2);
         }
     }
 
@@ -516,23 +600,27 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
 
     size_t indice_nivel = 0;
     while (indice_nivel < cantidad_de_niveles) {
+        int indice_sector_nivel = 3 + static_cast<int>(indice_nivel);
         MapaEditable nivel = mundo.obtener_nivel_mazmorra(indice_nivel);
         std::vector<EntidadDelMapa> escaleras =
             nivel.listar_entidades_por_tipo(TipoEntidad::ESCALERA_NIVEL);
         if (escaleras.empty()) {
             resultado.agregar_error(
                 "El nivel " + std::to_string(indice_nivel + 1) +
-                " de la caverna no tiene escalera de descenso.");
+                    " de la caverna no tiene escalera de descenso.",
+                indice_sector_nivel);
         } else {
             if (escaleras.size() > 1) {
                 resultado.agregar_error(
                     "El nivel " + std::to_string(indice_nivel + 1) +
-                    " de la caverna debe tener exactamente una escalera de descenso.");
+                        " de la caverna debe tener exactamente una escalera de descenso.",
+                    indice_sector_nivel);
             }
             if (!tiene_acceso_perimetral_transitable(nivel, escaleras[0])) {
                 resultado.agregar_error(
                     "El nivel " + std::to_string(indice_nivel + 1) +
-                    " tiene la escalera de descenso bloqueada por obstaculos.");
+                        " tiene la escalera de descenso bloqueada por obstáculos.",
+                    indice_sector_nivel);
             }
         }
 
@@ -540,17 +628,20 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
             nivel.listar_entidades_por_tipo(TipoEntidad::SALIDA_CAVERNA);
         if (salidas.empty()) {
             resultado.agregar_error(
-                "El nivel " + std::to_string(indice_nivel + 1) + " de la caverna no tiene salida.");
+                "El nivel " + std::to_string(indice_nivel + 1) + " de la caverna no tiene salida.",
+                indice_sector_nivel);
         } else {
             if (salidas.size() > 1) {
                 resultado.agregar_error(
                     "El nivel " + std::to_string(indice_nivel + 1) +
-                    " de la caverna debe tener exactamente una salida.");
+                        " de la caverna debe tener exactamente una salida.",
+                    indice_sector_nivel);
             }
             if (!tiene_acceso_perimetral_transitable(nivel, salidas[0])) {
                 resultado.agregar_error(
                     "El nivel " + std::to_string(indice_nivel + 1) +
-                    " tiene la salida bloqueada por obstaculos.");
+                        " tiene la salida bloqueada por obstáculos.",
+                    indice_sector_nivel);
             }
         }
 
@@ -558,12 +649,14 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
             if (!tiene_entrada_de_nivel_libre(nivel, salidas[0], escaleras[0])) {
                 resultado.agregar_error(
                     "El nivel " + std::to_string(indice_nivel + 1) +
-                    " no tiene una casilla transitable adyacente a la salida para aparecer.");
+                        " no tiene una casilla transitable adyacente a la salida para aparecer.",
+                    indice_sector_nivel);
             }
             if (!existe_camino_transitable(nivel, salidas[0], escaleras[0])) {
                 resultado.agregar_error(
                     "El nivel " + std::to_string(indice_nivel + 1) +
-                    " no tiene camino transitable entre la salida y la escalera.");
+                        " no tiene camino transitable entre la salida y la escalera.",
+                    indice_sector_nivel);
             }
         }
 

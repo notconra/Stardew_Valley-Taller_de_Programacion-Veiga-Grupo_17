@@ -19,15 +19,15 @@ struct InformacionEntidadTransicion {
 };
 
 static const std::map<std::string, InformacionEntidadTransicion> DESTINOS_A_ENTIDADES = {
-    {"FarmHouse2", {TipoEntidad::CABANIA, 5, 7, 9, 9}},
-    {"mercado", {TipoEntidad::MERCADO, 5, 9, 10, 10}},
+    {"FarmHouse2", {TipoEntidad::CABANIA, 5, 6, 9, 9}},
+    {"mercado", {TipoEntidad::MERCADO, 5, 8, 10, 10}},
     {"CommunityCenter", {TipoEntidad::CENTRO_COMUNITARIO, 5, 9, 12, 10}},
     {"centro_comunitario", {TipoEntidad::CENTRO_COMUNITARIO, 5, 8, 12, 10}},
-    {"Town", {TipoEntidad::TRANSICION_PUEBLO, 0, 0, 2, 2}},
-    {"granja", {TipoEntidad::TRANSICION_GRANJA, 0, 0, 2, 2}},
-    {"caverna", {TipoEntidad::ENTRADA_CAVERNA, 2, 6, 5, 7}},
-    {"mina_1", {TipoEntidad::ENTRADA_CAVERNA, 2, 6, 5, 7}},
-    {"mazmorra", {TipoEntidad::ENTRADA_CAVERNA, 2, 6, 5, 7}},
+    {"Town", {TipoEntidad::TRANSICION_PUEBLO, 0, 0, 1, 2}},
+    {"granja", {TipoEntidad::TRANSICION_GRANJA, 0, 0, 1, 2}},
+    {"caverna", {TipoEntidad::ENTRADA_CAVERNA, 1, 2, 3, 4}},
+    {"mina_1", {TipoEntidad::ENTRADA_CAVERNA, 1, 2, 3, 4}},
+    {"mazmorra", {TipoEntidad::ENTRADA_CAVERNA, 1, 2, 3, 4}},
     {"siguiente", {TipoEntidad::ESCALERA_NIVEL, 0, 0, 1, 1}}};
 
 static const std::map<std::string, TipoEntidad> IDENTIFICADORES_A_PUESTO = {
@@ -48,7 +48,10 @@ uint32_t CargadorDeSectorTMX::normalizar_tile_sector(
     uint32_t banderas = identificador_con_banderas & MASCARA_BANDERAS_ESPEJO_TILE;
     uint32_t identificador_puro = identificador_con_banderas & MASCARA_IDENTIFICADOR_TILE;
     uint32_t desplazamiento = PRIMER_IDENTIFICADOR_PUEBLO_TMX - 1;
-    if (identificador_puro >= PRIMER_IDENTIFICADOR_PUEBLO_TMX) {
+    static constexpr uint32_t GID_PASTO_LANDSCAPE_PUEBLO = 176;
+    if (identificador_puro == GID_PASTO_LANDSCAPE_PUEBLO) {
+        identificador_puro = CatalogoDeTerrenos::obtener_tile_base(SectorActual::PUEBLO);
+    } else if (identificador_puro >= PRIMER_IDENTIFICADOR_PUEBLO_TMX) {
         identificador_puro -= desplazamiento;
         while (identificador_puro > CANTIDAD_TILES_PUEBLO) {
             identificador_puro -= desplazamiento;
@@ -171,8 +174,13 @@ void CargadorDeSectorTMX::cargar_suelo_caverna(
 
                     uint8_t propiedades_suelo =
                         PropiedadDeCasilla::DECORABLE | PropiedadDeCasilla::ADMITE_MINERAL;
+                    bool es_tramo_escalera_salida =
+                        (id_estructura == TILE_SALIDA_CAVERNA_TRAMO_1 ||
+                         id_estructura == TILE_SALIDA_CAVERNA_TRAMO_2 ||
+                         id_estructura == TILE_SALIDA_CAVERNA_TRAMO_3);
                     if (valor_colision != 0 &&
-                        (id_estructura == 0 || MapaEditable::es_tile_muro_caverna(id_estructura))) {
+                        (id_estructura == 0 || MapaEditable::es_tile_muro_caverna(id_estructura) ||
+                         es_tramo_escalera_salida)) {
                         propiedades_suelo = PropiedadDeCasilla::BLOQUEA;
                     }
                     mapa.pintar_en_capa(
@@ -416,17 +424,7 @@ MapaEditable CargadorDeSectorTMX::cargar_sector(
                     }
                 }
 
-                // 4. Palmeras de esquinas superiores
-                mapa.estampar(
-                    CatalogoDeEstampas::obtener_estampa(TipoEstampa::MERCADO_PALMERA_IZQUIERDA),
-                    1,
-                    2);
-                mapa.estampar(
-                    CatalogoDeEstampas::obtener_estampa(TipoEstampa::MERCADO_PALMERA_DERECHA),
-                    cantidad_columnas - 3,
-                    2);
-
-                // 5. Estampas iniciales de mobiliario
+                // 4. Estampas iniciales de mobiliario
                 mapa.estampar(
                     CatalogoDeEstampas::obtener_estampa(TipoEstampa::MERCADO_MOSTRADOR_IZQUIERDO),
                     1,
@@ -596,6 +594,35 @@ MapaEditable CargadorDeSectorTMX::cargar_sector(
             int columna_salida = transicion.x / ANCHO_TILE_PIXELES;
             int fila_salida = transicion.y / ALTO_TILE_PIXELES;
             mapa.ubicar_entidad(TipoEntidad::SALIDA_CAVERNA, columna_salida, fila_salida, 1, 1);
+
+            int distancia = 1;
+            bool continuar_subiendo = true;
+            while (distancia <= 4 && continuar_subiendo) {
+                int fila_muro = fila_salida - distancia;
+                if (!mapa.esta_dentro(columna_salida, fila_muro)) {
+                    continuar_subiendo = false;
+                } else {
+                    CasillaDelMapa suelo_muro =
+                        mapa.obtener_casilla_en_capa(TipoCapa::SUELO, columna_salida, fila_muro);
+                    uint32_t estructura_muro = mapa.obtener_casilla_en_capa(
+                                                       TipoCapa::ESTRUCTURAS,
+                                                       columna_salida,
+                                                       fila_muro)
+                                                   .obtener_id_tile();
+                    if (suelo_muro.tiene_propiedad(PropiedadDeCasilla::BLOQUEA) &&
+                        estructura_muro == 0) {
+                        mapa.pintar_en_capa(
+                            TipoCapa::ESTRUCTURAS,
+                            columna_salida,
+                            fila_muro,
+                            MapaEditable::tile_acantilado_norte_caverna(distancia, columna_salida),
+                            PropiedadDeCasilla::BLOQUEA);
+                        distancia++;
+                    } else {
+                        continuar_subiendo = false;
+                    }
+                }
+            }
         } else {
             auto iterador_destino = DESTINOS_A_ENTIDADES.find(transicion.mapa_destino);
             if (iterador_destino != DESTINOS_A_ENTIDADES.end()) {
@@ -605,6 +632,16 @@ MapaEditable CargadorDeSectorTMX::cargar_sector(
                            iterador_destino->second.desplazamiento_fila;
                 int ancho_casillas = iterador_destino->second.ancho_casillas;
                 int alto_casillas = iterador_destino->second.alto_casillas;
+                if (MapaEditable::es_transicion_de_borde(iterador_destino->second.tipo_entidad)) {
+                    int ancho_tmx = transicion.ancho / ANCHO_TILE_PIXELES;
+                    int alto_tmx = transicion.alto / ALTO_TILE_PIXELES;
+                    if (ancho_tmx > 0) {
+                        ancho_casillas = ancho_tmx;
+                    }
+                    if (alto_tmx > 0) {
+                        alto_casillas = alto_tmx;
+                    }
+                }
 
                 if (sector != SectorActual::MERCADO) {
                     mapa.ubicar_entidad(
@@ -684,6 +721,10 @@ MapaEditable CargadorDeSectorTMX::cargar_sector(
             }
         }
         indice_puesto++;
+    }
+
+    if (sector == SectorActual::GRANJA) {
+        mapa.generar_muro_perimetral_granja();
     }
 
     return mapa;

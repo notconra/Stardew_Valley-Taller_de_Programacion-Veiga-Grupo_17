@@ -121,6 +121,17 @@ void TarjetaPartida::inicializar_interfaz(const CompositorPersonaje& compositor)
     layout_tiempo_jugado.setSpacing(6);
     layout_tiempo_jugado.setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
+    label_icono_moneda.setPixmap(RecursosUI::instancia().icono_moneda());
+    label_icono_moneda.setAttribute(Qt::WA_TransparentForMouseEvents);
+    layout_tiempo_jugado.addWidget(&label_icono_moneda);
+
+    label_monedas.setText(QString::number(info_partida.monedas));
+    label_monedas.setAttribute(Qt::WA_TransparentForMouseEvents);
+    label_monedas.setProperty("class", "label_partida_tiempo");
+    layout_tiempo_jugado.addWidget(&label_monedas);
+
+    layout_tiempo_jugado.addSpacing(14);
+
     label_icono_reloj.setPixmap(RecursosUI::instancia().icono_reloj());
     label_icono_reloj.setAttribute(Qt::WA_TransparentForMouseEvents);
     layout_tiempo_jugado.addWidget(&label_icono_reloj);
@@ -178,7 +189,7 @@ void TarjetaPartida::al_hacer_clic_eliminar() {
     btn_cancelar.setObjectName("btn_dialogo_cancelar");
     btn_cancelar.setProperty("class", "btn_dialogo_accion");
     RecursosUI::instancia().configurar_boton_cancelar(&btn_cancelar);
-    btn_cancelar.setFixedSize(52, 52);
+    btn_cancelar.setFixedSize(64, 64);
     btn_cancelar.setToolTip("Cancelar");
     connect(&btn_cancelar, &QPushButton::clicked, &dialogo, &QDialog::reject);
     layout_botones.addWidget(&btn_cancelar);
@@ -187,7 +198,7 @@ void TarjetaPartida::al_hacer_clic_eliminar() {
     btn_ok.setObjectName("btn_dialogo_ok");
     btn_ok.setProperty("class", "btn_dialogo_accion");
     RecursosUI::instancia().configurar_boton_ok(&btn_ok);
-    btn_ok.setFixedSize(52, 52);
+    btn_ok.setFixedSize(64, 64);
     btn_ok.setToolTip("Eliminar");
     connect(&btn_ok, &QPushButton::clicked, &dialogo, &QDialog::accept);
     layout_botones.addWidget(&btn_ok);
@@ -308,7 +319,7 @@ QString TarjetaPartida::formatear_fecha(uint32_t dia) const {
     const uint32_t indice_estacion = (dias_pasados / DIAS_POR_ESTACION) % ESTACIONES_POR_ANIO;
     const uint32_t anio = (dias_pasados / DIAS_POR_ANIO) + 1;
 
-    return QString("Dia %1 de %2, Ano %3")
+    return QString("Dia %1 de %2, Anio %3")
         .arg(dia_estacion)
         .arg(NOMBRES_ESTACIONES[indice_estacion])
         .arg(anio);
