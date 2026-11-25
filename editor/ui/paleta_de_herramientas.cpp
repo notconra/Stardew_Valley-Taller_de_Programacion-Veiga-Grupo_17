@@ -9,6 +9,7 @@
 #include <QSize>
 #include <QString>
 #include <QVBoxLayout>
+#include <QVariant>
 #include <cstdint>
 #include <vector>
 
@@ -109,7 +110,7 @@ PaletaDeHerramientas::PaletaDeHerramientas(QWidget* padre)
 QPushButton* PaletaDeHerramientas::crear_boton_modo(const QString& texto, ModoEditor modo) {
     QPushButton* boton = new QPushButton(texto, this);
     boton->setCheckable(true);
-    boton->setProperty("rol", "modo");
+    boton->setProperty("rol", QStringLiteral("modo"));
     grupo_modos->addButton(boton, static_cast<int>(modo));
     connect(boton, &QPushButton::clicked, this, [this, modo]() {
         desmarcar_grupo(grupo_tiles);
@@ -217,7 +218,7 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
         QPushButton* boton = new QPushButton(this);
         boton->setFixedSize(TAMANO_BOTON_TILE_PX, TAMANO_BOTON_TILE_PX);
         boton->setCheckable(true);
-        boton->setProperty("rol", "tile");
+        boton->setProperty("rol", QStringLiteral("tile"));
         boton->setToolTip(QString::fromStdString(definicion.nombre));
         boton->setIcon(QIcon(sprite_recortado.scaled(
             TAMANO_ICONO_TILE_PX,
@@ -293,7 +294,7 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
         QPushButton* boton_estampa =
             new QPushButton(QString::fromStdString(estampa.nombre), caja_estampas);
         boton_estampa->setCheckable(true);
-        boton_estampa->setProperty("rol", "estampa");
+        boton_estampa->setProperty("rol", QStringLiteral("estampa"));
         grupo_estampas->addButton(boton_estampa, static_cast<int>(tipo));
         layout_estampas->insertWidget(static_cast<int>(indice_estampa), boton_estampa);
 
