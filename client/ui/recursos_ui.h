@@ -34,6 +34,7 @@ public:
     QPixmap boton_eliminar() const;
     QPixmap boton_eliminar_hover() const;
     QPixmap icono_reloj() const;
+    QPixmap icono_moneda() const;
     QPixmap icono_masculino() const;
     QPixmap icono_femenino() const;
     QPixmap flecha_izquierda() const;
@@ -68,6 +69,7 @@ private:
     QPixmap sprite_eliminar;
     QPixmap sprite_eliminar_hover;
     QPixmap sprite_reloj;
+    QPixmap sprite_moneda;
     QPixmap sprite_masculino;
     QPixmap sprite_femenino;
     QPixmap sprite_flecha_izq;

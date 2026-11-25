@@ -20,6 +20,45 @@ void ExportadorDeMundoTMX::obtener_coordenadas_de_entidad_requerida(
     entidades[0].consultar_origen(columna_resultado, fila_resultado);
 }
 
+void ExportadorDeMundoTMX::calcular_destino_entrada_borde(
+    const MapaEditable& mapa_destino, const EntidadDelMapa& entidad_transicion,
+    int& columna_destino, int& fila_destino) {
+    int columna = 0;
+    int fila = 0;
+    int ancho = 1;
+    int alto = 1;
+    entidad_transicion.consultar_origen(columna, fila);
+    entidad_transicion.consultar_dimensiones(ancho, alto);
+
+    int total_columnas = mapa_destino.obtener_cantidad_de_columnas();
+    int total_filas = mapa_destino.obtener_cantidad_de_filas();
+
+    if (columna <= 1) {
+        columna_destino = columna + ancho;
+        fila_destino = (alto >= 2) ? fila : (fila - 1);
+    } else if (columna + ancho >= total_columnas - 1) {
+        columna_destino = columna - 1;
+        fila_destino = (alto >= 2) ? fila : (fila - 1);
+    } else if (fila <= 1) {
+        columna_destino = columna;
+        fila_destino = 1;
+    } else {
+        columna_destino = columna;
+        fila_destino = fila - 2;
+    }
+
+    if (columna_destino < 0) {
+        columna_destino = 0;
+    } else if (columna_destino >= total_columnas) {
+        columna_destino = total_columnas - 1;
+    }
+    if (fila_destino < 0) {
+        fila_destino = 0;
+    } else if (fila_destino >= total_filas - 1) {
+        fila_destino = total_filas - 2;
+    }
+}
+
 bool ExportadorDeMundoTMX::exportar_mundo_completo(
     const std::string& ruta_directorio_destino, const DefinicionDeMundo& mundo) {
     size_t cantidad_de_niveles = mundo.obtener_cantidad_de_niveles_mazmorra();
@@ -34,14 +73,12 @@ bool ExportadorDeMundoTMX::exportar_mundo_completo(
     const MapaEditable& mercado = mundo.obtener_sector_mercado();
 
     // 1. Validar que existan las transiciones obligatorias entre sectores
-    int col_pueblo_en_granja = 0;
-    int fil_pueblo_en_granja = 0;
-    obtener_coordenadas_de_entidad_requerida(
-        granja,
-        TipoEntidad::TRANSICION_PUEBLO,
-        "No se puede guardar el mundo: la granja debe tener una transicion hacia el pueblo.",
-        col_pueblo_en_granja,
-        fil_pueblo_en_granja);
+    std::vector<EntidadDelMapa> salidas_pueblo_en_granja =
+        granja.listar_entidades_por_tipo(TipoEntidad::TRANSICION_PUEBLO);
+    if (salidas_pueblo_en_granja.empty()) {
+        throw std::runtime_error(
+            "No se puede guardar el mundo: la granja debe tener una transicion hacia el pueblo.");
+    }
 
     int col_entrada_en_granja = 0;
     int fil_entrada_en_granja = 0;
@@ -52,14 +89,12 @@ bool ExportadorDeMundoTMX::exportar_mundo_completo(
         col_entrada_en_granja,
         fil_entrada_en_granja);
 
-    int col_granja_en_pueblo = 0;
-    int fil_granja_en_pueblo = 0;
-    obtener_coordenadas_de_entidad_requerida(
-        pueblo,
-        TipoEntidad::TRANSICION_GRANJA,
-        "No se puede guardar el mundo: el pueblo debe tener una transicion hacia la granja.",
-        col_granja_en_pueblo,
-        fil_granja_en_pueblo);
+    std::vector<EntidadDelMapa> salidas_granja_en_pueblo =
+        pueblo.listar_entidades_por_tipo(TipoEntidad::TRANSICION_GRANJA);
+    if (salidas_granja_en_pueblo.empty()) {
+        throw std::runtime_error(
+            "No se puede guardar el mundo: el pueblo debe tener una transicion hacia la granja.");
+    }
 
     int col_mercado_en_pueblo = 0;
     int fil_mercado_en_pueblo = 0;
@@ -82,33 +117,30 @@ bool ExportadorDeMundoTMX::exportar_mundo_completo(
 
     // 2. Resolver destinos cruzados enlazados
     DestinosDeTransicion destinos_granja;
-    int columna_aparicion_pueblo = col_granja_en_pueblo;
-    if (col_granja_en_pueblo <= 1) {
-        columna_aparicion_pueblo = 2;
-    }
-    destinos_granja.columna_destino_pueblo = columna_aparicion_pueblo;
-    destinos_granja.fila_destino_pueblo = fil_granja_en_pueblo;
+    calcular_destino_entrada_borde(
+        pueblo,
+        salidas_granja_en_pueblo[0],
+        destinos_granja.columna_destino_pueblo,
+        destinos_granja.fila_destino_pueblo);
     destinos_granja.columna_destino_caverna = col_salida_en_caverna;
     destinos_granja.fila_destino_caverna = fil_salida_en_caverna;
 
     DestinosDeTransicion destinos_pueblo;
-    int columna_aparicion_granja = col_pueblo_en_granja;
-    int ancho_granja = granja.obtener_cantidad_de_columnas();
-    if (col_pueblo_en_granja >= ancho_granja - 2) {
-        columna_aparicion_granja = ancho_granja - 3;
-    }
-    destinos_pueblo.columna_destino_granja = columna_aparicion_granja;
-    destinos_pueblo.fila_destino_granja = fil_pueblo_en_granja;
-    destinos_pueblo.columna_destino_mercado = 9;
-    destinos_pueblo.fila_destino_mercado = 14;
+    calcular_destino_entrada_borde(
+        granja,
+        salidas_pueblo_en_granja[0],
+        destinos_pueblo.columna_destino_granja,
+        destinos_pueblo.fila_destino_granja);
+    destinos_pueblo.columna_destino_mercado = mercado.obtener_cantidad_de_columnas() / 2;
+    destinos_pueblo.fila_destino_mercado = mercado.obtener_cantidad_de_filas() - 3;
 
     DestinosDeTransicion destinos_mercado;
     destinos_mercado.columna_destino_pueblo = col_mercado_en_pueblo + 5;
-    destinos_mercado.fila_destino_pueblo = fil_mercado_en_pueblo + 10;
+    destinos_mercado.fila_destino_pueblo = fil_mercado_en_pueblo + 9;
 
     DestinosDeTransicion destinos_caverna;
-    destinos_caverna.columna_salida_caverna = col_entrada_en_granja;
-    destinos_caverna.fila_salida_caverna = fil_entrada_en_granja;
+    destinos_caverna.columna_salida_caverna = col_entrada_en_granja + 1;
+    destinos_caverna.fila_salida_caverna = fil_entrada_en_granja + 3;
 
     // 3. Crear directorio de destino y exportar cada sector
     std::filesystem::create_directories(ruta_directorio_destino);

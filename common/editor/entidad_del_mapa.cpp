@@ -71,6 +71,11 @@ void EntidadDelMapa::trasladar_a(int nueva_columna, int nueva_fila) {
     }
 }
 
+void EntidadDelMapa::redimensionar(int nuevo_ancho, int nuevo_alto) {
+    ancho_en_casillas = nuevo_ancho;
+    alto_en_casillas = nuevo_alto;
+}
+
 void EntidadDelMapa::configurar_punto_de_atencion(int columna, int fila) {
     columna_de_atencion = columna;
     fila_de_atencion = fila;

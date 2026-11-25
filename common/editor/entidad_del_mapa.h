@@ -35,6 +35,7 @@ public:
     void consultar_punto_de_atencion(int& columna, int& fila, bool& tiene_atencion) const;
 
     void trasladar_a(int nueva_columna, int nueva_fila);
+    void redimensionar(int nuevo_ancho, int nuevo_alto);
     void configurar_punto_de_atencion(int columna, int fila);
     void remover_punto_de_atencion();
 

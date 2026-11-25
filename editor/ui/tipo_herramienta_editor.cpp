@@ -13,8 +13,8 @@ struct DimensionesEntidad {
 static constexpr int DIMENSION_POR_DEFECTO = 1;
 static constexpr int ANCHO_CABANIA = 9;
 static constexpr int ALTO_CABANIA = 9;
-static constexpr int ANCHO_ENTRADA_CAVERNA = 5;
-static constexpr int ALTO_ENTRADA_CAVERNA = 7;
+static constexpr int ANCHO_ENTRADA_CAVERNA = 3;
+static constexpr int ALTO_ENTRADA_CAVERNA = 4;
 static constexpr int ANCHO_PUESTO = 1;
 static constexpr int ALTO_PUESTO = 1;
 static constexpr int ANCHO_CENTRO_COMUNITARIO = 12;
@@ -25,10 +25,10 @@ static constexpr int ANCHO_ESCALERA = 1;
 static constexpr int ALTO_ESCALERA = 1;
 static constexpr int ANCHO_SALIDA_CAVERNA = 1;
 static constexpr int ALTO_SALIDA_CAVERNA = 1;
-static constexpr int ANCHO_TRANSICION = 2;
+static constexpr int ANCHO_TRANSICION = 1;
 static constexpr int ALTO_TRANSICION = 2;
 
-static constexpr const char* NOMBRE_CABANIA = "Cabania";
+static constexpr const char* NOMBRE_CABANIA = "Cabaña";
 static constexpr const char* NOMBRE_ENTRADA_CAVERNA = "Entrada Caverna";
 static constexpr const char* NOMBRE_PUESTO_MARNIE = "Puesto Marnie";
 static constexpr const char* NOMBRE_PUESTO_CLINT = "Puesto Clint";

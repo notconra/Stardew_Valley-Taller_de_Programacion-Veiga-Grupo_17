@@ -50,6 +50,11 @@ struct ListarMundos {
     bool operator==(const ListarMundos&) const = default;
 };
 
+struct VerificarCodigoPartida {
+    std::string codigo_partida;
+    bool operator==(const VerificarCodigoPartida&) const = default;
+};
+
 // Servidor a cliente
 
 struct InfoPartida {
@@ -63,6 +68,7 @@ struct InfoPartida {
     uint8_t jugadores_maximos = 0;
     uint32_t dia = 1;
     uint32_t segundos_jugados = 0;
+    uint32_t monedas = 0;
     bool operator==(const InfoPartida&) const = default;
 };
 
@@ -75,6 +81,11 @@ struct ListaPartidas {
 struct ListaMundos {
     std::vector<std::string> mundos;
     bool operator==(const ListaMundos&) const = default;
+};
+
+// Respuesta a VerificarCodigoPartida cuando el codigo existe y esta disponible.
+struct CodigoPartidaDisponible {
+    bool operator==(const CodigoPartidaDisponible&) const = default;
 };
 
 // Respuesta a CrearPartida y a UnirsePartida, el jugador ya está dentro.

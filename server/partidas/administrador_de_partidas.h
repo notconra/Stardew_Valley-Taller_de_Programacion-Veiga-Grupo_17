@@ -75,6 +75,8 @@ public:
     // Los mundos del editor con los que se puede crear una partida (además del estándar).
     std::vector<std::string> listar_mundos() const;
 
+    void verificar_disponibilidad(const std::string& codigo_partida) const;
+
     // La partida por defecto tiene un sólo jugador y el cliente que la crea
     // entra a ella.
     IngresoAPartida crear(

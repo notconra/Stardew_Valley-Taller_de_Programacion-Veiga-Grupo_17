@@ -86,6 +86,7 @@ private:
 
     FuenteDelJuego fuente_del_titulo;
     FuenteDelJuego fuente;
+    Textura marco_del_menu;
     bool abierto = false;
 
     // El plano del valle de Stardew.
@@ -102,6 +103,10 @@ private:
     std::string nombre_de(const JugadoresDeLaPartida& jugadores, uint32_t id_jugador) const;
     SDL_Color color_de(const Datos& datos, uint32_t id_jugador) const;
 
+    // Dibuja el marco de menu_box.png ocupando todo "exterior" (el borde y el relleno). Las
+    // esquinas se copian tal cual, los lados y el centro se estiran para llegar al tamaño pedido.
+    void dibujar_marco(SDL_Renderer* renderer, const SDL_Rect& exterior) const;
+
     void dibujar_circulo(
         SDL_Renderer* renderer, int centro_x, int centro_y, int radio, SDL_Color color) const;
     // Texto claro con un borde oscuro, para que se lea sobre el dibujo.
@@ -112,7 +117,7 @@ private:
 
 public:
     // "ruta_fuente" es la .ttf del juego. Lanza std::runtime_error si no encuentra las imágenes del
-    // valle o la fuente.
+    // valle, la del marco (menu_box.png) o la fuente.
     MapaGeneral(SDL_Renderer* renderer, const std::string& ruta_fuente);
 
     // Pasa a mostrar la granja y el pueblo del mundo del editor "nombre_mundo". Si no se pueden

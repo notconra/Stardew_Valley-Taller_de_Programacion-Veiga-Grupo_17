@@ -45,6 +45,11 @@ EstadoDeConexion::ProximoEstado EstadoDeConexion::unirse_a_partida(const UnirseP
     return rechazar();
 }
 
+EstadoDeConexion::ProximoEstado EstadoDeConexion::verificar_codigo_partida(
+    const VerificarCodigoPartida&) {
+    return rechazar();
+}
+
 EstadoDeConexion::ProximoEstado EstadoDeConexion::retomar_partida(const RetomarPartida&) {
     return rechazar();
 }

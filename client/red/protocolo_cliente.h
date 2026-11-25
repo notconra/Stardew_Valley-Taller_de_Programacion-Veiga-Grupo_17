@@ -23,6 +23,7 @@ private:
     void enviar_comando_retomar_partida(const RetomarPartida& retomar);
     void enviar_comando_eliminar_partida(const EliminarPartida& eliminar);
     void enviar_comando_listar_mundos(const ListarMundos& listar);
+    void enviar_comando_verificar_codigo_partida(const VerificarCodigoPartida& verificar);
     void enviar_comando_activar_multijugador(const ActivarMultijugador&);
     void enviar_comando_salir_de_partida(const SalirDePartida& salir_de_partida);
     void enviar_comando_moverse(const Moverse& moverse);
@@ -55,6 +56,7 @@ private:
     ErrorServidor recibir_error_servidor();
     ListaPartidas recibir_lista_partidas();
     ListaMundos recibir_lista_mundos();
+    CodigoPartidaDisponible recibir_codigo_partida_disponible();
     EntradaExitosaAPartida recibir_entrada_exitosa_a_partida();
     InfoPartida recibir_info_partida();
     MultijugadorActivado recibir_multijugador_activado();

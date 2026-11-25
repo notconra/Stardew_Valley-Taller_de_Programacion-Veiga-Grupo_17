@@ -20,9 +20,6 @@ class PaletaDeHerramientas : public QWidget {
 private:
     QVBoxLayout* layout_principal;
     QButtonGroup* grupo_modos;
-    QPushButton* boton_modo_terreno;
-    QPushButton* boton_modo_estampa;
-    QPushButton* boton_modo_colocar;
     QPushButton* boton_modo_mover;
     QPushButton* boton_modo_borrar;
 
@@ -52,11 +49,13 @@ private:
     QPushButton* crear_boton_modo(const QString& texto, ModoEditor modo);
     void limpiar_botones_de_tiles();
     void limpiar_botones_de_estampas();
+    void desmarcar_grupo(QButtonGroup* grupo);
 
 public:
     explicit PaletaDeHerramientas(QWidget* padre = nullptr);
 
     void actualizar_sector(SectorActual sector);
+    void desmarcar_todo();
     void sincronizar_rotacion_estampa(TipoEstampa estampa);
     void sincronizar_rotacion_tile(uint32_t id_tile);
 

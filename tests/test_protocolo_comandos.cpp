@@ -40,6 +40,10 @@ TEST_F(ProtocoloComandosTest, ListarMundos) {
     verificar_comando(ListarMundos{});
 }
 
+TEST_F(ProtocoloComandosTest, VerificarCodigoPartida) {
+    verificar_comando(VerificarCodigoPartida{"P0"});
+}
+
 TEST_F(ProtocoloComandosTest, ActivarMultijugador) {
     verificar_comando(ActivarMultijugador{});
 }

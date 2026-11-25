@@ -32,6 +32,9 @@ private:
     uint32_t proximo_identificador_de_estampa;
 
     int buscar_indice_de_entidad(uint32_t identificador) const;
+    void pintar_borde_lateral_granja(
+        int columna, int fila_lateral, uint32_t tile_a, uint32_t tile_b,
+        uint32_t tile_paso_lateral);
     static bool es_piso_en_mascara(
         const std::vector<std::vector<bool>>& mascara_piso, int columna, int fila);
 
@@ -58,7 +61,7 @@ public:
         uint8_t propiedades);
     static constexpr int ANCHO_VALLA_OESTE_CASILLAS = 1;
     static constexpr int ANCHO_VALLA_ESTE_CASILLAS = 1;
-    static constexpr int ALTO_VALLA_NORTE_CASILLAS = 2;
+    static constexpr int ALTO_VALLA_NORTE_CASILLAS = 4;
     static constexpr int ALTO_VALLA_SUR_CASILLAS = 1;
     static constexpr int ANCHO_VALLA_LATERAL_CASILLAS = 1;
     static constexpr int ALTO_VALLA_HORIZONTAL_CASILLAS = 2;
@@ -93,6 +96,7 @@ public:
     void generar_muro_perimetral_pueblo();
     void generar_muros_caverna();
     static bool es_tile_muro_caverna(uint32_t identificador_tile);
+    static uint32_t tile_acantilado_norte_caverna(int distancia_desde_piso, int columna);
     void reconstruir_perimetro_mercado();
     static bool es_tile_perimetro_mercado(uint32_t identificador_tile);
     void calcular_interaccion_puesto(
@@ -109,6 +113,10 @@ public:
     bool deslizar_entidad(uint32_t identificador, int nueva_columna, int nueva_fila);
     bool retirar_entidad(uint32_t identificador);
 
+    static bool es_transicion_de_borde(TipoEntidad tipo);
+    bool ajustar_posicion_transicion_borde(
+        int columna_entrada, int fila_entrada, int& columna_salida, int& fila_salida,
+        int& ancho_salida, int& alto_salida) const;
     bool entidad_puede_ubicarse_en(
         TipoEntidad tipo, int columna, int fila, int ancho, int alto,
         uint32_t identificador_a_ignorar) const;

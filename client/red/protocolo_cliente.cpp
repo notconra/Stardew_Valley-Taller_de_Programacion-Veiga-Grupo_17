@@ -14,6 +14,8 @@ ProtocoloCliente::ProtocoloCliente(ISocket& socket)
           {TipoMensaje::ERROR_SERVIDOR, [this] { return recibir_error_servidor(); }},
           {TipoMensaje::LISTA_PARTIDAS, [this] { return recibir_lista_partidas(); }},
           {TipoMensaje::LISTA_MUNDOS, [this] { return recibir_lista_mundos(); }},
+          {TipoMensaje::CODIGO_PARTIDA_DISPONIBLE,
+           [this] { return recibir_codigo_partida_disponible(); }},
           {TipoMensaje::PARTIDA_ENTRADA, [this] { return recibir_entrada_exitosa_a_partida(); }},
           {TipoMensaje::MULTIJUGADOR_ACTIVADO, [this] { return recibir_multijugador_activado(); }},
           {TipoMensaje::PARTIDA_ABANDONADA, [this] { return recibir_partida_abandonada(); }},
@@ -68,6 +70,7 @@ void ProtocoloCliente::enviar_comando(const ComandoCliente& comando) {
             [this](const RetomarPartida& m) { enviar_comando_retomar_partida(m); },
             [this](const EliminarPartida& m) { enviar_comando_eliminar_partida(m); },
             [this](const ListarMundos& m) { enviar_comando_listar_mundos(m); },
+            [this](const VerificarCodigoPartida& m) { enviar_comando_verificar_codigo_partida(m); },
             [this](const ActivarMultijugador& m) { enviar_comando_activar_multijugador(m); },
             [this](const SalirDePartida& m) { enviar_comando_salir_de_partida(m); },
             [this](const Moverse& m) { enviar_comando_moverse(m); },
@@ -136,6 +139,12 @@ void ProtocoloCliente::enviar_comando_eliminar_partida(const EliminarPartida& el
 
 void ProtocoloCliente::enviar_comando_listar_mundos(const ListarMundos&) {
     enviar_tipo(TipoMensaje::LISTAR_MUNDOS);
+}
+
+void ProtocoloCliente::enviar_comando_verificar_codigo_partida(
+    const VerificarCodigoPartida& verificar) {
+    enviar_tipo(TipoMensaje::VERIFICAR_CODIGO_PARTIDA);
+    enviar_texto(verificar.codigo_partida);
 }
 
 void ProtocoloCliente::enviar_comando_activar_multijugador(const ActivarMultijugador&) {
@@ -307,6 +316,7 @@ InfoPartida ProtocoloCliente::recibir_info_partida() {
     uint8_t jugadores_maximos = recibir_u8();
     uint32_t dia = recibir_u32();
     uint32_t segundos_jugados = recibir_u32();
+    uint32_t monedas = recibir_u32();
 
     return InfoPartida{
         codigo_partida,
@@ -318,7 +328,8 @@ InfoPartida ProtocoloCliente::recibir_info_partida() {
         jugadores_totales,
         jugadores_maximos,
         dia,
-        segundos_jugados};
+        segundos_jugados,
+        monedas};
 }
 
 ListaPartidas ProtocoloCliente::recibir_lista_partidas() {
@@ -340,6 +351,10 @@ ListaMundos ProtocoloCliente::recibir_lista_mundos() {
         mundos.push_back(recibir_texto());
     }
     return ListaMundos{mundos};
+}
+
+CodigoPartidaDisponible ProtocoloCliente::recibir_codigo_partida_disponible() {
+    return CodigoPartidaDisponible{};
 }
 
 EntradaExitosaAPartida ProtocoloCliente::recibir_entrada_exitosa_a_partida() {

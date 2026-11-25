@@ -15,9 +15,13 @@ hooks:   ## instala pre-commit y activa los hooks
 		python3 -m pip install --user --break-system-packages pre-commit
 	$(PRECOMMIT) install --hook-type pre-commit --hook-type commit-msg
 
-build:   ## compila server y client (make build JOBS=4 para compilar en paralelo con mas hilos)
+build:   ## compila server, client y editor (make build JOBS=4 para compilar en paralelo con mas hilos)
 	cmake -S . -B build
-	cmake --build build -j$(JOBS) --target server client
+	cmake --build build -j$(JOBS) --target server client editor
+
+editor:  ## compila el editor de mapas
+	cmake -S . -B build
+	cmake --build build -j$(JOBS) --target editor
 
 test:   ## compila y corre los tests
 	cmake -S . -B build
@@ -36,6 +40,6 @@ check:   ## corre TODOS los hooks sobre todo el repo
 clean:
 	rm -rf build build-tsan
 	find . -type f \( -name "*.o" -o -name "*.tsan.o" \) -delete
-	rm -f client server client-tsan server-tsan
+	rm -f client server editor client-tsan server-tsan
 
-.PHONY: deps hooks build test format lint check clean
+.PHONY: deps hooks build editor test format lint check clean

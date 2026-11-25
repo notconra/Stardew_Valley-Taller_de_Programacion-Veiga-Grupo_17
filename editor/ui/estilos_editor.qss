@@ -1,0 +1,255 @@
+QMainWindow {
+    background-color: #2D2D2D;
+    color: #FFFFFF;
+}
+
+QWidget {
+    background-color: #2D2D2D;
+    color: #EEEEEE;
+    font-family: sans-serif;
+}
+
+QDockWidget {
+    titlebar-close-icon: none;
+    titlebar-normal-icon: none;
+    font-weight: bold;
+}
+
+QDockWidget::title {
+    background: #383838;
+    padding: 6px;
+    border-radius: 3px;
+}
+
+QGroupBox {
+    border: 1px solid #4A4A4A;
+    border-radius: 4px;
+    margin-top: 10px;
+    font-weight: bold;
+    padding-top: 10px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 4px;
+    color: #A0D468;
+}
+
+QToolBar {
+    background: #333333;
+    border-bottom: 1px solid #444444;
+    spacing: 6px;
+    padding: 4px;
+}
+
+QMenuBar {
+    background-color: #242424;
+    color: #EEEEEE;
+    border-bottom: 1px solid #3A3A3A;
+}
+
+QMenuBar::item:selected {
+    background-color: #3A6B35;
+}
+
+QMenu {
+    background-color: #2E2E2E;
+    color: #EEEEEE;
+    border: 1px solid #444444;
+}
+
+QMenu::item:selected {
+    background-color: #3A6B35;
+}
+
+QStatusBar {
+    background-color: #242424;
+    color: #BBBBBB;
+    border-top: 1px solid #3A3A3A;
+}
+
+QListWidget {
+    background-color: #1F1F1F;
+    border: 1px solid #3E3E3E;
+    border-radius: 4px;
+    padding: 4px;
+}
+
+QComboBox {
+    background-color: #3C3C3C;
+    border: 1px solid #555555;
+    border-radius: 4px;
+    padding: 4px 8px;
+    color: white;
+}
+
+QPushButton {
+    background-color: #3E3E3E;
+    border: 1px solid #555555;
+    border-radius: 4px;
+    padding: 5px 10px;
+    color: white;
+}
+
+QPushButton:hover {
+    background-color: #4E4E4E;
+}
+
+QPushButton:pressed {
+    background-color: #2E2E2E;
+}
+
+#area_desplazamiento {
+    background-color: #222222;
+}
+
+#etiqueta_nombre_mundo {
+    padding: 0 10px;
+    font-size: 13px;
+}
+
+#etiqueta_dimensiones {
+    padding: 0 8px;
+    font-size: 13px;
+}
+
+#boton_redimensionar {
+    background-color: #3C5A78;
+    color: white;
+    font-weight: bold;
+    padding: 4px 10px;
+    border-radius: 4px;
+}
+
+#boton_redimensionar:hover {
+    background-color: #4C7298;
+}
+
+#boton_guardar_rapido {
+    background-color: #2E6B38;
+    color: white;
+    font-weight: bold;
+    padding: 4px 10px;
+    border-radius: 4px;
+}
+
+#boton_guardar_rapido:hover {
+    background-color: #3B8C4A;
+}
+
+QPushButton[rol="modo"] {
+    background-color: #383838;
+    color: #EEEEEE;
+    font-weight: bold;
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid #555555;
+}
+
+QPushButton[rol="modo"]:hover {
+    background-color: #4A4A4A;
+}
+
+QPushButton[rol="modo"]:checked {
+    background-color: #2E6B38;
+    color: white;
+    border: 1px solid #4CAF50;
+}
+
+QPushButton[rol="tile"] {
+    background-color: #2D2D2D;
+    border: 1px solid #444444;
+    border-radius: 4px;
+    padding: 2px;
+}
+
+QPushButton[rol="tile"]:hover {
+    background-color: #3D3D3D;
+    border: 1px solid #888888;
+}
+
+QPushButton[rol="tile"]:checked {
+    background-color: #2E6B38;
+    border: 2px solid #55FF55;
+}
+
+QPushButton[rol="estampa"] {
+    background-color: #2B3D4F;
+    color: white;
+    font-weight: bold;
+    padding: 5px 8px;
+    border-radius: 4px;
+    border: 1px solid #3A536B;
+    text-align: left;
+    font-size: 11px;
+}
+
+QPushButton[rol="estampa"]:hover {
+    background-color: #385068;
+}
+
+QPushButton[rol="estampa"]:checked {
+    background-color: #1E6B9B;
+    border: 2px solid #00D2FF;
+}
+
+#boton_muro_perimetral {
+    background-color: #5A3A1A;
+    color: white;
+    font-weight: bold;
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid #7A4F23;
+    font-size: 11px;
+}
+
+#boton_muro_perimetral:hover {
+    background-color: #7A4F23;
+}
+
+QPushButton[rol="entidad"] {
+    text-align: left;
+    padding: 6px 10px;
+    font-size: 13px;
+    border-radius: 4px;
+}
+
+QPushButton[rol="entidad"]:checked {
+    background-color: #4A6E82;
+    color: white;
+    font-weight: bold;
+}
+
+#boton_eliminar_entidad {
+    background-color: #B22222;
+    color: white;
+    font-weight: bold;
+    padding: 6px;
+    border-radius: 4px;
+}
+
+#boton_eliminar_entidad:hover {
+    background-color: #DC143C;
+}
+
+#boton_eliminar_entidad:disabled {
+    background-color: #555555;
+    color: #888888;
+}
+
+#etiqueta_estado_general {
+    background-color: #333333;
+    color: white;
+    padding: 8px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+#etiqueta_estado_general[estado="valido"] {
+    background-color: #2E6B38;
+}
+
+#etiqueta_estado_general[estado="invalido"] {
+    background-color: #8B0000;
+}
