@@ -398,8 +398,8 @@ bool LienzoDeEdicion::casilla_es_perimetro_protegido(int columna, int fila) cons
         }
         return false;
     } else if (sector_actual == SectorActual::GRANJA) {
-        if (columna == 0 || columna >= cantidad_columnas - 1 || fila <= 1 ||
-            fila >= cantidad_filas - 1) {
+        if (columna == 0 || columna >= cantidad_columnas - 1 ||
+            fila < MapaEditable::ALTO_VALLA_NORTE_CASILLAS || fila >= cantidad_filas - 1) {
             return true;
         }
     } else if (sector_actual == SectorActual::PUEBLO) {
@@ -491,6 +491,28 @@ void LienzoDeEdicion::inicializar_catalogo_visual_entidades() {
 void LienzoDeEdicion::dibujar_visual_entidad(
     QPainter& pintor, TipoEntidad tipo_entidad, int origen_columna, int origen_fila,
     const QRect& rectangulo_destino) {
+    if (tipo_entidad == TipoEntidad::ENTRADA_CAVERNA) {
+        int fila_local = 0;
+        while (fila_local < 4) {
+            int columna_local = 0;
+            while (columna_local < 3) {
+                dibujar_tile_en_lienzo(
+                    pintor,
+                    CatalogoDeEstampas::obtener_tile_suelo_cueva(fila_local, columna_local),
+                    origen_columna + columna_local,
+                    origen_fila + fila_local);
+                dibujar_tile_en_lienzo(
+                    pintor,
+                    CatalogoDeEstampas::obtener_tile_estructuras_cueva(fila_local, columna_local),
+                    origen_columna + columna_local,
+                    origen_fila + fila_local);
+                columna_local++;
+            }
+            fila_local++;
+        }
+        return;
+    }
+
     if (tipo_entidad == TipoEntidad::SALIDA_CAVERNA && !pixmap_caverna_entidades.isNull()) {
         pintor.drawPixmap(rectangulo_destino, pixmap_caverna_entidades, QRect(48, 112, 16, 16));
         int altura_escalera = 0;
@@ -661,10 +683,11 @@ void LienzoDeEdicion::dibujar_entidad(
         return;
     }
 
-    bool es_entidad_caverna =
+    bool es_entidad_tile_compuesta =
         (tipo_entidad == TipoEntidad::ESCALERA_NIVEL ||
-         tipo_entidad == TipoEntidad::SALIDA_CAVERNA);
-    if (es_entidad_caverna) {
+         tipo_entidad == TipoEntidad::SALIDA_CAVERNA ||
+         tipo_entidad == TipoEntidad::ENTRADA_CAVERNA);
+    if (es_entidad_tile_compuesta) {
         int origen_columna = 0;
         int origen_fila = 0;
         entidad.consultar_origen(origen_columna, origen_fila);
@@ -992,6 +1015,14 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
                 fila_fantasma,
                 ancho_defecto,
                 alto_defecto);
+        } else if (entidad_a_colocar == TipoEntidad::ENTRADA_CAVERNA) {
+            int cantidad_columnas = mapa_actual->obtener_cantidad_de_columnas();
+            fila_fantasma = 0;
+            if (columna_fantasma < 1) {
+                columna_fantasma = 1;
+            } else if (columna_fantasma + ancho_defecto > cantidad_columnas - 1) {
+                columna_fantasma = cantidad_columnas - 1 - ancho_defecto;
+            }
         }
         bool ubicable = mapa_actual->entidad_puede_ubicarse_en(
             entidad_a_colocar,
@@ -1322,6 +1353,13 @@ void LienzoDeEdicion::mousePressEvent(QMouseEvent* evento) {
                     fila_colocacion,
                     ancho_defecto,
                     alto_defecto);
+            } else if (entidad_a_colocar == TipoEntidad::ENTRADA_CAVERNA) {
+                fila_colocacion = 0;
+                if (columna_colocacion < 1) {
+                    columna_colocacion = 1;
+                } else if (columna_colocacion + ancho_defecto > cantidad_columnas - 1) {
+                    columna_colocacion = cantidad_columnas - 1 - ancho_defecto;
+                }
             }
             asegurar_espacio_en_caverna(
                 columna_colocacion,

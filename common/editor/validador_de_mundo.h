@@ -23,8 +23,8 @@ class ValidadorDeMundo {
 private:
     static constexpr int COLUMNA_PUERTA_CABANIA = 5;
     static constexpr int FILA_PUERTA_CABANIA = 7;
-    static constexpr int COLUMNA_PUERTA_CASETA_MINA = 2;
-    static constexpr int FILA_PUERTA_CASETA_MINA = 6;
+    static constexpr int COLUMNA_PUERTA_CASETA_MINA = 1;
+    static constexpr int FILA_PUERTA_CASETA_MINA = 3;
     static constexpr int COLUMNA_PUERTA_CENTRO_COMUNITARIO = 5;
     static constexpr int FILA_PUERTA_CENTRO_COMUNITARIO = 9;
     static constexpr int COLUMNA_PUERTA_MERCADO = 5;

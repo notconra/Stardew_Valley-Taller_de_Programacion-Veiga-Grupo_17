@@ -1263,3 +1263,35 @@ bool CatalogoDeEstampas::es_estampa_decorativa(TipoEstampa tipo) {
     }
     return false;
 }
+
+uint32_t CatalogoDeEstampas::obtener_tile_suelo_cueva(int fila_local, int columna_local) {
+    static constexpr int ANCHO_CUEVA = 3;
+    static constexpr int ALTO_CUEVA = 4;
+    static constexpr uint32_t TILES_SUELO_CUEVA[ALTO_CUEVA][ANCHO_CUEVA] = {
+        {TILE_PASTO_PERIMETRAL, TILE_PASTO_PERIMETRAL, TILE_PASTO_PERIMETRAL},
+        {TILE_CUEVA_INTERIOR_OSCURO, TILE_CUEVA_INTERIOR_OSCURO, TILE_CUEVA_INTERIOR_OSCURO},
+        {TILE_CUEVA_INTERIOR_OSCURO, TILE_CUEVA_SUELO_UMBRAL, TILE_CUEVA_INTERIOR_OSCURO},
+        {TILE_CUEVA_TIERRA_SALIDA, TILE_CUEVA_TIERRA_SALIDA, TILE_CUEVA_TIERRA_SALIDA}};
+    if (fila_local < 0 || fila_local >= ALTO_CUEVA || columna_local < 0 ||
+        columna_local >= ANCHO_CUEVA) {
+        return 0;
+    }
+    return TILES_SUELO_CUEVA[fila_local][columna_local];
+}
+
+uint32_t CatalogoDeEstampas::obtener_tile_estructuras_cueva(int fila_local, int columna_local) {
+    static constexpr int ANCHO_CUEVA = 3;
+    static constexpr int ALTO_CUEVA = 4;
+    static constexpr uint32_t TILES_ESTRUCTURAS_CUEVA[ALTO_CUEVA][ANCHO_CUEVA] = {
+        {TILE_CUEVA_BORDE_SUPERIOR_IZQ,
+         TILE_CUEVA_BORDE_SUPERIOR_MED,
+         TILE_CUEVA_BORDE_SUPERIOR_DER},
+        {TILE_CUEVA_PARED_MED_IZQ, TILE_CUEVA_ARCO_SUPERIOR, TILE_CUEVA_PARED_MED_DER},
+        {TILE_CUEVA_PARED_INF_IZQ, 0, TILE_CUEVA_PARED_INF_DER},
+        {TILE_CUEVA_BASE_IZQ, 0, TILE_CUEVA_BASE_DER}};
+    if (fila_local < 0 || fila_local >= ALTO_CUEVA || columna_local < 0 ||
+        columna_local >= ANCHO_CUEVA) {
+        return 0;
+    }
+    return TILES_ESTRUCTURAS_CUEVA[fila_local][columna_local];
+}

@@ -25,9 +25,9 @@ static const std::map<std::string, InformacionEntidadTransicion> DESTINOS_A_ENTI
     {"centro_comunitario", {TipoEntidad::CENTRO_COMUNITARIO, 5, 8, 12, 10}},
     {"Town", {TipoEntidad::TRANSICION_PUEBLO, 0, 0, 1, 2}},
     {"granja", {TipoEntidad::TRANSICION_GRANJA, 0, 0, 1, 2}},
-    {"caverna", {TipoEntidad::ENTRADA_CAVERNA, 2, 5, 5, 7}},
-    {"mina_1", {TipoEntidad::ENTRADA_CAVERNA, 2, 5, 5, 7}},
-    {"mazmorra", {TipoEntidad::ENTRADA_CAVERNA, 2, 5, 5, 7}},
+    {"caverna", {TipoEntidad::ENTRADA_CAVERNA, 1, 2, 3, 4}},
+    {"mina_1", {TipoEntidad::ENTRADA_CAVERNA, 1, 2, 3, 4}},
+    {"mazmorra", {TipoEntidad::ENTRADA_CAVERNA, 1, 2, 3, 4}},
     {"siguiente", {TipoEntidad::ESCALERA_NIVEL, 0, 0, 1, 1}}};
 
 static const std::map<std::string, TipoEntidad> IDENTIFICADORES_A_PUESTO = {
@@ -721,6 +721,10 @@ MapaEditable CargadorDeSectorTMX::cargar_sector(
             }
         }
         indice_puesto++;
+    }
+
+    if (sector == SectorActual::GRANJA) {
+        mapa.generar_muro_perimetral_granja();
     }
 
     return mapa;

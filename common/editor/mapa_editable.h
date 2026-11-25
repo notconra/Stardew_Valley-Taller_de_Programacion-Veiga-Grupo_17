@@ -32,6 +32,9 @@ private:
     uint32_t proximo_identificador_de_estampa;
 
     int buscar_indice_de_entidad(uint32_t identificador) const;
+    void pintar_borde_lateral_granja(
+        int columna, int fila_lateral, uint32_t tile_a, uint32_t tile_b,
+        uint32_t tile_paso_lateral);
     static bool es_piso_en_mascara(
         const std::vector<std::vector<bool>>& mascara_piso, int columna, int fila);
 
@@ -58,7 +61,7 @@ public:
         uint8_t propiedades);
     static constexpr int ANCHO_VALLA_OESTE_CASILLAS = 1;
     static constexpr int ANCHO_VALLA_ESTE_CASILLAS = 1;
-    static constexpr int ALTO_VALLA_NORTE_CASILLAS = 2;
+    static constexpr int ALTO_VALLA_NORTE_CASILLAS = 4;
     static constexpr int ALTO_VALLA_SUR_CASILLAS = 1;
     static constexpr int ANCHO_VALLA_LATERAL_CASILLAS = 1;
     static constexpr int ALTO_VALLA_HORIZONTAL_CASILLAS = 2;

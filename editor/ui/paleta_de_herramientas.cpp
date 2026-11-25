@@ -280,6 +280,8 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
         boton_muro_perimetral->setText("Restaurar Paredes Perimetrales");
     } else if (sector == SectorActual::CAVERNA) {
         boton_muro_perimetral->setText("Generar Muros de Mina");
+    } else if (sector == SectorActual::GRANJA) {
+        boton_muro_perimetral->setText("Generar Muros Exteriores");
     } else {
         boton_muro_perimetral->setText("Cerrar Perímetro con Vallas");
     }

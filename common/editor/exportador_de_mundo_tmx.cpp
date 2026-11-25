@@ -139,8 +139,8 @@ bool ExportadorDeMundoTMX::exportar_mundo_completo(
     destinos_mercado.fila_destino_pueblo = fil_mercado_en_pueblo + 9;
 
     DestinosDeTransicion destinos_caverna;
-    destinos_caverna.columna_salida_caverna = col_entrada_en_granja + 2;
-    destinos_caverna.fila_salida_caverna = fil_entrada_en_granja + 6;
+    destinos_caverna.columna_salida_caverna = col_entrada_en_granja + 1;
+    destinos_caverna.fila_salida_caverna = fil_entrada_en_granja + 3;
 
     // 3. Crear directorio de destino y exportar cada sector
     std::filesystem::create_directories(ruta_directorio_destino);
