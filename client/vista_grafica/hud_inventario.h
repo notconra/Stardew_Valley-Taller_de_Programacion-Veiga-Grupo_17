@@ -46,6 +46,9 @@ public:
     static constexpr const char* RUTA_ASSET_TACHO = "Assets/hud/tacho.png";
     static constexpr const char* RUTA_ASSET_VIDA = "Assets/hud/vida.png";
     static constexpr const char* RUTA_ASSET_ENERGIA = "Assets/hud/energia.png";
+    // Versiones más largas que se usan cuando el jugador completó el lote de pelea.
+    static constexpr const char* RUTA_ASSET_VIDA_MEJORADA = "Assets/hud/vida_mejorada.png";
+    static constexpr const char* RUTA_ASSET_ENERGIA_MEJORADA = "Assets/hud/energia_mejorada.png";
     static constexpr const char* RUTA_ASSET_FONDO_BARRA = "Assets/hud/fondo_barra.png";
     static constexpr const char* RUTA_ASSET_CASILLA = "Assets/hud/casilla.png";
     static constexpr const char* RUTA_ASSET_CASILLA_SELECCIONADA =
@@ -82,8 +85,11 @@ public:
     // al lado del otro: energía pegada al borde (siempre visible, se usa también fuera de la
     // mazmorra) y vida inmediatamente a su izquierda (solo tiene sentido mostrarla adentro de la
     // mazmorra, así que quien llama decide si corresponde).
-    void dibujar_vida(SDL_Renderer* renderer, uint8_t vida, uint8_t vida_maxima) const;
-    void dibujar_energia(SDL_Renderer* renderer, uint8_t energia, uint8_t energia_maxima) const;
+    // Con "mejorado" (lote de pelea completo) se usa el marco largo.
+    void dibujar_vida(
+        SDL_Renderer* renderer, uint8_t vida, uint8_t vida_maxima, bool mejorado) const;
+    void dibujar_energia(
+        SDL_Renderer* renderer, uint8_t energia, uint8_t energia_maxima, bool mejorado) const;
 
     // Para el mercado, qué ranura está bajo el mouse (como en hover).
     RanuraApuntada ranura_en_pantalla(
@@ -141,6 +147,8 @@ private:
     std::optional<Textura> tacho;
     std::optional<Textura> marco_de_vida;
     std::optional<Textura> marco_de_energia;
+    std::optional<Textura> marco_de_vida_mejorado;
+    std::optional<Textura> marco_de_energia_mejorado;
     std::optional<Textura> fondo_barra;
     std::optional<Textura> casilla;
     std::optional<Textura> casilla_seleccionada;
@@ -181,6 +189,12 @@ private:
     void dibujar_item_levantado(
         SDL_Renderer* renderer, const Disposicion& disposicion, const InventarioJugador& inventario,
         const CofreJugador& cofre, int raton_x, int raton_y) const;
+
+    // Elige el marco normal o el mejorado y lo dibuja con dibujar_gauge().
+    void dibujar_gauge_elegido(
+        SDL_Renderer* renderer, const std::optional<Textura>& normal,
+        const std::optional<Textura>& mejorado, bool usar_mejorado, double fraccion,
+        int borde_derecho) const;
 
     // Dibuja un gauge vertical (vida o energía) ya compuesto a tamaño nativo
     int dibujar_gauge(

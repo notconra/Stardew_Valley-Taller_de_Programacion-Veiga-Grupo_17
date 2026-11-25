@@ -1485,9 +1485,11 @@ void VistaPartida::dibujar(
     hud_mercado.dibujar(entrada.raton_x(), entrada.raton_y());
     hud.dibujar(renderer, ultimo_inventario, ultimo_cofre, entrada.raton_x(), entrada.raton_y());
     if (const EstadoJugador* propio = jugador_propio(); propio != nullptr) {
-        hud.dibujar_energia(renderer, propio->energia, propio->energia_maxima);
+        hud.dibujar_energia(
+            renderer, propio->energia, propio->energia_maxima, propio->con_mejora_de_pelea);
         if (mapa_actual_es_mazmorra() || propio->vida < propio->vida_maxima) {
-            hud.dibujar_vida(renderer, propio->vida, propio->vida_maxima);
+            hud.dibujar_vida(
+                renderer, propio->vida, propio->vida_maxima, propio->con_mejora_de_pelea);
         }
         reloj_grafico.dibujar_dinero(renderer, propio->monedas, ancho_de_pantalla);
     }

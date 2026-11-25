@@ -218,6 +218,8 @@ id = "mercado"
 ruta = "Assets/Maps/Mercado.tmx"
 capas_bajo_los_jugadores = ["Back", "Buildings", "Paredes", "Back2", "Back3", "Buildings2", "Buildings3"]
 capas_sobre_los_jugadores = ["Front"]
+# Música de la tienda de los NPCs: suena en loop mientras estás adentro (usa el volumen de música).
+ruta_ambiente = "Assets/sfx/musica_mercado.wav"
 ruta_caminar = "Assets/sfx/caminar_casa.wav"
 techado = true
 
