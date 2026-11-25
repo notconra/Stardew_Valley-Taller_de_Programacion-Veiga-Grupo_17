@@ -25,21 +25,21 @@ struct ConfiguracionBotonEntidad {
 
 static const std::map<SectorActual, std::vector<ConfiguracionBotonEntidad>> ENTIDADES_POR_SECTOR = {
     {SectorActual::GRANJA,
-     {{TipoEntidad::CABANIA, "Cabaña del Jugador (9x9)"},
-      {TipoEntidad::ENTRADA_CAVERNA, "Entrada Mina (5x7)"},
-      {TipoEntidad::TRANSICION_PUEBLO, "Salida a Pueblo (Borde 1x2 / 2x1)"}}},
+     {{TipoEntidad::CABANIA, "Cabaña del Jugador"},
+      {TipoEntidad::ENTRADA_CAVERNA, "Entrada Mina"},
+      {TipoEntidad::TRANSICION_PUEBLO, "Salida al Pueblo"}}},
     {SectorActual::PUEBLO,
-     {{TipoEntidad::CENTRO_COMUNITARIO, "Centro Comunitario (12x10)"},
-      {TipoEntidad::MERCADO, "Mercado (10x10)"},
-      {TipoEntidad::TRANSICION_GRANJA, "Salida a Granja (Borde 1x2 / 2x1)"}}},
+     {{TipoEntidad::CENTRO_COMUNITARIO, "Centro Comunitario"},
+      {TipoEntidad::MERCADO, "Mercado"},
+      {TipoEntidad::TRANSICION_GRANJA, "Salida a Granja"}}},
     {SectorActual::MERCADO,
-     {{TipoEntidad::PUESTO_MARNIE, "Puesto Marnie (1x1)"},
-      {TipoEntidad::PUESTO_CLINT, "Puesto Clint (1x1)"},
-      {TipoEntidad::PUESTO_PIERRE, "Puesto Pierre (1x1)"},
-      {TipoEntidad::PUESTO_ROBIN, "Puesto Robin (1x1)"}}},
+     {{TipoEntidad::PUESTO_MARNIE, "Puesto Marnie"},
+      {TipoEntidad::PUESTO_CLINT, "Puesto Clint"},
+      {TipoEntidad::PUESTO_PIERRE, "Puesto Pierre"},
+      {TipoEntidad::PUESTO_ROBIN, "Puesto Robin"}}},
     {SectorActual::CAVERNA,
-     {{TipoEntidad::ESCALERA_NIVEL, "Escalera Mazmorra (1x1)"},
-      {TipoEntidad::SALIDA_CAVERNA, "Salida Caverna (1x1)"}}}};
+     {{TipoEntidad::ESCALERA_NIVEL, "Escalera Mazmorra"},
+      {TipoEntidad::SALIDA_CAVERNA, "Salida Caverna"}}}};
 
 PanelDeValidacion::PanelDeValidacion(QWidget* padre)
     : QWidget(padre),
@@ -156,11 +156,20 @@ void PanelDeValidacion::actualizar_sector(SectorActual sector) {
         botones_entidades_actuales.push_back(boton);
         indice_config++;
     }
+}
 
-    if (!botones_entidades_actuales.empty()) {
-        botones_entidades_actuales[0]->setChecked(true);
-        emit entidad_cambiada(lista_configs[0].entidad);
+void PanelDeValidacion::desmarcar_entidades() {
+    if (grupo_entidades == nullptr) {
+        return;
     }
+    QAbstractButton* boton_marcado = grupo_entidades->checkedButton();
+    if (boton_marcado == nullptr) {
+        return;
+    }
+    bool era_exclusivo = grupo_entidades->exclusive();
+    grupo_entidades->setExclusive(false);
+    boton_marcado->setChecked(false);
+    grupo_entidades->setExclusive(era_exclusivo);
 }
 
 void PanelDeValidacion::habilitar_boton_eliminar(bool habilitado) {

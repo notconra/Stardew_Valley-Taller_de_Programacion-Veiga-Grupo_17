@@ -37,6 +37,7 @@ public:
     explicit PanelDeValidacion(QWidget* padre = nullptr);
 
     void actualizar_sector(SectorActual sector);
+    void desmarcar_entidades();
     void habilitar_boton_eliminar(bool habilitado);
     void actualizar_resultado(const ResultadoValidacion& resultado);
 
