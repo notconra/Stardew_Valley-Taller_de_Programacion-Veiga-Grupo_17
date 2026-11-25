@@ -77,7 +77,8 @@ LienzoDeEdicion::LienzoDeEdicion(QWidget* padre)
       fila_arrastre_actual(0),
       columna_hover(-1),
       fila_hover(-1),
-      mouse_presionado(false) {
+      mouse_presionado(false),
+      trazo_terreno_activo(false) {
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
     cargar_tilesets_de_sector(SectorActual::GRANJA);
@@ -426,8 +427,13 @@ void LienzoDeEdicion::pintar_casilla_en_posicion(int columna, int fila) {
     }
     mapa_actual
         ->pintar_en_capa(TipoCapa::SUELO, columna, fila, id_tile_actual, propiedades_actuales);
+    trazo_terreno_activo = true;
     emit mapa_modificado();
     update();
+}
+
+bool LienzoDeEdicion::esta_pintando_con_mouse() const {
+    return mouse_presionado && modo_actual == ModoEditor::TERRENO;
 }
 
 void LienzoDeEdicion::dibujar_capa_de_tiles(
@@ -1273,8 +1279,8 @@ void LienzoDeEdicion::mousePressEvent(QMouseEvent* evento) {
     }
 
     if (evento->button() == Qt::LeftButton) {
-        mouse_presionado = true;
         if (modo_actual == ModoEditor::TERRENO) {
+            mouse_presionado = true;
             pintar_casilla_en_posicion(columna, fila);
         } else if (modo_actual == ModoEditor::ESTAMPAR) {
             DefinicionEstampa definicion_estampa =
@@ -1390,6 +1396,10 @@ void LienzoDeEdicion::mouseMoveEvent(QMouseEvent* evento) {
 void LienzoDeEdicion::mouseReleaseEvent(QMouseEvent* evento) {
     if (evento->button() == Qt::LeftButton) {
         mouse_presionado = false;
+        if (trazo_terreno_activo) {
+            trazo_terreno_activo = false;
+            emit trazo_finalizado();
+        }
         if (arrastrando_entidad && identificador_entidad_seleccionada >= 0 &&
             mapa_actual != nullptr) {
             uint32_t id_seleccionada = static_cast<uint32_t>(identificador_entidad_seleccionada);

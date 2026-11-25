@@ -32,12 +32,18 @@
 
 static constexpr int DURACION_MENSAJE_ESTADO_MS = 2000;
 static constexpr int MARGEN_ANCHO_PANEL_PX = 16;
+static constexpr size_t MAXIMO_HISTORIAL_DESHACER = 20;
 
 VentanaPrincipalEditor::VentanaPrincipalEditor(QWidget* padre)
     : QMainWindow(padre),
       mundo_actual(DefinicionDeMundo::crear_mundo_por_defecto("Mundo Inicial")),
+      estado_actual_respaldo(mundo_actual),
+      historial_deshacer(),
+      historial_rehacer(),
       ruta_archivo_actual(""),
       hay_cambios_sin_guardar(false),
+      accion_deshacer(nullptr),
+      accion_rehacer(nullptr),
       lienzo(nullptr),
       paleta(nullptr),
       panel_validacion(nullptr),
@@ -114,6 +120,17 @@ void VentanaPrincipalEditor::inicializar_menu() {
     QAction* accion_salir = menu_archivo->addAction("&Salir");
     accion_salir->setShortcut(QKeySequence::Quit);
     connect(accion_salir, &QAction::triggered, this, &QWidget::close);
+
+    QMenu* menu_editar = barra_menu->addMenu("&Editar");
+    accion_deshacer = menu_editar->addAction("&Deshacer");
+    accion_deshacer->setShortcut(QKeySequence::Undo);
+    accion_deshacer->setEnabled(false);
+    connect(accion_deshacer, &QAction::triggered, this, &VentanaPrincipalEditor::deshacer);
+
+    accion_rehacer = menu_editar->addAction("&Rehacer");
+    accion_rehacer->setShortcut(QKeySequence::Redo);
+    accion_rehacer->setEnabled(false);
+    connect(accion_rehacer, &QAction::triggered, this, &VentanaPrincipalEditor::rehacer);
 
     QMenu* menu_ver = barra_menu->addMenu("&Ver");
     QAction* accion_zoom_in = menu_ver->addAction("Acercar Zoom (+)");
@@ -224,7 +241,13 @@ void VentanaPrincipalEditor::conectar_senales() {
         &VentanaPrincipalEditor::actualizar_coordenadas);
     connect(lienzo, &LienzoDeEdicion::mapa_modificado, this, [this]() {
         marcar_cambios_sin_guardar();
+        if (!lienzo->esta_pintando_con_mouse()) {
+            registrar_estado_en_historial();
+        }
         ejecutar_validacion();
+    });
+    connect(lienzo, &LienzoDeEdicion::trazo_finalizado, this, [this]() {
+        registrar_estado_en_historial();
     });
     connect(
         lienzo,
@@ -352,6 +375,7 @@ void VentanaPrincipalEditor::nuevo_mundo() {
     mundo_actual = DefinicionDeMundo::crear_mundo_por_defecto("Nuevo Mundo");
     ruta_archivo_actual = "";
     hay_cambios_sin_guardar = false;
+    limpiar_historial();
     actualizar_etiqueta_nombre_mundo();
     combo_sectores->setCurrentIndex(0);
     actualizar_sector_en_pantalla();
@@ -376,6 +400,7 @@ void VentanaPrincipalEditor::abrir_mundo() {
             mundo_actual = CargadorDeMundoTMX::cargar_mundo(ruta_directorio.toStdString());
             ruta_archivo_actual = ruta_directorio.toStdString();
             hay_cambios_sin_guardar = false;
+            limpiar_historial();
             actualizar_etiqueta_nombre_mundo();
             combo_sectores->setCurrentIndex(0);
             actualizar_sector_en_pantalla();
@@ -447,6 +472,62 @@ void VentanaPrincipalEditor::actualizar_etiqueta_nombre_mundo() {
 
 void VentanaPrincipalEditor::marcar_cambios_sin_guardar() {
     hay_cambios_sin_guardar = true;
+}
+
+void VentanaPrincipalEditor::registrar_estado_en_historial() {
+    if (historial_deshacer.size() >= MAXIMO_HISTORIAL_DESHACER) {
+        historial_deshacer.erase(historial_deshacer.begin());
+    }
+    historial_deshacer.push_back(estado_actual_respaldo);
+    historial_rehacer.clear();
+    estado_actual_respaldo = mundo_actual;
+    actualizar_acciones_historial();
+}
+
+void VentanaPrincipalEditor::limpiar_historial() {
+    historial_deshacer.clear();
+    historial_rehacer.clear();
+    estado_actual_respaldo = mundo_actual;
+    actualizar_acciones_historial();
+}
+
+void VentanaPrincipalEditor::actualizar_acciones_historial() {
+    if (accion_deshacer != nullptr) {
+        accion_deshacer->setEnabled(!historial_deshacer.empty());
+    }
+    if (accion_rehacer != nullptr) {
+        accion_rehacer->setEnabled(!historial_rehacer.empty());
+    }
+}
+
+void VentanaPrincipalEditor::deshacer() {
+    if (historial_deshacer.empty()) {
+        return;
+    }
+    historial_rehacer.push_back(mundo_actual);
+    mundo_actual = historial_deshacer.back();
+    historial_deshacer.pop_back();
+    estado_actual_respaldo = mundo_actual;
+    marcar_cambios_sin_guardar();
+    actualizar_sector_en_pantalla();
+    ejecutar_validacion();
+    actualizar_acciones_historial();
+    statusBar()->showMessage("Acción deshecha.", DURACION_MENSAJE_ESTADO_MS);
+}
+
+void VentanaPrincipalEditor::rehacer() {
+    if (historial_rehacer.empty()) {
+        return;
+    }
+    historial_deshacer.push_back(mundo_actual);
+    mundo_actual = historial_rehacer.back();
+    historial_rehacer.pop_back();
+    estado_actual_respaldo = mundo_actual;
+    marcar_cambios_sin_guardar();
+    actualizar_sector_en_pantalla();
+    ejecutar_validacion();
+    actualizar_acciones_historial();
+    statusBar()->showMessage("Acción rehecha.", DURACION_MENSAJE_ESTADO_MS);
 }
 
 bool VentanaPrincipalEditor::confirmar_descartar_cambios_si_es_necesario() {
@@ -785,6 +866,7 @@ void VentanaPrincipalEditor::abrir_dialogo_redimensionar() {
             lienzo->update();
             actualizar_etiqueta_dimensiones();
             marcar_cambios_sin_guardar();
+            registrar_estado_en_historial();
             ejecutar_validacion();
             statusBar()->showMessage(
                 QString("Dimensiones actualizadas a %1 x %2 casillas.")
@@ -805,18 +887,21 @@ void VentanaPrincipalEditor::generar_muro_perimetral_granja() {
         mapa_actual_sector->generar_muro_perimetral_granja();
         lienzo->update();
         marcar_cambios_sin_guardar();
+        registrar_estado_en_historial();
         ejecutar_validacion();
         statusBar()->showMessage("Perímetro de muros de troncos generado con éxito.", 3000);
     } else if (indice_sector == 1) {
         mapa_actual_sector->generar_muro_perimetral_pueblo();
         lienzo->update();
         marcar_cambios_sin_guardar();
+        registrar_estado_en_historial();
         ejecutar_validacion();
         statusBar()->showMessage("Perímetro de vallas urbanas generado con éxito.", 3000);
     } else if (indice_sector == 2) {
         mapa_actual_sector->reconstruir_perimetro_mercado();
         lienzo->update();
         marcar_cambios_sin_guardar();
+        registrar_estado_en_historial();
         ejecutar_validacion();
         statusBar()->showMessage("Perímetro del mercado restaurado con éxito.", 3000);
     } else if (indice_sector >= 3) {
@@ -825,6 +910,7 @@ void VentanaPrincipalEditor::generar_muro_perimetral_granja() {
         lienzo->update();
         actualizar_etiqueta_dimensiones();
         marcar_cambios_sin_guardar();
+        registrar_estado_en_historial();
         ejecutar_validacion();
         statusBar()->showMessage("Muros de mina generados con éxito.", 3000);
     }

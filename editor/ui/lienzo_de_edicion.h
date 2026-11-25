@@ -66,6 +66,7 @@ private:
     int columna_hover;
     int fila_hover;
     bool mouse_presionado;
+    bool trazo_terreno_activo;
 
     void inicializar_catalogo_visual_entidades();
     void cargar_tilesets_de_sector(SectorActual sector);
@@ -124,10 +125,12 @@ public:
     void rotar_elemento_actual();
     TipoEstampa obtener_estampa_a_colocar() const;
     uint32_t obtener_id_tile_actual() const;
+    bool esta_pintando_con_mouse() const;
 
 signals:
     void casilla_apuntada(int columna, int fila);
     void mapa_modificado();
+    void trazo_finalizado();
     void mapa_expandido(int columnas_agregadas_izquierda, int filas_agregadas_arriba);
     void entidad_seleccionada_cambio(int identificador_entidad);
     void estampa_rotada(TipoEstampa nueva_estampa);

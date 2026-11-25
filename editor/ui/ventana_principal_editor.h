@@ -1,6 +1,7 @@
 #ifndef VENTANA_PRINCIPAL_EDITOR_H
 #define VENTANA_PRINCIPAL_EDITOR_H
 
+#include <QAction>
 #include <QCloseEvent>
 #include <QComboBox>
 #include <QDockWidget>
@@ -8,6 +9,7 @@
 #include <QMainWindow>
 #include <QScrollArea>
 #include <string>
+#include <vector>
 
 #include "definicion_de_mundo.h"
 #include "lienzo_de_edicion.h"
@@ -19,9 +21,14 @@ class VentanaPrincipalEditor : public QMainWindow {
 
 private:
     DefinicionDeMundo mundo_actual;
+    DefinicionDeMundo estado_actual_respaldo;
+    std::vector<DefinicionDeMundo> historial_deshacer;
+    std::vector<DefinicionDeMundo> historial_rehacer;
     std::string ruta_archivo_actual;
     bool hay_cambios_sin_guardar;
 
+    QAction* accion_deshacer;
+    QAction* accion_rehacer;
     LienzoDeEdicion* lienzo;
     PaletaDeHerramientas* paleta;
     PanelDeValidacion* panel_validacion;
@@ -43,6 +50,9 @@ private:
     void actualizar_etiqueta_nombre_mundo();
     void ajustar_ancho_paneles();
     void marcar_cambios_sin_guardar();
+    void registrar_estado_en_historial();
+    void limpiar_historial();
+    void actualizar_acciones_historial();
     bool confirmar_descartar_cambios_si_es_necesario();
     bool validar_antes_de_guardar();
     MapaEditable* obtener_mapa_activo();
@@ -55,6 +65,8 @@ private slots:
     void abrir_mundo();
     void guardar_mundo();
     void guardar_mundo_como();
+    void deshacer();
+    void rehacer();
     void cambiar_sector(int indice);
     void aumentar_zoom();
     void disminuir_zoom();
