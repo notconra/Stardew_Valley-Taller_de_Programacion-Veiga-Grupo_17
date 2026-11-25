@@ -37,6 +37,9 @@ private:
         const MapaEditable& mapa, const EntidadDelMapa& centro_comunitario);
     static bool casilla_puerta_mercado_transitable(
         const MapaEditable& mapa, const EntidadDelMapa& mercado);
+    static bool calcular_casilla_llegada_borde(
+        const MapaEditable& mapa, const EntidadDelMapa& transicion, int& columna_llegada,
+        int& fila_llegada);
     static bool existe_camino_transitable(
         const MapaEditable& mapa, const EntidadDelMapa& origen, const EntidadDelMapa& destino);
     static bool existe_camino_desde_coordenada(

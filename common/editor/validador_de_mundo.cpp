@@ -170,6 +170,50 @@ bool ValidadorDeMundo::casilla_puerta_mercado_transitable(
     return transitable_izquierda || transitable_derecha;
 }
 
+bool ValidadorDeMundo::calcular_casilla_llegada_borde(
+    const MapaEditable& mapa, const EntidadDelMapa& transicion, int& columna_llegada,
+    int& fila_llegada) {
+    int columna = 0;
+    int fila = 0;
+    int ancho = 0;
+    int alto = 0;
+    transicion.consultar_origen(columna, fila);
+    transicion.consultar_dimensiones(ancho, alto);
+
+    int total_columnas = mapa.obtener_cantidad_de_columnas();
+    int total_filas = mapa.obtener_cantidad_de_filas();
+
+    bool es_borde_oeste =
+        (columna == 0 && ancho == 1 && alto == 2 && fila >= 2 && fila <= total_filas - 4);
+    bool es_borde_este =
+        (columna == total_columnas - 1 && ancho == 1 && alto == 2 && fila >= 2 &&
+         fila <= total_filas - 4);
+    bool es_borde_norte =
+        (fila == 0 && ancho == 2 && alto == 1 && columna >= 1 && columna <= total_columnas - 3);
+    bool es_borde_sur =
+        (fila == total_filas - 1 && ancho == 2 && alto == 1 && columna >= 1 &&
+         columna <= total_columnas - 3);
+
+    if (es_borde_oeste) {
+        columna_llegada = 1;
+        fila_llegada = fila + 1;
+    } else if (es_borde_este) {
+        columna_llegada = total_columnas - 2;
+        fila_llegada = fila + 1;
+    } else if (es_borde_norte) {
+        columna_llegada = columna;
+        fila_llegada = 2;
+    } else if (es_borde_sur) {
+        columna_llegada = columna;
+        fila_llegada = total_filas - 2;
+    } else {
+        return false;
+    }
+
+    return mapa.esta_dentro(columna_llegada, fila_llegada) &&
+           mapa.casilla_es_transitable(columna_llegada, fila_llegada);
+}
+
 bool ValidadorDeMundo::existe_camino_transitable(
     const MapaEditable& mapa, const EntidadDelMapa& entidad_a, const EntidadDelMapa& entidad_b) {
     if (!tiene_acceso_perimetral_transitable(mapa, entidad_a) ||
@@ -359,13 +403,25 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
         granja.listar_entidades_por_tipo(TipoEntidad::TRANSICION_PUEBLO);
     if (salidas_pueblo.empty()) {
         resultado.agregar_error("Falta la salida hacia el pueblo en la granja.");
+    } else if (salidas_pueblo.size() > 1) {
+        resultado.agregar_error("Solo puede haber una salida hacia el pueblo en la granja.");
     } else {
-        if (!tiene_acceso_perimetral_transitable(granja, salidas_pueblo[0])) {
+        int columna_acceso_pueblo = 0;
+        int fila_acceso_pueblo = 0;
+        if (!calcular_casilla_llegada_borde(
+                granja,
+                salidas_pueblo[0],
+                columna_acceso_pueblo,
+                fila_acceso_pueblo)) {
             resultado.agregar_error(
-                "La salida hacia el pueblo esta totalmente bloqueada por obstaculos.");
+                "La salida hacia el pueblo debe ubicarse en un borde valido y con su casilla "
+                "frente al porton libre.");
         } else if (
-            !cabanias.empty() &&
-            !existe_camino_transitable(granja, cabanias[0], salidas_pueblo[0])) {
+            !cabanias.empty() && !existe_camino_desde_coordenada(
+                                     granja,
+                                     columna_acceso_pueblo,
+                                     fila_acceso_pueblo,
+                                     cabanias[0])) {
             resultado.agregar_error(
                 "No existe un camino transitable entre la cabania y la salida hacia el pueblo.");
         }
@@ -404,22 +460,38 @@ ResultadoValidacion ValidadorDeMundo::validar(const DefinicionDeMundo& mundo) {
         pueblo.listar_entidades_por_tipo(TipoEntidad::TRANSICION_GRANJA);
     if (salidas_granja.empty()) {
         resultado.agregar_error("Falta la salida hacia la granja en el pueblo.");
-    } else if (!tiene_acceso_perimetral_transitable(pueblo, salidas_granja[0])) {
-        resultado.agregar_error(
-            "La salida hacia la granja esta totalmente bloqueada por obstaculos.");
-    }
-
-    if (!salidas_granja.empty()) {
-        if (!centros_comunitarios.empty() &&
-            !existe_camino_transitable(pueblo, salidas_granja[0], centros_comunitarios[0])) {
+    } else if (salidas_granja.size() > 1) {
+        resultado.agregar_error("Solo puede haber una salida hacia la granja en el pueblo.");
+    } else {
+        int columna_acceso_granja = 0;
+        int fila_acceso_granja = 0;
+        if (!calcular_casilla_llegada_borde(
+                pueblo,
+                salidas_granja[0],
+                columna_acceso_granja,
+                fila_acceso_granja)) {
             resultado.agregar_error(
-                "No existe un camino transitable entre la salida hacia la granja y el Centro "
-                "Comunitario.");
-        }
-        if (!mercados.empty() &&
-            !existe_camino_transitable(pueblo, salidas_granja[0], mercados[0])) {
-            resultado.agregar_error(
-                "No existe un camino transitable entre la salida hacia la granja y el Mercado.");
+                "La salida hacia la granja debe ubicarse en un borde valido y con su casilla "
+                "frente al porton libre.");
+        } else {
+            if (!centros_comunitarios.empty() && !existe_camino_desde_coordenada(
+                                                     pueblo,
+                                                     columna_acceso_granja,
+                                                     fila_acceso_granja,
+                                                     centros_comunitarios[0])) {
+                resultado.agregar_error(
+                    "No existe un camino transitable entre la salida hacia la granja y el Centro "
+                    "Comunitario.");
+            }
+            if (!mercados.empty() && !existe_camino_desde_coordenada(
+                                         pueblo,
+                                         columna_acceso_granja,
+                                         fila_acceso_granja,
+                                         mercados[0])) {
+                resultado.agregar_error(
+                    "No existe un camino transitable entre la salida hacia la granja y el "
+                    "Mercado.");
+            }
         }
     }
 

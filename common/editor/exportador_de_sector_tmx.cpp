@@ -800,11 +800,11 @@ void ExportadorDeSectorTMX::exportar_entidades() {
         }
 
         if (tipo == TipoEntidad::CABANIA) {
-            // La puerta de la cabaña está en la alfombra de bienvenida (fila 7)
+            // La puerta y el felpudo de la cabaña están en filas 6 y 7
             posicion_x_pixeles = (columna + 5) * ANCHO_TILE_PIXELES;
-            posicion_y_pixeles = (fila + 7) * ALTO_TILE_PIXELES;
+            posicion_y_pixeles = (fila + 6) * ALTO_TILE_PIXELES;
             ancho_pixeles = ANCHO_TILE_PIXELES;
-            alto_pixeles = ALTO_TILE_PIXELES;
+            alto_pixeles = ALTO_TILE_PIXELES * 2;
         } else if (tipo == TipoEntidad::ENTRADA_CAVERNA) {
             // La puerta/alfombra de la caseta de la mina está en columna 2, fila 6
             posicion_x_pixeles = (columna + COLUMNA_PUERTA_CASETA_MINA) * ANCHO_TILE_PIXELES;
@@ -837,14 +837,16 @@ void ExportadorDeSectorTMX::exportar_entidades() {
                 iterador_transicion->second.columna_destino,
                 iterador_transicion->second.fila_destino,
                 iterador_transicion->second.llegada);
-            // El lugar donde aparece el que sale por esta puerta: la casilla de abajo de la zona.
+            // El lugar donde aparece el que sale por esta puerta: una fila arriba de la casilla
+            // libre frente a la puerta, porque trasladar_a_casilla ubica los pies en fila + 1.
             const std::string llegada_propia = iterador_transicion->second.llegada_propia;
             if (!llegada_propia.empty()) {
+                int fila_llegada = ((posicion_y_pixeles + alto_pixeles) / ALTO_TILE_PIXELES) - 1;
                 escritor.agregar_llegada(
                     CAPA_TRANSICIONES_TMX,
                     llegada_propia,
                     posicion_x_pixeles / ANCHO_TILE_PIXELES,
-                    (posicion_y_pixeles + alto_pixeles) / ALTO_TILE_PIXELES);
+                    fila_llegada);
             }
         } else {
             auto iterador_puesto = PUESTOS_POR_TIPO.find(tipo);
@@ -884,7 +886,7 @@ void ExportadorDeSectorTMX::exportar_entidades() {
             CAPA_TRANSICIONES_TMX,
             LLEGADA_ENTRADA,
             columna_puerta,
-            fila_puerta - 1);
+            fila_puerta - 2);
     }
 }
 

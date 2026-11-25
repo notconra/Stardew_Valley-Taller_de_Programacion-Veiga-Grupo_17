@@ -25,7 +25,7 @@ static constexpr int ANCHO_ESCALERA = 1;
 static constexpr int ALTO_ESCALERA = 1;
 static constexpr int ANCHO_SALIDA_CAVERNA = 1;
 static constexpr int ALTO_SALIDA_CAVERNA = 1;
-static constexpr int ANCHO_TRANSICION = 2;
+static constexpr int ANCHO_TRANSICION = 1;
 static constexpr int ALTO_TRANSICION = 2;
 
 static constexpr const char* NOMBRE_CABANIA = "Cabania";

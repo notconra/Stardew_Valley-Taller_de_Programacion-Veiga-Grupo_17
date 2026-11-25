@@ -109,6 +109,10 @@ public:
     bool deslizar_entidad(uint32_t identificador, int nueva_columna, int nueva_fila);
     bool retirar_entidad(uint32_t identificador);
 
+    static bool es_transicion_de_borde(TipoEntidad tipo);
+    bool ajustar_posicion_transicion_borde(
+        int columna_entrada, int fila_entrada, int& columna_salida, int& fila_salida,
+        int& ancho_salida, int& alto_salida) const;
     bool entidad_puede_ubicarse_en(
         TipoEntidad tipo, int columna, int fila, int ancho, int alto,
         uint32_t identificador_a_ignorar) const;

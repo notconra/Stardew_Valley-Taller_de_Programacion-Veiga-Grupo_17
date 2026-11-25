@@ -133,11 +133,11 @@ DefinicionDeMundo DefinicionDeMundo::crear_mundo_por_defecto(const std::string& 
     // Configuración inicial de la Granja
     granja.ubicar_entidad(TipoEntidad::CABANIA, 6, 5, 9, 9);
     granja.ubicar_entidad(TipoEntidad::ENTRADA_CAVERNA, 20, 5, 5, 7);
-    granja.ubicar_entidad(TipoEntidad::TRANSICION_PUEBLO, 32, 16, 2, 2);
+    granja.ubicar_entidad(TipoEntidad::TRANSICION_PUEBLO, COLUMNAS_MAPA_GRANJA - 1, 16, 1, 2);
     granja.generar_muro_perimetral_granja();
 
     // Configuración inicial del Pueblo (Centro Comunitario y Mercado obligatorio, sin puestos)
-    pueblo.ubicar_entidad(TipoEntidad::TRANSICION_GRANJA, 0, 16, 2, 2);
+    pueblo.ubicar_entidad(TipoEntidad::TRANSICION_GRANJA, 0, 16, 1, 2);
     pueblo.ubicar_entidad(TipoEntidad::CENTRO_COMUNITARIO, 4, 3, 12, 10);
     pueblo.ubicar_entidad(TipoEntidad::MERCADO, 19, 3, 10, 10);
     pueblo.generar_muro_perimetral_pueblo();

@@ -352,16 +352,19 @@ void LienzoDeEdicion::borrar_en_casilla(int columna, int fila) {
     if (mapa_actual == nullptr || !mapa_actual->esta_dentro(columna, fila)) {
         return;
     }
-    if (casilla_es_perimetro_protegido(columna, fila)) {
-        return;
-    }
     EntidadDelMapa* entidad_tocada = mapa_actual->buscar_entidad_en_casilla(columna, fila);
     if (entidad_tocada != nullptr) {
         mapa_actual->retirar_entidad(entidad_tocada->obtener_identificador());
         identificador_entidad_seleccionada = -1;
         emit entidad_seleccionada_cambio(-1);
-    } else if (
-        mapa_actual->buscar_estampa_en_casilla(columna, fila) != nullptr ||
+        emit mapa_modificado();
+        update();
+        return;
+    }
+    if (casilla_es_perimetro_protegido(columna, fila)) {
+        return;
+    }
+    if (mapa_actual->buscar_estampa_en_casilla(columna, fila) != nullptr ||
         mapa_actual->casilla_pertenece_a_estanque(columna, fila)) {
         uint32_t tile_base = CatalogoDeTerrenos::obtener_tile_base(sector_actual);
         uint8_t prop_base =
@@ -982,16 +985,27 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
             entidad_a_colocar,
             ancho_defecto,
             alto_defecto);
+        int columna_fantasma = columna_hover;
+        int fila_fantasma = fila_hover;
+        if (MapaEditable::es_transicion_de_borde(entidad_a_colocar)) {
+            mapa_actual->ajustar_posicion_transicion_borde(
+                columna_hover,
+                fila_hover,
+                columna_fantasma,
+                fila_fantasma,
+                ancho_defecto,
+                alto_defecto);
+        }
         bool ubicable = mapa_actual->entidad_puede_ubicarse_en(
             entidad_a_colocar,
-            columna_hover,
-            fila_hover,
+            columna_fantasma,
+            fila_fantasma,
             ancho_defecto,
             alto_defecto,
             0);
         QRect rectangulo_fantasma(
-            columna_hover * tamano_casilla_px,
-            fila_hover * tamano_casilla_px,
+            columna_fantasma * tamano_casilla_px,
+            fila_fantasma * tamano_casilla_px,
             ancho_defecto * tamano_casilla_px,
             alto_defecto * tamano_casilla_px);
         if (es_puesto_comerciante) {
@@ -1109,10 +1123,21 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
             bool es_puesto_comerciante =
                 (tipo_ent == TipoEntidad::PUESTO_MARNIE || tipo_ent == TipoEntidad::PUESTO_CLINT ||
                  tipo_ent == TipoEntidad::PUESTO_PIERRE || tipo_ent == TipoEntidad::PUESTO_ROBIN);
+            int columna_arrastre_mostrada = columna_arrastre_actual;
+            int fila_arrastre_mostrada = fila_arrastre_actual;
+            if (MapaEditable::es_transicion_de_borde(tipo_ent)) {
+                mapa_actual->ajustar_posicion_transicion_borde(
+                    columna_arrastre_actual,
+                    fila_arrastre_actual,
+                    columna_arrastre_mostrada,
+                    fila_arrastre_mostrada,
+                    ancho_ent,
+                    alto_ent);
+            }
             bool ubicable = mapa_actual->entidad_puede_ubicarse_en(
                 tipo_ent,
-                columna_arrastre_actual,
-                fila_arrastre_actual,
+                columna_arrastre_mostrada,
+                fila_arrastre_mostrada,
                 ancho_ent,
                 alto_ent,
                 id_seleccionada);
@@ -1131,8 +1156,8 @@ void LienzoDeEdicion::paintEvent(QPaintEvent* evento) {
                 }
             }
             QRect rectangulo_arrastre(
-                columna_arrastre_actual * tamano_casilla_px,
-                fila_arrastre_actual * tamano_casilla_px,
+                columna_arrastre_mostrada * tamano_casilla_px,
+                fila_arrastre_mostrada * tamano_casilla_px,
                 ancho_ent * tamano_casilla_px,
                 alto_ent * tamano_casilla_px);
             if (es_puesto_comerciante) {
@@ -1290,18 +1315,33 @@ void LienzoDeEdicion::mousePressEvent(QMouseEvent* evento) {
                 entidad_a_colocar,
                 ancho_defecto,
                 alto_defecto);
-            asegurar_espacio_en_caverna(columna, fila, ancho_defecto, alto_defecto);
-            if (mapa_actual->entidad_puede_ubicarse_en(
-                    entidad_a_colocar,
+            int columna_colocacion = columna;
+            int fila_colocacion = fila;
+            if (MapaEditable::es_transicion_de_borde(entidad_a_colocar)) {
+                mapa_actual->ajustar_posicion_transicion_borde(
                     columna,
                     fila,
+                    columna_colocacion,
+                    fila_colocacion,
+                    ancho_defecto,
+                    alto_defecto);
+            }
+            asegurar_espacio_en_caverna(
+                columna_colocacion,
+                fila_colocacion,
+                ancho_defecto,
+                alto_defecto);
+            if (mapa_actual->entidad_puede_ubicarse_en(
+                    entidad_a_colocar,
+                    columna_colocacion,
+                    fila_colocacion,
                     ancho_defecto,
                     alto_defecto,
                     0)) {
                 uint32_t nuevo_id = mapa_actual->ubicar_entidad(
                     entidad_a_colocar,
-                    columna,
-                    fila,
+                    columna_colocacion,
+                    fila_colocacion,
                     ancho_defecto,
                     alto_defecto,
                     orientacion_entidad_a_colocar);
