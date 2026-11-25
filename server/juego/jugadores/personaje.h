@@ -53,22 +53,21 @@ struct Personaje {
     Buzon buzon;  // los regalos que recibió y todavía no abrió
 
     // Vida del jugador en combate (ver "Un día en el juego" del enunciado). Arranca a tope, baja
-    // con los golpes de los enemigos y se repone al dormir (ver ControladorDelDia). VIDA_MAXIMA
-    // toma el valor de VIDA_MAXIMA_JUGADOR (común con el cliente) para que el servidor y la barra
-    // de vida del HUD nunca se desincronicen.
-    static constexpr int VIDA_MAXIMA = VIDA_MAXIMA_JUGADOR;
-    int vida = VIDA_MAXIMA;
+    // con los golpes de los enemigos y se repone al dormir (ver ControladorDelDia). vida_base sale
+    // de [juego.jugador] vida_inicial del servidor.toml; el cliente recibe la máxima en cada estado.
+    int vida_base = VIDA_MAXIMA_JUGADOR;
+    int vida = vida_base;
 
     // Energía del jugador. El enunciado la gasta con cualquier acción: por ahora la gastan atacar
     // con la espada (ver AccionAtacar) y picar (ver AccionPicar). Con el 10% o menos camina a la
     // mitad de velocidad (ver multiplicador_de_velocidad()) y en 0 se desmaya (ver
-    // ControladorDelDia). ENERGIA_MAXIMA toma ENERGIA_MAXIMA_JUGADOR por la misma razón que
-    // VIDA_MAXIMA.
-    static constexpr int ENERGIA_MAXIMA = ENERGIA_MAXIMA_JUGADOR;
-    int energia = ENERGIA_MAXIMA;
+    // ControladorDelDia). energia_base sale de [juego.jugador] energia_inicial, igual que
+    // vida_base.
+    int energia_base = ENERGIA_MAXIMA_JUGADOR;
+    int energia = energia_base;
 
     // El premio del lote de pelea del centro comunitario: la vida y la energía máximas suben un
-    // 25%. VIDA_MAXIMA y ENERGIA_MAXIMA son las de base; las de este jugador salen de
+    // 25%. vida_base y energia_base son las de base; las de este jugador salen de
     // vida_maxima() y energia_maxima().
     bool tiene_mejora_de_pelea = false;
 
@@ -87,7 +86,7 @@ struct Personaje {
 
     Personaje(
         uint32_t id, const std::string& mapa_inicial, const CatalogoDeItems& catalogo,
-        uint8_t cantidad_ranuras_barra);
+        uint8_t cantidad_ranuras_barra, int vida_inicial, int energia_inicial);
 
     // Acredita monedas de oro a la billetera del jugador.
     void recibir_monedas(uint32_t cantidad);

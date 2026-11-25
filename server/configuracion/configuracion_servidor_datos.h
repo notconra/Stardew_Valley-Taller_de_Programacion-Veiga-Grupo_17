@@ -57,6 +57,13 @@ struct ConfiguracionInventarioServidor {
     uint8_t cantidad_ranuras_barra = 10;
 };
 
+// Vida y energía con las que arranca cada jugador (y a las que vuelve al dormir en su cama). Con el
+// premio del lote de pelea suben un 25%, y el protocolo las manda en un byte: por eso el tope es 200.
+struct ConfiguracionJugadorServidor {
+    int vida_inicial = 100;
+    int energia_inicial = 100;
+};
+
 // Cuánto dura cada acción y hasta dónde llega. Las duraciones se miden en ticks del servidor.
 struct ConfiguracionAccionesServidor {
     int alcance_en_casillas = 1;
@@ -116,6 +123,7 @@ struct ConfiguracionJuegoServidor {
     ConfiguracionMovimientoJugador movimiento;
     ConfiguracionAparicionJugador aparicion;
     ConfiguracionInventarioServidor inventario;
+    ConfiguracionJugadorServidor jugador;
     ConfiguracionAccionesServidor acciones;
     ConfiguracionCultivosServidor cultivos;
     ConfiguracionDropsServidor drops;
