@@ -912,26 +912,6 @@ static const DefinicionEstampa ESTAMPA_MERCADO_PLANTA_MACETA = {
     {CasillaEstampa{0, 0, 332u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
      CasillaEstampa{0, 1, 364u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA}}};
 
-static const DefinicionEstampa ESTAMPA_MERCADO_PALMERA_IZQUIERDA = {
-    TipoEstampa::MERCADO_PALMERA_IZQUIERDA,
-    "Palmera Decorativa (2x3) [R]",
-    2,
-    3,
-    {CasillaEstampa{0, 0, 2147483985u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
-     CasillaEstampa{1, 0, 2147483984u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
-     CasillaEstampa{0, 1, 2147484017u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
-     CasillaEstampa{0, 2, 2147484049u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA}}};
-
-static const DefinicionEstampa ESTAMPA_MERCADO_PALMERA_DERECHA = {
-    TipoEstampa::MERCADO_PALMERA_DERECHA,
-    "Palmera Decorativa Derecha (2x3) [R]",
-    2,
-    3,
-    {CasillaEstampa{0, 0, 336u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
-     CasillaEstampa{1, 0, 337u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
-     CasillaEstampa{1, 1, 369u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
-     CasillaEstampa{1, 2, 401u, TipoCapa::ESTRUCTURAS, PropiedadDeCasilla::BLOQUEA}}};
-
 static const DefinicionEstampa ESTAMPA_CAVERNA_POZO_AGUA = {
     TipoEstampa::CAVERNA_POZO_AGUA,
     "Pozo de Agua (3x2)",
@@ -1166,8 +1146,6 @@ static const std::map<TipoEstampa, DefinicionEstampa> MAPA_ESTAMPAS = {
     {TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA, ESTAMPA_MERCADO_ESTANTERIA_IZQUIERDA},
     {TipoEstampa::MERCADO_ESTANTERIA_DERECHA, ESTAMPA_MERCADO_ESTANTERIA_DERECHA},
     {TipoEstampa::MERCADO_PLANTA_MACETA, ESTAMPA_MERCADO_PLANTA_MACETA},
-    {TipoEstampa::MERCADO_PALMERA_IZQUIERDA, ESTAMPA_MERCADO_PALMERA_IZQUIERDA},
-    {TipoEstampa::MERCADO_PALMERA_DERECHA, ESTAMPA_MERCADO_PALMERA_DERECHA},
     {TipoEstampa::CAVERNA_POZO_AGUA, ESTAMPA_CAVERNA_POZO_AGUA},
     {TipoEstampa::CAVERNA_PUENTE_MADERA, ESTAMPA_CAVERNA_PUENTE_MADERA},
     {TipoEstampa::CAVERNA_ZONA_ADOQUIN, ESTAMPA_CAVERNA_ZONA_ADOQUIN},
@@ -1272,12 +1250,6 @@ TipoEstampa CatalogoDeEstampas::rotar_estampa(TipoEstampa tipo) {
     if (tipo == TipoEstampa::MERCADO_ESTANTERIA_DERECHA) {
         return TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA;
     }
-    if (tipo == TipoEstampa::MERCADO_PALMERA_IZQUIERDA) {
-        return TipoEstampa::MERCADO_PALMERA_DERECHA;
-    }
-    if (tipo == TipoEstampa::MERCADO_PALMERA_DERECHA) {
-        return TipoEstampa::MERCADO_PALMERA_IZQUIERDA;
-    }
     if (tipo == TipoEstampa::CAVERNA_VIA_HORIZONTAL) {
         return TipoEstampa::CAVERNA_VIA_VERTICAL;
     }
@@ -1302,9 +1274,7 @@ bool CatalogoDeEstampas::es_estampa_decorativa(TipoEstampa tipo) {
         tipo == TipoEstampa::MERCADO_PUESTO_DERECHO ||
         tipo == TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA ||
         tipo == TipoEstampa::MERCADO_ESTANTERIA_DERECHA ||
-        tipo == TipoEstampa::MERCADO_PLANTA_MACETA ||
-        tipo == TipoEstampa::MERCADO_PALMERA_IZQUIERDA ||
-        tipo == TipoEstampa::MERCADO_PALMERA_DERECHA || tipo == TipoEstampa::CAVERNA_POZO_AGUA ||
+        tipo == TipoEstampa::MERCADO_PLANTA_MACETA || tipo == TipoEstampa::CAVERNA_POZO_AGUA ||
         tipo == TipoEstampa::CAVERNA_ANDAMIO_MINERO ||
         tipo == TipoEstampa::CAVERNA_CARTEL_PELIGRO ||
         tipo == TipoEstampa::CAVERNA_VAGONETA_CARBON ||

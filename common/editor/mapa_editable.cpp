@@ -168,9 +168,39 @@ void MapaEditable::quitar_propiedad_de_casilla(int columna, int fila, uint8_t pr
 
 uint32_t MapaEditable::ubicar_entidad(
     TipoEntidad tipo, int columna, int fila, int ancho, int alto, Direccion orientacion) {
+    int columna_final = columna;
+    int fila_final = fila;
+    int ancho_final = ancho;
+    int alto_final = alto;
+    if (es_transicion_de_borde(tipo)) {
+        int columna_ajustada = 0;
+        int fila_ajustada = 0;
+        int ancho_ajustado = 0;
+        int alto_ajustado = 0;
+        if (ajustar_posicion_transicion_borde(
+                columna,
+                fila,
+                columna_ajustada,
+                fila_ajustada,
+                ancho_ajustado,
+                alto_ajustado)) {
+            columna_final = columna_ajustada;
+            fila_final = fila_ajustada;
+            ancho_final = ancho_ajustado;
+            alto_final = alto_ajustado;
+        }
+    }
+
     uint32_t nuevo_identificador = proximo_identificador_de_entidad;
     proximo_identificador_de_entidad++;
-    entidades.emplace_back(nuevo_identificador, tipo, columna, fila, ancho, alto, orientacion);
+    entidades.emplace_back(
+        nuevo_identificador,
+        tipo,
+        columna_final,
+        fila_final,
+        ancho_final,
+        alto_final,
+        orientacion);
     bool es_puesto_mercado =
         (tipo == TipoEntidad::PUESTO_MARNIE || tipo == TipoEntidad::PUESTO_CLINT ||
          tipo == TipoEntidad::PUESTO_PIERRE || tipo == TipoEntidad::PUESTO_ROBIN);
@@ -180,8 +210,8 @@ uint32_t MapaEditable::ubicar_entidad(
         int columna_atencion = 0;
         int fila_atencion = 0;
         calcular_interaccion_puesto(
-            columna,
-            fila,
+            columna_final,
+            fila_final,
             orientacion,
             columna_interaccion,
             fila_interaccion,
@@ -204,22 +234,69 @@ void MapaEditable::cargar_entidad(const EntidadDelMapa& entidad) {
     }
 }
 
+bool MapaEditable::es_transicion_de_borde(TipoEntidad tipo) {
+    return tipo == TipoEntidad::TRANSICION_PUEBLO || tipo == TipoEntidad::TRANSICION_GRANJA;
+}
+
+bool MapaEditable::ajustar_posicion_transicion_borde(
+    int columna_entrada, int fila_entrada, int& columna_salida, int& fila_salida, int& ancho_salida,
+    int& alto_salida) const {
+    if (cantidad_de_columnas < 4 || cantidad_de_filas < 6) {
+        return false;
+    }
+    if ((columna_entrada == 0 || columna_entrada == cantidad_de_columnas - 1) &&
+        fila_entrada >= 2 && fila_entrada <= cantidad_de_filas - 4) {
+        columna_salida = columna_entrada;
+        fila_salida = fila_entrada;
+        ancho_salida = 1;
+        alto_salida = 2;
+        return true;
+    }
+    if (((fila_entrada >= 0 && fila_entrada <= 1) ||
+         (fila_entrada >= cantidad_de_filas - 2 && fila_entrada <= cantidad_de_filas - 1)) &&
+        columna_entrada >= 1 && columna_entrada <= cantidad_de_columnas - 3) {
+        columna_salida = columna_entrada;
+        fila_salida = (fila_entrada <= 1) ? 0 : (cantidad_de_filas - 1);
+        ancho_salida = 2;
+        alto_salida = 1;
+        return true;
+    }
+    return false;
+}
+
 bool MapaEditable::entidad_puede_ubicarse_en(
     TipoEntidad tipo, int columna, int fila, int ancho, int alto,
     uint32_t identificador_a_ignorar) const {
-    bool dentro_horizontal = (columna >= 0) && (columna + ancho <= cantidad_de_columnas);
-    bool dentro_vertical = (fila >= 0) && (fila + alto <= cantidad_de_filas);
+    bool es_entidad_perimetral = es_transicion_de_borde(tipo);
+    int columna_objetivo = columna;
+    int fila_objetivo = fila;
+    int ancho_objetivo = ancho;
+    int alto_objetivo = alto;
+    if (es_entidad_perimetral) {
+        if (!ajustar_posicion_transicion_borde(
+                columna,
+                fila,
+                columna_objetivo,
+                fila_objetivo,
+                ancho_objetivo,
+                alto_objetivo)) {
+            return false;
+        }
+    }
+
+    bool dentro_horizontal =
+        (columna_objetivo >= 0) && (columna_objetivo + ancho_objetivo <= cantidad_de_columnas);
+    bool dentro_vertical =
+        (fila_objetivo >= 0) && (fila_objetivo + alto_objetivo <= cantidad_de_filas);
     if (!dentro_horizontal || !dentro_vertical) {
         return false;
     }
 
-    bool es_entidad_perimetral =
-        (tipo == TipoEntidad::TRANSICION_PUEBLO || tipo == TipoEntidad::TRANSICION_GRANJA);
     bool es_puesto_mercado =
         (tipo == TipoEntidad::PUESTO_MARNIE || tipo == TipoEntidad::PUESTO_CLINT ||
          tipo == TipoEntidad::PUESTO_PIERRE || tipo == TipoEntidad::PUESTO_ROBIN);
     bool es_entidad_unica =
-        (es_puesto_mercado || tipo == TipoEntidad::CABANIA ||
+        (es_puesto_mercado || es_entidad_perimetral || tipo == TipoEntidad::CABANIA ||
          tipo == TipoEntidad::ENTRADA_CAVERNA || tipo == TipoEntidad::CENTRO_COMUNITARIO ||
          tipo == TipoEntidad::MERCADO || tipo == TipoEntidad::ESCALERA_NIVEL ||
          tipo == TipoEntidad::SALIDA_CAVERNA);
@@ -241,10 +318,10 @@ bool MapaEditable::entidad_puede_ubicarse_en(
     }
 
     bool casillas_validas = true;
-    int fila_actual = fila;
-    while (fila_actual < fila + alto && casillas_validas) {
-        int columna_actual = columna;
-        while (columna_actual < columna + ancho && casillas_validas) {
+    int fila_actual = fila_objetivo;
+    while (fila_actual < fila_objetivo + alto_objetivo && casillas_validas) {
+        int columna_actual = columna_objetivo;
+        while (columna_actual < columna_objetivo + ancho_objetivo && casillas_validas) {
             int columna_puerta = cantidad_de_columnas / 2;
             bool es_pasillo_puerta_mercado =
                 (cantidad_de_columnas < 30 && columna_actual == columna_puerta &&
@@ -267,7 +344,8 @@ bool MapaEditable::entidad_puede_ubicarse_en(
         return false;
     }
 
-    EntidadDelMapa entidad_temporal(0, tipo, columna, fila, ancho, alto);
+    EntidadDelMapa
+        entidad_temporal(0, tipo, columna_objetivo, fila_objetivo, ancho_objetivo, alto_objetivo);
     bool hay_superposicion = false;
     size_t indice = 0;
     while (indice < entidades.size() && !hay_superposicion) {
@@ -349,10 +427,35 @@ bool MapaEditable::deslizar_entidad(uint32_t identificador, int nueva_columna, i
         return true;
     }
 
-    if (!entidad_puede_ubicarse_en(tipo, nueva_columna, nueva_fila, ancho, alto, identificador)) {
+    int columna_final = nueva_columna;
+    int fila_final = nueva_fila;
+    int ancho_final = ancho;
+    int alto_final = alto;
+    if (es_transicion_de_borde(tipo)) {
+        if (!ajustar_posicion_transicion_borde(
+                nueva_columna,
+                nueva_fila,
+                columna_final,
+                fila_final,
+                ancho_final,
+                alto_final)) {
+            return false;
+        }
+    }
+
+    if (!entidad_puede_ubicarse_en(
+            tipo,
+            columna_final,
+            fila_final,
+            ancho_final,
+            alto_final,
+            identificador)) {
         return false;
     }
-    entidades[posicion].trasladar_a(nueva_columna, nueva_fila);
+    entidades[posicion].trasladar_a(columna_final, fila_final);
+    if (es_transicion_de_borde(tipo)) {
+        entidades[posicion].redimensionar(ancho_final, alto_final);
+    }
     if (es_puesto_mercado) {
         int columna_interaccion = 0;
         int fila_interaccion = 0;
@@ -461,6 +564,8 @@ void MapaEditable::expandir(
         return;
     }
 
+    int ancho_anterior = cantidad_de_columnas;
+    int alto_anterior = cantidad_de_filas;
     cantidad_de_columnas = nuevas_columnas;
     cantidad_de_filas = nuevas_filas;
 
@@ -491,9 +596,21 @@ void MapaEditable::expandir(
     while (indice < entidades.size()) {
         int columna_origen = 0;
         int fila_origen = 0;
+        int ancho_entidad = 0;
+        int alto_entidad = 0;
         entidades[indice].consultar_origen(columna_origen, fila_origen);
+        entidades[indice].consultar_dimensiones(ancho_entidad, alto_entidad);
         int nueva_columna = columna_origen + agregar_izquierda;
         int nueva_fila = fila_origen + agregar_arriba;
+        if (agregar_izquierda == 0 && agregar_arriba == 0 &&
+            es_transicion_de_borde(entidades[indice].obtener_tipo())) {
+            if (columna_origen == ancho_anterior - 1 && ancho_entidad == 1) {
+                nueva_columna = nuevas_columnas - 1;
+            }
+            if (fila_origen == alto_anterior - 1 && alto_entidad == 1) {
+                nueva_fila = nuevas_filas - 1;
+            }
+        }
         entidades[indice].trasladar_a(nueva_columna, nueva_fila);
         if (entidades[indice].esta_contenida_en_rectangulo(0, 0, nuevas_columnas, nuevas_filas)) {
             entidades_conservadas.push_back(entidades[indice]);
@@ -1466,7 +1583,7 @@ void MapaEditable::reconstruir_perimetro_mercado() {
             if (!es_perimetro_norte && !es_lateral && !es_perimetro_sur) {
                 uint32_t identificador_suelo =
                     obtener_casilla_en_capa(TipoCapa::SUELO, columna, fila).obtener_id_tile();
-                if (es_tile_perimetro_mercado(identificador_suelo)) {
+                if (identificador_suelo == 0 || es_tile_perimetro_mercado(identificador_suelo)) {
                     pintar_en_capa(
                         TipoCapa::SUELO,
                         columna,
@@ -1505,23 +1622,36 @@ void MapaEditable::reconstruir_perimetro_mercado() {
 
     // 1. Pared norte:
     // Fila 0: Bloques superiores de piedra
+    pintar_en_capa(TipoCapa::SUELO, 0, 0, 0, PropiedadDeCasilla::BLOQUEA);
     pintar_en_capa(TipoCapa::ESTRUCTURAS, 0, 0, 2186, PropiedadDeCasilla::BLOQUEA);
+    borrar_en_capa(TipoCapa::FRENTE, 0, 0);
+    pintar_en_capa(TipoCapa::SUELO, cantidad_de_columnas - 1, 0, 0, PropiedadDeCasilla::BLOQUEA);
     pintar_en_capa(
         TipoCapa::ESTRUCTURAS,
         cantidad_de_columnas - 1,
         0,
         2188,
         PropiedadDeCasilla::BLOQUEA);
+    borrar_en_capa(TipoCapa::FRENTE, cantidad_de_columnas - 1, 0);
     int columna_norte = 1;
     while (columna_norte < cantidad_de_columnas - 1) {
+        pintar_en_capa(TipoCapa::SUELO, columna_norte, 0, 0, PropiedadDeCasilla::BLOQUEA);
         pintar_en_capa(TipoCapa::ESTRUCTURAS, columna_norte, 0, 2179, PropiedadDeCasilla::BLOQUEA);
+        borrar_en_capa(TipoCapa::FRENTE, columna_norte, 0);
         columna_norte++;
     }
 
     // Filas 1 y 2: Pared norte (piedra original)
     int fila_norte = 1;
     while (fila_norte <= 2) {
+        pintar_en_capa(TipoCapa::SUELO, 0, fila_norte, 0, PropiedadDeCasilla::BLOQUEA);
         pintar_en_capa(TipoCapa::ESTRUCTURAS, 0, fila_norte, 2241, PropiedadDeCasilla::BLOQUEA);
+        pintar_en_capa(
+            TipoCapa::SUELO,
+            cantidad_de_columnas - 1,
+            fila_norte,
+            0,
+            PropiedadDeCasilla::BLOQUEA);
         pintar_en_capa(
             TipoCapa::ESTRUCTURAS,
             cantidad_de_columnas - 1,
@@ -1542,7 +1672,9 @@ void MapaEditable::reconstruir_perimetro_mercado() {
     }
 
     // Fila 3: Zocalo inferior de madera de la pared norte
+    pintar_en_capa(TipoCapa::SUELO, 0, 3, 0, PropiedadDeCasilla::BLOQUEA);
     pintar_en_capa(TipoCapa::ESTRUCTURAS, 0, 3, 2241, PropiedadDeCasilla::BLOQUEA);
+    pintar_en_capa(TipoCapa::SUELO, cantidad_de_columnas - 1, 3, 0, PropiedadDeCasilla::BLOQUEA);
     pintar_en_capa(
         TipoCapa::ESTRUCTURAS,
         cantidad_de_columnas - 1,
@@ -1559,7 +1691,14 @@ void MapaEditable::reconstruir_perimetro_mercado() {
     // 2. Paredes laterales (oeste y este) desde fila 4 hasta fila zócalo - 1
     int fila_lateral = 4;
     while (fila_lateral < cantidad_de_filas - 2) {
+        pintar_en_capa(TipoCapa::SUELO, 0, fila_lateral, 0, PropiedadDeCasilla::BLOQUEA);
         pintar_en_capa(TipoCapa::ESTRUCTURAS, 0, fila_lateral, 2241, PropiedadDeCasilla::BLOQUEA);
+        pintar_en_capa(
+            TipoCapa::SUELO,
+            cantidad_de_columnas - 1,
+            fila_lateral,
+            0,
+            PropiedadDeCasilla::BLOQUEA);
         pintar_en_capa(
             TipoCapa::ESTRUCTURAS,
             cantidad_de_columnas - 1,
@@ -1625,6 +1764,12 @@ void MapaEditable::reconstruir_perimetro_mercado() {
 
             if (columna_sur == 0 || columna_sur == cantidad_de_columnas - 1) {
                 pintar_en_capa(
+                    TipoCapa::SUELO,
+                    columna_sur,
+                    fila_zocalo,
+                    0,
+                    PropiedadDeCasilla::BLOQUEA);
+                pintar_en_capa(
                     TipoCapa::ESTRUCTURAS,
                     columna_sur,
                     fila_zocalo,
@@ -1650,6 +1795,12 @@ void MapaEditable::reconstruir_perimetro_mercado() {
                 }
             }
             pintar_en_capa(
+                TipoCapa::SUELO,
+                columna_sur,
+                fila_inferior,
+                0,
+                PropiedadDeCasilla::BLOQUEA);
+            pintar_en_capa(
                 TipoCapa::ESTRUCTURAS,
                 columna_sur,
                 fila_inferior,
@@ -1663,19 +1814,6 @@ void MapaEditable::reconstruir_perimetro_mercado() {
             borrar_en_capa(TipoCapa::FRENTE, columna_sur, fila_inferior);
         }
         columna_sur++;
-    }
-
-    int columna_palmera_derecha = cantidad_de_columnas - 3;
-    if (capas.at(TipoCapa::ESTRUCTURAS).consultar_casilla(1, 4).obtener_id_tile() == 0) {
-        estampar(CatalogoDeEstampas::obtener_estampa(TipoEstampa::MERCADO_PALMERA_IZQUIERDA), 1, 2);
-    }
-    if (columna_palmera_derecha >= 1 && capas.at(TipoCapa::ESTRUCTURAS)
-                                                .consultar_casilla(columna_palmera_derecha + 1, 4)
-                                                .obtener_id_tile() == 0) {
-        estampar(
-            CatalogoDeEstampas::obtener_estampa(TipoEstampa::MERCADO_PALMERA_DERECHA),
-            columna_palmera_derecha,
-            2);
     }
 }
 
