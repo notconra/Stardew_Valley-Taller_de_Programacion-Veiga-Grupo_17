@@ -27,7 +27,11 @@
 #define PUNTOS_DE_LA_LETRA 18
 #define MARGEN 16
 #define ANCHO_DE_LA_LISTA 270
-#define GROSOR_DEL_MARCO 4
+
+#define GROSOR_DEL_MARCO 12
+#define BORDE_EN_EL_PNG 12
+#define LADO_DEL_PNG 56
+#define RUTA_DEL_MARCO "Assets/LooseSprites/menu_box.png"
 #define RADIO_DE_UN_LUGAR 8
 #define RADIO_DE_UN_JUGADOR 8
 #define RADIO_DEL_PROPIO 10
@@ -64,15 +68,14 @@ const SDL_Color COLOR_DE_UN_LUGAR{250, 210, 60, 255};
 const SDL_Color COLOR_DEL_BORDE{40, 20, 10, 255};
 const SDL_Color COLOR_DEL_TEXTO{255, 240, 200, 255};
 const SDL_Color COLOR_DEL_NOMBRE{255, 255, 255, 255};
-const SDL_Color COLOR_DEL_PAPEL{250, 210, 140, 255};
-const SDL_Color COLOR_DEL_MARCO{120, 60, 20, 255};
 const SDL_Color COLOR_DE_LA_LISTA{60, 30, 10, 255};
 
 }  // namespace
 
 MapaGeneral::MapaGeneral(SDL_Renderer* renderer, const std::string& ruta_fuente)
     : fuente_del_titulo(renderer, ruta_fuente, PUNTOS_DEL_TITULO),
-      fuente(renderer, ruta_fuente, PUNTOS_DE_LA_LETRA) {
+      fuente(renderer, ruta_fuente, PUNTOS_DE_LA_LETRA),
+      marco_del_menu(RUTA_DEL_MARCO, renderer) {
     usar_el_valle(renderer);
 }
 
@@ -360,27 +363,46 @@ void MapaGeneral::escribir(
     letra.dibujar(renderer, texto, x, y, color);
 }
 
+void MapaGeneral::dibujar_marco(SDL_Renderer* renderer, const SDL_Rect& exterior) const {
+    const int borde = std::max(1, std::min({GROSOR_DEL_MARCO, exterior.w / 2, exterior.h / 2}));
+    const int b = BORDE_EN_EL_PNG;
+    const int medio = LADO_DEL_PNG - 2 * b;
+    const int x = exterior.x;
+    const int y = exterior.y;
+    const int ancho_del_medio = exterior.w - 2 * borde;
+    const int alto_del_medio = exterior.h - 2 * borde;
+
+    // los 9 pedazos pars cada recorte del PNG con el lugar que ocupa en pantalla
+    const std::pair<SDL_Rect, SDL_Rect> pedazos[] = {
+        // Esquinas.
+        {{0, 0, b, b}, {x, y, borde, borde}},
+        {{b + medio, 0, b, b}, {x + exterior.w - borde, y, borde, borde}},
+        {{0, b + medio, b, b}, {x, y + exterior.h - borde, borde, borde}},
+        {{b + medio, b + medio, b, b},
+         {x + exterior.w - borde, y + exterior.h - borde, borde, borde}},
+
+        {{b, 0, medio, b}, {x + borde, y, ancho_del_medio, borde}},
+        {{b, b + medio, medio, b}, {x + borde, y + exterior.h - borde, ancho_del_medio, borde}},
+        {{0, b, b, medio}, {x, y + borde, borde, alto_del_medio}},
+        {{b + medio, b, b, medio}, {x + exterior.w - borde, y + borde, borde, alto_del_medio}},
+
+        {{b, b, medio, medio}, {x + borde, y + borde, ancho_del_medio, alto_del_medio}},
+    };
+    for (const auto& [recorte, destino] : pedazos) {
+        if (destino.w > 0 && destino.h > 0) {
+            SDL_RenderCopy(renderer, marco_del_menu.ptr(), &recorte, &destino);
+        }
+    }
+}
+
 void MapaGeneral::dibujar_lista(
     SDL_Renderer* renderer, const Datos& datos, const SDL_Rect& lugar) const {
-    SDL_SetRenderDrawColor(
-        renderer,
-        COLOR_DEL_MARCO.r,
-        COLOR_DEL_MARCO.g,
-        COLOR_DEL_MARCO.b,
-        COLOR_DEL_MARCO.a);
-    SDL_RenderFillRect(renderer, &lugar);
+    dibujar_marco(renderer, lugar);
     const SDL_Rect papel{
         lugar.x + GROSOR_DEL_MARCO,
         lugar.y + GROSOR_DEL_MARCO,
         lugar.w - 2 * GROSOR_DEL_MARCO,
         lugar.h - 2 * GROSOR_DEL_MARCO};
-    SDL_SetRenderDrawColor(
-        renderer,
-        COLOR_DEL_PAPEL.r,
-        COLOR_DEL_PAPEL.g,
-        COLOR_DEL_PAPEL.b,
-        COLOR_DEL_PAPEL.a);
-    SDL_RenderFillRect(renderer, &papel);
 
     const int renglon = fuente.alto_de_renglon() + MARGEN / 2;
     int y = papel.y + MARGEN / 2;
@@ -417,7 +439,7 @@ void MapaGeneral::dibujar(SDL_Renderer* renderer, const Datos& datos, const SDL_
     if (!abierto) {
         return;
     }
-    const int alto_del_titulo = fuente_del_titulo.alto_de_renglon() + MARGEN;
+    const int alto_del_titulo = fuente_del_titulo.alto_de_renglon() + MARGEN + GROSOR_DEL_MARCO;
     const int alto_de_la_lista_abajo = fuente_del_titulo.alto_de_renglon() + MARGEN * 3 / 2 +
                                        GROSOR_DEL_MARCO * 2 +
                                        static_cast<int>(datos.posiciones.jugadores.size()) *
@@ -426,29 +448,39 @@ void MapaGeneral::dibujar(SDL_Renderer* renderer, const Datos& datos, const SDL_
     // pixel art) y si no se achica lo que haga falta (un mundo del editor). La lista va al costado
     // o, si así el plano queda más grande (por ejemplo con el chat abierto), abajo.
     const double escala_al_costado = std::min(
-        static_cast<double>(area.w - ANCHO_DE_LA_LISTA - 3 * MARGEN) / ancho_del_plano,
-        static_cast<double>(area.h - alto_del_titulo - 2 * MARGEN) / alto_del_plano);
+        static_cast<double>(area.w - ANCHO_DE_LA_LISTA - 2 * GROSOR_DEL_MARCO - 3 * MARGEN) /
+            ancho_del_plano,
+        static_cast<double>(area.h - alto_del_titulo - GROSOR_DEL_MARCO - 2 * MARGEN) /
+            alto_del_plano);
     const double escala_abajo = std::min(
-        static_cast<double>(area.w - 2 * MARGEN) / ancho_del_plano,
-        static_cast<double>(area.h - alto_del_titulo - alto_de_la_lista_abajo - 3 * MARGEN) /
+        static_cast<double>(area.w - 2 * GROSOR_DEL_MARCO - 2 * MARGEN) / ancho_del_plano,
+        static_cast<double>(
+            area.h - alto_del_titulo - GROSOR_DEL_MARCO - alto_de_la_lista_abajo - 3 * MARGEN) /
             alto_del_plano);
     const bool lista_abajo = escala_abajo > escala_al_costado;
     double escala = lista_abajo ? escala_abajo : escala_al_costado;
     escala = escala >= 1.0 ? std::floor(escala) : std::max(escala, 0.1);
     const int ancho = static_cast<int>(ancho_del_plano * escala);
     const int alto = static_cast<int>(alto_del_plano * escala);
-    const int ancho_total = lista_abajo ? ancho : ancho + MARGEN + ANCHO_DE_LA_LISTA;
-    const int alto_total =
-        alto_del_titulo + alto + (lista_abajo ? MARGEN + alto_de_la_lista_abajo : 0);
+    // con el marco el mapa ocupa "ancho + 2 * GROSOR_DEL_MARCO" de ancho (y lo mismo de alto)
+    const int ancho_con_marco = ancho + 2 * GROSOR_DEL_MARCO;
+    const int ancho_total =
+        lista_abajo ? ancho_con_marco : ancho_con_marco + MARGEN + ANCHO_DE_LA_LISTA;
+    const int alto_total = alto_del_titulo + alto + GROSOR_DEL_MARCO +
+                           (lista_abajo ? MARGEN + alto_de_la_lista_abajo : 0);
     const SDL_Rect dibujo{
-        area.x + std::max(0, (area.w - ancho_total) / 2),
+        area.x + std::max(0, (area.w - ancho_total) / 2) + GROSOR_DEL_MARCO,
         area.y + std::max(0, (area.h - alto_total) / 2) + alto_del_titulo,
         ancho,
         alto};
+    const SDL_Rect marco{
+        dibujo.x - GROSOR_DEL_MARCO,
+        dibujo.y - GROSOR_DEL_MARCO,
+        ancho_con_marco,
+        alto + 2 * GROSOR_DEL_MARCO};
     const SDL_Rect lugar_de_la_lista =
-        lista_abajo
-            ? SDL_Rect{dibujo.x, dibujo.y + dibujo.h + MARGEN, ancho, alto_de_la_lista_abajo}
-            : SDL_Rect{dibujo.x + dibujo.w + MARGEN, dibujo.y, ANCHO_DE_LA_LISTA, dibujo.h};
+        lista_abajo ? SDL_Rect{marco.x, marco.y + marco.h + MARGEN, marco.w, alto_de_la_lista_abajo}
+                    : SDL_Rect{marco.x + marco.w + MARGEN, marco.y, ANCHO_DE_LA_LISTA, marco.h};
 
     // Se oscurece lo de atrás, pero se sigue viendo el juego.
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
@@ -461,21 +493,11 @@ void MapaGeneral::dibujar(SDL_Renderer* renderer, const Datos& datos, const SDL_
         fuente_del_titulo,
         mundo_propio.has_value() ? "Mapa de " + mundo_propio->nombre + "  (Tab o M para cerrar)"
                                  : std::string("Mapa del valle  (Tab o M para cerrar)"),
-        dibujo.x,
+        marco.x,
         dibujo.y - alto_del_titulo,
         COLOR_DEL_TEXTO);
-    const SDL_Rect marco{
-        dibujo.x - GROSOR_DEL_MARCO,
-        dibujo.y - GROSOR_DEL_MARCO,
-        dibujo.w + 2 * GROSOR_DEL_MARCO,
-        dibujo.h + 2 * GROSOR_DEL_MARCO};
-    SDL_SetRenderDrawColor(
-        renderer,
-        COLOR_DEL_MARCO.r,
-        COLOR_DEL_MARCO.g,
-        COLOR_DEL_MARCO.b,
-        COLOR_DEL_MARCO.a);
-    SDL_RenderFillRect(renderer, &marco);
+
+    dibujar_marco(renderer, marco);
     const auto en_pantalla = [&](const SDL_Point& punto) {
         return SDL_Point{
             dibujo.x + static_cast<int>(punto.x * escala),
