@@ -25,29 +25,6 @@ static constexpr int ESPACIADO_MODOS_PX = 4;
 static constexpr int ESPACIADO_TILES_PX = 4;
 static constexpr int ESPACIADO_ESTAMPAS_PX = 4;
 
-static constexpr const char* ESTILO_BOTON_MODO =
-    "QPushButton { background-color: #383838; color: #EEEEEE; font-weight: bold; padding: 6px; "
-    "border-radius: 4px; border: 1px solid #555555; }"
-    "QPushButton:hover { background-color: #4A4A4A; }"
-    "QPushButton:checked { background-color: #2E6B38; color: white; border: 1px solid #4CAF50; }";
-
-static constexpr const char* ESTILO_BOTON_TILE_CUADRO =
-    "QPushButton { background-color: #2D2D2D; border: 1px solid #444444; border-radius: 4px; "
-    "padding: 2px; }"
-    "QPushButton:hover { background-color: #3D3D3D; border: 1px solid #888888; }"
-    "QPushButton:checked { background-color: #2E6B38; border: 2px solid #55FF55; }";
-
-static constexpr const char* ESTILO_BOTON_ESTAMPA =
-    "QPushButton { background-color: #2B3D4F; color: white; font-weight: bold; padding: 5px 8px; "
-    "border-radius: 4px; border: 1px solid #3A536B; text-align: left; font-size: 11px; }"
-    "QPushButton:hover { background-color: #385068; }"
-    "QPushButton:checked { background-color: #1E6B9B; border: 2px solid #00D2FF; }";
-
-static constexpr const char* ESTILO_BOTON_PERIMETRO =
-    "QPushButton { background-color: #5A3A1A; color: white; font-weight: bold; padding: 6px; "
-    "border-radius: 4px; border: 1px solid #7A4F23; font-size: 11px; }"
-    "QPushButton:hover { background-color: #7A4F23; }";
-
 PaletaDeHerramientas::PaletaDeHerramientas(QWidget* padre)
     : QWidget(padre),
       layout_principal(nullptr),
@@ -89,7 +66,7 @@ PaletaDeHerramientas::PaletaDeHerramientas(QWidget* padre)
     layout_principal->setSpacing(ESPACIADO_LAYOUT_PX);
 
     // 1. Grupo de Modos de Edición
-    QGroupBox* caja_modos = new QGroupBox("Modo de Edicion", this);
+    QGroupBox* caja_modos = new QGroupBox("Modo de Edición", this);
     QVBoxLayout* layout_modos = new QVBoxLayout(caja_modos);
     layout_modos->setSpacing(ESPACIADO_MODOS_PX);
     grupo_modos = new QButtonGroup(this);
@@ -124,8 +101,8 @@ PaletaDeHerramientas::PaletaDeHerramientas(QWidget* padre)
 
     grupo_estampas = new QButtonGroup(this);
 
-    boton_muro_perimetral = new QPushButton("Cerrar Perimetro con Vallas", caja_estampas);
-    boton_muro_perimetral->setStyleSheet(ESTILO_BOTON_PERIMETRO);
+    boton_muro_perimetral = new QPushButton("Cerrar Perímetro con Vallas", caja_estampas);
+    boton_muro_perimetral->setObjectName("boton_muro_perimetral");
     connect(
         boton_muro_perimetral,
         &QPushButton::clicked,
@@ -142,7 +119,7 @@ PaletaDeHerramientas::PaletaDeHerramientas(QWidget* padre)
 QPushButton* PaletaDeHerramientas::crear_boton_modo(const QString& texto, ModoEditor modo) {
     QPushButton* boton = new QPushButton(texto, this);
     boton->setCheckable(true);
-    boton->setStyleSheet(ESTILO_BOTON_MODO);
+    boton->setProperty("rol", "modo");
     grupo_modos->addButton(boton, static_cast<int>(modo));
     connect(boton, &QPushButton::clicked, this, [this, modo]() { emit modo_cambiado(modo); });
     return boton;
@@ -226,7 +203,7 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
         QPushButton* boton = new QPushButton(this);
         boton->setFixedSize(TAMANO_BOTON_TILE_PX, TAMANO_BOTON_TILE_PX);
         boton->setCheckable(true);
-        boton->setStyleSheet(ESTILO_BOTON_TILE_CUADRO);
+        boton->setProperty("rol", "tile");
         boton->setToolTip(QString::fromStdString(definicion.nombre));
         boton->setIcon(QIcon(sprite_recortado.scaled(
             TAMANO_ICONO_TILE_PX,
@@ -286,7 +263,7 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
     } else if (sector == SectorActual::CAVERNA) {
         boton_muro_perimetral->setText("Generar Muros de Mina");
     } else {
-        boton_muro_perimetral->setText("Cerrar Perimetro con Vallas");
+        boton_muro_perimetral->setText("Cerrar Perímetro con Vallas");
     }
 
     size_t indice_estampa = 0;
@@ -296,7 +273,7 @@ void PaletaDeHerramientas::actualizar_sector(SectorActual sector) {
         QPushButton* boton_estampa =
             new QPushButton(QString::fromStdString(estampa.nombre), caja_estampas);
         boton_estampa->setCheckable(true);
-        boton_estampa->setStyleSheet(ESTILO_BOTON_ESTAMPA);
+        boton_estampa->setProperty("rol", "estampa");
         grupo_estampas->addButton(boton_estampa, static_cast<int>(tipo));
         layout_estampas->insertWidget(static_cast<int>(indice_estampa), boton_estampa);
 

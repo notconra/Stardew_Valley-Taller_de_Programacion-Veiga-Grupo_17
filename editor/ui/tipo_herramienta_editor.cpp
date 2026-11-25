@@ -28,7 +28,7 @@ static constexpr int ALTO_SALIDA_CAVERNA = 1;
 static constexpr int ANCHO_TRANSICION = 1;
 static constexpr int ALTO_TRANSICION = 2;
 
-static constexpr const char* NOMBRE_CABANIA = "Cabania";
+static constexpr const char* NOMBRE_CABANIA = "Cabaña";
 static constexpr const char* NOMBRE_ENTRADA_CAVERNA = "Entrada Caverna";
 static constexpr const char* NOMBRE_PUESTO_MARNIE = "Puesto Marnie";
 static constexpr const char* NOMBRE_PUESTO_CLINT = "Puesto Clint";

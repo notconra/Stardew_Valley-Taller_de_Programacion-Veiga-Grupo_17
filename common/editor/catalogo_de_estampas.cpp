@@ -858,7 +858,7 @@ static const DefinicionEstampa ESTAMPA_MERCADO_PUESTO_DERECHO = {
 
 static const DefinicionEstampa ESTAMPA_MERCADO_ESTANTERIA_IZQUIERDA = {
     TipoEstampa::MERCADO_ESTANTERIA_IZQUIERDA,
-    "Estanteria Comercial (6x3) [R]",
+    "Estantería Comercial (6x3) [R]",
     6,
     3,
     {CasillaEstampa{0, 0, 2147484608u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},
@@ -882,7 +882,7 @@ static const DefinicionEstampa ESTAMPA_MERCADO_ESTANTERIA_IZQUIERDA = {
 
 static const DefinicionEstampa ESTAMPA_MERCADO_ESTANTERIA_DERECHA = {
     TipoEstampa::MERCADO_ESTANTERIA_DERECHA,
-    "Estanteria Derecha (6x3) [R]",
+    "Estantería Derecha (6x3) [R]",
     6,
     3,
     {CasillaEstampa{0, 0, 955u, TipoCapa::FRENTE, PropiedadDeCasilla::NINGUNA},

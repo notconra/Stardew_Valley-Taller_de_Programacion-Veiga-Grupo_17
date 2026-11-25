@@ -79,7 +79,7 @@ static constexpr const char* NOMBRE_CAMINO_PIEDRA = "Sendero de Piedra";
 
 // Nombres temáticos de terrenos - Pueblo
 static constexpr const char* NOMBRE_PASTO_URBANO = "Pasto Urbano";
-static constexpr const char* NOMBRE_ADOQUIN_CALLE_1 = "Adoquin de Pueblo (Baldosa)";
+static constexpr const char* NOMBRE_ADOQUIN_CALLE_1 = "Adoquín de Pueblo (Baldosa)";
 static constexpr const char* NOMBRE_BORDE_CAMINO = "Borde de Camino (Rotable [R])";
 static constexpr const char* NOMBRE_ESQUINA_EXTERIOR = "Esquina Exterior (Rotable [R])";
 static constexpr const char* NOMBRE_ESQUINA_INTERIOR = "Esquina Interior (Rotable [R])";
@@ -90,7 +90,7 @@ static constexpr const char* NOMBRE_PISO_PIEDRA_OSCURA = "Piso de Piedra Oscura"
 static constexpr const char* NOMBRE_SENDERO_MINERO = "Piso Rocoso";
 static constexpr const char* NOMBRE_SENDERO_SECUNDARIO = "Piso Texturizado";
 static constexpr const char* NOMBRE_PISO_GUIJARROS = "Piso con Guijarros";
-static constexpr const char* NOMBRE_BARRO_SUBTERRANEO = "Tierra Subterranea";
+static constexpr const char* NOMBRE_BARRO_SUBTERRANEO = "Tierra Subterránea";
 
 static const std::map<SectorActual, std::vector<DefinicionTile>> CATALOGO_POR_SECTOR = {
     {SectorActual::GRANJA,
