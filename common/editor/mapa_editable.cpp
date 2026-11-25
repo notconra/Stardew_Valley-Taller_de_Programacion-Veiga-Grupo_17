@@ -245,7 +245,7 @@ bool MapaEditable::ajustar_posicion_transicion_borde(
         return false;
     }
     if ((columna_entrada == 0 || columna_entrada == cantidad_de_columnas - 1) &&
-        fila_entrada >= 2 && fila_entrada <= cantidad_de_filas - 4) {
+        fila_entrada >= ALTO_VALLA_NORTE_CASILLAS && fila_entrada <= cantidad_de_filas - 4) {
         columna_salida = columna_entrada;
         fila_salida = fila_entrada;
         ancho_salida = 1;
@@ -1217,17 +1217,52 @@ void MapaEditable::generar_muro_perimetral_granja() {
                                       : 0;
         uint32_t tile_oeste_a = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_A;
         uint32_t tile_oeste_b = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_B;
-        if (tile_paso_oeste == 0 && fila_lateral + 1 < fila_sur &&
-            fila_ocupada_por_transicion_oeste(fila_lateral + 1)) {
-            tile_oeste_a = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_FIN;
-            tile_oeste_b = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_FIN;
+        if (tile_paso_oeste == 0) {
+            if (fila_lateral == 0) {
+                tile_oeste_a = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_INICIO;
+                tile_oeste_b = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_INICIO;
+            } else if (
+                fila_lateral + 1 < fila_sur &&
+                fila_ocupada_por_transicion_oeste(fila_lateral + 1)) {
+                tile_oeste_a = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_ROCA;
+                tile_oeste_b = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_ROCA;
+            } else if (
+                fila_lateral + 2 < fila_sur &&
+                fila_ocupada_por_transicion_oeste(fila_lateral + 2)) {
+                tile_oeste_a = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_PARED;
+                tile_oeste_b = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_PARED;
+            } else if (
+                fila_lateral + 3 < fila_sur &&
+                fila_ocupada_por_transicion_oeste(fila_lateral + 3)) {
+                tile_oeste_a = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_FIN;
+                tile_oeste_b = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_FIN;
+            } else if (fila_lateral > 0 && fila_ocupada_por_transicion_oeste(fila_lateral - 1)) {
+                tile_oeste_a = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_INICIO;
+                tile_oeste_b = CatalogoDeEstampas::TILE_ACANTILADO_OESTE_INICIO;
+            }
         }
         uint32_t tile_este_a = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_A;
         uint32_t tile_este_b = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_B;
-        if (tile_paso_este == 0 && fila_lateral + 1 < fila_sur &&
-            fila_ocupada_por_transicion_este(fila_lateral + 1)) {
-            tile_este_a = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_FIN;
-            tile_este_b = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_FIN;
+        if (tile_paso_este == 0) {
+            if (fila_lateral == 0) {
+                tile_este_a = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_INICIO;
+                tile_este_b = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_INICIO;
+            } else if (
+                fila_lateral + 1 < fila_sur && fila_ocupada_por_transicion_este(fila_lateral + 1)) {
+                tile_este_a = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_ROCA;
+                tile_este_b = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_ROCA;
+            } else if (
+                fila_lateral + 2 < fila_sur && fila_ocupada_por_transicion_este(fila_lateral + 2)) {
+                tile_este_a = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_PARED;
+                tile_este_b = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_PARED;
+            } else if (
+                fila_lateral + 3 < fila_sur && fila_ocupada_por_transicion_este(fila_lateral + 3)) {
+                tile_este_a = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_FIN;
+                tile_este_b = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_FIN;
+            } else if (fila_lateral > 0 && fila_ocupada_por_transicion_este(fila_lateral - 1)) {
+                tile_este_a = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_INICIO;
+                tile_este_b = CatalogoDeEstampas::TILE_ACANTILADO_ESTE_INICIO;
+            }
         }
         pintar_borde_lateral_granja(0, fila_lateral, tile_oeste_a, tile_oeste_b, tile_paso_oeste);
         pintar_borde_lateral_granja(

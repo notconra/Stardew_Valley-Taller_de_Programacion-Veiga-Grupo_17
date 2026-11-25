@@ -111,7 +111,13 @@ public:
     static constexpr uint32_t TILE_PASO_MADERA_GRANJA = 467;
     static constexpr uint32_t TILE_PASO_TIERRA_GRANJA = 716;
     static constexpr uint32_t TILE_ACANTILADO_OESTE_FIN = 573;
+    static constexpr uint32_t TILE_ACANTILADO_OESTE_PARED = 598;
+    static constexpr uint32_t TILE_ACANTILADO_OESTE_ROCA = 673;
+    static constexpr uint32_t TILE_ACANTILADO_OESTE_INICIO = 518;
     static constexpr uint32_t TILE_ACANTILADO_ESTE_FIN = 570;
+    static constexpr uint32_t TILE_ACANTILADO_ESTE_PARED = 595;
+    static constexpr uint32_t TILE_ACANTILADO_ESTE_ROCA = 670;
+    static constexpr uint32_t TILE_ACANTILADO_ESTE_INICIO = 519;
 
     // Tiles de acantilado perimetral para la granja (spring_outdoorsTileSheet.png)
     static constexpr uint32_t TILE_ACANTILADO_NORTE_IZQ_0 = 596;
