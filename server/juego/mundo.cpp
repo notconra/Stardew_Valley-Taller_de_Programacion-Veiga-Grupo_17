@@ -58,7 +58,9 @@ Mundo::Mundo(
             guardado.id_jugador,
             mapa_destino,
             recursos.catalogo_de_items,
-            recursos.juego.inventario.cantidad_ranuras_barra);
+            recursos.juego.inventario.cantidad_ranuras_barra,
+            recursos.juego.jugador.vida_inicial,
+            recursos.juego.jugador.energia_inicial);
         restaurar(it->second, guardado);
     }
 }
@@ -133,7 +135,9 @@ void Mundo::conectar(
                              id_jugador,
                              recursos.mapa_inicial,
                              recursos.catalogo_de_items,
-                             recursos.juego.inventario.cantidad_ranuras_barra)
+                             recursos.juego.inventario.cantidad_ranuras_barra,
+            recursos.juego.jugador.vida_inicial,
+            recursos.juego.jugador.energia_inicial)
                          .first;
         encontrado->second.apariencia = apariencia;
     }
