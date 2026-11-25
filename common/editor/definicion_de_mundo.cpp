@@ -97,15 +97,22 @@ void DefinicionDeMundo::establecer_niveles_mazmorra(const std::vector<MapaEditab
 }
 
 MapaEditable DefinicionDeMundo::crear_sector_mercado_por_defecto() {
-    if (std::filesystem::exists("Assets/Maps/Mercado.tmx")) {
-        return CargadorDeSectorTMX::cargar_sector("Assets/Maps/Mercado.tmx", SectorActual::MERCADO);
-    }
     MapaEditable mercado(
         19,
         17,
         CatalogoDeTerrenos::obtener_tile_base(SectorActual::MERCADO),
         PropiedadDeCasilla::DECORABLE);
-    mercado.reconstruir_perimetro_mercado();
+    if (std::filesystem::exists("Assets/Maps/Mercado.tmx")) {
+        mercado =
+            CargadorDeSectorTMX::cargar_sector("Assets/Maps/Mercado.tmx", SectorActual::MERCADO);
+        mercado.vaciar_entidades();
+    } else {
+        mercado.reconstruir_perimetro_mercado();
+    }
+    mercado.ubicar_entidad(TipoEntidad::PUESTO_ROBIN, 3, 6, 1, 1, Direccion::ABAJO);
+    mercado.ubicar_entidad(TipoEntidad::PUESTO_MARNIE, 15, 6, 1, 1, Direccion::ABAJO);
+    mercado.ubicar_entidad(TipoEntidad::PUESTO_PIERRE, 2, 10, 1, 1, Direccion::DERECHA);
+    mercado.ubicar_entidad(TipoEntidad::PUESTO_CLINT, 16, 10, 1, 1, Direccion::IZQUIERDA);
     return mercado;
 }
 
