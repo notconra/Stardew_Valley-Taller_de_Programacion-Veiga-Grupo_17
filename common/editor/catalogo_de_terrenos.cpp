@@ -10,8 +10,7 @@
 // Exteriores - Granja (spring_outdoorsTileSheet.png, 25 columnas)
 static constexpr uint32_t TILE_TIERRA_BASE = 716;
 static constexpr uint32_t TILE_PASTO = 304;
-static constexpr uint32_t TILE_CAMINO_MADERA = 1260;
-static constexpr uint32_t TILE_CAMINO_PIEDRA = 1587;
+static constexpr uint32_t TILE_PASTO_CON_FLORES = 280;
 
 // Pueblo (spring_town.png, 32 columnas)
 static constexpr uint32_t TILE_PASTO_URBANO = 709;
@@ -74,8 +73,7 @@ static constexpr uint32_t TILE_PISO_MERCADO = 4705;
 // Nombres temáticos de terrenos - Granja
 static constexpr const char* NOMBRE_TIERRA_BASE = "Tierra de Granja";
 static constexpr const char* NOMBRE_PASTO = "Pasto Natural";
-static constexpr const char* NOMBRE_CAMINO_MADERA = "Sendero de Madera";
-static constexpr const char* NOMBRE_CAMINO_PIEDRA = "Sendero de Piedra";
+static constexpr const char* NOMBRE_PASTO_CON_FLORES = "Pasto con Flores";
 
 // Nombres temáticos de terrenos - Pueblo
 static constexpr const char* NOMBRE_PASTO_URBANO = "Pasto Urbano";
@@ -103,8 +101,8 @@ static const std::map<SectorActual, std::vector<DefinicionTile>> CATALOGO_POR_SE
           NOMBRE_PASTO,
           TILE_PASTO,
           PropiedadDeCasilla::DECORABLE | PropiedadDeCasilla::ADMITE_HIERBA},
-      DefinicionTile{NOMBRE_CAMINO_MADERA, TILE_CAMINO_MADERA, PropiedadDeCasilla::DECORABLE},
-      DefinicionTile{NOMBRE_CAMINO_PIEDRA, TILE_CAMINO_PIEDRA, PropiedadDeCasilla::DECORABLE}}},
+      DefinicionTile{
+          NOMBRE_PASTO_CON_FLORES, TILE_PASTO_CON_FLORES, PropiedadDeCasilla::DECORABLE}}},
     {SectorActual::PUEBLO,
      {DefinicionTile{NOMBRE_PASTO_URBANO, TILE_PASTO_URBANO, PropiedadDeCasilla::DECORABLE},
       DefinicionTile{NOMBRE_ADOQUIN_CALLE_1, TILE_ADOQUIN_CALLE_1, PropiedadDeCasilla::DECORABLE},
