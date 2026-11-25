@@ -98,10 +98,7 @@ void DefinicionDeMundo::establecer_niveles_mazmorra(const std::vector<MapaEditab
 
 MapaEditable DefinicionDeMundo::crear_sector_mercado_por_defecto() {
     if (std::filesystem::exists("Assets/Maps/Mercado.tmx")) {
-        MapaEditable mercado =
-            CargadorDeSectorTMX::cargar_sector("Assets/Maps/Mercado.tmx", SectorActual::MERCADO);
-        mercado.vaciar_entidades();
-        return mercado;
+        return CargadorDeSectorTMX::cargar_sector("Assets/Maps/Mercado.tmx", SectorActual::MERCADO);
     }
     MapaEditable mercado(
         19,
