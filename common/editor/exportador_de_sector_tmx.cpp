@@ -28,6 +28,18 @@ static const std::map<TipoEntidad, const char*> PUESTOS_POR_TIPO = {
     {TipoEntidad::PUESTO_PIERRE, "pierre"},
     {TipoEntidad::PUESTO_ROBIN, "robin"}};
 
+uint32_t ExportadorDeSectorTMX::traducir_tile_pueblo_para_exportar(uint32_t valor_crudo) {
+    if (valor_crudo == 0) {
+        return 0;
+    }
+    uint32_t banderas = valor_crudo & 0xE0000000;
+    uint32_t identificador_puro = valor_crudo & 0x1FFFFFFF;
+    if (identificador_puro == CatalogoDeTerrenos::obtener_tile_base(SectorActual::PUEBLO)) {
+        return banderas | GID_PASTO_LANDSCAPE_PUEBLO;
+    }
+    return banderas | (identificador_puro + FIRST_GID_PUEBLO - 1);
+}
+
 ExportadorDeSectorTMX::ExportadorDeSectorTMX(
     SectorActual sector_actual, const MapaEditable& mapa_sector,
     const DestinosDeTransicion& destinos_transicion)
@@ -156,21 +168,12 @@ void ExportadorDeSectorTMX::exportar_capas_de_tiles() {
     if (sector == SectorActual::PUEBLO) {
         size_t indice_pueblo = 0;
         while (indice_pueblo < total_casillas) {
-            if (tiles_suelo[indice_pueblo] != 0) {
-                uint32_t flags = tiles_suelo[indice_pueblo] & 0xE0000000;
-                uint32_t id_puro = tiles_suelo[indice_pueblo] & 0x1FFFFFFF;
-                tiles_suelo[indice_pueblo] = flags | (id_puro + FIRST_GID_PUEBLO - 1);
-            }
-            if (tiles_estructuras[indice_pueblo] != 0) {
-                uint32_t flags = tiles_estructuras[indice_pueblo] & 0xE0000000;
-                uint32_t id_puro = tiles_estructuras[indice_pueblo] & 0x1FFFFFFF;
-                tiles_estructuras[indice_pueblo] = flags | (id_puro + FIRST_GID_PUEBLO - 1);
-            }
-            if (tiles_frente[indice_pueblo] != 0) {
-                uint32_t flags = tiles_frente[indice_pueblo] & 0xE0000000;
-                uint32_t id_puro = tiles_frente[indice_pueblo] & 0x1FFFFFFF;
-                tiles_frente[indice_pueblo] = flags | (id_puro + FIRST_GID_PUEBLO - 1);
-            }
+            tiles_suelo[indice_pueblo] =
+                traducir_tile_pueblo_para_exportar(tiles_suelo[indice_pueblo]);
+            tiles_estructuras[indice_pueblo] =
+                traducir_tile_pueblo_para_exportar(tiles_estructuras[indice_pueblo]);
+            tiles_frente[indice_pueblo] =
+                traducir_tile_pueblo_para_exportar(tiles_frente[indice_pueblo]);
             indice_pueblo++;
         }
     }

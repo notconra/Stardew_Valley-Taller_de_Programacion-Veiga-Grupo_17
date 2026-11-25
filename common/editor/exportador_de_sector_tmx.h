@@ -43,6 +43,7 @@ private:
 
     static constexpr int COLUMNA_SPAWN_CASA = 27;
     static constexpr int FILA_SPAWN_CASA = 28;
+    static constexpr uint32_t GID_PASTO_LANDSCAPE_PUEBLO = 176;
 
     static constexpr int COLUMNA_ENTRADA_MERCADO = 9;
     static constexpr int FILA_ENTRADA_MERCADO = 14;
@@ -150,6 +151,7 @@ private:
     void inyectar_tiles_de_salida_caverna(
         int origen_columna, int origen_fila, int total_columnas, int total_filas,
         std::vector<uint32_t>& tiles_estructuras, std::vector<uint32_t>& tiles_colisiones);
+    static uint32_t traducir_tile_pueblo_para_exportar(uint32_t valor_crudo);
 
 public:
     ExportadorDeSectorTMX(

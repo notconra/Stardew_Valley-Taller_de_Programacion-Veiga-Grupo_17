@@ -48,7 +48,10 @@ uint32_t CargadorDeSectorTMX::normalizar_tile_sector(
     uint32_t banderas = identificador_con_banderas & MASCARA_BANDERAS_ESPEJO_TILE;
     uint32_t identificador_puro = identificador_con_banderas & MASCARA_IDENTIFICADOR_TILE;
     uint32_t desplazamiento = PRIMER_IDENTIFICADOR_PUEBLO_TMX - 1;
-    if (identificador_puro >= PRIMER_IDENTIFICADOR_PUEBLO_TMX) {
+    static constexpr uint32_t GID_PASTO_LANDSCAPE_PUEBLO = 176;
+    if (identificador_puro == GID_PASTO_LANDSCAPE_PUEBLO) {
+        identificador_puro = CatalogoDeTerrenos::obtener_tile_base(SectorActual::PUEBLO);
+    } else if (identificador_puro >= PRIMER_IDENTIFICADOR_PUEBLO_TMX) {
         identificador_puro -= desplazamiento;
         while (identificador_puro > CANTIDAD_TILES_PUEBLO) {
             identificador_puro -= desplazamiento;
