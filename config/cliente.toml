@@ -11,7 +11,7 @@ mapa_inicial = "FarmHouse2"
 # para tailscale (bren): host = "100.117.194.20"
 # para tailscale (conra): host = "100.126.247.61"
 # local: host = "100.126.247.61"
-host = "100.126.247.61"
+host = "127.0.0.1"
 puerto = "8081"
 
 [ventana]
@@ -26,7 +26,7 @@ redimensionable = true
 [sdl]
 # si estan en linux nativo (con GPU) pongan true, si están con WSL o VM (sin GPU) ponganlo en false para usar
 # el renderer por software de SDL, que evita que use OpenGL los hilos para de llvmpipe emular la GPU.
-acelerado = true
+acelerado = false
 vsync = true
 fps_maximos = 60
 
