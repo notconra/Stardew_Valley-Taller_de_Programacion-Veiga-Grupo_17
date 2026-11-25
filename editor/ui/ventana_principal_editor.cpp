@@ -37,6 +37,7 @@ VentanaPrincipalEditor::VentanaPrincipalEditor(QWidget* padre)
     : QMainWindow(padre),
       mundo_actual(DefinicionDeMundo::crear_mundo_por_defecto("Mundo Inicial")),
       ruta_archivo_actual(""),
+      hay_cambios_sin_guardar(false),
       lienzo(nullptr),
       paleta(nullptr),
       panel_validacion(nullptr),
@@ -221,11 +222,10 @@ void VentanaPrincipalEditor::conectar_senales() {
         &LienzoDeEdicion::casilla_apuntada,
         this,
         &VentanaPrincipalEditor::actualizar_coordenadas);
-    connect(
-        lienzo,
-        &LienzoDeEdicion::mapa_modificado,
-        this,
-        &VentanaPrincipalEditor::ejecutar_validacion);
+    connect(lienzo, &LienzoDeEdicion::mapa_modificado, this, [this]() {
+        marcar_cambios_sin_guardar();
+        ejecutar_validacion();
+    });
     connect(
         lienzo,
         &LienzoDeEdicion::mapa_expandido,
@@ -346,26 +346,23 @@ void VentanaPrincipalEditor::ajustar_ancho_paneles() {
 }
 
 void VentanaPrincipalEditor::nuevo_mundo() {
-    bool aceptado = false;
-    QString nombre = QInputDialog::getText(
-        this,
-        "Nuevo Mundo",
-        "Ingrese el nombre del nuevo mundo:",
-        QLineEdit::Normal,
-        "Nuevo Mundo",
-        &aceptado);
-    if (aceptado && !nombre.trimmed().isEmpty()) {
-        mundo_actual = DefinicionDeMundo::crear_mundo_por_defecto(nombre.toStdString());
-        ruta_archivo_actual = "";
-        actualizar_etiqueta_nombre_mundo();
-        combo_sectores->setCurrentIndex(0);
-        actualizar_sector_en_pantalla();
-        ejecutar_validacion();
-        statusBar()->showMessage("Mundo creado correctamente.", 3000);
+    if (!confirmar_descartar_cambios_si_es_necesario()) {
+        return;
     }
+    mundo_actual = DefinicionDeMundo::crear_mundo_por_defecto("Nuevo Mundo");
+    ruta_archivo_actual = "";
+    hay_cambios_sin_guardar = false;
+    actualizar_etiqueta_nombre_mundo();
+    combo_sectores->setCurrentIndex(0);
+    actualizar_sector_en_pantalla();
+    ejecutar_validacion();
+    statusBar()->showMessage("Nuevo mundo creado.", 3000);
 }
 
 void VentanaPrincipalEditor::abrir_mundo() {
+    if (!confirmar_descartar_cambios_si_es_necesario()) {
+        return;
+    }
     std::filesystem::create_directories("mundos");
     QString directorio_mundos = QDir::current().absoluteFilePath("mundos");
     QString ruta_directorio = QFileDialog::getExistingDirectory(
@@ -378,6 +375,7 @@ void VentanaPrincipalEditor::abrir_mundo() {
         try {
             mundo_actual = CargadorDeMundoTMX::cargar_mundo(ruta_directorio.toStdString());
             ruta_archivo_actual = ruta_directorio.toStdString();
+            hay_cambios_sin_guardar = false;
             actualizar_etiqueta_nombre_mundo();
             combo_sectores->setCurrentIndex(0);
             actualizar_sector_en_pantalla();
@@ -402,6 +400,8 @@ void VentanaPrincipalEditor::guardar_mundo() {
     }
     try {
         ExportadorDeMundoTMX::exportar_mundo_completo(ruta_archivo_actual, mundo_actual);
+        hay_cambios_sin_guardar = false;
+        actualizar_etiqueta_nombre_mundo();
         statusBar()->showMessage(
             QString("Mundo guardado en %1").arg(QString::fromStdString(ruta_archivo_actual)),
             4000);
@@ -443,6 +443,38 @@ void VentanaPrincipalEditor::actualizar_etiqueta_nombre_mundo() {
         return;
     }
     etiqueta_nombre_mundo->setText(QString("Mundo: <b>%1</b>").arg(nombre));
+}
+
+void VentanaPrincipalEditor::marcar_cambios_sin_guardar() {
+    hay_cambios_sin_guardar = true;
+}
+
+bool VentanaPrincipalEditor::confirmar_descartar_cambios_si_es_necesario() {
+    if (!hay_cambios_sin_guardar) {
+        return true;
+    }
+    QMessageBox::StandardButton respuesta = QMessageBox::question(
+        this,
+        "Cambios sin guardar",
+        "Hay cambios sin guardar en el mundo actual. ¿Querés guardarlos antes de continuar?",
+        QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
+        QMessageBox::Save);
+    if (respuesta == QMessageBox::Cancel) {
+        return false;
+    }
+    if (respuesta == QMessageBox::Discard) {
+        return true;
+    }
+    guardar_mundo();
+    return !hay_cambios_sin_guardar;
+}
+
+void VentanaPrincipalEditor::closeEvent(QCloseEvent* evento) {
+    if (!confirmar_descartar_cambios_si_es_necesario()) {
+        evento->ignore();
+        return;
+    }
+    evento->accept();
 }
 
 bool VentanaPrincipalEditor::validar_antes_de_guardar() {
@@ -746,6 +778,7 @@ void VentanaPrincipalEditor::abrir_dialogo_redimensionar() {
             lienzo->actualizar_tamano_del_lienzo();
             lienzo->update();
             actualizar_etiqueta_dimensiones();
+            marcar_cambios_sin_guardar();
             ejecutar_validacion();
             statusBar()->showMessage(
                 QString("Dimensiones actualizadas a %1 x %2 casillas.")
@@ -765,16 +798,19 @@ void VentanaPrincipalEditor::generar_muro_perimetral_granja() {
     if (indice_sector == 0) {
         mapa_actual_sector->generar_muro_perimetral_granja();
         lienzo->update();
+        marcar_cambios_sin_guardar();
         ejecutar_validacion();
         statusBar()->showMessage("Perímetro de muros de troncos generado con éxito.", 3000);
     } else if (indice_sector == 1) {
         mapa_actual_sector->generar_muro_perimetral_pueblo();
         lienzo->update();
+        marcar_cambios_sin_guardar();
         ejecutar_validacion();
         statusBar()->showMessage("Perímetro de vallas urbanas generado con éxito.", 3000);
     } else if (indice_sector == 2) {
         mapa_actual_sector->reconstruir_perimetro_mercado();
         lienzo->update();
+        marcar_cambios_sin_guardar();
         ejecutar_validacion();
         statusBar()->showMessage("Perímetro del mercado restaurado con éxito.", 3000);
     } else if (indice_sector >= 3) {
@@ -782,6 +818,7 @@ void VentanaPrincipalEditor::generar_muro_perimetral_granja() {
         lienzo->actualizar_tamano_del_lienzo();
         lienzo->update();
         actualizar_etiqueta_dimensiones();
+        marcar_cambios_sin_guardar();
         ejecutar_validacion();
         statusBar()->showMessage("Muros de mina generados con éxito.", 3000);
     }

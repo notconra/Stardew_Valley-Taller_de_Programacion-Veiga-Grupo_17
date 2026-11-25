@@ -1,6 +1,7 @@
 #ifndef VENTANA_PRINCIPAL_EDITOR_H
 #define VENTANA_PRINCIPAL_EDITOR_H
 
+#include <QCloseEvent>
 #include <QComboBox>
 #include <QDockWidget>
 #include <QLabel>
@@ -19,6 +20,7 @@ class VentanaPrincipalEditor : public QMainWindow {
 private:
     DefinicionDeMundo mundo_actual;
     std::string ruta_archivo_actual;
+    bool hay_cambios_sin_guardar;
 
     LienzoDeEdicion* lienzo;
     PaletaDeHerramientas* paleta;
@@ -40,8 +42,13 @@ private:
     void actualizar_etiqueta_dimensiones();
     void actualizar_etiqueta_nombre_mundo();
     void ajustar_ancho_paneles();
+    void marcar_cambios_sin_guardar();
+    bool confirmar_descartar_cambios_si_es_necesario();
     bool validar_antes_de_guardar();
     MapaEditable* obtener_mapa_activo();
+
+protected:
+    void closeEvent(QCloseEvent* evento) override;
 
 private slots:
     void nuevo_mundo();
