@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "../azar.h"
+#include "../aspersores/aspersores.h"
 #include "../muebles/muebles.h"
 
 const ObjetoDelMundo* Sector::objeto_al_frente(uint32_t id_jugador) const {
@@ -98,6 +99,15 @@ void Sector::llover_sobre_los_cultivos(Notificador& notificador) {
     }
 }
 
+void Sector::regar_con_aspersores(Notificador& notificador) {
+    static const int DESPLAZAMIENTOS[4][2] = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
+    for (const auto& aspersor : objetos.obtener_objetos_de_tipo(TipoObjeto::ASPERSOR)) {
+        for (const auto& [dc, df] : DESPLAZAMIENTOS) {
+            regar(notificador, Casilla{aspersor.columna + dc, aspersor.fila + df});
+        }
+    }
+}
+
 void Sector::avisar_casilla(Notificador& notificador, const Casilla& casilla) const {
     TierraCambiada evento;
     evento.casilla =
@@ -161,7 +171,11 @@ void Sector::cargar_mueble(TipoObjeto tipo, uint32_t columna, uint32_t fila) {
 }
 
 void Sector::agregar_muebles_guardados_a(std::vector<DatosMuebleGuardado>& lista) const {
-    for (const DefinicionDeObjeto& mueble : Muebles::definiciones()) {
+    // Los aspersores se guardan como un mueble más: solo importa su tipo y su posición.
+    std::vector<DefinicionDeObjeto> guardables = Muebles::definiciones();
+    const std::vector<DefinicionDeObjeto> aspersores = Aspersores::definiciones();
+    guardables.insert(guardables.end(), aspersores.begin(), aspersores.end());
+    for (const DefinicionDeObjeto& mueble : guardables) {
         for (const auto& objeto : objetos.obtener_objetos_de_tipo(mueble.tipo)) {
             DatosMuebleGuardado guardado;
             guardado.id_mapa = id;

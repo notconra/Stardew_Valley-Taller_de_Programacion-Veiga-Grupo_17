@@ -12,8 +12,13 @@
 
 PuestoRobin::PuestoRobin(const ConfiguracionMercadoServidor& config)
     : PuestoDeMercado("robin", config, {}),
-      cofre(producto(TipoItem::COFRE, "Cofre", "Cofre para guardar hasta 30 objetos distintos.")) {
+      cofre(producto(TipoItem::COFRE, "Cofre", "Cofre para guardar hasta 30 objetos distintos.")),
+      aspersor(producto(
+          TipoItem::ASPERSOR,
+          "Aspersor",
+          "Cada manana riega las 4 casillas adyacentes. Se coloca en la granja.")) {
     catalogo.push_back(cofre);
+    catalogo.push_back(aspersor);
     for (const DatosDeMueble* mueble : CatalogoDeMuebles::muebles()) {
         std::string descripcion = "Mueble para la casa o la granja.";
         if (mueble->tipo == TipoDeMueble::ALFOMBRA) {
@@ -42,7 +47,7 @@ std::vector<ProductoEnVenta> PuestoRobin::obtener_productos_en_venta(uint32_t di
     std::shuffle(sorteados.begin(), sorteados.end(), motor);
     sorteados.resize(std::min<size_t>(sorteados.size(), MUEBLES_POR_DIA));
 
-    std::vector<ProductoEnVenta> del_dia = {cofre};
+    std::vector<ProductoEnVenta> del_dia = {cofre, aspersor};
     del_dia.insert(del_dia.end(), sorteados.begin(), sorteados.end());
     return del_dia;
 }

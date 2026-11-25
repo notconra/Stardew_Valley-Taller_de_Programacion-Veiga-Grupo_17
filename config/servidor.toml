@@ -135,7 +135,7 @@ oro_minimo = 0
 oro_maximo = 10
 
 [mazmorra.enemigos.orco]
-vida = 60
+vida = 40
 danio = 8
 ticks_entre_ataques = 60
 ticks_para_revivir = 0
@@ -157,7 +157,7 @@ multiplicador_de_frenesi = 2.0
 radio_de_sangre = 3
 
 [mazmorra.enemigos.vampiros.vampira]
-vida = 80
+vida = 50
 danio = 8
 ticks_entre_ataques = 50
 ticks_para_revivir = 200
@@ -168,7 +168,7 @@ oro_minimo = 5
 oro_maximo = 15
 
 [mazmorra.enemigos.vampiros.vampiro]
-vida = 100
+vida = 70
 danio = 14
 ticks_entre_ataques = 60
 ticks_para_revivir = 200
@@ -194,7 +194,7 @@ distancia_de_ataque = 4
 # Pinches en el suelo (enunciado: se activan por tiempo). Pasan ticks_inactiva guardados y
 # ticks_activa afuera; a cada jugador parado encima le sacan "danio" una vez por activación.
 [mazmorra.trampas]
-por_nivel = 10
+por_nivel = 5
 lanzallamas_por_nivel = 4
 danio = 10
 ticks_inactiva = 90
@@ -253,6 +253,7 @@ SEMILLA_CEBOLLA_DE_VERDEO = 8
 SEMILLA_CALABAZA = 30
 
 COFRE = 100
+ASPERSOR = 100
 MUEBLE_POR_CASILLA = 25
 
 [mercado.precios_de_venta]
