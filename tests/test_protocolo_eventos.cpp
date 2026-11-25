@@ -215,11 +215,12 @@ TEST_F(ProtocoloEventosTest, EstadoJuego) {
         {animal1, animal2},
         {71, 72},
         {npc_uno(), npc_dos()},
-        {}});
+        {},
+        4});
 }
 
 TEST_F(ProtocoloEventosTest, EstadoJuegoVacio) {
-    verificar_evento(EstadoJuego{"granja", {}, {}, {}, {}, {}, {}, {}, {}, {}, {}});
+    verificar_evento(EstadoJuego{"granja", {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, 0});
 }
 
 TEST_F(ProtocoloEventosTest, JugadoresEnSector) {

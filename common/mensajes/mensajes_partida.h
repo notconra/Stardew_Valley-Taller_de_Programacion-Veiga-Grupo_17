@@ -432,6 +432,7 @@ struct EstadoJuego {
     std::vector<EstadoNpc> npcs;
     // No viaja en ESTADO_JUEGO: llega con LlamasEnSector en cada tick que haya llamas volando.
     std::vector<EstadoLlama> llamas;
+    uint8_t nivel_de_mazmorra = 0;
     bool operator==(const EstadoJuego&) const = default;
 };
 

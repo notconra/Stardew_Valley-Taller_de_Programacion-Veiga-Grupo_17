@@ -353,6 +353,7 @@ EstadoJuego GestorDeSectores::armar_instantanea(const std::string& id_mapa) cons
 
     EstadoJuego estado;
     estado.mapa = id_mapa;
+    estado.nivel_de_mazmorra = static_cast<uint8_t>(std::max(sector.nivel_de_mazmorra, 0));
     estado.jugadores = armar_jugadores(id_mapa);
     estado.npcs = armar_npcs(id_mapa);
     sector.objetos.agregar_a(estado);

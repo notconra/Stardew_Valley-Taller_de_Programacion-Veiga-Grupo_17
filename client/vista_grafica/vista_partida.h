@@ -28,6 +28,7 @@
 #include "hud_mercado.h"
 #include "iconos_de_items.h"
 #include "iconos_de_lote.h"
+#include "indicador_de_nivel.h"
 #include "lluvia_grafica.h"
 #include "mapa_general.h"
 #include "mapa_grafico.h"
@@ -229,10 +230,11 @@ private:
         const Camara& camara, const HudInventario& hud, const HudMercado& hud_mercado,
         const VisionMazmorra& vision_mazmorra, const EntradaDelUsuario& entrada,
         const VistaChat& chat, RelojGrafico& reloj_grafico,
-        const PantallaDeDescanso& pantalla_de_descanso, const PanelDeRegalos& regalos,
-        const VentanaDeLote& ventana_de_lote, const MarcasDeLotes& marcas_de_lotes,
-        const CuadroDeAviso& cuadro_de_aviso, const CuadroDeDialogo& cuadro_de_dialogo,
-        LluviaGrafica& lluvia, const MenuEnJuego& menu, const MapaGeneral& mapa_general) const;
+        const IndicadorDeNivel& indicador_de_nivel, const PantallaDeDescanso& pantalla_de_descanso,
+        const PanelDeRegalos& regalos, const VentanaDeLote& ventana_de_lote,
+        const MarcasDeLotes& marcas_de_lotes, const CuadroDeAviso& cuadro_de_aviso,
+        const CuadroDeDialogo& cuadro_de_dialogo, LluviaGrafica& lluvia, const MenuEnJuego& menu,
+        const MapaGeneral& mapa_general) const;
 
 public:
     VistaPartida(ConexionConServidor& conexion_conectada, const ConfiguracionVista& configuracion);

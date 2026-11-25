@@ -599,6 +599,7 @@ EstadoJuego ProtocoloCliente::recibir_estado_juego() {
     for (uint16_t i = 0; i < cantidad_de_npcs; ++i) {
         estado_juego.npcs.push_back(recibir_estado_npc());
     }
+    estado_juego.nivel_de_mazmorra = recibir_u8();
 
     return estado_juego;
 }

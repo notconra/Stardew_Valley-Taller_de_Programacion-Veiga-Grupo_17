@@ -257,6 +257,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
     mapa_general
         .usar_mundo(mundo_actual, configuracion_de("granja"), configuracion_de("Town"), graficos);
     std::optional<RelojGrafico> reloj_grafico;
+    IndicadorDeNivel indicador_de_nivel(renderizador.ptr(), configuracion.chat.ruta_fuente);
     std::optional<PantallaDeDescanso> pantalla_de_descanso;
     std::optional<PanelDeRegalos> regalos;
     reloj_grafico.emplace(renderizador.ptr(), configuracion.chat.ruta_fuente, alto_de_pantalla);
@@ -534,6 +535,7 @@ bool VistaPartida::ejecutar(const EntradaExitosaAPartida& partida) {
             entrada,
             chat,
             *reloj_grafico,
+            indicador_de_nivel,
             *pantalla_de_descanso,
             *regalos,
             *ventana_de_lote,
@@ -1288,10 +1290,11 @@ void VistaPartida::dibujar(
     const CultivosGraficos& cultivos, const EfectoDeRiego& efecto_de_riego, const Camara& camara,
     const HudInventario& hud, const HudMercado& hud_mercado, const VisionMazmorra& vision_mazmorra,
     const EntradaDelUsuario& entrada, const VistaChat& chat, RelojGrafico& reloj_grafico,
-    const PantallaDeDescanso& pantalla_de_descanso, const PanelDeRegalos& regalos,
-    const VentanaDeLote& ventana_de_lote, const MarcasDeLotes& marcas_de_lotes,
-    const CuadroDeAviso& cuadro_de_aviso, const CuadroDeDialogo& cuadro_de_dialogo,
-    LluviaGrafica& lluvia, const MenuEnJuego& menu, const MapaGeneral& mapa_general) const {
+    const IndicadorDeNivel& indicador_de_nivel, const PantallaDeDescanso& pantalla_de_descanso,
+    const PanelDeRegalos& regalos, const VentanaDeLote& ventana_de_lote,
+    const MarcasDeLotes& marcas_de_lotes, const CuadroDeAviso& cuadro_de_aviso,
+    const CuadroDeDialogo& cuadro_de_dialogo, LluviaGrafica& lluvia, const MenuEnJuego& menu,
+    const MapaGeneral& mapa_general) const {
     SDL_Renderer* renderer = renderizador.ptr();
     if (mundo != nullptr) {
         SDL_SetRenderTarget(renderer, mundo);
@@ -1495,6 +1498,9 @@ void VistaPartida::dibujar(
 
     if (hora_del_juego.has_value()) {
         reloj_grafico.dibujar(renderer, *hora_del_juego, ancho_de_pantalla);
+    }
+    if (mapa_actual_es_mazmorra() && ultimo_estado_juego.nivel_de_mazmorra > 0) {
+        indicador_de_nivel.dibujar(renderer, ultimo_estado_juego.nivel_de_mazmorra);
     }
 
     regalos.dibujar(renderer, datos_de_regalos());

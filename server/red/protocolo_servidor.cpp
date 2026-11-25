@@ -534,6 +534,7 @@ void ProtocoloServidor::enviar_estado_juego(const EstadoJuego& estado_juego) {
     for (const EstadoNpc& estado : estado_juego.npcs) {
         enviar_estado_npc(estado);
     }
+    enviar_u8(estado_juego.nivel_de_mazmorra);
 }
 
 void ProtocoloServidor::enviar_evento_jugadores_en_sector(const JugadoresEnSector& jugadores) {
