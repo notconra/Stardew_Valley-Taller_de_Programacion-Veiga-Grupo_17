@@ -86,6 +86,8 @@ private:
     void llenar_lista_partidas(const ListaPartidas& lista);
     bool procesar_evento_ingreso(const EventoServidor& evento);
     QString describir_error(const ErrorServidor& error) const;
+    void mostrar_mensaje_stardew(const QString& mensaje);
+    static QString normalizar_texto_stardew(const QString& texto);
 
     ConexionConServidor& conexion;
     EntradaExitosaAPartida& partida_actual;

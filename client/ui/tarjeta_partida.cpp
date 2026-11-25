@@ -178,7 +178,7 @@ void TarjetaPartida::al_hacer_clic_eliminar() {
     btn_cancelar.setObjectName("btn_dialogo_cancelar");
     btn_cancelar.setProperty("class", "btn_dialogo_accion");
     RecursosUI::instancia().configurar_boton_cancelar(&btn_cancelar);
-    btn_cancelar.setFixedSize(52, 52);
+    btn_cancelar.setFixedSize(64, 64);
     btn_cancelar.setToolTip("Cancelar");
     connect(&btn_cancelar, &QPushButton::clicked, &dialogo, &QDialog::reject);
     layout_botones.addWidget(&btn_cancelar);
@@ -187,7 +187,7 @@ void TarjetaPartida::al_hacer_clic_eliminar() {
     btn_ok.setObjectName("btn_dialogo_ok");
     btn_ok.setProperty("class", "btn_dialogo_accion");
     RecursosUI::instancia().configurar_boton_ok(&btn_ok);
-    btn_ok.setFixedSize(52, 52);
+    btn_ok.setFixedSize(64, 64);
     btn_ok.setToolTip("Eliminar");
     connect(&btn_ok, &QPushButton::clicked, &dialogo, &QDialog::accept);
     layout_botones.addWidget(&btn_ok);
