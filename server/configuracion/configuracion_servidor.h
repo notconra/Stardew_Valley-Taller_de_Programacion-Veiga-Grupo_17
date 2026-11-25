@@ -41,6 +41,7 @@ private:
     void cargar_movimiento(const toml::table& tabla);
     void cargar_aparicion(const toml::table& tabla);
     void cargar_inventario(const toml::table& tabla);
+    void cargar_jugador(const toml::table& tabla);
     void cargar_acciones(const toml::table& tabla);
     void cargar_cultivos(const toml::table& tabla);
     void cargar_drops(const toml::table& tabla);

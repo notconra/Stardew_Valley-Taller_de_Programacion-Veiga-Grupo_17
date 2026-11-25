@@ -86,6 +86,10 @@ y = 416
 [juego.inventario]
 # cantidad_ranuras_barra = 10
 
+[juego.jugador]
+vida_inicial = 100
+energia_inicial = 100
+
 [juego.acciones]
 # Las duraciones se miden en ticks (con ticks_por_segundo = 40, 8 ticks son 0,2 segundos).
 # alcance_en_casillas = 1
