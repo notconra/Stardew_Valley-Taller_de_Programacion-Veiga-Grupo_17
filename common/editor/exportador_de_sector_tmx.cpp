@@ -505,11 +505,7 @@ void ExportadorDeSectorTMX::inyectar_tiles_de_cabania(
 
                 if (fila_local < FILA_LIMITE_TECHO_CABANIA) {
                     tiles_frente[indice_mapa] = gid_global;
-                    if (columna_local <= 3 && fila_local < 3) {
-                        tiles_colisiones[indice_mapa] = 1;
-                    } else {
-                        tiles_colisiones[indice_mapa] = 0;
-                    }
+                    tiles_colisiones[indice_mapa] = 0;
                 } else if (fila_local == FILA_LIMITE_TECHO_CABANIA) {
                     tiles_frente[indice_mapa] = gid_global;
                     tiles_colisiones[indice_mapa] = 1;
@@ -550,7 +546,10 @@ void ExportadorDeSectorTMX::inyectar_tiles_de_centro_comunitario(
                      columna_local >= COLUMNA_INICIO_ACCESO_CENTRO_COMUNITARIO &&
                      columna_local <= COLUMNA_FIN_ACCESO_CENTRO_COMUNITARIO);
 
-                if (fila_local <= FILA_LIMITE_TECHO_CENTRO_COMUNITARIO) {
+                if (fila_local < FILA_LIMITE_TECHO_CENTRO_COMUNITARIO) {
+                    tiles_frente[indice_mapa] = gid_global;
+                    tiles_colisiones[indice_mapa] = 0;
+                } else if (fila_local == FILA_LIMITE_TECHO_CENTRO_COMUNITARIO) {
                     tiles_frente[indice_mapa] = gid_global;
                     tiles_colisiones[indice_mapa] = 1;
                 } else if (es_acceso) {
@@ -598,7 +597,10 @@ void ExportadorDeSectorTMX::inyectar_tiles_de_mercado(
                          columna_local >= COLUMNA_INICIO_ACCESO_MERCADO &&
                          columna_local <= COLUMNA_FIN_ACCESO_MERCADO);
 
-                    if (fila_local <= FILA_LIMITE_TECHO_MERCADO) {
+                    if (fila_local < FILA_LIMITE_TECHO_MERCADO) {
+                        tiles_frente[indice_mapa] = gid_global;
+                        tiles_colisiones[indice_mapa] = 0;
+                    } else if (fila_local == FILA_LIMITE_TECHO_MERCADO) {
                         tiles_frente[indice_mapa] = gid_global;
                         tiles_colisiones[indice_mapa] = 1;
                     } else if (es_acceso) {
