@@ -36,6 +36,8 @@ private:
     void conectar_senales();
     void actualizar_sector_en_pantalla();
     void actualizar_etiqueta_dimensiones();
+    void actualizar_etiqueta_nombre_mundo();
+    bool validar_antes_de_guardar();
     MapaEditable* obtener_mapa_activo();
 
 private slots:
@@ -43,7 +45,6 @@ private slots:
     void abrir_mundo();
     void guardar_mundo();
     void guardar_mundo_como();
-    void renombrar_mundo();
     void cambiar_sector(int indice);
     void cambiar_capa(int indice);
     void aumentar_zoom();

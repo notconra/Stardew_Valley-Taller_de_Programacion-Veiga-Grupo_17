@@ -29,7 +29,6 @@ private:
     QLabel* etiqueta_titulo;
     QLabel* etiqueta_estado_general;
     QListWidget* lista_errores;
-    QPushButton* boton_revalidar;
 
     void inicializar_seccion_entidades();
     void limpiar_botones_entidades();
@@ -42,7 +41,6 @@ public:
     void actualizar_resultado(const ResultadoValidacion& resultado);
 
 signals:
-    void validacion_solicitada();
     void entidad_cambiada(TipoEntidad entidad);
     void eliminar_solicitado();
 };

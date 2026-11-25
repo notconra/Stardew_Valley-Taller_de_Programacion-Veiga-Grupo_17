@@ -60,8 +60,7 @@ PanelDeValidacion::PanelDeValidacion(QWidget* padre)
       boton_eliminar_entidad(nullptr),
       etiqueta_titulo(nullptr),
       etiqueta_estado_general(nullptr),
-      lista_errores(nullptr),
-      boton_revalidar(nullptr) {
+      lista_errores(nullptr) {
     layout_principal = new QVBoxLayout(this);
     layout_principal->setContentsMargins(8, 8, 8, 8);
     layout_principal->setSpacing(8);
@@ -91,19 +90,6 @@ PanelDeValidacion::PanelDeValidacion(QWidget* padre)
     lista_errores = new QListWidget(grupo_errores);
     layout_errores->addWidget(lista_errores);
     layout_principal->addWidget(grupo_errores);
-
-    // 5. Botón de Revalidar Mundo
-    boton_revalidar = new QPushButton("Revalidar Mundo", this);
-    boton_revalidar->setStyleSheet(
-        "QPushButton { background-color: #2E6B38; color: white; font-weight: bold; padding: 8px; "
-        "border-radius: 4px; }"
-        "QPushButton:hover { background-color: #3B8C4A; }");
-    connect(
-        boton_revalidar,
-        &QPushButton::clicked,
-        this,
-        &PanelDeValidacion::validacion_solicitada);
-    layout_principal->addWidget(boton_revalidar);
 
     actualizar_sector(SectorActual::GRANJA);
 }

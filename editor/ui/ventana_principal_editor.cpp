@@ -128,29 +128,16 @@ void VentanaPrincipalEditor::inicializar_menu() {
         &QAction::triggered,
         this,
         &VentanaPrincipalEditor::abrir_dialogo_redimensionar);
-
-    QAction* accion_validar = menu_herramientas->addAction("&Validar Mundo");
-    accion_validar->setShortcut(QKeySequence(Qt::Key_F5));
-    connect(
-        accion_validar,
-        &QAction::triggered,
-        this,
-        &VentanaPrincipalEditor::ejecutar_validacion);
 }
 
 void VentanaPrincipalEditor::inicializar_barra_de_herramientas() {
     QToolBar* barra = addToolBar("Herramientas Principales");
     barra->setMovable(false);
 
-    etiqueta_nombre_mundo = new QLabel(
-        QString("Mundo: <b>%1</b>").arg(QString::fromStdString(mundo_actual.obtener_nombre())),
-        barra);
+    etiqueta_nombre_mundo = new QLabel(barra);
     etiqueta_nombre_mundo->setStyleSheet("padding: 0 10px; font-size: 13px;");
+    actualizar_etiqueta_nombre_mundo();
     barra->addWidget(etiqueta_nombre_mundo);
-
-    QPushButton* boton_renombrar = new QPushButton("Renombrar", barra);
-    connect(boton_renombrar, &QPushButton::clicked, this, &VentanaPrincipalEditor::renombrar_mundo);
-    barra->addWidget(boton_renombrar);
 
     barra->addSeparator();
 
@@ -227,6 +214,14 @@ void VentanaPrincipalEditor::inicializar_barra_de_herramientas() {
         this,
         &VentanaPrincipalEditor::guardar_mundo);
     barra->addWidget(boton_guardar_rapido);
+
+    QPushButton* boton_guardar_como = new QPushButton("Guardar como...", barra);
+    connect(
+        boton_guardar_como,
+        &QPushButton::clicked,
+        this,
+        &VentanaPrincipalEditor::guardar_mundo_como);
+    barra->addWidget(boton_guardar_como);
 }
 
 void VentanaPrincipalEditor::inicializar_barra_de_estado() {
@@ -298,12 +293,6 @@ void VentanaPrincipalEditor::conectar_senales() {
         lienzo,
         &LienzoDeEdicion::eliminar_entidad_seleccionada);
 
-    connect(
-        panel_validacion,
-        &PanelDeValidacion::validacion_solicitada,
-        this,
-        &VentanaPrincipalEditor::ejecutar_validacion);
-
     QShortcut* atajo_rotar = new QShortcut(QKeySequence(Qt::Key_R), this);
     connect(atajo_rotar, &QShortcut::activated, lienzo, &LienzoDeEdicion::rotar_elemento_actual);
 
@@ -362,7 +351,7 @@ void VentanaPrincipalEditor::nuevo_mundo() {
     if (aceptado && !nombre.trimmed().isEmpty()) {
         mundo_actual = DefinicionDeMundo::crear_mundo_por_defecto(nombre.toStdString());
         ruta_archivo_actual = "";
-        etiqueta_nombre_mundo->setText(QString("Mundo: <b>%1</b>").arg(nombre));
+        actualizar_etiqueta_nombre_mundo();
         combo_sectores->setCurrentIndex(0);
         actualizar_sector_en_pantalla();
         ejecutar_validacion();
@@ -383,9 +372,7 @@ void VentanaPrincipalEditor::abrir_mundo() {
         try {
             mundo_actual = CargadorDeMundoTMX::cargar_mundo(ruta_directorio.toStdString());
             ruta_archivo_actual = ruta_directorio.toStdString();
-            etiqueta_nombre_mundo->setText(
-                QString("Mundo: <b>%1</b>")
-                    .arg(QString::fromStdString(mundo_actual.obtener_nombre())));
+            actualizar_etiqueta_nombre_mundo();
             combo_sectores->setCurrentIndex(0);
             actualizar_sector_en_pantalla();
             ejecutar_validacion();
@@ -400,6 +387,9 @@ void VentanaPrincipalEditor::abrir_mundo() {
 }
 
 void VentanaPrincipalEditor::guardar_mundo() {
+    if (!validar_antes_de_guardar()) {
+        return;
+    }
     if (ruta_archivo_actual.empty()) {
         guardar_mundo_como();
         return;
@@ -415,6 +405,9 @@ void VentanaPrincipalEditor::guardar_mundo() {
 }
 
 void VentanaPrincipalEditor::guardar_mundo_como() {
+    if (!validar_antes_de_guardar()) {
+        return;
+    }
     std::filesystem::create_directories("mundos");
     bool aceptado = false;
     QString nombre_sugerido = QString::fromStdString(mundo_actual.obtener_nombre());
@@ -427,27 +420,37 @@ void VentanaPrincipalEditor::guardar_mundo_como() {
         &aceptado);
 
     if (aceptado && !nombre_carpeta.trimmed().isEmpty()) {
+        std::string nombre_carpeta_limpio = nombre_carpeta.trimmed().toStdString();
         std::filesystem::path ruta_destino =
-            std::filesystem::path("mundos") / nombre_carpeta.trimmed().toStdString();
+            std::filesystem::path("mundos") / nombre_carpeta_limpio;
         ruta_archivo_actual = ruta_destino.string();
+        mundo_actual.establecer_nombre(nombre_carpeta_limpio);
+        actualizar_etiqueta_nombre_mundo();
         guardar_mundo();
     }
 }
 
-void VentanaPrincipalEditor::renombrar_mundo() {
-    bool aceptado = false;
-    QString nombre = QInputDialog::getText(
-        this,
-        "Renombrar Mundo",
-        "Nuevo nombre para el mundo:",
-        QLineEdit::Normal,
-        QString::fromStdString(mundo_actual.obtener_nombre()),
-        &aceptado);
-    if (aceptado && !nombre.trimmed().isEmpty()) {
-        mundo_actual.establecer_nombre(nombre.toStdString());
-        etiqueta_nombre_mundo->setText(QString("Mundo: <b>%1</b>").arg(nombre));
-        ejecutar_validacion();
+void VentanaPrincipalEditor::actualizar_etiqueta_nombre_mundo() {
+    QString nombre = QString::fromStdString(mundo_actual.obtener_nombre());
+    if (ruta_archivo_actual.empty()) {
+        etiqueta_nombre_mundo->setText(QString("Mundo: <b>%1 (sin guardar)</b>").arg(nombre));
+        return;
     }
+    etiqueta_nombre_mundo->setText(QString("Mundo: <b>%1</b>").arg(nombre));
+}
+
+bool VentanaPrincipalEditor::validar_antes_de_guardar() {
+    ResultadoValidacion resultado = ValidadorDeMundo::validar(mundo_actual);
+    panel_validacion->actualizar_resultado(resultado);
+    if (resultado.es_valido) {
+        return true;
+    }
+    QString detalle_errores = "No se puede guardar un mundo invalido.\n\nErrores encontrados:";
+    for (const std::string& error : resultado.errores) {
+        detalle_errores += QString("\n- %1").arg(QString::fromStdString(error));
+    }
+    QMessageBox::warning(this, "Mundo Invalido", detalle_errores);
+    return false;
 }
 
 void VentanaPrincipalEditor::cambiar_sector(int indice) {
