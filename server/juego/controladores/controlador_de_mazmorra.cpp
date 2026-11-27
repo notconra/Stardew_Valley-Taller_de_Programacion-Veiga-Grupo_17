@@ -12,8 +12,8 @@
 #include "../../../common/tipo_item.h"
 #include "../../../common/tipo_objeto.h"
 #include "../azar.h"
-#include "./../mazmorra/cargador_mazmorra.h"
-#include "./../mazmorra/minerales.h"
+#include "../mazmorra/cargador_mazmorra.h"
+#include "../mazmorra/minerales.h"
 
 ControladorDeMazmorra::ControladorDeMazmorra(
     const RecursosDeJuego& recursos, GestorDeSectores& sectores,

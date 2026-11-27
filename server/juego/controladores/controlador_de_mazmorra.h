@@ -10,7 +10,7 @@
 #include "../mapa/mapa.h"
 #include "../recursos/recursos_de_juego.h"
 #include "../sector/gestor_de_sectores.h"
-#include "./../mazmorra/mazmorra.h"
+#include "../mazmorra/mazmorra.h"
 
 // Todo lo procedural de la mazmorra como elegir los niveles al arrancar, poblarlos cuando entra el
 // primer jugador, y resolver las transiciones especiales (entrada, escalera, salida). Mundo lo

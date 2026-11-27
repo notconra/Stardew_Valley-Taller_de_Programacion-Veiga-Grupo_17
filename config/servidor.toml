@@ -92,7 +92,7 @@ energia_inicial = 100
 
 [juego.acciones]
 # Las duraciones se miden en ticks (con ticks_por_segundo = 40, 8 ticks son 0,2 segundos).
-# alcance_en_casillas = 1
+ alcance_en_casillas = 3
 duracion_picar_en_ticks = 16
 duracion_tratar_tierra_en_ticks = 16
 duracion_atacar_en_ticks = 18

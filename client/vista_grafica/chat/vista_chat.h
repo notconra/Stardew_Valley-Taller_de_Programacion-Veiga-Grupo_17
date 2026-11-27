@@ -12,7 +12,7 @@
 
 #include "../../../common/mensajes/mensajes.h"
 #include "../../configuracion/configuracion_cliente_datos.h"
-#include "../entrada_del_usuario.h"
+#include "../entrada/entrada_del_usuario.h"
 #include "cache_de_texto.h"
 #include "catalogo_de_imagenes.h"
 #include "estilo_del_chat.h"
