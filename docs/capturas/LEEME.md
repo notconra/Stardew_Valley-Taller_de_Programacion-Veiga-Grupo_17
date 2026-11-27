@@ -1,0 +1,55 @@
+# Capturas del manual
+
+Guardá cada captura en esta carpeta con exactamente este nombre (PNG):
+
+- [ ] `01-granja.png` — La granja
+- [ ] `02-menu.png` — Pantalla principal
+- [ ] `03-personaje.png` — Creación de personaje
+- [ ] `04-multijugador.png` — Código de invitación
+- [ ] `05-hud.png` — HUD durante el juego
+- [ ] `06-mapa.png` — Mapa general
+- [ ] `07-menu-juego.png` — Menú del juego
+- [ ] `08-dormir.png` — Acostado en la cama
+- [ ] `09-cultivos.png` — Huerta regada
+- [ ] `10-animales.png` — Vacas y gallinas
+- [ ] `11-mercado.png` — El mercado
+- [ ] `12-puesto.png` — Ventana de un puesto
+- [ ] `13-cofre.png` — Cofre abierto
+- [ ] `14-mina.png` — Dentro de la mina
+- [ ] `15-enemigos.png` — Combate
+- [ ] `16-centro-ruinas.png` — En ruinas
+- [ ] `17-centro-arreglado.png` — Restaurado
+- [ ] `18-chat.png` — Chat
+- [ ] `19-regalos.png` — Panel de regalos
+- [ ] `20-editor.png` — Editor de mapas
+- [ ] `21-inventario.png` — Barra e inventario
+- [ ] `22-cosecha.png` — Cultivos listos
+- [ ] `23-ventana-lote.png` — Ventana de un lote
+- [ ] `24-truco.png` — Un truco en el chat
+- [ ] `25-mapa-jugadores.png` — Mapa con varios jugadores
+- [ ] `26-mapa-invierno.png` — Mapa en otra estación
+- [ ] `27-riego.png` — Plantas que piden agua
+- [ ] `28-aspersor.png` — Aspersor entre cultivos
+- [ ] `29-aspersor-compra.png` — Comprándolo en Robin
+- [ ] `30-lluvia.png` — Un día de lluvia
+- [ ] `31-verano.png` — Verano
+- [ ] `32-otono.png` — Otoño
+- [ ] `33-invierno.png` — Invierno
+- [ ] `34-npc-paseo.png` — Vecinos paseando
+- [ ] `35-npc-puesto.png` — Atendiendo el puesto
+- [ ] `36-dialogo.png` — Diálogo con un vecino
+- [ ] `37-esqueleto.png` — Esqueleto
+- [ ] `38-orcos.png` — Grupo de orcos
+- [ ] `39-vampiros.png` — Pareja de vampiros
+- [ ] `40-calavera.png` — Calavera disparando
+- [ ] `41-regalo-enviar.png` — Eligiendo destinatario
+- [ ] `42-regalo-recibido.png` — Regalos sin abrir
+- [ ] `43-editor-paleta.png` — Paleta de herramientas
+- [ ] `44-editor-validacion.png` — Panel de validación
+- [ ] `45-robin.png` — Los muebles del día
+- [ ] `46-casa-decorada.png` — Una casa decorada
+- [ ] `47-pierre.png` — Semillas de Pierre
+- [ ] `48-premio.png` — Aviso del premio en el chat
+- [ ] `49-privado.png` — Privados y avisos
+- [ ] `50-emojis.png` — Menú de emojis
+- [ ] `51-stickers.png` — Stickers en el menú
