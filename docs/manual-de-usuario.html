@@ -98,6 +98,12 @@ nav button{width:48px;height:44px}
 body,#portada{background:linear-gradient(rgba(25,14,6,.38),rgba(25,14,6,.55)),var(--valle) center/cover no-repeat fixed #2a1b10}
 #abrir,#num{text-shadow:0 2px 0 #1b0f07,0 0 8px #1b0f07;opacity:1}
 @media print{body{background:none}}
+
+/* capturas grandes */
+.libro .page .shot{margin:.4em 0}
+.libro .page .shot img{display:block;margin:0 auto;box-sizing:border-box;max-width:100%;max-height:none;height:auto;border-style:solid;border-color:transparent;border-width:8px;border-image-slice:6;border-image-width:8px;border-image-repeat:stretch;image-rendering:pixelated}
+.libro .page .shot.falta img{display:none}
+.libro .page.fotos figcaption{line-height:1.1}
 </style></head><body>
 
 <div id="portada"><button id="tapa" aria-label="Abrir el manual"><span id="etiqueta"><img alt="Manual de usuario" src="data:image/png;base64,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"></span><span id="cara"><span class="g"><b>Taller de Programación</b>Barletta · Docampo<br>Garcia Palau · Vezzulla</span></span></button><span id="abrir">Click en el libro para abrirlo</span></div>
@@ -169,10 +175,18 @@ make build JOBS=4  # compila más rápido</pre><p>Otros comandos útiles:</p><ta
 <script>
 const p=[...document.querySelectorAll('.page')],$=i=>document.getElementById(i),ancho=matchMedia('(min-aspect-ratio:1001/1000)');
 let a=0;
-function ajustar(e){if(!e.classList.contains('ver'))return;const im=[...e.querySelectorAll('.shot img')];e.style.fontSize='';im.forEach(i=>i.style.maxHeight='');
+function medir(i,alto){const w=i.closest('.page').clientWidth-14,r=i.naturalWidth/i.naturalHeight||1.6;i.style.width=Math.floor(Math.min(w,alto*r))+'px'}
+function ajustar(e){if(!e.classList.contains('ver'))return;const im=[...e.querySelectorAll('.shot:not(.falta) img')];e.style.fontSize='';
+const H=e.clientHeight;
+if(e.classList.contains('fotos'))im.forEach(i=>medir(i,H*(im.length>1?.37:.7)));else im.forEach(i=>medir(i,H*.45));
 const sobra=()=>e.scrollHeight>e.clientHeight+2;
-for(let m=7;m>=4&&sobra();m-=.5)im.forEach(i=>i.style.maxHeight=m+'em');
 let t=parseFloat(getComputedStyle(e).fontSize);const min=t*.82;while(sobra()&&t>min){t-=.5;e.style.fontSize=t+'px'}}
+/* si una captura no entra grande junto al texto, pasa a una pagina propia */
+function repartir(){p.slice(2).forEach(e=>{const f=[...e.querySelectorAll('.shot:not(.falta)')].filter(x=>x.querySelector('img').naturalWidth);if(!f.length)return;
+const era=e.classList.contains('ver');e.classList.add('ver');ajustar(e);const no=f.length>1||e.scrollHeight>e.clientHeight+2;if(!era)e.classList.remove('ver');if(!no)return;
+const h=e.querySelector('h2');let ult=e;for(let k=0;k<f.length;k+=2){const n=document.createElement('section');n.className='page fotos';if(h)n.appendChild(h.cloneNode(true));f.slice(k,k+2).forEach(x=>n.appendChild(x));ult.after(n);p.splice(p.indexOf(ult)+1,0,n);ult=n}});
+document.querySelectorAll('a[href^="#p"]').forEach(l=>{const d=$(l.hash.slice(1)),b=l.querySelector('b:last-child');if(d&&b&&/^\d+$/.test(b.textContent))b.textContent=p.indexOf(d)+1})}
+addEventListener('load',()=>{repartir();ir(a)});
 function ir(i){const n=ancho.matches?2:1;a=Math.max(0,Math.min(p.length-1,i));a-=a%n;
 p.forEach((e,j)=>{e.classList.toggle('ver',j>=a&&j<a+n);e.scrollTop=0});p.forEach(ajustar);
 if(n>1){const v=p.slice(a,a+n),t=Math.min(...v.map(e=>parseFloat(getComputedStyle(e).fontSize)));if(a>1)v.forEach(e=>e.style.fontSize=t+'px')}
@@ -180,7 +194,7 @@ $('num').textContent=(a+1)+(n>1&&a+1<p.length?'-'+(a+2):'')+' / '+p.length;
 $('ant').disabled=a===0;$('sig').disabled=a+n>=p.length}
 $('ant').onclick=()=>ir(a-(ancho.matches?2:1));$('sig').onclick=()=>ir(a+(ancho.matches?2:1));$('ind').onclick=()=>ir(0);
 addEventListener('keydown',e=>{if(e.key==='ArrowLeft')$('ant').click();if(e.key==='ArrowRight')$('sig').click();if(e.key==='Escape')$('zoom').style.display='none'});
-document.addEventListener('click',e=>{const l=e.target.closest('a[href^="#p"]');if(l){e.preventDefault();ir(+l.hash.slice(2)-1)}
+document.addEventListener('click',e=>{const l=e.target.closest('a[href^="#p"]');if(l){e.preventDefault();ir(p.indexOf($(l.hash.slice(1))))}
 if(e.target.matches('.shot img')){$('zoom').firstChild.src=e.target.src;$('zoom').style.display='flex'}else if(e.target.closest('#zoom'))$('zoom').style.display='none'});
 $('eant').onclick=()=>$('ant').click();$('esig').onclick=()=>$('sig').click();
 addEventListener('resize',()=>ir(a));addEventListener('load',()=>ir(a));document.fonts.ready.then(()=>ir(a));
