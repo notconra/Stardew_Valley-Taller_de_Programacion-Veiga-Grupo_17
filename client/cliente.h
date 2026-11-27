@@ -8,7 +8,7 @@
 #include "configuracion/configuracion_cliente.h"
 #include "estado_del_juego.h"
 #include "red/conexion_con_servidor.h"
-#include "vista_grafica/vista_partida.h"
+#include "vista_grafica/partida/vista_partida.h"
 // Orquestador principal del cliente. Tiene la conexión con el servidor y las vistas.
 class Cliente {
 private:
